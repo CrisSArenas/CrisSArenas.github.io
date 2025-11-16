@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume | Cristian Arenas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Additional Resume-Specific Styles */
+        .resume-page {
+            padding-top: 80px;
+            min-height: 100vh;
+            background: var(--dark-bg);
+        }
+        
+        .resume-header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--darker-bg), var(--dark-bg));
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .resume-header h1 {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .resume-contact {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .resume-contact a {
+            color: var(--primary-cyan);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .resume-contact a:hover {
+            color: var(--primary-green);
+        }
+        
+        .resume-actions {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .resume-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+        
+        .resume-section {
+            margin-bottom: 4rem;
+        }
+        
+        .resume-section-title {
+            font-size: 2rem;
+            color: var(--primary-cyan);
+            border-bottom: 2px solid var(--primary-cyan);
+            padding-bottom: 0.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .experience-item,
+        .education-item {
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-left: 3px solid var(--primary-cyan);
+            border-radius: 5px;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .item-title h3 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+        
+        .item-company {
+            color: var(--primary-green);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .item-location {
+            text-align: right;
+            color: var(--text-secondary);
+        }
+        
+        .item-date {
+            color: var(--primary-cyan);
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+        }
+        
+        .item-responsibilities {
+            list-style: none;
+            margin-top: 1rem;
+        }
+        
+        .item-responsibilities li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: start;
+            gap: 0.5rem;
+        }
+        
+        .item-responsibilities li::before {
+            content: '▹';
+            color: var(--primary-cyan);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        
+        .skills-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .skill-group h4 {
+            color: var(--primary-cyan);
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+        }
+        
+        .skill-items {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        
+        .certification-item {
+            background: var(--card-bg);
+            padding: 1rem 1.5rem;
+            border-radius: 5px;
+            border-left: 3px solid var(--primary-green);
+            margin-bottom: 1rem;
+        }
+        
+        .certification-name {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        
+        .certification-org {
+            color: var(--primary-cyan);
+            font-size: 0.95rem;
+        }
+        
+        @media (max-width: 768px) {
+            .resume-header h1 {
+                font-size: 2rem;
+            }
+            
+            .resume-contact {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .item-header {
+                flex-direction: column;
+            }
+            
+            .item-location {
+                text-align: left;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="terminal-prompt">cristian@portfolio:~$</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#home">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#skills">Skills</a></li>
+                <li><a href="index.html#projects">Projects</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Resume Page Content -->
+    <div class="resume-page">
+        <!-- Resume Header -->
+        <div class="resume-header">
+            <h1>Cristian Sanchez Arenas</h1>
+            <div class="resume-contact">
+                <span><i class="fas fa-map-marker-alt"></i> Cincinnati, OH 45236</span>
+                <span><i class="fas fa-phone"></i> (513) 835-6419</span>
+                <span><i class="fas fa-envelope"></i> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></span>
+                <span><i class="fab fa-linkedin"></i> <a href="https://linkedin.com/in/cristian-arenas-ai-engineer-cybersecurity" target="_blank">LinkedIn</a></span>
+            </div>
+            <div class="resume-actions">
+                <button class="btn btn-primary" onclick="window.print()">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+                <a href="index.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Portfolio
+                </a>
+            </div>
+        </div>
+
+        <!-- Resume Content -->
+        <div class="resume-content">
+            
+            <!-- Work Experience Section -->
+            <section class="resume-section">
+                <h2 class="resume-section-title">
+                    <i class="fas fa-briefcase"></i> Work Experience
+                </h2>
+                
+                <!-- FEG Investment Advisors -->
+                <div class="experience-item">
+                    <div class="item-header">
+                        <div class="item-title">
+                            <h3>Senior Portfolio Management Analyst</h3>
+                            <div class="item-company">FEG Investment Advisors</div>
+                        </div>
+                        <div class="item-location">
+                            <div>Cincinnati, OH</div>
+                            <div class="item-date">Mar 2025 – Present</div>
+                        </div>
+                    </div>
+                    <ul class="item-responsibilities">
+                        <li>Build and deploy AI/ML tools (LLMs, NLP, predictive models) for portfolio oversight, reducing manual work 35%.</li>
+                        <li>Develop production-grade pipelines (Python, SQL, Airflow) for analytics and model training.</li>
+                        <li>Develop GenAI solutions for automated portfolio commentary and market analysis using LLMs and NLP.</li>
+                        <li>Lead end-to-end development of internal portfolio systems and tools, built from scratch and scaled across users.</li>
+                        <li>Implement anomaly-detection models to identify unusual exposures, improving accuracy 25%.</li>
+                        <li>Apply secure development practices (access control, SIEM monitoring, endpoint protection) for all internal tools.</li>
+                        <li>Train junior analysts on AI, data engineering, and secure model deployment.</li>
+                    </ul>
+                </div>
+
+                <!-- Colliers -->
+                <div class="experience-item">
+                    <div class="item-header">
+                        <div class="item-title">
+                            <h3>Research Analyst</h3>
+                            <div class="item-company">Colliers</div>
+                        </div>
+                        <div class="item-location">
+                            <div>Cincinnati, OH</div>
+                            <div class="item-date">Apr 2024 – Mar 2025</div>
+                        </div>
+                    </div>
+                    <ul class="item-responsibilities">
+                        <li>Built LLM app for automated CRE insights, increasing output speed 4×.</li>
+                        <li>Created PySpark ETL pipelines processing 2M+ monthly data points; reduced reporting time 35%.</li>
+                        <li>Automated PDF/OCR ingestion with CV tools (OpenCV, Tesseract), saving ~20 hours/week.</li>
+                        <li>Embedded cybersecurity controls (audit logs, data-quality checks) in pipeline workflows.</li>
+                        <li>Delivered team workshops on AI automation and secure tool usage.</li>
+                    </ul>
+                </div>
+
+                <!-- ArLa Capital -->
+                <div class="experience-item">
+                    <div class="item-header">
+                        <div class="item-title">
+                            <h3>Senior Investment Associate</h3>
+                            <div class="item-company">ArLa Capital</div>
+                        </div>
+                        <div class="item-location">
+                            <div>Zurich, CH</div>
+                            <div class="item-date">Feb 2022 – Apr 2024</div>
+                        </div>
+                    </div>
+                    <ul class="item-responsibilities">
+                        <li>Built automated reporting engine with audit-ready logs, cutting month-end close 45%.</li>
+                        <li>Developed ML-driven macro and allocation models to support investment decisions.</li>
+                        <li>Engineered secure APIs for data ingestion with NIST-aligned safeguards.</li>
+                    </ul>
+                </div>
+
+                <!-- Citi -->
+                <div class="experience-item">
+                    <div class="item-header">
+                        <div class="item-title">
+                            <h3>Investment & Product Analyst</h3>
+                            <div class="item-company">Citi</div>
+                        </div>
+                        <div class="item-location">
+                            <div>Mexico City</div>
+                            <div class="item-date">Jun 2020 – Feb 2022</div>
+                        </div>
+                    </div>
+                    <ul class="item-responsibilities">
+                        <li>Developed Python-based automation tools for portfolio monitoring, increasing reporting efficiency by 22%.</li>
+                        <li>Led the technical rollout of BlackRock Aladdin across Wealth Management & Private Banking, training 80+ investment professionals.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Education Section -->
+            <section class="resume-section">
+                <h2 class="resume-section-title">
+                    <i class="fas fa-graduation-cap"></i> Education
+                </h2>
+                
+                <!-- University of Colorado Boulder -->
+                <div class="education-item">
+                    <div class="item-header">
+                        <div class="item-title">
+                            <h3>Master of Science in Computer Science</h3>
+                            <div class="item-company">University of Colorado Boulder, College of Engineering and Applied Science</div>
+                        </div>
+                        <div class="item-location">
+                            <div>Boulder, CO</div>
+                            <div class="item-date">Expected Aug 2027</div>
+                        </div>
+                    </div>
+                    <ul class="item-responsibilities">
+                        <li><strong>Cumulative GPA:</strong> 4.0/4.0</li>
+                        <li><strong>Relevant Coursework:</strong> Data Structures & Algorithms, Machine Learning, Deep Learning, Generative AI, NLP, Networking and Cybersecurity</li>
+                    </ul>
+                </div>
+
+                <!-- Escuela Bancaria y Comercial -->
+                <div class="education-item">
+                    <div class="item-header">
+                        <div class="item-title">
+                            <h3>Bachelor of Science in Finance and Banking</h3>
+                            <div class="item-company">Escuela Bancaria y Comercial – EBC</div>
+                        </div>
+                        <div class="item-location">
+                            <div>Mexico City</div>
+                            <div class="item-date">Class of 2020</div>
+                        </div>
+                    </div>
+                    <ul class="item-responsibilities">
+                        <li><strong>GPA:</strong> 3.8/4.0</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Technical Skills Section -->
+            <section class="resume-section">
+                <h2 class="resume-section-title">
+                    <i class="fas fa-cogs"></i> Technical Skills
+                </h2>
+                
+                <div class="skills-list">
+                    <div class="skill-group">
+                        <h4>Languages</h4>
+                        <div class="skill-items">Python, SQL, Java, C++</div>
+                    </div>
+                    
+                    <div class="skill-group">
+                        <h4>AI & Machine Learning</h4>
+                        <div class="skill-items">ML, LLMs, NLP, Scikit-learn, Deep Learning, LangChain, Predictive Modeling</div>
+                    </div>
+                    
+                    <div class="skill-group">
+                        <h4>Cybersecurity</h4>
+                        <div class="skill-items">SIEM analysis, incident response, endpoint protection, access control, vulnerability mitigation</div>
+                    </div>
+                    
+                    <div class="skill-group">
+                        <h4>Data & Tools</h4>
+                        <div class="skill-items">Pandas, NumPy, PySpark, Airflow, Git, Power BI, OpenCV, Aladdin</div>
+                    </div>
+                    
+                    <div class="skill-group">
+                        <h4>Cloud & Infrastructure</h4>
+                        <div class="skill-items">AWS, Azure, Docker, CI/CD, API Development</div>
+                    </div>
+                    
+                    <div class="skill-group">
+                        <h4>Spoken Languages</h4>
+                        <div class="skill-items">Fluent in Spanish and English</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Certifications Section -->
+            <section class="resume-section">
+                <h2 class="resume-section-title">
+                    <i class="fas fa-certificate"></i> Certifications
+                </h2>
+                
+                <div class="certification-item">
+                    <div class="certification-name">Jr Penetration Tester</div>
+                    <div class="certification-org">TryHackMe | Credential ID: THM-OIEMOBENH4</div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <p>&copy; 2025 Cristian Arenas. Built with passion for AI and cybersecurity.</p>
+                    <p class="footer-subtext">Cincinnati, OH | <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer-cybersecurity" target="_blank">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/yourusername" target="_blank">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="mailto:cristianmiguelsa@gmail.com">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
