@@ -129,48 +129,6 @@ const createMobileMenu = () => {
     }
 };
 
-// Add mobile menu styles dynamically
-const mobileMenuStyle = document.createElement('style');
-mobileMenuStyle.textContent = `
-    .mobile-menu-toggle {
-        display: none;
-        background: none;
-        border: none;
-        color: var(--primary-cyan);
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 0.5rem;
-    }
-    
-    @media (max-width: 768px) {
-        .mobile-menu-toggle {
-            display: block;
-        }
-        
-        .nav-links {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(10, 14, 39, 0.98);
-            flex-direction: column;
-            padding: 2rem;
-            display: none;
-            border-top: 1px solid var(--border-color);
-        }
-        
-        .nav-links.show-mobile {
-            display: flex;
-        }
-        
-        .nav-links li {
-            width: 100%;
-            text-align: center;
-        }
-    }
-`;
-document.head.appendChild(mobileMenuStyle);
-
 // Initialize mobile menu immediately and on resize
 createMobileMenu();
 
