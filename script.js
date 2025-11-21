@@ -171,8 +171,8 @@ mobileMenuStyle.textContent = `
 `;
 document.head.appendChild(mobileMenuStyle);
 
-// Initialize mobile menu
-createMobileMenu();
+// Initialize mobile menu after page loads
+document.addEventListener('DOMContentLoaded', createMobileMenu);
 
 // Reinitialize on window resize
 window.addEventListener('resize', createMobileMenu);
