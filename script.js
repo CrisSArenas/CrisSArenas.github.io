@@ -102,38 +102,25 @@ style.textContent = `
 document.head.appendChild(style);
 
 // ===================================
-// MOBILE MENU TOGGLE (Optional Enhancement)
+// MOBILE MENU TOGGLE
 // ===================================
 
-// Create mobile menu toggle button
-const createMobileMenu = () => {
-    const navLinks = document.querySelector('.nav-links');
-    const navbar = document.querySelector('.navbar .container');
-    
-    // Only add mobile menu on smaller screens
-    if (window.innerWidth <= 768) {
-        if (!document.querySelector('.mobile-menu-toggle')) {
-            const toggleBtn = document.createElement('button');
-            toggleBtn.className = 'mobile-menu-toggle';
-            toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
-            toggleBtn.setAttribute('aria-label', 'Toggle menu');
-            
-            toggleBtn.addEventListener('click', () => {
-                navLinks.classList.toggle('show-mobile');
-                toggleBtn.querySelector('i').classList.toggle('fa-bars');
-                toggleBtn.querySelector('i').classList.toggle('fa-times');
-            });
-            
-            navbar.appendChild(toggleBtn);
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const navLinks = document.getElementById('navLinks');
+
+if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', function() {
+        navLinks.classList.toggle('show-mobile');
+        const icon = this.querySelector('i');
+        if (icon.classList.contains('fa-bars')) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        } else {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
         }
-    }
-};
-
-// Initialize mobile menu immediately and on resize
-createMobileMenu();
-
-// Reinitialize on window resize
-window.addEventListener('resize', createMobileMenu);
+    });
+}
 
 // ===================================
 // CONSOLE EASTER EGG
