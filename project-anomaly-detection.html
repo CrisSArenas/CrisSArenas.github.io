@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anomaly Detection System | Cristian Arenas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Project Detail Page Specific Styles */
+        .project-detail {
+            padding-top: 80px;
+            min-height: 100vh;
+            background: var(--dark-bg);
+        }
+        
+        .project-hero {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, var(--darker-bg), var(--dark-bg));
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .project-hero h1 {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .project-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .meta-item i {
+            color: var(--primary-cyan);
+        }
+        
+        .project-tags-large {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        
+        .tag-large {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-cyan);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            color: var(--primary-green);
+            transform: translateX(-5px);
+        }
+        
+        .project-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+        
+        .content-section {
+            margin-bottom: 3rem;
+        }
+        
+        .content-section h2 {
+            font-size: 2rem;
+            color: var(--primary-cyan);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--primary-cyan);
+            padding-bottom: 0.5rem;
+        }
+        
+        .content-section h3 {
+            font-size: 1.5rem;
+            color: var(--primary-green);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .content-section h4 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .content-section p, .content-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .content-section li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .architecture-diagram {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            overflow-x: auto;
+            color: var(--primary-green);
+        }
+        
+        .architecture-diagram pre {
+            margin: 0;
+            white-space: pre;
+        }
+        
+        .highlight-box {
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary-cyan);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 5px;
+        }
+        
+        .highlight-box strong {
+            color: var(--primary-cyan);
+        }
+        
+        .tech-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .tech-item {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            border-color: var(--primary-cyan);
+            transform: translateY(-3px);
+        }
+        
+        .tech-item i {
+            color: var(--primary-cyan);
+            margin-right: 0.5rem;
+        }
+
+        .formula-box {
+            background: var(--darker-bg);
+            border: 1px solid var(--primary-green);
+            border-radius: 5px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: var(--font-mono);
+            color: var(--primary-green);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="terminal-prompt">cristian@portfolio:~$</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#home">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#skills">Skills</a></li>
+                <li><a href="index.html#projects">Projects</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Project Detail Content -->
+    <div class="project-detail">
+        <!-- Project Hero Section -->
+        <div class="project-hero">
+            <div class="container">
+                <a href="index.html#projects" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+                
+                <h1>Anomaly Detection System</h1>
+                
+                <div class="project-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-building"></i>
+                        <span>FEG Investment Advisors</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>2025</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Machine Learning System</span>
+                    </div>
+                </div>
+                
+                <p class="hero-description">
+                    A production-grade risk-monitoring engine designed to automatically flag unusual behavior in 
+                    portfolios, exposures, and performance metrics using ensemble ML methods and statistical analysis, 
+                    improving detection accuracy by 25%.
+                </p>
+                
+                <div class="project-tags-large">
+                    <span class="tag-large">Scikit-learn</span>
+                    <span class="tag-large">Machine Learning</span>
+                    <span class="tag-large">Predictive Modeling</span>
+                    <span class="tag-large">Python</span>
+                    <span class="tag-large">Apache Airflow</span>
+                    <span class="tag-large">Statistical Analysis</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Content -->
+        <div class="project-content">
+            
+            <!-- System Overview -->
+            <section class="content-section">
+                <h2>System Overview</h2>
+                <p>
+                    The Anomaly Detection System is a production-grade risk-monitoring engine designed to 
+                    automatically flag unusual behavior in portfolios, exposures, and performance metrics.
+                </p>
+                
+                <p>It ingests multi-source portfolio data, constructs engineered risk features, and applies 
+                a combination of statistical methods and ML-based anomaly detection models. The goal is to:</p>
+                <ul>
+                    <li>Detect outlier behavior in exposures, flows, and performance</li>
+                    <li>Surface early warning signals for portfolio managers</li>
+                    <li>Scale across dozens of portfolios and strategies with minimal manual oversight</li>
+                </ul>
+                
+                <p>
+                    The system is built primarily in Python, orchestrated by Airflow, and backed by SQL/Parquet 
+                    storage, with model tracking via lightweight experiment logging.
+                </p>
+            </section>
+
+            <!-- Architecture -->
+            <section class="content-section">
+                <h2>High-Level Architecture</h2>
+                <div class="architecture-diagram">
+                    <pre>
+                 +--------------------------+
+                 |   Portfolio Data Layer   |
+                 | (SQL, CSV, Vendor APIs)  |
+                 +------------+-------------+
+                              |
+                     [Airflow DAG Trigger]
+                              |
+            +-----------------v------------------+
+            |     Data Ingestion & Staging       |
+            | (ETL → Parquet / Staging Tables)   |
+            +-----------------+------------------+
+                              |
+            +-----------------v------------------+
+            |   Feature Engineering Pipeline     |
+            |  (Returns, exposures, risk stats)  |
+            +-----------------+------------------+
+                              |
+            +-----------------v------------------+
+            |     Anomaly Detection Engine       |
+            | (Stat + ML ensemble models)        |
+            +-----------------+------------------+
+                              |
+            +-----------------v------------------+
+            | Scoring & Alerting Subsystem       |
+            | (Scores, thresholds, flags)        |
+            +-----------------+------------------+
+                              |
+            +-----------------v------------------+
+            | Reporting / Downstream Consumers   |
+            | (Dashboards, PDFs, APIs, email)    |
+            +------------------------------------+
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Data Engineering -->
+            <section class="content-section">
+                <h2>Data Engineering & Feature Stack</h2>
+                
+                <h3>Data Sources</h3>
+                <p>Typical inputs:</p>
+                <ul>
+                    <li>Holdings & allocations (by fund, sleeve, asset class, POD)</li>
+                    <li>Daily / monthly returns at security, manager, and portfolio levels</li>
+                    <li>Benchmarks (index returns, risk-free rate)</li>
+                    <li>Flow data (subscriptions/redemptions, cash flows)</li>
+                    <li>Risk analytics (exposure grids, duration, beta, volatility)</li>
+                </ul>
+                
+                <p>
+                    All raw inputs are ingested via Python ETL tasks (Airflow operators) and written to 
+                    staging tables in SQL and Parquet files in object storage for analytical workloads.
+                </p>
+
+                <h3>Feature Engineering</h3>
+                <p>The feature pipeline transforms raw time-series and cross-sectional data into ML-ready features:</p>
+
+                <h4>Returns / Performance Features</h4>
+                <ul>
+                    <li>Rolling returns: 5d, 30d, 60d, 6M, 12M, 24M</li>
+                    <li>Excess return vs benchmark</li>
+                    <li>Rolling volatility and drawdown metrics</li>
+                    <li>Sharpe-like ratios over recent windows</li>
+                </ul>
+
+                <h4>Exposure & Composition Features</h4>
+                <ul>
+                    <li>Sector, region, style, and factor exposure weights</li>
+                    <li>Concentration metrics (top 5/10 positions share)</li>
+                    <li>Active weights vs policy or benchmark bands</li>
+                    <li>Liquidity breakdowns (e.g., % illiquid / lock-up)</li>
+                </ul>
+
+                <h4>Flow & Behavior Features</h4>
+                <ul>
+                    <li>Abnormal flows as % of AUM</li>
+                    <li>Sudden changes in cash levels</li>
+                    <li>Turnover-like metrics (position change intensity)</li>
+                </ul>
+
+                <h4>Risk & Correlation Features</h4>
+                <ul>
+                    <li>Beta to key indices</li>
+                    <li>Pairwise / cluster correlations</li>
+                    <li>Factor load shifts over rolling windows</li>
+                </ul>
+
+                <p>
+                    Feature sets are materialized as feature tables keyed by portfolio_id and as_of_date, 
+                    and persisted for downstream reuse.
+                </p>
+            </section>
+
+            <!-- Anomaly Detection Engine -->
+            <section class="content-section">
+                <h2>Anomaly Detection Engine</h2>
+                
+                <p>
+                    The anomaly detection layer uses a hybrid ensemble of statistical and ML methods to 
+                    mitigate the weaknesses of any single approach.
+                </p>
+
+                <h3>Model Types</h3>
+
+                <h4>1. Statistical Z-Score Based Detection</h4>
+                <ul>
+                    <li>For univariate metrics (e.g., cash %, single exposure drift)</li>
+                    <li>Uses rolling mean/std with configurable lookback</li>
+                    <li>Flags values beyond N standard deviations</li>
+                </ul>
+
+                <h4>2. Isolation Forest</h4>
+                <ul>
+                    <li>Tree-based anomaly detection on multi-dimensional feature space</li>
+                    <li>Works well with non-linear relationships and mixed densities</li>
+                    <li>Produces anomaly scores per portfolio / date</li>
+                </ul>
+
+                <h4>3. Local Outlier Factor (LOF)</h4>
+                <ul>
+                    <li>Density-based method for cross-sectional anomalies</li>
+                    <li>Identifies portfolios behaving very differently from peers</li>
+                </ul>
+
+                <h4>4. Time-series Atypical Behavior</h4>
+                <ul>
+                    <li>Optional: rolling autoencoder or reconstruction-error–based detector</li>
+                    <li>Measures how "unusual" a sequence looks relative to prior sequences</li>
+                </ul>
+
+                <h3>Model Pipeline</h3>
+                
+                <p><strong>Step 1: Feature Standardization</strong></p>
+                <ul>
+                    <li>Scale numeric features (z-score or robust scaling)</li>
+                    <li>Optionally bucket portfolios by type for comparable distributions</li>
+                </ul>
+
+                <p><strong>Step 2: Model Application Per Portfolio Group</strong></p>
+                <ul>
+                    <li>Train/fit anomaly models periodically (rolling training window)</li>
+                    <li>Generate anomaly scores daily/weekly using latest features</li>
+                </ul>
+
+                <p><strong>Step 3: Ensemble Scoring</strong></p>
+                <p>Combine multiple models' outputs into a final score:</p>
+                <div class="formula-box">
+                    anomaly_score = w₁ × iforest + w₂ × lof + w₃ × z_score_max
+                </div>
+                
+                <p>Apply a calibrated threshold to map scores to flags:</p>
+                <ul>
+                    <li><strong>NORMAL</strong> - Standard behavior</li>
+                    <li><strong>WATCH</strong> - Elevated risk</li>
+                    <li><strong>CRITICAL</strong> - Immediate attention required</li>
+                </ul>
+
+                <p><strong>Step 4: Explainability Attachments</strong></p>
+                <p>For each flagged observation, attach:</p>
+                <ul>
+                    <li>Top contributing features</li>
+                    <li>Direction and magnitude</li>
+                    <li>Relevant time-series snippets</li>
+                </ul>
+                
+                <div class="highlight-box">
+                    <strong>Result:</strong> This makes it easier for PMs and risk teams to interpret why 
+                    something was flagged, improving detection accuracy by 25%.
+                </div>
+            </section>
+
+            <!-- Orchestration -->
+            <section class="content-section">
+                <h2>Orchestration & Scheduling (Airflow)</h2>
+                
+                <h3>DAG Structure</h3>
+                <div class="architecture-diagram">
+                    <pre>
+dag_anomaly_detection/
+├── task_ingest_data
+├── task_feature_engineering
+├── task_train_models      (optional, e.g., weekly)
+├── task_score_anomalies   (daily/weekly)
+└── task_publish_results
+                    </pre>
+                </div>
+
+                <h3>Key Characteristics</h3>
+                
+                <p><strong>Scheduling:</strong></p>
+                <ul>
+                    <li>train_models: weekly or monthly</li>
+                    <li>score_anomalies: daily/weekly</li>
+                </ul>
+
+                <p><strong>Dependencies:</strong></p>
+                <ul>
+                    <li>Scoring can't run unless ingestion and feature engineering succeed</li>
+                    <li>Publishing only runs if scoring succeeds</li>
+                </ul>
+
+                <p><strong>Resilience:</strong></p>
+                <ul>
+                    <li>Retry policies with backoff for transient DB / file errors</li>
+                    <li>SLA monitoring on key tasks (e.g., scoring must finish before 9am)</li>
+                </ul>
+
+                <h3>Data Lineage & Logging</h3>
+                <p>Each run logs:</p>
+                <ul>
+                    <li>Source datasets version / snapshot IDs</li>
+                    <li>Model versions used (if applicable)</li>
+                    <li>Threshold configuration used</li>
+                    <li>Summary statistics for anomaly counts</li>
+                </ul>
+                <p>This enables auditability and post-mortem analysis if a false positive/negative is reported.</p>
+            </section>
+
+            <!-- Scoring & Alerts -->
+            <section class="content-section">
+                <h2>Scoring, Thresholding & Alerts</h2>
+                
+                <h3>Score Calibration</h3>
+                <p>Thresholds are calibrated using:</p>
+                <ul>
+                    <li>Historical backtesting (simulate past periods)</li>
+                    <li>Domain feedback from portfolio analysts / risk teams</li>
+                    <li>Tuning target: keep false positives manageable while avoiding missing material anomalies</li>
+                </ul>
+
+                <p>The system supports config-driven thresholds by:</p>
+                <ul>
+                    <li>Portfolio type</li>
+                    <li>Strategy</li>
+                    <li>Risk appetite profile</li>
+                </ul>
+
+                <h3>Alert Generation</h3>
+                <p>For each flagged entry, an alert payload is generated containing:</p>
+                <ul>
+                    <li>Portfolio ID and date</li>
+                    <li>Anomaly score and severity level</li>
+                    <li>Top contributing features with z-scores</li>
+                    <li>Context window with historical data</li>
+                </ul>
+
+                <p>Alerts are then:</p>
+                <ul>
+                    <li>Persisted in a table for dashboards</li>
+                    <li>Routed to email distribution lists</li>
+                    <li>Sent to Slack channels</li>
+                    <li>Fed to oversight/GenAI commentary engines as "risk flags"</li>
+                </ul>
+            </section>
+
+            <!-- Security -->
+            <section class="content-section">
+                <h2>Security & Compliance</h2>
+                
+                <h3>Data Security</h3>
+                <ul>
+                    <li>Restricted access to holdings and performance data via RBAC</li>
+                    <li>Encrypted connections (TLS) to DB and storage</li>
+                    <li>At-rest encryption for Parquet and logs</li>
+                </ul>
+
+                <h3>Operational Controls</h3>
+                <ul>
+                    <li>Read-only access for anomaly processes to production data sources</li>
+                    <li>All model outputs logged and retained for governance</li>
+                    <li>No client-identifying PII beyond portfolio IDs / internal identifiers</li>
+                </ul>
+            </section>
+
+            <!-- Testing -->
+            <section class="content-section">
+                <h2>Testing & Validation</h2>
+                
+                <h3>Unit Testing</h3>
+                <ul>
+                    <li>Data transformation functions (feature engineering)</li>
+                    <li>Threshold logic and severity mapping</li>
+                    <li>Serialization/deserialization of anomaly payloads</li>
+                </ul>
+
+                <h3>Backtesting / Model Validation</h3>
+                <p>A historical backtest harness:</p>
+                <ul>
+                    <li>Replays previous periods with known events</li>
+                    <li>Evaluates whether the system would have flagged these events</li>
+                    <li>Produces metrics: anomaly hit rate, average flags per month, stability of scores</li>
+                </ul>
+
+                <h3>Integration Tests</h3>
+                <ul>
+                    <li>End-to-end DAG runs in staging environment</li>
+                    <li>Validation that alerts are written to correct tables/queues</li>
+                    <li>Sanity checks on number of anomalies per run</li>
+                </ul>
+            </section>
+
+            <!-- Performance -->
+            <section class="content-section">
+                <h2>Performance & Scalability</h2>
+                
+                <h3>Performance</h3>
+                <ul>
+                    <li>Feature generation and scoring vectorized (pandas / numpy)</li>
+                    <li>Parallelization across portfolios using Airflow task parallelism</li>
+                </ul>
+
+                <h3>Horizontal Scalability</h3>
+                <ul>
+                    <li>New portfolios simply appear as new rows in feature tables</li>
+                    <li>No retraining required for every new portfolio</li>
+                    <li>Models trained at segment level (e.g., by strategy type)</li>
+                </ul>
+
+                <h3>Extensibility</h3>
+                <p>The system is designed so you can:</p>
+                <ul>
+                    <li>Plug in new anomaly models with a consistent interface</li>
+                    <li>Add new features without breaking existing schemas</li>
+                    <li>Integrate outputs with other systems</li>
+                </ul>
+            </section>
+
+            <!-- Impact -->
+            <section class="content-section">
+                <h2>Impact</h2>
+                <div class="highlight-box">
+                    <p>The Anomaly Detection System:</p>
+                    <ul>
+                        <li><strong>Increases coverage</strong> of risk monitoring beyond manual tracking</li>
+                        <li><strong>Catches non-obvious patterns</strong> (multi-feature combinations)</li>
+                        <li><strong>Standardizes oversight</strong> across portfolios / strategies</li>
+                        <li><strong>Reduces manual scanning time</strong>, allowing analysts to focus on investigation</li>
+                        <li><strong>Improves accuracy by 25%</strong> in detecting unusual exposures</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Technologies -->
+            <section class="content-section">
+                <h2>Technologies Used</h2>
+                <div class="tech-list">
+                    <div class="tech-item">
+                        <i class="fab fa-python"></i> Python
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-brain"></i> Scikit-learn
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-chart-line"></i> Pandas / NumPy
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-project-diagram"></i> Apache Airflow
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-database"></i> SQL / PostgreSQL
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-file-code"></i> Parquet
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-chart-bar"></i> Statistical Analysis
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-cogs"></i> MLflow
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <p>&copy; 2025 Cristian Arenas. Built with passion for AI and cybersecurity.</p>
+                    <p class="footer-subtext">Cincinnati, OH | <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer-cybersecurity" target="_blank">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/CrisSArenas" target="_blank">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="mailto:cristianmiguelsa@gmail.com">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

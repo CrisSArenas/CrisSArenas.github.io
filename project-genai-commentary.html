@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Portfolio Commentary Engine | Cristian Arenas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Project Detail Page Specific Styles */
+        .project-detail {
+            padding-top: 80px;
+            min-height: 100vh;
+            background: var(--dark-bg);
+        }
+        
+        .project-hero {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, var(--darker-bg), var(--dark-bg));
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .project-hero h1 {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .project-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .meta-item i {
+            color: var(--primary-cyan);
+        }
+        
+        .project-tags-large {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        
+        .tag-large {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-cyan);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            color: var(--primary-green);
+            transform: translateX(-5px);
+        }
+        
+        .project-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+        
+        .content-section {
+            margin-bottom: 3rem;
+        }
+        
+        .content-section h2 {
+            font-size: 2rem;
+            color: var(--primary-cyan);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--primary-cyan);
+            padding-bottom: 0.5rem;
+        }
+        
+        .content-section h3 {
+            font-size: 1.5rem;
+            color: var(--primary-green);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .content-section h4 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .content-section p, .content-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .content-section li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .architecture-diagram {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            overflow-x: auto;
+            color: var(--primary-green);
+        }
+        
+        .architecture-diagram pre {
+            margin: 0;
+            white-space: pre;
+        }
+        
+        .code-example {
+            background: var(--darker-bg);
+            border: 1px solid var(--primary-cyan);
+            border-radius: 5px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            overflow-x: auto;
+            color: var(--primary-green);
+        }
+        
+        .highlight-box {
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary-cyan);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 5px;
+        }
+        
+        .highlight-box strong {
+            color: var(--primary-cyan);
+        }
+        
+        .tech-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .tech-item {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            border-color: var(--primary-cyan);
+            transform: translateY(-3px);
+        }
+        
+        .tech-item i {
+            color: var(--primary-cyan);
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="terminal-prompt">cristian@portfolio:~$</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#home">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#skills">Skills</a></li>
+                <li><a href="index.html#projects">Projects</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Project Detail Content -->
+    <div class="project-detail">
+        <!-- Project Hero Section -->
+        <div class="project-hero">
+            <div class="container">
+                <a href="index.html#projects" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+                
+                <h1>GenAI Portfolio Commentary Engine</h1>
+                
+                <div class="project-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-building"></i>
+                        <span>FEG Investment Advisors</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>2025</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Generative AI System</span>
+                    </div>
+                </div>
+                
+                <p class="hero-description">
+                    An LLM-driven narrative generation system designed to automate institutional-grade investment 
+                    commentary, replacing entirely manual processes and reducing commentary creation time from hours 
+                    to minutes while maintaining compliance and quality standards.
+                </p>
+                
+                <div class="project-tags-large">
+                    <span class="tag-large">LangChain</span>
+                    <span class="tag-large">Generative AI</span>
+                    <span class="tag-large">NLP</span>
+                    <span class="tag-large">Python</span>
+                    <span class="tag-large">Apache Airflow</span>
+                    <span class="tag-large">RAG</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Content -->
+        <div class="project-content">
+            
+            <!-- System Overview -->
+            <section class="content-section">
+                <h2>System Overview</h2>
+                <p>
+                    The GenAI Portfolio Commentary Engine is an LLM-driven narrative generation system designed 
+                    to automate institutional-grade investment commentary. It ingests structured portfolio, performance, 
+                    and market data, processes it through a multi-phase NLP pipeline, and generates high-quality 
+                    commentary aligned with internal compliance, tone, and domain expertise.
+                </p>
+                
+                <p>The engine integrates:</p>
+                <ul>
+                    <li>A feature extraction layer</li>
+                    <li>A rules-driven financial insight generator</li>
+                    <li>A multi-stage LLM reasoning chain</li>
+                    <li>Guardrails ensuring factual, numerical, and regulatory correctness</li>
+                    <li>Automated PDF/HTML reporting modules</li>
+                </ul>
+                
+                <p>
+                    It replaced an entirely manual process typically requiring hours of analyst time per client.
+                </p>
+            </section>
+
+            <!-- Architecture -->
+            <section class="content-section">
+                <h2>High-Level Architecture</h2>
+                <div class="architecture-diagram">
+                    <pre>
+                         +------------------------+
+                         |  Portfolio Data Feeds  |
+                         | (SQL, APIs, Vendor DB) |
+                         +-----------+------------+
+                                     |
+                        (Airflow Orchestrated Extract)
+                                     |
+                   +-----------------v-----------------+
+                   |  Feature Engineering Subsystem    |
+                   | (Deltas, drivers, risk signals)   |
+                   +-----------------+-----------------+
+                                     |
+                   +-----------------v-----------------+
+                   |  Insight Generation Engine        |
+                   | (Rules + statistical heuristics)  |
+                   +-----------------+-----------------+
+                                     |
+                   +-----------------v-----------------+
+                   |     GenAI LLM Reasoning Chain     |
+                   | (templating, guardrails, RAG)     |
+                   +-----------------+-----------------+
+                                     |
+                   +-----------------v-----------------+
+                   |     Narrative Post-Processing     |
+                   | (validation + formatting)         |
+                   +-----------------+-----------------+
+                                     |
+                   +-----------------v-----------------+
+                   |      Reporting Output Layer       |
+                   | (HTML, PDF, Markdown, email)      |
+                   +-----------------------------------+
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Data Engineering -->
+            <section class="content-section">
+                <h2>Data Engineering & Feature Pipeline</h2>
+                
+                <h3>Data Sources</h3>
+                <p>The system processes:</p>
+                <ul>
+                    <li>Daily/weekly portfolio performance data</li>
+                    <li>Attribution summaries (sector, factor, style drivers)</li>
+                    <li>Benchmark returns</li>
+                    <li>Asset-class breakouts</li>
+                    <li>Exposure changes</li>
+                    <li>Manager/fund-level deltas</li>
+                </ul>
+                <p>All inputs are version-controlled and stored in Parquet for reproducibility.</p>
+
+                <h3>Feature Engineering</h3>
+                <p>A dedicated transformer maps raw data into domain-specific features used by the LLM:</p>
+                <ul>
+                    <li>Return decomposition (active/passive drivers)</li>
+                    <li>Top contributors & detractors</li>
+                    <li>Rolling volatility trends</li>
+                    <li>Factor beta changes</li>
+                    <li>Exposure rotations</li>
+                    <li>Liquidity signals</li>
+                    <li>Cross-portfolio consistency checks</li>
+                </ul>
+
+                <p>Each feature is encoded into a structured JSON artifact:</p>
+                <div class="code-example">
+{
+  "period": "Q3 2025",
+  "portfolio_return": 5.45,
+  "benchmark_return": 4.90,
+  "active_contribution": 0.55,
+  "exposure_changes": {...},
+  "top_drivers": [...],
+  "risk_flags": [...],
+  "style_shifts": {...}
+}
+                </div>
+            </section>
+
+            <!-- Insight Generation -->
+            <section class="content-section">
+                <h2>Insight Generation Engine</h2>
+                <p>
+                    Before hitting the LLM, the system runs a deterministic layer to ensure all insights 
+                    are numerically accurate and material deltas exceeding thresholds are flagged.
+                </p>
+
+                <h3>Rule Types</h3>
+                <ul>
+                    <li><strong>Return significance rule:</strong> identify statistically meaningful deviations</li>
+                    <li><strong>Sector drift rule:</strong> detect >2% absolute moves</li>
+                    <li><strong>Alpha decomposition rule:</strong> segment active return components</li>
+                    <li><strong>Liquidity rule:</strong> highlight sudden liquidity changes in DMA portfolios</li>
+                </ul>
+
+                <p>
+                    This ensures that the LLM receives not raw numbers, but interpreted financial signals.
+                </p>
+            </section>
+
+            <!-- LLM Chain -->
+            <section class="content-section">
+                <h2>LLM Reasoning Chain Architecture</h2>
+                
+                <h3>Multi-Stage Pipeline</h3>
+                <p>The commentary engine uses a 4-stage LLM pipeline:</p>
+                <ol>
+                    <li><strong>Draft generation</strong> (structured → natural language)</li>
+                    <li><strong>Tone normalization</strong> (institutional investment tone)</li>
+                    <li><strong>Compliance & factuality enforcement</strong></li>
+                    <li><strong>Formatting & summarization</strong></li>
+                </ol>
+                <p>Each stage is treated as a separate "agent" with specific responsibilities.</p>
+
+                <h3>Prompt Engineering Design</h3>
+                <p>Prompts use a controlled structure:</p>
+                <ul>
+                    <li>JSON inputs</li>
+                    <li>Strict constraints ("do not fabricate values," "use only provided data")</li>
+                    <li>Required sections (performance, attribution, exposures, risk flags)</li>
+                    <li>Fintech domain vocabulary</li>
+                    <li>Style guide (formal, concise, actionable)</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <strong>Example constraint:</strong> "You must ONLY use the numerical values provided. 
+                    If information is missing, state that the data is unavailable. NEVER invent data or 
+                    refer to market moves outside the scope."
+                </div>
+
+                <h3>Guardrails</h3>
+                <p>The system implements:</p>
+                <ul>
+                    <li>Numeric reconciliation checks</li>
+                    <li>Semantic similarity validation</li>
+                    <li>Disallowed phrase filters</li>
+                    <li>Fact-alignment scoring</li>
+                </ul>
+                <p>Outputs failing validation are auto-routed back to regeneration with modified constraints.</p>
+
+                <h3>RAG (Retrieval-Augmented Generation) Layer</h3>
+                <p>Optional but supported:</p>
+                <ul>
+                    <li>Embedding model encodes historical commentary</li>
+                    <li>Vector search retrieves stylistically similar past narratives</li>
+                    <li>Retrieved snippets guide consistency</li>
+                </ul>
+            </section>
+
+            <!-- Orchestration -->
+            <section class="content-section">
+                <h2>Orchestration Layer (Airflow)</h2>
+                
+                <h3>DAG Structure</h3>
+                <div class="architecture-diagram">
+                    <pre>
+dag_genai_commentary/
+├── load_data
+├── transform_features
+├── generate_insights
+├── llm_stage_1_draft
+├── llm_stage_2_tone
+├── llm_stage_3_compliance
+├── llm_stage_4_formatting
+└── publish_report
+                    </pre>
+                </div>
+
+                <h3>Resilience & Observability</h3>
+                <ul>
+                    <li>Task-level JSON logs</li>
+                    <li>Auto-retry for transient vendor/API failures</li>
+                    <li>SLA monitoring</li>
+                    <li>Checkpointing after each LLM stage</li>
+                </ul>
+            </section>
+
+            <!-- Security -->
+            <section class="content-section">
+                <h2>Security & Compliance Engineering</h2>
+                
+                <h3>Data Security</h3>
+                <ul>
+                    <li>PII removed at ingest</li>
+                    <li>Sensitive IDs tokenized before LLM calls</li>
+                    <li>Encrypted storage for all run artifacts</li>
+                    <li>IAM-restricted access</li>
+                </ul>
+
+                <h3>LLM Safety</h3>
+                <ul>
+                    <li>All inference through private endpoints</li>
+                    <li>Content filters block unsupported claims</li>
+                    <li>Zero retention enforced</li>
+                </ul>
+
+                <h3>Compliance</h3>
+                <p>The generated narratives conform to:</p>
+                <ul>
+                    <li>Internal compliance tone</li>
+                    <li>Investment policy guidelines</li>
+                    <li>SEC/FINRA standards for performance commentary</li>
+                </ul>
+            </section>
+
+            <!-- Testing -->
+            <section class="content-section">
+                <h2>Testing & Validation</h2>
+                
+                <h3>Unit Tests</h3>
+                <ul>
+                    <li>Feature engineering correctness</li>
+                    <li>Threshold logic validation</li>
+                    <li>JSON schema tests</li>
+                </ul>
+
+                <h3>LLM Output QA</h3>
+                <p>Automated tests ensure:</p>
+                <ul>
+                    <li>No hallucinated data</li>
+                    <li>All numbers match source inputs</li>
+                    <li>Required sections are present</li>
+                    <li>Tone matches investment style guide</li>
+                </ul>
+
+                <h3>Integration Tests</h3>
+                <p>Run full pipeline with historical datasets to ensure stability.</p>
+            </section>
+
+            <!-- Performance -->
+            <section class="content-section">
+                <h2>Performance & Scalability</h2>
+                
+                <h3>Performance</h3>
+                <ul>
+                    <li>Commentary generation: <strong><3 seconds per portfolio</strong></li>
+                    <li>Batch processing: horizontally scalable</li>
+                    <li>Caching for benchmark & exposure data</li>
+                </ul>
+
+                <h3>Concurrency</h3>
+                <ul>
+                    <li>Parallel execution for multi-portfolio firms</li>
+                    <li>LLM batching to avoid rate limits</li>
+                </ul>
+
+                <h3>Fault-Tolerance</h3>
+                <ul>
+                    <li>Automatic fallback prompts</li>
+                    <li>Graceful degradation (basic commentary when LLM unavailable)</li>
+                </ul>
+            </section>
+
+            <!-- Impact -->
+            <section class="content-section">
+                <h2>Impact</h2>
+                <div class="highlight-box">
+                    <ul>
+                        <li><strong>Reduced narrative creation time</strong> from hours → minutes</li>
+                        <li><strong>Standardized commentary</strong> across teams</li>
+                        <li><strong>Removed human errors</strong> in calculations</li>
+                        <li><strong>Provided scalable</strong> institutional-grade reporting</li>
+                        <li><strong>Enabled faster</strong> client communication cycles</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Technologies -->
+            <section class="content-section">
+                <h2>Technologies Used</h2>
+                <div class="tech-list">
+                    <div class="tech-item">
+                        <i class="fab fa-python"></i> Python
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-robot"></i> LangChain
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-brain"></i> OpenAI API
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-project-diagram"></i> Apache Airflow
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-database"></i> SQL
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-table"></i> Pandas
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-file-code"></i> Parquet
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-vector-square"></i> Vector DB
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <p>&copy; 2025 Cristian Arenas. Built with passion for AI and cybersecurity.</p>
+                    <p class="footer-subtext">Cincinnati, OH | <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer-cybersecurity" target="_blank">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/CrisSArenas" target="_blank">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="mailto:cristianmiguelsa@gmail.com">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

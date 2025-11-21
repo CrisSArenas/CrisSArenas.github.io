@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI/ML Portfolio Oversight System | Cristian Arenas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Project Detail Page Specific Styles */
+        .project-detail {
+            padding-top: 80px;
+            min-height: 100vh;
+            background: var(--dark-bg);
+        }
+        
+        .project-hero {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, var(--darker-bg), var(--dark-bg));
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .project-hero h1 {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .project-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .meta-item i {
+            color: var(--primary-cyan);
+        }
+        
+        .project-tags-large {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        
+        .tag-large {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-cyan);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            color: var(--primary-green);
+            transform: translateX(-5px);
+        }
+        
+        .project-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+        
+        .content-section {
+            margin-bottom: 3rem;
+        }
+        
+        .content-section h2 {
+            font-size: 2rem;
+            color: var(--primary-cyan);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--primary-cyan);
+            padding-bottom: 0.5rem;
+        }
+        
+        .content-section h3 {
+            font-size: 1.5rem;
+            color: var(--primary-green);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .content-section h4 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .content-section p, .content-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        
+        .content-section ul {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .content-section li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .architecture-diagram {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            overflow-x: auto;
+            color: var(--primary-green);
+        }
+        
+        .architecture-diagram pre {
+            margin: 0;
+            white-space: pre;
+        }
+        
+        .highlight-box {
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary-cyan);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 5px;
+        }
+        
+        .highlight-box strong {
+            color: var(--primary-cyan);
+        }
+        
+        .tech-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .tech-item {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            border-color: var(--primary-cyan);
+            transform: translateY(-3px);
+        }
+        
+        .tech-item i {
+            color: var(--primary-cyan);
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="terminal-prompt">cristian@portfolio:~$</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#home">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#skills">Skills</a></li>
+                <li><a href="index.html#projects">Projects</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Project Detail Content -->
+    <div class="project-detail">
+        <!-- Project Hero Section -->
+        <div class="project-hero">
+            <div class="container">
+                <a href="index.html#projects" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+                
+                <h1>AI/ML Portfolio Oversight System</h1>
+                
+                <div class="project-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-building"></i>
+                        <span>FEG Investment Advisors</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>2025</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Production AI System</span>
+                    </div>
+                </div>
+                
+                <p class="hero-description">
+                    A modular, distributed analytical pipeline built to automate institutional portfolio 
+                    oversight workflows, integrating structured data ingestion, automated exposure/risk computation, 
+                    statistical anomaly detection, LLM-based narrative generation, and pipeline orchestration.
+                </p>
+                
+                <div class="project-tags-large">
+                    <span class="tag-large">Python</span>
+                    <span class="tag-large">LLMs</span>
+                    <span class="tag-large">NLP</span>
+                    <span class="tag-large">Apache Airflow</span>
+                    <span class="tag-large">SQL</span>
+                    <span class="tag-large">Machine Learning</span>
+                    <span class="tag-large">AWS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Content -->
+        <div class="project-content">
+            
+            <!-- System Overview -->
+            <section class="content-section">
+                <h2>System Overview</h2>
+                <p>
+                    The AI/ML Portfolio Oversight System is a modular, distributed analytical pipeline built to 
+                    automate institutional portfolio oversight workflows. The system integrates:
+                </p>
+                <ul>
+                    <li>Structured data ingestion</li>
+                    <li>Automated exposure/risk computation</li>
+                    <li>Statistical anomaly detection</li>
+                    <li>LLM-based narrative generation</li>
+                    <li>Pipeline orchestration and dependency management via Airflow</li>
+                </ul>
+                <p>
+                    The architecture is designed for fault-tolerant, reproducible, and auditable execution, 
+                    supporting daily cycles of multi-portfolio exposure monitoring.
+                </p>
+            </section>
+
+            <!-- Architecture -->
+            <section class="content-section">
+                <h2>High-Level Architecture</h2>
+                <div class="architecture-diagram">
+                    <pre>
+               +---------------------+
+               | External Data Feeds |
+               |  (CSV, APIs, SQL)   |
+               +----------+----------+
+                          |
+                [Airflow DAG Trigger]
+                          |
+           +--------------v-----------------+
+           |   Data Ingestion Subsystem     |
+           |  (Extract + Landing Zone S3)   |
+           +--------------+-----------------+
+                          |
+           +--------------v-----------------+
+           | Preprocessing & Normalization  |
+           |  (Schema mapping, QC, DQ)      |
+           +--------------+-----------------+
+                          |
+        +-----------------v-------------------+
+        |      Risk & Exposure Engine        |
+        | (Factor models, style, clustering) |
+        +-----------------+-------------------+
+                          |
+         +----------------v-----------------+
+         |   ML/Statistical Anomaly Layer   |
+         | (Ensemble detection, time-series) |
+         +----------------+------------------+
+                          |
+        +-----------------v---------------------+
+        |         LLM Oversight Engine         |
+        | (Prompt templates, guardrails, NLP)  |
+        +-----------------+---------------------+
+                          |
+                +---------v--------+
+                | Reporting Layer  |
+                | (HTML/PDF/Email) |
+                +------------------+
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Data Engineering -->
+            <section class="content-section">
+                <h2>Data Engineering Architecture</h2>
+                
+                <h3>Data Sources</h3>
+                <p>Data is ingested from multiple structured and semi-structured sources:</p>
+                <ul>
+                    <li>SQL databases (portfolio exposures, holdings, NAVs)</li>
+                    <li>Vendor benchmark APIs (MSCI, Bloomberg style factors)</li>
+                    <li>Custodian flat files (CSV, XLSX)</li>
+                    <li>Internal performance reports</li>
+                    <li>Factor model datasets (HML, Momentum, Quality, Term structure)</li>
+                </ul>
+                <p>
+                    All sources land in a staging layer, stored in Parquet for columnar compression, 
+                    schema evolution, and fast downstream reads.
+                </p>
+
+                <h3>Data Normalization Pipeline</h3>
+                <p>The pipeline enforces:</p>
+                <ul>
+                    <li>Schema alignment (via Pydantic models)</li>
+                    <li>Mapping to canonical taxonomies (POD, asset class, vehicle structure)</li>
+                    <li>Asset identifier resolution (ticker → CUSIP/ISIN mapping)</li>
+                    <li>Currency normalization</li>
+                    <li>Missing value imputation (deterministic rules, not ML)</li>
+                    <li>Reconciliation (NAV vs aggregated MV difference threshold ≤ 10bps)</li>
+                </ul>
+                <p>Failures trigger Airflow task retries and eventually route to error logs.</p>
+            </section>
+
+            <!-- Risk Engine -->
+            <section class="content-section">
+                <h2>Exposure & Risk Engine</h2>
+                
+                <h3>Factor Exposure Calculation</h3>
+                <p>Uses:</p>
+                <ul>
+                    <li>PCA-derived market factors</li>
+                    <li>Bloomberg-style factor mapping</li>
+                    <li>Style factor decomposition (Value, Momentum, Quality, Size)</li>
+                    <li>Duration and convexity for fixed income exposures</li>
+                    <li>Liquidity tiers (T+1, weekly, monthly, quarterly)</li>
+                </ul>
+
+                <h3>Geographic + Sector Exposures</h3>
+                <p>Computed using:</p>
+                <ul>
+                    <li>Hierarchical grouping from security metadata</li>
+                    <li>Propagated exposures for nested fund-of-funds</li>
+                    <li>Weight normalization after look-through</li>
+                </ul>
+
+                <h3>Risk Metrics</h3>
+                <p>Using:</p>
+                <ul>
+                    <li>Rolling standard deviation (30, 60, 90 days)</li>
+                    <li>Correlation matrices</li>
+                    <li>Cross-asset beta mapping</li>
+                    <li>Idiosyncratic vs systematic risk contribution</li>
+                </ul>
+            </section>
+
+            <!-- ML & Anomaly Detection -->
+            <section class="content-section">
+                <h2>Machine Learning & Anomaly Detection</h2>
+                
+                <h3>Techniques Used</h3>
+                <p>The system uses a hybrid ensemble of:</p>
+                <ul>
+                    <li>Isolation Forest (outlier detection)</li>
+                    <li>Local Outlier Factor (LOF)</li>
+                    <li>Rolling z-score deviation</li>
+                    <li>Cluster-based deviation detection (K-Means or hierarchical clustering)</li>
+                    <li>Autoencoder reconstruction error (optional for dense datasets)</li>
+                </ul>
+
+                <h3>Input Features</h3>
+                <p>Key engineered features include:</p>
+                <ul>
+                    <li>Exposure deltas (1d, 5d, 30d)</li>
+                    <li>Drift velocity and acceleration</li>
+                    <li>Factor loadings</li>
+                    <li>Liquidity mismatch indicators</li>
+                    <li>Performance drivers vs expected factor returns</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <strong>Result:</strong> Improved anomaly detection accuracy by 25%, enabling early 
+                    identification of unusual portfolio exposures and potential risk indicators.
+                </div>
+            </section>
+
+            <!-- LLM Engine -->
+            <section class="content-section">
+                <h2>LLM Oversight Engine</h2>
+                
+                <h3>Pipeline Structure</h3>
+                <p>Multi-step chain:</p>
+                <ol>
+                    <li><strong>Structured Feature Extraction</strong> - exposure deltas, risks, anomalies → JSON bundle</li>
+                    <li><strong>Template Selection</strong> - Based on portfolio type (OCIO, endowment, DMA, etc.)</li>
+                    <li><strong>LLM Prompt Assembly</strong> - Jinja-based template combining numerical insights & qualitative rules</li>
+                    <li><strong>LLM Inference</strong> - Via OpenAI or Azure endpoints (temperature = 0 for deterministic results)</li>
+                    <li><strong>Post-Processing & Validation</strong> - Regex + semantic checks to prevent hallucinations</li>
+                </ol>
+
+                <h3>Prompt Engineering Design</h3>
+                <p>Prompts include:</p>
+                <ul>
+                    <li>Structured tables</li>
+                    <li>Explicit constraints</li>
+                    <li>"Never fabricate data" rules</li>
+                    <li>Portfolio-specific vocabulary</li>
+                    <li>Risk flags sections</li>
+                </ul>
+                <p>This ensures outputs meet institutional standards.</p>
+            </section>
+
+            <!-- Orchestration -->
+            <section class="content-section">
+                <h2>Orchestration Architecture (Airflow)</h2>
+                
+                <h3>DAG Structure</h3>
+                <div class="architecture-diagram">
+                    <pre>
+dag_ai_oversight/
+├── ingest_data
+├── validate_data
+├── compute_exposures
+├── compute_risk_metrics
+├── anomaly_detection
+├── generate_llm_commentary
+└── publish_reports
+                    </pre>
+                </div>
+
+                <h3>Features</h3>
+                <ul>
+                    <li>Retry policies with exponential backoff</li>
+                    <li>Task-level logging (structured JSON logs)</li>
+                    <li>SLA monitoring</li>
+                    <li>XCom for passing structured data between tasks</li>
+                    <li>Sensors for waiting on vendor files</li>
+                </ul>
+
+                <h3>Scheduling</h3>
+                <p>Runs:</p>
+                <ul>
+                    <li>Daily (T-1 data)</li>
+                    <li>Weekly (full rebalance cycle)</li>
+                </ul>
+            </section>
+
+            <!-- Security -->
+            <section class="content-section">
+                <h2>Security Architecture</h2>
+                
+                <h3>Data Security</h3>
+                <ul>
+                    <li>AES-256 encrypted storage</li>
+                    <li>IAM role-based access control</li>
+                    <li>Secrets stored in AWS Secrets Manager</li>
+                    <li>Network-level protection (VPC subnets)</li>
+                </ul>
+
+                <h3>LLM Security</h3>
+                <ul>
+                    <li>Sensitive data redaction</li>
+                    <li>Tokenized security identifiers</li>
+                    <li>Zero-trust outbound calls</li>
+                </ul>
+
+                <h3>Compliance</h3>
+                <p>Aligned with:</p>
+                <ul>
+                    <li>NIST 800-53</li>
+                    <li>SOC2 internal controls</li>
+                    <li>Vendor data usage agreements</li>
+                </ul>
+            </section>
+
+            <!-- Performance -->
+            <section class="content-section">
+                <h2>Performance & Scalability</h2>
+                
+                <h3>Horizontal Scalability</h3>
+                <ul>
+                    <li>Airflow workers scale via Kubernetes executor</li>
+                    <li>Parallel processing of multiple portfolios</li>
+                    <li>Partitioned Parquet reads for speed</li>
+                </ul>
+
+                <h3>Throughput</h3>
+                <ul>
+                    <li>Daily processing of 20+ portfolios</li>
+                    <li>Sub-minute per-portfolio ingestion and analysis</li>
+                    <li>Commentary generation < 2 seconds/portfolio</li>
+                </ul>
+            </section>
+
+            <!-- Impact -->
+            <section class="content-section">
+                <h2>Impact</h2>
+                <div class="highlight-box">
+                    <p>Engineered system enabled:</p>
+                    <ul>
+                        <li><strong>35% reduction</strong> in analyst workload</li>
+                        <li><strong>Zero</strong> manual reconciliation errors</li>
+                        <li><strong>Faster</strong> risk flag escalation</li>
+                        <li><strong>Daily/weekly</strong> oversight at scale</li>
+                        <li><strong>Institution-grade</strong> auditability & reproducibility</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Technologies Used -->
+            <section class="content-section">
+                <h2>Technologies Used</h2>
+                <div class="tech-list">
+                    <div class="tech-item">
+                        <i class="fab fa-python"></i> Python
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-database"></i> SQL / PostgreSQL
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-brain"></i> Scikit-learn
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-project-diagram"></i> Apache Airflow
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-robot"></i> LLMs / NLP
+                    </div>
+                    <div class="tech-item">
+                        <i class="fab fa-aws"></i> AWS S3
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-table"></i> Pandas / NumPy
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-file-code"></i> Parquet
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <p>&copy; 2025 Cristian Arenas. Built with passion for AI and cybersecurity.</p>
+                    <p class="footer-subtext">Cincinnati, OH | <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer-cybersecurity" target="_blank">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/CrisSArenas" target="_blank">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="mailto:cristianmiguelsa@gmail.com">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
