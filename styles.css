@@ -824,3 +824,53 @@ body {
 .project-link i {
     transition: transform 0.3s ease;
 }
+
+/* ===================================
+   MOBILE MENU FIX
+   =================================== */
+
+.mobile-menu-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
+        background: none;
+        border: none;
+        color: var(--primary-cyan);
+        font-size: 1.8rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        z-index: 1001;
+    }
+    
+    .nav-links {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: rgba(10, 14, 39, 0.98);
+        backdrop-filter: blur(10px);
+        flex-direction: column;
+        padding: 2rem;
+        display: none !important;
+        border-top: 1px solid var(--border-color);
+        z-index: 999;
+    }
+    
+    .nav-links.show-mobile {
+        display: flex !important;
+    }
+    
+    .nav-links li {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .nav-links a {
+        display: block;
+        padding: 1rem;
+        font-size: 1.1rem;
+    }
+}
