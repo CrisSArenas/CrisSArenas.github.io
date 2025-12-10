@@ -129,8 +129,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===================================
 
 console.log('%c👨‍💻 Hello, fellow developer!', 'color: #00f7ff; font-size: 20px; font-weight: bold;');
-console.log('%cInterested in how this was built? Check out the code!', 'color: #00ff41; font-size: 14px;');
-console.log('%cBuilt with passion for AI and cybersecurity 🔐', 'color: #a1a1aa; font-size: 12px;');
+console.log('%cCurious how this was put together? Take a look behind the scenes:', 'color: #00ff41; font-size: 14px;');
+console.log('%c🔍 Source: %chttps://tinyurl.com/insights-dev', 
+    'color: #aaa; font-size: 12px;',
+    'color: #00aaff; font-size: 12px; text-decoration: underline;');
 
 // ===================================
 // PERFORMANCE OPTIMIZATION
