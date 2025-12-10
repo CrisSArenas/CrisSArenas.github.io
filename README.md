@@ -6,7 +6,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 👤 Author
 
 **Cristian Arenas**
-- LinkedIn: [cristian-arenas-ai-engineer-cybersecurity](https://linkedin.com/in/cristian-arenas-ai-engineer)
+- LinkedIn: [cristian-arenas-ai-engineer](https://linkedin.com/in/cristian-arenas-ai-engineer)
 - GitHub: [@CrisSArenas](https://github.com/CrisSArenas)
 - Email: cristianmiguelsa@gmail.com
 
