@@ -84,12 +84,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const typingElement = document.querySelector('.typing-effect');
 
     if (typingElement) {
-        const textLength = typingElement.textContent.length;        
-        // 'ch' units are equal to the width of the "0" character in the current font
-        typingElement.style.width = `${textLength + 1}ch`;
-        // The 'steps()' must equal the number of characters for a clean effect
+        const text = typingElement.textContent;
+        const totalCharacters = text.length;
+
+        typingElement.style.width = 'fit-content';
+        const naturalWidth = typingElement.offsetWidth; 
+        
+        typingElement.style.setProperty('--typing-width', `${naturalWidth + 5}px`);
+        
+        typingElement.style.width = '0';
+
         typingElement.style.animation = `
-            typing 3.5s steps(${textLength + 1}) 1s 1 normal both,
+            typing 3.5s steps(${totalCharacters}) 1s 1 normal both,
             blink 1s step-end infinite
         `;
     }
