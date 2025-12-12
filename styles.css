@@ -228,14 +228,17 @@ body {
     border-right: 2px solid var(--primary-cyan);
     white-space: nowrap;
     overflow: hidden;
-    animation: typing 4s steps(50) 1s 1 normal both;
+    display: inline-block;  /* ADD THIS - makes it size to content */
+    width: 0;               /* ADD THIS - start from 0 width */
+    animation: typing 4s steps(35) 1s 1 normal both;  /* Change steps from 50 to 35 */
 }
+
 @keyframes typing {
     from {
         width: 0;
     }
     to {
-        width: 100%;
+        width: 100%;  /* This now means 100% of the text width, not container */
     }
 }
 
