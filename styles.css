@@ -228,17 +228,17 @@ body {
     border-right: 2px solid var(--primary-cyan);
     white-space: nowrap;
     overflow: hidden;
-    display: inline-block;  /* ADD THIS - makes it size to content */
-    width: 0;               /* ADD THIS - start from 0 width */
-    animation: typing 4s steps(35) 1s 1 normal both;  /* Change steps from 50 to 35 */
+    display: block;  /* Keep it as block to stay on its own line */
+    max-width: fit-content;  /* Only take up as much space as the text */
+    animation: typing 4s steps(35) 1s 1 normal both;
 }
 
 @keyframes typing {
     from {
-        width: 0;
+        max-width: 0;  /* Animate max-width instead of width */
     }
     to {
-        width: 100%;  /* This now means 100% of the text width, not container */
+        max-width: 100%;
     }
 }
 
