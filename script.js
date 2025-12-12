@@ -85,24 +85,45 @@ document.querySelectorAll('.project-card, .skill-category, .stat-card').forEach(
 // but we can add cursor blinking effect
 const typingElement = document.querySelector('.typing-effect');
 if (typingElement) {
-    const textLength = typingElement.textContent.trim().length;
+    // Get actual text length
+    const textLength = typingElement.textContent.length;
     
-    typingElement.style.animation = `typing 4s steps(${textLength}) 1s 1 normal both`;
+    // Get the full width of the text content
+    typingElement.style.width = 'auto';
+    const fullWidth = typingElement.scrollWidth;
+    typingElement.style.width = '0';
     
+    console.log('Text length:', textLength);
+    console.log('Full width:', fullWidth);
+    
+    // Create custom animation with exact width
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        @keyframes typing-precise {
+            from { width: 0; }
+            to { width: ${fullWidth}px; }
+        }
+    `;
+    document.head.appendChild(styleSheet);
+    
+    // Apply the animation
+    typingElement.style.animation = `typing-precise 4s steps(${textLength}) 1s 1 normal both`;
+    
+    // Add blinking cursor after typing completes
     setTimeout(() => {
-        typingElement.style.animation = `typing 4s steps(${textLength}) 1s 1 normal both, blink 0.75s step-end infinite`;
+        typingElement.style.animation = `typing-precise 4s steps(${textLength}) 1s 1 normal both, blink 0.75s step-end infinite`;
     }, 5000);
 }
 
-// Add blink animation to CSS dynamically
-const style = document.createElement('style');
-style.textContent = `
+// Blink animation
+const blinkStyle = document.createElement('style');
+blinkStyle.textContent = `
     @keyframes blink {
         from, to { border-color: transparent; }
         50% { border-color: var(--primary-cyan); }
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(blinkStyle);
 
 // ===================================
 // MOBILE MENU TOGGLE
