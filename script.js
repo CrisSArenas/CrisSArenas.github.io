@@ -78,28 +78,28 @@ document.querySelectorAll('.project-card, .skill-category, .stat-card').forEach(
 });
 
 // ===================================
-// TYPING EFFECT FIXED
+// TYPING EFFECT ENHANCEMENT
 // ===================================
-document.addEventListener('DOMContentLoaded', () => {
-    const typingElement = document.querySelector('.typing-effect');
 
-    if (typingElement) {
-        const text = typingElement.textContent;
-        const totalCharacters = text.length;
+// The CSS handles the basic typing animation,
+// but we can add cursor blinking effect
+const typingElement = document.querySelector('.typing-effect');
+if (typingElement) {
+    // Add blinking cursor animation after typing completes
+    setTimeout(() => {
+        typingElement.style.animation = 'typing 4s steps(50) 1s 1 normal both, blink 0.75s step-end infinite';
+    }, 5000);
+}
 
-        typingElement.style.width = 'fit-content';
-        const naturalWidth = typingElement.offsetWidth; 
-        
-        typingElement.style.setProperty('--typing-width', `${naturalWidth + 5}px`);
-        
-        typingElement.style.width = '0';
-
-        typingElement.style.animation = `
-            typing 3.5s steps(${totalCharacters}) 1s 1 normal both,
-            blink 1s step-end infinite
-        `;
+// Add blink animation to CSS dynamically
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes blink {
+        from, to { border-color: transparent; }
+        50% { border-color: var(--primary-cyan); }
     }
-});
+`;
+document.head.appendChild(style);
 
 // ===================================
 // MOBILE MENU TOGGLE
