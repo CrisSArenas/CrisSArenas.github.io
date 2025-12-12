@@ -78,28 +78,27 @@ document.querySelectorAll('.project-card, .skill-category, .stat-card').forEach(
 });
 
 // ===================================
-// TYPING EFFECT ENHANCEMENT
+// TYPING EFFECT FIXED
 // ===================================
+document.addEventListener('DOMContentLoaded', () => {
+    const typingElement = document.querySelector('.typing-effect');
 
-// The CSS handles the basic typing animation,
-// but we can add cursor blinking effect
-const typingElement = document.querySelector('.typing-effect');
-if (typingElement) {
-    // Add blinking cursor animation after typing completes
-    setTimeout(() => {
-        typingElement.style.animation = 'typing 4s steps(50) 1s 1 normal both, blink 0.75s step-end infinite';
-    }, 5000);
-}
+    if (typingElement) {
+        // 1. Get the text length
+        const textLength = typingElement.textContent.length;
+        
+        // 2. Set width to text length + 1 extra character (for the cursor space)
+        // 'ch' units are equal to the width of the "0" character in the current font
+        typingElement.style.width = `${textLength + 1}ch`;
 
-// Add blink animation to CSS dynamically
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes blink {
-        from, to { border-color: transparent; }
-        50% { border-color: var(--primary-cyan); }
+        // 3. Apply the animation with the exact number of steps
+        // The 'steps()' must equal the number of characters for a clean effect
+        typingElement.style.animation = `
+            typing 3.5s steps(${textLength + 1}) 1s 1 normal both,
+            blink 1s step-end infinite
+        `;
     }
-`;
-document.head.appendChild(style);
+});
 
 // ===================================
 // MOBILE MENU TOGGLE
