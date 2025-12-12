@@ -87,8 +87,8 @@ const typingElement = document.querySelector('.typing-effect');
 if (typingElement) {
     // Add blinking cursor animation after typing completes
     setTimeout(() => {
-        typingElement.style.animation = 'typing 4s steps(50) 1s 1 normal both, blink 0.75s step-end infinite';
-    }, 5000);
+        typingElement.style.animation = 'typing 4s steps(31) 1s 1 normal both, blink 0.75s step-end infinite';
+    }, 3100);
 }
 
 // Add blink animation to CSS dynamically
