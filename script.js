@@ -83,23 +83,26 @@ document.querySelectorAll('.project-card, .skill-category, .stat-card').forEach(
 
 // The CSS handles the basic typing animation,
 // but we can add cursor blinking effect
-// const typingElement = document.querySelector('.typing-effect');
-// if (typingElement) {
-//     // Add blinking cursor animation after typing completes
-//     setTimeout(() => {
-//         typingElement.style.animation = 'typing 4s steps(50) 1s 1 normal both, blink 0.75s step-end infinite';
-//     }, 5000);
-// }
+const typingElement = document.querySelector('.typing-effect');
+if (typingElement) {
+    const textLength = typingElement.textContent.trim().length;
+    
+    typingElement.style.animation = `typing 4s steps(${textLength}) 1s 1 normal both`;
+    
+    setTimeout(() => {
+        typingElement.style.animation = `typing 4s steps(${textLength}) 1s 1 normal both, blink 0.75s step-end infinite`;
+    }, 5000);
+}
 
-// // Add blink animation to CSS dynamically
-// const style = document.createElement('style');
-// style.textContent = `
-//     @keyframes blink {
-//         from, to { border-color: transparent; }
-//         50% { border-color: var(--primary-cyan); }
-//     }
-// `;
-// document.head.appendChild(style);
+// Add blink animation to CSS dynamically
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes blink {
+        from, to { border-color: transparent; }
+        50% { border-color: var(--primary-cyan); }
+    }
+`;
+document.head.appendChild(style);
 
 // ===================================
 // MOBILE MENU TOGGLE
