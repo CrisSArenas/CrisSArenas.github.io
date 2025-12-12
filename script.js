@@ -84,14 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const typingElement = document.querySelector('.typing-effect');
 
     if (typingElement) {
-        // 1. Get the text length
-        const textLength = typingElement.textContent.length;
-        
-        // 2. Set width to text length + 1 extra character (for the cursor space)
+        const textLength = typingElement.textContent.length;        
         // 'ch' units are equal to the width of the "0" character in the current font
         typingElement.style.width = `${textLength + 1}ch`;
-
-        // 3. Apply the animation with the exact number of steps
         // The 'steps()' must equal the number of characters for a clean effect
         typingElement.style.animation = `
             typing 3.5s steps(${textLength + 1}) 1s 1 normal both,
