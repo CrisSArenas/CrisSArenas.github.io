@@ -1,0 +1,4018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROS 2 Navigation Stack - Nav2 Visualizer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Roboto:wght@300;400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1e1e1e;
+            color: #cccccc;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-rows: 38px 1fr 320px 22px;
+            grid-template-columns: 52px 25% 1fr;
+            height: 100vh;
+        }
+
+        /* Top Menu */
+        .top-menu {
+            grid-column: 1 / -1;
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+        }
+
+        .menu-section {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 20px;
+        }
+
+        .menu-item {
+            padding: 6px 12px;
+            font-size: 13px;
+            color: #cccccc;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .menu-item:hover {
+            background: #3e3e42;
+        }
+
+        .app-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #cccccc;
+            margin-right: auto;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #858585;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ec9b0;
+        }
+
+        .status-dot.inactive {
+            background: #858585;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            grid-row: 2 / 4;
+            background: #252526;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+            padding: 8px 0;
+        }
+
+        .tool-item {
+            width: 36px;
+            height: 36px;
+            margin: 4px 8px;
+            background: none;
+            border: 1px solid transparent;
+            color: #cccccc;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.15s;
+        }
+
+        .tool-item:hover {
+            background: #2d2d30;
+            border-color: #3e3e42;
+        }
+
+        .tool-item.active {
+            background: #094771;
+            border-color: #007acc;
+        }
+
+        .tool-item::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 56px;
+            background: #3e3e42;
+            color: #cccccc;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+            transition: opacity 0.2s;
+        }
+
+        .tool-item:hover::after {
+            opacity: 1;
+        }
+
+        .toolbar-spacer {
+            flex: 1;
+        }
+
+        /* Viewport */
+        .viewport {
+            grid-column: 3;
+            grid-row: 2;
+            background: #1e1e1e;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .viewport-toolbar {
+            height: 32px;
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            justify-content: space-between;
+        }
+
+        .viewport-label {
+            font-size: 11px;
+            color: #858585;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .viewport-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .viewport-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: #3e3e42;
+            border: 1px solid #555555;
+            color: #cccccc;
+            cursor: pointer;
+            border-radius: 3px;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.15s;
+        }
+
+        .viewport-btn:hover {
+            background: #505050;
+        }
+
+        .viewport-btn.active {
+            background: #094771;
+            border-color: #007acc;
+            color: #ffffff;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            position: relative;
+            background: #0d1117;
+            width: 100%;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .viewport-overlay {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid #3e3e42;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            backdrop-filter: blur(8px);
+        }
+
+        .overlay-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+            gap: 24px;
+        }
+
+        .overlay-label {
+            color: #858585;
+        }
+
+        .overlay-value {
+            color: #4ec9b0;
+            font-weight: 500;
+        }
+
+        .legend-overlay {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 11px;
+            backdrop-filter: blur(8px);
+        }
+
+        .legend-header {
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .legend-header:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .legend-title {
+            color: #cccccc;
+            font-weight: 500;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .legend-toggle {
+            color: #858585;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .legend-overlay.collapsed .legend-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .legend-body {
+            padding: 12px 14px;
+            max-height: 300px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .legend-overlay.collapsed .legend-body {
+            max-height: 0;
+            padding: 0 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            color: #858585;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            grid-column: 2;
+            grid-row: 2 / 4;
+            background: #252526;
+            border-right: 1px solid #3e3e42;
+            overflow-y: auto;
+        }
+
+        .sidebar-panel {
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .panel-title {
+            background: #2d2d30;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #cccccc;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .panel-body {
+            padding: 12px;
+        }
+
+        .param-item {
+            margin-bottom: 16px;
+        }
+
+        .param-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+
+        .param-name {
+            color: #9cdcfe;
+        }
+
+        .param-val {
+            color: #b5cea8;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 500;
+        }
+
+        .param-slider {
+            width: 100%;
+            height: 3px;
+            background: #3e3e42;
+            outline: none;
+            -webkit-appearance: none;
+            border-radius: 2px;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #007acc;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .param-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #007acc;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .tf-tree {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .tf-item {
+            padding-left: 16px;
+            position: relative;
+            color: #4ec9b0;
+        }
+
+        .tf-item::before {
+            content: '├─';
+            position: absolute;
+            left: 0;
+            color: #555555;
+        }
+
+        .tf-item:last-child::before {
+            content: '└─';
+        }
+
+        .topic-list {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+        }
+
+        .topic-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            color: #cccccc;
+        }
+
+        .topic-path {
+            color: #9cdcfe;
+        }
+
+        .topic-hz {
+            color: #b5cea8;
+        }
+
+        .bt-container {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .bt-item {
+            padding: 4px 8px;
+            margin: 2px 0;
+            border-left: 3px solid #555555;
+            color: #858585;
+        }
+
+        .bt-item.active {
+            border-color: #4ec9b0;
+            color: #4ec9b0;
+        }
+
+        .bt-item.running {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            animation: pulse 1.5s infinite;
+        }
+
+        .bt-item.success {
+            border-color: #4ec9b0;
+            color: #4ec9b0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 11px;
+        }
+
+        .checkbox-row input {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Console */
+        .console {
+            grid-column: 3;
+            grid-row: 3;
+            background: #1a1a1a;
+            border-top: 3px solid #007acc;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .console-toolbar {
+            height: 32px;
+            background: #252526;
+            border-bottom: 1px solid #007acc;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            justify-content: space-between;
+        }
+
+        .console-label {
+            font-size: 11px;
+            color: #4ec9b0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .console-btn {
+            padding: 3px 8px;
+            font-size: 10px;
+            background: none;
+            border: 1px solid #555555;
+            color: #cccccc;
+            cursor: pointer;
+            border-radius: 2px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .console-btn:hover {
+            background: #3e3e42;
+        }
+
+        .console-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            background: #1e1e1e;
+            color: #cccccc;
+            min-height: 0;
+        }
+        
+        .console-output:empty::before {
+            content: 'Console initialized. Waiting for navigation events...';
+            color: #858585;
+            font-style: italic;
+        }
+
+        .console-line {
+            margin: 3px 0;
+            padding: 2px 0;
+        }
+
+        .log-time {
+            color: #858585;
+        }
+
+        .log-level {
+            font-weight: 500;
+            margin: 0 8px;
+        }
+
+        .log-level.INFO {
+            color: #4ec9b0;
+            font-weight: 600;
+        }
+
+        .log-level.WARN {
+            color: #dcdcaa;
+            font-weight: 600;
+        }
+
+        .log-level.ERROR {
+            color: #f48771;
+            font-weight: 600;
+        }
+
+        .log-text {
+            color: #d4d4d4;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            grid-column: 1 / -1;
+            grid-row: 4;
+            background: #007acc;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: #ffffff;
+            justify-content: space-between;
+        }
+
+        .status-section {
+            display: flex;
+            gap: 16px;
+        }
+
+        .status-info {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            width: 520px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #cccccc;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #858585;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #cccccc;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .help-section {
+            margin-bottom: 24px;
+        }
+
+        .help-heading {
+            font-size: 13px;
+            font-weight: 500;
+            color: #4ec9b0;
+            margin-bottom: 8px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #cccccc;
+            margin-bottom: 8px;
+        }
+
+        .shortcut-list {
+            margin-top: 12px;
+        }
+
+        .shortcut-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 12px;
+            color: #cccccc;
+        }
+
+        .shortcut-key {
+            background: #3e3e42;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            color: #4ec9b0;
+        }
+
+        /* Alerts */
+        .alert-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f48771;
+            color: #ffffff;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 13px;
+            display: none;
+            z-index: 3000;
+        }
+
+        .alert-bar.show {
+            display: block;
+        }
+
+        .mode-indicator {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: rgba(45, 45, 48, 0.95);
+            border: 1px solid #3e3e42;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #4ec9b0;
+            font-family: 'Roboto Mono', monospace;
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mode-indicator.hidden {
+            display: none;
+        }
+
+        .mode-close {
+            background: none;
+            border: none;
+            color: #858585;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .mode-close:hover {
+            color: #cccccc;
+        }
+
+        .instruction-banner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 122, 204, 0.95);
+            color: #ffffff;
+            padding: 16px 32px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            z-index: 2500;
+        }
+
+        .instruction-banner.show {
+            display: block;
+        }
+
+        /* Welcome Screen */
+        .welcome-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            backdrop-filter: blur(4px);
+        }
+
+        .welcome-overlay.hide {
+            display: none;
+        }
+
+        .welcome-content {
+            background: #2d2d30;
+            border: 1px solid #007acc;
+            border-radius: 6px;
+            width: 720px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .welcome-header {
+            background: linear-gradient(135deg, #007acc 0%, #005a9e 100%);
+            padding: 24px 32px;
+            border-bottom: 1px solid #007acc;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Obstacle Control Panel */
+        .obstacle-panel {
+            position: fixed;
+            bottom: 180px;
+            left: 64px;
+            background: rgba(45, 45, 48, 0.95);
+            border: 1px solid #3e3e42;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 11px;
+            backdrop-filter: blur(8px);
+            display: none;
+            z-index: 1500;
+            min-width: 200px;
+        }
+
+        .obstacle-panel.show {
+            display: block;
+        }
+
+        .obstacle-panel-title {
+            font-size: 11px;
+            font-weight: 500;
+            color: #4ec9b0;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .obstacle-type-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .obstacle-type-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .obstacle-type-option:hover {
+            background: #2d2d30;
+            border-color: #007acc;
+        }
+
+        .obstacle-type-option.selected {
+            background: #094771;
+            border-color: #007acc;
+        }
+
+        .obstacle-type-option input[type="radio"] {
+            margin: 0;
+        }
+
+        .obstacle-type-option label {
+            cursor: pointer;
+            color: #cccccc;
+            flex: 1;
+        }
+
+        .movement-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 3px;
+            margin-top: 8px;
+        }
+
+        .movement-toggle label {
+            color: #cccccc;
+            font-size: 11px;
+        }
+
+        .movement-toggle input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Environment Selector - moved to sidebar */
+        .environment-selector {
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .environment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .environment-toggle {
+            color: #858585;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .environment-selector.collapsed .environment-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .environment-body {
+            max-height: 300px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .environment-selector.collapsed .environment-body {
+            max-height: 0;
+            padding: 0;
+        }
+
+        .environment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .environment-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .environment-option:hover {
+            background: #2d2d30;
+            border-color: #007acc;
+        }
+
+        .environment-option.selected {
+            background: #094771;
+            border-color: #007acc;
+        }
+
+        .environment-option input[type="radio"] {
+            margin: 0;
+        }
+
+        .environment-option label {
+            cursor: pointer;
+            color: #cccccc;
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .environment-desc {
+            font-size: 10px;
+            color: #858585;
+            margin-top: 2px;
+        }
+
+        .welcome-body {
+            padding: 32px;
+        }
+
+        .welcome-section {
+            margin-bottom: 28px;
+        }
+
+        .welcome-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4ec9b0;
+            margin-bottom: 12px;
+        }
+
+        .welcome-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #cccccc;
+            margin-bottom: 12px;
+        }
+
+        .welcome-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 12px 0;
+        }
+
+        .welcome-list li {
+            padding: 8px 12px;
+            margin: 6px 0;
+            background: #1e1e1e;
+            border-left: 3px solid #007acc;
+            font-size: 13px;
+            color: #cccccc;
+            border-radius: 2px;
+        }
+
+        .welcome-list strong {
+            color: #4ec9b0;
+            font-weight: 500;
+        }
+
+        .welcome-feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .welcome-feature {
+            background: #1e1e1e;
+            padding: 16px;
+            border-radius: 4px;
+            border: 1px solid #3e3e42;
+        }
+
+        .welcome-feature-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #9cdcfe;
+            margin-bottom: 6px;
+        }
+
+        .welcome-feature-desc {
+            font-size: 12px;
+            color: #858585;
+            line-height: 1.5;
+        }
+
+        .welcome-footer {
+            padding: 20px 32px;
+            background: #252526;
+            border-top: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .welcome-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #cccccc;
+        }
+
+        .welcome-btn {
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            background: #007acc;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .welcome-btn:hover {
+            background: #005a9e;
+        }
+
+        .keyboard-hint {
+            display: inline-block;
+            background: #3e3e42;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            color: #4ec9b0;
+            margin: 0 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-bar" id="alertBar"></div>
+    <div class="mode-indicator" id="modeIndicator">
+        <span>Click on map to set navigation goal</span>
+        <button class="mode-close" onclick="hideModeIndicator()">×</button>
+    </div>
+    <div class="instruction-banner" id="instructionBanner"></div>
+
+    <!-- Obstacle Control Panel -->
+    <div class="obstacle-panel" id="obstaclePanel">
+        <div class="obstacle-panel-title">Obstacle Options</div>
+        <div class="obstacle-type-selector">
+            <div class="obstacle-type-option selected" data-type="box">
+                <input type="radio" name="obstacleType" id="typeBox" value="box" checked>
+                <label for="typeBox">Box / Crate</label>
+            </div>
+            <div class="obstacle-type-option" data-type="person">
+                <input type="radio" name="obstacleType" id="typePerson" value="person">
+                <label for="typePerson">Person</label>
+            </div>
+            <div class="obstacle-type-option" data-type="robot">
+                <input type="radio" name="obstacleType" id="typeRobot" value="robot">
+                <label for="typeRobot">Robot</label>
+            </div>
+            <div class="obstacle-type-option" data-type="furniture">
+                <input type="radio" name="obstacleType" id="typeFurniture" value="furniture">
+                <label for="typeFurniture">Furniture</label>
+            </div>
+        </div>
+        <div class="movement-toggle">
+            <label for="obstacleMoving">Moving Obstacle</label>
+            <input type="checkbox" id="obstacleMoving">
+        </div>
+    </div>
+
+    <!-- Welcome Screen -->
+    <div class="welcome-overlay" id="welcomeOverlay">
+        <div class="welcome-content">
+            <div class="welcome-header">
+                <div class="welcome-title">ROS 2 Navigation Stack Simulator</div>
+                <div class="welcome-subtitle">Professional Nav2 Visualization & Testing Environment</div>
+            </div>
+            <div class="welcome-body">
+                <div class="welcome-section">
+                    <div class="welcome-section-title">
+                        What is this simulator?
+                    </div>
+                    <p class="welcome-text">
+                        This is a real-time simulation of ROS 2 Navigation Stack (Nav2), demonstrating autonomous mobile robot navigation in a realistic indoor environment. The simulator implements actual robotics algorithms used in production systems including A* path planning, Pure Pursuit trajectory following, and intelligent recovery behaviors.
+                    </p>
+                    <p class="welcome-text">
+                        Experience how professional robots navigate autonomously, avoid obstacles, and recover from challenging situations—all running directly in your browser.
+                    </p>
+                </div>
+
+                <div class="welcome-section">
+                    <div class="welcome-section-title">
+                        Key Features
+                    </div>
+                    <div class="welcome-feature-grid">
+                        <div class="welcome-feature">
+                            <div class="welcome-feature-title">Global Path Planning</div>
+                            <div class="welcome-feature-desc">A* algorithm computes optimal collision-free paths through complex environments</div>
+                        </div>
+                        <div class="welcome-feature">
+                            <div class="welcome-feature-title">Local Control</div>
+                            <div class="welcome-feature-desc">Pure Pursuit controller with adaptive lookahead for smooth trajectory following</div>
+                        </div>
+                        <div class="welcome-feature">
+                            <div class="welcome-feature-title">Dynamic Obstacles</div>
+                            <div class="welcome-feature-desc">Real-time obstacle detection and automatic path replanning</div>
+                        </div>
+                        <div class="welcome-feature">
+                            <div class="welcome-feature-title">Recovery Behaviors</div>
+                            <div class="welcome-feature-desc">Smart recovery system: backup, rotate, and replan when stuck</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="welcome-section">
+                    <div class="welcome-section-title">
+                        Quick Start Guide
+                    </div>
+                    <ul class="welcome-list">
+                        <li><strong>Set Navigation Goal:</strong> Click the goal tool <span class="keyboard-hint">G</span> then click anywhere on the map. The robot will autonomously navigate to that position.</li>
+                        <li><strong>Add Dynamic Obstacles:</strong> Select the obstacle tool <span class="keyboard-hint">O</span> and click to place moving people, boxes, or other robots.</li>
+                        <li><strong>Watch the Magic:</strong> Observe how the robot automatically avoids obstacles, replans paths, and recovers when stuck.</li>
+                        <li><strong>Adjust Parameters:</strong> Use the sidebar to tune velocity limits, goal tolerance, and visualization options.</li>
+                        <li><strong>Pause/Resume:</strong> Press <span class="keyboard-hint">Space</span> to pause navigation and inspect the current state.</li>
+                    </ul>
+                </div>
+
+                <div class="welcome-section">
+                    <div class="welcome-section-title">
+                        Technical Details
+                    </div>
+                    <p class="welcome-text">
+                        <strong>Architecture:</strong> Implements ROS 2 Nav2 behavior tree with ComputePathToPose, FollowPath, and RecoveryNode plugins.
+                    </p>
+                    <p class="welcome-text">
+                        <strong>Algorithms:</strong> NavFn planner (A* with octile heuristic), Pure Pursuit controller with obstacle avoidance, dynamic window approach for safety.
+                    </p>
+                    <p class="welcome-text">
+                        <strong>Costmaps:</strong> Global costmap for long-term planning, local costmap for real-time collision avoidance, inflation layers for safety margins.
+                    </p>
+                </div>
+            </div>
+            <div class="welcome-footer">
+                <label class="welcome-checkbox">
+                    <input type="checkbox" id="dontShowAgain">
+                    <span>Don't show this again</span>
+                </label>
+                <button class="welcome-btn" onclick="closeWelcome()">Start Simulation</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Navigation Quick Reference</div>
+                <button class="modal-close" onclick="hideHelp()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <div class="help-heading">Setting Navigation Goals</div>
+                    <div class="help-text">Select the "Goal" tool from the toolbar (or press <strong>G</strong>) and click anywhere on the map. The robot will:</div>
+                    <div class="help-text">
+                        1. <strong>Plan:</strong> Compute an optimal collision-free path using A* algorithm<br>
+                        2. <strong>Navigate:</strong> Follow the path using Pure Pursuit controller<br>
+                        3. <strong>Adapt:</strong> Automatically replan if obstacles block the path<br>
+                        4. <strong>Recover:</strong> Execute recovery behaviors if stuck
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-heading">Costmap Layers Explained</div>
+                    <div class="help-text"><strong>Global Costmap (Blue Grid):</strong> Static map with inflated obstacle boundaries. Used by the global planner to compute long-term paths. Shows the entire environment at once.</div>
+                    <div class="help-text"><strong>Local Costmap (Blue Circle):</strong> Dynamic sensor-based map around the robot. Used by the local controller for real-time collision avoidance. Updates constantly with sensor data.</div>
+                    <div class="help-text"><strong>Inflation Layer (Red Halos):</strong> Safety margin visualization showing where the robot prefers not to travel. Helps maintain safe clearance from obstacles.</div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-heading">Dynamic Obstacles & Testing</div>
+                    <div class="help-text">Use the "Obstacle" tool (press <strong>O</strong>) to add dynamic entities:</div>
+                    <div class="help-text">
+                        • <strong>Boxes:</strong> Static obstacles (crates, furniture)<br>
+                        • <strong>People:</strong> Moving pedestrians<br>
+                        • <strong>Robots:</strong> Other autonomous agents
+                    </div>
+                    <div class="help-text">The navigation system automatically detects when obstacles block the path and triggers replanning. Try placing obstacles in the robot's path to see recovery behaviors in action!</div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-heading">Parameter Tuning</div>
+                    <div class="help-text">
+                        <strong>max_vel_x:</strong> Maximum forward velocity. Higher = faster but less safe<br>
+                        <strong>max_vel_theta:</strong> Maximum rotational velocity. Affects turning agility<br>
+                        <strong>xy_goal_tolerance:</strong> Distance threshold to consider goal reached
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-heading">Recovery Behaviors</div>
+                    <div class="help-text">When the robot gets stuck (no progress for 3+ seconds), it automatically:</div>
+                    <div class="help-text">
+                        1. <strong>Backup:</strong> Reverse slowly for 1.5 seconds<br>
+                        2. <strong>Rotate:</strong> Spin in place to scan for clear paths<br>
+                        3. <strong>Replan:</strong> Compute a new path from current position
+                    </div>
+                    <div class="help-text">Watch the Behavior Tree panel to see which recovery behavior is active!</div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-heading">Keyboard Shortcuts</div>
+                    <div class="shortcut-list">
+                        <div class="shortcut-row">
+                            <span>Set Navigation Goal</span>
+                            <span class="shortcut-key">G</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Add Dynamic Obstacle</span>
+                            <span class="shortcut-key">O</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Set Initial Pose (Relocalize)</span>
+                            <span class="shortcut-key">P</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Pause/Resume Navigation</span>
+                            <span class="shortcut-key">Space</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Reset Simulation</span>
+                            <span class="shortcut-key">R</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Toggle Help</span>
+                            <span class="shortcut-key">H or ?</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Close Modals</span>
+                            <span class="shortcut-key">Esc</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-heading">Pro Tips</div>
+                    <div class="help-text">
+                        • Watch the console for detailed navigation events and diagnostics<br>
+                        • The "Replans" counter shows how many times the path was recomputed<br>
+                        • Toggle visualization layers to understand different aspects of navigation<br>
+                        • The laser scan visualization shows the robot's perception range<br>
+                        • Local trajectory (dashed line) predicts robot movement for next 1.5 seconds
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="top-menu">
+            <div class="app-title">ROS 2 Navigation Stack Visualizer</div>
+            <div class="menu-section">
+                <button class="menu-item" onclick="showHelp()">Help</button>
+                <button class="menu-item" onclick="resetSimulation()">Reset</button>
+            </div>
+            <div class="status-indicator">
+                <span>FPS:</span>
+                <span id="fpsValue">60</span>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="tool-item active" id="toolGoal" data-label="2D Nav Goal (G)">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="10" cy="10" r="3" fill="currentColor"/>
+                </svg>
+            </div>
+            <div class="tool-item" id="toolObstacle" data-label="Add Obstacle (O)">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <rect x="3" y="3" width="14" height="14" fill="currentColor"/>
+                </svg>
+            </div>
+            <div class="tool-item" id="toolPose" data-label="Initial Pose (P)">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 2 L10 18 M10 2 L14 6 M10 2 L6 6" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <div class="tool-item" id="toolPause" data-label="Pause (Space)">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <rect x="6" y="4" width="3" height="12" fill="currentColor"/>
+                    <rect x="11" y="4" width="3" height="12" fill="currentColor"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="viewport">
+            <div class="viewport-toolbar">
+                <div class="viewport-label">/map — nav_msgs/OccupancyGrid</div>
+                <div class="viewport-buttons">
+                    <button class="viewport-btn active" id="btnGlobalCostmap">Global Costmap</button>
+                    <button class="viewport-btn" id="btnLocalCostmap">Local Costmap</button>
+                    <button class="viewport-btn" id="btnInflation">Inflation</button>
+                    <button class="viewport-btn active" id="btnPath">Path</button>
+                </div>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas id="mainCanvas"></canvas>
+                <div class="viewport-overlay">
+                    <div class="overlay-row">
+                        <span class="overlay-label">x, y, θ:</span>
+                        <span class="overlay-value" id="poseDisplay">0.00, 0.00, 0.00</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="overlay-label">v_linear:</span>
+                        <span class="overlay-value" id="velDisplay">0.00 m/s</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="overlay-label">goal_dist:</span>
+                        <span class="overlay-value" id="distDisplay">—</span>
+                    </div>
+                    <div class="overlay-row">
+                        <span class="overlay-label">path_len:</span>
+                        <span class="overlay-value" id="pathDisplay">—</span>
+                    </div>
+                </div>
+                <div class="legend-overlay">
+                    <div class="legend-header" onclick="toggleLegend()">
+                        <div class="legend-title">Legend</div>
+                        <div class="legend-toggle">▼</div>
+                    </div>
+                    <div class="legend-body">
+                        <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #4ec9b0, #3a9d8f); box-shadow: 0 0 8px #4ec9b0;"></div>
+                        <span>Robot</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 0 8px #f59e0b;"></div>
+                        <span>Goal</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #3b82f6, #2563eb);"></div>
+                        <span>Path</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #8b4513, #6b3410);"></div>
+                        <span>Furniture</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #60a5fa, #1e40af); border-radius: 50%;"></div>
+                        <span>Person</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3a3f47;"></div>
+                        <span>Walls</span>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-panel environment-selector collapsed">
+                <div class="panel-title environment-header" onclick="toggleEnvironmentSelector()" style="cursor: pointer;">
+                    <span>Environment Layout</span>
+                    <span class="environment-toggle" style="float: right;">▼</span>
+                </div>
+                <div class="panel-body environment-body">
+                    <div class="environment-options">
+                        <div class="environment-option selected" data-env="warehouse">
+                            <input type="radio" name="environment" id="envWarehouse" value="warehouse" checked>
+                            <label for="envWarehouse">
+                                <div>Warehouse</div>
+                                <div class="environment-desc">Storage racks and aisles</div>
+                            </label>
+                        </div>
+                        <div class="environment-option" data-env="industrial">
+                            <input type="radio" name="environment" id="envIndustrial" value="industrial">
+                            <label for="envIndustrial">
+                                <div>Industrial Complex</div>
+                                <div class="environment-desc">Manufacturing facility</div>
+                            </label>
+                        </div>
+                        <div class="environment-option" data-env="house">
+                            <input type="radio" name="environment" id="envHouse" value="house">
+                            <label for="envHouse">
+                                <div>House</div>
+                                <div class="environment-desc">Open-concept residential</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-panel">
+                <div class="panel-title">Navigation Parameters</div>
+                <div class="panel-body">
+                    <div class="param-item">
+                        <div class="param-header">
+                            <span class="param-name">max_vel_x</span>
+                            <span class="param-val" id="maxVelDisplay">0.50 m/s</span>
+                        </div>
+                        <input type="range" class="param-slider" id="maxVelSlider" min="0.1" max="1.0" step="0.05" value="0.5">
+                    </div>
+                    <div class="param-item">
+                        <div class="param-header">
+                            <span class="param-name">max_vel_theta</span>
+                            <span class="param-val" id="maxAngDisplay">1.00 rad/s</span>
+                        </div>
+                        <input type="range" class="param-slider" id="maxAngSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+                    </div>
+                    <div class="param-item">
+                        <div class="param-header">
+                            <span class="param-name">xy_goal_tolerance</span>
+                            <span class="param-val" id="tolDisplay">0.10 m</span>
+                        </div>
+                        <input type="range" class="param-slider" id="tolSlider" min="0.05" max="0.5" step="0.05" value="0.1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-panel">
+                <div class="panel-title">Transform Tree</div>
+                <div class="panel-body">
+                    <div class="tf-tree">
+                        <div style="color: #4ec9b0;">map</div>
+                        <div class="tf-item">odom</div>
+                        <div class="tf-item" style="padding-left: 32px;">base_footprint</div>
+                        <div class="tf-item" style="padding-left: 48px;">base_link</div>
+                        <div class="tf-item" style="padding-left: 64px;">laser</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-panel">
+                <div class="panel-title">Active Topics</div>
+                <div class="panel-body">
+                    <div class="topic-list">
+                        <div class="topic-row">
+                            <span class="topic-path">/scan</span>
+                            <span class="topic-hz">10 Hz</span>
+                        </div>
+                        <div class="topic-row">
+                            <span class="topic-path">/odom</span>
+                            <span class="topic-hz">50 Hz</span>
+                        </div>
+                        <div class="topic-row">
+                            <span class="topic-path">/cmd_vel</span>
+                            <span class="topic-hz">20 Hz</span>
+                        </div>
+                        <div class="topic-row">
+                            <span class="topic-path">/global_plan</span>
+                            <span class="topic-hz" id="planHz">— Hz</span>
+                        </div>
+                        <div class="topic-row">
+                            <span class="topic-path">/local_costmap</span>
+                            <span class="topic-hz">5 Hz</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-panel">
+                <div class="panel-title">Behavior Tree</div>
+                <div class="panel-body">
+                    <div class="bt-container">
+                        <div class="bt-item" id="btNav">NavigateToPose</div>
+                        <div class="bt-item" id="btCompute">├─ ComputePathToPose</div>
+                        <div class="bt-item" id="btFollow">├─ FollowPath</div>
+                        <div class="bt-item" id="btRecovery">└─ RecoveryNode</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-panel">
+                <div class="panel-title">Visualization</div>
+                <div class="panel-body">
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="chkFootprint" checked>
+                        <label>Robot Footprint</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="chkLaser" checked>
+                        <label>Laser Scan</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="chkPath" checked>
+                        <label>Global Path</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="chkLocal" checked>
+                        <label>Local Trajectory</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="console">
+            <div class="console-toolbar">
+                <div class="console-label">Console Output</div>
+                <button class="console-btn" onclick="clearConsole()">Clear</button>
+            </div>
+            <div class="console-output" id="consoleOutput"></div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-section">
+                <div class="status-info">
+                    <span class="status-dot" id="navDot"></span>
+                    <span id="navStatus">Navigation Active</span>
+                </div>
+                <div class="status-info">
+                    <span>State:</span>
+                    <span id="stateDisplay">Ready</span>
+                </div>
+            </div>
+            <div class="status-section">
+                <div class="status-info">
+                    <span>Replans:</span>
+                    <span id="replansDisplay">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Configuration
+        const SCALE = 40;
+        const ROBOT_RADIUS = 0.25;
+        const SAFETY_MARGIN = 0.15;
+
+        // State
+        let mode = 'goal';
+        let paused = false;
+        let showGlobal = true;
+        let showLocal = false;
+        let showInflation = false;
+        let showPath = true;
+        let showFootprint = true;
+        let showLaser = true;
+        let showLocalTraj = true;
+
+        // Robot state - will be set after environment is built
+        let robot = {
+            x: 0,
+            y: 0,
+            theta: 0,
+            vx: 0,
+            vy: 0,
+            omega: 0,
+            maxV: 0.5,
+            maxOmega: 1.0
+        };
+        
+        // Obstacle placement settings
+        let selectedObstacleType = 'box';
+        let obstacleMoving = false;
+        
+        // Environment selection
+        let selectedEnvironment = 'warehouse';
+
+        let goal = null;
+        let globalPath = [];
+        let localTraj = [];
+        let obstacles = [];
+        let walls = [];
+        let replans = 0;
+        let worldWidth = 0;
+        let worldHeight = 0;
+        let replanTimer = 0;
+        let stuckTimer = 0;
+        let recoveryMode = null;
+        let recoveryTimer = 0;
+        let lastLogTime = 0;
+        let lastWaypointCount = 0;
+
+        // Build environment based on selection
+        function buildEnvironment() {
+            worldWidth = canvas.width / SCALE;
+            worldHeight = canvas.height / SCALE;
+            walls = [];
+            obstacles = [];
+            
+            if (selectedEnvironment === 'house') {
+                buildHouseEnvironment();
+            } else if (selectedEnvironment === 'warehouse') {
+                buildWarehouseEnvironment();
+            } else if (selectedEnvironment === 'industrial') {
+                buildIndustrialEnvironment();
+            }
+        }
+        
+        // Build open-concept house environment - realistic modern floor plan
+        function buildHouseEnvironment() {
+
+            const wallThickness = 0.2;
+            const doorWidth = 2.0; // Standard doorway width
+            
+            // Exterior walls - complete boundary
+            walls.push({x: 0, y: 0, w: worldWidth, h: wallThickness}); // Top
+            walls.push({x: 0, y: 0, w: wallThickness, h: worldHeight}); // Left
+            walls.push({x: 0, y: worldHeight - wallThickness, w: worldWidth, h: wallThickness}); // Bottom
+            walls.push({x: worldWidth - wallThickness, y: 0, w: wallThickness, h: worldHeight}); // Right
+
+            // Realistic room layout:
+            // Left 40% = Living/Dining open space
+            // Center 35% = Kitchen with peninsula
+            // Right 25% = Bedroom with bathroom
+            
+            // Vertical divider between living area and bedroom (with doorway)
+            const bedroomWallX = worldWidth * 0.65;
+            const doorCenterY = worldHeight * 0.45;
+            
+            // Top segment of bedroom wall (above door)
+            walls.push({
+                x: bedroomWallX,
+                y: wallThickness,
+                w: wallThickness,
+                h: doorCenterY - doorWidth/2 - wallThickness
+            });
+            
+            // Bottom segment of bedroom wall (below door)
+            walls.push({
+                x: bedroomWallX,
+                y: doorCenterY + doorWidth/2,
+                w: wallThickness,
+                h: worldHeight - wallThickness - (doorCenterY + doorWidth/2)
+            });
+
+            // Kitchen peninsula (partial wall/counter)
+            const kitchenPeninsulaX = worldWidth * 0.42;
+            walls.push({
+                x: kitchenPeninsulaX,
+                y: worldHeight * 0.35,
+                w: wallThickness,
+                h: worldHeight * 0.25
+            });
+
+            // Bathroom wall (inside bedroom, top-right corner)
+            const bathroomWallY = worldHeight * 0.35;
+            const bathroomDoorX = bedroomWallX + (worldWidth - bedroomWallX) * 0.45;
+            
+            // Horizontal bathroom wall (with doorway)
+            walls.push({
+                x: bedroomWallX + wallThickness,
+                y: bathroomWallY,
+                w: bathroomDoorX - bedroomWallX - wallThickness,
+                h: wallThickness
+            });
+            walls.push({
+                x: bathroomDoorX + doorWidth * 0.6,
+                y: bathroomWallY,
+                w: worldWidth - wallThickness - (bathroomDoorX + doorWidth * 0.6),
+                h: wallThickness
+            });
+
+            // Furniture obstacles - realistic placement with proper clearance
+            obstacles = [
+                // LIVING ROOM (left area)
+                // Sofa against left wall
+                {
+                    x: 2.5,
+                    y: 2.5,
+                    r: 0.5,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 2.0,
+                    height: 0.9,
+                    label: 'Sofa'
+                },
+                // Coffee table in front of sofa
+                {
+                    x: 2.5,
+                    y: 4.5,
+                    r: 0.4,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 1.2,
+                    height: 0.7,
+                    label: 'Table'
+                },
+                // TV stand on opposite wall
+                {
+                    x: 2.5,
+                    y: 7.5,
+                    r: 0.3,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 1.5,
+                    height: 0.5,
+                    label: 'TV'
+                },
+                
+                // DINING AREA (left-center)
+                // Dining table
+                {
+                    x: 5.0,
+                    y: worldHeight - 3.5,
+                    r: 0.6,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 1.5,
+                    height: 1.0,
+                    label: 'Dining'
+                },
+                
+                // KITCHEN (center area, near peninsula)
+                // Kitchen island/counter
+                {
+                    x: kitchenPeninsulaX + 2.0,
+                    y: worldHeight * 0.25,
+                    r: 0.4,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 2.0,
+                    height: 1.0,
+                    label: 'Kitchen'
+                },
+                // Refrigerator
+                {
+                    x: kitchenPeninsulaX + 2.5,
+                    y: 1.5,
+                    r: 0.3,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 0.8,
+                    height: 0.8,
+                    label: 'Fridge'
+                },
+                
+                // BEDROOM (right side, below bathroom)
+                // Bed
+                {
+                    x: bedroomWallX + 2.5,
+                    y: worldHeight - 3.0,
+                    r: 0.5,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 2.0,
+                    height: 1.8,
+                    label: 'Bed'
+                },
+                // Nightstand
+                {
+                    x: bedroomWallX + 1.5,
+                    y: worldHeight - 4.0,
+                    r: 0.25,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 0.6,
+                    height: 0.5,
+                    label: 'Stand'
+                },
+                // Dresser
+                {
+                    x: worldWidth - 1.5,
+                    y: worldHeight - 2.5,
+                    r: 0.3,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 1.2,
+                    height: 0.6,
+                    label: 'Dresser'
+                },
+                
+                // BATHROOM (top-right corner)
+                // Toilet
+                {
+                    x: worldWidth - 1.5,
+                    y: 1.5,
+                    r: 0.2,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 0.5,
+                    height: 0.6,
+                    label: 'Toilet'
+                },
+                // Sink
+                {
+                    x: bedroomWallX + 1.5,
+                    y: 1.5,
+                    r: 0.2,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 0.6,
+                    height: 0.5,
+                    label: 'Sink'
+                },
+                
+                // DYNAMIC OBSTACLES - Moving agents in open areas
+                // Person walking in living room
+                {
+                    x: 6.0,
+                    y: 5.0,
+                    r: 0.3,
+                    vx: 0.1,
+                    vy: 0.08,
+                    type: 'person',
+                    shape: 'circle'
+                },
+                // Robot vacuum in dining area
+                {
+                    x: 4.0,
+                    y: worldHeight - 5.0,
+                    r: 0.2,
+                    vx: 0.12,
+                    vy: -0.1,
+                    type: 'robot',
+                    shape: 'circle'
+                },
+                // Pet in hallway area
+                {
+                    x: worldWidth * 0.5,
+                    y: doorCenterY,
+                    r: 0.25,
+                    vx: -0.08,
+                    vy: 0.12,
+                    type: 'person',
+                    shape: 'circle'
+                }
+            ];
+        }
+        
+        // Build warehouse environment
+        function buildWarehouseEnvironment() {
+            const wallThickness = 0.15;
+            
+            // Exterior walls
+            walls.push({x: 0, y: 0, w: worldWidth, h: wallThickness}); // Top
+            walls.push({x: 0, y: 0, w: wallThickness, h: worldHeight}); // Left
+            walls.push({x: 0, y: worldHeight - wallThickness, w: worldWidth, h: wallThickness}); // Bottom
+            walls.push({x: worldWidth - wallThickness, y: 0, w: wallThickness, h: worldHeight}); // Right
+            
+            // Create storage rack aisles (3 columns, well spaced)
+            const aisleWidth = 3.5; // Wide aisles for robot navigation
+            const rackWidth = 1.5;
+            const rackHeight = worldHeight * 0.5;
+            const startX = worldWidth * 0.2;
+            const startY = (worldHeight - rackHeight) / 2;
+            
+            // Three storage rack columns
+            for (let i = 0; i < 3; i++) {
+                const x = startX + i * (rackWidth + aisleWidth);
+                
+                walls.push({
+                    x: x,
+                    y: startY,
+                    w: rackWidth,
+                    h: rackHeight
+                });
+            }
+            
+            // Office area (top left corner) - L-shaped
+            walls.push({
+                x: wallThickness,
+                y: wallThickness,
+                w: worldWidth * 0.15 - wallThickness,
+                h: wallThickness
+            });
+            walls.push({
+                x: wallThickness,
+                y: wallThickness,
+                w: wallThickness,
+                h: worldHeight * 0.25
+            });
+            walls.push({
+                x: wallThickness,
+                y: worldHeight * 0.25,
+                w: worldWidth * 0.15 - wallThickness,
+                h: wallThickness
+            });
+            
+            // Warehouse obstacles - strategically placed in open areas
+            obstacles = [
+                // Pallet in loading zone (bottom right, away from racks)
+                {
+                    x: worldWidth - 4.0,
+                    y: worldHeight - 3.0,
+                    r: 0.5,
+                    vx: 0,
+                    vy: 0,
+                    type: 'box',
+                    shape: 'rect',
+                    width: 1.2,
+                    height: 1.2,
+                    label: 'Pallet'
+                },
+                // Forklift parked (top right area)
+                {
+                    x: worldWidth - 3.5,
+                    y: 3.5,
+                    r: 0.4,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 1.2,
+                    height: 1.8,
+                    label: 'Forklift'
+                },
+                // Moving warehouse robot in first aisle
+                {
+                    x: startX + rackWidth + aisleWidth / 2,
+                    y: worldHeight * 0.4,
+                    r: 0.35,
+                    vx: 0,
+                    vy: 0.15,
+                    type: 'robot',
+                    shape: 'circle'
+                },
+                // Worker in second aisle
+                {
+                    x: startX + (rackWidth + aisleWidth) * 1.5 + rackWidth / 2,
+                    y: worldHeight * 0.7,
+                    r: 0.3,
+                    vx: 0,
+                    vy: -0.12,
+                    type: 'person',
+                    shape: 'circle'
+                },
+                // Boxes in office area
+                {
+                    x: 2.5,
+                    y: 2.0,
+                    r: 0.4,
+                    vx: 0,
+                    vy: 0,
+                    type: 'box',
+                    shape: 'rect',
+                    width: 1.0,
+                    height: 0.8,
+                    label: 'Boxes'
+                },
+                // Cart in main corridor
+                {
+                    x: startX - 1.5,
+                    y: worldHeight / 2,
+                    r: 0.3,
+                    vx: 0.1,
+                    vy: 0,
+                    type: 'box',
+                    shape: 'rect',
+                    width: 0.7,
+                    height: 1.0
+                }
+            ];
+        }
+        
+        // Build industrial complex environment
+        function buildIndustrialEnvironment() {
+            const wallThickness = 0.15;
+            
+            // Exterior walls
+            walls.push({x: 0, y: 0, w: worldWidth, h: wallThickness}); // Top
+            walls.push({x: 0, y: 0, w: wallThickness, h: worldHeight}); // Left
+            walls.push({x: 0, y: worldHeight - wallThickness, w: worldWidth, h: wallThickness}); // Bottom
+            walls.push({x: worldWidth - wallThickness, y: 0, w: wallThickness, h: worldHeight}); // Right
+            
+            const spacing = 1.5;
+            const lineWidth = worldWidth * 0.35;
+            
+            // Assembly line 1 (top area) - parallel walls creating a corridor
+            const line1Y = worldHeight * 0.25;
+            walls.push({
+                x: spacing,
+                y: line1Y,
+                w: lineWidth,
+                h: wallThickness
+            });
+            walls.push({
+                x: spacing,
+                y: line1Y + 2.5,
+                w: lineWidth,
+                h: wallThickness
+            });
+            
+            // Assembly line 2 (bottom area) - parallel walls creating a corridor
+            const line2Y = worldHeight * 0.65;
+            walls.push({
+                x: spacing,
+                y: line2Y,
+                w: lineWidth,
+                h: wallThickness
+            });
+            walls.push({
+                x: spacing,
+                y: line2Y + 2.5,
+                w: lineWidth,
+                h: wallThickness
+            });
+            
+            // Quality control room (top right) - U-shaped enclosure
+            const qcX = worldWidth - 5.0;
+            const qcY = wallThickness + 1.0;
+            walls.push({
+                x: qcX,
+                y: qcY,
+                w: wallThickness,
+                h: 4.0
+            });
+            walls.push({
+                x: qcX,
+                y: qcY,
+                w: 3.5,
+                h: wallThickness
+            });
+            walls.push({
+                x: qcX + 3.5,
+                y: qcY,
+                w: wallThickness,
+                h: 2.5
+            });
+            
+            // Material storage cage (center)
+            const storageX = worldWidth * 0.5;
+            const storageY = worldHeight * 0.45;
+            walls.push({
+                x: storageX,
+                y: storageY,
+                w: wallThickness,
+                h: 2.0
+            });
+            walls.push({
+                x: storageX + 2.5,
+                y: storageY,
+                w: wallThickness,
+                h: 2.0
+            });
+            
+            // Industrial obstacles - placed in accessible areas
+            obstacles = [
+                // CNC Machine 1 (in first assembly line)
+                {
+                    x: spacing + 3.0,
+                    y: line1Y + 1.2,
+                    r: 0.6,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 2.2,
+                    height: 1.4,
+                    label: 'CNC-1'
+                },
+                // CNC Machine 2 (in second assembly line)
+                {
+                    x: spacing + 3.0,
+                    y: line2Y + 1.2,
+                    r: 0.6,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 2.2,
+                    height: 1.4,
+                    label: 'CNC-2'
+                },
+                // AGV 1 (moving in main corridor)
+                {
+                    x: worldWidth * 0.45,
+                    y: worldHeight * 0.35,
+                    r: 0.35,
+                    vx: 0.12,
+                    vy: 0,
+                    type: 'robot',
+                    shape: 'rect',
+                    width: 1.1,
+                    height: 0.9,
+                    label: 'AGV'
+                },
+                // AGV 2 (different corridor)
+                {
+                    x: worldWidth * 0.45,
+                    y: worldHeight * 0.8,
+                    r: 0.35,
+                    vx: 0.12,
+                    vy: 0,
+                    type: 'robot',
+                    shape: 'rect',
+                    width: 1.1,
+                    height: 0.9,
+                    label: 'AGV'
+                },
+                // Worker in QC area
+                {
+                    x: qcX + 1.5,
+                    y: qcY + 1.5,
+                    r: 0.3,
+                    vx: 0,
+                    vy: 0,
+                    type: 'person',
+                    shape: 'circle'
+                },
+                // Material cart (moving between areas)
+                {
+                    x: storageX + 1.2,
+                    y: storageY + 3.0,
+                    r: 0.3,
+                    vx: -0.08,
+                    vy: 0,
+                    type: 'box',
+                    shape: 'rect',
+                    width: 0.8,
+                    height: 1.2
+                },
+                // Robot arm base (end of line 1)
+                {
+                    x: spacing + lineWidth - 2.0,
+                    y: line1Y + 1.2,
+                    r: 0.4,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'circle',
+                    label: 'Arm'
+                },
+                // Material bins in storage area
+                {
+                    x: storageX + 0.6,
+                    y: storageY + 0.8,
+                    r: 0.4,
+                    vx: 0,
+                    vy: 0,
+                    type: 'box',
+                    shape: 'rect',
+                    width: 1.3,
+                    height: 0.6,
+                    label: 'Parts'
+                },
+                // Inspection table in QC
+                {
+                    x: qcX + 1.8,
+                    y: qcY + 0.8,
+                    r: 0.3,
+                    vx: 0,
+                    vy: 0,
+                    type: 'furniture',
+                    shape: 'rect',
+                    width: 1.4,
+                    height: 0.7,
+                    label: 'Table'
+                },
+                // Moving worker (between lines)
+                {
+                    x: worldWidth * 0.3,
+                    y: worldHeight * 0.5,
+                    r: 0.3,
+                    vx: 0,
+                    vy: 0.1,
+                    type: 'person',
+                    shape: 'circle'
+                }
+            ];
+        }
+
+        buildEnvironment();
+        
+        // Find safe starting position for robot
+        function findSafeStartPosition() {
+            // Try several potential starting positions
+            const candidates = [
+                {x: 2.0, y: 2.0},
+                {x: worldWidth / 2, y: worldHeight / 2},
+                {x: worldWidth - 3.0, y: worldHeight - 3.0},
+                {x: 3.0, y: worldHeight - 3.0},
+                {x: worldWidth - 3.0, y: 3.0},
+            ];
+            
+            for (let candidate of candidates) {
+                if (isValidPos(candidate.x, candidate.y, ROBOT_RADIUS + 0.2)) {
+                    return candidate;
+                }
+            }
+            
+            // If no candidates work, search the grid
+            for (let x = 2.0; x < worldWidth - 2.0; x += 1.0) {
+                for (let y = 2.0; y < worldHeight - 2.0; y += 1.0) {
+                    if (isValidPos(x, y, ROBOT_RADIUS + 0.2)) {
+                        return {x, y};
+                    }
+                }
+            }
+            
+            // Fallback - force position in top left
+            return {x: 2.0, y: 2.0};
+        }
+
+        // Enhanced collision checking with proper boundary respect
+        function isValidPos(x, y, checkRadius = ROBOT_RADIUS) {
+            // Check world boundaries with strict margin
+            const boundaryMargin = 0.3;
+            if (x - checkRadius < boundaryMargin || x + checkRadius > worldWidth - boundaryMargin ||
+                y - checkRadius < boundaryMargin || y + checkRadius > worldHeight - boundaryMargin) {
+                return false;
+            }
+
+            // Check walls with proper margin
+            for (let wall of walls) {
+                if (x + checkRadius > wall.x && x - checkRadius < wall.x + wall.w &&
+                    y + checkRadius > wall.y && y - checkRadius < wall.y + wall.h) {
+                    return false;
+                }
+            }
+
+            // Check obstacles with safety margin
+            for (let obs of obstacles) {
+                if (obs.shape === 'rect') {
+                    const hw = obs.width / 2;
+                    const hh = obs.height / 2;
+                    const margin = checkRadius + SAFETY_MARGIN;
+                    if (x + margin > obs.x - hw && x - margin < obs.x + hw &&
+                        y + margin > obs.y - hh && y - margin < obs.y + hh) {
+                        return false;
+                    }
+                } else {
+                    const dx = x - obs.x;
+                    const dy = y - obs.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < obs.r + checkRadius + SAFETY_MARGIN) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // Improved A* pathfinding with better heuristics
+        function computePath(start, end) {
+            if (!isValidPos(end.x, end.y)) {
+                addLog('ERROR', 'Goal position is invalid or in collision');
+                return [];
+            }
+
+            const gridSize = 0.2; // Finer grid for better paths
+            const heuristic = (a, b) => {
+                const dx = Math.abs(a.x - b.x);
+                const dy = Math.abs(a.y - b.y);
+                // Octile distance heuristic (optimal for 8-directional movement)
+                const D = 1.0;
+                const D2 = Math.sqrt(2);
+                return D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
+            };
+
+            const openSet = [{
+                x: start.x,
+                y: start.y,
+                g: 0,
+                h: heuristic(start, end),
+                f: heuristic(start, end),
+                parent: null
+            }];
+
+            const closedSet = new Map();
+            let iterations = 0;
+            const maxIterations = 8000; // Increased for finer grid
+
+            while (openSet.length > 0 && iterations < maxIterations) {
+                iterations++;
+                
+                // Get node with lowest f score (use binary heap in production)
+                openSet.sort((a, b) => a.f - b.f);
+                const current = openSet.shift();
+
+                const key = `${Math.round(current.x/gridSize)},${Math.round(current.y/gridSize)}`;
+                if (closedSet.has(key)) continue;
+                closedSet.set(key, current);
+
+                // Check if we reached the goal
+                const distToGoal = heuristic(current, end);
+                if (distToGoal < gridSize * 1.5) {
+                    const path = [];
+                    let node = current;
+                    while (node) {
+                        path.unshift({x: node.x, y: node.y});
+                        node = node.parent;
+                    }
+                    // Add final goal position
+                    if (path.length > 0 && (Math.abs(path[path.length-1].x - end.x) > 0.01 || 
+                                            Math.abs(path[path.length-1].y - end.y) > 0.01)) {
+                        path.push({x: end.x, y: end.y});
+                    }
+                    
+                    addLog('INFO', `Path computed: ${path.length} waypoints, ${iterations} iterations`);
+                    return smoothPath(path);
+                }
+
+                // Explore neighbors with 8-directional movement
+                const moves = [
+                    {dx: gridSize, dy: 0, cost: 1.0},
+                    {dx: -gridSize, dy: 0, cost: 1.0},
+                    {dx: 0, dy: gridSize, cost: 1.0},
+                    {dx: 0, dy: -gridSize, cost: 1.0},
+                    {dx: gridSize, dy: gridSize, cost: 1.414},
+                    {dx: -gridSize, dy: -gridSize, cost: 1.414},
+                    {dx: gridSize, dy: -gridSize, cost: 1.414},
+                    {dx: -gridSize, dy: gridSize, cost: 1.414},
+                ];
+
+                for (let move of moves) {
+                    const nx = current.x + move.dx;
+                    const ny = current.y + move.dy;
+
+                    // Skip if out of bounds or in collision
+                    if (!isValidPos(nx, ny, ROBOT_RADIUS + SAFETY_MARGIN)) continue;
+
+                    const g = current.g + move.cost * gridSize;
+                    const h = heuristic({x: nx, y: ny}, end);
+                    const f = g + h * 1.1; // Slight heuristic weight
+
+                    const neighborKey = `${Math.round(nx/gridSize)},${Math.round(ny/gridSize)}`;
+                    if (!closedSet.has(neighborKey)) {
+                        // Check if this neighbor is already in open set
+                        const existingIdx = openSet.findIndex(n => 
+                            Math.abs(n.x - nx) < gridSize/2 && Math.abs(n.y - ny) < gridSize/2
+                        );
+                        
+                        if (existingIdx >= 0) {
+                            // Update if we found a better path
+                            if (g < openSet[existingIdx].g) {
+                                openSet[existingIdx] = {x: nx, y: ny, g, h, f, parent: current};
+                            }
+                        } else {
+                            openSet.push({x: nx, y: ny, g, h, f, parent: current});
+                        }
+                    }
+                }
+            }
+
+            addLog('WARN', `Path planning failed after ${iterations} iterations`);
+            return [];
+        }
+
+        // Improved path smoothing with safety checks
+        function smoothPath(path) {
+            if (path.length <= 2) return path;
+            
+            const smoothed = [path[0]];
+            let current = 0;
+            
+            while (current < path.length - 1) {
+                let farthest = current + 1;
+                
+                // Linear search for farthest visible point (safer than binary search)
+                for (let i = current + 1; i < path.length; i++) {
+                    if (isLineOfSightClear(path[current], path[i])) {
+                        farthest = i;
+                    } else {
+                        break; // Stop at first non-visible point
+                    }
+                }
+                
+                // Don't skip too many waypoints at once for safety
+                const maxSkip = Math.min(farthest, current + 5);
+                smoothed.push(path[maxSkip]);
+                current = maxSkip;
+            }
+            
+            // Ensure we have the final point
+            if (smoothed[smoothed.length - 1] !== path[path.length - 1]) {
+                const lastSmoothed = smoothed[smoothed.length - 1];
+                const lastPath = path[path.length - 1];
+                if (Math.abs(lastSmoothed.x - lastPath.x) > 0.1 || 
+                    Math.abs(lastSmoothed.y - lastPath.y) > 0.1) {
+                    smoothed.push(path[path.length - 1]);
+                }
+            }
+            
+            return smoothed;
+        }
+
+        // Line of sight check with dense sampling
+        function isLineOfSightClear(p1, p2) {
+            const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+            const steps = Math.ceil(dist / 0.08); // Denser sampling for better accuracy
+            
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const x = p1.x + (p2.x - p1.x) * t;
+                const y = p1.y + (p2.y - p1.y) * t;
+                
+                // Use full safety margin for line of sight checks
+                if (!isValidPos(x, y, ROBOT_RADIUS + SAFETY_MARGIN)) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Console logging
+        function addLog(level, msg) {
+            const output = document.getElementById('consoleOutput');
+            if (!output) {
+                console.error('Console output element not found');
+                return;
+            }
+            
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-level ${level}">[${level}]</span>
+                <span class="log-text">${msg}</span>
+            `;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+            
+            // Force visibility
+            output.style.display = 'block';
+        }
+
+        function clearConsole() {
+            document.getElementById('consoleOutput').innerHTML = '';
+        }
+
+        // Behavior tree visualization
+        function updateBT(state) {
+            const items = ['btNav', 'btCompute', 'btFollow', 'btRecovery'];
+            items.forEach(id => {
+                document.getElementById(id).className = 'bt-item';
+            });
+
+            if (state === 'planning') {
+                document.getElementById('btNav').className = 'bt-item active';
+                document.getElementById('btCompute').className = 'bt-item running';
+            } else if (state === 'following') {
+                document.getElementById('btNav').className = 'bt-item success';
+                document.getElementById('btCompute').className = 'bt-item success';
+                document.getElementById('btFollow').className = 'bt-item running';
+            } else if (state === 'recovery') {
+                document.getElementById('btRecovery').className = 'bt-item running';
+            }
+        }
+
+        // Improved robot update with Pure Pursuit controller and recovery behaviors
+        function updateRobot(dt) {
+            if (paused || !goal) {
+                robot.vx = 0;
+                robot.vy = 0;
+                robot.omega = 0;
+                return;
+            }
+
+            // Check if we reached the goal
+            const goalDx = goal.x - robot.x;
+            const goalDy = goal.y - robot.y;
+            const goalDist = Math.sqrt(goalDx * goalDx + goalDy * goalDy);
+            const tol = parseFloat(document.getElementById('tolSlider').value);
+
+            if (goalDist < tol) {
+                robot.vx = 0;
+                robot.vy = 0;
+                robot.omega = 0;
+                addLog('INFO', 'Goal reached successfully');
+                goal = null;
+                globalPath = [];
+                stuckTimer = 0;
+                recoveryMode = null;
+                updateBT('');
+                document.getElementById('stateDisplay').textContent = 'Goal Reached';
+                document.getElementById('planHz').textContent = '— Hz';
+                setTimeout(() => {
+                    document.getElementById('stateDisplay').textContent = 'Ready';
+                }, 3000);
+                return;
+            }
+
+            // Handle recovery behaviors
+            if (recoveryMode) {
+                recoveryTimer += dt;
+                
+                if (recoveryMode === 'rotate') {
+                    // Rotate in place to find clear path
+                    robot.omega = robot.maxOmega * 0.7;
+                    robot.theta += robot.omega * dt;
+                    while (robot.theta > Math.PI) robot.theta -= 2 * Math.PI;
+                    while (robot.theta < -Math.PI) robot.theta += 2 * Math.PI;
+                    robot.vx = 0;
+                    robot.vy = 0;
+                    
+                    if (recoveryTimer > 2.0) { // Rotate for 2 seconds
+                        recoveryMode = 'replan';
+                        recoveryTimer = 0;
+                        addLog('INFO', 'Recovery rotation complete, attempting replan');
+                    }
+                } else if (recoveryMode === 'backup') {
+                    // Back up slowly
+                    const backupSpeed = -robot.maxV * 0.3;
+                    robot.vx = Math.cos(robot.theta) * backupSpeed;
+                    robot.vy = Math.sin(robot.theta) * backupSpeed;
+                    robot.omega = 0;
+                    
+                    moveRobot(dt);
+                    
+                    if (recoveryTimer > 1.5) { // Back up for 1.5 seconds
+                        recoveryMode = 'rotate';
+                        recoveryTimer = 0;
+                        addLog('INFO', 'Backup complete, attempting rotation recovery');
+                    }
+                } else if (recoveryMode === 'replan') {
+                    const newPath = computePath(robot, goal);
+                    if (newPath.length > 0) {
+                        globalPath = newPath;
+                        replans++;
+                        document.getElementById('replansDisplay').textContent = replans;
+                        addLog('INFO', 'Recovery successful - new path found');
+                        recoveryMode = null;
+                        recoveryTimer = 0;
+                        stuckTimer = 0;
+                        updateBT('following');
+                    } else {
+                        // If replan fails, try backing up
+                        recoveryMode = 'backup';
+                        recoveryTimer = 0;
+                        addLog('WARN', 'Replan failed, attempting backup recovery');
+                    }
+                }
+                
+                updateDisplays();
+                return;
+            }
+
+            // Remove waypoints that are behind the robot (more conservative)
+            while (globalPath.length > 2) {
+                const dx = globalPath[0].x - robot.x;
+                const dy = globalPath[0].y - robot.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Check if waypoint is behind robot
+                const toWaypoint = Math.atan2(dy, dx);
+                let angleDiff = toWaypoint - robot.theta;
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                // Only remove if close AND roughly behind or very close
+                if (dist < 0.25 || (dist < 0.5 && Math.abs(angleDiff) > Math.PI * 0.6)) {
+                    globalPath.shift();
+                } else {
+                    break;
+                }
+            }
+
+            // Check if path needs replanning (more comprehensive)
+            replanTimer += dt;
+            if (replanTimer > 0.5) { // Check every 0.5 seconds
+                replanTimer = 0;
+                
+                // Check if current path is blocked (look further ahead)
+                let pathBlocked = false;
+                let blockedIndex = -1;
+                const checkAhead = Math.min(10, globalPath.length);
+                for (let i = 0; i < checkAhead; i++) {
+                    if (!isValidPos(globalPath[i].x, globalPath[i].y, ROBOT_RADIUS + SAFETY_MARGIN)) {
+                        pathBlocked = true;
+                        blockedIndex = i;
+                        break;
+                    }
+                }
+
+                if (pathBlocked || (globalPath.length === 0 && goalDist > tol * 2)) {
+                    if (pathBlocked) {
+                        addLog('WARN', `Obstacle detected blocking waypoint ${blockedIndex}, replanning path...`);
+                    } else {
+                        addLog('WARN', 'Path empty, replanning...');
+                    }
+                    updateBT('planning');
+                    const newPath = computePath(robot, goal);
+                    if (newPath.length > 0) {
+                        globalPath = newPath;
+                        replans++;
+                        stuckTimer = 0;
+                        document.getElementById('replansDisplay').textContent = replans;
+                        addLog('INFO', 'New path computed successfully');
+                        updateBT('following');
+                    } else {
+                        addLog('ERROR', 'Unable to find valid path, starting recovery');
+                        updateBT('recovery');
+                        recoveryMode = 'rotate';
+                        recoveryTimer = 0;
+                    }
+                    return;
+                }
+            }
+
+            // Check if robot is making progress (stuck detection)
+            const currentSpeed = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
+            if (currentSpeed < robot.maxV * 0.1 && goalDist > tol * 2) {
+                stuckTimer += dt;
+                if (stuckTimer > 3.0) { // Stuck for 3 seconds
+                    addLog('WARN', 'Robot appears stuck, initiating recovery behavior');
+                    updateBT('recovery');
+                    recoveryMode = 'backup';
+                    recoveryTimer = 0;
+                    stuckTimer = 0;
+                    return;
+                }
+            } else {
+                stuckTimer = 0;
+            }
+
+            // If no path, try direct approach to goal
+            if (globalPath.length === 0) {
+                if (goalDist < tol * 3 && isLineOfSightClear(robot, goal)) {
+                    const targetAngle = Math.atan2(goalDy, goalDx);
+                    let angleDiff = targetAngle - robot.theta;
+                    while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                    while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                    
+                    robot.omega = Math.max(-robot.maxOmega, Math.min(robot.maxOmega, angleDiff * 2.5));
+                    robot.theta += robot.omega * dt;
+                    while (robot.theta > Math.PI) robot.theta -= 2 * Math.PI;
+                    while (robot.theta < -Math.PI) robot.theta += 2 * Math.PI;
+                    
+                    const speed = Math.min(robot.maxV * 0.5, goalDist * 0.7);
+                    robot.vx = Math.cos(robot.theta) * speed;
+                    robot.vy = Math.sin(robot.theta) * speed;
+                    
+                    moveRobot(dt);
+                    updateDisplays();
+                }
+                return;
+            }
+
+            // Pure Pursuit Algorithm - improved lookahead
+            const speedFactor = Math.min(1.0, currentSpeed / robot.maxV);
+            const baseLookahead = 0.5 + speedFactor * 0.5; // Adaptive: 0.5-1.0m based on speed
+            const lookaheadDist = Math.min(baseLookahead, goalDist * 0.7);
+            
+            // Find the point on the path closest to lookahead distance
+            let targetPoint = null;
+            let closestIdx = 0;
+            let minDistDiff = Infinity;
+            
+            for (let i = 0; i < globalPath.length; i++) {
+                const dx = globalPath[i].x - robot.x;
+                const dy = globalPath[i].y - robot.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                const distDiff = Math.abs(dist - lookaheadDist);
+                if (distDiff < minDistDiff && dist >= lookaheadDist * 0.5) {
+                    minDistDiff = distDiff;
+                    targetPoint = globalPath[i];
+                    closestIdx = i;
+                }
+            }
+            
+            // If no good lookahead point found, use nearest path point ahead
+            if (!targetPoint && globalPath.length > 0) {
+                targetPoint = globalPath[Math.min(1, globalPath.length - 1)];
+            }
+
+            if (!targetPoint) {
+                // Fallback: go directly to goal
+                targetPoint = goal;
+            }
+
+            // Local obstacle avoidance - check immediate vicinity
+            const obstacleInPath = !isValidPos(
+                robot.x + Math.cos(robot.theta) * (ROBOT_RADIUS + 0.3),
+                robot.y + Math.sin(robot.theta) * (ROBOT_RADIUS + 0.3),
+                ROBOT_RADIUS
+            );
+
+            // Calculate target angle
+            const dx = targetPoint.x - robot.x;
+            const dy = targetPoint.y - robot.y;
+            const targetAngle = Math.atan2(dy, dx);
+
+            // Calculate angle difference (error)
+            let angleDiff = targetAngle - robot.theta;
+            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+            // Pure Pursuit steering control
+            const L = Math.sqrt(dx * dx + dy * dy); // Distance to target point
+            const alpha = angleDiff; // Angle to target
+            
+            // Calculate angular velocity using Pure Pursuit formula
+            let angularVelocity;
+            
+            if (L > 0.01) {
+                // Improved Pure Pursuit with curvature limiting
+                angularVelocity = (2 * robot.maxV * Math.sin(alpha)) / L;
+                // Limit angular velocity
+                angularVelocity = Math.max(-robot.maxOmega, Math.min(robot.maxOmega, angularVelocity));
+            } else {
+                angularVelocity = 0;
+            }
+            
+            robot.omega = angularVelocity;
+            robot.theta += robot.omega * dt;
+            while (robot.theta > Math.PI) robot.theta -= 2 * Math.PI;
+            while (robot.theta < -Math.PI) robot.theta += 2 * Math.PI;
+
+            // Linear velocity control with better speed regulation
+            let speed;
+            const absAngleDiff = Math.abs(angleDiff);
+            
+            if (obstacleInPath) {
+                // Obstacle directly ahead - slow down significantly
+                speed = robot.maxV * 0.15;
+            } else if (absAngleDiff < Math.PI / 12) {
+                // Very well aligned - full speed
+                speed = robot.maxV;
+            } else if (absAngleDiff < Math.PI / 6) {
+                // Well aligned - 80% speed
+                speed = robot.maxV * 0.8;
+            } else if (absAngleDiff < Math.PI / 4) {
+                // Medium alignment - 60% speed
+                speed = robot.maxV * 0.6;
+            } else if (absAngleDiff < Math.PI / 2) {
+                // Poor alignment - 35% speed
+                speed = robot.maxV * 0.35;
+            } else {
+                // Very poor alignment - rotate in place
+                speed = robot.maxV * 0.1;
+            }
+
+            // Slow down near goal for smooth arrival
+            if (goalDist < 2.0) {
+                const goalFactor = Math.max(0.25, goalDist / 2.0);
+                speed *= goalFactor;
+            }
+
+            // Slow down for tight turns
+            const curvature = Math.abs(robot.omega);
+            if (curvature > robot.maxOmega * 0.5) {
+                const curvatureFactor = 1.0 - (curvature / robot.maxOmega) * 0.5;
+                speed *= curvatureFactor;
+            }
+
+            robot.vx = Math.cos(robot.theta) * speed;
+            robot.vy = Math.sin(robot.theta) * speed;
+
+            moveRobot(dt);
+
+            // Generate local trajectory for visualization
+            localTraj = [];
+            let simX = robot.x;
+            let simY = robot.y;
+            let simTheta = robot.theta;
+            const simSpeed = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
+            for (let t = 0; t < 1.5; t += 0.1) {
+                simX += Math.cos(simTheta) * simSpeed * 0.1;
+                simY += Math.sin(simTheta) * simSpeed * 0.1;
+                simTheta += robot.omega * 0.1;
+                localTraj.push({x: simX, y: simY});
+            }
+
+            // Update displays
+            updateDisplays();
+        }
+
+        // Separate movement function with collision handling and boundary enforcement
+        function moveRobot(dt) {
+            const newX = robot.x + robot.vx * dt;
+            const newY = robot.y + robot.vy * dt;
+
+            // Try the desired movement
+            if (isValidPos(newX, newY)) {
+                robot.x = newX;
+                robot.y = newY;
+            } else {
+                // Try moving only in X direction
+                const xOnlyValid = isValidPos(robot.x + robot.vx * dt, robot.y);
+                const yOnlyValid = isValidPos(robot.x, robot.y + robot.vy * dt);
+                
+                if (xOnlyValid) {
+                    // Can move in X, obstacle in Y direction
+                    robot.x += robot.vx * dt;
+                    robot.vy = 0;
+                } else if (yOnlyValid) {
+                    // Can move in Y, obstacle in X direction
+                    robot.y += robot.vy * dt;
+                    robot.vx = 0;
+                } else {
+                    // Try moving with greatly reduced speed in the direction we're facing
+                    const slowSpeed = 0.15;
+                    const slowX = robot.x + Math.cos(robot.theta) * slowSpeed * robot.maxV * dt;
+                    const slowY = robot.y + Math.sin(robot.theta) * slowSpeed * robot.maxV * dt;
+                    
+                    if (isValidPos(slowX, slowY)) {
+                        robot.x = slowX;
+                        robot.y = slowY;
+                        robot.vx = Math.cos(robot.theta) * slowSpeed * robot.maxV;
+                        robot.vy = Math.sin(robot.theta) * slowSpeed * robot.maxV;
+                    } else {
+                        // Completely blocked - stop and increment stuck timer
+                        robot.vx = 0;
+                        robot.vy = 0;
+                    }
+                }
+            }
+
+            // Strictly enforce boundaries - never let robot escape
+            const boundaryMargin = ROBOT_RADIUS + 0.3;
+            robot.x = Math.max(boundaryMargin, Math.min(worldWidth - boundaryMargin, robot.x));
+            robot.y = Math.max(boundaryMargin, Math.min(worldHeight - boundaryMargin, robot.y));
+            
+            // If we hit a boundary, zero out velocity in that direction
+            if (robot.x <= boundaryMargin || robot.x >= worldWidth - boundaryMargin) {
+                robot.vx = 0;
+            }
+            if (robot.y <= boundaryMargin || robot.y >= worldHeight - boundaryMargin) {
+                robot.vy = 0;
+            }
+        }
+
+        // Update displays
+        function updateDisplays() {
+            document.getElementById('poseDisplay').textContent = 
+                `${robot.x.toFixed(2)}, ${robot.y.toFixed(2)}, ${robot.theta.toFixed(2)}`;
+            
+            const v = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
+            document.getElementById('velDisplay').textContent = `${v.toFixed(2)} m/s`;
+            
+            if (goal) {
+                const dx = goal.x - robot.x;
+                const dy = goal.y - robot.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                document.getElementById('distDisplay').textContent = `${dist.toFixed(2)} m`;
+                
+                let pathLen = 0;
+                for (let i = 1; i < globalPath.length; i++) {
+                    const dx = globalPath[i].x - globalPath[i-1].x;
+                    const dy = globalPath[i].y - globalPath[i-1].y;
+                    pathLen += Math.sqrt(dx * dx + dy * dy);
+                }
+                document.getElementById('pathDisplay').textContent = `${pathLen.toFixed(2)} m`;
+                document.getElementById('planHz').textContent = '10 Hz';
+                
+                // Periodic console logging during navigation (every 2 seconds)
+                const currentTime = Date.now();
+                if (currentTime - lastLogTime > 2000) {
+                    lastLogTime = currentTime;
+                    
+                    // Log velocity change
+                    if (v > 0.01) {
+                        addLog('INFO', `Navigating: velocity ${v.toFixed(2)} m/s, distance to goal ${dist.toFixed(2)} m`);
+                    }
+                    
+                    // Log waypoint progress
+                    if (globalPath.length !== lastWaypointCount) {
+                        if (lastWaypointCount > globalPath.length && lastWaypointCount > 0) {
+                            addLog('INFO', `Waypoint reached, ${globalPath.length} waypoints remaining`);
+                        }
+                        lastWaypointCount = globalPath.length;
+                    }
+                    
+                    // Log if robot is moving slowly (potential issue)
+                    if (v < 0.05 && dist > 0.5) {
+                        addLog('WARN', 'Low velocity detected, checking for obstacles');
+                    }
+                }
+            } else {
+                document.getElementById('distDisplay').textContent = '—';
+                document.getElementById('pathDisplay').textContent = '—';
+                document.getElementById('planHz').textContent = '— Hz';
+            }
+        }
+
+        // Update moving obstacles
+        function updateObstacles(dt) {
+            for (let obs of obstacles) {
+                if (obs.vx === 0 && obs.vy === 0) continue;
+
+                const newX = obs.x + obs.vx * dt;
+                const newY = obs.y + obs.vy * dt;
+
+                // Check wall collisions
+                let hitWall = false;
+                for (let wall of walls) {
+                    let collision = false;
+                    
+                    if (obs.shape === 'rect') {
+                        const hw = obs.width / 2;
+                        const hh = obs.height / 2;
+                        collision = (newX - hw < wall.x + wall.w && newX + hw > wall.x &&
+                                   newY - hh < wall.y + wall.h && newY + hh > wall.y);
+                    } else {
+                        collision = (newX - obs.r < wall.x + wall.w && newX + obs.r > wall.x &&
+                                   newY - obs.r < wall.y + wall.h && newY + obs.r > wall.y);
+                    }
+                    
+                    if (collision) {
+                        hitWall = true;
+                        break;
+                    }
+                }
+
+                if (hitWall) {
+                    obs.vx *= -1;
+                    obs.vy *= -1;
+                } else {
+                    obs.x = newX;
+                    obs.y = newY;
+                }
+
+                // Boundary check
+                const margin = obs.shape === 'rect' ? Math.max(obs.width, obs.height) / 2 : obs.r;
+                if (obs.x - margin < 0.2 || obs.x + margin > worldWidth - 0.2) obs.vx *= -1;
+                if (obs.y - margin < 0.2 || obs.y + margin > worldHeight - 0.2) obs.vy *= -1;
+
+                obs.x = Math.max(margin + 0.2, Math.min(worldWidth - margin - 0.2, obs.x));
+                obs.y = Math.max(margin + 0.2, Math.min(worldHeight - margin - 0.2, obs.y));
+            }
+        }
+
+        // Render function with enhanced visuals
+        function render() {
+            // Background with subtle gradient
+            const bgGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            bgGrad.addColorStop(0, '#0d1117');
+            bgGrad.addColorStop(1, '#161b22');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Floor tiles for realism
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+            ctx.lineWidth = 1;
+            const tileSize = SCALE * 2;
+            for (let x = 0; x < canvas.width; x += tileSize) {
+                for (let y = 0; y < canvas.height; y += tileSize) {
+                    if ((Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0) {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.01)';
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                    }
+                }
+            }
+
+            // Grid with subtle depth
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += SCALE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += SCALE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Walls with 3D effect and shadows
+            for (let wall of walls) {
+                const x = wall.x * SCALE;
+                const y = wall.y * SCALE;
+                const w = wall.w * SCALE;
+                const h = wall.h * SCALE;
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(x + 3, y + 3, w, h);
+                
+                // Wall gradient for 3D effect
+                const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+                grad.addColorStop(0, '#3a3f47');
+                grad.addColorStop(1, '#2a2e33');
+                ctx.fillStyle = grad;
+                ctx.fillRect(x, y, w, h);
+                
+                // Highlight edge for depth
+                ctx.strokeStyle = '#4a4f57';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, y, w, h);
+            }
+
+            // Global costmap inflation
+            if (showGlobal && showInflation) {
+                ctx.fillStyle = 'rgba(248, 113, 113, 0.08)';
+                for (let wall of walls) {
+                    const inf = 0.3;
+                    ctx.fillRect(
+                        (wall.x - inf) * SCALE,
+                        (wall.y - inf) * SCALE,
+                        (wall.w + inf * 2) * SCALE,
+                        (wall.h + inf * 2) * SCALE
+                    );
+                }
+            }
+
+            // Obstacles with enhanced visuals
+            for (let obs of obstacles) {
+                const centerX = obs.x * SCALE;
+                const centerY = obs.y * SCALE;
+                
+                // Inflation layer
+                if (showInflation) {
+                    ctx.fillStyle = 'rgba(248, 113, 113, 0.12)';
+                    if (obs.shape === 'rect') {
+                        const hw = obs.width / 2;
+                        const hh = obs.height / 2;
+                        const inf = ROBOT_RADIUS + SAFETY_MARGIN;
+                        ctx.fillRect(
+                            (obs.x - hw - inf) * SCALE,
+                            (obs.y - hh - inf) * SCALE,
+                            (obs.width + inf * 2) * SCALE,
+                            (obs.height + inf * 2) * SCALE
+                        );
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(
+                            centerX, centerY,
+                            (obs.r + ROBOT_RADIUS + SAFETY_MARGIN) * SCALE,
+                            0, Math.PI * 2
+                        );
+                        ctx.fill();
+                    }
+                }
+
+                // Draw obstacles with realistic styling
+                if (obs.shape === 'rect') {
+                    const hw = obs.width / 2;
+                    const hh = obs.height / 2;
+                    const x = (obs.x - hw) * SCALE;
+                    const y = (obs.y - hh) * SCALE;
+                    const w = obs.width * SCALE;
+                    const h = obs.height * SCALE;
+                    
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                    ctx.fillRect(x + 4, y + 4, w, h);
+                    
+                    // Main object with gradient
+                    let grad;
+                    switch(obs.type) {
+                        case 'furniture':
+                            grad = ctx.createLinearGradient(x, y, x + w, y + h);
+                            grad.addColorStop(0, '#a0522d');
+                            grad.addColorStop(0.5, '#8b4513');
+                            grad.addColorStop(1, '#6b3410');
+                            ctx.fillStyle = grad;
+                            ctx.fillRect(x, y, w, h);
+                            // Wood grain effect
+                            ctx.strokeStyle = 'rgba(101, 67, 33, 0.3)';
+                            ctx.lineWidth = 1;
+                            for (let i = 0; i < 3; i++) {
+                                ctx.beginPath();
+                                ctx.moveTo(x + (w * (i + 1) / 4), y);
+                                ctx.lineTo(x + (w * (i + 1) / 4), y + h);
+                                ctx.stroke();
+                            }
+                            break;
+                        case 'box':
+                            grad = ctx.createLinearGradient(x, y, x + w, y + h);
+                            grad.addColorStop(0, '#cd853f');
+                            grad.addColorStop(1, '#8b6534');
+                            ctx.fillStyle = grad;
+                            ctx.fillRect(x, y, w, h);
+                            // Box tape lines
+                            ctx.strokeStyle = '#d2691e';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
+                            break;
+                    }
+                    
+                    // Border
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, w, h);
+                    
+                } else {
+                    // Circular obstacles (people, robots)
+                    const radius = obs.r * SCALE;
+                    
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                    ctx.beginPath();
+                    ctx.arc(centerX + 3, centerY + 3, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Main object with radial gradient
+                    const grad = ctx.createRadialGradient(
+                        centerX - radius * 0.3, centerY - radius * 0.3, 0,
+                        centerX, centerY, radius
+                    );
+                    
+                    switch(obs.type) {
+                        case 'person':
+                            grad.addColorStop(0, '#60a5fa');
+                            grad.addColorStop(0.7, '#3b82f6');
+                            grad.addColorStop(1, '#1e40af');
+                            ctx.fillStyle = grad;
+                            ctx.beginPath();
+                            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                            ctx.fill();
+                            // Person icon
+                            ctx.fillStyle = '#ffffff';
+                            ctx.beginPath();
+                            ctx.arc(centerX, centerY - radius * 0.2, radius * 0.3, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.fillRect(centerX - radius * 0.25, centerY + radius * 0.1, radius * 0.5, radius * 0.6);
+                            break;
+                        case 'robot':
+                            grad.addColorStop(0, '#a78bfa');
+                            grad.addColorStop(0.7, '#8b5cf6');
+                            grad.addColorStop(1, '#6d28d9');
+                            ctx.fillStyle = grad;
+                            ctx.beginPath();
+                            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                            ctx.fill();
+                            // Robot details
+                            ctx.strokeStyle = '#e9d5ff';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.arc(centerX, centerY, radius * 0.7, 0, Math.PI * 2);
+                            ctx.stroke();
+                            break;
+                        default:
+                            grad.addColorStop(0, '#9ca3af');
+                            grad.addColorStop(1, '#4b5563');
+                            ctx.fillStyle = grad;
+                            ctx.beginPath();
+                            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                            ctx.fill();
+                    }
+                    
+                    // Border
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Movement indicator with arrow
+                if (obs.vx !== 0 || obs.vy !== 0) {
+                    const angle = Math.atan2(obs.vy, obs.vx);
+                    const arrowLen = 0.5;
+                    const arrowWidth = 0.15;
+                    
+                    const tipX = (obs.x + Math.cos(angle) * arrowLen) * SCALE;
+                    const tipY = (obs.y + Math.sin(angle) * arrowLen) * SCALE;
+                    
+                    // Arrow shaft
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(tipX, tipY);
+                    ctx.stroke();
+                    
+                    // Arrow head
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.beginPath();
+                    ctx.moveTo(tipX, tipY);
+                    ctx.lineTo(
+                        tipX - Math.cos(angle - 0.5) * arrowWidth * SCALE,
+                        tipY - Math.sin(angle - 0.5) * arrowWidth * SCALE
+                    );
+                    ctx.lineTo(
+                        tipX - Math.cos(angle + 0.5) * arrowWidth * SCALE,
+                        tipY - Math.sin(angle + 0.5) * arrowWidth * SCALE
+                    );
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // Draw labels for furniture
+                if (obs.type === 'furniture' && obs.label) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.font = '11px "Roboto", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(obs.label, centerX, centerY);
+                }
+            }
+
+            // Local costmap with scanning effect
+            if (showLocal) {
+                const radius = 2.0;
+                const robotX = robot.x * SCALE;
+                const robotY = robot.y * SCALE;
+                
+                // Outer boundary
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath();
+                ctx.arc(robotX, robotY, radius * SCALE, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Gradient fill
+                const grad = ctx.createRadialGradient(
+                    robotX, robotY, 0,
+                    robotX, robotY, radius * SCALE
+                );
+                grad.addColorStop(0, 'rgba(59, 130, 246, 0.15)');
+                grad.addColorStop(0.7, 'rgba(59, 130, 246, 0.05)');
+                grad.addColorStop(1, 'rgba(59, 130, 246, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(robotX, robotY, radius * SCALE, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Rotating scan line effect
+                const scanAngle = (Date.now() % 2000) / 2000 * Math.PI * 2;
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(robotX, robotY);
+                ctx.lineTo(
+                    robotX + Math.cos(scanAngle) * radius * SCALE,
+                    robotY + Math.sin(scanAngle) * radius * SCALE
+                );
+                ctx.stroke();
+            }
+
+            // Global path with gradient and glow
+            if (showPath && globalPath.length > 1) {
+                // Path shadow/glow
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+                ctx.lineWidth = 8;
+                ctx.shadowColor = '#3b82f6';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.moveTo(globalPath[0].x * SCALE, globalPath[0].y * SCALE);
+                for (let i = 1; i < globalPath.length; i++) {
+                    ctx.lineTo(globalPath[i].x * SCALE, globalPath[i].y * SCALE);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                // Main path line
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(globalPath[0].x * SCALE, globalPath[0].y * SCALE);
+                for (let i = 1; i < globalPath.length; i++) {
+                    ctx.lineTo(globalPath[i].x * SCALE, globalPath[i].y * SCALE);
+                }
+                ctx.stroke();
+
+                // Waypoint markers with gradient
+                for (let i = 0; i < globalPath.length; i++) {
+                    const p = globalPath[i];
+                    const px = p.x * SCALE;
+                    const py = p.y * SCALE;
+                    
+                    // Progress gradient (from start to goal)
+                    const progress = i / (globalPath.length - 1);
+                    const grad = ctx.createRadialGradient(px, py, 0, px, py, 4);
+                    grad.addColorStop(0, `rgba(59, 130, 246, ${1 - progress * 0.5})`);
+                    grad.addColorStop(1, `rgba(37, 99, 235, ${1 - progress * 0.5})`);
+                    
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Outer ring
+                    ctx.strokeStyle = '#60a5fa';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 4, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            // Local trajectory with fading effect
+            if (showLocalTraj && localTraj.length > 1) {
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                
+                // Draw trajectory with fading opacity
+                for (let i = 1; i < localTraj.length; i++) {
+                    const alpha = 0.6 - (i / localTraj.length) * 0.4;
+                    ctx.strokeStyle = `rgba(96, 165, 250, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.moveTo(localTraj[i-1].x * SCALE, localTraj[i-1].y * SCALE);
+                    ctx.lineTo(localTraj[i].x * SCALE, localTraj[i].y * SCALE);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+            }
+
+            // Laser scan with realistic effects
+            if (showLaser) {
+                const numRays = 32;
+                const maxRange = 3.0;
+                const robotX = robot.x * SCALE;
+                const robotY = robot.y * SCALE;
+
+                for (let i = 0; i < numRays; i++) {
+                    const angle = robot.theta - Math.PI + (i / numRays) * 2 * Math.PI;
+                    const endX = robot.x + Math.cos(angle) * maxRange;
+                    const endY = robot.y + Math.sin(angle) * maxRange;
+
+                    let hitX = endX;
+                    let hitY = endY;
+                    let hitDist = maxRange;
+
+                    for (let d = 0.1; d < maxRange; d += 0.1) {
+                        const testX = robot.x + Math.cos(angle) * d;
+                        const testY = robot.y + Math.sin(angle) * d;
+                        
+                        if (!isValidPos(testX, testY, 0)) {
+                            hitX = testX;
+                            hitY = testY;
+                            hitDist = d;
+                            break;
+                        }
+                    }
+
+                    // Laser ray with distance-based opacity
+                    const alpha = 0.15 * (1 - hitDist / maxRange);
+                    ctx.strokeStyle = `rgba(78, 201, 176, ${alpha})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(robotX, robotY);
+                    ctx.lineTo(hitX * SCALE, hitY * SCALE);
+                    ctx.stroke();
+
+                    // Hit point with glow
+                    if (hitDist < maxRange) {
+                        const pointAlpha = 0.8 * (1 - hitDist / maxRange);
+                        
+                        // Glow effect
+                        ctx.fillStyle = `rgba(78, 201, 176, ${pointAlpha * 0.3})`;
+                        ctx.beginPath();
+                        ctx.arc(hitX * SCALE, hitY * SCALE, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Point
+                        ctx.fillStyle = `rgba(78, 201, 176, ${pointAlpha})`;
+                        ctx.beginPath();
+                        ctx.arc(hitX * SCALE, hitY * SCALE, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                
+                // Laser scanner housing on robot
+                ctx.strokeStyle = 'rgba(78, 201, 176, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(robotX, robotY, ROBOT_RADIUS * SCALE * 0.3, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Robot with enhanced 3D appearance
+            if (showFootprint) {
+                const robotX = robot.x * SCALE;
+                const robotY = robot.y * SCALE;
+                const robotR = ROBOT_RADIUS * SCALE;
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.arc(robotX + 4, robotY + 4, robotR * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Footprint circle (safety boundary)
+                ctx.strokeStyle = 'rgba(78, 201, 176, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(robotX, robotY, robotR, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Robot body with gradient
+                const bodyGrad = ctx.createRadialGradient(
+                    robotX - robotR * 0.2, robotY - robotR * 0.2, 0,
+                    robotX, robotY, robotR * 0.8
+                );
+                bodyGrad.addColorStop(0, '#2d3748');
+                bodyGrad.addColorStop(0.7, '#1a202c');
+                bodyGrad.addColorStop(1, '#0d1117');
+                ctx.fillStyle = bodyGrad;
+                ctx.beginPath();
+                ctx.arc(robotX, robotY, robotR * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Robot border with glow
+                ctx.strokeStyle = '#4ec9b0';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#4ec9b0';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(robotX, robotY, robotR * 0.8, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Direction indicator (front arrow)
+                const arrowLen = robotR * 0.9;
+                const arrowTipX = robotX + Math.cos(robot.theta) * arrowLen;
+                const arrowTipY = robotY + Math.sin(robot.theta) * arrowLen;
+                
+                // Arrow glow
+                ctx.strokeStyle = '#4ec9b0';
+                ctx.lineWidth = 5;
+                ctx.shadowColor = '#4ec9b0';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.moveTo(robotX, robotY);
+                ctx.lineTo(arrowTipX, arrowTipY);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                // Arrow head
+                const arrowHeadLen = robotR * 0.3;
+                ctx.fillStyle = '#4ec9b0';
+                ctx.beginPath();
+                ctx.moveTo(arrowTipX, arrowTipY);
+                ctx.lineTo(
+                    arrowTipX - Math.cos(robot.theta - 0.5) * arrowHeadLen,
+                    arrowTipY - Math.sin(robot.theta - 0.5) * arrowHeadLen
+                );
+                ctx.lineTo(
+                    arrowTipX - Math.cos(robot.theta + 0.5) * arrowHeadLen,
+                    arrowTipY - Math.sin(robot.theta + 0.5) * arrowHeadLen
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // Robot center dot
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(robotX, robotY, robotR * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Speed indicator (pulsing rings when moving)
+                const speed = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
+                if (speed > 0.05) {
+                    const pulsePhase = (Date.now() % 1000) / 1000;
+                    ctx.strokeStyle = `rgba(78, 201, 176, ${0.5 - pulsePhase * 0.5})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(robotX, robotY, robotR * (0.9 + pulsePhase * 0.4), 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            // Goal marker with animation
+            if (goal) {
+                const goalX = goal.x * SCALE;
+                const goalY = goal.y * SCALE;
+                const pulsePhase = (Date.now() % 1500) / 1500;
+                const pulseSize = 1 + Math.sin(pulsePhase * Math.PI * 2) * 0.2;
+                
+                // Outer pulsing ring
+                ctx.strokeStyle = `rgba(245, 158, 11, ${0.4 - pulsePhase * 0.3})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(goalX, goalY, 0.4 * SCALE * pulseSize, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Inner filled circle with gradient
+                const goalGrad = ctx.createRadialGradient(
+                    goalX, goalY, 0,
+                    goalX, goalY, 0.3 * SCALE
+                );
+                goalGrad.addColorStop(0, 'rgba(251, 191, 36, 0.4)');
+                goalGrad.addColorStop(1, 'rgba(245, 158, 11, 0.2)');
+                ctx.fillStyle = goalGrad;
+                ctx.beginPath();
+                ctx.arc(goalX, goalY, 0.3 * SCALE, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Border
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#f59e0b';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(goalX, goalY, 0.3 * SCALE, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Crosshair marker
+                const crossSize = 0.5 * SCALE;
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(goalX, goalY - crossSize);
+                ctx.lineTo(goalX, goalY + crossSize);
+                ctx.moveTo(goalX - crossSize, goalY);
+                ctx.lineTo(goalX + crossSize, goalY);
+                ctx.stroke();
+                
+                // Center dot
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath();
+                ctx.arc(goalX, goalY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Mouse interaction
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / SCALE;
+            const y = (e.clientY - rect.top) / SCALE;
+
+            if (mode === 'goal') {
+                if (!isValidPos(x, y)) {
+                    addLog('WARN', 'Invalid goal position - in collision or out of bounds');
+                    showInstruction('Cannot set goal in collision or out of bounds');
+                    return;
+                }
+
+                goal = {x, y};
+                updateBT('planning');
+                document.getElementById('stateDisplay').textContent = 'Planning';
+                addLog('INFO', `New goal received: (${x.toFixed(2)}, ${y.toFixed(2)})`);
+                
+                globalPath = computePath(robot, goal);
+                
+                if (globalPath.length > 0) {
+                    updateBT('following');
+                    document.getElementById('stateDisplay').textContent = 'Navigating';
+                    document.getElementById('planHz').textContent = '10 Hz';
+                    addLog('INFO', 'Path computed, navigation started');
+                    showInstruction('Navigation started');
+                } else {
+                    updateBT('recovery');
+                    addLog('ERROR', 'Failed to compute path to goal');
+                    showInstruction('No valid path to goal');
+                }
+            } else if (mode === 'obstacle') {
+                const type = selectedObstacleType;
+                const isMoving = obstacleMoving;
+                
+                let obstacleData;
+                switch(type) {
+                    case 'box':
+                        obstacleData = {
+                            type: 'box',
+                            shape: 'rect',
+                            width: 0.6 + Math.random() * 0.4,
+                            height: 0.6 + Math.random() * 0.4,
+                            r: 0.4,
+                            vx: isMoving ? (Math.random() - 0.5) * 0.2 : 0,
+                            vy: isMoving ? (Math.random() - 0.5) * 0.2 : 0
+                        };
+                        break;
+                    case 'person':
+                        obstacleData = {
+                            type: 'person',
+                            shape: 'circle',
+                            r: 0.3,
+                            vx: isMoving ? (Math.random() - 0.5) * 0.2 : 0,
+                            vy: isMoving ? (Math.random() - 0.5) * 0.2 : 0
+                        };
+                        break;
+                    case 'robot':
+                        obstacleData = {
+                            type: 'robot',
+                            shape: 'circle',
+                            r: 0.25,
+                            vx: isMoving ? (Math.random() - 0.5) * 0.15 : 0,
+                            vy: isMoving ? (Math.random() - 0.5) * 0.15 : 0
+                        };
+                        break;
+                    case 'furniture':
+                        obstacleData = {
+                            type: 'furniture',
+                            shape: 'rect',
+                            width: 1.0 + Math.random() * 0.8,
+                            height: 0.8 + Math.random() * 0.4,
+                            r: 0.5,
+                            vx: 0,
+                            vy: 0,
+                            label: 'Object'
+                        };
+                        break;
+                }
+                
+                obstacles.push({
+                    x, 
+                    y,
+                    ...obstacleData
+                });
+                
+                const movingText = isMoving ? ' (moving)' : ' (static)';
+                addLog('WARN', `${obstacleData.type} obstacle added${movingText}`);
+                showInstruction(`${obstacleData.type} added${movingText}`);
+            } else if (mode === 'pose') {
+                if (!isValidPos(x, y)) {
+                    addLog('WARN', 'Invalid pose - in collision or out of bounds');
+                    showInstruction('Cannot set pose in collision or out of bounds');
+                    return;
+                }
+                
+                robot.x = x;
+                robot.y = y;
+                robot.theta = 0;
+                addLog('INFO', `Initial pose set to (${x.toFixed(2)}, ${y.toFixed(2)}, 0.00)`);
+                showInstruction('Robot pose updated');
+            }
+        });
+
+        // Tool selection
+        document.getElementById('toolGoal').addEventListener('click', function() {
+            mode = 'goal';
+            document.querySelectorAll('.tool-item').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('obstaclePanel').classList.remove('show');
+            updateModeIndicator('Click on map to set navigation goal');
+        });
+
+        document.getElementById('toolObstacle').addEventListener('click', function() {
+            mode = 'obstacle';
+            document.querySelectorAll('.tool-item').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('obstaclePanel').classList.add('show');
+            updateModeIndicator('Click on map to place obstacle');
+        });
+        
+        // Obstacle type selection
+        document.querySelectorAll('.obstacle-type-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.obstacle-type-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+                selectedObstacleType = this.dataset.type;
+            });
+        });
+        
+        // Movement toggle
+        document.getElementById('obstacleMoving').addEventListener('change', function() {
+            obstacleMoving = this.checked;
+        });
+        
+        // Environment selection
+        document.querySelectorAll('.environment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.environment-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+                selectedEnvironment = this.dataset.env;
+                
+                // Rebuild environment and reset robot
+                addLog('INFO', `Switching to ${selectedEnvironment} environment`);
+                resetSimulation();
+            });
+        });
+
+        document.getElementById('toolPose').addEventListener('click', function() {
+            mode = 'pose';
+            document.querySelectorAll('.tool-item').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('obstaclePanel').classList.remove('show');
+            updateModeIndicator('Click on map to set initial pose');
+        });
+
+        document.getElementById('toolPause').addEventListener('click', function() {
+            paused = !paused;
+            this.classList.toggle('active');
+            if (paused) {
+                addLog('WARN', 'Navigation paused');
+                document.getElementById('stateDisplay').textContent = 'Paused';
+                document.getElementById('navDot').classList.add('inactive');
+                document.getElementById('navStatus').textContent = 'Navigation Inactive';
+                showInstruction('Navigation paused - press Space or click pause to resume');
+            } else {
+                addLog('INFO', 'Navigation resumed');
+                document.getElementById('stateDisplay').textContent = goal ? 'Navigating' : 'Ready';
+                document.getElementById('navDot').classList.remove('inactive');
+                document.getElementById('navStatus').textContent = 'Navigation Active';
+                hideInstruction();
+            }
+        });
+
+        function updateModeIndicator(text) {
+            const indicator = document.getElementById('modeIndicator');
+            indicator.classList.remove('hidden');
+            indicator.querySelector('span').textContent = text;
+        }
+
+        function showInstruction(text) {
+            const banner = document.getElementById('instructionBanner');
+            banner.textContent = text;
+            banner.classList.add('show');
+            setTimeout(() => {
+                banner.classList.remove('show');
+            }, 3000);
+        }
+
+        function hideInstruction() {
+            document.getElementById('instructionBanner').classList.remove('show');
+        }
+
+        // Viewport buttons
+        document.getElementById('btnGlobalCostmap').addEventListener('click', function() {
+            showGlobal = !showGlobal;
+            this.classList.toggle('active');
+        });
+
+        document.getElementById('btnLocalCostmap').addEventListener('click', function() {
+            showLocal = !showLocal;
+            this.classList.toggle('active');
+        });
+
+        document.getElementById('btnInflation').addEventListener('click', function() {
+            showInflation = !showInflation;
+            this.classList.toggle('active');
+        });
+
+        document.getElementById('btnPath').addEventListener('click', function() {
+            showPath = !showPath;
+            this.classList.toggle('active');
+        });
+
+        // Sliders
+        document.getElementById('maxVelSlider').addEventListener('input', function() {
+            robot.maxV = parseFloat(this.value);
+            document.getElementById('maxVelDisplay').textContent = `${robot.maxV.toFixed(2)} m/s`;
+        });
+
+        document.getElementById('maxAngSlider').addEventListener('input', function() {
+            robot.maxOmega = parseFloat(this.value);
+            document.getElementById('maxAngDisplay').textContent = `${robot.maxOmega.toFixed(2)} rad/s`;
+        });
+
+        document.getElementById('tolSlider').addEventListener('input', function() {
+            document.getElementById('tolDisplay').textContent = `${this.value} m`;
+        });
+
+        // Checkboxes
+        document.getElementById('chkFootprint').addEventListener('change', function() {
+            showFootprint = this.checked;
+        });
+
+        document.getElementById('chkLaser').addEventListener('change', function() {
+            showLaser = this.checked;
+        });
+
+        document.getElementById('chkPath').addEventListener('change', function() {
+            showPath = this.checked;
+        });
+
+        document.getElementById('chkLocal').addEventListener('change', function() {
+            showLocalTraj = this.checked;
+        });
+
+        // Welcome screen
+        function closeWelcome() {
+            const dontShow = document.getElementById('dontShowAgain').checked;
+            if (dontShow) {
+                localStorage.setItem('hideWelcome', 'true');
+            }
+            document.getElementById('welcomeOverlay').classList.add('hide');
+        }
+
+        function checkWelcomeScreen() {
+            const hideWelcome = localStorage.getItem('hideWelcome');
+            if (hideWelcome === 'true') {
+                document.getElementById('welcomeOverlay').classList.add('hide');
+            }
+        }
+        
+        // Toggle environment selector
+        function toggleEnvironmentSelector() {
+            document.querySelector('.environment-selector').classList.toggle('collapsed');
+        }
+        
+        // Toggle legend
+        function toggleLegend() {
+            document.querySelector('.legend-overlay').classList.toggle('collapsed');
+        }
+        
+        // Hide mode indicator
+        function hideModeIndicator() {
+            document.getElementById('modeIndicator').classList.add('hidden');
+        }
+
+        // Help modal
+        function showHelp() {
+            document.getElementById('helpModal').classList.add('show');
+        }
+
+        function hideHelp() {
+            document.getElementById('helpModal').classList.remove('show');
+        }
+
+        // Reset simulation
+        function resetSimulation() {
+            goal = null;
+            globalPath = [];
+            localTraj = [];
+            replans = 0;
+            replanTimer = 0;
+            stuckTimer = 0;
+            recoveryMode = null;
+            recoveryTimer = 0;
+            lastLogTime = 0;
+            lastWaypointCount = 0;
+            paused = false;
+            document.getElementById('toolPause').classList.remove('active');
+            document.getElementById('replansDisplay').textContent = '0';
+            
+            buildEnvironment();
+            
+            // Find safe starting position
+            const startPos = findSafeStartPosition();
+            robot = {
+                x: startPos.x,
+                y: startPos.y,
+                theta: 0,
+                vx: 0,
+                vy: 0,
+                omega: 0,
+                maxV: parseFloat(document.getElementById('maxVelSlider').value),
+                maxOmega: parseFloat(document.getElementById('maxAngSlider').value)
+            };
+            
+            clearConsole();
+            const envNames = {
+                'house': 'Open-Concept House',
+                'warehouse': 'Warehouse Facility',
+                'industrial': 'Industrial Manufacturing Complex'
+            };
+            const envName = envNames[selectedEnvironment] || selectedEnvironment;
+            
+            addLog('INFO', '--- Navigation System Reset ---');
+            addLog('INFO', 'ROS 2 Humble - Nav2 lifecycle nodes starting');
+            addLog('INFO', `Environment: ${envName}`);
+            addLog('INFO', `Map dimensions: ${worldWidth.toFixed(1)}m x ${worldHeight.toFixed(1)}m`);
+            addLog('INFO', 'Planner: NavFn (A* octile distance)');
+            addLog('INFO', 'Controller: Pure Pursuit (adaptive)');
+            addLog('INFO', 'Recovery: [backup, rotate, replan]');
+            addLog('INFO', `Robot position: (${startPos.x.toFixed(2)}, ${startPos.y.toFixed(2)}, 0.00)`);
+            addLog('INFO', `Obstacles: ${obstacles.length} total, ${obstacles.filter(o => o.vx !== 0 || o.vy !== 0).length} dynamic`);
+            addLog('INFO', 'System ready - set navigation goal to begin');
+            addLog('INFO', '---');
+            
+            updateBT('');
+            document.getElementById('stateDisplay').textContent = 'Ready';
+            document.getElementById('navDot').classList.remove('inactive');
+            document.getElementById('navStatus').textContent = 'Navigation Active';
+            
+            updateDisplays();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'g' || e.key === 'G') {
+                document.getElementById('toolGoal').click();
+            } else if (e.key === 'o' || e.key === 'O') {
+                document.getElementById('toolObstacle').click();
+            } else if (e.key === 'p' || e.key === 'P') {
+                document.getElementById('toolPose').click();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                document.getElementById('toolPause').click();
+            } else if (e.key === 'r' || e.key === 'R') {
+                resetSimulation();
+            } else if (e.key === 'h' || e.key === 'H' || e.key === '?') {
+                showHelp();
+            } else if (e.key === 'Escape') {
+                hideHelp();
+            }
+        });
+
+        // Animation loop
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTimer = 0;
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min((time - lastTime) / 1000, 0.1);
+            lastTime = time;
+
+            frameCount++;
+            fpsTimer += dt;
+            if (fpsTimer >= 1.0) {
+                document.getElementById('fpsValue').textContent = frameCount;
+                frameCount = 0;
+                fpsTimer = 0;
+            }
+
+            if (!paused) {
+                updateRobot(dt);
+                updateObstacles(dt);
+            }
+            render();
+        }
+
+        // Initialize
+        checkWelcomeScreen();
+        
+        // Add initial welcome message to console to make it clearly visible
+        addLog('INFO', '========================================');
+        addLog('INFO', 'ROS 2 Navigation Stack Visualizer v1.0');
+        addLog('INFO', '========================================');
+        addLog('INFO', 'Console Output Active');
+        addLog('INFO', 'System initializing...');
+        addLog('INFO', '');
+        
+        resetSimulation();
+        animate(performance.now());
+    </script>
+</body>
+</html>
