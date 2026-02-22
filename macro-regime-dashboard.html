@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Regime & Tactical Allocation | Cristian Arenas</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b1120;--card:#111827;--card2:#1a2332;
+  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
+  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
+  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
+}
+body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+a{color:var(--cyan);text-decoration:none}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* NAV */
+.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s}
+.nav .back:hover{color:var(--cyan)}
+.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.nav h1 i{color:var(--cyan);font-size:14px}
+.regime-pill{margin-left:auto;padding:5px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:700;letter-spacing:.5px}
+.pill-goldilocks{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.pill-reflation{background:rgba(245,158,11,.12);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+.pill-stagflation{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.pill-deflation{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+
+/* GUIDE */
+.guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
+.guide-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.guide-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;cursor:pointer;user-select:none}
+.guide-header h2{font-size:13px;font-weight:600;color:var(--dim);display:flex;align-items:center;gap:8px}
+.guide-header h2 i{color:var(--cyan)}
+.guide-btn{background:var(--card2);border:1px solid var(--border);color:var(--dim);padding:4px 14px;border-radius:6px;font-size:11px;cursor:pointer;transition:.2s}
+.guide-btn:hover{color:var(--cyan);border-color:var(--cyan)}
+.guide-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;border-top:1px solid var(--border)}
+.guide-grid.hide{display:none}
+.guide-card{background:var(--card2);border-radius:8px;padding:12px 14px}
+.guide-card h3{font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.guide-card h3 i{font-size:11px}
+.guide-card p{font-size:12px;color:var(--dim);line-height:1.5}
+.guide-card strong{color:var(--text)}
+
+/* GRID */
+.grid{max-width:1440px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.full{grid-column:1/-1}
+
+/* PANEL */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.panel-head h3{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.panel-head h3 i{color:var(--cyan);font-size:13px}
+.panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
+.panel-body{padding:16px 18px}
+
+/* CANVAS */
+canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+
+/* SLIDER ROW */
+.slider-row{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.slider-row label{font-size:12px;color:var(--dim);white-space:nowrap;display:flex;align-items:center;gap:6px;font-weight:500}
+.slider-row label i{color:var(--cyan)}
+.slider-row input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:var(--border);border-radius:4px;outline:none}
+.slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 0 4px rgba(6,182,212,.15)}
+.slider-row .val{color:var(--cyan);font-family:var(--mono);font-size:16px;font-weight:700;min-width:70px;text-align:right}
+
+/* MOMENTUM TABLE */
+.mtable{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.mtable th{color:var(--dim);font-weight:600;padding:10px 10px;text-align:center;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.mtable th:first-child{text-align:left}
+.mtable td{padding:10px;text-align:center;border-bottom:1px solid rgba(30,41,59,.4)}
+.mtable td:first-child{text-align:left;font-weight:500}
+.mtable tr:hover{background:rgba(6,182,212,.03)}
+.sig-up2{color:var(--green);font-weight:700}
+.sig-up{color:#34d399}
+.sig-flat{color:var(--dim)}
+.sig-dn{color:#f87171}
+.sig-dn2{color:var(--red);font-weight:700}
+.badge{display:inline-block;padding:3px 10px;border-radius:5px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.badge-buy{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25)}
+.badge-sell{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.badge-hold{background:rgba(148,163,184,.08);color:var(--dim);border:1px solid rgba(148,163,184,.15)}
+
+/* ALLOC BARS */
+.arow{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+.arow:last-child{margin-bottom:0}
+.arow .lbl{min-width:95px;color:var(--dim);font-size:12px}
+.arow .bars{flex:1;display:flex;gap:3px;height:20px}
+.arow .bar{height:100%;border-radius:3px;transition:width .4s}
+.arow .nums{min-width:90px;text-align:right;font-family:var(--mono);font-size:12px;display:flex;gap:6px;justify-content:flex-end}
+.arow .nums .s{color:var(--dim)}
+.arow .nums .t{color:var(--cyan)}
+.arow .nums .d{font-weight:700}
+
+/* METRICS */
+.mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.mcard{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:90px}
+.mcard .v{font-size:16px;font-weight:700;font-family:var(--mono)}
+.mcard .v.g{color:var(--green)}.mcard .v.c{color:var(--cyan)}.mcard .v.r{color:var(--red)}.mcard .v.y{color:var(--yellow)}
+.mcard .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
+/* PACING */
+.pctrl{margin-bottom:10px}
+.pctrl label{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:4px}
+.pctrl label span:last-child{color:var(--cyan);font-family:var(--mono);font-weight:600}
+.pctrl input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:var(--border);border-radius:2px;outline:none}
+.pctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer}
+
+/* TOOLTIP */
+.tip{position:absolute;background:var(--card);border:1px solid var(--cyan);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;display:none;z-index:10;white-space:nowrap;font-family:var(--mono);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+
+/* LEGEND */
+.legend{display:flex;gap:14px;margin-top:10px;font-size:11px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px;color:var(--dim)}
+.legend .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+@media(max-width:1024px){.grid{grid-template-columns:1fr}}
+@media(max-width:600px){.nav{flex-wrap:wrap;gap:8px}.slider-row{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="back"><i class="fas fa-arrow-left"></i> Portfolio</a>
+  <h1><i class="fas fa-globe"></i> Macro Regime & Tactical Allocation</h1>
+  <div class="regime-pill pill-goldilocks" id="regimeBadge">GOLDILOCKS</div>
+</div>
+
+<div class="guide">
+  <div class="guide-box">
+    <div class="guide-header" onclick="toggleGuide()">
+      <h2><i class="fas fa-lightbulb"></i> Quick Guide</h2>
+      <button class="guide-btn" id="guideBtn">HIDE</button>
+    </div>
+    <div class="guide-grid" id="guideGrid">
+      <div class="guide-card">
+        <h3><i class="fas fa-sliders-h"></i> Timeline</h3>
+        <p>Drag the slider through <strong>Q1 2000 – Q4 2025</strong>. All panels use historical regime data and update live.</p>
+      </div>
+      <div class="guide-card">
+        <h3><i class="fas fa-th-large"></i> Regime Quadrant</h3>
+        <p>Growth vs Inflation grid with 4 regimes: <strong>Goldilocks</strong>, <strong>Reflation</strong>, <strong>Stagflation</strong>, <strong>Deflation</strong>.</p>
+      </div>
+      <div class="guide-card">
+        <h3><i class="fas fa-tachometer-alt"></i> VIX Gauge</h3>
+        <p>Implied volatility gauge + historical line chart. Colors show <strong>Low / Normal / Elevated / Crisis</strong>.</p>
+      </div>
+      <div class="guide-card">
+        <h3><i class="fas fa-signal"></i> Momentum</h3>
+        <p>Multi-horizon momentum across 8 asset classes with <strong>BUY / HOLD / SELL</strong> signals.</p>
+      </div>
+      <div class="guide-card">
+        <h3><i class="fas fa-balance-scale"></i> Allocation</h3>
+        <p>Strategic vs tactical allocation. The tilt shows <strong>over/underweight</strong> per regime.</p>
+      </div>
+      <div class="guide-card">
+        <h3><i class="fas fa-landmark"></i> J-Curve</h3>
+        <p><strong>Drag sliders</strong> to model private equity cashflows. See TVPI, DPI, RVPI, IRR live.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="slider-row full">
+    <label><i class="fas fa-clock"></i> Regime Timeline</label>
+    <input type="range" id="timeSlider" min="0" max="103" value="99">
+    <div class="val" id="yearLabel">Q4 2024</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-th-large"></i> Macro Regime Quadrant</h3>
+      <span class="tag">Growth vs Inflation</span>
+    </div>
+    <div class="panel-body" style="position:relative">
+      <canvas id="quadrantCanvas"></canvas>
+      <div class="tip" id="quadTip"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-tachometer-alt"></i> Volatility Regime & VIX</h3>
+      <span class="tag">Gauge + Historical</span>
+    </div>
+    <div class="panel-body">
+      <canvas id="vixCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="panel full">
+    <div class="panel-head">
+      <h3><i class="fas fa-signal"></i> Cross-Asset Momentum Signals</h3>
+      <span class="tag">3M / 6M / 1Y / 2Y horizons</span>
+    </div>
+    <div class="panel-body">
+      <table class="mtable" id="momTable"></table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-balance-scale"></i> Tactical vs Strategic</h3>
+      <span class="tag">Regime-driven tilts</span>
+    </div>
+    <div class="panel-body">
+      <div id="allocBars"></div>
+      <div class="legend">
+        <span><span class="dot" style="background:rgba(148,163,184,.35)"></span> Strategic</span>
+        <span><span class="dot" style="background:rgba(6,182,212,.5)"></span> Tactical</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-chart-bar"></i> Performance Attribution</h3>
+      <span class="tag">Brinson decomposition</span>
+    </div>
+    <div class="panel-body">
+      <canvas id="attrCanvas"></canvas>
+      <div class="mrow" id="attrMetrics"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-border-all"></i> Correlation Matrix</h3>
+      <span class="tag">Hover for details</span>
+    </div>
+    <div class="panel-body" style="position:relative">
+      <canvas id="corrCanvas"></canvas>
+      <div class="tip" id="corrTip"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-landmark"></i> Private Capital J-Curve</h3>
+      <span class="tag">Drag sliders to model</span>
+    </div>
+    <div class="panel-body">
+      <div style="display:grid;grid-template-columns:200px 1fr;gap:16px">
+        <div>
+          <div class="pctrl"><label><span>Commitment ($M)</span><span id="pcCommit">100</span></label><input type="range" min="20" max="500" value="100" id="slCommit"></div>
+          <div class="pctrl"><label><span>Call Rate (%/yr)</span><span id="pcCall">25</span></label><input type="range" min="10" max="50" value="25" id="slCall"></div>
+          <div class="pctrl"><label><span>Dist. Start (yr)</span><span id="pcDist">3</span></label><input type="range" min="2" max="6" value="3" id="slDist"></div>
+          <div class="pctrl"><label><span>Growth (%)</span><span id="pcGrowth">15</span></label><input type="range" min="5" max="30" value="15" id="slGrowth"></div>
+          <div class="mrow" id="jcurveMetrics" style="flex-direction:column"></div>
+        </div>
+        <canvas id="jcurveCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleGuide(){
+  const g=document.getElementById('guideGrid'),b=document.getElementById('guideBtn');
+  g.classList.toggle('hide');b.textContent=g.classList.contains('hide')?'SHOW':'HIDE';
+}
+
+// DATA
+const QUARTERS=[];
+for(let y=2000;y<=2025;y++)for(let q=1;q<=4;q++)QUARTERS.push({year:y,q,label:`Q${q} ${y}`});
+
+// Historical macro regime data Q1 2000 – Q4 2025
+// g = normalized growth indicator [-1,+1] (ISM/GDP trend vs potential)
+// inf = normalized inflation indicator [-1,+1] (CPI trend vs 2% target)
+const HIST_G_INF=[
+  // 2000: Tech bubble peak → bust
+  {g:.65,inf:-.05},{g:.48,inf:-.10},{g:.18,inf:-.18},{g:-.18,inf:-.15},
+  // 2001: Recession + 9/11 shock
+  {g:-.42,inf:-.22},{g:-.52,inf:-.28},{g:-.68,inf:-.35},{g:-.50,inf:-.28},
+  // 2002: Post-recession weakness
+  {g:-.35,inf:-.22},{g:-.28,inf:-.18},{g:-.20,inf:-.18},{g:-.10,inf:-.12},
+  // 2003: Recovery begins
+  {g:.05,inf:-.12},{g:.22,inf:-.08},{g:.38,inf:-.02},{g:.48,inf:.02},
+  // 2004: Expansion
+  {g:.52,inf:.12},{g:.47,inf:.15},{g:.42,inf:.10},{g:.52,inf:.05},
+  // 2005: Goldilocks
+  {g:.47,inf:.05},{g:.42,inf:.05},{g:.47,inf:.00},{g:.52,inf:-.05},
+  // 2006: Strong growth
+  {g:.57,inf:.08},{g:.52,inf:.12},{g:.47,inf:.08},{g:.52,inf:.05},
+  // 2007: Late cycle → stagflation emerging
+  {g:.42,inf:.15},{g:.35,inf:.25},{g:.18,inf:.38},{g:-.05,inf:.42},
+  // 2008: Global Financial Crisis
+  {g:-.22,inf:.52},{g:-.38,inf:.55},{g:-.58,inf:.32},{g:-.92,inf:-.18},
+  // 2009: Trough + early recovery
+  {g:-.82,inf:-.48},{g:-.68,inf:-.42},{g:-.22,inf:-.32},{g:.05,inf:-.22},
+  // 2010: Recovery
+  {g:.32,inf:-.10},{g:.42,inf:.05},{g:.35,inf:.12},{g:.47,inf:.15},
+  // 2011: Reflation → Euro crisis
+  {g:.42,inf:.32},{g:.35,inf:.35},{g:.12,inf:.20},{g:.08,inf:.10},
+  // 2012: Modest recovery
+  {g:.22,inf:.05},{g:.27,inf:.00},{g:.32,inf:-.05},{g:.37,inf:-.05},
+  // 2013: Goldilocks
+  {g:.42,inf:-.10},{g:.47,inf:-.10},{g:.47,inf:-.10},{g:.52,inf:-.05},
+  // 2014: Solid growth, low inflation
+  {g:.47,inf:-.05},{g:.52,inf:-.10},{g:.52,inf:-.22},{g:.42,inf:-.38},
+  // 2015: Strong USD, oil deflation
+  {g:.32,inf:-.42},{g:.37,inf:-.38},{g:.28,inf:-.32},{g:.18,inf:-.28},
+  // 2016: Slowdown → Trump reflation
+  {g:.08,inf:-.22},{g:.15,inf:-.15},{g:.28,inf:-.05},{g:.38,inf:.10},
+  // 2017: Synchronized global growth
+  {g:.47,inf:.10},{g:.52,inf:.05},{g:.52,inf:.05},{g:.57,inf:.10},
+  // 2018: Tax stimulus → trade war → Q4 selloff
+  {g:.57,inf:.28},{g:.55,inf:.32},{g:.47,inf:.25},{g:.12,inf:.22},
+  // 2019: Fed pivot, soft landing
+  {g:.28,inf:.05},{g:.32,inf:-.05},{g:.32,inf:-.05},{g:.38,inf:.00},
+  // 2020: COVID shock → V-shape recovery
+  {g:-.22,inf:.05},{g:-.95,inf:-.58},{g:.52,inf:-.28},{g:.42,inf:-.20},
+  // 2021: Strong recovery + inflation surge
+  {g:.62,inf:.18},{g:.78,inf:.48},{g:.62,inf:.68},{g:.52,inf:.78},
+  // 2022: Stagflation
+  {g:.15,inf:.92},{g:-.12,inf:.97},{g:-.07,inf:.82},{g:.03,inf:.65},
+  // 2023: Disinflation, soft landing
+  {g:.28,inf:.45},{g:.38,inf:.28},{g:.47,inf:.18},{g:.52,inf:.08},
+  // 2024: Continued soft landing
+  {g:.47,inf:.12},{g:.42,inf:.08},{g:.42,inf:.08},{g:.38,inf:.10},
+  // 2025: Tariff uncertainty, resilient labor market
+  {g:.32,inf:.15},{g:.28,inf:.22},{g:.30,inf:.18},{g:.32,inf:.12}
+];
+
+// Historical VIX quarterly averages (approximate)
+const HIST_VIX=[
+  25,23,28,33, // 2000
+  30,26,43,28, // 2001
+  25,30,45,38, // 2002
+  35,22,19,17, // 2003
+  15,18,14,13, // 2004
+  12,13,13,12, // 2005
+  11,18,12,11, // 2006
+  12,14,23,24, // 2007
+  27,22,33,70, // 2008
+  48,36,27,21, // 2009
+  17,33,24,18, // 2010
+  16,16,42,28, // 2011
+  19,22,15,16, // 2012
+  14,16,14,13, // 2013
+  15,12,14,20, // 2014
+  16,13,28,18, // 2015
+  22,15,14,15, // 2016
+  11,11,10,11, // 2017
+  18,16,13,27, // 2018
+  15,13,14,13, // 2019
+  47,35,27,23, // 2020
+  20,17,19,18, // 2021
+  27,28,27,24, // 2022
+  20,15,17,13, // 2023
+  14,13,18,18, // 2024
+  18,22,20,18  // 2025
+];
+
+const RD=HIST_G_INF.map((d,i)=>({...QUARTERS[i],...d}));
+
+function regime(g,inf){
+  if(g>0&&inf<=0)return{name:'Goldilocks',cls:'pill-goldilocks',color:'#10b981'};
+  if(g>0&&inf>0)return{name:'Reflation',cls:'pill-reflation',color:'#f59e0b'};
+  if(g<=0&&inf>0)return{name:'Stagflation',cls:'pill-stagflation',color:'#ef4444'};
+  return{name:'Deflation',cls:'pill-deflation',color:'#3b82f6'};
+}
+
+const AC=['US Equity','Intl Equity','EM Equity','Fixed Income','High Yield','Priv. Equity','Real Assets','Cash'];
+const MA=['S&P 500','MSCI EAFE','EM Equities','US 10Y Tsy','HY Credit','Gold','Commodities','USD Index'];
+const STRAT=[25,15,10,25,5,10,8,2];
+
+function tactical(r){
+  switch(r){
+    case'Goldilocks':return[30,18,12,18,5,10,5,2];
+    case'Reflation':return[22,12,8,15,3,10,25,5];
+    case'Stagflation':return[12,8,5,25,3,8,20,19];
+    case'Deflation':return[18,10,5,38,5,5,4,15];
+    default:return STRAT;
+  }
+}
+
+const CL=['US Eq','Intl Eq','EM Eq','FI','HY','PE','Real','Cash'];
+const CM=[
+  [1,.82,.72,-.05,.62,.72,.42,.02],
+  [.82,1,.78,.08,.55,.65,.48,.01],
+  [.72,.78,1,.05,.58,.60,.52,.00],
+  [-.05,.08,.05,1,.25,-.08,.12,.05],
+  [.62,.55,.58,.25,1,.50,.38,.03],
+  [.72,.65,.60,-.08,.50,1,.45,.01],
+  [.42,.48,.52,.12,.38,.45,1,.02],
+  [.02,.01,.00,.05,.03,.01,.02,1]
+];
+
+let tIdx=99; // Q4 2024
+function cur(){return RD[Math.min(tIdx,RD.length-1)];}
+
+function setup(canvas,h){
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.clientWidth||canvas.parentElement.clientWidth;
+  canvas.style.height=h+'px';
+  canvas.width=W*dpr;canvas.height=h*dpr;
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  return{ctx,W,H:h};
+}
+
+// QUADRANT
+function drawQuadrant(){
+  const c=document.getElementById('quadrantCanvas');
+  const{ctx,W,H}=setup(c,400);
+  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
+  const p={l:50,r:25,t:25,b:40},pw=W-p.l-p.r,ph=H-p.t-p.b;
+  const cx=p.l+pw/2,cy=p.t+ph/2;
+  const sx=v=>p.l+(v+1)/2*pw,sy=v=>H-p.b-(v+1)/2*ph;
+
+  [{x:cx,y:p.t,w:pw/2,h:ph/2,l:'REFLATION',c:'rgba(245,158,11,.05)',tc:'#f59e0b'},
+   {x:p.l,y:p.t,w:pw/2,h:ph/2,l:'STAGFLATION',c:'rgba(239,68,68,.05)',tc:'#ef4444'},
+   {x:p.l,y:cy,w:pw/2,h:ph/2,l:'DEFLATION',c:'rgba(59,130,246,.05)',tc:'#3b82f6'},
+   {x:cx,y:cy,w:pw/2,h:ph/2,l:'GOLDILOCKS',c:'rgba(16,185,129,.05)',tc:'#10b981'}
+  ].forEach(q=>{
+    ctx.fillStyle=q.c;ctx.fillRect(q.x,q.y,q.w,q.h);
+    ctx.fillStyle=q.tc;ctx.globalAlpha=.25;ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+    ctx.fillText(q.l,q.x+q.w/2,q.y+22);ctx.globalAlpha=1;
+  });
+
+  ctx.strokeStyle='rgba(148,163,184,.2)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(cx,p.t);ctx.lineTo(cx,H-p.b);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(p.l,cy);ctx.lineTo(W-p.r,cy);ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle='#64748b';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('Growth \u2192',W-p.r-35,cy+16);ctx.fillText('\u2190 Contraction',p.l+45,cy+16);
+  ctx.save();ctx.translate(p.l-12,cy);ctx.rotate(-Math.PI/2);ctx.fillText('Inflation \u2192',0,-12);ctx.restore();
+
+  const d=cur(),ts=Math.max(0,tIdx-20);
+  ctx.strokeStyle='rgba(6,182,212,.15)';ctx.lineWidth=1.5;ctx.beginPath();
+  for(let i=ts;i<=tIdx&&i<RD.length;i++){
+    const r=RD[i],x=sx(Math.max(-1,Math.min(1,r.g))),y=sy(Math.max(-1,Math.min(1,r.inf)));
+    i===ts?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }ctx.stroke();
+
+  for(let i=ts;i<=tIdx&&i<RD.length;i++){
+    const r=RD[i],a=.1+(i-ts)/(tIdx-ts+1)*.5;
+    const x=sx(Math.max(-1,Math.min(1,r.g))),y=sy(Math.max(-1,Math.min(1,r.inf)));
+    ctx.fillStyle=`rgba(6,182,212,${a})`;ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();
+  }
+
+  if(d){
+    const x=sx(Math.max(-1,Math.min(1,d.g))),y=sy(Math.max(-1,Math.min(1,d.inf)));
+    const rg=regime(d.g,d.inf);
+    ctx.shadowColor=rg.color;ctx.shadowBlur=14;
+    ctx.fillStyle=rg.color;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='left';
+    ctx.fillText(d.label,x+14,y-6);ctx.fillStyle=rg.color;ctx.fillText(rg.name,x+14,y+8);
+  }
+
+  const rc=RD.slice(Math.max(0,tIdx-12),tIdx+1);
+  const cnt={Goldilocks:0,Reflation:0,Stagflation:0,Deflation:0};
+  rc.forEach(r=>{cnt[regime(r.g,r.inf).name]++});
+  const tot=rc.length||1;
+  ctx.font='10px var(--mono)';ctx.textAlign='right';
+  ctx.fillStyle='#10b981';ctx.fillText(`Goldilocks ${(cnt.Goldilocks/tot*100).toFixed(0)}%`,W-p.r-5,H-p.b-5);
+  ctx.fillStyle='#f59e0b';ctx.fillText(`Reflation ${(cnt.Reflation/tot*100).toFixed(0)}%`,W-p.r-5,p.t+38);
+  ctx.fillStyle='#ef4444';ctx.fillText(`Stagflation ${(cnt.Stagflation/tot*100).toFixed(0)}%`,p.l+85,p.t+38);
+  ctx.fillStyle='#3b82f6';ctx.fillText(`Deflation ${(cnt.Deflation/tot*100).toFixed(0)}%`,p.l+85,H-p.b-5);
+}
+
+// VIX
+function drawVIX(){
+  const c=document.getElementById('vixCanvas');
+  const{ctx,W,H}=setup(c,400);
+  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
+
+  const vd=HIST_VIX;
+  const cv=vd[Math.min(tIdx,vd.length-1)];
+
+  const gH=165,gCx=W/2,gCy=gH-10,gR=Math.min(W/2-40,125);
+  const aS=Math.PI;
+  // Gauge zones aligned to text thresholds: LOW <15, NORMAL 15-20, ELEVATED 20-30, CRISIS >30
+  // VIX range 9-80 → normalized fractions
+  const vz=v=>(v-9)/71;
+  [{f:0,t:vz(15),c:'#10b981'},{f:vz(15),t:vz(20),c:'#f59e0b'},{f:vz(20),t:vz(30),c:'#f97316'},{f:vz(30),t:1,c:'#ef4444'}].forEach(z=>{
+    ctx.beginPath();ctx.arc(gCx,gCy,gR,aS+z.f*Math.PI,aS+z.t*Math.PI);
+    ctx.strokeStyle=z.c;ctx.lineWidth=20;ctx.lineCap='butt';ctx.stroke();
+  });
+
+  const vn=Math.min(1,Math.max(0,(cv-9)/71)),na=aS+vn*Math.PI;
+  ctx.save();ctx.translate(gCx,gCy);ctx.rotate(na);
+  ctx.fillStyle='#e2e8f0';ctx.beginPath();ctx.moveTo(0,-3);ctx.lineTo(gR-10,0);ctx.lineTo(0,3);ctx.closePath();ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='#06b6d4';ctx.beginPath();ctx.arc(gCx,gCy,6,0,Math.PI*2);ctx.fill();
+
+  const vc=cv<15?'#10b981':cv<20?'#f59e0b':cv<30?'#f97316':'#ef4444';
+  const vl=cv<15?'LOW':cv<20?'NORMAL':cv<30?'ELEVATED':'CRISIS';
+  ctx.fillStyle=vc;ctx.font='bold 26px var(--mono)';ctx.textAlign='center';ctx.fillText(cv.toFixed(1),gCx,gCy+36);
+  ctx.font='11px sans-serif';ctx.fillText(vl,gCx,gCy+52);
+  ctx.font='9px var(--mono)';ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.fillText('9',gCx-gR-5,gCy+10);
+  ctx.textAlign='right';ctx.fillText('80',gCx+gR+5,gCy+10);
+
+  const cT=gH+30,cH=H-cT-35,cL=50,cR=W-20,cW=cR-cL;
+  ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;
+  const vm=Math.max(...vd.slice(0,tIdx+1))*1.1;
+  for(let i=0;i<=4;i++){const y=cT+cH*i/4;ctx.beginPath();ctx.moveTo(cL,y);ctx.lineTo(cR,y);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.font='9px var(--mono)';ctx.textAlign='right';ctx.fillText((vm*(4-i)/4).toFixed(0),cL-5,y+3);}
+
+  const n=Math.min(tIdx+1,vd.length);
+  ctx.strokeStyle='rgba(6,182,212,.7)';ctx.lineWidth=1.5;ctx.beginPath();
+  for(let i=0;i<n;i++){const x=cL+(i/(RD.length-1))*cW,y=cT+cH*(1-vd[i]/vm);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+
+  [15,20,30].forEach((lv,li)=>{
+    const y=cT+cH*(1-lv/vm);
+    if(y>cT&&y<cT+cH){
+      ctx.strokeStyle=['rgba(16,185,129,.2)','rgba(245,158,11,.2)','rgba(239,68,68,.2)'][li];
+      ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(cL,y);ctx.lineTo(cR,y);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=['#10b981','#f59e0b','#ef4444'][li];ctx.font='8px var(--mono)';ctx.textAlign='left';ctx.fillText(lv,cR+3,y+3);
+    }
+  });
+
+  ctx.fillStyle='#64748b';ctx.font='9px var(--mono)';ctx.textAlign='center';
+  for(let y=2000;y<=2025;y+=5){const i=(y-2000)*4,x=cL+(i/(RD.length-1))*cW;ctx.fillText(y,x,cT+cH+14);}
+}
+
+// Factor sensitivities per asset: [growth_beta, inflation_beta]
+// Positive beta = asset rises with factor; negative = inverse
+const MOM_SENS=[
+  [0.80,-0.35],  // S&P 500: growth-driven, rate/valuation drag from inflation
+  [0.75,-0.35],  // MSCI EAFE: similar, slightly lower beta
+  [1.00,-0.20],  // EM Equities: high growth beta, commodity tailwind offsets inflation
+  [-0.70,-0.60], // US 10Y Treasury: inverse — rates rise with growth+inflation
+  [0.65,-0.10],  // HY Credit: credit cycle / growth driven
+  [-0.10, 0.60], // Gold: inflation hedge + risk-off store of value
+  [0.35, 0.75],  // Commodities: supply/demand + inflation driven
+  [-0.50,-0.15]  // USD Index: risk-off = strong USD; strong growth = risk-on = weak USD
+];
+
+function calcMom(assetIdx,quarters){
+  const ei=Math.min(tIdx,RD.length-1);
+  const si=Math.max(0,ei-quarters+1);
+  const s=MOM_SENS[assetIdx];
+  let tw=0,ws=0;
+  for(let i=si;i<=ei;i++){
+    const w=i-si+1; // recent quarters weighted more
+    const d=RD[i];
+    ws+=(d.g*s[0]+d.inf*s[1])*w;
+    tw+=w;
+  }
+  return tw>0?ws/tw:0;
+}
+
+// MOMENTUM — horizons aligned to quarterly data granularity
+function drawMomentum(){
+  const d=cur(),t=document.getElementById('momTable');
+  const md=MA.map((n,i)=>{
+    const m1q=calcMom(i,1),m2q=calcMom(i,2),m4q=calcMom(i,4),m8q=calcMom(i,8);
+    return{n,m1q,m2q,m4q,m8q,comp:(m1q+m2q*1.5+m4q*2.5+m8q*3)/8};
+  });
+  const sc=v=>v>.3?'sig-up2':v>.1?'sig-up':v<-.3?'sig-dn2':v<-.1?'sig-dn':'sig-flat';
+  const st=v=>v>.3?'\u25B2\u25B2':v>.1?'\u25B2':v<-.3?'\u25BC\u25BC':v<-.1?'\u25BC':'\u25CF';
+  const bg=v=>v>.15?'<span class="badge badge-buy">BUY</span>':v<-.15?'<span class="badge badge-sell">SELL</span>':'<span class="badge badge-hold">HOLD</span>';
+  const fmt=v=>(v>=0?'+':'')+v.toFixed(2);
+  let h='<tr><th>Asset</th><th>3M</th><th>6M</th><th>1Y</th><th>2Y</th><th>Signal</th></tr>';
+  md.forEach(r=>{h+=`<tr><td>${r.n}</td><td class="${sc(r.m1q)}">${st(r.m1q)} ${fmt(r.m1q)}</td><td class="${sc(r.m2q)}">${st(r.m2q)} ${fmt(r.m2q)}</td><td class="${sc(r.m4q)}">${st(r.m4q)} ${fmt(r.m4q)}</td><td class="${sc(r.m8q)}">${st(r.m8q)} ${fmt(r.m8q)}</td><td>${bg(r.comp)}</td></tr>`;});
+  t.innerHTML=h;
+}
+
+// ALLOCATION
+function drawAlloc(){
+  const d=cur(),rn=regime(d.g,d.inf).name,tac=tactical(rn),c=document.getElementById('allocBars');c.innerHTML='';
+  AC.forEach((n,i)=>{
+    const tilt=tac[i]-STRAT[i],tc=tilt>0?'var(--green)':tilt<0?'var(--red)':'var(--dim)',ts=tilt>0?'+':'';
+    c.innerHTML+=`<div class="arow"><div class="lbl">${n}</div><div class="bars"><div class="bar" style="width:${STRAT[i]/40*100}%;background:rgba(148,163,184,.2)"></div></div><div class="bars"><div class="bar" style="width:${tac[i]/40*100}%;background:rgba(6,182,212,.35)"></div></div><div class="nums"><span class="s">${STRAT[i]}%</span><span class="t">${tac[i]}%</span><span class="d" style="color:${tc}">${ts}${tilt}</span></div></div>`;
+  });
+}
+
+// ATTRIBUTION — Proper Brinson-Hood-Beebower decomposition
+// [annualized_base_return, growth_beta, inflation_beta, quarterly_vol]
+const ASSET_PARAMS=[
+  [0.10, 0.040,-0.012, 0.08],  // US Equity: pro-growth, inflation drag via rates
+  [0.08, 0.030,-0.010, 0.09],  // Intl Equity
+  [0.09, 0.050,-0.008, 0.11],  // EM Equity: high growth beta
+  [0.04,-0.020,-0.018, 0.03],  // Fixed Income: inverse growth (rates fall → price up), inverse inflation
+  [0.06, 0.030,-0.006, 0.04],  // High Yield: credit cycle, mild inflation drag
+  [0.12, 0.040,-0.010, 0.07],  // Priv. Equity
+  [0.05, 0.010, 0.020, 0.06],  // Real Assets: inflation beneficiary
+  [0.03, 0.005, 0.005, 0.002]  // Cash: near-risk-free, tiny vol
+];
+
+function seededRand(seed){const x=(Math.sin(seed)*43758.5453)%1;return Math.abs(x)*0.98+0.01;}
+function seededNorm(s1,s2){const u=seededRand(s1),v=seededRand(s2);const n=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);return Math.max(-2.5,Math.min(2.5,n));}
+
+function simAssetReturns(qi){
+  const d=RD[Math.min(qi,RD.length-1)];
+  return ASSET_PARAMS.map((p,ai)=>{
+    const base=p[0]/4+d.g*p[1]+d.inf*p[2];
+    const noise=seededNorm(qi*13.7+ai*3.1,qi*7.3+ai*11.9)*(p[3]/2);
+    return base+noise;
+  });
+}
+
+// Rolling active-return history for proper tracking error
+const attrHistory=[];
+
+function computeBrinson(qi){
+  const d=RD[Math.min(qi,RD.length-1)];
+  const rn=regime(d.g,d.inf).name;
+  const wp=tactical(rn).map(w=>w/100);
+  const wb=STRAT.map(w=>w/100);
+  const rb=simAssetReturns(qi);
+  const rp=rb.map((r,i)=>{
+    const alpha=seededNorm(qi*19.3+i*5.7,qi*11.1+i*8.3)*0.005;
+    return r+alpha;
+  });
+
+  let alloc=0,sel=0,inter=0;
+  for(let i=0;i<wb.length;i++){
+    alloc+=(wp[i]-wb[i])*rb[i];
+    sel+=wb[i]*(rp[i]-rb[i]);
+    inter+=(wp[i]-wb[i])*(rp[i]-rb[i]);
+  }
+
+  const fxNoise=seededNorm(qi*23.1+0.5,qi*17.9+3.2)*0.003;
+  const currency=d.inf*-0.002+fxNoise;
+  const total=alloc+sel+inter+currency;
+  return{alloc,sel,inter,currency,total};
+}
+
+function fmtBps(v){
+  const bp=v*10000;
+  return(bp>=0?'+':'')+bp.toFixed(0)+' bps';
+}
+
+function drawAttr(){
+  const c=document.getElementById('attrCanvas');
+  const{ctx,W,H}=setup(c,280);
+  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
+
+  const qi=Math.min(tIdx,RD.length-1);
+  const{alloc:ae,sel:se,inter:ie,currency:ce,total:ta}=computeBrinson(qi);
+
+  attrHistory.length=0;
+  const lookback=Math.min(qi+1,12);
+  for(let i=qi-lookback+1;i<=qi;i++){
+    if(i>=0)attrHistory.push(computeBrinson(i).total);
+  }
+  const meanAR=attrHistory.reduce((a,b)=>a+b,0)/attrHistory.length;
+  const te=Math.sqrt(attrHistory.reduce((s,v)=>s+(v-meanAR)**2,0)/Math.max(attrHistory.length-1,1));
+  const ir=te>0.0001?(meanAR/te)*Math.sqrt(4):0;
+
+  const items=[{l:'Allocation',v:ae},{l:'Selection',v:se},{l:'Interaction',v:ie},{l:'Currency',v:ce},{l:'Total Active',v:ta,tot:true}];
+  const p={l:75,r:25,t:25,b:45},pw=W-p.l-p.r,ph=H-p.t-p.b,bW=pw/items.length*.55,gap=pw/items.length;
+  const maxBps=Math.max(...items.map(i=>Math.abs(i.v*10000)))*1.4||50;
+  const mv=maxBps/10000;
+  const zY=p.t+ph/2,sv=v=>zY-v/mv*(ph/2);
+
+  ctx.strokeStyle='rgba(148,163,184,.25)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.l,zY);ctx.lineTo(W-p.r,zY);ctx.stroke();
+  ctx.font='9px var(--mono)';ctx.fillStyle='#64748b';ctx.textAlign='right';
+  const gridBps=maxBps>200?Math.ceil(maxBps/200)*100:maxBps>80?Math.ceil(maxBps/100)*50:maxBps>30?Math.ceil(maxBps/40)*20:Math.ceil(maxBps/10)*5;
+  for(let step=-2;step<=2;step++){
+    if(step===0)continue;
+    const bpVal=gridBps*step/2,v=bpVal/10000,y=sv(v);
+    ctx.strokeStyle='rgba(30,41,59,.4)';ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();
+    ctx.fillText(bpVal.toFixed(0)+' bps',p.l-6,y+3);
+  }
+  ctx.fillText('0',p.l-6,zY+3);
+
+  let rs=0;
+  items.forEach((it,i)=>{
+    const x=p.l+gap*i+gap/2-bW/2,col=it.v>=0?'#10b981':'#ef4444';
+    let yTop,yBot;
+    if(it.tot){yTop=it.v>=0?sv(it.v):zY;yBot=it.v>=0?zY:sv(it.v);}
+    else{const ps=rs;rs+=it.v;yTop=sv(Math.max(ps,rs));yBot=sv(Math.min(ps,rs));}
+    const bH=Math.max(yBot-yTop,3);
+    ctx.fillStyle=col;ctx.globalAlpha=it.tot?.9:.7;
+    const rx=Math.min(4,bH/2);
+    ctx.beginPath();ctx.moveTo(x+rx,yTop);ctx.lineTo(x+bW-rx,yTop);ctx.quadraticCurveTo(x+bW,yTop,x+bW,yTop+rx);ctx.lineTo(x+bW,yBot-rx);ctx.quadraticCurveTo(x+bW,yBot,x+bW-rx,yBot);ctx.lineTo(x+rx,yBot);ctx.quadraticCurveTo(x,yBot,x,yBot-rx);ctx.lineTo(x,yTop+rx);ctx.quadraticCurveTo(x,yTop,x+rx,yTop);ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.fillStyle=col;ctx.font='bold 11px var(--mono)';ctx.textAlign='center';
+    ctx.fillText(fmtBps(it.v),x+bW/2,it.v>=0?yTop-7:yBot+13);
+    ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.fillText(it.l,x+bW/2,H-p.b+14);
+    if(!it.tot&&i<items.length-2){
+      ctx.strokeStyle='rgba(148,163,184,.25)';ctx.setLineDash([3,3]);ctx.lineWidth=1;
+      const nx=p.l+gap*(i+1)+gap/2-bW/2,cy=sv(rs);
+      ctx.beginPath();ctx.moveTo(x+bW+2,cy);ctx.lineTo(nx-2,cy);ctx.stroke();ctx.setLineDash([]);
+    }
+  });
+
+  document.getElementById('attrMetrics').innerHTML=`
+    <div class="mcard"><div class="v ${ta>=0?'g':'r'}">${fmtBps(ta)}</div><div class="l">Total Active</div></div>
+    <div class="mcard"><div class="v c">${ir.toFixed(2)}</div><div class="l">Info Ratio</div></div>
+    <div class="mcard"><div class="v ${ae>=0?'g':'r'}">${fmtBps(ae)}</div><div class="l">Alloc Effect</div></div>`;
+}
+
+// CORRELATION
+function drawCorr(){
+  const c=document.getElementById('corrCanvas');
+  const{ctx,W,H}=setup(c,360);
+  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
+  const n=CL.length,p={l:60,r:15,t:15,b:50},pw=W-p.l-p.r,ph=H-p.t-p.b,cw=pw/n,ch=ph/n;
+
+  for(let i=0;i<n;i++){for(let j=0;j<n;j++){
+    const v=CM[i][j],x=p.l+j*cw,y=p.t+i*ch;
+    let r,g,b;
+    if(v>=0){const t=v;r=Math.round(8+t*10);g=Math.round(13+t*70);b=Math.round(26+t*180);}
+    else{const t=-v;r=Math.round(8+t*210);g=Math.round(13+t*20);b=Math.round(26+t*20);}
+    ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(x+1,y+1,cw-2,ch-2);
+    ctx.fillStyle=Math.abs(v)>.4?'#e2e8f0':'#94a3b8';ctx.font='10px var(--mono)';ctx.textAlign='center';ctx.fillText(v.toFixed(2),x+cw/2,y+ch/2+4);
+  }}
+
+  ctx.fillStyle='#94a3b8';ctx.font='10px var(--mono)';
+  CL.forEach((l,i)=>{
+    ctx.textAlign='right';ctx.fillText(l,p.l-6,p.t+i*ch+ch/2+3);
+    ctx.save();ctx.translate(p.l+i*cw+cw/2,H-p.b+8);ctx.rotate(-Math.PI/4);ctx.textAlign='right';ctx.fillText(l,0,0);ctx.restore();
+  });
+  c._m={p,cw,ch,n};
+}
+
+document.getElementById('corrCanvas')?.addEventListener('mousemove',function(e){
+  const r=this.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const tip=document.getElementById('corrTip'),m=this._m;if(!m){tip.style.display='none';return;}
+  const col=Math.floor((mx-m.p.l)/m.cw),row=Math.floor((my-m.p.t)/m.ch);
+  if(row>=0&&row<m.n&&col>=0&&col<m.n){
+    tip.style.display='block';tip.style.left=(mx+12)+'px';tip.style.top=(my-12)+'px';
+    const v=CM[row][col];tip.innerHTML=`<strong>${CL[row]}</strong> vs <strong>${CL[col]}</strong><br>Corr: <span style="color:${v>=0?'#06b6d4':'#ef4444'}">${v.toFixed(2)}</span>`;
+  }else tip.style.display='none';
+});
+document.getElementById('corrCanvas')?.addEventListener('mouseleave',()=>{document.getElementById('corrTip').style.display='none';});
+
+// J-CURVE
+function drawJCurve(){
+  const commit=+document.getElementById('slCommit').value,callR=+document.getElementById('slCall').value/100;
+  const distS=+document.getElementById('slDist').value,growth=+document.getElementById('slGrowth').value/100;
+  document.getElementById('pcCommit').textContent=commit;document.getElementById('pcCall').textContent=+document.getElementById('slCall').value;
+  document.getElementById('pcDist').textContent=distS;document.getElementById('pcGrowth').textContent=+document.getElementById('slGrowth').value;
+
+  const yrs=10,data=[];let calC=0,distC=0,nav=0;
+  for(let y=0;y<=yrs;y++){
+    const rem=commit-calC,cal=y===0?0:Math.min(rem,commit*callR*(y<=3?1:.4));calC+=cal;nav+=cal;
+    if(y>=distS){const ds=nav*(.15+y*.03);distC+=ds;nav-=ds;nav*=(1+growth*(1-y/yrs));}
+    else nav*=(1+growth*.3);
+    data.push({y,cal:calC,dist:distC,nav,cf:-calC+distC});
+  }
+
+  const c=document.getElementById('jcurveCanvas');
+  const{ctx,W,H}=setup(c,280);
+  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
+  const p={l:55,r:20,t:20,b:35},pw=W-p.l-p.r,ph=H-p.t-p.b;
+  const maxV=Math.max(...data.map(d=>Math.max(d.cal,d.dist,d.nav,Math.abs(d.cf))))*1.15;
+  const minCF=Math.min(...data.map(d=>d.cf)),range=maxV-Math.min(0,minCF);
+  const sy=v=>H-p.b-(v-Math.min(0,minCF))/range*ph,sx=i=>(i/yrs)*pw+p.l;
+
+  ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;
+  for(let i=0;i<=4;i++){const v=Math.min(0,minCF)+range*i/4,y=sy(v);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.font='9px var(--mono)';ctx.textAlign='right';ctx.fillText('$'+v.toFixed(0)+'M',p.l-5,y+3);}
+
+  ctx.strokeStyle='rgba(148,163,184,.2)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.l,sy(0));ctx.lineTo(W-p.r,sy(0));ctx.stroke();
+
+  const dl=(k,col,dash)=>{ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash(dash?[4,4]:[]);ctx.beginPath();data.forEach((d,i)=>{i===0?ctx.moveTo(sx(i),sy(d[k])):ctx.lineTo(sx(i),sy(d[k]));});ctx.stroke();ctx.setLineDash([]);};
+  dl('cal','#ef4444',true);dl('dist','#10b981',true);dl('nav','#06b6d4',false);
+
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=2.5;ctx.shadowColor='rgba(245,158,11,.3)';ctx.shadowBlur=5;
+  ctx.beginPath();data.forEach((d,i)=>{i===0?ctx.moveTo(sx(i),sy(d.cf)):ctx.lineTo(sx(i),sy(d.cf));});ctx.stroke();ctx.shadowBlur=0;
+
+  ctx.fillStyle='#64748b';ctx.textAlign='center';for(let i=0;i<=yrs;i+=2)ctx.fillText('Y'+i,sx(i),H-p.b+14);
+  ctx.font='9px var(--mono)';ctx.textAlign='left';
+  [{l:'J-Curve',c:'#f59e0b'},{l:'NAV',c:'#06b6d4'},{l:'Called',c:'#ef4444'},{l:'Distributed',c:'#10b981'}].forEach((l,i)=>{
+    ctx.fillStyle=l.c;ctx.fillRect(p.l+i*90,H-12,8,8);ctx.fillStyle='#94a3b8';ctx.fillText(l.l,p.l+i*90+12,H-4);
+  });
+
+  const fn=data[data.length-1].nav,td=data[data.length-1].dist,tvpi=(td+fn)/calC,dpi=td/calC,rvpi=fn/calC;
+  // Proper IRR via Newton's method on the net cashflow stream
+  const cfs=data.map((d,i)=>{
+    const callIn=i===0?0:(d.cal-(i>0?data[i-1].cal:0));
+    const distOut=i===0?0:(d.dist-(i>0?data[i-1].dist:0));
+    return-callIn+distOut;
+  });
+  cfs[cfs.length-1]+=fn;
+  function solveIRR(cfs){
+    let r=0.10;
+    for(let iter=0;iter<100;iter++){
+      let npv=0,dnpv=0;
+      for(let t=0;t<cfs.length;t++){
+        const df=Math.pow(1+r,-t);
+        npv+=cfs[t]*df;
+        dnpv-=t*cfs[t]*df/(1+r);
+      }
+      if(Math.abs(dnpv)<1e-12)break;
+      const nr=r-npv/dnpv;
+      if(Math.abs(nr-r)<1e-8)break;
+      r=Math.max(-0.5,Math.min(5,nr));
+    }
+    return r;
+  }
+  const irr=solveIRR(cfs);
+  document.getElementById('jcurveMetrics').innerHTML=`
+    <div class="mcard"><div class="v c">${tvpi.toFixed(2)}x</div><div class="l">TVPI</div></div>
+    <div class="mcard"><div class="v g">${dpi.toFixed(2)}x</div><div class="l">DPI</div></div>
+    <div class="mcard"><div class="v y">${rvpi.toFixed(2)}x</div><div class="l">RVPI</div></div>
+    <div class="mcard"><div class="v g">${(irr*100).toFixed(1)}%</div><div class="l">IRR</div></div>`;
+}
+
+function renderAll(){
+  const d=cur(),rg=regime(d.g,d.inf);
+  const b=document.getElementById('regimeBadge');b.textContent=rg.name.toUpperCase();b.className='regime-pill '+rg.cls;
+  document.getElementById('yearLabel').textContent=d.label;
+  drawQuadrant();drawVIX();drawMomentum();drawAlloc();drawAttr();drawCorr();drawJCurve();
+}
+
+document.getElementById('timeSlider').addEventListener('input',e=>{tIdx=+e.target.value;renderAll();});
+['slCommit','slCall','slDist','slGrowth'].forEach(id=>{document.getElementById(id).addEventListener('input',drawJCurve);});
+
+renderAll();
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderAll,200);});
+</script>
+</body>
+</html>

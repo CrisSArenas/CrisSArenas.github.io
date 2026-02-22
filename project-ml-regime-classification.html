@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Regime Classification System | Cristian Arenas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Project Detail Page Specific Styles */
+        .project-detail {
+            padding-top: 80px;
+            min-height: 100vh;
+            background: var(--dark-bg);
+        }
+
+        .project-hero {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, var(--darker-bg), var(--dark-bg));
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .project-hero h1 {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .meta-item i {
+            color: var(--primary-cyan);
+        }
+
+        .project-tags-large {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .tag-large {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-cyan);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            color: var(--primary-green);
+            transform: translateX(-5px);
+        }
+
+        .project-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .content-section {
+            margin-bottom: 3rem;
+        }
+
+        .content-section h2 {
+            font-size: 2rem;
+            color: var(--primary-cyan);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--primary-cyan);
+            padding-bottom: 0.5rem;
+        }
+
+        .content-section h3 {
+            font-size: 1.5rem;
+            color: var(--primary-green);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-section h4 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .content-section p, .content-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .architecture-diagram {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            overflow-x: auto;
+            color: var(--primary-green);
+        }
+
+        .architecture-diagram pre {
+            margin: 0;
+            white-space: pre;
+        }
+
+        .highlight-box {
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary-cyan);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 5px;
+        }
+
+        .highlight-box strong {
+            color: var(--primary-cyan);
+        }
+
+        .tech-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .tech-item {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            border-color: var(--primary-cyan);
+            transform: translateY(-3px);
+        }
+
+        .tech-item i {
+            color: var(--primary-cyan);
+            margin-right: 0.5rem;
+        }
+
+        .formula-box {
+            background: var(--darker-bg);
+            border: 1px solid var(--primary-green);
+            border-radius: 5px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: var(--font-mono);
+            color: var(--primary-green);
+            text-align: center;
+        }
+
+        .signal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .signal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.2rem 1.4rem;
+            transition: border-color 0.2s;
+        }
+
+        .signal-card:hover {
+            border-color: var(--primary-cyan);
+        }
+
+        .signal-card h4 {
+            color: var(--primary-cyan);
+            font-size: 0.95rem;
+            margin-top: 0;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .signal-card h4 i {
+            font-size: 0.85rem;
+        }
+
+        .signal-card ul {
+            margin: 0;
+            margin-left: 1.2rem;
+        }
+
+        .signal-card li {
+            font-size: 0.88rem;
+            margin-bottom: 0.3rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="terminal-prompt">cristian@portfolio:~$</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#home">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#skills">Skills</a></li>
+                <li><a href="index.html#projects">Projects</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Project Detail Content -->
+    <div class="project-detail">
+        <!-- Project Hero Section -->
+        <div class="project-hero">
+            <div class="container">
+                <a href="index.html#projects" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+
+                <h1>ML Regime Classification System</h1>
+
+                <div class="project-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>2025</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-brain"></i>
+                        <span>Machine Learning · Signal Engineering · Tactical Allocation</span>
+                    </div>
+                </div>
+
+                <p class="hero-description">
+                    Production ML classification system that predicts risk-on / risk-off market states in real time
+                    by synthesizing momentum factors, credit spreads, yield signals, fund flows, volatility surfaces,
+                    macro indicators, and sentiment data — improving regime detection accuracy by 80% over
+                    the prior rules-based approach.
+                </p>
+
+                <div class="project-tags-large">
+                    <span class="tag-large">Python</span>
+                    <span class="tag-large">Scikit-learn</span>
+                    <span class="tag-large">XGBoost / LightGBM</span>
+                    <span class="tag-large">Regime Classification</span>
+                    <span class="tag-large">Signal Engineering</span>
+                    <span class="tag-large">Apache Airflow</span>
+                    <span class="tag-large">Walk-Forward Validation</span>
+                    <span class="tag-large">Factor Analysis</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Content -->
+        <div class="project-content">
+
+            <!-- Problem & Motivation -->
+            <section class="content-section">
+                <h2>Problem & Motivation</h2>
+                <p>
+                    Investment portfolios that span multiple asset classes — equities, fixed income, credit,
+                    real assets, alternatives — require continuous awareness of the prevailing market regime.
+                    A risk-on regime (strong growth, tight spreads, risk appetite) calls for different positioning
+                    than a risk-off regime (deteriorating macro, widening credit, flight to safety). Getting
+                    that classification wrong, or detecting a regime shift too late, directly translates to
+                    misaligned exposures and drawdowns.
+                </p>
+                <p>
+                    The legacy approach relied on a static, hand-coded rules engine: fixed thresholds on a
+                    small number of indicators (VIX level, yield curve slope, a single credit spread). While
+                    interpretable, the rules were brittle — they broke down during non-standard regimes,
+                    missed compound signals, and required constant manual recalibration as market structure
+                    evolved.
+                </p>
+                <p>
+                    The objective was to replace the rules engine with a trained ML classification pipeline
+                    that ingests a broad, diverse signal universe, learns non-linear relationships between
+                    signals and regime labels, and produces stable, actionable risk-on / risk-off predictions
+                    with measurable accuracy — fully automated and production-deployed.
+                </p>
+
+                <div class="highlight-box">
+                    <strong>Core goal:</strong> At any given date, given the current state of momentum,
+                    credit, rates, flows, volatility, macro, and sentiment — what regime are we in,
+                    and how confident is the model?
+                </div>
+            </section>
+
+            <!-- High-Level Architecture -->
+            <section class="content-section">
+                <h2>High-Level Architecture</h2>
+                <div class="architecture-diagram">
+                    <pre>
+  ┌─────────────────────────────────────────────────────────┐
+  │              Raw Signal Universe (7 categories)         │
+  │  Momentum · Credit · Yields · Flows · Vol · Macro · Sent│
+  └────────────────────────┬────────────────────────────────┘
+                           │ [Daily ingestion — Airflow DAG]
+                           ▼
+  ┌─────────────────────────────────────────────────────────┐
+  │               Feature Engineering Pipeline              │
+  │  Rolling windows · Cross-signal normalization           │
+  │  Lag transforms · Regime-change velocity features       │
+  └────────────────────────┬────────────────────────────────┘
+                           │
+                           ▼
+  ┌─────────────────────────────────────────────────────────┐
+  │              Regime Label Construction                  │
+  │  Historical regime identification (supervised labels)   │
+  │  Risk-On / Risk-Off · Optional multi-class extension    │
+  └────────────────────────┬────────────────────────────────┘
+                           │
+                           ▼
+  ┌─────────────────────────────────────────────────────────┐
+  │             ML Classification Ensemble                  │
+  │  Random Forest · XGBoost · LightGBM · Logistic stack   │
+  │  Walk-forward training · Out-of-sample validation       │
+  └────────────────────────┬────────────────────────────────┘
+                           │
+                           ▼
+  ┌─────────────────────────────────────────────────────────┐
+  │         Regime Prediction & Confidence Output           │
+  │  Class label + probability score + feature attribution  │
+  └────────────────────────┬────────────────────────────────┘
+                           │
+                           ▼
+  ┌─────────────────────────────────────────────────────────┐
+  │       Downstream Consumers (Allocation · Risk · Reports)│
+  └─────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Signal Universe -->
+            <section class="content-section">
+                <h2>Signal Universe — 7 Categories</h2>
+                <p>
+                    The most critical design decision was breadth and diversity of the signal universe.
+                    No single indicator reliably predicts regime transitions across all market cycles.
+                    The pipeline ingests signals across seven orthogonal categories, reducing dependence
+                    on any one data source while capturing the multi-dimensional nature of risk appetite.
+                </p>
+
+                <div class="signal-grid">
+
+                    <div class="signal-card">
+                        <h4><i class="fas fa-chart-line"></i> Momentum Factors</h4>
+                        <ul>
+                            <li>Cross-asset price momentum across multiple time horizons</li>
+                            <li>Trend strength and direction indicators</li>
+                            <li>Market breadth measures</li>
+                            <li>Inter-asset momentum divergence signals</li>
+                        </ul>
+                    </div>
+
+                    <div class="signal-card">
+                        <h4><i class="fas fa-compress-arrows-alt"></i> Credit Spreads</h4>
+                        <ul>
+                            <li>Spread levels and rates of change across credit quality tiers</li>
+                            <li>Cross-market spread ratios as risk appetite indicators</li>
+                            <li>Spread curve shape dynamics</li>
+                            <li>Distressed market indicators</li>
+                        </ul>
+                    </div>
+
+                    <div class="signal-card">
+                        <h4><i class="fas fa-wave-square"></i> Yield Signals</h4>
+                        <ul>
+                            <li>Yield curve shape and inversion metrics</li>
+                            <li>Real yield and inflation expectation dynamics</li>
+                            <li>Rate volatility measures</li>
+                            <li>Forward rate market signals</li>
+                        </ul>
+                    </div>
+
+                    <div class="signal-card">
+                        <h4><i class="fas fa-water"></i> Fund Flows</h4>
+                        <ul>
+                            <li>Aggregate flows across risk and safe-haven asset classes</li>
+                            <li>Flow normalization relative to fund size</li>
+                            <li>Cross-asset flow divergence patterns</li>
+                            <li>Safe-haven demand dynamics</li>
+                        </ul>
+                    </div>
+
+                    <div class="signal-card">
+                        <h4><i class="fas fa-bolt"></i> Volatility Signals</h4>
+                        <ul>
+                            <li>Implied volatility levels and term structure</li>
+                            <li>Realized vs implied volatility spread</li>
+                            <li>Cross-asset volatility correlations</li>
+                            <li>Higher-order uncertainty and skew measures</li>
+                        </ul>
+                    </div>
+
+                    <div class="signal-card">
+                        <h4><i class="fas fa-globe"></i> Macro Indicators</h4>
+                        <ul>
+                            <li>Activity and growth diffusion indices</li>
+                            <li>Leading economic indicator composites</li>
+                            <li>Labor market dynamics</li>
+                            <li>Economic surprise relative to consensus</li>
+                        </ul>
+                    </div>
+
+                    <div class="signal-card">
+                        <h4><i class="fas fa-comments"></i> Sentiment Signals</h4>
+                        <ul>
+                            <li>Options market positioning and skew</li>
+                            <li>Institutional and retail investor survey data</li>
+                            <li>Futures market speculative positioning</li>
+                            <li>Primary market issuance activity</li>
+                        </ul>
+                    </div>
+
+                </div>
+
+                <div class="highlight-box">
+                    <strong>Design principle:</strong> Each signal category captures a different dimension of
+                    risk appetite. Momentum and flows measure observed behavior; credit and volatility measure
+                    market pricing of risk; macro measures the fundamental backdrop; sentiment measures
+                    positioning and psychology. The ensemble sees all seven simultaneously.
+                </div>
+            </section>
+
+            <!-- Feature Engineering -->
+            <section class="content-section">
+                <h2>Feature Engineering Pipeline</h2>
+                <p>
+                    Raw signals are transformed into ML-ready features through a standardized pipeline
+                    that handles time-series structure, cross-sectional normalization, and temporal
+                    lags to prevent look-ahead bias.
+                </p>
+
+                <h3>Transformations Applied</h3>
+
+                <h4>Level Features</h4>
+                <ul>
+                    <li>Raw current value of each signal (credit spread, VIX, PMI, etc.)</li>
+                    <li>Z-score vs rolling 252-day (1-year) mean and standard deviation</li>
+                    <li>Percentile rank vs trailing N-year history</li>
+                </ul>
+
+                <h4>Rate-of-Change Features</h4>
+                <ul>
+                    <li>1-week, 4-week, 12-week deltas for each signal</li>
+                    <li>Momentum of signal momentum (second derivative — regime acceleration)</li>
+                    <li>Directional change counts (number of consecutive up/down moves)</li>
+                </ul>
+
+                <h4>Cross-Signal Interaction Features</h4>
+                <ul>
+                    <li>Compound stress composites combining signals from different categories</li>
+                    <li>Risk appetite divergence measures across asset classes</li>
+                    <li>Confirming vs diverging signal combinations (macro vs market-based)</li>
+                    <li>Regime inflection indicators constructed from proprietary signal pairs</li>
+                </ul>
+
+                <h4>Temporal Lag Features</h4>
+                <ul>
+                    <li>1-week, 2-week, 4-week lags of key signals to capture delayed responses</li>
+                    <li>Rolling averages (4W, 13W, 26W) to smooth high-frequency noise</li>
+                    <li>Exponentially weighted moving averages (EWMA) with multiple decay factors</li>
+                </ul>
+
+                <h4>Regime Persistence Features</h4>
+                <ul>
+                    <li>Number of consecutive weeks in current predicted regime (momentum of regime itself)</li>
+                    <li>Distance from regime-change threshold (confidence margin)</li>
+                    <li>Volatility of rolling prediction probability (regime stability signal)</li>
+                </ul>
+
+                <div class="architecture-diagram">
+                    <pre>
+Raw Signal [any category]
+        │
+        ├── level feature              (raw current value)
+        ├── z-score vs rolling window  (normalized level)
+        ├── percentile rank vs history (distributional context)
+        ├── short-horizon delta        (recent rate of change)
+        ├── medium-horizon delta       (intermediate momentum)
+        ├── long-horizon delta         (trend confirmation)
+        ├── fast EWMA                  (short-term smoothed trend)
+        ├── slow EWMA                  (long-term smoothed trend)
+        └── cross-signal interaction   (composite stress feature)
+
+→ Applied across all base signals in the proprietary signal universe
+→ Total feature space: ~300–400 engineered features per observation
+→ Dimensionality reduction / feature selection applied pre-training
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Regime Label Construction -->
+            <section class="content-section">
+                <h2>Regime Label Construction</h2>
+                <p>
+                    Supervised classification requires ground-truth labels. Regime labels were constructed
+                    historically using a combination of objective market indicators and established
+                    economic turning-point methodologies — rather than subjective annotation — to
+                    ensure reproducibility and reduce labeling bias.
+                </p>
+
+                <h3>Primary Labeling Approach</h3>
+                <ul>
+                    <li>
+                        <strong>Risk-On:</strong> Periods where a composite of market-based and
+                        macro signals simultaneously indicate positive risk appetite — tightening
+                        conditions, positive flows, and improving fundamental backdrop.
+                    </li>
+                    <li>
+                        <strong>Risk-Off:</strong> Periods where the same composite signals flip —
+                        deteriorating market pricing, defensive positioning, outflows from risk assets,
+                        and weakening macro conditions occurring in combination.
+                    </li>
+                </ul>
+
+                <h3>Label Smoothing</h3>
+                <p>
+                    Raw label switches are noisy. A minimum persistence filter (e.g., require N consecutive
+                    weeks of consistent signal before declaring a regime change) smooths spurious
+                    transitions. This reflects the real-world truth that genuine regime shifts
+                    persist — one-day spikes do not constitute a new regime.
+                </p>
+
+                <h3>Multi-Class Extension</h3>
+                <p>
+                    The binary risk-on / risk-off framework was extended optionally to a four-class taxonomy
+                    aligned with the classic growth-inflation quadrant:
+                </p>
+                <ul>
+                    <li><strong>Goldilocks</strong> — above-trend growth, below-target inflation</li>
+                    <li><strong>Reflation</strong> — above-trend growth, above-target inflation</li>
+                    <li><strong>Stagflation</strong> — below-trend growth, above-target inflation</li>
+                    <li><strong>Deflation</strong> — below-trend growth, below-target inflation</li>
+                </ul>
+            </section>
+
+            <!-- ML Model Architecture -->
+            <section class="content-section">
+                <h2>ML Model Architecture</h2>
+
+                <h3>Model Selection Rationale</h3>
+                <p>
+                    Tree-based ensembles were the primary model family due to their ability to capture
+                    non-linear threshold effects inherent in regime dynamics (e.g., credit spreads matter
+                    more once they cross a critical level, not in a linear fashion), natural handling of
+                    mixed-scale features, and interpretability through feature importance.
+                </p>
+
+                <h4>Base Learners</h4>
+                <ul>
+                    <li>
+                        <strong>Random Forest Classifier</strong> — low variance, handles feature
+                        collinearity well (relevant given correlated macro/credit signals), strong baseline.
+                    </li>
+                    <li>
+                        <strong>Gradient Boosted Trees (XGBoost / LightGBM)</strong> — higher
+                        discriminative power on tabular financial data; captures sequential signal
+                        interactions that Random Forest may miss.
+                    </li>
+                    <li>
+                        <strong>L1/L2-Regularized Logistic Regression</strong> — linear baseline
+                        providing a probability-calibrated reference and enforcing sparsity; used
+                        as meta-learner in stacking layer.
+                    </li>
+                </ul>
+
+                <h4>Ensemble / Stacking Layer</h4>
+                <p>
+                    Predictions from base learners are combined through a meta-learner (stacking):
+                </p>
+                <div class="formula-box">
+                    P(risk-off) = meta_model( p_rf, p_xgb, p_lgbm ) → calibrated probability
+                </div>
+                <p>
+                    Soft-voting was also tested as an alternative (weighted average of class
+                    probabilities). Stacking outperformed soft-voting on out-of-sample accuracy
+                    across walk-forward folds, particularly during regime transition periods.
+                </p>
+
+                <h3>Walk-Forward Training</h3>
+                <p>
+                    Financial time series require strictly chronological validation. Standard k-fold
+                    cross-validation leaks future information. The pipeline uses an expanding-window
+                    walk-forward scheme:
+                </p>
+                <div class="architecture-diagram">
+                    <pre>
+Fold 1:  Train [2005 → 2015]  |  Validate [2015 → 2016]
+Fold 2:  Train [2005 → 2016]  |  Validate [2016 → 2017]
+Fold 3:  Train [2005 → 2017]  |  Validate [2017 → 2018]
+...
+Fold N:  Train [2005 → 2023]  |  Validate [2023 → 2024]
+
+→ Each fold's predictions concatenate into a full OOS time series
+→ Accuracy, precision, recall evaluated on the concatenated OOS series
+→ No future data ever enters a training window
+                    </pre>
+                </div>
+
+                <h3>Feature Selection</h3>
+                <p>
+                    The ~300–400 engineered features are reduced before training:
+                </p>
+                <ul>
+                    <li>Remove features with near-zero variance across the training window</li>
+                    <li>Drop highly correlated feature pairs (|ρ| &gt; 0.92) — keep the one with higher
+                        individual predictive power (measured by univariate AUC)</li>
+                    <li>Recursive Feature Elimination (RFE) driven by XGBoost feature importance</li>
+                    <li>Final model operates on ~60–80 selected features per training fold</li>
+                </ul>
+
+                <h3>Hyperparameter Optimization</h3>
+                <ul>
+                    <li>Bayesian optimization (Optuna) over the walk-forward validation metric</li>
+                    <li>Key hyperparameters: tree depth, learning rate, subsample ratio, L1/L2
+                        regularization, minimum samples per leaf</li>
+                    <li>Objective: maximize out-of-sample F1 on the risk-off class
+                        (false negatives — missed risk-off — are more costly than false positives)</li>
+                </ul>
+            </section>
+
+            <!-- Orchestration -->
+            <section class="content-section">
+                <h2>Orchestration & Production Pipeline</h2>
+
+                <h3>Airflow DAG Structure</h3>
+                <div class="architecture-diagram">
+                    <pre>
+dag_regime_classifier/
+├── task_ingest_market_data        (daily — APIs, vendor feeds)
+├── task_ingest_macro_releases     (event-triggered — data calendar)
+├── task_ingest_fund_flows         (weekly — fund flow providers)
+├── task_feature_engineering       (daily — transforms all signals)
+├── task_feature_validation        (schema + distribution checks)
+├── task_run_inference             (daily — apply current model)
+├── task_retrain_models            (weekly — rolling walk-forward)
+└── task_publish_regime_output     (daily — downstream systems)
+                    </pre>
+                </div>
+
+                <h3>Key Pipeline Design Decisions</h3>
+
+                <h4>Inference vs Retraining Separation</h4>
+                <p>
+                    Daily inference uses a frozen model artifact versioned in the model registry.
+                    Retraining runs on a separate weekly cadence (or triggered by performance
+                    drift alerts) to avoid model staleness without introducing daily instability.
+                </p>
+
+                <h4>Data Validation Layer</h4>
+                <p>
+                    Before any inference, feature distributions are compared to training-time
+                    distributions (Great Expectations or equivalent). If any signal shows
+                    extreme distribution shift — indicating a data quality issue rather than
+                    genuine market move — the pipeline halts and alerts, rather than producing
+                    a potentially corrupted regime prediction.
+                </p>
+
+                <h4>Model Registry & Versioning</h4>
+                <ul>
+                    <li>Each trained model artifact is logged with: training window, feature set version,
+                        hyperparameters, OOS validation metrics</li>
+                    <li>Inference always references a pinned model version — no silent model swaps</li>
+                    <li>Challenger / champion framework: new model versions run in shadow mode
+                        before promotion</li>
+                </ul>
+
+                <h4>Resilience</h4>
+                <ul>
+                    <li>Retry policies with exponential backoff on data ingestion tasks</li>
+                    <li>Fallback to prior day's features if current-day ingestion fails
+                        (with a staleness flag appended to the output)</li>
+                    <li>SLA monitoring: regime output must be published before market open</li>
+                </ul>
+            </section>
+
+            <!-- Output & Interpretation -->
+            <section class="content-section">
+                <h2>Output Format & Downstream Use</h2>
+
+                <h3>Regime Output Schema</h3>
+                <div class="architecture-diagram">
+                    <pre>
+{
+  "as_of_date":        "2025-01-15",
+  "regime_label":      "risk-off",
+  "confidence":        0.83,
+  "regime_duration_w": 3,
+  "top_signals": [
+    { "feature": "[proprietary_signal_1]",  "contribution": +0.31 },
+    { "feature": "[proprietary_signal_2]",  "contribution": +0.22 },
+    { "feature": "[proprietary_signal_3]",  "contribution": -0.18 },
+    { "feature": "[proprietary_signal_4]",  "contribution": +0.14 }
+  ],
+  "model_version": "regime_clf_v2.4.1",
+  "data_freshness": "current"
+}
+                    </pre>
+                </div>
+
+                <h3>Downstream Integration Points</h3>
+                <ul>
+                    <li>
+                        <strong>Tactical allocation engine:</strong> regime label and confidence
+                        score feed directly into the tactical overweight/underweight tilt logic —
+                        risk-off triggers defensive positioning (increase duration, reduce credit,
+                        increase cash), risk-on triggers pro-risk tilt.
+                    </li>
+                    <li>
+                        <strong>Risk monitoring:</strong> regime transitions trigger exposure review
+                        workflows for portfolio management teams.
+                    </li>
+                    <li>
+                        <strong>Reporting layer:</strong> regime context is injected into automated
+                        portfolio commentary generation (LLM-based), providing macro framing for
+                        performance attribution narratives.
+                    </li>
+                    <li>
+                        <strong>Research:</strong> feature attributions are logged historically to
+                        track which signal categories were most predictive across different market cycles.
+                    </li>
+                </ul>
+
+                <h3>Confidence Thresholding</h3>
+                <p>
+                    The model outputs a probability score (0–1) for the risk-off class. Three operating
+                    zones are defined:
+                </p>
+                <ul>
+                    <li><strong>High confidence risk-on</strong> (P &lt; 0.35) — full pro-risk allocation</li>
+                    <li><strong>Uncertain / transitional</strong> (P 0.35–0.65) — neutral / reduced tilt,
+                        signal flagged for analyst review</li>
+                    <li><strong>High confidence risk-off</strong> (P &gt; 0.65) — defensive positioning activated</li>
+                </ul>
+                <p>
+                    The uncertain zone is intentional. Forcing a binary output in periods of genuine
+                    ambiguity produces whipsawing allocation changes. The confidence band acts as a
+                    buffer that keeps positioning stable during noisy transitions.
+                </p>
+            </section>
+
+            <!-- Validation -->
+            <section class="content-section">
+                <h2>Model Validation & Performance</h2>
+
+                <h3>Evaluation Metrics</h3>
+                <ul>
+                    <li><strong>AUC-ROC</strong> — overall discriminative ability across all confidence thresholds</li>
+                    <li><strong>F1 (risk-off class)</strong> — primary metric; penalizes missing genuine risk-off periods</li>
+                    <li><strong>Precision / Recall tradeoff</strong> — tuned to minimize false negatives (missed risk-off)
+                        while keeping false positives manageable (excess defensiveness has a cost)</li>
+                    <li><strong>Regime persistence accuracy</strong> — does the model agree with itself over
+                        consecutive days within the same true regime? (measures signal stability)</li>
+                    <li><strong>Transition detection lead time</strong> — how many days before a consensus
+                        regime change does the model first signal the new regime?</li>
+                </ul>
+
+                <h3>Benchmark Comparison</h3>
+                <p>
+                    The ML classifier was evaluated against the prior rules-based system on the same
+                    historical out-of-sample period. The rules-based system used fixed thresholds on
+                    VIX, one credit spread, and yield curve slope. Key findings:
+                </p>
+                <ul>
+                    <li>ML classifier achieved <strong>80% higher regime detection accuracy</strong> on
+                        out-of-sample periods covering multiple distinct market cycles</li>
+                    <li>Rules-based system produced frequent false positives during ambiguous market
+                        periods; the multi-signal architecture reduced these materially</li>
+                    <li>ML system consistently detected regime transitions <strong>weeks earlier</strong>
+                        than the single-indicator threshold triggers of the prior approach</li>
+                    <li>Compound cross-category signal interactions that the rules engine could not
+                        express were the largest contributors to ML outperformance</li>
+                </ul>
+
+                <h3>Ongoing Monitoring</h3>
+                <ul>
+                    <li>Weekly comparison of predicted regime vs realized market behavior (ex-post labels)</li>
+                    <li>Feature drift detection: alert if any top-10 signal drifts beyond 2σ from
+                        training distribution</li>
+                    <li>Model confidence tracking: alert if average confidence score drops (model uncertainty
+                        may indicate out-of-distribution market conditions)</li>
+                    <li>Periodic revalidation against updated historical regime labels as more history accumulates</li>
+                </ul>
+            </section>
+
+            <!-- Security & Compliance -->
+            <section class="content-section">
+                <h2>Security & Compliance</h2>
+
+                <h3>Data Controls</h3>
+                <ul>
+                    <li>Market data ingested via credentialed API connections; keys stored in secrets manager</li>
+                    <li>Encrypted transit (TLS) for all external data pulls</li>
+                    <li>Feature tables stored in encrypted, access-controlled storage; role-based access
+                        limits consumption to authorized systems and users</li>
+                </ul>
+
+                <h3>Model Governance</h3>
+                <ul>
+                    <li>All model artifacts versioned with full training provenance (data window, feature
+                        list, hyperparameters, validation metrics)</li>
+                    <li>Regime output logs retained for audit — every prediction is traceable to the
+                        exact model version and input feature snapshot that produced it</li>
+                    <li>Model changes require validation sign-off before production promotion; challenger
+                        models run in shadow mode for a minimum period before replacing champion</li>
+                </ul>
+
+                <h3>Operational Controls</h3>
+                <ul>
+                    <li>Pipeline processes have read-only access to upstream data sources</li>
+                    <li>No write-back to source systems — regime outputs are written only to
+                        designated output tables and message queues</li>
+                    <li>Alerting on pipeline failures triggers immediate notification before
+                        market open so downstream consumers know to treat the signal as stale</li>
+                </ul>
+            </section>
+
+            <!-- Impact -->
+            <section class="content-section">
+                <h2>Impact</h2>
+                <div class="highlight-box">
+                    <ul>
+                        <li><strong>80% improvement in regime detection accuracy</strong> over the prior
+                            rules-based system, measured out-of-sample across multiple market cycles</li>
+                        <li><strong>Earlier regime transition detection</strong> — multi-signal confluence
+                            identifies turning points 3–4 weeks ahead of single-indicator threshold triggers</li>
+                        <li><strong>Stable, actionable signals</strong> — the confidence banding and
+                            smoothing architecture eliminated the whipsawing that plagued the rules engine
+                            during ambiguous market periods</li>
+                        <li><strong>Interpretable outputs</strong> — per-prediction feature attribution
+                            lets portfolio managers understand why the model is risk-on or risk-off,
+                            not just that it is</li>
+                        <li><strong>Fully automated</strong> — zero manual intervention required for
+                            daily regime classification; analysts freed to focus on interpretation
+                            and response rather than signal aggregation</li>
+                        <li><strong>Extensible architecture</strong> — new signal categories can be
+                            added to the feature pipeline without retraining from scratch; the
+                            walk-forward framework handles expanding signal universes gracefully</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Technologies -->
+            <section class="content-section">
+                <h2>Technologies Used</h2>
+                <div class="tech-list">
+                    <div class="tech-item">
+                        <i class="fab fa-python"></i> Python
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-brain"></i> Scikit-learn
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-fire"></i> XGBoost / LightGBM
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-chart-line"></i> Pandas / NumPy
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-project-diagram"></i> Apache Airflow
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-database"></i> SQL / PostgreSQL
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-file-code"></i> Parquet / Arrow
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-flask"></i> Optuna (Hyperparameter Opt.)
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-cogs"></i> MLflow (Model Registry)
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-shield-alt"></i> Great Expectations (Validation)
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <p>&copy; 2026 Cristian Arenas. Quantitative Investment & AI/ML Engineering.</p>
+                    <p class="footer-subtext"> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="mailto:cristianmiguelsa@gmail.com">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollTop" class="scroll-top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="script.js"></script>
+</body>
+</html>

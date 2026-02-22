@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Portfolio Optimizer | Cristian Arenas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e27;--surface:#111827;--card:#0f1629;--border:#1e293b;
+  --text:#f1f5f9;--muted:#94a3b8;--dim:#475569;
+  --accent:#06b6d4;--accent-hover:#00f7ff;--accent-bg:rgba(6,182,212,.08);
+  --green:#10b981;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b;--cyan:#06b6d4;
+  --radius:10px;--radius-sm:6px
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+.page{max-width:1560px;margin:0 auto;padding:20px 28px 40px}
+
+/* STATUS BAR */
+.status-bar{padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--border);font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
+
+/* HEADER */
+.header{display:flex;justify-content:space-between;align-items:center;padding:20px 0 18px;margin-bottom:4px}
+.header h1{font-size:1.4rem;font-weight:700;color:#fff;letter-spacing:-.03em}
+.header h1 span{color:var(--accent)}
+.header .sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+.header-actions{display:flex;gap:8px}
+.btn-ghost{padding:7px 16px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:inherit;font-size:.75rem;border-radius:var(--radius-sm);transition:all .2s}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:240px 1fr 400px;gap:16px;align-items:start;margin-bottom:20px}
+@media(max-width:1200px){.grid{grid-template-columns:220px 1fr;gap:14px}}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+
+/* PANELS */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.panel-hdr{padding:11px 16px;border-bottom:1px solid var(--border);font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;background:rgba(0,0,0,.15)}
+.panel-body{padding:14px 16px}
+
+/* CONTROLS */
+.ctrl-row{margin-bottom:10px}
+.ctrl-row label{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:8px;font-weight:500}
+.ctrl-row input[type=number]{width:58px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.75rem;border-radius:var(--radius-sm);text-align:center}
+.ctrl-row input[type=range]{flex:1;min-width:50px;accent-color:var(--accent);height:4px;cursor:pointer}
+.ctrl-row input[type=range]::-webkit-slider-thumb{width:14px;height:14px}
+.ctrl-row input[type=checkbox]{accent-color:var(--accent)}
+.ctrl-hint{font-size:.68rem;color:var(--dim);margin-top:2px;margin-bottom:10px}
+.ctrl-btns{display:flex;gap:8px;margin-bottom:4px}
+.ctrl-val{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text);min-width:32px;text-align:right}
+.btn{padding:9px 22px;background:var(--accent);color:#000;border:none;cursor:pointer;font-family:inherit;font-weight:600;font-size:.78rem;border-radius:var(--radius-sm);transition:all .2s}
+.btn:hover{background:var(--accent-hover);box-shadow:0 4px 16px rgba(6,182,212,.3)}
+.btn.secondary{background:var(--border);color:var(--text)}
+.btn.secondary:hover{background:#2a2f3a;color:var(--accent)}
+
+/* WEIGHTS */
+.weight-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:.72rem}
+.weight-row .lbl{width:66px;color:var(--muted);font-weight:500;font-size:.68rem;flex-shrink:0}
+.weight-row input[type=range]{flex:1;min-width:50px;accent-color:var(--accent);height:3px;cursor:pointer}
+.weight-row input[type=number]{width:50px;text-align:right;padding:3px 5px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.7rem;border-radius:4px}
+.weight-row .lock{cursor:pointer;opacity:.35;user-select:none;transition:all .2s;font-size:.68rem;font-weight:600;width:16px;text-align:center}
+.weight-row .lock:hover{opacity:.7}
+.weight-row .lock.on{opacity:1;color:var(--accent)}
+.preset-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.bench-btn{padding:4px 10px;font-size:.68rem;background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:inherit;border-radius:4px;transition:all .15s;font-weight:500}
+.bench-btn:hover,.bench-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+
+/* KPIs */
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:10px;border-radius:var(--radius-sm);overflow:hidden}
+.kpi-cell{padding:14px 10px;background:var(--card);text-align:center;transition:background .2s;cursor:help}
+.kpi-cell:hover{background:var(--accent-bg)}
+.kpi-cell .lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:600}
+.kpi-cell .val{font-size:1.15rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kpi-cell .val.pos{color:var(--green)}
+.kpi-cell .val.neg{color:var(--red)}
+.kpi-secondary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:10px;border-radius:var(--radius-sm);overflow:hidden}
+.kpi-secondary .kpi-cell .val{font-size:.82rem}
+.kpi-tertiary{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);margin-bottom:10px;border-radius:var(--radius-sm);overflow:hidden}
+.kpi-tertiary .kpi-cell{padding:10px 6px}
+.kpi-tertiary .kpi-cell .val{font-size:.75rem}
+
+/* OPT RESULTS */
+.opt-result{padding:12px 14px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;font-size:.78rem;transition:all .2s;border-radius:var(--radius-sm)}
+.opt-result:hover{background:var(--accent-bg);border-color:var(--accent)}
+.opt-result .name{font-weight:600;color:#fff;margin-bottom:3px}
+.opt-result .vals{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.opt-result.recommended{border-color:var(--green);background:rgba(16,185,129,.05)}
+.opt-result .badge{display:none}
+.opt-result.recommended .badge{display:inline-block;font-size:.6rem;background:var(--green);color:#000;padding:1px 6px;margin-left:6px;font-weight:700;border-radius:3px}
+.assumptions{font-size:.68rem;color:var(--dim);padding:12px;background:var(--surface);border-radius:var(--radius-sm);margin-top:12px;line-height:1.6}
+
+/* CMA TABLE */
+.cma-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.68rem;margin-top:8px}
+.cma-table th{padding:6px 8px;color:var(--muted);font-weight:600;text-align:left;border-bottom:1px solid var(--border);font-size:.6rem;text-transform:uppercase;letter-spacing:.04em}
+.cma-table td{padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:.68rem;border-bottom:1px solid rgba(30,35,48,.5)}
+.cma-table tr:hover td{background:var(--accent-bg)}
+.cma-table .asset-eq{color:var(--blue)}
+.cma-table .asset-fi{color:var(--green)}
+.cma-table .asset-alt{color:var(--amber)}
+.cma-table .asset-cash{color:var(--muted)}
+
+/* SECTION LABEL */
+.section-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.section-label .hint{font-size:.62rem;color:var(--dim);text-transform:none;letter-spacing:0;font-weight:400}
+
+/* CHART SUBTITLE */
+.chart-sub{font-size:.62rem;color:var(--dim);margin-top:-6px;margin-bottom:8px}
+
+/* FRONTIER LEGEND */
+.frontier-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.62rem;color:var(--muted);margin-top:8px}
+.frontier-legend span{display:flex;align-items:center;gap:4px}
+.frontier-legend .fdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* WEIGHT COLOR BARS */
+.weight-row.eq .lbl{color:var(--blue)}
+.weight-row.fi .lbl{color:var(--green)}
+.weight-row.alt .lbl{color:var(--amber)}
+.weight-row.cash-row .lbl{color:var(--muted)}
+.weight-total{font-size:.68rem;color:var(--muted);text-align:right;padding:6px 0 0;border-top:1px solid var(--border);margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+/* CORRELATION */
+.corr-panel{margin-bottom:20px}
+.corr-table{width:100%;border-collapse:separate;border-spacing:2px;font-family:'JetBrains Mono',monospace;font-size:.72rem}
+.corr-table th{padding:8px 6px;color:var(--muted);font-weight:600;font-size:.65rem;text-transform:uppercase;letter-spacing:.04em}
+.corr-table td{padding:8px 6px;text-align:center;border-radius:4px;font-weight:500;cursor:help;transition:all .15s}
+.corr-table td:hover{transform:scale(1.08);box-shadow:0 0 12px rgba(6,182,212,.25)}
+
+/* CHARTS */
+.chart-wrap{position:relative;padding:20px 20px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);cursor:crosshair;transition:border-color .2s;overflow:hidden}
+.chart-wrap:hover{border-color:rgba(6,182,212,.3)}
+.chart-wrap canvas{display:block;width:100%;border-radius:4px}
+.chart-wide{margin-bottom:20px}
+.chart-wide canvas{height:380px}
+.chart-trio canvas{height:360px}
+.chart-wrap .chart-title{font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.chart-wrap .chart-legend{position:absolute;top:16px;right:20px;display:flex;gap:14px;font-size:.7rem;z-index:5}
+.chart-wrap .chart-legend span{display:flex;align-items:center;gap:5px;color:var(--muted)}
+.chart-wrap .chart-legend .dot{width:8px;height:8px;border-radius:50%}
+.chart-wrap .chart-legend .dot.port{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.chart-wrap .chart-legend .dot.bm{background:var(--muted)}
+.grid-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-charts .chart-full{grid-column:1/-1}
+@media(max-width:900px){.grid-charts{grid-template-columns:1fr}}
+
+/* TOOLTIP */
+.chart-tooltip{position:fixed;font-size:.72rem;font-family:'JetBrains Mono',monospace;color:var(--text);background:rgba(10,14,39,.96);border:1px solid var(--accent);padding:8px 12px;pointer-events:none;opacity:0;z-index:200;border-radius:var(--radius-sm);box-shadow:0 8px 32px rgba(0,0,0,.5);backdrop-filter:blur(8px);max-width:240px;line-height:1.5}
+.chart-tooltip.show{opacity:1}
+.cma-table .pos{color:var(--green)}.cma-table .neg{color:var(--red)}
+.chart-crosshair{position:absolute;pointer-events:none;opacity:0;z-index:4;top:40px;bottom:20px;width:1px;background:var(--accent);transition:none}
+.chart-crosshair.show{opacity:.6}
+
+/* OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;visibility:hidden;transition:all .25s;backdrop-filter:blur(4px)}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{max-width:560px;width:100%;max-height:85vh;overflow-y:auto;background:var(--card);border:1px solid var(--border);padding:28px;border-radius:var(--radius);position:relative}
+.overlay-box h2{font-size:1rem;font-weight:600;color:#fff;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.overlay-box h3{font-size:.72rem;color:var(--accent);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.overlay-box p,.overlay-box li{font-size:.78rem;color:var(--text);line-height:1.7;margin-bottom:6px}
+.overlay-box ul{margin-left:18px}
+.overlay-box .formula{font-size:.75rem;font-family:'JetBrains Mono',monospace;background:var(--bg);padding:10px 14px;border-left:3px solid var(--accent);margin:8px 0;color:var(--muted);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.overlay-box .btn-close{position:absolute;top:14px;right:14px;background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:4px;transition:all .15s}
+.overlay-box .btn-close:hover{color:var(--accent);border-color:var(--accent)}
+.overlay-box kbd{background:var(--bg);padding:2px 7px;border:1px solid var(--border);font-size:.7rem;border-radius:4px;font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+<div class="status-bar">
+  <span>Seed <span id="statusSeed">100</span> · Rf <span id="statusRf">2.50</span>% · MaxW <span id="statusMaxW">0.35</span> · <span id="statusLast">Ready</span></span>
+  <span>15Y synthetic · 8 assets · Deterministic</span>
+</div>
+
+<div class="page">
+<header class="header">
+  <div>
+    <h1>Portfolio <span>Optimizer</span></h1>
+    <p class="sub">Mean-variance optimization across 8 asset classes with Yale endowment constraints</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-ghost" id="btnCopy">Copy Weights</button>
+    <button class="btn-ghost" id="btnExport">Export CSV</button>
+    <button class="btn-ghost" id="btnGuide">? Guide</button>
+  </div>
+</header>
+
+<div class="grid">
+  <!-- CONTROLS -->
+  <div class="panel">
+    <div class="panel-hdr"><span style="color:var(--accent);margin-right:6px">1</span> Parameters</div>
+    <div class="panel-body">
+      <div class="ctrl-row"><label>Simulation Seed <input type="number" id="seed" value="100" min="1" max="9999"></label></div>
+      <div class="ctrl-hint">Changes random path. Same seed = same results.</div>
+      <div class="ctrl-row"><label>Risk-Free Rate <input type="range" id="rf" min="0" max="6" step="0.25" value="2.5"> <span class="ctrl-val" id="rfVal">2.50%</span></label></div>
+      <div class="ctrl-row"><label><input type="checkbox" id="longOnly" checked> Long-only constraint</label></div>
+      <div class="ctrl-row"><label>Max Weight <input type="range" id="maxW" min="0.10" max="0.60" step="0.05" value="0.35"> <span class="ctrl-val" id="maxWVal">35%</span></label></div>
+      <div class="ctrl-hint">Per-asset cap for diversification.</div>
+      <div class="ctrl-row"><label>Target Vol <input type="range" id="targetVol" min="4" max="18" step="0.5" value="10"> <span class="ctrl-val" id="targetVolVal">10%</span></label></div>
+      <div class="ctrl-hint">Used by Target Vol optimization.</div>
+      <div class="ctrl-btns">
+        <button class="btn" id="btnOptimize">Optimize</button>
+        <button class="btn secondary" id="btnReset">Reset</button>
+      </div>
+      <p class="ctrl-hint">1. Set parameters → 2. Click Optimize → 3. Click a result to apply</p>
+    </div>
+  </div>
+
+  <!-- WEIGHTS -->
+  <div class="panel">
+    <div class="panel-hdr"><span style="color:var(--accent);margin-right:6px">2</span> Allocation Weights</div>
+    <div class="panel-body">
+      <div class="preset-row">
+        <button class="bench-btn" id="benchBtn">60/40</button>
+        <button class="bench-btn preset" data-preset="yale">Yale</button>
+        <button class="bench-btn preset" data-preset="riskparity">Risk Parity</button>
+        <button class="bench-btn preset" data-preset="allweather">All-Weather</button>
+        <button class="bench-btn preset" data-preset="equal">Equal</button>
+      </div>
+      <div id="weightRows"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="panel">
+    <div class="panel-hdr"><span style="color:var(--accent);margin-right:6px">3</span> Portfolio Analytics</div>
+    <div class="panel-body">
+      <div class="kpi" id="kpiMain"></div>
+      <div class="kpi-secondary" id="kpiSecondary"></div>
+      <div class="kpi-tertiary" id="kpiTertiary"></div>
+      <div class="panel-hdr" style="margin:12px -16px 8px;border-radius:0">Optimization</div>
+      <div id="optResults"></div>
+      <div class="assumptions" id="assumptions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CMA TABLE -->
+<div class="section-label">Capital Market Assumptions <span class="hint">Theoretical inputs driving optimization</span></div>
+<div class="panel" style="margin-bottom:20px">
+  <div class="panel-body" style="padding:12px 16px;overflow-x:auto">
+    <table class="cma-table" id="cmaTable"></table>
+  </div>
+</div>
+
+<!-- CORRELATION -->
+<div class="section-label">Correlation Matrix <span class="hint">Cross-asset dependencies</span></div>
+<div class="panel corr-panel" style="margin-bottom:20px">
+  <div class="panel-hdr">Pairwise Correlations</div>
+  <div class="panel-body" style="overflow-x:auto;padding:16px">
+    <table class="corr-table" id="corrTable"></table>
+  </div>
+</div>
+
+<!-- GROWTH CHART -->
+<div class="section-label">Performance <span class="hint">Simulated 15-year backtest</span></div>
+<div class="chart-wrap chart-wide" id="pathChartWrap">
+  <div class="chart-title">Growth of $1</div>
+  <div class="chart-legend"><span><span class="dot port"></span>Portfolio</span><span><span class="dot bm"></span>60/40 BM</span></div>
+  <div class="chart-crosshair" id="pathCrosshair"></div>
+  <canvas id="pathChart"></canvas>
+</div>
+
+<!-- BOTTOM CHARTS -->
+<div class="section-label">Risk Analytics <span class="hint">Decomposition, frontier & drawdown</span></div>
+<div class="grid-charts">
+  <div class="chart-wrap chart-trio chart-full" id="riskChartWrap">
+    <div class="chart-title">Risk Contribution</div>
+    <div class="chart-sub">% of total portfolio variance by asset</div>
+    <canvas id="riskChart"></canvas>
+  </div>
+  <div class="chart-wrap chart-trio" id="frontierChartWrap">
+    <div class="chart-title">Efficient Frontier</div>
+    <div class="chart-sub">σ (x-axis) vs E[R] (y-axis) — hover for details</div>
+    <canvas id="frontierChart"></canvas>
+    <div class="frontier-legend" id="frontierLegend">
+      <span><span class="fdot" style="background:#06b6d4;box-shadow:0 0 6px #06b6d4"></span>Current</span>
+      <span><span class="fdot" style="background:#3b82f6"></span>Min Var</span>
+      <span><span class="fdot" style="background:#10b981"></span>Max Sharpe</span>
+      <span><span class="fdot" style="background:#f59e0b"></span>Target Vol</span>
+    </div>
+  </div>
+  <div class="chart-wrap chart-trio" id="ddChartWrap">
+    <div class="chart-title">Drawdown</div>
+    <div class="chart-sub">Peak-to-trough decline over time</div>
+    <canvas id="ddChart"></canvas>
+  </div>
+</div>
+<div style="text-align:center;padding:28px 0 12px;font-size:.65rem;color:var(--dim);border-top:1px solid var(--border);margin-top:32px">
+  Simulated returns are hypothetical. Past performance does not guarantee future results.
+  Built with mean-variance optimization and Monte Carlo simulation.
+</div>
+</div>
+
+<div class="chart-tooltip" id="chartTooltip"></div>
+
+<!-- GUIDE OVERLAY -->
+<div class="overlay" id="guideOverlay">
+  <div class="overlay-box">
+    <button class="btn-close" id="guideClose">✕</button>
+    <h2>Portfolio Optimizer — Guide</h2>
+    <h3>How It Works</h3>
+    <p><b>1.</b> Set parameters (seed, risk-free rate, constraints) in the left panel.</p>
+    <p><b>2.</b> Adjust allocation weights manually or pick a preset (Yale, Risk Parity, etc.).</p>
+    <p><b>3.</b> Click <b>Optimize</b> to compute three optimal portfolios. Click any result to apply.</p>
+    <p>All weights auto-rescale to 100%. Lock an asset with <b>L</b> to hold it fixed during rebalancing.</p>
+    <h3>Asset Classes</h3>
+    <p><span style="color:var(--blue)">■</span> <b>Equities</b>: US, International, Emerging Markets — growth engines with higher volatility.</p>
+    <p><span style="color:var(--green)">■</span> <b>Fixed Income</b>: US Agg Bonds — low-risk income and diversification.</p>
+    <p><span style="color:var(--amber)">■</span> <b>Credit & Alts</b>: IG/HY Credit, TIPS — yield enhancement and inflation protection.</p>
+    <h3>Key Formulas</h3>
+    <div class="formula">μ_p = w'μ  (portfolio expected return)</div>
+    <div class="formula">σ_p = √(w'Σw)  (portfolio volatility)</div>
+    <div class="formula">Sharpe = (μ_p − Rf) / σ_p</div>
+    <div class="formula">Sortino = (μ_p − Rf) / σ_downside</div>
+    <div class="formula">β = Cov(R_p, R_b) / Var(R_b)  vs 60/40</div>
+    <div class="formula">VaR 95% = 5th pctile monthly return, annualized</div>
+    <div class="formula">Calmar = Annualized Return / Max Drawdown</div>
+    <div class="formula">Info Ratio = (μ_p − μ_b) / Tracking Error</div>
+    <h3>Optimization Methods</h3>
+    <p><b>Min Variance</b>: w ∝ Σ⁻¹·1 — minimizes total risk regardless of return.</p>
+    <p><b>Max Sharpe</b>: w ∝ Σ⁻¹·(μ−Rf) — best risk-adjusted return on the efficient frontier.</p>
+    <p><b>Target Vol</b>: Blends Max Sharpe with cash to match your target volatility level.</p>
+    <h3>Constraints (Yale Model)</h3>
+    <p>Cash ≤ 5% · Equities ≥ 25% · Credit (IG + HY) ≤ 30% · Per-asset cap applied.</p>
+    <p>Inspired by the Yale Endowment's diversification principles: broad equity exposure, limited cash drag, and controlled credit concentration.</p>
+    <h3>Keyboard Shortcuts</h3>
+    <ul><li><kbd>?</kbd> Toggle this guide</li><li><kbd>O</kbd> Run optimization</li><li><kbd>R</kbd> Reset to defaults</li></ul>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function(){
+const F = v => typeof v==='number'&&!isNaN(v)?v.toFixed(2):'—';
+const P = v => typeof v==='number'&&!isNaN(v)?(v*100).toFixed(2)+'%':'—';
+
+const ASSETS=['US_EQ','INTL_EQ','EM_EQ','US_AGG','IG_CREDIT','HY_CREDIT','TIPS','CASH'];
+const LABELS=['US Equity','Intl Equity','EM Equity','US Agg','IG Credit','HY Credit','TIPS','Cash'];
+const N=8, T=180;
+const W_BM=[.6,0,0,.4,0,0,0,0];
+
+const APP={
+  state:{seed:100,rf:.025,longOnly:true,maxW:.35,targetVol:.10,
+    weights:[.30,.20,.08,.25,.08,.04,.03,.02],
+    locked:Array(N).fill(false),lastOpt:null},
+  data:null,optResults:null,frontierData:null,drawdownData:null
+};
+
+// --- PRNG ---
+function rng32(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);return((t+=t<0?0x100000000:0)>>>0)/4294967296}}
+
+// --- DATA GENERATION ---
+function genData(seed){
+  const rng=rng32(seed);
+  const bm=()=>{const u=Math.max(1e-10,rng()),v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+
+  // Realistic capital market assumptions
+  const mu_a=[.072,.062,.078,.034,.038,.052,.033,APP.state.rf];
+  const vol_a=[.165,.175,.205,.045,.068,.105,.055,.01];
+  const C=[
+    [1,.75,.68,.05,.18,.35,.08,-.05],
+    [.75,1,.72,.03,.15,.32,.06,-.04],
+    [.68,.72,1,.02,.12,.30,.04,-.03],
+    [.05,.03,.02,1,.55,.40,.52,.10],
+    [.18,.15,.12,.55,1,.65,.38,.04],
+    [.35,.32,.30,.40,.65,1,.30,.01],
+    [.08,.06,.04,.52,.38,.30,1,.08],
+    [-.05,-.04,-.03,.10,.04,.01,.08,1]
+  ];
+
+  // Cholesky
+  const L=[];
+  for(let i=0;i<N;i++){L[i]=[];for(let j=0;j<=i;j++){let s=0;for(let k=0;k<j;k++)s+=L[i][k]*L[j][k];L[i][j]=i===j?Math.sqrt(Math.max(1e-12,C[i][i]-s)):(C[i][j]-s)/(L[j][j]||1e-12)}for(let j=i+1;j<N;j++)L[i][j]=0}
+
+  const mu_m=mu_a.map(m=>Math.log(1+m)/12);
+  const vol_m=vol_a.map(v=>v/Math.sqrt(12));
+  const rets=[];
+  for(let t=0;t<T;t++){
+    const z=[];for(let i=0;i<N;i++)z[i]=bm();
+    const e=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<=i;j++)s+=L[i][j]*z[j];e[i]=s}
+    const r=[];for(let i=0;i<N;i++)r.push(Math.exp(mu_m[i]-.5*vol_m[i]*vol_m[i]+vol_m[i]*e[i])-1);
+    rets.push(r);
+  }
+
+  // Theoretical covariance (more stable for optimization)
+  const Sigma=[];
+  for(let i=0;i<N;i++){Sigma[i]=[];for(let j=0;j<N;j++)Sigma[i][j]=C[i][j]*vol_a[i]*vol_a[j]}
+  return{returns:rets,mu:mu_a,Sigma};
+}
+
+// --- MATH ---
+function simplex(w){const w2=w.map(v=>Math.max(0,v));const s=w2.reduce((a,b)=>a+b,0)||1;return w2.map(v=>v/s)}
+
+const CASH_I=7, MAX_CASH=.05, EQ_I=[0,1,2], CR_I=[4,5], MIN_EQ=.25, MAX_CR=.30;
+
+function projW(w,mxW,lo){
+  let w2=w.map(v=>lo?Math.max(0,v):v);
+  w2=w2.map(v=>Math.min(mxW,Math.max(lo?0:-1,v)));
+  w2=simplex(w2);
+  if(w2[CASH_I]>MAX_CASH){const os=1-w2[CASH_I];w2[CASH_I]=MAX_CASH;if(os>1e-8)for(let i=0;i<N;i++)if(i!==CASH_I)w2[i]*=(1-MAX_CASH)/os}
+  return w2;
+}
+
+function projOpt(w,mxW,lo){
+  let w2=projW(w,Math.min(mxW,.30),lo);
+  const cs=CR_I.reduce((s,i)=>s+w2[i],0);
+  if(cs>MAX_CR){const sc=MAX_CR/cs;CR_I.forEach(i=>w2[i]*=sc);w2=simplex(w2)}
+  const es=EQ_I.reduce((s,i)=>s+w2[i],0);
+  if(es<MIN_EQ&&es>0){
+    const need=MIN_EQ-es;const rest=[3,4,5,6,7];
+    const rs=rest.reduce((s,i)=>s+w2[i],0);
+    if(rs>1e-8){const sc=Math.max(0,1-need/rs);rest.forEach(i=>w2[i]*=sc);EQ_I.forEach(i=>w2[i]+=w2[i]/es*need);w2=simplex(w2)}
+  }
+  return w2;
+}
+
+function portMu(w,mu){return w.reduce((s,v,i)=>s+v*mu[i],0)}
+function portVol(w,S){let v=0;for(let i=0;i<N;i++)for(let j=0;j<N;j++)v+=w[i]*S[i][j]*w[j];return Math.sqrt(Math.max(0,v))}
+function sharpe(w,mu,S,rf){const v=portVol(w,S);return v>1e-8?(portMu(w,mu)-rf)/v:0}
+function riskContrib(w,S){const sw=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=S[i][j]*w[j];sw[i]=s}const t=w.reduce((s,v,i)=>s+v*sw[i],0)||1;return w.map((v,i)=>v*sw[i]/t*100)}
+function growthPath(w,rets){const p=[1];for(let t=0;t<rets.length;t++){const r=w.reduce((s,v,i)=>s+v*rets[t][i],0);p.push(p[p.length-1]*(1+r))}return p}
+function maxDD(p){if(!p||!p.length)return 0;let pk=p[0],dd=0;for(let i=0;i<p.length;i++){pk=Math.max(pk,p[i]);dd=Math.max(dd,pk>0?(pk-p[i])/pk:0)}return dd*100}
+
+function trackingError(w,wb,rets){
+  if(rets.length<2)return 0;
+  const d=rets.map(t=>{const rp=w.reduce((s,v,i)=>s+v*t[i],0);const rb=wb.reduce((s,v,i)=>s+v*t[i],0);return rp-rb});
+  const m=d.reduce((a,b)=>a+b,0)/d.length;
+  const v=d.reduce((s,x)=>s+(x-m)**2,0)/(d.length-1)||0;
+  return Math.sqrt(v*12)*100;
+}
+function turnover(w,wp){return w.reduce((s,v,i)=>s+Math.abs(v-wp[i]),0)*100}
+function worst12m(p){let w=0;for(let i=12;i<p.length;i++){const r=(p[i]-p[i-12])/p[i-12]*100;w=Math.min(w,r)}return w}
+
+function sortinoRatio(w,rets,rf){
+  const rp=rets.map(t=>w.reduce((s,v,i)=>s+v*t[i],0));
+  if(!rp.length)return 0;
+  const rfm=Math.pow(1+rf,1/12)-1;
+  const neg=rp.filter(r=>r<rfm);
+  const dv=neg.length?Math.sqrt(neg.reduce((s,x)=>s+(x-rfm)**2,0)/neg.length)*Math.sqrt(12):.01;
+  return Math.min(5,Math.max(-5,(portMu(w,APP.data.mu)-rf)/Math.max(dv,.01)));
+}
+function infoRatio(w,wb,rets){const te=trackingError(w,wb,rets)/100;if(te<1e-8)return 0;return(portMu(w,APP.data.mu)-portMu(wb,APP.data.mu))/te}
+function betaCalc(w,wb,rets){
+  const rp=rets.map(t=>w.reduce((s,v,i)=>s+v*t[i],0));
+  const rb=rets.map(t=>wb.reduce((s,v,i)=>s+v*t[i],0));
+  if(rp.length<2)return 0;
+  const mp=rp.reduce((a,b)=>a+b,0)/rp.length;
+  const mb=rb.reduce((a,b)=>a+b,0)/rb.length;
+  const vb=rb.reduce((s,x)=>s+(x-mb)**2,0)/(rb.length-1)||1e-10;
+  const cv=rp.reduce((s,x,i)=>s+(x-mp)*(rb[i]-mb),0)/(rb.length-1);
+  return cv/vb;
+}
+function var95(w,rets){
+  const rp=rets.map(t=>w.reduce((s,v,i)=>s+v*t[i],0));
+  if(!rp.length)return 0;
+  const sorted=[...rp].sort((a,b)=>a-b);
+  return(Math.pow(1+sorted[Math.max(0,Math.floor(rp.length*.05))],12)-1)*100;
+}
+function calmar(w,rets){const r=portMu(w,APP.data.mu)*100;const d=maxDD(growthPath(w,rets));return d>0?r/d:0}
+function getCorr(S){const c=[];for(let i=0;i<N;i++){c[i]=[];for(let j=0;j<N;j++){c[i][j]=Math.max(-1,Math.min(1,S[i][j]/(Math.sqrt(S[i][i])*Math.sqrt(S[j][j])+1e-12)))}}return c}
+
+// --- MATRIX INVERSE ---
+function inv(A){
+  const n=A.length,a=A.map(r=>[...r]),I=[];
+  for(let i=0;i<n;i++){I[i]=[];for(let j=0;j<n;j++)I[i][j]=i===j?1:0}
+  for(let c=0;c<n;c++){
+    let p=c;for(let r=c+1;r<n;r++)if(Math.abs(a[r][c])>Math.abs(a[p][c]))p=r;
+    [a[c],a[p]]=[a[p],a[c]];[I[c],I[p]]=[I[p],I[c]];
+    const d=a[c][c]||1e-12;for(let j=0;j<n;j++){a[c][j]/=d;I[c][j]/=d}
+    for(let r=0;r<n;r++)if(r!==c){const f=a[r][c];for(let j=0;j<n;j++){a[r][j]-=f*a[c][j];I[r][j]-=f*I[c][j]}}
+  }
+  return I;
+}
+
+// --- PRESETS ---
+const PRESETS={
+  riskparity:()=>{const v=APP.data.Sigma.map((_,i)=>Math.sqrt(APP.data.Sigma[i][i]));const iv=v.map(x=>1/(x+1e-8));const s=iv.reduce((a,b)=>a+b,0);return iv.map(x=>x/s)},
+  allweather:()=>[.20,.15,.05,.30,.10,.05,.12,.03],
+  yale:()=>[.12,.18,.10,.15,.15,.08,.17,.05],
+  equal:()=>Array(N).fill(1/N)
+};
+
+// --- OPTIMIZE ---
+function optimize(){
+  const{mu,Sigma}=APP.data,rf=APP.state.rf,mxW=APP.state.maxW,lo=APP.state.longOnly,tv=APP.state.targetVol;
+  const SR=Sigma.map((r,i)=>r.map((x,j)=>x+(i===j?1e-6:0)));
+  const SI=inv(SR);
+  const ones=Array(N).fill(1);
+  const ex=mu.map(m=>m-rf);
+
+  // Min Variance: w ∝ Σ⁻¹·1
+  const mvR=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=SI[i][j]*ones[j];mvR[i]=s}
+  const mvS=mvR.reduce((a,b)=>a+b,0)||1;
+  let minVar=projOpt(mvR.map(x=>x/mvS),mxW,lo);
+
+  // Max Sharpe: w ∝ Σ⁻¹·(μ−rf)
+  const msR=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=SI[i][j]*ex[j];msR[i]=s}
+  const msS=msR.reduce((a,b)=>a+b,0);
+  let maxS=msS>1e-10?projOpt(msR.map(x=>Math.max(0,x/msS)),mxW,lo):projOpt(Array(N).fill(1/N),mxW,lo);
+
+  // Target Vol: blend with cash if below tangency, or search upward
+  const vTan=portVol(maxS,Sigma);
+  let tvP;
+  if(Math.abs(vTan-tv)<.005){
+    tvP=[...maxS];
+  }else if(tv<vTan&&vTan>1e-8){
+    const a=tv/vTan;
+    const blended=maxS.map((v,i)=>i===CASH_I?a*v+(1-a):a*v);
+    tvP=projOpt(blended,mxW,lo);
+    if(Math.abs(portVol(tvP,Sigma)-tv)>.005){
+      const sr=rng32(APP.state.seed+777);
+      let best=tvP,bd=Math.abs(portVol(tvP,Sigma)-tv);
+      for(let n=0;n<20000;n++){
+        const u=[];let s=0;for(let i=0;i<N;i++){u[i]=-Math.log(Math.max(1e-10,sr()));s+=u[i]}
+        const ww=projOpt(u.map(x=>x/s),mxW,lo);
+        const d=Math.abs(portVol(ww,Sigma)-tv);
+        if(d<bd&&sharpe(ww,mu,Sigma,rf)>.01){bd=d;best=ww}
+      }
+      tvP=best;
+    }
+  }else{
+    // tv > vTan: search for best Sharpe among portfolios near target vol
+    const sr=rng32(APP.state.seed+777);
+    let best=maxS,bd=Math.abs(vTan-tv),bestSh=-1e9;
+    for(let n=0;n<25000;n++){
+      const u=[];let s=0;for(let i=0;i<N;i++){u[i]=-Math.log(Math.max(1e-10,sr()));s+=u[i]}
+      const ww=projOpt(u.map(x=>x/s),mxW,lo);
+      const wVol=portVol(ww,Sigma);
+      const d=Math.abs(wVol-tv);
+      const wSh=sharpe(ww,mu,Sigma,rf);
+      if(d<.015&&wSh>bestSh){bestSh=wSh;best=ww;bd=d}
+      else if(d<bd&&wSh>.01){bd=d;best=ww}
+    }
+    tvP=best;
+  }
+
+  if(sharpe(minVar,mu,Sigma,rf)<.001)minVar=[...maxS];
+  return{minVar,maxSharpe:maxS,targetVol:tvP};
+}
+
+// --- DRAW: GROWTH PATH ---
+function drawPath(cvs,p,pb){
+  const dpr=devicePixelRatio||1,rc=cvs.getBoundingClientRect();
+  cvs.width=rc.width*dpr;cvs.height=rc.height*dpr;
+  const c=cvs.getContext('2d');c.scale(dpr,dpr);
+  const W=rc.width,H=rc.height,pad={l:52,r:16,t:8,b:28};
+  const gw=W-pad.l-pad.r,gh=H-pad.t-pad.b;
+  const all=[...p,...pb];
+  const mn=Math.min(...all)*.97,mx=Math.max(...all)*1.03;
+  const tx=i=>pad.l+(i/Math.max(1,p.length-1))*gw;
+  const ty=v=>pad.t+gh*(1-(v-mn)/(mx-mn||1));
+
+  c.fillStyle='#080c1e';c.fillRect(0,0,W,H);
+
+  // Grid
+  c.strokeStyle='#1e293b';c.lineWidth=1;
+  for(let i=0;i<=6;i++){c.beginPath();c.moveTo(pad.l,pad.t+gh*(1-i/6));c.lineTo(W-pad.r,pad.t+gh*(1-i/6));c.stroke()}
+  for(let i=0;i<=12;i++){c.beginPath();c.moveTo(pad.l+(i/12)*gw,pad.t);c.lineTo(pad.l+(i/12)*gw,H-pad.b);c.stroke()}
+
+  // Labels
+  c.fillStyle='#64748b';c.font='10px "JetBrains Mono",monospace';c.textAlign='right';
+  for(let i=0;i<=4;i++){const v=mn+(mx-mn)*(i/4);c.fillText(v.toFixed(2)+'x',pad.l-6,pad.t+gh*(1-i/4)+4)}
+  c.textAlign='center';
+  for(let y=0;y<=15;y+=3){const idx=y*12;if(idx<p.length)c.fillText((2010+y)+'',tx(idx),H-10)}
+
+  // Area
+  const gr=c.createLinearGradient(0,pad.t,0,H-pad.b);
+  gr.addColorStop(0,'rgba(6,182,212,.25)');gr.addColorStop(1,'rgba(6,182,212,0)');
+  c.fillStyle=gr;c.beginPath();c.moveTo(tx(0),H-pad.b);
+  p.forEach((v,i)=>c.lineTo(tx(i),ty(v)));
+  c.lineTo(tx(p.length-1),H-pad.b);c.closePath();c.fill();
+
+  // Portfolio line
+  c.strokeStyle='#06b6d4';c.lineWidth=2;c.lineJoin='round';c.beginPath();
+  p.forEach((v,i)=>{i===0?c.moveTo(tx(i),ty(v)):c.lineTo(tx(i),ty(v))});c.stroke();
+
+  // Benchmark line
+  c.strokeStyle='#94a3b8';c.setLineDash([4,3]);c.lineWidth=1.5;c.beginPath();
+  pb.forEach((v,i)=>{i===0?c.moveTo(tx(i),ty(v)):c.lineTo(tx(i),ty(v))});c.stroke();c.setLineDash([]);
+
+  // End value labels
+  const pEnd=p[p.length-1],pbEnd=pb[pb.length-1];
+  c.font='bold 11px "JetBrains Mono",monospace';
+  c.fillStyle='#06b6d4';c.textAlign='left';
+  c.fillText(pEnd.toFixed(2)+'x',tx(p.length-1)+6,ty(pEnd)+4);
+  c.fillStyle='#94a3b8';
+  c.fillText(pbEnd.toFixed(2)+'x',tx(pb.length-1)+6,ty(pbEnd)+4);
+
+  return{tx,ty,mn,mx,pad,gw,gh};
+}
+
+// --- DRAW: RISK BARS ---
+function drawRiskBars(cvs,rc){
+  const dpr=devicePixelRatio||1,rect=cvs.getBoundingClientRect();
+  cvs.width=rect.width*dpr;cvs.height=rect.height*dpr;
+  const c=cvs.getContext('2d');c.scale(dpr,dpr);
+  const W=rect.width,H=rect.height,pad={l:62,r:56,t:8,b:12};
+  const gw=W-pad.l-pad.r,gh=H-pad.t-pad.b;
+  const mxRc=Math.max(...rc,1);
+  c.fillStyle='#080c1e';c.fillRect(0,0,W,H);
+  const BAR_COLORS=[
+    ['#2563eb','#3b82f6'],['#2563eb','#3b82f6'],['#2563eb','#3b82f6'],
+    ['#047857','#10b981'],['#ca8a04','#eab308'],['#ca8a04','#eab308'],
+    ['#d97706','#f59e0b'],['#475569','#94a3b8']
+  ];
+  const bH=Math.max(16,gh/N-6),gap=5;
+  LABELS.forEach((name,i)=>{
+    const y=pad.t+i*(bH+gap);
+    c.fillStyle='#64748b';c.font='10px "Inter",sans-serif';c.textAlign='right';
+    c.fillText(name,pad.l-6,y+bH/2+4);
+    c.fillStyle='#1e293b';c.fillRect(pad.l,y,gw,bH);
+    const bW=Math.max(0,gw*(rc[i]/mxRc));
+    if(bW>2){
+      const g=c.createLinearGradient(pad.l,0,pad.l+bW,0);
+      g.addColorStop(0,BAR_COLORS[i][0]);g.addColorStop(1,BAR_COLORS[i][1]);
+      c.fillStyle=g;
+      const r=Math.min(4,bH/2);
+      c.beginPath();c.moveTo(pad.l,y);c.lineTo(pad.l+bW-r,y);c.quadraticCurveTo(pad.l+bW,y,pad.l+bW,y+r);c.lineTo(pad.l+bW,y+bH-r);c.quadraticCurveTo(pad.l+bW,y+bH,pad.l+bW-r,y+bH);c.lineTo(pad.l,y+bH);c.closePath();c.fill();
+    }
+    const label=rc[i].toFixed(1)+'%';
+    c.font='10px "JetBrains Mono",monospace';
+    const labelW=c.measureText(label).width;
+    if(pad.l+bW+8+labelW>W-4){
+      c.fillStyle='#fff';c.textAlign='right';
+      c.fillText(label,pad.l+bW-8,y+bH/2+4);
+    }else{
+      c.fillStyle='#f1f5f9';c.textAlign='left';
+      c.fillText(label,pad.l+bW+8,y+bH/2+4);
+    }
+  });
+}
+
+// --- DRAW: FRONTIER ---
+function drawFrontier(cvs,mu,S,rf,wCur,optR){
+  const dpr=devicePixelRatio||1,rect=cvs.getBoundingClientRect();
+  cvs.width=rect.width*dpr;cvs.height=rect.height*dpr;
+  const c=cvs.getContext('2d');c.scale(dpr,dpr);
+  const W=rect.width,H=rect.height,pad={l:44,r:12,t:8,b:28};
+  const gw=W-pad.l-pad.r,gh=H-pad.t-pad.b;
+  const sr=rng32(APP.state.seed+888);
+  const pts=[];
+  for(let n=0;n<1200;n++){
+    const u=[];let s=0;for(let i=0;i<N;i++){u[i]=-Math.log(Math.max(1e-10,sr()));s+=u[i]}
+    const ww=projW(u.map(x=>x/s),APP.state.maxW,APP.state.longOnly);
+    pts.push({r:portMu(ww,mu),v:portVol(ww,S)*100});
+  }
+  const vMn=Math.max(0,Math.min(...pts.map(p=>p.v))-1),vMx=Math.max(...pts.map(p=>p.v))+1;
+  const rMn=Math.min(...pts.map(p=>p.r))-.005,rMx=Math.max(...pts.map(p=>p.r))+.005;
+  const tx=v=>pad.l+((v-vMn)/(vMx-vMn||1))*gw;
+  const ty=r=>pad.t+gh*(1-(r-rMn)/(rMx-rMn||1));
+
+  c.fillStyle='#080c1e';c.fillRect(0,0,W,H);
+  c.strokeStyle='#1e293b';c.lineWidth=1;
+  for(let i=0;i<=4;i++){c.beginPath();c.moveTo(pad.l,pad.t+gh*(1-i/4));c.lineTo(W-pad.r,pad.t+gh*(1-i/4));c.stroke()}
+
+  c.fillStyle='#64748b';c.font='9px "JetBrains Mono",monospace';c.textAlign='right';
+  for(let i=0;i<=4;i++){const r=rMn+(rMx-rMn)*(i/4);c.fillText((r*100).toFixed(1)+'%',pad.l-4,ty(r)+3)}
+  c.textAlign='center';
+  for(let i=0;i<=4;i++){const v=vMn+(vMx-vMn)*(i/4);c.fillText(v.toFixed(1)+'%',tx(v),H-8)}
+
+  // Cloud
+  pts.forEach(p=>{
+    const sh=(p.r-rf)/(p.v/100||.01);
+    const alpha=Math.min(.5,Math.max(.08,sh*.15));
+    c.fillStyle='rgba(6,182,212,'+alpha+')';
+    c.beginPath();c.arc(tx(p.v),ty(p.r),2.5,0,Math.PI*2);c.fill();
+  });
+
+  // Capital Market Line from Rf through tangency
+  if(optR){
+    const ms=optR.find(x=>x.name==='Max Sharpe');
+    if(ms){
+      const tanR=portMu(ms.w,mu),tanV=portVol(ms.w,S)*100;
+      if(tanV>1e-4){
+        const slope=(tanR-rf)/tanV;
+        const v0=0,r0=rf,v1=vMx,r1=rf+slope*(v1/100)*100;
+        c.strokeStyle='rgba(16,185,129,.25)';c.lineWidth=1;c.setLineDash([6,4]);c.beginPath();
+        c.moveTo(tx(v0),ty(r0));c.lineTo(tx(v1),ty(r1));c.stroke();c.setLineDash([]);
+      }
+    }
+  }
+
+  const dot=(ww,col,r,label)=>{
+    const ret=portMu(ww,mu),vol=portVol(ww,S)*100;
+    c.fillStyle=col;c.beginPath();c.arc(tx(vol),ty(ret),r,0,Math.PI*2);c.fill();
+    c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1.5;c.stroke();
+    if(label){c.fillStyle=col;c.font='bold 9px "Inter",sans-serif';c.textAlign='left';c.fillText(label,tx(vol)+r+4,ty(ret)+3)}
+  };
+  if(optR){
+    const mv=optR.find(x=>x.name==='Min Variance'),ms=optR.find(x=>x.name==='Max Sharpe'),tv=optR.find(x=>x.name==='Target Vol');
+    if(mv)dot(mv.w,'#3b82f6',6,'Min Var');if(ms)dot(ms.w,'#10b981',7,'Max SR');if(tv)dot(tv.w,'#f59e0b',6,'Tgt σ');
+  }
+  dot(wCur,'#06b6d4',5,'You');
+
+  const fromX=px=>vMn+(px-pad.l)/gw*(vMx-vMn);
+  const fromY=py=>rMn+(1-(py-pad.t)/gh)*(rMx-rMn);
+  return{pts,tx,ty,fromX,fromY,pad,gw,gh};
+}
+
+// --- DRAW: DRAWDOWN ---
+function drawDrawdown(cvs,p){
+  const dpr=devicePixelRatio||1,rect=cvs.getBoundingClientRect();
+  cvs.width=rect.width*dpr;cvs.height=rect.height*dpr;
+  const c=cvs.getContext('2d');c.scale(dpr,dpr);
+  const W=rect.width,H=rect.height,pad={l:44,r:12,t:8,b:28};
+  const gw=W-pad.l-pad.r,gh=H-pad.t-pad.b;
+  let pk=p[0];const dd=p.map(v=>{pk=Math.max(pk,v);return pk>0?(pk-v)/pk*100:0});
+  const mxD=Math.max(...dd,.1);
+  const tx=i=>pad.l+(i/Math.max(1,dd.length-1))*gw;
+  const ty=v=>pad.t+gh*(v/mxD);
+
+  c.fillStyle='#080c1e';c.fillRect(0,0,W,H);
+  c.strokeStyle='#1e293b';c.lineWidth=1;
+  for(let i=0;i<=4;i++){c.beginPath();c.moveTo(pad.l,pad.t+gh*(i/4));c.lineTo(W-pad.r,pad.t+gh*(i/4));c.stroke()}
+
+  c.fillStyle='#64748b';c.font='9px "JetBrains Mono",monospace';c.textAlign='right';
+  for(let i=0;i<=4;i++)c.fillText('-'+(mxD*i/4).toFixed(1)+'%',pad.l-4,pad.t+gh*(i/4)+3);
+  c.textAlign='center';
+  for(let y=0;y<=15;y+=5){const idx=y*12;if(idx<dd.length)c.fillText((2010+y)+'',tx(idx),H-8)}
+
+  const gr=c.createLinearGradient(0,pad.t,0,H-pad.b);
+  gr.addColorStop(0,'rgba(239,68,68,.35)');gr.addColorStop(1,'rgba(239,68,68,.03)');
+  c.fillStyle=gr;c.beginPath();c.moveTo(pad.l,pad.t);
+  dd.forEach((v,i)=>c.lineTo(tx(i),ty(v)));
+  c.lineTo(tx(dd.length-1),pad.t);c.closePath();c.fill();
+
+  c.strokeStyle='#ef4444';c.lineWidth=1.5;c.lineJoin='round';c.beginPath();
+  dd.forEach((v,i)=>{i===0?c.moveTo(tx(i),ty(v)):c.lineTo(tx(i),ty(v))});c.stroke();
+
+  return{dd,tx,pad,gw};
+}
+
+// --- WEIGHT MANAGEMENT ---
+function rescale(ci,nv){
+  const w=[...APP.state.weights],lk=APP.state.locked;
+  let ls=0,fs=0;
+  for(let i=0;i<N;i++){if(lk[i])ls+=w[i];else if(i!==ci)fs+=w[i]}
+  w[ci]=Math.max(0,Math.min(1,nv));
+  const tf=1-ls-w[ci];
+  if(fs>1e-10){const sc=tf/fs;for(let i=0;i<N;i++)if(!lk[i]&&i!==ci)w[i]*=sc}else w[ci]=1-ls;
+  APP.state.weights=simplex(w);
+}
+function setW(w){APP.state.weights=simplex(w.map(v=>Math.max(0,Math.min(1,v))))}
+
+// --- RENDER ---
+function render(){
+  if(!APP.data)APP.data=genData(APP.state.seed);
+  const w=simplex(APP.state.weights),{mu,Sigma,returns:rets}=APP.data,rf=APP.state.rf;
+  const ret=portMu(w,mu),vol=portVol(w,Sigma)*100,sh=sharpe(w,mu,Sigma,rf);
+  const p=growthPath(w,rets),pb=growthPath(W_BM,rets);
+  const mdd=maxDD(p),te=trackingError(w,W_BM,rets),to=turnover(w,W_BM),w12=worst12m(p);
+  const rc=riskContrib(w,Sigma);
+  const srt=sortinoRatio(w,rets,rf),ir=infoRatio(w,W_BM,rets);
+  const bt=betaCalc(w,W_BM,rets),v95=var95(w,rets),cal=calmar(w,rets);
+
+  // Status bar
+  document.getElementById('statusSeed').textContent=APP.state.seed;
+  document.getElementById('statusRf').textContent=F(rf*100);
+  document.getElementById('statusMaxW').textContent=Math.round(APP.state.maxW*100)+'%';
+  document.getElementById('statusLast').textContent=APP.state.lastOpt||'Ready';
+
+  // Sync control displays
+  document.getElementById('rfVal').textContent=F(rf*100)+'%';
+  document.getElementById('maxWVal').textContent=Math.round(APP.state.maxW*100)+'%';
+  document.getElementById('targetVolVal').textContent=Math.round(APP.state.targetVol*100)+'%';
+  document.getElementById('rf').value=(rf*100).toString();
+  document.getElementById('maxW').value=APP.state.maxW.toString();
+  document.getElementById('targetVol').value=Math.round(APP.state.targetVol*100).toString();
+
+  // KPIs — conditional coloring
+  const retC=ret>=rf?'pos':'neg';
+  const shC=sh>=.5?'pos':sh<0?'neg':'';
+  const srtC=srt>=.5?'pos':srt<0?'neg':'';
+  const irC=ir>0?'pos':ir<0?'neg':'';
+  const calC=cal>.5?'pos':'';
+  const btC=bt>=.8&&bt<=1.2?'pos':'';
+
+  document.getElementById('kpiMain').innerHTML=[
+    '<div class="kpi-cell" title="Expected annual return: w\'μ = Σ(wi × μi)"><div class="lbl">Exp. Return</div><div class="val '+retC+'">'+(ret>=0?'+':'')+P(ret)+'</div></div>',
+    '<div class="kpi-cell" title="Annualized volatility: σ = √(w\'Σw)"><div class="lbl">Volatility</div><div class="val">'+F(vol)+'%</div></div>',
+    '<div class="kpi-cell" title="Risk-adjusted return: (μ − Rf) / σ"><div class="lbl">Sharpe</div><div class="val '+shC+'">'+F(sh)+'</div></div>'
+  ].join('');
+
+  document.getElementById('kpiSecondary').innerHTML=[
+    '<div class="kpi-cell" title="Largest peak-to-trough decline in simulated path"><div class="lbl">Max Drawdown</div><div class="val neg">−'+F(mdd)+'%</div></div>',
+    '<div class="kpi-cell" title="Std. dev. of excess return vs 60/40 benchmark, annualized"><div class="lbl">Tracking Error</div><div class="val">'+F(te)+'%</div></div>',
+    '<div class="kpi-cell" title="Sum of absolute weight differences vs 60/40 benchmark"><div class="lbl">Turnover</div><div class="val">'+F(to)+'%</div></div>',
+    '<div class="kpi-cell" title="Worst rolling 12-month return in simulation"><div class="lbl">Worst 12m</div><div class="val neg">'+F(w12)+'%</div></div>'
+  ].join('');
+
+  document.getElementById('kpiTertiary').innerHTML=[
+    '<div class="kpi-cell" title="Downside risk-adjusted: (μ − Rf) / σ_downside"><div class="lbl">Sortino</div><div class="val '+srtC+'">'+F(srt)+'</div></div>',
+    '<div class="kpi-cell" title="Active return per unit of tracking error: (μp − μb) / TE"><div class="lbl">Info Ratio</div><div class="val '+irC+'">'+F(ir)+'</div></div>',
+    '<div class="kpi-cell" title="Systematic risk vs 60/40: Cov(Rp,Rb) / Var(Rb)"><div class="lbl">Beta</div><div class="val '+btC+'">'+(Math.abs(bt)>10?'—':F(bt))+'</div></div>',
+    '<div class="kpi-cell" title="Value at Risk: 5th percentile monthly return, annualized"><div class="lbl">VaR 95%</div><div class="val neg">'+F(v95)+'%</div></div>',
+    '<div class="kpi-cell" title="Return efficiency per unit of drawdown: μ / MaxDD"><div class="lbl">Calmar</div><div class="val '+calC+'">'+F(cal)+'</div></div>'
+  ].join('');
+
+  // CMA Table
+  const CLASS=['eq','eq','eq','fi','fi','fi','alt','cash-row'];
+  const CLASS_LABEL=['Equity','Equity','Equity','Fixed Income','Credit','Credit','Real Assets','Cash'];
+  const cmaEl=document.getElementById('cmaTable');
+  if(cmaEl){
+    const shA=mu.map((m,i)=>{const v=Math.sqrt(Sigma[i][i]);return v>1e-8?(m-rf)/v:0});
+    cmaEl.innerHTML='<tr><th>Asset</th><th>Class</th><th>E[R] Ann.</th><th>Vol Ann.</th><th>Sharpe</th><th>Weight</th></tr>'+
+      LABELS.map((name,i)=>{
+        const cls=CLASS[i];
+        const clr=cls==='eq'?'asset-eq':cls==='fi'?'asset-fi':cls==='alt'?'asset-alt':'asset-cash';
+        return'<tr><td class="'+clr+'" style="font-weight:600">'+name+'</td>'+
+          '<td style="color:var(--muted)">'+CLASS_LABEL[i]+'</td>'+
+          '<td>'+(mu[i]*100).toFixed(1)+'%</td>'+
+          '<td>'+(Math.sqrt(Sigma[i][i])*100).toFixed(1)+'%</td>'+
+          '<td class="'+(shA[i]>=0?'pos':'neg')+'">'+shA[i].toFixed(2)+'</td>'+
+          '<td style="font-weight:600">'+(w[i]*100).toFixed(1)+'%</td></tr>';
+      }).join('');
+  }
+
+  // Correlation
+  const corr=getCorr(Sigma);
+  const volP=i=>(Math.sqrt(Sigma[i][i])*100).toFixed(1)+'%';
+  document.getElementById('corrTable').innerHTML=
+    '<tr><th></th>'+LABELS.map(a=>'<th>'+a+'</th>').join('')+'</tr>'+
+    LABELS.map((a,i)=>'<tr><th title="Vol: '+volP(i)+'">'+a+'</th>'+corr[i].map((v,j)=>{
+      const al=Math.abs(v)*.55;
+      const bg=v>=0?'rgba(59,130,246,'+al+')':'rgba(239,68,68,'+al+')';
+      const tip=LABELS[i]+' vs '+LABELS[j]+': '+v.toFixed(3);
+      return'<td style="background:'+bg+'" title="'+tip+'">'+v.toFixed(2)+'</td>';
+    }).join('')+'</tr>').join('');
+
+  // Opt results with descriptive info
+  const od=document.getElementById('optResults');
+  const tvTarget=Math.round(APP.state.targetVol*100);
+  const optDesc={'Min Variance':'Lowest possible portfolio risk','Max Sharpe':'Best risk-adjusted return','Target Vol':'Target: '+tvTarget+'% volatility'};
+  if(APP.optResults){
+    od.innerHTML=APP.optResults.map((r,i)=>{
+      const applied=w.every((v,j)=>Math.abs(v-r.w[j])<.001);
+      const rec=r.name==='Max Sharpe';
+      return'<div class="opt-result'+(rec?' recommended':'')+'" data-idx="'+i+'">'+
+        '<div class="name">'+r.name+(rec?'<span class="badge">Best Sharpe</span>':'')+
+        (applied?' <span style="color:var(--green);font-size:.65rem">&#10003; Applied</span>':'')+
+        '</div><div class="vals">Ret '+(r.ret>=0?'+':'')+P(r.ret)+' · Vol '+F(r.vol*100)+'% · Sharpe '+F(r.sharpe)+
+        '</div><div style="font-size:.62rem;color:var(--dim);margin-top:2px">'+(optDesc[r.name]||'')+'</div></div>';
+    }).join('');
+    od.querySelectorAll('.opt-result').forEach(el=>{
+      el.onclick=()=>{const r=APP.optResults[el.dataset.idx];setW(r.w);APP.state.lastOpt=r.name;render()};
+    });
+  }else{
+    od.innerHTML='<div class="opt-result" style="cursor:default;opacity:.5"><div class="name">No optimization yet</div><div class="vals" style="margin-top:2px">Click Optimize to compute Min Variance, Max Sharpe, and Target Vol</div></div>';
+  }
+
+  document.getElementById('assumptions').innerHTML=
+    '<b style="color:var(--muted)">Constraints (Yale Model):</b> Cash ≤ 5% · Equity ≥ 25% · Credit ≤ 30% · Per-asset ≤ '+Math.round(APP.state.maxW*100)+'%'+
+    '<br><b style="color:var(--muted)">Parameters:</b> Rf = '+F(rf*100)+'% · Seed = '+APP.state.seed+' · 15Y monthly simulation · Benchmark = 60/40';
+
+  // Weights with asset class coloring
+  document.getElementById('weightRows').innerHTML=LABELS.map((name,i)=>
+    '<div class="weight-row '+CLASS[i]+'"><span class="lbl">'+name+'</span>'+
+    '<input type="range" data-idx="'+i+'" min="0" max="100" step="0.5" value="'+(w[i]*100)+'">'+
+    '<input type="number" data-idx="'+i+'" value="'+F(w[i]*100)+'" step="0.5" min="0" max="100">'+
+    '<span class="lock'+(APP.state.locked[i]?' on':'')+'" data-idx="'+i+'">L</span></div>'
+  ).join('')+
+  '<div class="weight-total">Equity '+(EQ_I.reduce((s,i)=>s+w[i],0)*100).toFixed(1)+
+  '% · Credit '+(CR_I.reduce((s,i)=>s+w[i],0)*100).toFixed(1)+
+  '% · Total 100%</div>';
+
+  document.getElementById('weightRows').querySelectorAll('input[type=range]').forEach(inp=>{
+    inp.oninput=function(){rescale(+this.dataset.idx,+this.value/100);render()};
+  });
+  document.getElementById('weightRows').querySelectorAll('input[type=number]').forEach(inp=>{
+    inp.onchange=function(){rescale(+this.dataset.idx,+this.value/100);render()};
+  });
+  document.getElementById('weightRows').querySelectorAll('.lock').forEach(el=>{
+    el.onclick=function(){APP.state.locked[+this.dataset.idx]=!APP.state.locked[+this.dataset.idx];render()};
+  });
+
+  // Bench active state
+  document.getElementById('benchBtn').classList.toggle('active',w.every((v,i)=>Math.abs(v-W_BM[i])<.001));
+
+  // Draw charts
+  APP.pathData=drawPath(document.getElementById('pathChart'),p,pb);
+  drawRiskBars(document.getElementById('riskChart'),rc);
+  APP.frontierData=drawFrontier(document.getElementById('frontierChart'),mu,Sigma,rf,w,APP.optResults);
+  APP.drawdownData=drawDrawdown(document.getElementById('ddChart'),p);
+
+  // --- INTERACTIVITY ---
+  const tt=document.getElementById('chartTooltip');
+
+  // Growth tooltip — use canvas rect for accurate position
+  const pw=document.getElementById('pathChartWrap'),ch=document.getElementById('pathCrosshair');
+  const pathCvs=document.getElementById('pathChart');
+  pw.onmousemove=e=>{
+    const cr=pathCvs.getBoundingClientRect(),pd=APP.pathData;if(!pd)return;
+    const x=e.clientX-cr.left;
+    if(x<pd.pad.l||x>cr.width-pd.pad.r){tt.classList.remove('show');ch.classList.remove('show');return}
+    const idx=Math.round((x-pd.pad.l)/pd.gw*(p.length-1));
+    const i=Math.max(0,Math.min(idx,p.length-1));
+    const yr=2010+Math.floor(i/12),mo=(i%12)+1;
+    const diff=((p[i]-pb[i])/pb[i]*100);
+    tt.innerHTML='<b>'+yr+'-'+(mo<10?'0':'')+mo+'</b><br>'+
+      '<span style="color:#06b6d4">Portfolio:</span> '+F(p[i])+'x<br>'+
+      '<span style="color:#94a3b8">60/40 BM:</span> '+F(pb[i])+'x<br>'+
+      '<span style="color:'+(diff>=0?'#10b981':'#ef4444')+'">Excess: '+(diff>=0?'+':'')+diff.toFixed(1)+'%</span>';
+    tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-10)+'px';
+    const wr=pw.getBoundingClientRect();
+    const chX=cr.left-wr.left+x;
+    tt.classList.add('show');ch.style.left=chX+'px';ch.classList.add('show');
+  };
+  pw.onmouseleave=()=>{tt.classList.remove('show');ch.classList.remove('show')};
+
+  // Risk bars tooltip — use canvas rect
+  const rw=document.getElementById('riskChartWrap');
+  const riskCvs=document.getElementById('riskChart');
+  rw.onmousemove=e=>{
+    const cr2=riskCvs.getBoundingClientRect();
+    const bH=Math.max(16,(cr2.height-20)/N-6),gap=5;
+    const y=e.clientY-cr2.top-8;
+    const idx=Math.floor(y/(bH+gap));
+    if(idx>=0&&idx<N){
+      tt.innerHTML='<b>'+LABELS[idx]+'</b><br>Risk: '+rc[idx].toFixed(1)+'% · Weight: '+F(w[idx]*100)+'%';
+      tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-10)+'px';tt.classList.add('show');
+    }else tt.classList.remove('show');
+  };
+  rw.onmouseleave=()=>tt.classList.remove('show');
+
+  // Frontier tooltip — use canvas rect for accurate position
+  const fw=document.getElementById('frontierChartWrap');
+  const frCvs=document.getElementById('frontierChart');
+  fw.onmousemove=e=>{
+    const fd=APP.frontierData;if(!fd)return;
+    const cr=frCvs.getBoundingClientRect();
+    const x=e.clientX-cr.left-fd.pad.l,y=e.clientY-cr.top-fd.pad.t;
+    if(x<0||x>fd.gw||y<0||y>fd.gh){tt.classList.remove('show');return}
+    const v=fd.fromX(e.clientX-cr.left),ret=fd.fromY(e.clientY-cr.top);
+    let near=fd.pts[0],dMin=1e9;
+    fd.pts.forEach(p=>{const d=(p.v-v)**2+(p.r-ret)**2*1e4;if(d<dMin){dMin=d;near=p}});
+    const sh=(near.r-rf)/(near.v/100||.01);
+    tt.innerHTML='<b>Vol</b> '+near.v.toFixed(1)+'%<br><b>Return</b> '+(near.r*100).toFixed(2)+'%<br><b>Sharpe</b> '+sh.toFixed(2);
+    tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-10)+'px';tt.classList.add('show');
+  };
+  fw.onmouseleave=()=>tt.classList.remove('show');
+
+  // Drawdown tooltip — use canvas rect for accurate position
+  const dw=document.getElementById('ddChartWrap');
+  const ddCvs=document.getElementById('ddChart');
+  dw.onmousemove=e=>{
+    const dd=APP.drawdownData;if(!dd)return;
+    const cr=ddCvs.getBoundingClientRect();
+    const x=e.clientX-cr.left-dd.pad.l;
+    if(x<0||x>dd.gw){tt.classList.remove('show');return}
+    const idx=Math.round(x/dd.gw*(dd.dd.length-1));
+    const i=Math.max(0,Math.min(idx,dd.dd.length-1));
+    const yr=2010+Math.floor(i/12),mo=(i%12)+1;
+    tt.innerHTML='<b>'+yr+'-'+(mo<10?'0':'')+mo+'</b><br>Drawdown: −'+dd.dd[i].toFixed(2)+'%';
+    tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-10)+'px';tt.classList.add('show');
+  };
+  dw.onmouseleave=()=>tt.classList.remove('show');
+}
+
+// --- REFRESH OPT ---
+function refreshOpt(){
+  if(!APP.optResults||!APP.data)return;
+  const res=optimize();
+  APP.optResults=[
+    {name:'Min Variance',w:res.minVar,ret:portMu(res.minVar,APP.data.mu),vol:portVol(res.minVar,APP.data.Sigma),sharpe:sharpe(res.minVar,APP.data.mu,APP.data.Sigma,APP.state.rf)},
+    {name:'Max Sharpe',w:res.maxSharpe,ret:portMu(res.maxSharpe,APP.data.mu),vol:portVol(res.maxSharpe,APP.data.Sigma),sharpe:sharpe(res.maxSharpe,APP.data.mu,APP.data.Sigma,APP.state.rf)},
+    {name:'Target Vol',w:res.targetVol,ret:portMu(res.targetVol,APP.data.mu),vol:portVol(res.targetVol,APP.data.Sigma),sharpe:sharpe(res.targetVol,APP.data.mu,APP.data.Sigma,APP.state.rf)}
+  ];
+  if(APP.state.lastOpt){const r=APP.optResults.find(x=>x.name===APP.state.lastOpt);if(r)setW(r.w)}
+}
+
+// --- BIND ---
+function bind(){
+  const $=id=>document.getElementById(id);
+
+  $('seed').onchange=function(){
+    const v=Math.max(1,Math.min(9999,parseInt(this.value,10)||100));
+    APP.state.seed=v;this.value=v;APP.data=genData(v);refreshOpt();render();
+  };
+  $('seed').onkeydown=function(e){if(e.key==='Enter')this.dispatchEvent(new Event('change'))};
+
+  $('rf').oninput=function(){
+    APP.state.rf=+this.value/100;APP.data=genData(APP.state.seed);refreshOpt();render();
+  };
+  $('longOnly').onchange=function(){APP.state.longOnly=this.checked;refreshOpt();render()};
+  $('maxW').oninput=function(){APP.state.maxW=+this.value;refreshOpt();render()};
+  $('targetVol').oninput=function(){APP.state.targetVol=+this.value/100;refreshOpt();render()};
+
+  $('btnOptimize').onclick=function(){
+    const res=optimize();
+    APP.optResults=[
+      {name:'Min Variance',w:res.minVar,ret:portMu(res.minVar,APP.data.mu),vol:portVol(res.minVar,APP.data.Sigma),sharpe:sharpe(res.minVar,APP.data.mu,APP.data.Sigma,APP.state.rf)},
+      {name:'Max Sharpe',w:res.maxSharpe,ret:portMu(res.maxSharpe,APP.data.mu),vol:portVol(res.maxSharpe,APP.data.Sigma),sharpe:sharpe(res.maxSharpe,APP.data.mu,APP.data.Sigma,APP.state.rf)},
+      {name:'Target Vol',w:res.targetVol,ret:portMu(res.targetVol,APP.data.mu),vol:portVol(res.targetVol,APP.data.Sigma),sharpe:sharpe(res.targetVol,APP.data.mu,APP.data.Sigma,APP.state.rf)}
+    ];
+    setW(res.maxSharpe);APP.state.lastOpt='Max Sharpe';render();
+  };
+
+  $('btnReset').onclick=function(){
+    APP.state.weights=[.30,.20,.08,.25,.08,.04,.03,.02];
+    APP.state.locked=Array(N).fill(false);APP.optResults=null;APP.state.lastOpt=null;render();
+  };
+
+  $('benchBtn').onclick=function(){setW(W_BM);document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));render()};
+
+  document.querySelectorAll('.preset').forEach(btn=>{
+    btn.onclick=function(){
+      const k=this.dataset.preset;
+      if(PRESETS[k]&&APP.data){
+        setW(projW(PRESETS[k](),APP.state.maxW,APP.state.longOnly));
+        document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
+        this.classList.add('active');render();
+      }
+    };
+  });
+
+  $('btnCopy').onclick=function(){
+    const txt=LABELS.map((a,i)=>a+': '+(APP.state.weights[i]*100).toFixed(2)+'%').join('\n');
+    navigator.clipboard.writeText(txt).then(()=>{this.textContent='Copied!';setTimeout(()=>{this.textContent='Copy Weights'},1200)});
+  };
+
+  $('btnExport').onclick=function(){
+    const w=simplex(APP.state.weights),{mu,Sigma}=APP.data,rf=APP.state.rf;
+    let csv='Asset,Weight,E[R],Volatility,Sharpe\n';
+    LABELS.forEach((name,i)=>{
+      const v=Math.sqrt(Sigma[i][i]);
+      csv+=name+','+(w[i]*100).toFixed(2)+'%,'+(mu[i]*100).toFixed(2)+'%,'+(v*100).toFixed(2)+'%,'+(v>1e-8?((mu[i]-rf)/v).toFixed(3):'N/A')+'\n';
+    });
+    csv+='\nPortfolio,'+(portMu(w,mu)*100).toFixed(2)+'%,'+(portVol(w,Sigma)*100).toFixed(2)+'%,'+sharpe(w,mu,Sigma,rf).toFixed(3)+'\n';
+    const blob=new Blob([csv],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='portfolio-'+APP.state.seed+'.csv';a.click();
+    this.textContent='Exported!';setTimeout(()=>{this.textContent='Export CSV'},1200);
+  };
+
+  const ov=$('guideOverlay');
+  $('btnGuide').onclick=()=>ov.classList.add('show');
+  $('guideClose').onclick=()=>ov.classList.remove('show');
+  ov.onclick=e=>{if(e.target===ov)ov.classList.remove('show')};
+
+  document.onkeydown=e=>{
+    if(e.key==='?'&&!e.ctrlKey){ov.classList.toggle('show');e.preventDefault()}
+    if(ov.classList.contains('show')&&e.key==='Escape')ov.classList.remove('show');
+    if(!document.activeElement||document.activeElement.tagName==='BODY'){
+      if(e.key==='o'||e.key==='O'){$('btnOptimize').click();e.preventDefault()}
+      if(e.key==='r'||e.key==='R'){$('btnReset').click();e.preventDefault()}
+    }
+  };
+
+  // Resize handler for charts
+  let resizeTimer;
+  window.onresize=()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(render,150)};
+}
+
+document.addEventListener('DOMContentLoaded',()=>{bind();render()});
+})();
+</script>
+</body>
+</html>
