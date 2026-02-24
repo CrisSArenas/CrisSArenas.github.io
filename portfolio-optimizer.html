@@ -19,6 +19,11 @@
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
 .page{max-width:1560px;margin:0 auto;padding:20px 28px 40px}
 
+/* NAV BAR */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.nav .back{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;text-decoration:none}
+.nav .back:hover{color:var(--accent)}
+
 /* STATUS BAR */
 .status-bar{padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--border);font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
 
@@ -167,6 +172,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </style>
 </head>
 <body>
+<div class="nav">
+  <a href="index.html" class="back">&#9664; Portfolio</a>
+</div>
 <div class="status-bar">
   <span>Seed <span id="statusSeed">100</span> · Rf <span id="statusRf">2.50</span>% · MaxW <span id="statusMaxW">0.35</span> · <span id="statusLast">Ready</span></span>
   <span>15Y synthetic · 8 assets · Deterministic</span>
@@ -544,7 +552,7 @@ function drawPath(cvs,p,pb){
   const dpr=devicePixelRatio||1,rc=cvs.getBoundingClientRect();
   cvs.width=rc.width*dpr;cvs.height=rc.height*dpr;
   const c=cvs.getContext('2d');c.scale(dpr,dpr);
-  const W=rc.width,H=rc.height,pad={l:52,r:16,t:8,b:28};
+  const W=rc.width,H=rc.height,pad={l:52,r:56,t:8,b:28};
   const gw=W-pad.l-pad.r,gh=H-pad.t-pad.b;
   const all=[...p,...pb];
   const mn=Math.min(...all)*.97,mx=Math.max(...all)*1.03;
