@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STM32 Memory-Mapped I/O Lab | Cristian Arenas</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b1120;--card:#111827;--card2:#1a2332;
+  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
+  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
+  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
+}
+body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+a{color:var(--cyan);text-decoration:none}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;cursor:pointer}
+.nav .back:hover{color:var(--cyan)}
+.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.nav h1 i{color:var(--cyan);font-size:14px}
+.nav .nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{padding:6px 18px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;font-family:'Inter','Segoe UI',sans-serif;display:inline-flex;align-items:center;gap:5px}
+.btn-preset{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
+.btn-preset:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+.btn-preset.active{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.12)}
+.btn-reset{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
+.btn-reset:hover{color:var(--red);border-color:var(--red)}
+.help-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.help-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+.live-pill{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:600;color:var(--green);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);letter-spacing:.3px}
+.live-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(16,185,129,.8);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.status-bar{padding:8px 24px;background:var(--card);border-bottom:1px solid var(--border);font-size:11px;color:var(--dim);display:flex;justify-content:space-between;font-family:var(--mono);letter-spacing:.02em;flex-wrap:wrap;gap:6px}
+
+.guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
+.guide-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.guide-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;cursor:pointer;user-select:none}
+.guide-header h2{font-size:13px;font-weight:600;color:var(--dim);display:flex;align-items:center;gap:8px}
+.guide-header h2 i{color:var(--cyan)}
+.guide-toggle{background:var(--card2);border:1px solid var(--border);color:var(--dim);padding:4px 14px;border-radius:6px;font-size:11px;cursor:pointer;transition:.2s;font-family:var(--mono)}
+.guide-toggle:hover{color:var(--cyan);border-color:var(--cyan)}
+.guide-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;border-top:1px solid var(--border)}
+.guide-grid.hide{display:none}
+.guide-card{background:var(--card2);border-radius:8px;padding:12px 14px}
+.guide-card .step{display:inline-block;background:rgba(6,182,212,.15);color:var(--cyan);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;font-family:var(--mono)}
+.guide-card h3{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.guide-card p{font-size:11.5px;color:var(--dim);line-height:1.5}
+.guide-card strong{color:var(--text)}
+
+.grid{max-width:1440px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.full{grid-column:1/-1}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.panel-head h3{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.panel-head h3 i{color:var(--cyan);font-size:13px}
+.panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
+.panel-body{padding:16px 18px;position:relative;flex:1;overflow-y:auto}
+canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+
+/* Peripheral tabs */
+.periph-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.periph-tab{padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--dim);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--mono);user-select:none;display:flex;align-items:center;gap:6px}
+.periph-tab:hover{border-color:var(--cyan);color:var(--text)}
+.periph-tab.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1)}
+.periph-tab .pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.periph-info{margin-top:12px;padding:10px 14px;background:var(--card2);border-radius:8px;font-size:11px;color:var(--dim);line-height:1.6}
+.periph-info strong{color:var(--text)}
+
+/* Register editor */
+.reg-section{margin-bottom:18px}
+.reg-section:last-child{margin-bottom:0}
+.reg-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px}
+.reg-label .rname{font-size:12px;font-weight:700;color:var(--cyan);font-family:var(--mono)}
+.reg-label .raddr{font-size:9px;color:var(--dim);font-family:var(--mono);margin-left:6px}
+.reg-label .rhex{font-size:12px;color:var(--orange);font-family:var(--mono);font-weight:600}
+.reg-desc-text{font-size:10px;color:var(--dim);margin-bottom:6px;line-height:1.4;font-style:italic}
+.bit-row-wrap{overflow-x:auto;padding-bottom:4px}
+.bit-num-row{display:flex;gap:1px;min-width:fit-content}
+.bit-num{width:20px;height:12px;text-align:center;font-size:7px;color:var(--dim);font-family:var(--mono);flex-shrink:0}
+.bit-row{display:flex;gap:1px;min-width:fit-content}
+.bit-cell{width:20px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--mono);font-weight:700;cursor:pointer;border-radius:2px;transition:all .15s;flex-shrink:0;user-select:none}
+.bit-cell.b0{background:var(--card2);color:var(--dim);border:1px solid var(--border)}
+.bit-cell.b1{background:rgba(16,185,129,.2);color:var(--green);border:1px solid rgba(16,185,129,.4)}
+.bit-cell:hover{transform:scale(1.15);z-index:2;box-shadow:0 0 8px rgba(6,182,212,.4)}
+.bit-cell.reserved{background:rgba(30,41,59,.3);color:rgba(148,163,184,.25);cursor:default;border:1px solid rgba(30,41,59,.5)}
+.bit-cell.reserved:hover{transform:none;box-shadow:none}
+.field-bar{display:flex;gap:1px;margin-top:2px;min-width:fit-content}
+.field-bar-seg{width:20px;height:3px;border-radius:1px;flex-shrink:0}
+.field-legend{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.field-tag{font-size:8px;padding:1px 6px;border-radius:3px;font-family:var(--mono);font-weight:600;border:1px solid;display:flex;align-items:center;gap:3px}
+
+/* Waveform */
+.wf-info{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;align-items:center;font-size:11px}
+.wf-chip{padding:3px 10px;font-size:10px;border:1px solid var(--border);border-radius:4px;background:var(--card2);color:var(--dim);font-family:var(--mono);font-weight:600}
+.wf-val{font-family:var(--mono);color:var(--cyan);font-weight:700;font-size:11px}
+.wf-lbl{color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.3px}
+.wf-legend{display:flex;gap:12px;margin-top:8px;font-size:10px;flex-wrap:wrap}
+.wf-legend-item{display:flex;align-items:center;gap:4px;color:var(--dim)}
+.wf-legend-sw{width:14px;height:3px;border-radius:1px}
+
+/* Code preview */
+.code-block{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre;color:var(--dim);max-height:380px;overflow-y:auto}
+.code-block .kw{color:var(--cyan)}
+.code-block .hex{color:var(--green)}
+.code-block .cmt{color:#546178;font-style:italic}
+.code-block .fn{color:var(--yellow)}
+.code-block .op{color:var(--text)}
+.code-block .reg{color:var(--orange)}
+.code-block .tp{color:var(--purple)}
+.code-block .str{color:var(--green)}
+.code-block .num{color:var(--cyan)}
+
+/* Pin diagram */
+.pin-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:10px;color:var(--dim)}
+.pin-legend-item{display:flex;align-items:center;gap:5px}
+.pin-legend-sw{width:10px;height:10px;border-radius:2px}
+
+/* Tooltip */
+.tt{position:fixed;pointer-events:none;background:rgba(10,14,39,.94);border:1px solid rgba(6,182,212,.35);border-radius:8px;padding:9px 13px;font-size:12px;color:#f1f5f9;z-index:200;opacity:0;transition:opacity .12s;backdrop-filter:blur(12px);max-width:280px;box-shadow:0 8px 30px rgba(0,0,0,.6);line-height:1.5}
+.tt.show{opacity:1}
+.tt-title{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-weight:600}
+.tt-row{display:flex;justify-content:space-between;gap:14px;align-items:center}
+.tt-row+.tt-row{margin-top:2px}
+.tt-lbl{color:#94a3b8;font-size:11px}
+.tt-val{font-family:var(--mono);font-weight:700;font-size:12px}
+.tt-divider{height:1px;background:var(--border);margin:5px 0}
+
+/* Help */
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.help-overlay.open{display:flex}
+.help-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:0}
+.help-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
+.help-modal-head h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.help-modal-head h2 i{color:var(--cyan)}
+.help-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.help-close:hover{color:var(--red);border-color:var(--red)}
+.help-body{padding:20px 22px}
+.help-section{margin-bottom:20px}
+.help-section:last-child{margin-bottom:0}
+.help-section h3{font-size:12px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.help-section p{font-size:12.5px;color:var(--dim);line-height:1.7;margin-bottom:6px}
+.help-section p strong{color:var(--text)}
+.help-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin-top:6px}
+.help-dl dt{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
+.help-dl dd{color:var(--dim);line-height:1.6}
+
+.disclaimer{max-width:1440px;margin:16px auto 30px;padding:0 16px}
+.disclaimer-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:11px;color:var(--dim);line-height:1.6}
+.disclaimer-box strong{color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="tt" id="tooltip"></div>
+
+<nav class="nav">
+  <a class="back" href="index.html#demos"><i class="fas fa-chevron-left"></i> Back to Portfolio</a>
+  <h1><i class="fas fa-microchip"></i> STM32 Memory-Mapped I/O Lab</h1>
+  <div class="nav-actions">
+    <div class="live-pill"><span class="pulse"></span> INTERACTIVE</div>
+    <button class="btn btn-preset" id="prLed" onclick="loadPreset('led')"><i class="fas fa-lightbulb"></i> LED Blink</button>
+    <button class="btn btn-preset" id="prPwm" onclick="loadPreset('pwm')"><i class="fas fa-wave-square"></i> PWM 1kHz</button>
+    <button class="btn btn-preset" id="prUart" onclick="loadPreset('uart')"><i class="fas fa-exchange-alt"></i> UART 115200</button>
+    <button class="btn btn-preset" id="prAdc" onclick="loadPreset('adc')"><i class="fas fa-chart-line"></i> ADC Single</button>
+    <button class="btn btn-reset" onclick="resetAll()"><i class="fas fa-redo"></i> Reset</button>
+    <button class="help-btn" onclick="toggleHelp()" title="Help"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+
+<div class="status-bar">
+  <span id="statusL">MEMORY-MAPPED I/O LAB &mdash; Click register bits to configure peripherals</span>
+  <span id="statusR">Peripheral: GPIOA &bull; Base: 0x40020000 &bull; Bus: AHB1</span>
+</div>
+
+<!-- Help Modal -->
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-modal">
+    <div class="help-modal-head">
+      <h2><i class="fas fa-book-open"></i> STM32 I/O Lab Guide</h2>
+      <button class="help-close" onclick="toggleHelp()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="help-body">
+      <div class="help-section"><h3>What This Tool Does</h3><p>This interactive lab simulates <strong>STM32F446RE memory-mapped I/O registers</strong>. Manipulate peripheral registers at the bit level and observe real-time hardware behavior: waveforms, pin states, and equivalent C code.</p></div>
+      <div class="help-section"><h3>Peripherals</h3>
+        <dl class="help-dl">
+          <dt>GPIOA</dt><dd>General Purpose I/O Port A. Configure 16 pins as input, output, alternate function, or analog. Set output levels via ODR.</dd>
+          <dt>TIM2</dt><dd>32-bit general-purpose timer. PWM generation with prescaler (PSC), auto-reload (ARR), capture/compare (CCR1).</dd>
+          <dt>USART1</dt><dd>Universal serial receiver/transmitter. Configure baud rate (BRR), enable TX/RX, set word length and parity.</dd>
+          <dt>ADC1</dt><dd>12-bit analog-to-digital converter. Configure resolution, conversion mode, sampling time.</dd>
+        </dl>
+      </div>
+      <div class="help-section"><h3>How to Use</h3>
+        <dl class="help-dl">
+          <dt>Select Peripheral</dt><dd>Click a tab to load its registers into the editor.</dd>
+          <dt>Toggle Bits</dt><dd>Click any bit cell to toggle 0/1. All views update instantly.</dd>
+          <dt>Hover for Info</dt><dd>Hover over any bit for field name, description, and current value.</dd>
+          <dt>Use Presets</dt><dd>Click preset buttons for common configurations.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Guide -->
+<div class="guide">
+  <div class="guide-box">
+    <div class="guide-header" onclick="toggleGuide()">
+      <h2><i class="fas fa-lightbulb"></i> Quick Guide</h2>
+      <button class="guide-toggle" id="guideBtn">Hide</button>
+    </div>
+    <div class="guide-grid" id="guideGrid">
+      <div class="guide-card"><span class="step">STEP 1</span><h3>Select Peripheral</h3><p>Choose <strong>GPIO, Timer, UART, or ADC</strong> to load its memory-mapped registers.</p></div>
+      <div class="guide-card"><span class="step">STEP 2</span><h3>Toggle Bits</h3><p><strong>Click any bit</strong> to flip it. Hex value, waveform, and code update instantly.</p></div>
+      <div class="guide-card"><span class="step">STEP 3</span><h3>View Waveforms</h3><p>Oscilloscope shows <strong>real-time output</strong>: GPIO levels, PWM, UART frames, ADC sampling.</p></div>
+      <div class="guide-card"><span class="step">STEP 4</span><h3>Try Presets</h3><p>Load <strong>common configs</strong>: LED Blink, PWM 1kHz, UART 115200, ADC Single.</p></div>
+      <div class="guide-card"><span class="step">STEP 5</span><h3>Read C Code</h3><p>The code panel shows <strong>equivalent CMSIS code</strong> that matches your configuration.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- Peripheral Selector -->
+  <div class="panel">
+    <div class="panel-head"><h3><i class="fas fa-microchip"></i> Peripheral Selector</h3><span class="tag">STM32F446RE</span></div>
+    <div class="panel-body">
+      <div class="periph-tabs" id="periphTabs"></div>
+      <div class="periph-info" id="periphInfo"></div>
+    </div>
+  </div>
+
+  <!-- Register Editor -->
+  <div class="panel">
+    <div class="panel-head"><h3><i class="fas fa-th"></i> Register Editor</h3><span class="tag" id="regTag">GPIOA Registers</span></div>
+    <div class="panel-body" id="regEditor" style="max-height:500px;overflow-y:auto"></div>
+  </div>
+
+  <!-- Waveform Viewer (full width) -->
+  <div class="panel full">
+    <div class="panel-head"><h3><i class="fas fa-wave-square"></i> Waveform Viewer</h3><span class="tag" id="wfTag">Oscilloscope</span></div>
+    <div class="panel-body">
+      <div class="wf-info" id="wfInfo"></div>
+      <canvas id="wfCanvas" height="220" style="cursor:crosshair"></canvas>
+      <div class="wf-legend" id="wfLegend"></div>
+    </div>
+  </div>
+
+  <!-- Pin Diagram -->
+  <div class="panel">
+    <div class="panel-head"><h3><i class="fas fa-border-all"></i> Pin Diagram</h3><span class="tag">48-pin LQFP</span></div>
+    <div class="panel-body">
+      <canvas id="pinCanvas" height="380"></canvas>
+      <div class="pin-legend">
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--green)"></span> Output HIGH</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--red)"></span> Output LOW</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--dim)"></span> Input</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--blue)"></span> Alt Function</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--purple)"></span> Analog</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C Code Preview -->
+  <div class="panel">
+    <div class="panel-head"><h3><i class="fas fa-code"></i> C Code Preview</h3><span class="tag">CMSIS Register Access</span></div>
+    <div class="panel-body"><div class="code-block" id="codeBlock"></div></div>
+  </div>
+</div>
+
+<div class="disclaimer">
+  <div class="disclaimer-box">
+    <strong>Educational Tool:</strong> This lab simulates STM32F446RE memory-mapped registers for learning purposes. Register addresses, bit fields, and behaviors match the STM32F446RE reference manual (RM0390). Waveforms and pin states are simulated. Always consult the official reference manual for production firmware.
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STM32 MEMORY-MAPPED I/O LAB - CORE ENGINE
+   ============================================================ */
+
+// ---- TOOLTIP ----
+var ttEl=document.getElementById('tooltip');
+function showTT(e,html){ttEl.innerHTML=html;ttEl.classList.add('show');var r=ttEl.getBoundingClientRect();var x=e.clientX+14,y=e.clientY-10;if(x+r.width>window.innerWidth-10)x=e.clientX-r.width-14;if(y+r.height>window.innerHeight-10)y=window.innerHeight-r.height-10;if(y<5)y=5;ttEl.style.left=x+'px';ttEl.style.top=y+'px'}
+function hideTT(){ttEl.classList.remove('show')}
+function toggleHelp(){document.getElementById('helpOverlay').classList.toggle('open')}
+document.getElementById('helpOverlay').addEventListener('click',function(e){if(e.target===this)toggleHelp()});
+function toggleGuide(){var g=document.getElementById('guideGrid'),b=document.getElementById('guideBtn');g.classList.toggle('hide');b.textContent=g.classList.contains('hide')?'Show':'Hide'}
+
+/* ============================================================
+   FIELD COLORS
+   ============================================================ */
+var FC=['#06b6d4','#10b981','#f59e0b','#8b5cf6','#3b82f6','#ef4444','#f97316','#ec4899','#14b8a6','#a855f7','#eab308','#6366f1','#22d3ee','#84cc16','#e879f9','#fb923c'];
+
+/* ============================================================
+   PERIPHERAL DEFINITIONS
+   ============================================================ */
+function mkGPIOFields(regPrefix,descFn,bitsPerPin){
+  var f=[];
+  for(var i=15;i>=0;i--){
+    var bs=[];for(var b=bitsPerPin-1;b>=0;b--)bs.push(i*bitsPerPin+b);
+    f.push({name:regPrefix+i,bits:bs,desc:descFn(i)});
+  }
+  if(bitsPerPin===1){var rb=[];for(var i=31;i>=16;i--)rb.push(i);f.push({name:'Reserved',bits:rb,desc:'Reserved',reserved:true})}
+  return f;
+}
+function range(hi,lo){var a=[];for(var i=hi;i>=lo;i--)a.push(i);return a}
+function rsvBits(bits){return {name:'Reserved',bits:bits,desc:'Reserved bits',reserved:true}}
+
+var PERIPHS={
+  gpio:{name:'GPIOA',icon:'fa-plug',color:'#10b981',base:0x40020000,bus:'AHB1',
+    desc:'General Purpose I/O Port A. 16 pins (PA0-PA15). Configure mode, output type, speed, pull-up/down, and output data.',
+    regs:[
+      {name:'MODER',off:0x00,rst:0xA8000000,desc:'Mode register. 2 bits/pin: 00=Input, 01=Output, 10=AF, 11=Analog',
+       fields:mkGPIOFields('MODER',function(i){return 'PA'+i+' mode: 00=Input, 01=Output, 10=AF, 11=Analog'},2)},
+      {name:'OTYPER',off:0x04,rst:0,desc:'Output type. Bit per pin: 0=Push-pull, 1=Open-drain (bits 15:0)',
+       fields:mkGPIOFields('OT',function(i){return 'PA'+i+' type: 0=Push-pull, 1=Open-drain'},1)},
+      {name:'ODR',off:0x14,rst:0,desc:'Output data register. 1=HIGH, 0=LOW for each pin (bits 15:0)',
+       fields:mkGPIOFields('ODR',function(i){return 'PA'+i+' output: 1=HIGH, 0=LOW'},1)},
+      {name:'PUPDR',off:0x0C,rst:0x64000000,desc:'Pull-up/pull-down. 2 bits/pin: 00=None, 01=Pull-up, 10=Pull-down',
+       fields:mkGPIOFields('PUPDR',function(i){return 'PA'+i+' pull: 00=None, 01=Pull-up, 10=Pull-down'},2)}
+    ]},
+  tim2:{name:'TIM2',icon:'fa-clock',color:'#f59e0b',base:0x40000000,bus:'APB1',
+    desc:'General-purpose 32-bit timer. PWM generation, input capture, output compare. APB1 clock up to 90 MHz.',
+    regs:[
+      {name:'CR1',off:0x00,rst:0,desc:'Control register 1. Enable counter, direction, alignment.',
+       fields:[
+         {name:'CKD',bits:[9,8],desc:'Clock division: 00=1x, 01=2x, 10=4x'},
+         {name:'ARPE',bits:[7],desc:'Auto-reload preload: 0=Not buffered, 1=Buffered'},
+         {name:'CMS',bits:[6,5],desc:'Center-aligned mode: 00=Edge, 01/10/11=Center'},
+         {name:'DIR',bits:[4],desc:'Direction: 0=Up, 1=Down'},
+         {name:'OPM',bits:[3],desc:'One-pulse mode'},
+         {name:'URS',bits:[2],desc:'Update request source'},
+         {name:'UDIS',bits:[1],desc:'Update disable'},
+         {name:'CEN',bits:[0],desc:'Counter enable: 1=Start counting'},
+         rsvBits(range(31,10))
+       ]},
+      {name:'CCMR1',off:0x18,rst:0,desc:'Capture/compare mode 1. CH1/CH2 as output compare or PWM.',
+       fields:[
+         {name:'OC2M',bits:[14,13,12],desc:'Output compare 2 mode'},
+         {name:'OC2PE',bits:[11],desc:'OC2 preload enable'},
+         {name:'CC2S',bits:[9,8],desc:'CC2 selection'},
+         {name:'OC1M',bits:[6,5,4],desc:'OC1 mode: 110=PWM mode 1, 111=PWM mode 2'},
+         {name:'OC1PE',bits:[3],desc:'OC1 preload enable: 1=Buffered'},
+         {name:'OC1FE',bits:[2],desc:'OC1 fast enable'},
+         {name:'CC1S',bits:[1,0],desc:'CC1 selection: 00=Output'},
+         rsvBits([31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,10,7])
+       ]},
+      {name:'CCER',off:0x20,rst:0,desc:'Capture/compare enable. Enable channel outputs and set polarity.',
+       fields:[
+         {name:'CC4P',bits:[13],desc:'CC4 polarity'},
+         {name:'CC4E',bits:[12],desc:'CC4 enable'},
+         {name:'CC3P',bits:[9],desc:'CC3 polarity'},
+         {name:'CC3E',bits:[8],desc:'CC3 enable'},
+         {name:'CC2P',bits:[5],desc:'CC2 polarity'},
+         {name:'CC2E',bits:[4],desc:'CC2 enable'},
+         {name:'CC1P',bits:[1],desc:'CC1 polarity: 0=Active high'},
+         {name:'CC1E',bits:[0],desc:'CC1 output enable: 1=On'},
+         rsvBits([31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,11,10,7,6,3,2])
+       ]},
+      {name:'PSC',off:0x28,rst:0,desc:'Prescaler (16-bit). Timer freq = 90MHz / (PSC+1).',
+       fields:[{name:'PSC',bits:range(15,0),desc:'Prescaler value 0-65535'},rsvBits(range(31,16))]},
+      {name:'ARR',off:0x2C,rst:0xFFFFFFFF,desc:'Auto-reload register. Counter resets at ARR. Sets PWM period.',
+       fields:[{name:'ARR',bits:range(31,0),desc:'Auto-reload value. Period=(ARR+1)*(PSC+1)/90MHz'}]},
+      {name:'CCR1',off:0x34,rst:0,desc:'Capture/compare 1. In PWM mode sets duty cycle = CCR1/(ARR+1).',
+       fields:[{name:'CCR1',bits:range(31,0),desc:'Compare value. Duty=CCR1/(ARR+1)'}]}
+    ]},
+  usart1:{name:'USART1',icon:'fa-exchange-alt',color:'#3b82f6',base:0x40011000,bus:'APB2',
+    desc:'Universal sync/async receiver/transmitter. Full-duplex serial. APB2 clock = 90 MHz.',
+    regs:[
+      {name:'CR1',off:0x00,rst:0,desc:'Control register 1. Enable USART, TX, RX, word length, parity.',
+       fields:[
+         {name:'OVER8',bits:[15],desc:'Oversampling: 0=16x, 1=8x'},
+         {name:'UE',bits:[13],desc:'USART enable: 1=Enabled'},
+         {name:'M',bits:[12],desc:'Word length: 0=8 bits, 1=9 bits'},
+         {name:'WAKE',bits:[11],desc:'Wakeup method'},
+         {name:'PCE',bits:[10],desc:'Parity enable: 1=Enabled'},
+         {name:'PS',bits:[9],desc:'Parity: 0=Even, 1=Odd'},
+         {name:'PEIE',bits:[8],desc:'PE interrupt enable'},
+         {name:'TXEIE',bits:[7],desc:'TXE interrupt enable'},
+         {name:'TCIE',bits:[6],desc:'TC interrupt enable'},
+         {name:'RXNEIE',bits:[5],desc:'RXNE interrupt enable'},
+         {name:'IDLEIE',bits:[4],desc:'IDLE interrupt enable'},
+         {name:'TE',bits:[3],desc:'Transmitter enable: 1=On'},
+         {name:'RE',bits:[2],desc:'Receiver enable: 1=On'},
+         {name:'RWU',bits:[1],desc:'Receiver wakeup'},
+         {name:'SBK',bits:[0],desc:'Send break'},
+         rsvBits([31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,14])
+       ]},
+      {name:'CR2',off:0x04,rst:0,desc:'Control register 2. Stop bits, clock settings.',
+       fields:[
+         {name:'STOP',bits:[13,12],desc:'Stop bits: 00=1, 01=0.5, 10=2, 11=1.5'},
+         {name:'CLKEN',bits:[11],desc:'Clock enable (sync mode)'},
+         {name:'CPOL',bits:[10],desc:'Clock polarity'},
+         {name:'CPHA',bits:[9],desc:'Clock phase'},
+         {name:'LBCL',bits:[8],desc:'Last bit clock pulse'},
+         {name:'LBDIE',bits:[6],desc:'LIN break detection IE'},
+         {name:'LBDL',bits:[5],desc:'LIN break detection length'},
+         {name:'ADD',bits:[3,2,1,0],desc:'USART node address'},
+         rsvBits([31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,7,4])
+       ]},
+      {name:'BRR',off:0x08,rst:0,desc:'Baud rate register. Mantissa [15:4], Fraction [3:0]. Baud=90MHz/(16*USARTDIV).',
+       fields:[
+         {name:'DIV_Mantissa',bits:range(15,4),desc:'Mantissa of USARTDIV'},
+         {name:'DIV_Fraction',bits:[3,2,1,0],desc:'Fraction of USARTDIV (4-bit, /16)'},
+         rsvBits(range(31,16))
+       ]},
+      {name:'DR',off:0x04,rst:0,desc:'Data register. TX/RX data (bits 8:0).',
+       fields:[
+         {name:'DR',bits:range(8,0),desc:'Data value (8 or 9 bits)'},
+         rsvBits(range(31,9))
+       ]}
+    ]},
+  adc1:{name:'ADC1',icon:'fa-chart-line',color:'#8b5cf6',base:0x40012000,bus:'APB2',
+    desc:'12-bit ADC. Up to 16 external channels. Configurable resolution (6/8/10/12-bit). Single and continuous modes.',
+    regs:[
+      {name:'CR1',off:0x04,rst:0,desc:'Control 1. Resolution, scan mode, interrupt enables.',
+       fields:[
+         {name:'OVRIE',bits:[26],desc:'Overrun interrupt enable'},
+         {name:'RES',bits:[25,24],desc:'Resolution: 00=12-bit, 01=10, 10=8, 11=6'},
+         {name:'AWDEN',bits:[23],desc:'Watchdog enable on regular ch'},
+         {name:'JAWDEN',bits:[22],desc:'Watchdog enable on injected ch'},
+         {name:'DISCNUM',bits:[15,14,13],desc:'Discontinuous mode channel count'},
+         {name:'JDISCEN',bits:[12],desc:'Injected discontinuous'},
+         {name:'DISCEN',bits:[11],desc:'Regular discontinuous'},
+         {name:'JAUTO',bits:[10],desc:'Auto injected conversion'},
+         {name:'AWDSGL',bits:[9],desc:'Watchdog single channel'},
+         {name:'SCAN',bits:[8],desc:'Scan mode: 1=Enabled'},
+         {name:'JEOCIE',bits:[7],desc:'Injected EOC IE'},
+         {name:'AWDIE',bits:[6],desc:'Watchdog IE'},
+         {name:'EOCIE',bits:[5],desc:'EOC interrupt enable'},
+         {name:'AWDCH',bits:[4,3,2,1,0],desc:'Watchdog channel select'},
+         rsvBits([31,30,29,28,27,21,20,19,18,17,16])
+       ]},
+      {name:'CR2',off:0x08,rst:0,desc:'Control 2. Enable ADC, start conversion, DMA, continuous mode.',
+       fields:[
+         {name:'SWSTART',bits:[30],desc:'Start regular conversion: write 1'},
+         {name:'EXTEN',bits:[29,28],desc:'External trigger: 00=Off, 01=Rising'},
+         {name:'EXTSEL',bits:[27,26,25,24],desc:'Trigger source select'},
+         {name:'JSWSTART',bits:[22],desc:'Start injected conversion'},
+         {name:'JEXTEN',bits:[21,20],desc:'Injected trigger enable'},
+         {name:'ALIGN',bits:[11],desc:'Alignment: 0=Right, 1=Left'},
+         {name:'EOCS',bits:[10],desc:'End of conversion selection'},
+         {name:'DDS',bits:[9],desc:'DMA disable selection'},
+         {name:'DMA',bits:[8],desc:'DMA mode: 1=Enabled'},
+         {name:'CONT',bits:[1],desc:'Continuous mode: 1=Continuous'},
+         {name:'ADON',bits:[0],desc:'ADC ON: 1=Enable'},
+         rsvBits([31,23,19,18,17,16,15,14,13,12,7,6,5,4,3,2])
+       ]},
+      {name:'SMPR2',off:0x10,rst:0,desc:'Sample time register 2. 3 bits per channel (CH0-CH9).',
+       fields:(function(){var f=[];for(var i=9;i>=0;i--)f.push({name:'SMP'+i,bits:[i*3+2,i*3+1,i*3],desc:'CH'+i+' sample time: 000=3cy...111=480cy'});f.push(rsvBits([31,30]));return f})()},
+      {name:'SQR3',off:0x34,rst:0,desc:'Regular sequence register 3. First 6 conversions (SQ1-SQ6).',
+       fields:[
+         {name:'SQ6',bits:[29,28,27,26,25],desc:'Sequence 6 channel (0-18)'},
+         {name:'SQ5',bits:[24,23,22,21,20],desc:'Sequence 5 channel'},
+         {name:'SQ4',bits:[19,18,17,16,15],desc:'Sequence 4 channel'},
+         {name:'SQ3',bits:[14,13,12,11,10],desc:'Sequence 3 channel'},
+         {name:'SQ2',bits:[9,8,7,6,5],desc:'Sequence 2 channel'},
+         {name:'SQ1',bits:[4,3,2,1,0],desc:'Sequence 1 channel (0-18)'},
+         rsvBits([31,30])
+       ]},
+      {name:'DR',off:0x4C,rst:0,desc:'Data register. 12-bit conversion result (bits 15:0).',
+       fields:[{name:'DATA',bits:range(15,0),desc:'Conversion data (right-aligned)'},rsvBits(range(31,16))]}
+    ]}
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var curPeriph='gpio';
+var regVals={};
+
+function initRegs(){
+  regVals={};
+  for(var pk in PERIPHS){regVals[pk]={};for(var r of PERIPHS[pk].regs)regVals[pk][r.name]=(r.rst>>>0)}
+}
+initRegs();
+
+function gBit(pk,rn,b){return(regVals[pk][rn]>>>b)&1}
+function tBit(pk,rn,b){regVals[pk][rn]=(regVals[pk][rn]^(1<<b))>>>0}
+function getFieldVal(pk,rn,bits){var v=0;for(var i=0;i<bits.length;i++)v=(v<<1)|gBit(pk,rn,bits[i]);return v}
+function hex32(v){return '0x'+(v>>>0).toString(16).toUpperCase().padStart(8,'0')}
+
+/* ============================================================
+   PERIPHERAL TABS
+   ============================================================ */
+function buildTabs(){
+  var c=document.getElementById('periphTabs');c.innerHTML='';
+  for(var pk in PERIPHS){
+    var p=PERIPHS[pk];
+    var t=document.createElement('div');t.className='periph-tab'+(pk===curPeriph?' active':'');
+    t.innerHTML='<span class="pdot" style="background:'+p.color+'"></span><i class="fas '+p.icon+'" style="font-size:10px"></i> '+p.name;
+    t.dataset.pk=pk;t.onclick=function(){curPeriph=this.dataset.pk;refreshAll()};
+    c.appendChild(t);
+  }
+  var p=PERIPHS[curPeriph];
+  document.getElementById('periphInfo').innerHTML='<strong>'+p.name+'</strong> &mdash; '+p.desc+'<br><span style="color:var(--cyan);font-family:var(--mono);font-size:10px">Base: '+hex32(p.base)+' &bull; Bus: '+p.bus+'</span>';
+  document.getElementById('statusR').textContent='Peripheral: '+p.name+' \u2022 Base: '+hex32(p.base)+' \u2022 Bus: '+p.bus;
+  document.getElementById('regTag').textContent=p.name+' Registers';
+}
+
+/* ============================================================
+   REGISTER EDITOR
+   ============================================================ */
+function buildRegEditor(){
+  var el=document.getElementById('regEditor');el.innerHTML='';
+  var p=PERIPHS[curPeriph];
+  for(var ri=0;ri<p.regs.length;ri++){
+    var reg=p.regs[ri];
+    var sec=document.createElement('div');sec.className='reg-section';
+
+    // Build bit-to-field map
+    var bfMap={};var fIdx=0;
+    for(var fi=0;fi<reg.fields.length;fi++){
+      var f=reg.fields[fi];
+      for(var bi=0;bi<f.bits.length;bi++) bfMap[f.bits[bi]]={f:f,ci:f.reserved?-1:fIdx};
+      if(!f.reserved)fIdx++;
+    }
+
+    // Label
+    var lbl=document.createElement('div');lbl.className='reg-label';
+    lbl.innerHTML='<div><span class="rname">'+p.name+'->'+reg.name+'</span><span class="raddr">'+hex32(p.base+reg.off)+'</span></div><span class="rhex" id="rhex_'+curPeriph+'_'+reg.name+'">'+hex32(regVals[curPeriph][reg.name])+'</span>';
+    sec.appendChild(lbl);
+
+    // Desc
+    var desc=document.createElement('div');desc.className='reg-desc-text';desc.textContent=reg.desc;
+    sec.appendChild(desc);
+
+    // Bit rows
+    var wrap=document.createElement('div');wrap.className='bit-row-wrap';
+
+    // Bit numbers
+    var numR=document.createElement('div');numR.className='bit-num-row';
+    for(var b=31;b>=0;b--){var n=document.createElement('div');n.className='bit-num';n.textContent=b;numR.appendChild(n)}
+    wrap.appendChild(numR);
+
+    // Bit cells
+    var bitR=document.createElement('div');bitR.className='bit-row';
+    for(var b=31;b>=0;b--){
+      var cell=document.createElement('div');
+      var v=gBit(curPeriph,reg.name,b);
+      var fm=bfMap[b];
+      var isRsv=fm&&fm.ci===-1;
+      cell.className='bit-cell'+(isRsv?' reserved':(v?' b1':' b0'));
+      cell.textContent=v;
+      cell.dataset.b=b;cell.dataset.r=reg.name;cell.dataset.p=curPeriph;
+      if(fm&&!isRsv){var col=FC[fm.ci%FC.length];cell.style.borderBottomColor=col;cell.style.borderBottomWidth='2px'}
+      if(!isRsv){
+        cell.onclick=function(){tBit(this.dataset.p,this.dataset.r,parseInt(this.dataset.b));refreshAll()};
+      }
+      (function(cell,fm,reg){
+        cell.onmouseenter=function(e){
+          if(!fm)return;
+          var fv=getFieldVal(curPeriph,reg.name,fm.f.bits);
+          showTT(e,'<div class="tt-title">'+fm.f.name+'</div>'+
+            '<div class="tt-row"><span class="tt-lbl">Bit(s)</span><span class="tt-val">['+fm.f.bits.join(',')+']</span></div>'+
+            '<div class="tt-row"><span class="tt-lbl">Value</span><span class="tt-val" style="color:var(--cyan)">'+fv+' (0b'+fv.toString(2).padStart(fm.f.bits.length,'0')+')</span></div>'+
+            '<div class="tt-divider"></div><div style="font-size:11px;color:var(--dim)">'+fm.f.desc+'</div>');
+        };
+        cell.onmousemove=function(e){if(fm)showTT(e,ttEl.innerHTML)};
+        cell.onmouseleave=hideTT;
+      })(cell,fm,reg);
+      bitR.appendChild(cell);
+    }
+    wrap.appendChild(bitR);
+
+    // Field color bar
+    var fbar=document.createElement('div');fbar.className='field-bar';
+    for(var b=31;b>=0;b--){
+      var seg=document.createElement('div');seg.className='field-bar-seg';
+      var fm=bfMap[b];
+      if(fm&&fm.ci>=0){seg.style.background=FC[fm.ci%FC.length];seg.style.opacity='0.6'}
+      else{seg.style.background='var(--border)';seg.style.opacity='0.3'}
+      fbar.appendChild(seg);
+    }
+    wrap.appendChild(fbar);
+    sec.appendChild(wrap);
+
+    // Field legend
+    var leg=document.createElement('div');leg.className='field-legend';
+    var fi2=0;
+    for(var fi=0;fi<reg.fields.length;fi++){
+      var f=reg.fields[fi];if(f.reserved)continue;
+      var tag=document.createElement('span');tag.className='field-tag';
+      var col=FC[fi2%FC.length];
+      tag.style.borderColor=col;tag.style.color=col;tag.style.background=col+'15';
+      tag.textContent=f.name;leg.appendChild(tag);fi2++;
+    }
+    sec.appendChild(leg);
+    el.appendChild(sec);
+  }
+}
+
+/* ============================================================
+   PIN DIAGRAM (Canvas)
+   ============================================================ */
+var PIN48=[
+  {n:'VBAT'},{n:'PC13'},{n:'PC14'},{n:'PC15'},{n:'PH0'},{n:'PH1'},{n:'NRST'},{n:'PC0'},{n:'PC1'},{n:'PC2'},{n:'PC3'},{n:'VSSA'},
+  {n:'VDDA'},{n:'PA0'},{n:'PA1'},{n:'PA2'},{n:'PA3'},{n:'VSS'},{n:'VDD'},{n:'PA4'},{n:'PA5'},{n:'PA6'},{n:'PA7'},{n:'PC4'},
+  {n:'PC5'},{n:'PB0'},{n:'PB1'},{n:'PB2'},{n:'PB10'},{n:'PB11'},{n:'VCAP'},{n:'VDD'},{n:'PB12'},{n:'PB13'},{n:'PB14'},{n:'PB15'},
+  {n:'PC6'},{n:'PC7'},{n:'PC8'},{n:'PC9'},{n:'PA8'},{n:'PA9'},{n:'PA10'},{n:'PA11'},{n:'PA12'},{n:'PA13'},{n:'PA14'},{n:'PA15'}
+];
+
+function pinState(name){
+  if(!name.startsWith('PA'))return{color:'#334155',lbl:''};
+  var num=parseInt(name.substring(2));if(isNaN(num)||num>15)return{color:'#334155',lbl:''};
+  var mode=(regVals.gpio.MODER>>>(num*2))&0x3;
+  var out=(regVals.gpio.ODR>>>num)&1;
+  if(mode===0)return{color:'#94a3b8',lbl:'IN'};
+  if(mode===1)return out?{color:'#10b981',lbl:'HI'}:{color:'#ef4444',lbl:'LO'};
+  if(mode===2)return{color:'#3b82f6',lbl:'AF'};
+  return{color:'#8b5cf6',lbl:'AN'};
+}
+
+function drawPins(){
+  var cv=document.getElementById('pinCanvas');
+  var dpr=window.devicePixelRatio||1;
+  var rect=cv.getBoundingClientRect();
+  cv.width=rect.width*dpr;cv.height=rect.height*dpr;
+  var ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  var W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);
+
+  var cx=W*0.2,cy=H*0.12,cw=W*0.6,ch=H*0.76;
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.25)';ctx.beginPath();ctx.roundRect(cx+3,cy+3,cw,ch,8);ctx.fill();
+  // Body
+  ctx.fillStyle='#1a2332';ctx.strokeStyle='#334155';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(cx,cy,cw,ch,8);ctx.fill();ctx.stroke();
+  // Pin 1 dot
+  ctx.fillStyle='rgba(6,182,212,0.4)';ctx.beginPath();ctx.arc(cx+14,cy+ch-14,5,0,Math.PI*2);ctx.fill();
+  // Labels
+  ctx.fillStyle='#94a3b8';ctx.font='600 11px Inter,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('STM32F446RE',cx+cw/2,cy+ch/2-12);
+  ctx.font='10px Courier New,monospace';ctx.fillStyle='#64748b';
+  ctx.fillText('LQFP-48',cx+cw/2,cy+ch/2+4);
+  ctx.fillText('ARM Cortex-M4',cx+cw/2,cy+ch/2+18);
+
+  var pLen=16,pW=5,nSide=12;
+  var sides=[
+    {pins:PIN48.slice(0,12),s:'bottom'},
+    {pins:PIN48.slice(12,24),s:'right'},
+    {pins:PIN48.slice(24,36),s:'top'},
+    {pins:PIN48.slice(36,48),s:'left'}
+  ];
+  for(var si=0;si<sides.length;si++){
+    var sd=sides[si];
+    var sp=(sd.s==='bottom'||sd.s==='top')?cw/(nSide+1):ch/(nSide+1);
+    for(var i=0;i<sd.pins.length;i++){
+      var p=sd.pins[i],st=pinState(p.n);
+      var px,py;
+      ctx.fillStyle=st.color;
+      if(sd.s==='bottom'){
+        px=cx+sp*(i+1);py=cy+ch;
+        ctx.fillRect(px-pW/2,py,pW,pLen);
+        ctx.font='600 7px Courier New,monospace';ctx.textAlign='center';
+        ctx.save();ctx.translate(px,py+pLen+4);ctx.rotate(Math.PI/2.5);ctx.fillText(p.n,0,0);ctx.restore();
+      }else if(sd.s==='right'){
+        px=cx+cw;py=cy+ch-sp*(i+1);
+        ctx.fillRect(px,py-pW/2,pLen,pW);
+        ctx.font='600 7px Courier New,monospace';ctx.textAlign='left';ctx.fillText(p.n,px+pLen+4,py+3);
+      }else if(sd.s==='top'){
+        px=cx+cw-sp*(i+1);py=cy;
+        ctx.fillRect(px-pW/2,py-pLen,pW,pLen);
+        ctx.font='600 7px Courier New,monospace';ctx.textAlign='center';
+        ctx.save();ctx.translate(px,py-pLen-4);ctx.rotate(-Math.PI/2.5);ctx.fillText(p.n,0,0);ctx.restore();
+      }else{
+        px=cx;py=cy+sp*(i+1);
+        ctx.fillRect(px-pLen,py-pW/2,pLen,pW);
+        ctx.font='600 7px Courier New,monospace';ctx.textAlign='right';ctx.fillText(p.n,px-pLen-4,py+3);
+      }
+    }
+  }
+}
+
+/* ============================================================
+   WAVEFORM VIEWER (Canvas, animated)
+   ============================================================ */
+var wfFrame=0,wfAnim=null;
+
+function wfConfig(){
+  var pk=curPeriph;
+  if(pk==='gpio'){
+    var chs=[];
+    for(var i=0;i<8;i++){
+      var m=(regVals.gpio.MODER>>>(i*2))&3;
+      if(m===1){var v=(regVals.gpio.ODR>>>i)&1;chs.push({name:'PA'+i,val:v,color:v?'#10b981':'#ef4444'})}
+    }
+    if(!chs.length)chs.push({name:'PA0',val:0,color:'#94a3b8'});
+    return{type:'gpio',chs:chs};
+  }
+  if(pk==='tim2'){
+    var cr1=regVals.tim2.CR1,psc=regVals.tim2.PSC&0xFFFF,arr=regVals.tim2.ARR,ccr1=regVals.tim2.CCR1;
+    var ccmr1=regVals.tim2.CCMR1,ccer=regVals.tim2.CCER;
+    var cen=cr1&1,oc1m=(ccmr1>>>4)&7,cc1e=ccer&1;
+    var fTim=90e6/(psc+1),freq=arr>0?fTim/(arr+1):0,duty=arr>0?Math.min(ccr1/(arr+1),1):0;
+    var isPWM=(oc1m===6||oc1m===7)&&cc1e&&cen;
+    return{type:'tim',cen:cen,psc:psc,arr:arr,ccr1:ccr1,freq:freq,duty:duty,isPWM:isPWM};
+  }
+  if(pk==='usart1'){
+    var cr1=regVals.usart1.CR1,brr=regVals.usart1.BRR;
+    var ue=(cr1>>>13)&1,te=(cr1>>>3)&1,m=(cr1>>>12)&1,pce=(cr1>>>10)&1,ps=(cr1>>>9)&1;
+    var over8=(cr1>>>15)&1;
+    var mant=(brr>>>4)&0xFFF,frac=brr&0xF;
+    var div2=over8?8:16,uDiv=mant+frac/div2;
+    var baud=uDiv>0?Math.round(90e6/(div2*uDiv)):0;
+    var dr=regVals.usart1.DR&0x1FF;
+    return{type:'uart',ue:ue,te:te,m:m,pce:pce,ps:ps,baud:baud,dr:dr};
+  }
+  if(pk==='adc1'){
+    var cr2=regVals.adc1.CR2,cr1=regVals.adc1.CR1;
+    var adon=cr2&1,cont=(cr2>>>1)&1,res=(cr1>>>24)&3;
+    var resBits=[12,10,8,6][res],dr=regVals.adc1.DR&0xFFFF;
+    return{type:'adc',adon:adon,cont:cont,resBits:resBits,dr:dr};
+  }
+  return{type:'none'};
+}
+
+function drawWaveform(){
+  var cv=document.getElementById('wfCanvas');
+  var dpr=window.devicePixelRatio||1;
+  var rect=cv.getBoundingClientRect();
+  cv.width=rect.width*dpr;cv.height=rect.height*dpr;
+  var ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  var W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);
+  var cfg=wfConfig();
+
+  var ml=60,mr=20,mt=20,mb=30;
+  var gW=W-ml-mr,gH=H-mt-mb;
+
+  // Grid
+  ctx.strokeStyle='rgba(30,41,59,0.5)';ctx.lineWidth=0.5;
+  for(var i=0;i<=10;i++){var x=ml+(gW/10)*i;ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+gH);ctx.stroke()}
+  for(var i=0;i<=5;i++){var y=mt+(gH/5)*i;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+gW,y);ctx.stroke()}
+
+  // Center crosshair
+  ctx.strokeStyle='rgba(6,182,212,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(ml+gW/2,mt);ctx.lineTo(ml+gW/2,mt+gH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ml,mt+gH/2);ctx.lineTo(ml+gW,mt+gH/2);ctx.stroke();
+  ctx.setLineDash([]);
+
+  var infoEl=document.getElementById('wfInfo');
+  var legEl=document.getElementById('wfLegend');
+
+  if(cfg.type==='gpio'){
+    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">GPIO Digital Output</span><span class="wf-lbl">Channels:</span><span class="wf-val">'+cfg.chs.length+'</span>';
+    var chH=Math.min(gH/Math.max(cfg.chs.length,1),45),gap=6;
+    for(var ci=0;ci<cfg.chs.length;ci++){
+      var c=cfg.chs[ci];
+      var hiY=mt+ci*(chH+gap)+chH*0.15,loY=mt+ci*(chH+gap)+chH*0.85;
+      ctx.fillStyle=c.color;ctx.font='10px Courier New,monospace';ctx.textAlign='right';ctx.fillText(c.name,ml-8,(hiY+loY)/2);
+      ctx.fillStyle='#475569';ctx.font='8px Courier New,monospace';
+      ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3);
+      var y=c.val?hiY:loY;
+      ctx.strokeStyle=c.color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+gW,y);ctx.stroke();
+      ctx.fillStyle=c.color+'15';ctx.fillRect(ml,Math.min(y,loY),gW,Math.abs(loY-y)||1);
+      ctx.fillStyle=c.color;ctx.font='600 10px Courier New,monospace';ctx.textAlign='left';
+      ctx.fillText(c.val?'HIGH (3.3V)':'LOW (0V)',ml+gW-80,(hiY+loY)/2+3);
+    }
+    legEl.innerHTML=cfg.chs.map(function(c){return '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+c.color+'"></span>'+c.name+'</div>'}).join('');
+    document.getElementById('wfTag').textContent='GPIO Output States';
+  }
+  else if(cfg.type==='tim'){
+    var fStr=cfg.freq>=1e6?(cfg.freq/1e6).toFixed(2)+' MHz':cfg.freq>=1e3?(cfg.freq/1e3).toFixed(2)+' kHz':cfg.freq.toFixed(1)+' Hz';
+    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">'+(cfg.isPWM?'PWM':'Timer')+'</span>'+
+      '<span class="wf-lbl">Freq:</span><span class="wf-val">'+fStr+'</span>'+
+      '<span class="wf-lbl">Duty:</span><span class="wf-val">'+(cfg.duty*100).toFixed(1)+'%</span>'+
+      '<span class="wf-lbl">PSC:</span><span class="wf-val">'+cfg.psc+'</span>'+
+      '<span class="wf-lbl">ARR:</span><span class="wf-val">'+cfg.arr+'</span>'+
+      '<span class="wf-lbl">CCR1:</span><span class="wf-val">'+cfg.ccr1+'</span>';
+
+    if(cfg.isPWM&&cfg.freq>0){
+      var hiY=mt+gH*0.15,loY=mt+gH*0.85;
+      ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.font='10px Courier New,monospace';
+      ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3);ctx.fillText('CH1',ml-8,(hiY+loY)/2+3);
+      var cycles=4,cycW=gW/cycles,dutyW=cycW*cfg.duty;
+      var phase=(wfFrame%120)/120;
+      ctx.save();ctx.beginPath();ctx.rect(ml,mt,gW,gH);ctx.clip();
+      ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.beginPath();
+      for(var c=-1;c<cycles+1;c++){
+        var cx2=ml+c*cycW-phase*cycW;
+        ctx.lineTo(cx2,loY);ctx.lineTo(cx2,hiY);ctx.lineTo(cx2+dutyW,hiY);ctx.lineTo(cx2+dutyW,loY);ctx.lineTo(cx2+cycW,loY);
+      }
+      ctx.stroke();
+      ctx.fillStyle='rgba(245,158,11,0.06)';
+      for(var c=-1;c<cycles+1;c++){var cx2=ml+c*cycW-phase*cycW;ctx.fillRect(cx2,hiY,dutyW,loY-hiY)}
+      ctx.restore();
+      // Period labels
+      ctx.fillStyle='#64748b';ctx.font='9px Courier New,monospace';ctx.textAlign='center';
+      var pStr=cfg.freq>0?(1/cfg.freq>=1e-3?((1/cfg.freq)*1e3).toFixed(2)+' ms':((1/cfg.freq)*1e6).toFixed(1)+' us'):'--';
+      ctx.fillText('T = '+pStr,ml+gW/2,mt+gH+18);
+    }else{
+      ctx.fillStyle='#475569';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillText(cfg.cen?'Timer running (configure OC1M=110, CC1E=1 for PWM)':'Timer disabled (CEN=0)',ml+gW/2,mt+gH/2);
+    }
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#f59e0b"></span>TIM2 CH1</div>';
+    document.getElementById('wfTag').textContent=cfg.isPWM?'PWM: '+fStr+', '+(cfg.duty*100).toFixed(1)+'% duty':'Timer';
+  }
+  else if(cfg.type==='uart'){
+    var bStr=cfg.baud>0?cfg.baud.toLocaleString():'0';
+    var cfgStr=(cfg.m?'9':'8')+(cfg.pce?(cfg.ps?'O':'E'):'N')+'1';
+    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">UART TX</span>'+
+      '<span class="wf-lbl">Baud:</span><span class="wf-val">'+bStr+'</span>'+
+      '<span class="wf-lbl">Config:</span><span class="wf-val">'+cfgStr+'</span>'+
+      '<span class="wf-lbl">DR:</span><span class="wf-val">0x'+(cfg.dr&0xFF).toString(16).toUpperCase().padStart(2,'0')+'</span>';
+
+    if(cfg.ue&&cfg.te&&cfg.baud>0){
+      var hiY=mt+gH*0.2,loY=mt+gH*0.8;
+      ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.font='10px Courier New,monospace';
+      ctx.fillText('MARK',ml-8,hiY+3);ctx.fillText('SPACE',ml-8,loY+3);
+      var dBits=cfg.m?9:8,total=1+dBits+(cfg.pce?1:0)+1;
+      var bW=gW/(total+4),data=cfg.dr&((1<<dBits)-1);
+      var x=ml+bW*1.5;
+      ctx.strokeStyle='#3b82f6';ctx.lineWidth=2;ctx.beginPath();
+      ctx.moveTo(ml,hiY);ctx.lineTo(x,hiY);
+      // Start
+      ctx.lineTo(x,loY);x+=bW;ctx.lineTo(x,loY);
+      ctx.fillStyle='#475569';ctx.font='8px Courier New,monospace';ctx.textAlign='center';
+      ctx.fillText('S',x-bW/2,loY+12);
+      // Data LSB first
+      for(var i=0;i<dBits;i++){
+        var bit=(data>>>i)&1;var y=bit?hiY:loY;
+        ctx.lineTo(x,y);x+=bW;ctx.lineTo(x,y);
+        ctx.fillStyle=bit?'#3b82f6':'#475569';
+        ctx.fillText(bit.toString(),x-bW/2,bit?hiY-6:loY+12);
+      }
+      // Parity
+      if(cfg.pce){
+        var par=0;for(var i=0;i<dBits;i++)par^=(data>>>i)&1;
+        var pb=cfg.ps?(1-par):par;var y=pb?hiY:loY;
+        ctx.lineTo(x,y);x+=bW;ctx.lineTo(x,y);
+        ctx.fillStyle='#f59e0b';ctx.fillText('P',x-bW/2,pb?hiY-6:loY+12);
+      }
+      // Stop
+      ctx.lineTo(x,hiY);x+=bW;ctx.lineTo(x,hiY);
+      ctx.fillStyle='#10b981';ctx.fillText('STOP',x-bW/2,hiY-6);
+      ctx.lineTo(ml+gW,hiY);ctx.stroke();
+    }else{
+      ctx.fillStyle='#475569';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillText(cfg.ue?'Set TE=1 and BRR for TX waveform':'USART disabled (UE=0)',ml+gW/2,mt+gH/2);
+    }
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#3b82f6"></span>USART1 TX</div>';
+    document.getElementById('wfTag').textContent=cfg.ue&&cfg.te?'UART '+bStr+' baud '+cfgStr:'USART1';
+  }
+  else if(cfg.type==='adc'){
+    var maxV=(1<<cfg.resBits)-1;
+    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">'+(cfg.adon?cfg.resBits+'-bit ADC':'ADC OFF')+'</span>'+
+      '<span class="wf-lbl">Conv:</span><span class="wf-val">'+(cfg.cont?'Continuous':'Single')+'</span>'+
+      '<span class="wf-lbl">DR:</span><span class="wf-val">'+cfg.dr+'/'+maxV+'</span>';
+    if(cfg.adon){
+      ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.font='10px Courier New,monospace';
+      ctx.fillText(maxV.toString(),ml-8,mt+6);ctx.fillText('0',ml-8,mt+gH);
+      ctx.fillText((maxV/2|0).toString(),ml-8,mt+gH/2+3);
+      // Analog signal
+      var pts=200;
+      ctx.strokeStyle='rgba(139,92,246,0.3)';ctx.lineWidth=1.5;ctx.beginPath();
+      for(var i=0;i<=pts;i++){
+        var t=i/pts;var x=ml+t*gW;
+        var sig=0.5+0.4*Math.sin(2*Math.PI*3*t+wfFrame*0.03)+0.1*Math.sin(2*Math.PI*7*t);
+        var y=mt+gH*(1-sig);
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      // Sample dots
+      var ns=cfg.cont?20:1;
+      ctx.fillStyle='#8b5cf6';
+      for(var i=0;i<ns;i++){
+        var t=(i+0.5)/ns;var x=ml+t*gW;
+        var sig=0.5+0.4*Math.sin(2*Math.PI*3*t+wfFrame*0.03)+0.1*Math.sin(2*Math.PI*7*t);
+        var y=mt+gH*(1-sig);
+        ctx.strokeStyle='rgba(139,92,246,0.4)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,mt+gH);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='#8b5cf6';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
+        if(ns<=8){var dv=Math.round(sig*maxV);ctx.font='8px Courier New,monospace';ctx.textAlign='center';ctx.fillText(dv.toString(),x,y-8)}
+      }
+    }else{
+      ctx.fillStyle='#475569';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillText('ADC disabled (ADON=0)',ml+gW/2,mt+gH/2);
+    }
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#8b5cf6"></span>ADC1</div><div class="wf-legend-item"><span class="wf-legend-sw" style="background:rgba(139,92,246,0.3)"></span>Analog In</div>';
+    document.getElementById('wfTag').textContent=cfg.adon?cfg.resBits+'-bit '+(cfg.cont?'Continuous':'Single'):'ADC1';
+  }
+
+  // Scope border
+  ctx.strokeStyle='rgba(6,182,212,0.2)';ctx.lineWidth=1;ctx.strokeRect(ml,mt,gW,gH);
+}
+
+function animWF(){wfFrame++;drawWaveform();wfAnim=requestAnimationFrame(animWF)}
+
+/* ============================================================
+   C CODE PREVIEW
+   ============================================================ */
+function S(cls,txt){return '<span class="'+cls+'">'+txt+'</span>'}
+
+function genCode(){
+  var pk=curPeriph,lines=[];
+  lines.push(S('cmt','// STM32F446RE Register Configuration'));
+  lines.push(S('cmt','// Generated from Memory-Mapped I/O Lab'));
+  lines.push('');
+  lines.push(S('tp','#include')+' '+S('str','"stm32f4xx.h"'));
+  lines.push('');
+
+  if(pk==='gpio'){
+    lines.push(S('tp','void')+' '+S('fn','GPIO_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// Enable GPIOA clock'));
+    lines.push('  '+S('reg','RCC->AHB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_AHB1ENR_GPIOAEN')+';');
+    lines.push('');
+    var moder=regVals.gpio.MODER,odr=regVals.gpio.ODR,otyper=regVals.gpio.OTYPER,pupdr=regVals.gpio.PUPDR;
+    lines.push('  '+S('cmt','// Pin modes'));
+    lines.push('  '+S('reg','GPIOA->MODER')+' '+S('op','=')+' '+S('hex',hex32(moder))+';');
+    var mNames=['Input','Output','AF','Analog'];
+    for(var i=0;i<16;i++){var m=(moder>>>(i*2))&3;if(m>0||i<8)lines.push('  '+S('cmt','// PA'+i+': '+mNames[m]))}
+    lines.push('');
+    if(otyper!==0){lines.push('  '+S('cmt','// Output type'));lines.push('  '+S('reg','GPIOA->OTYPER')+' '+S('op','=')+' '+S('hex',hex32(otyper))+';');lines.push('')}
+    if(pupdr!==0x64000000){lines.push('  '+S('cmt','// Pull-up/pull-down'));lines.push('  '+S('reg','GPIOA->PUPDR')+' '+S('op','=')+' '+S('hex',hex32(pupdr))+';');lines.push('')}
+    lines.push('  '+S('cmt','// Output data'));
+    lines.push('  '+S('reg','GPIOA->ODR')+' '+S('op','=')+' '+S('hex',hex32(odr))+';');
+    for(var i=0;i<16;i++){var m=(moder>>>(i*2))&3;if(m===1){var v=(odr>>>i)&1;lines.push('  '+S('cmt','// PA'+i+' = '+(v?'HIGH':'LOW')))}}
+    lines.push('}');
+  }
+  else if(pk==='tim2'){
+    var psc=regVals.tim2.PSC&0xFFFF,arr=regVals.tim2.ARR,ccr1=regVals.tim2.CCR1;
+    var cr1=regVals.tim2.CR1,ccmr1=regVals.tim2.CCMR1,ccer=regVals.tim2.CCER;
+    var oc1m=(ccmr1>>>4)&7;
+    lines.push(S('tp','void')+' '+S('fn','TIM2_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// Enable TIM2 clock'));
+    lines.push('  '+S('reg','RCC->APB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB1ENR_TIM2EN')+';');
+    lines.push('');
+    lines.push('  '+S('cmt','// PSC: f_timer = 90MHz/('+psc+'+1) = '+(90e6/(psc+1)/1e3).toFixed(2)+' kHz'));
+    lines.push('  '+S('reg','TIM2->PSC')+' '+S('op','=')+' '+S('num',psc.toString())+';');
+    lines.push('');
+    lines.push('  '+S('cmt','// ARR: counter period'));
+    lines.push('  '+S('reg','TIM2->ARR')+' '+S('op','=')+' '+S('num',arr.toString())+';');
+    lines.push('');
+    if(oc1m===6||oc1m===7){
+      var d=arr>0?(ccr1/(arr+1)*100).toFixed(1):'0';
+      lines.push('  '+S('cmt','// PWM Mode '+(oc1m===6?'1':'2')+' on CH1'));
+      lines.push('  '+S('reg','TIM2->CCMR1')+' '+S('op','=')+' '+S('hex',hex32(ccmr1))+';');
+      lines.push('');
+      lines.push('  '+S('cmt','// Duty = CCR1/(ARR+1) = '+d+'%'));
+      lines.push('  '+S('reg','TIM2->CCR1')+' '+S('op','=')+' '+S('num',ccr1.toString())+';');
+      lines.push('');
+    }
+    if(ccer&1){lines.push('  '+S('cmt','// Enable CH1 output'));lines.push('  '+S('reg','TIM2->CCER')+' '+S('op','|=')+' '+S('hex','TIM_CCER_CC1E')+';');lines.push('')}
+    if(cr1&1){lines.push('  '+S('cmt','// Start counter'));lines.push('  '+S('reg','TIM2->CR1')+' '+S('op','|=')+' '+S('hex','TIM_CR1_CEN')+';')}
+    lines.push('}');
+  }
+  else if(pk==='usart1'){
+    var cr1=regVals.usart1.CR1,brr=regVals.usart1.BRR;
+    var ue=(cr1>>>13)&1,te=(cr1>>>3)&1,re=(cr1>>>2)&1,m=(cr1>>>12)&1,pce=(cr1>>>10)&1,ps=(cr1>>>9)&1;
+    var mant=(brr>>>4)&0xFFF,frac=brr&0xF;
+    var over8=(cr1>>>15)&1,div2=over8?8:16;
+    var uDiv=mant+frac/div2;
+    var baud=uDiv>0?Math.round(90e6/(div2*uDiv)):0;
+    lines.push(S('tp','void')+' '+S('fn','USART1_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// Enable USART1 clock'));
+    lines.push('  '+S('reg','RCC->APB2ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB2ENR_USART1EN')+';');
+    lines.push('');
+    lines.push('  '+S('cmt','// Baud: '+baud+' (USARTDIV='+uDiv.toFixed(4)+')'));
+    lines.push('  '+S('reg','USART1->BRR')+' '+S('op','=')+' '+S('hex','0x'+(brr&0xFFFF).toString(16).toUpperCase().padStart(4,'0'))+';');
+    lines.push('');
+    var cfgStr=(m?'9':'8')+(pce?(ps?'O':'E'):'N')+'1';
+    lines.push('  '+S('cmt','// Config: '+cfgStr));
+    var flags=[];
+    if(ue)flags.push('USART_CR1_UE');if(te)flags.push('USART_CR1_TE');if(re)flags.push('USART_CR1_RE');
+    if(m)flags.push('USART_CR1_M');if(pce)flags.push('USART_CR1_PCE');
+    if(flags.length)lines.push('  '+S('reg','USART1->CR1')+' '+S('op','|=')+' '+S('hex',flags.join(' | '))+';');
+    else lines.push('  '+S('reg','USART1->CR1')+' '+S('op','=')+' '+S('hex',hex32(cr1))+';');
+    lines.push('}');
+    lines.push('');
+    lines.push(S('tp','void')+' '+S('fn','USART1_Send')+'('+S('tp','char')+' c) {');
+    lines.push('  '+S('kw','while')+' (!('+S('reg','USART1->SR')+' '+S('op','&')+' '+S('hex','USART_SR_TXE')+'));');
+    lines.push('  '+S('reg','USART1->DR')+' '+S('op','=')+' c;');
+    lines.push('}');
+  }
+  else if(pk==='adc1'){
+    var cr1=regVals.adc1.CR1,cr2=regVals.adc1.CR2;
+    var res=(cr1>>>24)&3,resBits=[12,10,8,6][res];
+    var cont=(cr2>>>1)&1;
+    lines.push(S('tp','void')+' '+S('fn','ADC1_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// Enable ADC1 clock'));
+    lines.push('  '+S('reg','RCC->APB2ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB2ENR_ADC1EN')+';');
+    lines.push('');
+    lines.push('  '+S('cmt','// Resolution: '+resBits+'-bit'));
+    lines.push('  '+S('reg','ADC1->CR1')+' '+S('op','=')+' '+S('hex',hex32(cr1))+';');
+    lines.push('');
+    lines.push('  '+S('cmt','// '+(cont?'Continuous':'Single')+' conversion'));
+    lines.push('  '+S('reg','ADC1->CR2')+' '+S('op','=')+' '+S('hex',hex32(cr2))+';');
+    lines.push('');
+    lines.push('  '+S('cmt','// Sequence & sample time'));
+    lines.push('  '+S('reg','ADC1->SQR3')+' '+S('op','=')+' '+S('hex',hex32(regVals.adc1.SQR3))+';');
+    lines.push('  '+S('reg','ADC1->SMPR2')+' '+S('op','=')+' '+S('hex',hex32(regVals.adc1.SMPR2))+';');
+    lines.push('}');
+    lines.push('');
+    lines.push(S('tp','uint16_t')+' '+S('fn','ADC1_Read')+'('+S('tp','void')+') {');
+    lines.push('  '+S('reg','ADC1->CR2')+' '+S('op','|=')+' '+S('hex','ADC_CR2_SWSTART')+';');
+    lines.push('  '+S('kw','while')+' (!('+S('reg','ADC1->SR')+' '+S('op','&')+' '+S('hex','ADC_SR_EOC')+'));');
+    lines.push('  '+S('kw','return')+' '+S('reg','ADC1->DR')+';');
+    lines.push('}');
+  }
+  document.getElementById('codeBlock').innerHTML=lines.join('\n');
+}
+
+/* ============================================================
+   PRESETS
+   ============================================================ */
+function loadPreset(name){
+  initRegs();
+  document.querySelectorAll('.btn-preset').forEach(function(b){b.classList.remove('active')});
+  if(name==='led'){
+    curPeriph='gpio';
+    var m=regVals.gpio.MODER;m&=~(3<<10);m|=(1<<10);regVals.gpio.MODER=m>>>0;
+    regVals.gpio.ODR=(1<<5)>>>0;
+    document.getElementById('prLed').classList.add('active');
+  }else if(name==='pwm'){
+    curPeriph='tim2';
+    var m=regVals.gpio.MODER;m&=~3;m|=2;regVals.gpio.MODER=m>>>0;
+    regVals.tim2.PSC=89;regVals.tim2.ARR=999;regVals.tim2.CCR1=500;
+    regVals.tim2.CCMR1=(6<<4)|(1<<3);regVals.tim2.CCER=1;regVals.tim2.CR1=1;
+    document.getElementById('prPwm').classList.add('active');
+  }else if(name==='uart'){
+    curPeriph='usart1';
+    var m=regVals.gpio.MODER;m&=~(3<<18);m|=(2<<18);regVals.gpio.MODER=m>>>0;
+    regVals.usart1.BRR=0x030D;
+    regVals.usart1.CR1=(1<<13)|(1<<3)|(1<<2);
+    regVals.usart1.DR=0x55;
+    document.getElementById('prUart').classList.add('active');
+  }else if(name==='adc'){
+    curPeriph='adc1';
+    var m=regVals.gpio.MODER;m&=~3;m|=3;regVals.gpio.MODER=m>>>0;
+    regVals.adc1.CR1=0;regVals.adc1.CR2=1;
+    regVals.adc1.SQR3=0;regVals.adc1.SMPR2=7;regVals.adc1.DR=2048;
+    document.getElementById('prAdc').classList.add('active');
+  }
+  refreshAll();
+}
+
+function resetAll(){
+  initRegs();curPeriph='gpio';
+  document.querySelectorAll('.btn-preset').forEach(function(b){b.classList.remove('active')});
+  refreshAll();
+}
+
+/* ============================================================
+   MASTER REFRESH
+   ============================================================ */
+function refreshAll(){
+  buildTabs();
+  buildRegEditor();
+  drawPins();
+  drawWaveform();
+  genCode();
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+window.addEventListener('resize',function(){drawPins();drawWaveform()});
+refreshAll();
+animWF();
+</script>
+
+<!-- Welcome Popup -->
+<style>
+.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease}
+.welcome-overlay.show{opacity:1}
+.welcome-box{background:var(--card,#111827);border:1px solid var(--border,#1e293b);border-radius:14px;max-width:420px;width:90%;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.welcome-box h3{font-size:16px;font-weight:700;color:var(--text,#e2e8f0);margin:0 0 12px}
+.welcome-box p{font-size:13.5px;color:var(--muted,#94a3b8);line-height:1.6;margin:0 0 20px}
+.welcome-box .help-icon-hint{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent,#06b6d4);color:#0b1120;font-weight:700;font-size:13px;vertical-align:middle;margin:0 2px}
+.welcome-box button{background:var(--accent,#06b6d4);color:#0b1120;border:none;padding:9px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.welcome-box button:hover{opacity:.85}
+</style>
+<div class="welcome-overlay" id="welcomePopup">
+  <div class="welcome-box">
+    <h3>Welcome to the STM32 Memory-Mapped I/O Lab</h3>
+    <p>To get the most out of this demo, click the <span class="help-icon-hint">?</span> button in the top-right corner for a full guide, tutorial, and explanation of every feature.</p>
+    <button onclick="document.getElementById('welcomePopup').classList.remove('show');setTimeout(function(){document.getElementById('welcomePopup').style.display='none'},300)">Got it</button>
+  </div>
+</div>
+<script>
+(function(){
+  var wp = document.getElementById('welcomePopup');
+  if(wp) setTimeout(function(){ wp.classList.add('show'); }, 400);
+})();
+</script>
+</body>
+</html>

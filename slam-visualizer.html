@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SLAM Mapping Visualizer | Cristian Arenas</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b1120;--card:#111827;--card2:#1a2332;
+  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
+  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
+  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
+}
+body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;overflow-x:hidden}
+a{color:var(--cyan);text-decoration:none}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* NAV */
+.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;cursor:pointer;text-decoration:none}
+.nav .back:hover{color:var(--cyan)}
+.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.nav h1 i{color:var(--cyan);font-size:14px}
+.nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.live-pill{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:600;color:var(--green);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);letter-spacing:.3px}
+.live-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(16,185,129,.8);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.help-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.help-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+
+/* HELP MODAL */
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.help-overlay.open{display:flex}
+.help-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:0}
+.help-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
+.help-modal-head h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.help-modal-head h2 i{color:var(--cyan)}
+.help-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.help-close:hover{color:var(--red);border-color:var(--red)}
+.help-body{padding:20px 22px}
+.help-section{margin-bottom:20px}
+.help-section:last-child{margin-bottom:0}
+.help-section h3{font-size:12px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.help-section p{font-size:12.5px;color:var(--dim);line-height:1.7;margin-bottom:6px}
+.help-section p strong{color:var(--text)}
+.help-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin-top:6px}
+.help-dl dt{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
+.help-dl dd{color:var(--dim);line-height:1.6}
+
+/* GUIDE */
+.guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
+.guide-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.guide-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;cursor:pointer;user-select:none}
+.guide-header h2{font-size:13px;font-weight:600;color:var(--dim);display:flex;align-items:center;gap:8px}
+.guide-header h2 i{color:var(--cyan)}
+.guide-toggle{background:var(--card2);border:1px solid var(--border);color:var(--dim);padding:4px 14px;border-radius:6px;font-size:11px;cursor:pointer;transition:.2s;font-family:var(--mono)}
+.guide-toggle:hover{color:var(--cyan);border-color:var(--cyan)}
+.guide-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;border-top:1px solid var(--border)}
+.guide-grid.hide{display:none}
+.guide-card{background:var(--card2);border-radius:8px;padding:12px 14px}
+.guide-card .step{display:inline-block;background:rgba(6,182,212,.15);color:var(--cyan);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;font-family:var(--mono)}
+.guide-card h3{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.guide-card p{font-size:11.5px;color:var(--dim);line-height:1.5}
+.guide-card strong{color:var(--text)}
+
+/* KPI STRIP */
+.kpi-strip{max-width:1440px;margin:16px auto 0;padding:0 16px}
+.kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden}
+.kpi-cell{padding:14px 10px;background:var(--card);text-align:center;cursor:help;transition:background .2s}
+.kpi-cell:hover{background:rgba(6,182,212,.05)}
+.kpi-cell .lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:600}
+.kpi-cell .val{font-size:1.1rem;font-weight:700;font-family:var(--mono)}
+.kpi-cell .val.c{color:var(--cyan)}
+.kpi-cell .val.g{color:var(--green)}
+.kpi-cell .val.y{color:var(--yellow)}
+.kpi-cell .val.b{color:var(--blue)}
+.kpi-cell .val.p{color:var(--purple)}
+.kpi-cell .val.o{color:var(--orange)}
+@media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:500px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+
+/* CONTROLS */
+.controls{max-width:1440px;margin:16px auto 0;padding:0 16px}
+.ctrl-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ctrl-head{display:flex;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text);gap:8px}
+.ctrl-head i{color:var(--cyan);font-size:13px}
+.ctrl-body{padding:16px 18px;display:flex;flex-wrap:wrap;gap:20px;align-items:center}
+.ctrl-group{display:flex;flex-direction:column;gap:6px;min-width:120px}
+.ctrl-group h4{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px}
+.ctrl-group .toggle-row{display:flex;gap:5px;flex-wrap:wrap}
+.env-btn{padding:5px 12px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:5px;transition:all .15s;font-weight:600;user-select:none}
+.env-btn:hover{border-color:var(--cyan);color:var(--text)}
+.env-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1)}
+.key-hint{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:700;background:var(--card2);border:1px solid var(--border);color:var(--dim)}
+
+/* GRID */
+.grid{max-width:1440px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.full{grid-column:1/-1}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+/* PANEL */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.panel-head h3{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.panel-head h3 i{color:var(--cyan);font-size:13px}
+.panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
+.panel-body{padding:16px 18px;position:relative}
+canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+
+/* TELEMETRY TABLE */
+.telem-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.telem-table td{padding:6px 10px;font-family:var(--mono);border-bottom:1px solid rgba(30,41,59,.4)}
+.telem-table td:first-child{color:var(--dim);font-family:inherit;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:50%}
+.telem-table td:last-child{text-align:right;color:var(--cyan);font-weight:600}
+.telem-section{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;padding:10px 10px 4px;border-bottom:1px solid var(--border)}
+
+/* DISCLAIMER */
+.disclaimer{max-width:1440px;margin:16px auto 30px;padding:0 16px}
+.disclaimer-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:11px;color:var(--dim);line-height:1.6}
+.disclaimer-box strong{color:var(--text)}
+
+@media(max-width:1024px){.grid{grid-template-columns:1fr}.ctrl-body{flex-direction:column;align-items:stretch}}
+@media(max-width:600px){.nav{flex-wrap:wrap;gap:8px}}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a class="back" href="index.html#demos"><i class="fas fa-chevron-left"></i> Back to Portfolio</a>
+  <h1><i class="fas fa-robot"></i> SLAM Mapping Visualizer</h1>
+  <div class="nav-actions">
+    <span class="live-pill"><span class="pulse"></span> LIVE</span>
+    <button class="help-btn" onclick="toggleHelp()"><i class="fas fa-question"></i></button>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-modal">
+    <div class="help-modal-head">
+      <h2><i class="fas fa-book-open"></i> SLAM Visualizer Guide</h2>
+      <button class="help-close" onclick="toggleHelp()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="help-body">
+      <div class="help-section">
+        <h3>What This Tool Does</h3>
+        <p>This visualizer demonstrates <strong>Simultaneous Localization and Mapping (SLAM)</strong> in a browser. Drive a virtual robot through pre-built indoor environments using WASD keys while watching it build an <strong>occupancy grid map</strong> in real time using simulated LiDAR scans.</p>
+        <p>The robot performs <strong>raycasting-based LiDAR simulation</strong> with 180 beams spanning 360 degrees, and updates the map using <strong>log-odds occupancy grid mapping</strong>.</p>
+      </div>
+      <div class="help-section">
+        <h3>Controls</h3>
+        <dl class="help-dl">
+          <dt>W</dt><dd>Accelerate forward</dd>
+          <dt>S</dt><dd>Brake / reverse</dd>
+          <dt>A</dt><dd>Rotate left (counter-clockwise)</dd>
+          <dt>D</dt><dd>Rotate right (clockwise)</dd>
+        </dl>
+      </div>
+      <div class="help-section">
+        <h3>SLAM Concepts</h3>
+        <dl class="help-dl">
+          <dt>Occupancy Grid</dt><dd>A 2D grid where each cell stores a log-odds value representing the probability of being occupied, free, or unknown. Updated via Bresenham-style ray marching.</dd>
+          <dt>LiDAR Raycasting</dt><dd>180 beams sweep 360 degrees around the robot. Each beam marches through the environment checking for wall intersections to determine range measurements.</dd>
+          <dt>Log-Odds Update</dt><dd>Cells along each ray are marked as free (negative update) while the cell at each hit point is marked as occupied (positive update). This Bayesian approach handles noisy measurements gracefully.</dd>
+          <dt>Coverage Mapping</dt><dd>As the robot explores, unknown cells transition to known states. Coverage percentage tracks how much of the navigable environment has been observed.</dd>
+        </dl>
+      </div>
+      <div class="help-section">
+        <h3>Panel Descriptions</h3>
+        <dl class="help-dl">
+          <dt>World View</dt><dd>Top-down rendering of the actual environment with walls, the robot (triangle), LiDAR beams (cyan), and path trail (green).</dd>
+          <dt>Occupancy Grid Map</dt><dd>The map being built in real-time. Dark = unknown, dark blue = free space, bright green/cyan = obstacles detected.</dd>
+          <dt>LiDAR Scan View</dt><dd>Polar plot of the current 360-degree LiDAR scan with range rings and angular sector labels.</dd>
+          <dt>Telemetry</dt><dd>Real-time robot pose, velocity, LiDAR statistics, and map coverage metrics.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK GUIDE -->
+<div class="guide">
+  <div class="guide-box">
+    <div class="guide-header" onclick="toggleGuide()">
+      <h2><i class="fas fa-compass"></i> Quick Guide</h2>
+      <button class="guide-toggle" id="guideBtn">Hide &#x25B4;</button>
+    </div>
+    <div class="guide-grid" id="guideContent">
+      <div class="guide-card">
+        <span class="step">STEP 1</span>
+        <h3>Drive the Robot</h3>
+        <p>Use <strong>WASD</strong> keys to drive the robot through the environment</p>
+      </div>
+      <div class="guide-card">
+        <span class="step">STEP 2</span>
+        <h3>Watch LiDAR Scan</h3>
+        <p>Watch LiDAR beams (<strong>cyan</strong>) scan surroundings in real-time</p>
+      </div>
+      <div class="guide-card">
+        <span class="step">STEP 3</span>
+        <h3>Build the Map</h3>
+        <p>Observe the <strong>occupancy grid map</strong> build as the robot explores</p>
+      </div>
+      <div class="guide-card">
+        <span class="step">STEP 4</span>
+        <h3>Compare Views</h3>
+        <p>Toggle between <strong>raw scan view</strong> and <strong>filtered SLAM output</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+  <div class="kpi-row">
+    <div class="kpi-cell"><div class="lbl">Pose X</div><div class="val c" id="kpiX">0</div></div>
+    <div class="kpi-cell"><div class="lbl">Pose Y</div><div class="val c" id="kpiY">0</div></div>
+    <div class="kpi-cell"><div class="lbl">Heading</div><div class="val y" id="kpiHeading">0&deg;</div></div>
+    <div class="kpi-cell"><div class="lbl">Speed</div><div class="val g" id="kpiSpeed">0.0</div></div>
+    <div class="kpi-cell"><div class="lbl">Map Coverage</div><div class="val b" id="kpiCoverage">0%</div></div>
+    <div class="kpi-cell"><div class="lbl">LiDAR Hits</div><div class="val o" id="kpiHits">0</div></div>
+    <div class="kpi-cell"><div class="lbl">Distance</div><div class="val p" id="kpiDist">0</div></div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="ctrl-panel">
+    <div class="ctrl-head"><i class="fas fa-sliders-h"></i> Controls & Environments</div>
+    <div class="ctrl-body">
+      <div class="ctrl-group">
+        <h4>Movement</h4>
+        <div style="display:flex;gap:4px;align-items:center">
+          <span class="key-hint">W</span>
+          <span class="key-hint">A</span>
+          <span class="key-hint">S</span>
+          <span class="key-hint">D</span>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <h4>Environment</h4>
+        <div class="toggle-row">
+          <button class="env-btn" data-env="small" onclick="loadEnv('small')">Small Room</button>
+          <button class="env-btn" data-env="lshape" onclick="loadEnv('lshape')">L-Shaped Corridor</button>
+          <button class="env-btn active" data-env="multi" onclick="loadEnv('multi')">Multi-Room</button>
+          <button class="env-btn" data-env="maze" onclick="loadEnv('maze')">Maze</button>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <h4>Actions</h4>
+        <div class="toggle-row">
+          <button class="env-btn" onclick="resetMap()" style="border-color:var(--yellow);color:var(--yellow)"><i class="fas fa-eraser"></i> Reset Map</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid">
+
+  <!-- WORLD VIEW -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-globe"></i> World View</h3>
+      <span class="tag">Top-down environment with LiDAR</span>
+    </div>
+    <div class="panel-body" style="padding:8px">
+      <canvas id="worldCanvas" style="height:420px;cursor:crosshair"></canvas>
+    </div>
+  </div>
+
+  <!-- OCCUPANCY GRID MAP -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-th"></i> Occupancy Grid Map</h3>
+      <span class="tag" id="coverageTag">Coverage: 0%</span>
+    </div>
+    <div class="panel-body" style="padding:8px">
+      <canvas id="mapCanvas" style="height:420px"></canvas>
+    </div>
+  </div>
+
+  <!-- LIDAR SCAN VIEW -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-satellite-dish"></i> LiDAR Scan View</h3>
+      <span class="tag">360&deg; Polar Plot</span>
+    </div>
+    <div class="panel-body">
+      <canvas id="lidarCanvas" style="height:350px"></canvas>
+    </div>
+  </div>
+
+  <!-- TELEMETRY -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-tachometer-alt"></i> Telemetry & Stats</h3>
+      <span class="tag">Real-time</span>
+    </div>
+    <div class="panel-body" style="padding:8px 16px">
+      <div class="telem-section">Robot Pose</div>
+      <table class="telem-table">
+        <tr><td>Position X</td><td id="telX">0.0</td></tr>
+        <tr><td>Position Y</td><td id="telY">0.0</td></tr>
+        <tr><td>Heading (Theta)</td><td id="telTheta">0.0&deg;</td></tr>
+      </table>
+      <div class="telem-section" style="margin-top:8px">Velocity</div>
+      <table class="telem-table">
+        <tr><td>Linear Velocity</td><td id="telLinVel">0.00</td></tr>
+        <tr><td>Angular Velocity</td><td id="telAngVel">0.00 &deg;/s</td></tr>
+      </table>
+      <div class="telem-section" style="margin-top:8px">LiDAR Stats</div>
+      <table class="telem-table">
+        <tr><td>Hit Count</td><td id="telHits">0</td></tr>
+        <tr><td>Avg Distance</td><td id="telAvgDist">0.0</td></tr>
+        <tr><td>Min Distance</td><td id="telMinDist">0.0</td></tr>
+        <tr><td>Max Distance</td><td id="telMaxDist">0.0</td></tr>
+      </table>
+      <div class="telem-section" style="margin-top:8px">Map Stats</div>
+      <table class="telem-table">
+        <tr><td>Cells Explored</td><td id="telExplored">0%</td></tr>
+        <tr><td>Total Cells</td><td id="telTotal">0</td></tr>
+        <tr><td>Occupied Cells</td><td id="telOccupied">0</td></tr>
+      </table>
+      <div class="telem-section" style="margin-top:8px">Odometry</div>
+      <table class="telem-table">
+        <tr><td>Total Distance</td><td id="telDist">0.0 px</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  <div class="disclaimer-box">
+    <strong>Note:</strong> This is a simplified educational simulation of SLAM concepts. The occupancy grid uses log-odds updates, and LiDAR simulation uses raycasting against line-segment walls. Real-world SLAM systems involve significantly more complex sensor fusion, loop closure detection, and graph optimization algorithms.
+  </div>
+</div>
+
+<script>
+// ================================================================
+// SLAM MAPPING VISUALIZER - Full Interactive Demo
+// ================================================================
+
+// --- UI Helpers ---
+function toggleHelp(){
+  const o=document.getElementById('helpOverlay');
+  o.classList.toggle('open');
+}
+function toggleGuide(){
+  const g=document.getElementById('guideContent');
+  const b=document.getElementById('guideBtn');
+  g.classList.toggle('hide');
+  b.innerHTML=g.classList.contains('hide')?'Show &#x25BE;':'Hide &#x25B4;';
+}
+
+// --- Canvas Setup ---
+const dpr=window.devicePixelRatio||1;
+function setupCanvas(id){
+  const c=document.getElementById(id);
+  const r=c.getBoundingClientRect();
+  c.width=r.width*dpr;
+  c.height=r.height*dpr;
+  const ctx=c.getContext('2d');
+  ctx.scale(dpr,dpr);
+  return{canvas:c,ctx,w:r.width,h:r.height};
+}
+
+let worldCtx,mapCtx,lidarCtx;
+let worldW,worldH,mapW,mapH,lidarW,lidarH;
+
+function initCanvases(){
+  const w=setupCanvas('worldCanvas');
+  worldCtx=w.ctx;worldW=w.w;worldH=w.h;
+  const m=setupCanvas('mapCanvas');
+  mapCtx=m.ctx;mapW=m.w;mapH=m.h;
+  const l=setupCanvas('lidarCanvas');
+  lidarCtx=l.ctx;lidarW=l.w;lidarH=l.h;
+}
+
+// --- Environments ---
+// Wall segments: arrays of {x1,y1,x2,y2}
+const ENVS={};
+const ENV_SIZE=600; // World coordinate space
+
+function makeRect(x,y,w,h){
+  return[
+    {x1:x,y1:y,x2:x+w,y2:y},
+    {x1:x+w,y1:y,x2:x+w,y2:y+h},
+    {x1:x+w,y1:y+h,x2:x,y2:y+h},
+    {x1:x,y1:y+h,x2:x,y2:y}
+  ];
+}
+function makeLine(x1,y1,x2,y2){return{x1,y1,x2,y2};}
+
+// Small Room
+ENVS.small=(()=>{
+  const walls=[...makeRect(100,100,400,400)];
+  // inner obstacles
+  walls.push(makeLine(200,100,200,220));
+  walls.push(makeLine(350,280,350,500));
+  walls.push(makeLine(200,380,350,380));
+  return{walls,startX:300,startY:300,startA:0};
+})();
+
+// L-Shaped Corridor
+ENVS.lshape=(()=>{
+  const walls=[];
+  // Outer boundary of L
+  walls.push(makeLine(60,60,400,60));
+  walls.push(makeLine(400,60,400,260));
+  walls.push(makeLine(400,260,260,260));
+  walls.push(makeLine(260,260,260,540));
+  walls.push(makeLine(260,540,60,540));
+  walls.push(makeLine(60,540,60,60));
+  // Inner boundary of L
+  walls.push(makeLine(120,120,340,120));
+  walls.push(makeLine(340,120,340,200));
+  walls.push(makeLine(340,200,200,200));
+  walls.push(makeLine(200,200,200,480));
+  walls.push(makeLine(200,480,120,480));
+  walls.push(makeLine(120,480,120,120));
+  return{walls,startX:160,startY:160,startA:0};
+})();
+
+// Multi-Room (DEFAULT)
+ENVS.multi=(()=>{
+  const walls=[];
+  // Outer boundary
+  walls.push(...makeRect(40,40,520,520));
+  // Room 1 (top-left)
+  walls.push(makeLine(40,250,180,250));
+  walls.push(makeLine(220,250,300,250));
+  walls.push(makeLine(300,40,300,130));
+  walls.push(makeLine(300,170,300,250));
+  // Room 2 (top-right)
+  walls.push(makeLine(300,250,420,250));
+  walls.push(makeLine(460,250,560,250));
+  // Room 3 (bottom area)
+  walls.push(makeLine(40,400,200,400));
+  walls.push(makeLine(240,400,400,400));
+  walls.push(makeLine(440,400,560,400));
+  // Internal walls
+  walls.push(makeLine(300,400,300,480));
+  walls.push(makeLine(300,520,300,560));
+  // Obstacles in rooms
+  walls.push(makeLine(120,120,180,120));
+  walls.push(makeLine(180,120,180,180));
+  walls.push(makeLine(400,100,450,100));
+  walls.push(makeLine(450,100,450,160));
+  walls.push(makeLine(150,450,150,530));
+  walls.push(makeLine(420,320,500,320));
+  return{walls,startX:170,startY:150,startA:Math.PI/4};
+})();
+
+// Maze
+ENVS.maze=(()=>{
+  const walls=[...makeRect(40,40,520,520)];
+  const cols=6,rows=6;
+  const cellW=(520-40)/cols,cellH=(520-40)/rows;
+  const ox=40,oy=40;
+  // Randomized DFS maze generation (all cells reachable)
+  function seededRand(s){return((Math.sin(s*127.1+311.7)*43758.5453)%1+1)%1;}
+  let seed=42;
+  function rand(){return seededRand(seed++);}
+  const visited=Array.from({length:rows},()=>Array(cols).fill(false));
+  // Track which walls are open: right[r][c] and bottom[r][c]
+  const openRight=Array.from({length:rows},()=>Array(cols).fill(false));
+  const openBottom=Array.from({length:rows},()=>Array(cols).fill(false));
+  const stack=[[0,0]];
+  visited[0][0]=true;
+  while(stack.length>0){
+    const [r,c]=stack[stack.length-1];
+    const neighbors=[];
+    if(r>0&&!visited[r-1][c])neighbors.push([r-1,c,'top']);
+    if(r<rows-1&&!visited[r+1][c])neighbors.push([r+1,c,'bottom']);
+    if(c>0&&!visited[r][c-1])neighbors.push([r,c-1,'left']);
+    if(c<cols-1&&!visited[r][c+1])neighbors.push([r,c+1,'right']);
+    if(neighbors.length===0){stack.pop();continue;}
+    const idx=Math.floor(rand()*neighbors.length)%neighbors.length;
+    const [nr,nc,dir]=neighbors[idx];
+    if(dir==='right')openRight[r][c]=true;
+    else if(dir==='left')openRight[r][nc]=true;
+    else if(dir==='bottom')openBottom[r][c]=true;
+    else if(dir==='top')openBottom[nr][c]=true;
+    visited[nr][nc]=true;
+    stack.push([nr,nc]);
+  }
+  // Build wall segments for closed walls
+  const gap=32;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const x1=ox+c*cellW,y1=oy+r*cellH;
+      // Right wall (skip last column, outer wall handles it)
+      if(c<cols-1&&!openRight[r][c]){
+        const wx=x1+cellW;
+        walls.push(makeLine(wx,y1,wx,y1+cellH));
+      }
+      // Bottom wall (skip last row)
+      if(r<rows-1&&!openBottom[r][c]){
+        const wy=y1+cellH;
+        walls.push(makeLine(x1,wy,x1+cellW,wy));
+      }
+    }
+  }
+  return{walls,startX:ox+cellW/2,startY:oy+cellH/2,startA:0};
+})();
+
+// --- Robot State ---
+let robot={x:300,y:300,angle:0,vLin:0,vAng:0};
+let trail=[];
+let totalDist=0;
+let keys={w:false,a:false,s:false,d:false};
+let currentEnv='multi';
+
+// --- Occupancy Grid ---
+const GRID_RES=4; // pixels per grid cell in world coords
+let gridW,gridH,grid; // log-odds grid
+const L_FREE=-0.4;
+const L_OCC=0.85;
+const L_MIN=-5;
+const L_MAX=5;
+const LIDAR_RANGE=150;
+const NUM_BEAMS=180;
+
+function initGrid(){
+  gridW=Math.ceil(ENV_SIZE/GRID_RES);
+  gridH=Math.ceil(ENV_SIZE/GRID_RES);
+  grid=new Float32Array(gridW*gridH); // 0 = unknown
+  mapImageData=null; // force rebuild of cached image
+  mapTmpCanvas=null;
+  mapTmpCtx=null;
+}
+
+// --- LiDAR Data ---
+let scanData=[]; // {angle, dist, hit, hx, hy}
+
+// --- Raycasting ---
+function raySegIntersect(ox,oy,dx,dy,seg){
+  const sx=seg.x2-seg.x1, sy=seg.y2-seg.y1;
+  const denom=dx*sy-dy*sx;
+  if(Math.abs(denom)<1e-10)return Infinity;
+  const t=((seg.x1-ox)*sy-(seg.y1-oy)*sx)/denom;
+  const u=((seg.x1-ox)*dy-(seg.y1-oy)*dx)/denom;
+  if(t>0.001&&u>=0&&u<=1)return t;
+  return Infinity;
+}
+
+function castRay(ox,oy,angle,walls){
+  const dx=Math.cos(angle), dy=Math.sin(angle);
+  let minT=LIDAR_RANGE;
+  for(let i=0;i<walls.length;i++){
+    const t=raySegIntersect(ox,oy,dx,dy,walls[i]);
+    if(t<minT)minT=t;
+  }
+  return{dist:minT,hit:minT<LIDAR_RANGE,hx:ox+dx*minT,hy:oy+dy*minT};
+}
+
+function doLidarScan(){
+  const env=ENVS[currentEnv];
+  scanData=[];
+  const step=Math.PI*2/NUM_BEAMS;
+  for(let i=0;i<NUM_BEAMS;i++){
+    const a=robot.angle+i*step;
+    const r=castRay(robot.x,robot.y,a,env.walls);
+    scanData.push({angle:i*step,dist:r.dist,hit:r.hit,hx:r.hx,hy:r.hy});
+  }
+}
+
+// --- Occupancy Grid Update ---
+let mapUpdateTimer=0;
+function updateOccupancyGrid(){
+  for(let i=0;i<scanData.length;i++){
+    const s=scanData[i];
+    const a=robot.angle+s.angle;
+    const dx=Math.cos(a), dy=Math.sin(a);
+    const steps=Math.floor(s.dist/GRID_RES);
+    // Mark free cells along ray
+    for(let j=0;j<steps;j++){
+      const wx=robot.x+dx*j*GRID_RES;
+      const wy=robot.y+dy*j*GRID_RES;
+      const gx=Math.floor(wx/GRID_RES);
+      const gy=Math.floor(wy/GRID_RES);
+      if(gx>=0&&gx<gridW&&gy>=0&&gy<gridH){
+        const idx=gy*gridW+gx;
+        grid[idx]=Math.max(L_MIN,grid[idx]+L_FREE);
+      }
+    }
+    // Mark occupied cell at hit point
+    if(s.hit){
+      const gx=Math.floor(s.hx/GRID_RES);
+      const gy=Math.floor(s.hy/GRID_RES);
+      if(gx>=0&&gx<gridW&&gy>=0&&gy<gridH){
+        const idx=gy*gridW+gx;
+        grid[idx]=Math.min(L_MAX,grid[idx]+L_OCC);
+      }
+    }
+  }
+}
+
+// --- Collision Detection ---
+function pointNearSegment(px,py,seg,radius){
+  const dx=seg.x2-seg.x1, dy=seg.y2-seg.y1;
+  const len2=dx*dx+dy*dy;
+  if(len2===0)return Math.hypot(px-seg.x1,py-seg.y1)<radius;
+  let t=((px-seg.x1)*dx+(py-seg.y1)*dy)/len2;
+  t=Math.max(0,Math.min(1,t));
+  const cx=seg.x1+t*dx, cy=seg.y1+t*dy;
+  return Math.hypot(px-cx,py-cy)<radius;
+}
+
+function canMoveTo(nx,ny){
+  const walls=ENVS[currentEnv].walls;
+  for(let i=0;i<walls.length;i++){
+    if(pointNearSegment(nx,ny,walls[i],8))return false;
+  }
+  return true;
+}
+
+// --- Physics Update ---
+const MAX_LIN_VEL=2.5;
+const MAX_ANG_VEL=0.045;
+const LIN_ACCEL=0.12;
+const ANG_ACCEL=0.006;
+const LIN_FRICTION=0.92;
+const ANG_FRICTION=0.88;
+
+function updatePhysics(){
+  // Apply controls
+  if(keys.w)robot.vLin=Math.min(MAX_LIN_VEL,robot.vLin+LIN_ACCEL);
+  if(keys.s)robot.vLin=Math.max(-MAX_LIN_VEL*0.6,robot.vLin-LIN_ACCEL);
+  if(keys.a)robot.vAng-=ANG_ACCEL;
+  if(keys.d)robot.vAng+=ANG_ACCEL;
+
+  // Friction
+  robot.vLin*=LIN_FRICTION;
+  robot.vAng*=ANG_FRICTION;
+  robot.vAng=Math.max(-MAX_ANG_VEL,Math.min(MAX_ANG_VEL,robot.vAng));
+
+  // Clamp small values
+  if(Math.abs(robot.vLin)<0.01)robot.vLin=0;
+  if(Math.abs(robot.vAng)<0.001)robot.vAng=0;
+
+  // Update angle
+  robot.angle+=robot.vAng;
+
+  // Update position with collision
+  const nx=robot.x+Math.cos(robot.angle)*robot.vLin;
+  const ny=robot.y+Math.sin(robot.angle)*robot.vLin;
+
+  if(canMoveTo(nx,ny)){
+    const dx=nx-robot.x, dy=ny-robot.y;
+    totalDist+=Math.hypot(dx,dy);
+    robot.x=nx;
+    robot.y=ny;
+  }else{
+    robot.vLin*=-0.3; // bounce
+  }
+
+  // Trail
+  if(Math.abs(robot.vLin)>0.1){
+    trail.push({x:robot.x,y:robot.y,t:performance.now()});
+    if(trail.length>2000)trail.shift();
+  }
+}
+
+// --- Drawing: World View ---
+function drawWorld(){
+  const ctx=worldCtx;
+  const sx=worldW/ENV_SIZE, sy=worldH/ENV_SIZE;
+  const s=Math.min(sx,sy);
+  const offX=(worldW-ENV_SIZE*s)/2;
+  const offY=(worldH-ENV_SIZE*s)/2;
+
+  ctx.clearRect(0,0,worldW,worldH);
+  ctx.fillStyle='#0a0e1a';
+  ctx.fillRect(0,0,worldW,worldH);
+
+  ctx.save();
+  ctx.translate(offX,offY);
+  ctx.scale(s,s);
+
+  // Walls
+  const walls=ENVS[currentEnv].walls;
+  ctx.strokeStyle='#4b5563';
+  ctx.lineWidth=3;
+  ctx.lineCap='round';
+  for(const w of walls){
+    ctx.beginPath();
+    ctx.moveTo(w.x1,w.y1);
+    ctx.lineTo(w.x2,w.y2);
+    ctx.stroke();
+  }
+
+  // Trail
+  const now=performance.now();
+  for(let i=0;i<trail.length;i++){
+    const age=(now-trail[i].t)/8000;
+    const alpha=Math.max(0,1-age);
+    if(alpha<=0)continue;
+    ctx.fillStyle=`rgba(16,185,129,${alpha*0.6})`;
+    ctx.beginPath();
+    ctx.arc(trail[i].x,trail[i].y,2,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  // LiDAR beams
+  for(const sc of scanData){
+    const a=robot.angle+sc.angle;
+    const alpha=sc.hit?0.3*(1-sc.dist/LIDAR_RANGE)+0.05:0.04;
+    ctx.strokeStyle=`rgba(6,182,212,${alpha})`;
+    ctx.lineWidth=0.8;
+    ctx.beginPath();
+    ctx.moveTo(robot.x,robot.y);
+    ctx.lineTo(sc.hx,sc.hy);
+    ctx.stroke();
+    if(sc.hit){
+      ctx.fillStyle=`rgba(6,182,212,${0.6*(1-sc.dist/LIDAR_RANGE)+0.2})`;
+      ctx.beginPath();
+      ctx.arc(sc.hx,sc.hy,2,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  // Robot
+  ctx.save();
+  ctx.translate(robot.x,robot.y);
+  ctx.rotate(robot.angle);
+  ctx.fillStyle=`rgba(6,182,212,0.9)`;
+  ctx.beginPath();
+  ctx.moveTo(12,0);
+  ctx.lineTo(-7,-6);
+  ctx.lineTo(-4,0);
+  ctx.lineTo(-7,6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='rgba(6,182,212,0.4)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  // Glow
+  const grd=ctx.createRadialGradient(0,0,0,0,0,20);
+  grd.addColorStop(0,'rgba(6,182,212,0.15)');
+  grd.addColorStop(1,'rgba(6,182,212,0)');
+  ctx.fillStyle=grd;
+  ctx.beginPath();
+  ctx.arc(0,0,20,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+// --- Drawing: Occupancy Grid Map ---
+let mapImageData=null;
+let mapTmpCanvas=null;
+let mapTmpCtx=null;
+function drawMap(){
+  const ctx=mapCtx;
+  ctx.clearRect(0,0,mapW,mapH);
+
+  const cellW=mapW/gridW;
+  const cellH=mapH/gridH;
+
+  // Build image
+  if(!mapImageData||mapImageData.width!==gridW||mapImageData.height!==gridH){
+    mapImageData=new ImageData(gridW,gridH);
+    mapTmpCanvas=document.createElement('canvas');
+    mapTmpCanvas.width=gridW;mapTmpCanvas.height=gridH;
+    mapTmpCtx=mapTmpCanvas.getContext('2d');
+  }
+  const d=mapImageData.data;
+  for(let y=0;y<gridH;y++){
+    for(let x=0;x<gridW;x++){
+      const idx=(y*gridW+x);
+      const v=grid[idx];
+      const pi=idx*4;
+      if(v===0){
+        // Unknown
+        d[pi]=0x1a; d[pi+1]=0x23; d[pi+2]=0x32; d[pi+3]=255;
+      }else if(v<0){
+        // Free space - dark blue/black
+        const freeIntensity=Math.min(1,Math.abs(v)/3);
+        d[pi]=Math.floor(10+freeIntensity*10);
+        d[pi+1]=Math.floor(14+freeIntensity*18);
+        d[pi+2]=Math.floor(30+freeIntensity*30);
+        d[pi+3]=255;
+      }else{
+        // Occupied - bright green/cyan
+        const occIntensity=Math.min(1,v/3);
+        d[pi]=Math.floor(6+occIntensity*20);
+        d[pi+1]=Math.floor(100+occIntensity*155);
+        d[pi+2]=Math.floor(130+occIntensity*82);
+        d[pi+3]=255;
+      }
+    }
+  }
+
+  // Draw scaled image using cached offscreen canvas
+  mapTmpCtx.putImageData(mapImageData,0,0);
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(mapTmpCanvas,0,0,mapW,mapH);
+
+  // Grid lines (faint)
+  ctx.strokeStyle='rgba(30,41,59,0.3)';
+  ctx.lineWidth=0.5;
+  const step=Math.max(1,Math.floor(gridW/30));
+  for(let x=0;x<gridW;x+=step){
+    const px=x*cellW;
+    ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,mapH);ctx.stroke();
+  }
+  for(let y=0;y<gridH;y+=step){
+    const py=y*cellH;
+    ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(mapW,py);ctx.stroke();
+  }
+
+  // Robot position on map
+  const rx=robot.x/ENV_SIZE*mapW;
+  const ry=robot.y/ENV_SIZE*mapH;
+  ctx.save();
+  ctx.translate(rx,ry);
+  ctx.rotate(robot.angle);
+  ctx.fillStyle='rgba(239,68,68,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(6,0);
+  ctx.lineTo(-4,-3.5);
+  ctx.lineTo(-2,0);
+  ctx.lineTo(-4,3.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// --- Drawing: LiDAR Polar Plot ---
+function drawLidar(){
+  const ctx=lidarCtx;
+  const cx=lidarW/2, cy=lidarH/2;
+  const maxR=Math.min(cx,cy)-30;
+
+  ctx.clearRect(0,0,lidarW,lidarH);
+  ctx.fillStyle='#0a0e1a';
+  ctx.fillRect(0,0,lidarW,lidarH);
+
+  // Range rings
+  ctx.strokeStyle='rgba(30,41,59,0.5)';
+  ctx.lineWidth=0.7;
+  const numRings=3;
+  for(let i=1;i<=numRings;i++){
+    const r=maxR*(i/numRings);
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.stroke();
+    // Label
+    ctx.fillStyle='rgba(148,163,184,0.5)';
+    ctx.font="9px 'Courier New',monospace";
+    ctx.textAlign='center';
+    ctx.fillText(`${Math.round(LIDAR_RANGE*i/numRings)}px`,cx,cy-r+10);
+  }
+
+  // Angular sector labels
+  ctx.fillStyle='rgba(148,163,184,0.6)';
+  ctx.font="10px 'Courier New',monospace";
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  const labels=[{a:0,l:'0\u00B0'},{a:Math.PI/2,l:'90\u00B0'},{a:Math.PI,l:'180\u00B0'},{a:3*Math.PI/2,l:'270\u00B0'}];
+  for(const lb of labels){
+    const lx=cx+Math.cos(lb.a-Math.PI/2)*(maxR+18);
+    const ly=cy+Math.sin(lb.a-Math.PI/2)*(maxR+18);
+    ctx.fillText(lb.l,lx,ly);
+  }
+
+  // Cross lines
+  ctx.strokeStyle='rgba(30,41,59,0.3)';
+  ctx.beginPath();ctx.moveTo(cx,cy-maxR);ctx.lineTo(cx,cy+maxR);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx-maxR,cy);ctx.lineTo(cx+maxR,cy);ctx.stroke();
+
+  // Scan data points
+  for(const s of scanData){
+    if(!s.hit)continue;
+    const r=(s.dist/LIDAR_RANGE)*maxR;
+    const plotA=s.angle-Math.PI/2; // 0 = up
+    const px=cx+Math.cos(plotA)*r;
+    const py=cy+Math.sin(plotA)*r;
+    const alpha=0.5+0.5*(1-s.dist/LIDAR_RANGE);
+    ctx.fillStyle=`rgba(6,182,212,${alpha})`;
+    ctx.beginPath();
+    ctx.arc(px,py,2.5,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  // Center dot (robot)
+  ctx.fillStyle='rgba(239,68,68,0.9)';
+  ctx.beginPath();
+  ctx.arc(cx,cy,4,0,Math.PI*2);
+  ctx.fill();
+  // Direction indicator
+  ctx.strokeStyle='rgba(239,68,68,0.6)';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(cx,cy-15);
+  ctx.stroke();
+}
+
+// --- Telemetry Update ---
+function updateTelemetry(){
+  const hits=scanData.filter(s=>s.hit);
+  const hitCount=hits.length;
+  const dists=hits.map(s=>s.dist);
+  const avgDist=hitCount>0?dists.reduce((a,b)=>a+b,0)/hitCount:0;
+  const minDist=hitCount>0?Math.min(...dists):0;
+  const maxDist=hitCount>0?Math.max(...dists):0;
+
+  // Count grid states
+  let explored=0, occupied=0;
+  for(let i=0;i<grid.length;i++){
+    if(grid[i]!==0)explored++;
+    if(grid[i]>0.5)occupied++;
+  }
+  const coveragePct=(explored/grid.length*100).toFixed(1);
+
+  // KPI strip
+  document.getElementById('kpiX').textContent=Math.round(robot.x);
+  document.getElementById('kpiY').textContent=Math.round(robot.y);
+  document.getElementById('kpiHeading').innerHTML=(((robot.angle*180/Math.PI)%360+360)%360).toFixed(0)+'&deg;';
+  document.getElementById('kpiSpeed').textContent=Math.abs(robot.vLin).toFixed(2);
+  document.getElementById('kpiCoverage').textContent=coveragePct+'%';
+  document.getElementById('kpiHits').textContent=hitCount;
+  document.getElementById('kpiDist').textContent=totalDist.toFixed(0);
+
+  // Telemetry panel
+  document.getElementById('telX').textContent=robot.x.toFixed(1);
+  document.getElementById('telY').textContent=robot.y.toFixed(1);
+  document.getElementById('telTheta').innerHTML=(((robot.angle*180/Math.PI)%360+360)%360).toFixed(1)+'&deg;';
+  document.getElementById('telLinVel').textContent=robot.vLin.toFixed(3);
+  document.getElementById('telAngVel').innerHTML=(robot.vAng*180/Math.PI).toFixed(2)+' &deg;/s';
+  document.getElementById('telHits').textContent=hitCount;
+  document.getElementById('telAvgDist').textContent=avgDist.toFixed(1);
+  document.getElementById('telMinDist').textContent=minDist.toFixed(1);
+  document.getElementById('telMaxDist').textContent=maxDist.toFixed(1);
+  document.getElementById('telExplored').textContent=coveragePct+'%';
+  document.getElementById('telTotal').textContent=grid.length;
+  document.getElementById('telOccupied').textContent=occupied;
+  document.getElementById('telDist').textContent=totalDist.toFixed(1)+' px';
+  document.getElementById('coverageTag').textContent='Coverage: '+coveragePct+'%';
+}
+
+// --- Environment Loading ---
+function loadEnv(name){
+  currentEnv=name;
+  const env=ENVS[name];
+  robot.x=env.startX;
+  robot.y=env.startY;
+  robot.angle=env.startA;
+  robot.vLin=0;
+  robot.vAng=0;
+  trail=[];
+  totalDist=0;
+  initGrid();
+  // Update buttons
+  document.querySelectorAll('.env-btn[data-env]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.env===name);
+  });
+}
+
+function resetMap(){
+  initGrid();
+}
+
+// --- Keyboard Input ---
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='w')keys.w=true;
+  else if(k==='a')keys.a=true;
+  else if(k==='s')keys.s=true;
+  else if(k==='d')keys.d=true;
+  if(['w','a','s','d'].includes(k))e.preventDefault();
+});
+document.addEventListener('keyup',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='w')keys.w=false;
+  else if(k==='a')keys.a=false;
+  else if(k==='s')keys.s=false;
+  else if(k==='d')keys.d=false;
+});
+
+// --- Main Loop ---
+let lastMapUpdate=0;
+let frameCount=0;
+
+function tick(timestamp){
+  updatePhysics();
+  doLidarScan();
+
+  // Update occupancy grid at ~10Hz
+  if(timestamp-lastMapUpdate>100){
+    updateOccupancyGrid();
+    lastMapUpdate=timestamp;
+  }
+
+  drawWorld();
+  drawMap();
+  drawLidar();
+
+  // Update telemetry every 3 frames
+  if(frameCount%3===0)updateTelemetry();
+  frameCount++;
+
+  requestAnimationFrame(tick);
+}
+
+// --- Window Resize ---
+let resizeTimer;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{initCanvases();},150);
+});
+
+// --- Init ---
+function init(){
+  initCanvases();
+  initGrid();
+  loadEnv('multi');
+  requestAnimationFrame(tick);
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+
+<!-- Welcome Popup -->
+<style>
+.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease}
+.welcome-overlay.show{opacity:1}
+.welcome-box{background:var(--card,#111827);border:1px solid var(--border,#1e293b);border-radius:14px;max-width:420px;width:90%;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.welcome-box h3{font-size:16px;font-weight:700;color:var(--text,#e2e8f0);margin:0 0 12px}
+.welcome-box p{font-size:13.5px;color:var(--muted,#94a3b8);line-height:1.6;margin:0 0 20px}
+.welcome-box .help-icon-hint{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent,#06b6d4);color:#0b1120;font-weight:700;font-size:13px;vertical-align:middle;margin:0 2px}
+.welcome-box button{background:var(--accent,#06b6d4);color:#0b1120;border:none;padding:9px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.welcome-box button:hover{opacity:.85}
+</style>
+<div class="welcome-overlay" id="welcomePopup">
+  <div class="welcome-box">
+    <h3>Welcome to the SLAM Mapping Visualizer</h3>
+    <p>To get the most out of this demo, click the <span class="help-icon-hint">?</span> button in the top-right corner for a full guide, tutorial, and explanation of every feature.</p>
+    <button onclick="document.getElementById('welcomePopup').classList.remove('show');setTimeout(function(){document.getElementById('welcomePopup').style.display='none'},300)">Got it</button>
+  </div>
+</div>
+<script>
+(function(){
+  var wp = document.getElementById('welcomePopup');
+  if(wp) setTimeout(function(){ wp.classList.add('show'); }, 400);
+})();
+</script>
+</body>
+</html>

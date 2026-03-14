@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TinyML Model Quantization Lab | Cristian Arenas</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b1120;--card:#111827;--card2:#1a2332;
+  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
+  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
+  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
+}
+body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+a{color:var(--cyan);text-decoration:none}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* NAV */
+.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;cursor:pointer;text-decoration:none}
+.nav .back:hover{color:var(--cyan)}
+.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.nav h1 i{color:var(--cyan);font-size:14px}
+.nav .nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.help-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.help-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+
+/* HELP MODAL */
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.help-overlay.open{display:flex}
+.help-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.help-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
+.help-modal-head h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.help-modal-head h2 i{color:var(--cyan)}
+.help-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.help-close:hover{color:var(--red);border-color:var(--red)}
+.help-body{padding:20px 22px}
+.help-section{margin-bottom:20px}
+.help-section:last-child{margin-bottom:0}
+.help-section h3{font-size:12px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.help-section p{font-size:12.5px;color:var(--dim);line-height:1.7;margin-bottom:6px}
+.help-section p strong{color:var(--text)}
+.help-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin-top:6px}
+.help-dl dt{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
+.help-dl dd{color:var(--dim);line-height:1.6}
+
+/* GUIDE */
+.guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
+.guide-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.guide-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;cursor:pointer;user-select:none}
+.guide-header h2{font-size:13px;font-weight:600;color:var(--dim);display:flex;align-items:center;gap:8px}
+.guide-header h2 i{color:var(--cyan)}
+.guide-toggle{background:var(--card2);border:1px solid var(--border);color:var(--dim);padding:4px 14px;border-radius:6px;font-size:11px;cursor:pointer;transition:.2s;font-family:var(--mono)}
+.guide-toggle:hover{color:var(--cyan);border-color:var(--cyan)}
+.guide-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;border-top:1px solid var(--border)}
+.guide-grid.hide{display:none}
+.guide-card{background:var(--card2);border-radius:8px;padding:12px 14px}
+.guide-card .step{display:inline-block;background:rgba(6,182,212,.15);color:var(--cyan);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;font-family:var(--mono)}
+.guide-card h3{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.guide-card p{font-size:11.5px;color:var(--dim);line-height:1.5}
+.guide-card strong{color:var(--text)}
+@media(max-width:900px){.guide-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.guide-grid{grid-template-columns:1fr}}
+
+/* KPI STRIP */
+.kpi-strip{max-width:1440px;margin:16px auto 0;padding:0 16px}
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden}
+.kpi-cell{padding:14px 10px;background:var(--card);text-align:center;cursor:help;transition:background .2s}
+.kpi-cell:hover{background:rgba(6,182,212,.05)}
+.kpi-cell .lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:600}
+.kpi-cell .val{font-size:1.1rem;font-weight:700;font-family:var(--mono)}
+.kpi-cell .val.neutral{color:var(--cyan)}
+.kpi-cell .val.pos{color:var(--green)}
+.kpi-cell .val.neg{color:var(--red)}
+.kpi-cell .val.warn{color:var(--yellow)}
+@media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+
+/* CONTROLS */
+.controls{max-width:1440px;margin:16px auto 0;padding:0 16px}
+.ctrl-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ctrl-head{display:flex;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text);gap:8px}
+.ctrl-head i{color:var(--cyan);font-size:13px}
+.ctrl-body{padding:16px 18px;display:flex;flex-wrap:wrap;gap:20px;align-items:center}
+.ctrl-group{display:flex;flex-direction:column;gap:6px}
+.ctrl-group h4{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.quant-btns{display:flex;gap:5px}
+.q-btn{padding:6px 16px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:5px;transition:all .15s;font-weight:600;user-select:none;font-family:var(--mono)}
+.q-btn:hover{border-color:var(--cyan);color:var(--text)}
+.q-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.12);box-shadow:0 0 8px rgba(6,182,212,.15)}
+.model-select{padding:6px 14px;border:1px solid var(--border);border-radius:5px;background:var(--card2);color:var(--text);font-family:inherit;font-size:12px;cursor:pointer}
+.model-select:focus{outline:none;border-color:var(--cyan)}
+.action-btn{padding:7px 18px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;font-family:inherit;display:flex;align-items:center;gap:6px}
+.action-btn.primary{background:var(--cyan);color:#000}
+.action-btn.primary:hover{background:#00e5ff;box-shadow:0 4px 16px rgba(6,182,212,.3)}
+.action-btn.secondary{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
+.action-btn.secondary:hover{border-color:var(--green);color:var(--green)}
+.action-btn.run{background:var(--green);color:#000}
+.action-btn.run:hover{background:#34d399;box-shadow:0 4px 16px rgba(16,185,129,.3)}
+.action-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* GRID */
+.grid{max-width:1440px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+/* PANEL */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.panel-head h3{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.panel-head h3 i{color:var(--cyan);font-size:13px}
+.panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
+.panel-head select{padding:4px 10px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:4px;font-family:inherit;cursor:pointer}
+.panel-head select:focus{outline:none;border-color:var(--cyan)}
+.panel-body{padding:16px 18px;position:relative}
+canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+
+/* WEIGHT STATS */
+.weight-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.ws-item{background:var(--card2);border-radius:6px;padding:8px 10px;text-align:center}
+.ws-item .ws-lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.ws-item .ws-val{font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);margin-top:2px}
+
+/* ARCHITECTURE */
+.arch-layer{display:flex;align-items:center;gap:6px;padding:6px 10px;margin-bottom:4px;border-radius:6px;cursor:pointer;transition:all .15s;border:1px solid transparent;background:var(--card2)}
+.arch-layer:hover{border-color:rgba(6,182,212,.3);background:rgba(6,182,212,.04)}
+.arch-layer.selected{border-color:var(--cyan);background:rgba(6,182,212,.08);box-shadow:0 0 10px rgba(6,182,212,.1)}
+.arch-layer .layer-color{width:10px;height:28px;border-radius:3px;flex-shrink:0}
+.arch-layer .layer-info{flex:1;min-width:0}
+.arch-layer .layer-name{font-size:11px;font-weight:600;color:var(--text)}
+.arch-layer .layer-dim{font-size:10px;color:var(--dim);font-family:var(--mono)}
+.arch-layer .layer-params{font-size:10px;color:var(--dim);font-family:var(--mono);text-align:right;white-space:nowrap}
+.arch-layer .layer-size{font-size:10px;font-weight:700;font-family:var(--mono);text-align:right;white-space:nowrap}
+.arch-arrow{text-align:center;color:var(--dim);font-size:11px;margin:2px 0}
+
+/* MCU FLASH */
+.flash-bar-wrap{margin-bottom:14px}
+.flash-bar-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px}
+.flash-bar-label .fl-name{color:var(--dim);font-weight:600}
+.flash-bar-label .fl-pct{font-family:var(--mono);font-weight:700}
+.flash-bar{height:28px;background:var(--bg);border-radius:6px;overflow:hidden;display:flex;position:relative;border:1px solid var(--border)}
+.flash-seg{height:100%;transition:width .6s ease;position:relative;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:rgba(255,255,255,.7);overflow:hidden;white-space:nowrap}
+.flash-seg.boot{background:#475569}
+.flash-seg.app{background:var(--blue)}
+.flash-seg.model{background:var(--cyan)}
+.flash-seg.free{background:rgba(255,255,255,.03)}
+.flash-seg.overflow{background:var(--red);animation:flash-warn 1s infinite}
+@keyframes flash-warn{0%,100%{opacity:1}50%{opacity:.5}}
+
+.flash-progress{height:4px;background:var(--bg);border-radius:4px;overflow:hidden;margin:10px 0}
+.flash-progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:4px;transition:width .05s linear}
+
+.inference-result{background:var(--card2);border-radius:8px;padding:14px;margin-top:12px;display:none}
+.inference-result.show{display:block}
+.inference-result h4{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;font-weight:700}
+.pred-bar{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:11px}
+.pred-bar .pred-label{width:50px;color:var(--dim);font-family:var(--mono);text-align:right;flex-shrink:0}
+.pred-bar .pred-track{flex:1;height:14px;background:var(--bg);border-radius:3px;overflow:hidden;position:relative}
+.pred-bar .pred-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.pred-bar .pred-pct{width:40px;font-family:var(--mono);font-weight:600;color:var(--dim);font-size:10px}
+.pred-bar.top .pred-label{color:var(--green);font-weight:700}
+.pred-bar.top .pred-pct{color:var(--green);font-weight:700}
+.inference-time{margin-top:10px;font-size:11px;color:var(--dim);font-family:var(--mono);display:flex;justify-content:space-between}
+.inference-time span{color:var(--cyan);font-weight:700}
+
+/* INPUT GRID (legacy) */
+.input-grid{display:grid;grid-template-columns:repeat(28,1fr);gap:0;margin-bottom:10px;border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.input-pixel{aspect-ratio:1;background:#000}
+
+/* DRAWABLE CANVAS */
+.draw-canvas-wrap{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+#drawCanvas{width:100%;aspect-ratio:1;border-radius:6px;border:1px solid var(--border);background:#000;cursor:crosshair;touch-action:none;image-rendering:pixelated}
+.draw-toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.draw-btn{padding:5px 12px;font-size:10px;background:var(--card2);border:1px solid var(--border);color:var(--dim);border-radius:5px;cursor:pointer;font-weight:600;font-family:var(--mono);transition:all .15s;display:flex;align-items:center;gap:4px}
+.draw-btn:hover{border-color:var(--cyan);color:var(--text)}
+.draw-label{font-size:10px;color:var(--dim);font-style:italic;margin-left:auto}
+
+/* FORWARD PASS ANIMATION */
+.arch-layer.fwd-active{border-color:var(--green)!important;background:rgba(16,185,129,.12)!important;box-shadow:0 0 14px rgba(16,185,129,.2)}
+.arch-arrow.fwd-active i{color:var(--green)!important;animation:arrow-pulse .3s ease}
+@keyframes arrow-pulse{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.5);opacity:1}100%{transform:scale(1);opacity:1}}
+
+/* TOOLTIP */
+.tt{position:fixed;pointer-events:none;background:rgba(10,14,39,.94);border:1px solid rgba(6,182,212,.35);border-radius:8px;padding:9px 13px;font-size:12px;color:#f1f5f9;z-index:200;opacity:0;transition:opacity .12s;backdrop-filter:blur(12px);max-width:280px;box-shadow:0 8px 30px rgba(0,0,0,.6);line-height:1.5}
+.tt.show{opacity:1}
+
+/* DISCLAIMER */
+.disclaimer{max-width:1440px;margin:16px auto 30px;padding:0 16px}
+.disclaimer-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:11px;color:var(--dim);line-height:1.6}
+.disclaimer-box strong{color:var(--text)}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:11px;color:var(--dim)}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-swatch{width:12px;height:3px;border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="tt" id="tooltip"></div>
+
+<nav class="nav">
+  <a class="back" href="index.html#demos"><i class="fas fa-chevron-left"></i> Back to Portfolio</a>
+  <h1><i class="fas fa-brain"></i> TinyML Model Quantization Lab</h1>
+  <div class="nav-actions">
+    <button class="help-btn" onclick="toggleHelp()" title="Help &amp; Guide"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+
+<!-- HELP MODAL -->
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-modal">
+    <div class="help-modal-head">
+      <h2><i class="fas fa-book-open"></i> Understanding This Lab</h2>
+      <button class="help-close" onclick="toggleHelp()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="help-body">
+      <div class="help-section">
+        <h3>What This Tool Does</h3>
+        <p>This lab demonstrates <strong>neural network quantization</strong> for TinyML deployment. It shows how reducing weight precision from 32-bit floating point (FP32) to 8-bit integer (INT8) or 4-bit integer (INT4) dramatically reduces model size and inference time, enabling deployment on resource-constrained microcontrollers.</p>
+      </div>
+      <div class="help-section">
+        <h3>Weight Distribution Heatmap</h3>
+        <p>Each cell in the heatmap represents a neural network weight. <strong style="color:#3b82f6">Blue</strong> indicates negative values, <strong>white</strong> is near-zero, and <strong style="color:#ef4444">red</strong> indicates positive values. With FP32, you see smooth gradients with many unique values. INT8 quantization snaps weights to 256 discrete levels. INT4 uses only 16 levels, producing a visibly blocky pattern.</p>
+      </div>
+      <div class="help-section">
+        <h3>Quantization Metrics</h3>
+        <dl class="help-dl">
+          <dt>Scale Factor</dt>
+          <dd>Multiplier that maps floating-point range to integer range. Computed as (max - min) / (2^bits - 1).</dd>
+          <dt>Zero-Point</dt>
+          <dd>Integer value that corresponds to floating-point zero. Ensures zero is exactly representable.</dd>
+          <dt>Accuracy</dt>
+          <dd>Classification accuracy on a test set. Drops slightly with quantization due to precision loss.</dd>
+          <dt>Model Size</dt>
+          <dd>Total model size in KB. Reduces proportionally with bit-width reduction.</dd>
+          <dt>Inference Time</dt>
+          <dd>Time to run one forward pass on a Cortex-M7 MCU. INT8/INT4 ops are much faster than FP32.</dd>
+          <dt>Flash Usage</dt>
+          <dd>Percentage of MCU flash memory occupied by the model plus application code and bootloader.</dd>
+        </dl>
+      </div>
+      <div class="help-section">
+        <h3>MCU Flash Deployment</h3>
+        <p>The flash memory visualization shows how a <strong>512KB STM32H7</strong> flash is partitioned. The bootloader (16KB) and application code (48KB) are fixed. The model segment varies with quantization level. If the model exceeds available flash, the bar turns red indicating the model will not fit.</p>
+      </div>
+      <div class="help-section">
+        <h3>Model Architectures</h3>
+        <dl class="help-dl">
+          <dt>MobileNet-v2 (Tiny)</dt>
+          <dd>Lightweight architecture optimized for mobile and edge devices. Uses depthwise separable convolutions. Good accuracy-to-size ratio.</dd>
+          <dt>Custom CNN (3-layer)</dt>
+          <dd>Simple 3-layer convolutional network. Smallest model, highest base accuracy on simple tasks like MNIST digit classification.</dd>
+          <dt>ResNet-8</dt>
+          <dd>Compact residual network with skip connections. Balances depth and size, robust to quantization thanks to residual paths.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GUIDE -->
+<div class="guide">
+  <div class="guide-box">
+    <div class="guide-header" id="guideToggle">
+      <h2><i class="fas fa-compass"></i> How This Lab Works</h2>
+      <button class="guide-toggle" id="guideBtn">Hide &#x25B4;</button>
+    </div>
+    <div class="guide-grid" id="guideContent">
+      <div class="guide-card">
+        <span class="step">STEP 1</span>
+        <h3>Pick a Model &amp; Precision</h3>
+        <p>Select a <strong>model architecture</strong> (MobileNet, ResNet, or Custom CNN) and a <strong>quantization level</strong> (FP32, INT8, or INT4). Watch the weight heatmap change in real time.</p>
+      </div>
+      <div class="guide-card">
+        <span class="step">STEP 2</span>
+        <h3>Flash to MCU</h3>
+        <p>Click <strong>Flash to MCU</strong> to deploy the model into simulated STM32 flash memory. The progress bar shows each stage of the flash process.</p>
+      </div>
+      <div class="guide-card">
+        <span class="step">STEP 3</span>
+        <h3>Draw or Load a Digit</h3>
+        <p>After flashing, <strong>draw a digit</strong> (0-9) on the black canvas with your mouse or finger, or click <strong>Random Sample</strong> to load one automatically.</p>
+      </div>
+      <div class="guide-card">
+        <span class="step">STEP 4</span>
+        <h3>Run Inference</h3>
+        <p>Click <strong>Run</strong> and watch the <strong>forward pass animate</strong> through each layer. The network classifies your digit and shows confidence scores per class.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+  <div class="kpi-row">
+    <div class="kpi-cell" title="Selected model architecture">
+      <div class="lbl">Model</div>
+      <div class="val neutral" id="kpiModel">Custom CNN</div>
+    </div>
+    <div class="kpi-cell" title="Current quantization precision">
+      <div class="lbl">Precision</div>
+      <div class="val neutral" id="kpiPrecision">FP32</div>
+    </div>
+    <div class="kpi-cell" title="Model size in KB">
+      <div class="lbl">Size</div>
+      <div class="val pos" id="kpiSize">480 KB</div>
+    </div>
+    <div class="kpi-cell" title="Classification accuracy">
+      <div class="lbl">Accuracy</div>
+      <div class="val pos" id="kpiAccuracy">95.1%</div>
+    </div>
+    <div class="kpi-cell" title="Inference time on Cortex-M7">
+      <div class="lbl">Inference</div>
+      <div class="val neutral" id="kpiInference">850 ms</div>
+    </div>
+    <div class="kpi-cell" title="Flash memory utilization">
+      <div class="lbl">Flash Usage</div>
+      <div class="val" id="kpiFlash">106%</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="ctrl-panel">
+    <div class="ctrl-head"><i class="fas fa-sliders-h"></i> Quantization Controls</div>
+    <div class="ctrl-body">
+      <div class="ctrl-group">
+        <h4>Model Architecture</h4>
+        <select class="model-select" id="modelSelect" onchange="changeModel(this.value)">
+          <option value="custom">Custom CNN (3-layer)</option>
+          <option value="mobilenet">MobileNet-v2 (Tiny)</option>
+          <option value="resnet">ResNet-8</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <h4>Quantization Level</h4>
+        <div class="quant-btns">
+          <button class="q-btn active" data-q="fp32" onclick="setQuantization('fp32')">FP32</button>
+          <button class="q-btn" data-q="int8" onclick="setQuantization('int8')">INT8</button>
+          <button class="q-btn" data-q="int4" onclick="setQuantization('int4')">INT4</button>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <h4>Actions</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="action-btn primary" id="quantizeBtn" onclick="animateQuantize()"><i class="fas fa-compress-alt"></i> Quantize</button>
+          <button class="action-btn secondary" id="flashBtn" onclick="flashToMCU()"><i class="fas fa-microchip"></i> Flash to MCU</button>
+          <button class="action-btn run" id="inferBtn" onclick="runInference()" disabled><i class="fas fa-play"></i> Run Inference</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANELS -->
+<div class="grid">
+  <!-- Panel 1: Weight Heatmap -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-th"></i> Weight Distribution Heatmap</h3>
+      <select id="layerSelect" onchange="selectLayerByDropdown(this.value)"></select>
+    </div>
+    <div class="panel-body">
+      <canvas id="heatmapCanvas" height="340"></canvas>
+      <div class="weight-stats" id="weightStats">
+        <div class="ws-item"><div class="ws-lbl">Min</div><div class="ws-val" id="wsMin">--</div></div>
+        <div class="ws-item"><div class="ws-lbl">Max</div><div class="ws-val" id="wsMax">--</div></div>
+        <div class="ws-item"><div class="ws-lbl">Mean</div><div class="ws-val" id="wsMean">--</div></div>
+        <div class="ws-item"><div class="ws-lbl">Std Dev</div><div class="ws-val" id="wsStd">--</div></div>
+        <div class="ws-item"><div class="ws-lbl">Scale</div><div class="ws-val" id="wsScale">N/A</div></div>
+        <div class="ws-item"><div class="ws-lbl">Zero-Point</div><div class="ws-val" id="wsZero">N/A</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 2: Architecture -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-project-diagram"></i> Model Architecture</h3>
+      <span class="tag" id="archModelName">Custom CNN (3-layer)</span>
+    </div>
+    <div class="panel-body" id="archBody"></div>
+  </div>
+
+  <!-- Panel 3: Accuracy vs Size -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-chart-bar"></i> Accuracy vs Size Tradeoff</h3>
+      <span class="tag">Dual-axis comparison</span>
+    </div>
+    <div class="panel-body">
+      <canvas id="tradeoffCanvas" height="300"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan)"></span> Accuracy %</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--green)"></span> Size (KB)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--orange);height:8px;width:8px;border-radius:50%"></span> Inference (ms)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 4: MCU Flash -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-microchip"></i> MCU Flash Deployment</h3>
+      <span class="tag">STM32H7 &mdash; 512 KB Flash</span>
+    </div>
+    <div class="panel-body">
+      <div class="flash-bar-wrap">
+        <div class="flash-bar-label">
+          <span class="fl-name">Flash Memory Map</span>
+          <span class="fl-pct" id="flashPct">--</span>
+        </div>
+        <div class="flash-bar" id="flashBar">
+          <div class="flash-seg boot" style="width:3.1%">Boot</div>
+          <div class="flash-seg app" style="width:9.4%">App</div>
+          <div class="flash-seg model" id="flashModel" style="width:50%">Model</div>
+          <div class="flash-seg free" id="flashFree" style="width:37.5%"></div>
+        </div>
+      </div>
+      <div class="flash-bar-wrap">
+        <div class="flash-bar-label">
+          <span class="fl-name">Flash Progress</span>
+          <span id="flashStatus" style="color:var(--dim);font-size:11px">Ready</span>
+        </div>
+        <div class="flash-progress">
+          <div class="flash-progress-bar" id="flashProgressBar"></div>
+        </div>
+      </div>
+      <div class="legend" style="margin-top:0;margin-bottom:12px">
+        <div class="legend-item"><span class="legend-swatch" style="background:#475569;height:8px;width:16px;border-radius:2px"></span> Bootloader (16KB)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--blue);height:8px;width:16px;border-radius:2px"></span> App Code (48KB)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan);height:8px;width:16px;border-radius:2px"></span> Model</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:rgba(255,255,255,.08);height:8px;width:16px;border-radius:2px"></span> Free</div>
+      </div>
+
+      <!-- Inference result -->
+      <div class="inference-result" id="inferenceResult">
+        <h4><i class="fas fa-pencil-alt" style="margin-right:6px"></i> Draw a Digit or Load a Sample</h4>
+        <div class="draw-canvas-wrap">
+          <canvas id="drawCanvas" width="280" height="280"></canvas>
+          <div class="draw-toolbar">
+            <button class="draw-btn" onclick="clearDrawCanvas()"><i class="fas fa-eraser"></i> Clear</button>
+            <button class="draw-btn" onclick="loadRandomSample()"><i class="fas fa-random"></i> Random Sample</button>
+            <button class="action-btn run" id="inferBtnCanvas" onclick="runInference()" style="padding:5px 14px;font-size:10px"><i class="fas fa-play"></i> Run</button>
+            <span class="draw-label">Draw with mouse or touch</span>
+          </div>
+        </div>
+        <h4 style="margin-top:12px"><i class="fas fa-poll" style="margin-right:6px"></i> Prediction Confidence</h4>
+        <div id="predBars"></div>
+        <div class="inference-time">
+          <span>Inference on Cortex-M7</span>
+          <span id="inferTime">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="disclaimer">
+  <div class="disclaimer-box">
+    <strong>Educational Demo.</strong> All model architectures, weight distributions, accuracy metrics, and inference benchmarks are simulated for educational purposes. Real quantization involves calibration datasets, per-channel scaling, and hardware-specific optimizations. Actual deployment performance varies by MCU, compiler optimizations, and operator support.
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   TinyML Model Quantization Lab - Interactive Demo
+   ================================================================ */
+
+// ─── DATA ─────────────────────────────────────────────────────────
+const MODELS = {
+  mobilenet: {
+    name: 'MobileNet-v2 (Tiny)',
+    short: 'MobileNet',
+    layers: [
+      { name:'Conv1',    type:'conv',  dims:'28x28x1 -> 28x28x16',  color:'#3b82f6', params:160,    gridW:16, gridH:10 },
+      { name:'DWConv2',  type:'conv',  dims:'28x28x16 -> 14x14x32', color:'#6366f1', params:4736,   gridW:20, gridH:16 },
+      { name:'DWConv3',  type:'conv',  dims:'14x14x32 -> 7x7x64',   color:'#8b5cf6', params:18560,  gridW:24, gridH:20 },
+      { name:'Dense1',   type:'dense', dims:'3136 -> 128',           color:'#f97316', params:401536, gridW:28, gridH:22 },
+      { name:'Dense2',   type:'dense', dims:'128 -> 10',             color:'#10b981', params:1290,   gridW:12, gridH:8  }
+    ],
+    fp32: { accuracy:92.3, size:426, inference:850 },
+    int8: { accuracy:91.8, size:108, inference:120 },
+    int4: { accuracy:89.1, size:55,  inference:65  }
+  },
+  custom: {
+    name: 'Custom CNN (3-layer)',
+    short: 'Custom CNN',
+    layers: [
+      { name:'Conv1',  type:'conv',  dims:'28x28x1 -> 26x26x8',  color:'#3b82f6', params:80,    gridW:14, gridH:8  },
+      { name:'Conv2',  type:'conv',  dims:'13x13x8 -> 11x11x16', color:'#6366f1', params:1168,  gridW:18, gridH:14 },
+      { name:'Conv3',  type:'conv',  dims:'5x5x16 -> 3x3x32',    color:'#8b5cf6', params:4640,  gridW:22, gridH:18 },
+      { name:'Dense1', type:'dense', dims:'288 -> 64',            color:'#f97316', params:18496, gridW:26, gridH:20 },
+      { name:'Dense2', type:'dense', dims:'64 -> 10',             color:'#10b981', params:650,   gridW:12, gridH:8  }
+    ],
+    fp32: { accuracy:95.1, size:98, inference:340 },
+    int8: { accuracy:94.7, size:25, inference:48  },
+    int4: { accuracy:91.2, size:13, inference:26  }
+  },
+  resnet: {
+    name: 'ResNet-8',
+    short: 'ResNet-8',
+    layers: [
+      { name:'Conv1',     type:'conv',  dims:'28x28x1 -> 28x28x16',  color:'#3b82f6', params:160,    gridW:16, gridH:10 },
+      { name:'ResBlock1', type:'conv',  dims:'28x28x16 -> 14x14x32', color:'#6366f1', params:9344,   gridW:22, gridH:16 },
+      { name:'ResBlock2', type:'conv',  dims:'14x14x32 -> 7x7x64',   color:'#8b5cf6', params:36992,  gridW:26, gridH:20 },
+      { name:'Dense1',    type:'dense', dims:'3136 -> 64',            color:'#f97316', params:200768, gridW:28, gridH:22 },
+      { name:'Dense2',    type:'dense', dims:'64 -> 10',              color:'#10b981', params:650,    gridW:12, gridH:8  }
+    ],
+    fp32: { accuracy:93.8, size:380, inference:720 },
+    int8: { accuracy:93.2, size:96,  inference:105 },
+    int4: { accuracy:90.5, size:48,  inference:58  }
+  }
+};
+
+const MCU_FLASH = 512;
+const BOOT_KB   = 16;
+const APP_KB    = 48;
+
+// ─── STATE ────────────────────────────────────────────────────────
+let currentModel   = 'custom';
+let currentQuant   = 'fp32';
+let selectedLayer  = 0;
+let weights        = {};
+let quantWeights   = {};
+let isFlashed      = false;
+let animFrame      = null;
+let flashInterval  = null;
+
+// ─── SEEDED RNG ───────────────────────────────────────────────────
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a>>>15, 1|a);
+    t = t + Math.imul(t ^ t>>>7, 61|t) ^ t;
+    return ((t ^ t>>>14)>>>0) / 4294967296;
+  };
+}
+function normalRandom(rng){
+  let u=0,v=0;
+  while(u===0) u=rng();
+  while(v===0) v=rng();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+// ─── GENERATE WEIGHTS ─────────────────────────────────────────────
+function generateWeights(modelKey){
+  const model = MODELS[modelKey];
+  const rng = mulberry32(42 + modelKey.charCodeAt(0));
+  weights = {};
+  model.layers.forEach((layer,i)=>{
+    const n = layer.gridW * layer.gridH;
+    const w = new Float32Array(n);
+    const std = layer.type === 'conv' ? 0.3 : 0.15;
+    for(let j=0;j<n;j++) w[j] = normalRandom(rng)*std;
+    weights[i] = w;
+  });
+  applyQuantization();
+}
+
+// ─── QUANTIZATION ─────────────────────────────────────────────────
+function applyQuantization(){
+  const model = MODELS[currentModel];
+  quantWeights = {};
+  model.layers.forEach((_,i)=>{
+    const w = weights[i];
+    if(!w) return;
+    const n = w.length;
+    const qw = new Float32Array(n);
+    if(currentQuant === 'fp32'){
+      qw.set(w);
+    } else {
+      const bits = currentQuant==='int8' ? 8 : 4;
+      const levels = Math.pow(2,bits);
+      let mn=Infinity, mx=-Infinity;
+      for(let j=0;j<n;j++){ if(w[j]<mn) mn=w[j]; if(w[j]>mx) mx=w[j]; }
+      const scale = (mx-mn)/(levels-1);
+      for(let j=0;j<n;j++){
+        const q = Math.round((w[j]-mn)/scale);
+        const clamped = Math.max(0,Math.min(levels-1,q));
+        qw[j] = mn + clamped*scale;
+      }
+    }
+    quantWeights[i] = qw;
+  });
+}
+
+// ─── CANVAS UTILS ─────────────────────────────────────────────────
+function setupCanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  return { ctx, w:rect.width, h:rect.height };
+}
+
+// ─── HEATMAP ──────────────────────────────────────────────────────
+function weightToColor(v, mn, mx){
+  const range = Math.max(Math.abs(mn), Math.abs(mx));
+  const norm = range===0 ? 0 : v/range;
+  let r,g,b;
+  if(norm < 0){
+    const t = Math.min(1, Math.abs(norm));
+    r = Math.round(255*(1-t*0.85));
+    g = Math.round(255*(1-t*0.85));
+    b = Math.round(100 + 155*t);
+  } else {
+    const t = Math.min(1, norm);
+    r = Math.round(100 + 155*t);
+    g = Math.round(255*(1-t*0.85));
+    b = Math.round(255*(1-t*0.85));
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
+let prevHeatWeights = null;
+let heatAnimProgress = 1;
+let heatAnimStart = null;
+const HEAT_ANIM_DURATION = 600;
+
+function easeInOutCubic(t){
+  return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+}
+
+function drawHeatmap(timestamp){
+  const canvas = document.getElementById('heatmapCanvas');
+  if(!canvas) return;
+  const { ctx, w, h } = setupCanvas(canvas);
+  const model = MODELS[currentModel];
+  const layer = model.layers[selectedLayer];
+  const gw = layer.gridW;
+  const gh = layer.gridH;
+  const qw = quantWeights[selectedLayer];
+  if(!qw) return;
+
+  let drawWeights = qw;
+  if(prevHeatWeights && heatAnimProgress < 1){
+    if(!heatAnimStart) heatAnimStart = timestamp;
+    const elapsed = timestamp - heatAnimStart;
+    heatAnimProgress = Math.min(1, elapsed / HEAT_ANIM_DURATION);
+    const t = easeInOutCubic(heatAnimProgress);
+    drawWeights = new Float32Array(qw.length);
+    for(let i=0;i<qw.length;i++){
+      const pi = i < prevHeatWeights.length ? prevHeatWeights[i] : 0;
+      drawWeights[i] = pi + (qw[i]-pi)*t;
+    }
+    if(heatAnimProgress < 1){
+      animFrame = requestAnimationFrame(drawHeatmap);
+    } else {
+      prevHeatWeights = null;
+      heatAnimStart = null;
+    }
+  }
+
+  const pad = 24;
+  const legendH = 36;
+  const cellW = (w - pad*2) / gw;
+  const cellH = (h - pad*2 - legendH) / gh;
+  const cellSize = Math.min(cellW, cellH);
+  const offX = (w - gw*cellSize) / 2;
+  const offY = pad;
+
+  ctx.clearRect(0,0,w,h);
+
+  // Find range
+  let mn=Infinity, mx=-Infinity;
+  for(let i=0;i<drawWeights.length;i++){
+    if(drawWeights[i]<mn) mn=drawWeights[i];
+    if(drawWeights[i]>mx) mx=drawWeights[i];
+  }
+
+  // Draw cells with subtle gap
+  for(let r=0;r<gh;r++){
+    for(let c=0;c<gw;c++){
+      const idx = r*gw + c;
+      if(idx>=drawWeights.length) continue;
+      const v = drawWeights[idx];
+      const x = offX + c*cellSize;
+      const y = offY + r*cellSize;
+      ctx.fillStyle = weightToColor(v, mn, mx);
+      ctx.fillRect(x+0.5, y+0.5, cellSize-1, cellSize-1);
+    }
+  }
+
+  // Grid overlay for quantized (more visible borders)
+  if(currentQuant !== 'fp32'){
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 0.5;
+    for(let r=0;r<=gh;r++){
+      ctx.beginPath();
+      ctx.moveTo(offX, offY+r*cellSize);
+      ctx.lineTo(offX+gw*cellSize, offY+r*cellSize);
+      ctx.stroke();
+    }
+    for(let c=0;c<=gw;c++){
+      ctx.beginPath();
+      ctx.moveTo(offX+c*cellSize, offY);
+      ctx.lineTo(offX+c*cellSize, offY+gh*cellSize);
+      ctx.stroke();
+    }
+  }
+
+  // Color legend bar
+  const barY = offY + gh*cellSize + 14;
+  const barW = Math.min(220, w-80);
+  const barX = (w-barW)/2;
+  const grad = ctx.createLinearGradient(barX,0,barX+barW,0);
+  grad.addColorStop(0, '#3b82f6');
+  grad.addColorStop(0.5, '#ffffff');
+  grad.addColorStop(1, '#ef4444');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barW, 8, 3);
+  ctx.fill();
+
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '9px Courier New, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(mn.toFixed(2), barX, barY+20);
+  ctx.textAlign = 'center';
+  ctx.fillText('0.00', barX+barW/2, barY+20);
+  ctx.textAlign = 'right';
+  ctx.fillText(mx.toFixed(2), barX+barW, barY+20);
+
+  // Title line
+  ctx.fillStyle = '#64748b';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  const uniqueVals = new Set(Array.from(drawWeights).map(v=>v.toFixed(6))).size;
+  ctx.fillText(`${layer.name}  |  ${gw*gh} weights  |  ${currentQuant.toUpperCase()}  |  ${uniqueVals} unique values`, w/2, h-4);
+
+  // Stats
+  let sum=0, sumSq=0;
+  for(let i=0;i<drawWeights.length;i++){ sum+=drawWeights[i]; sumSq+=drawWeights[i]*drawWeights[i]; }
+  const mean = sum/drawWeights.length;
+  const std = Math.sqrt(sumSq/drawWeights.length - mean*mean);
+
+  document.getElementById('wsMin').textContent = mn.toFixed(3);
+  document.getElementById('wsMax').textContent = mx.toFixed(3);
+  document.getElementById('wsMean').textContent = mean.toFixed(3);
+  document.getElementById('wsStd').textContent = std.toFixed(3);
+
+  if(currentQuant !== 'fp32'){
+    const bits = currentQuant==='int8' ? 8 : 4;
+    const levels = Math.pow(2,bits);
+    const origW = weights[selectedLayer];
+    let omn=Infinity, omx=-Infinity;
+    for(let j=0;j<origW.length;j++){ if(origW[j]<omn) omn=origW[j]; if(origW[j]>omx) omx=origW[j]; }
+    const scale = (omx-omn)/(levels-1);
+    const zp = Math.round(-omn/scale);
+    document.getElementById('wsScale').textContent = scale.toFixed(4);
+    document.getElementById('wsZero').textContent = zp.toString();
+  } else {
+    document.getElementById('wsScale').textContent = 'N/A';
+    document.getElementById('wsZero').textContent = 'N/A';
+  }
+}
+
+// ─── ARCHITECTURE ─────────────────────────────────────────────────
+function drawArchitecture(){
+  const model = MODELS[currentModel];
+  const body = document.getElementById('archBody');
+  document.getElementById('archModelName').textContent = model.name;
+  body.innerHTML = '';
+
+  // Input layer
+  addArchBlock(body, {
+    name: 'Input',
+    sub: '28 x 28 x 1 (MNIST)',
+    color: '#475569',
+    right: '784 values',
+    rightColor: 'var(--dim)',
+    clickable: false
+  });
+
+  model.layers.forEach((layer,i)=>{
+    // Arrow
+    const arrow = document.createElement('div');
+    arrow.className = 'arch-arrow';
+    arrow.innerHTML = '<i class="fas fa-arrow-down" style="font-size:10px"></i>';
+    body.appendChild(arrow);
+
+    const sizeRatio = currentQuant==='fp32' ? 1 : currentQuant==='int8' ? 0.25 : 0.125;
+    const layerKB = (layer.params*4*sizeRatio/1024).toFixed(1);
+    const sizeColor = currentQuant==='fp32' ? 'var(--text)' : currentQuant==='int8' ? 'var(--cyan)' : 'var(--green)';
+
+    const div = document.createElement('div');
+    div.className = 'arch-layer' + (i===selectedLayer ? ' selected' : '');
+    div.onclick = ()=> selectLayer(i);
+    div.innerHTML = `
+      <div class="layer-color" style="background:${layer.color}"></div>
+      <div class="layer-info">
+        <div class="layer-name">${layer.name} <span style="color:var(--dim);font-size:10px;font-weight:400">(${layer.type})</span></div>
+        <div class="layer-dim">${layer.dims}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="layer-params">${layer.params.toLocaleString()} params</div>
+        <div class="layer-size" style="color:${sizeColor}">${layerKB} KB</div>
+      </div>
+    `;
+    body.appendChild(div);
+  });
+
+  // Output arrow
+  const arrow2 = document.createElement('div');
+  arrow2.className = 'arch-arrow';
+  arrow2.innerHTML = '<i class="fas fa-arrow-down" style="font-size:10px"></i>';
+  body.appendChild(arrow2);
+
+  // Output
+  addArchBlock(body, {
+    name: 'Output (Softmax)',
+    sub: '10 classes',
+    color: '#10b981',
+    right: 'Predictions',
+    rightColor: 'var(--green)',
+    clickable: false
+  });
+
+  // Total params
+  const totalParams = model.layers.reduce((s,l)=>s+l.params, 0);
+  const totalKB = MODELS[currentModel][currentQuant].size;
+  const totalDiv = document.createElement('div');
+  totalDiv.style.cssText = 'margin-top:10px;padding:8px 12px;background:var(--card2);border-radius:6px;display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono)';
+  totalDiv.innerHTML = `
+    <span style="color:var(--dim)">Total: ${totalParams.toLocaleString()} params</span>
+    <span style="color:var(--cyan);font-weight:700">${totalKB} KB (${currentQuant.toUpperCase()})</span>
+  `;
+  body.appendChild(totalDiv);
+
+  // Update layer dropdown
+  const sel = document.getElementById('layerSelect');
+  sel.innerHTML = '';
+  model.layers.forEach((layer,i)=>{
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = layer.name;
+    opt.selected = i===selectedLayer;
+    sel.appendChild(opt);
+  });
+}
+
+function addArchBlock(parent, cfg){
+  const div = document.createElement('div');
+  div.className = 'arch-layer';
+  if(!cfg.clickable) div.style.cursor = 'default';
+  div.innerHTML = `
+    <div class="layer-color" style="background:${cfg.color}"></div>
+    <div class="layer-info">
+      <div class="layer-name">${cfg.name}</div>
+      <div class="layer-dim">${cfg.sub}</div>
+    </div>
+    <div class="layer-params" style="color:${cfg.rightColor}">${cfg.right}</div>
+  `;
+  parent.appendChild(div);
+}
+
+function selectLayer(i){
+  selectedLayer = i;
+  drawArchitecture();
+  startHeatmapTransition();
+}
+function selectLayerByDropdown(val){
+  selectLayer(parseInt(val));
+}
+
+// ─── TRADEOFF CHART ───────────────────────────────────────────────
+function drawTradeoffChart(){
+  const canvas = document.getElementById('tradeoffCanvas');
+  if(!canvas) return;
+  const { ctx, w, h } = setupCanvas(canvas);
+  const model = MODELS[currentModel];
+  const levels = ['fp32','int8','int4'];
+  const labels = ['FP32','INT8','INT4'];
+  const accData  = levels.map(l=>model[l].accuracy);
+  const sizeData = levels.map(l=>model[l].size);
+  const infData  = levels.map(l=>model[l].inference);
+
+  const pad = { top:30, right:58, bottom:38, left:52 };
+  const chartW = w - pad.left - pad.right;
+  const chartH = h - pad.top - pad.bottom;
+
+  ctx.clearRect(0,0,w,h);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(30,41,59,.5)';
+  ctx.lineWidth = 0.5;
+  for(let i=0;i<=5;i++){
+    const y = pad.top + (chartH/5)*i;
+    ctx.beginPath();
+    ctx.moveTo(pad.left,y);
+    ctx.lineTo(w-pad.right,y);
+    ctx.stroke();
+  }
+
+  // Accuracy axis (left)
+  const accMin = Math.floor(Math.min(...accData)-2);
+  const accMax = Math.ceil(Math.max(...accData)+1);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '9px Courier New, monospace';
+  ctx.textAlign = 'right';
+  for(let i=0;i<=5;i++){
+    const val = accMin + (accMax-accMin)*(1-i/5);
+    const y = pad.top + (chartH/5)*i;
+    ctx.fillText(val.toFixed(1)+'%', pad.left-6, y+3);
+  }
+  ctx.save();
+  ctx.translate(12, pad.top+chartH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillStyle = '#06b6d4';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Accuracy (%)', 0, 0);
+  ctx.restore();
+
+  // Size axis (right)
+  const sizeMax = Math.ceil(Math.max(...sizeData)*1.15);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '9px Courier New, monospace';
+  for(let i=0;i<=5;i++){
+    const val = sizeMax*(1-i/5);
+    const y = pad.top + (chartH/5)*i;
+    ctx.fillText(Math.round(val)+'KB', w-pad.right+6, y+3);
+  }
+  ctx.save();
+  ctx.translate(w-6, pad.top+chartH/2);
+  ctx.rotate(Math.PI/2);
+  ctx.fillStyle = '#10b981';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Size (KB)', 0, 0);
+  ctx.restore();
+
+  // X-axis
+  const barGroupW = chartW / 3;
+  levels.forEach((level,i)=>{
+    const x = pad.left + barGroupW*i + barGroupW/2;
+    const isActive = level===currentQuant;
+    ctx.fillStyle = isActive ? '#06b6d4' : '#94a3b8';
+    ctx.font = (isActive?'bold ':'') + '11px Courier New, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(labels[i], x, h-pad.bottom+18);
+  });
+
+  // Accuracy bars
+  const barW = barGroupW * 0.32;
+  levels.forEach((level,i)=>{
+    const x = pad.left + barGroupW*i + barGroupW/2 - barW/2;
+    const accNorm = (accData[i]-accMin)/(accMax-accMin);
+    const barH = accNorm * chartH;
+    const y = pad.top + chartH - barH;
+    const isActive = level===currentQuant;
+
+    ctx.fillStyle = isActive ? 'rgba(6,182,212,.65)' : 'rgba(6,182,212,.25)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, [4,4,0,0]);
+    ctx.fill();
+    if(isActive){
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = isActive ? '#06b6d4' : '#64748b';
+    ctx.font = (isActive?'bold ':'') + '10px Courier New, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(accData[i].toFixed(1)+'%', x+barW/2, y-6);
+  });
+
+  // Size line
+  ctx.beginPath();
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  levels.forEach((level,i)=>{
+    const x = pad.left + barGroupW*i + barGroupW/2;
+    const sizeNorm = sizeData[i]/sizeMax;
+    const y = pad.top + chartH - sizeNorm*chartH;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Size dots + labels
+  levels.forEach((level,i)=>{
+    const x = pad.left + barGroupW*i + barGroupW/2;
+    const sizeNorm = sizeData[i]/sizeMax;
+    const y = pad.top + chartH - sizeNorm*chartH;
+    const isActive = level===currentQuant;
+    ctx.beginPath();
+    ctx.arc(x, y, isActive?5:3.5, 0, Math.PI*2);
+    ctx.fillStyle = '#10b981';
+    ctx.fill();
+    if(isActive){ ctx.strokeStyle='#0b1120'; ctx.lineWidth=2; ctx.stroke(); }
+
+    ctx.fillStyle = isActive ? '#10b981' : '#64748b';
+    ctx.font = (isActive?'bold ':'') + '9px Courier New, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(sizeData[i]+'KB', x, y-10);
+  });
+
+  // Inference dots (orange)
+  const infMax = Math.max(...infData)*1.2;
+  levels.forEach((level,i)=>{
+    const x = pad.left + barGroupW*i + barGroupW/2;
+    const infNorm = infData[i]/infMax;
+    const y = pad.top + chartH - infNorm*chartH;
+    const isActive = level===currentQuant;
+
+    ctx.beginPath();
+    ctx.arc(x, y, isActive?6:4, 0, Math.PI*2);
+    ctx.fillStyle = '#f97316';
+    ctx.fill();
+    if(isActive){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke(); }
+
+    ctx.fillStyle = isActive ? '#f97316' : '#64748b';
+    ctx.font = (isActive?'bold ':'') + '9px Courier New, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(infData[i]+'ms', x+10, y+4);
+  });
+}
+
+// ─── FLASH VISUALIZATION ─────────────────────────────────────────
+function updateFlashBar(){
+  const model = MODELS[currentModel];
+  const stats = model[currentQuant];
+  const modelKB = stats.size;
+  const usedKB = BOOT_KB + APP_KB + modelKB;
+  const pct = usedKB / MCU_FLASH * 100;
+  const overflow = usedKB > MCU_FLASH;
+
+  const bootPct  = BOOT_KB / MCU_FLASH * 100;
+  const appPct   = APP_KB / MCU_FLASH * 100;
+  const modelPct = overflow ? (100 - bootPct - appPct) : (modelKB / MCU_FLASH * 100);
+  const freePct  = overflow ? 0 : (100 - bootPct - appPct - modelPct);
+
+  const modelSeg = document.getElementById('flashModel');
+  modelSeg.style.width = modelPct+'%';
+  modelSeg.className = 'flash-seg model' + (overflow ? ' overflow' : '');
+  modelSeg.textContent = modelPct > 5 ? modelKB+'KB' : '';
+
+  const freeSeg = document.getElementById('flashFree');
+  freeSeg.style.width = freePct+'%';
+  freeSeg.textContent = freePct > 10 ? Math.round(MCU_FLASH-usedKB)+'KB' : '';
+
+  const pctEl = document.getElementById('flashPct');
+  pctEl.textContent = pct.toFixed(1)+'%';
+  pctEl.style.color = overflow ? 'var(--red)' : pct>80 ? 'var(--yellow)' : 'var(--green)';
+
+  // KPI flash
+  const kpiFlash = document.getElementById('kpiFlash');
+  kpiFlash.textContent = pct.toFixed(0)+'%';
+  kpiFlash.className = overflow ? 'val neg' : pct>80 ? 'val warn' : 'val pos';
+}
+
+// ─── FLASH ANIMATION ──────────────────────────────────────────────
+function flashToMCU(){
+  const model = MODELS[currentModel];
+  const stats = model[currentQuant];
+  const usedKB = BOOT_KB + APP_KB + stats.size;
+
+  if(usedKB > MCU_FLASH){
+    document.getElementById('flashStatus').textContent = 'ERROR: Model exceeds 512KB flash!';
+    document.getElementById('flashStatus').style.color = 'var(--red)';
+    return;
+  }
+
+  isFlashed = false;
+  document.getElementById('inferBtn').disabled = true;
+  document.getElementById('inferenceResult').classList.remove('show');
+  if(flashInterval) clearInterval(flashInterval);
+
+  const bar = document.getElementById('flashProgressBar');
+  const status = document.getElementById('flashStatus');
+  bar.style.width = '0%';
+
+  const steps = [
+    { pct:10,  text:'Erasing flash sectors...' },
+    { pct:25,  text:'Writing bootloader...' },
+    { pct:40,  text:'Writing application code...' },
+    { pct:55,  text:'Transferring model layer 1...' },
+    { pct:70,  text:'Transferring model layer 2...' },
+    { pct:82,  text:'Transferring model layer 3...' },
+    { pct:90,  text:'Verifying CRC32...' },
+    { pct:97,  text:'Configuring interrupts...' },
+    { pct:100, text:'Flash complete! MCU ready.' }
+  ];
+
+  let stepIdx = 0;
+  status.textContent = 'Initializing...';
+  status.style.color = 'var(--yellow)';
+
+  flashInterval = setInterval(()=>{
+    if(stepIdx < steps.length){
+      bar.style.width = steps[stepIdx].pct+'%';
+      status.textContent = steps[stepIdx].text;
+      if(stepIdx === steps.length-1){
+        status.style.color = 'var(--green)';
+        isFlashed = true;
+        document.getElementById('inferBtn').disabled = false;
+        var icb = document.getElementById('inferBtnCanvas');
+        if(icb) icb.disabled = false;
+        clearInterval(flashInterval);
+        flashInterval = null;
+        // Show canvas drawing area immediately
+        document.getElementById('inferenceResult').classList.add('show');
+        initDrawCanvas();
+        clearDrawCanvas();
+      }
+      stepIdx++;
+    }
+  }, 300);
+}
+
+// ─── DIGIT BITMAPS (28x28 MNIST-style) ────────────────────────────
+const DIGIT_BITMAPS = {
+  0: [
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000111111100000000000',
+    '0000000011111111111000000000',
+    '0000001111100001111100000000',
+    '0000001111000000111100000000',
+    '0000011110000000011110000000',
+    '0000011110000000011110000000',
+    '0000011100000000001110000000',
+    '0000011100000000001110000000',
+    '0000011100000000001110000000',
+    '0000011100000000001110000000',
+    '0000011100000000001110000000',
+    '0000011100000000001110000000',
+    '0000011100000000011110000000',
+    '0000011110000000011110000000',
+    '0000011110000000011100000000',
+    '0000001111000000111100000000',
+    '0000001111100001111000000000',
+    '0000000111111111110000000000',
+    '0000000011111111100000000000',
+    '0000000000111110000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000'
+  ],
+  1: [
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000001110000000000000',
+    '0000000000011110000000000000',
+    '0000000000111110000000000000',
+    '0000000001111110000000000000',
+    '0000000011101110000000000000',
+    '0000000011001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000000001110000000000000',
+    '0000000001111111110000000000',
+    '0000000001111111110000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000'
+  ],
+  3: [
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000001111111000000000000',
+    '0000000111111111110000000000',
+    '0000001110000001111000000000',
+    '0000000000000000111000000000',
+    '0000000000000000111000000000',
+    '0000000000000001110000000000',
+    '0000000000000111100000000000',
+    '0000000000111111000000000000',
+    '0000000000111111100000000000',
+    '0000000000000001111000000000',
+    '0000000000000000011100000000',
+    '0000000000000000011100000000',
+    '0000000000000000011100000000',
+    '0000000000000000011100000000',
+    '0000000000000000111000000000',
+    '0000001100000001110000000000',
+    '0000001111000011110000000000',
+    '0000000111111111100000000000',
+    '0000000011111110000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000'
+  ],
+  4: [
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000111000000000000',
+    '0000000000001111000000000000',
+    '0000000000011111000000000000',
+    '0000000000111011000000000000',
+    '0000000001110011000000000000',
+    '0000000011100011000000000000',
+    '0000000111000011000000000000',
+    '0000001110000011000000000000',
+    '0000011100000011000000000000',
+    '0000111000000011000000000000',
+    '0000111000000011000000000000',
+    '0001111111111111111000000000',
+    '0001111111111111111000000000',
+    '0000000000000011000000000000',
+    '0000000000000011000000000000',
+    '0000000000000011000000000000',
+    '0000000000000011000000000000',
+    '0000000000000011000000000000',
+    '0000000000000011000000000000',
+    '0000000000000011000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000'
+  ],
+  5: [
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000111111111110000000000',
+    '0000000111111111110000000000',
+    '0000000111000000000000000000',
+    '0000000111000000000000000000',
+    '0000000111000000000000000000',
+    '0000000111111111000000000000',
+    '0000000111111111110000000000',
+    '0000000000000001111000000000',
+    '0000000000000000011100000000',
+    '0000000000000000011100000000',
+    '0000000000000000011100000000',
+    '0000000000000000011100000000',
+    '0000000000000000011100000000',
+    '0000000000000000011100000000',
+    '0000000000000000111000000000',
+    '0000001100000001110000000000',
+    '0000001111000111100000000000',
+    '0000000111111111000000000000',
+    '0000000001111100000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000'
+  ],
+  7: [
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000001111111111111100000000',
+    '0000001111111111111100000000',
+    '0000001111111111111110000000',
+    '0000000000000000011110000000',
+    '0000000000000000111100000000',
+    '0000000000000001111000000000',
+    '0000000000000011110000000000',
+    '0000000000000111100000000000',
+    '0000000000001111000000000000',
+    '0000000000011110000000000000',
+    '0000000000111100000000000000',
+    '0000000001111000000000000000',
+    '0000000011110000000000000000',
+    '0000000111100000000000000000',
+    '0000000111100000000000000000',
+    '0000001111000000000000000000',
+    '0000001111000000000000000000',
+    '0000001110000000000000000000',
+    '0000001110000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000'
+  ],
+  8: [
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000001111111000000000000',
+    '0000000111111111110000000000',
+    '0000001110000001111000000000',
+    '0000001110000000111000000000',
+    '0000001110000000111000000000',
+    '0000001111000001111000000000',
+    '0000000111100011110000000000',
+    '0000000011111111100000000000',
+    '0000000001111111000000000000',
+    '0000000011111111100000000000',
+    '0000000111100011110000000000',
+    '0000001111000001111000000000',
+    '0000001110000000111100000000',
+    '0000011100000000011100000000',
+    '0000011100000000011100000000',
+    '0000011110000000111100000000',
+    '0000001111000001111000000000',
+    '0000000111111111110000000000',
+    '0000000011111111000000000000',
+    '0000000000111100000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000'
+  ],
+  9: [
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000001111110000000000000',
+    '0000000111111111100000000000',
+    '0000001111000011110000000000',
+    '0000011110000001111000000000',
+    '0000011100000000111000000000',
+    '0000011100000000111000000000',
+    '0000011100000000111000000000',
+    '0000011110000001111000000000',
+    '0000001111000011111000000000',
+    '0000000111111111111000000000',
+    '0000000011111101111000000000',
+    '0000000000000001110000000000',
+    '0000000000000011100000000000',
+    '0000000000000111000000000000',
+    '0000000000001110000000000000',
+    '0000000000011100000000000000',
+    '0000000000111000000000000000',
+    '0000000001110000000000000000',
+    '0000000011100000000000000000',
+    '0000000011000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000',
+    '0000000000000000000000000000'
+  ]
+};
+const DIGIT_KEYS = Object.keys(DIGIT_BITMAPS).map(Number);
+
+// Confusion pairs: which digits are commonly confused with each other
+const CONFUSION = {0:[6],1:[7],3:[5,8],4:[9],5:[3,6],7:[1,2],8:[3,6],9:[4,7]};
+
+// ─── DRAWABLE CANVAS ──────────────────────────────────────────────
+let isDrawing = false;
+let drawCtx = null;
+let drawCanvasInited = false;
+
+function initDrawCanvas(){
+  if(drawCanvasInited) return;
+  const canvas = document.getElementById('drawCanvas');
+  if(!canvas) return;
+  drawCtx = canvas.getContext('2d');
+  drawCtx.fillStyle = '#000';
+  drawCtx.fillRect(0,0,280,280);
+
+  function getCoords(e){
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 280 / rect.width;
+    const scaleY = 280 / rect.height;
+    if(e.touches){
+      return { x:(e.touches[0].clientX-rect.left)*scaleX, y:(e.touches[0].clientY-rect.top)*scaleY };
+    }
+    return { x:(e.clientX-rect.left)*scaleX, y:(e.clientY-rect.top)*scaleY };
+  }
+
+  function startDraw(e){
+    e.preventDefault();
+    isDrawing = true;
+    const p = getCoords(e);
+    drawCtx.beginPath();
+    drawCtx.moveTo(p.x, p.y);
+    // Draw a dot for single clicks
+    drawCtx.strokeStyle = '#fff';
+    drawCtx.lineWidth = 18;
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+    drawCtx.lineTo(p.x+0.1, p.y+0.1);
+    drawCtx.stroke();
+  }
+  function moveDraw(e){
+    e.preventDefault();
+    if(!isDrawing) return;
+    const p = getCoords(e);
+    drawCtx.strokeStyle = '#fff';
+    drawCtx.lineWidth = 18;
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+    drawCtx.lineTo(p.x, p.y);
+    drawCtx.stroke();
+    drawCtx.beginPath();
+    drawCtx.moveTo(p.x, p.y);
+  }
+  function endDraw(e){
+    e.preventDefault();
+    isDrawing = false;
+  }
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', moveDraw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('mouseleave', endDraw);
+  canvas.addEventListener('touchstart', startDraw, {passive:false});
+  canvas.addEventListener('touchmove', moveDraw, {passive:false});
+  canvas.addEventListener('touchend', endDraw, {passive:false});
+  drawCanvasInited = true;
+}
+
+function clearDrawCanvas(){
+  const canvas = document.getElementById('drawCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,280,280);
+  document.getElementById('predBars').innerHTML = '';
+  document.getElementById('inferTime').textContent = '--';
+}
+
+function loadRandomSample(){
+  const canvas = document.getElementById('drawCanvas');
+  if(!canvas) return;
+  initDrawCanvas();
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,280,280);
+  const digit = DIGIT_KEYS[Math.floor(Math.random()*DIGIT_KEYS.length)];
+  const bitmap = DIGIT_BITMAPS[digit];
+  const rng = mulberry32(Date.now() & 0xFFFF);
+  const cellW = 280/28, cellH = 280/28;
+  for(let r=0;r<28;r++){
+    for(let c=0;c<28;c++){
+      const on = bitmap[r][c]==='1';
+      const v = on ? Math.round(180+rng()*75) : Math.round(rng()*20);
+      ctx.fillStyle = `rgb(${v},${v},${v})`;
+      ctx.fillRect(c*cellW, r*cellH, cellW, cellH);
+    }
+  }
+}
+
+function getDrawCanvasData(){
+  const canvas = document.getElementById('drawCanvas');
+  if(!canvas) return new Float32Array(784);
+  const ctx = canvas.getContext('2d');
+  const img = ctx.getImageData(0,0,280,280);
+  const data = new Float32Array(784);
+  const cell = 10; // 280/28
+  for(let r=0;r<28;r++){
+    for(let c=0;c<28;c++){
+      let sum = 0;
+      for(let dy=0;dy<cell;dy++){
+        for(let dx=0;dx<cell;dx++){
+          const px = ((r*cell+dy)*280 + (c*cell+dx))*4;
+          sum += img.data[px]; // red channel (grayscale)
+        }
+      }
+      data[r*28+c] = sum / (cell*cell*255);
+    }
+  }
+  return data;
+}
+
+function matchDigitTemplate(pixelData){
+  // Binarize drawn input for better matching against binary templates
+  const binary = new Float32Array(784);
+  for(let i=0;i<784;i++) binary[i] = pixelData[i] > 0.25 ? 1.0 : 0.0;
+
+  // Center-of-mass shift: align drawn input to template centers
+  let cmx=0, cmy=0, mass=0;
+  for(let r=0;r<28;r++) for(let c=0;c<28;c++){
+    const v = binary[r*28+c];
+    cmx += c*v; cmy += r*v; mass += v;
+  }
+  if(mass > 0){ cmx /= mass; cmy /= mass; }
+  const shiftX = Math.round(14 - cmx);
+  const shiftY = Math.round(14 - cmy);
+  const centered = new Float32Array(784);
+  for(let r=0;r<28;r++) for(let c=0;c<28;c++){
+    const sr = r - shiftY, sc = c - shiftX;
+    if(sr>=0 && sr<28 && sc>=0 && sc<28) centered[r*28+c] = binary[sr*28+sc];
+  }
+
+  let bestDigit = 0, bestScore = Infinity;
+  for(const key of DIGIT_KEYS){
+    const bitmap = DIGIT_BITMAPS[key];
+    // Also compute template center-of-mass for fair comparison
+    let tcx=0, tcy=0, tmass=0;
+    for(let r=0;r<28;r++) for(let c=0;c<28;c++){
+      const v = bitmap[r][c]==='1' ? 1.0 : 0.0;
+      tcx += c*v; tcy += r*v; tmass += v;
+    }
+    if(tmass>0){ tcx /= tmass; tcy /= tmass; }
+    const tsx = Math.round(14-tcx), tsy = Math.round(14-tcy);
+
+    let score = 0;
+    for(let r=0;r<28;r++) for(let c=0;c<28;c++){
+      const sr = r-tsy, sc = c-tsx;
+      const tVal = (sr>=0&&sr<28&&sc>=0&&sc<28) ? (bitmap[sr][sc]==='1'?1.0:0.0) : 0.0;
+      score += Math.abs(tVal - centered[r*28+c]);
+    }
+    if(score < bestScore){ bestScore = score; bestDigit = key; }
+  }
+  return bestDigit;
+}
+
+// ─── FORWARD PASS ANIMATION ──────────────────────────────────────
+function animateForwardPass(callback){
+  const archBody = document.getElementById('archBody');
+  if(!archBody){ if(callback) callback(); return; }
+  const layers = archBody.querySelectorAll('.arch-layer');
+  const arrows = archBody.querySelectorAll('.arch-arrow');
+  let step = 0;
+  const totalSteps = layers.length;
+  const stepDelay = 180;
+
+  function highlightStep(){
+    layers.forEach(l => l.classList.remove('fwd-active'));
+    arrows.forEach(a => a.classList.remove('fwd-active'));
+
+    if(step >= totalSteps){
+      setTimeout(()=>{
+        layers.forEach(l => l.classList.remove('fwd-active'));
+        arrows.forEach(a => a.classList.remove('fwd-active'));
+        if(callback) callback();
+      }, 200);
+      return;
+    }
+
+    layers[step].classList.add('fwd-active');
+    if(step > 0 && arrows[step-1]) arrows[step-1].classList.add('fwd-active');
+    layers[step].scrollIntoView({behavior:'smooth', block:'nearest'});
+
+    step++;
+    setTimeout(highlightStep, stepDelay);
+  }
+  highlightStep();
+}
+
+// ─── INFERENCE ────────────────────────────────────────────────────
+let inferRunning = false;
+
+function runInference(){
+  if(!isFlashed || inferRunning) return;
+  inferRunning = true;
+
+  const model = MODELS[currentModel];
+  const stats = model[currentQuant];
+  const result = document.getElementById('inferenceResult');
+  result.classList.add('show');
+
+  // Disable buttons during animation
+  document.getElementById('inferBtn').disabled = true;
+  var icb = document.getElementById('inferBtnCanvas');
+  if(icb) icb.disabled = true;
+
+  // Get canvas data and match digit
+  const pixelData = getDrawCanvasData();
+  const totalBrightness = pixelData.reduce((s,v)=>s+v, 0);
+  // If canvas is mostly blank, load a random sample first
+  if(totalBrightness < 5){
+    loadRandomSample();
+  }
+  const finalData = totalBrightness < 5 ? getDrawCanvasData() : pixelData;
+  const trueClass = matchDigitTemplate(finalData);
+
+  // Run forward pass animation, then show predictions
+  animateForwardPass(()=>{
+    const rng = mulberry32(Date.now() & 0xFFFF);
+    const preds = [];
+    let total = 0;
+
+    let predictedClass = trueClass;
+    const confusable = CONFUSION[trueClass] || [];
+    if(currentQuant==='int4' && rng()<0.18 && confusable.length>0){
+      predictedClass = confusable[Math.floor(rng()*confusable.length)%confusable.length];
+    } else if(currentQuant==='int8' && rng()<0.04 && confusable.length>0){
+      predictedClass = confusable[Math.floor(rng()*confusable.length)%confusable.length];
+    }
+
+    for(let i=0;i<10;i++){
+      let v;
+      if(i===predictedClass){
+        v = 0.55 + rng()*0.35;
+      } else if(confusable.includes(i)){
+        v = 0.03 + rng()*0.08;
+      } else {
+        v = rng()*0.025;
+      }
+      if(currentQuant==='int4') v *= (0.80 + rng()*0.20);
+      else if(currentQuant==='int8') v *= (0.93 + rng()*0.07);
+      preds.push(v);
+      total += v;
+    }
+    for(let i=0;i<10;i++) preds[i] /= total;
+
+    let topIdx = 0;
+    for(let i=1;i<10;i++) if(preds[i]>preds[topIdx]) topIdx=i;
+
+    const barsDiv = document.getElementById('predBars');
+    barsDiv.innerHTML = '';
+    for(let i=0;i<10;i++){
+      const bar = document.createElement('div');
+      const isWrongTop = (i===topIdx && topIdx!==trueClass);
+      bar.className = 'pred-bar' + (i===topIdx ? ' top' : '');
+      const pct = preds[i]*100;
+      const color = isWrongTop ? 'var(--red)' : i===topIdx ? 'var(--green)' : 'rgba(6,182,212,.35)';
+      bar.innerHTML = `
+        <span class="pred-label">${i}</span>
+        <div class="pred-track"><div class="pred-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div></div>
+        <span class="pred-pct">${pct.toFixed(1)}%</span>
+      `;
+      barsDiv.appendChild(bar);
+    }
+
+    const jitter = Math.round((rng()-0.5)*stats.inference*0.15);
+    document.getElementById('inferTime').textContent = (stats.inference + jitter) + ' ms';
+
+    // Re-enable buttons
+    document.getElementById('inferBtn').disabled = false;
+    if(icb) icb.disabled = false;
+    inferRunning = false;
+  });
+}
+
+// ─── UPDATE ALL ───────────────────────────────────────────────────
+function updateAll(){
+  const model = MODELS[currentModel];
+  const stats = model[currentQuant];
+
+  document.getElementById('kpiModel').textContent     = model.short;
+  document.getElementById('kpiPrecision').textContent  = currentQuant.toUpperCase();
+  document.getElementById('kpiSize').textContent       = stats.size + ' KB';
+  document.getElementById('kpiInference').textContent  = stats.inference + ' ms';
+  document.getElementById('kpiAccuracy').textContent   = stats.accuracy + '%';
+
+  const accEl = document.getElementById('kpiAccuracy');
+  accEl.className = stats.accuracy>=93 ? 'val pos' : stats.accuracy>=90 ? 'val warn' : 'val neg';
+
+  const sizeEl = document.getElementById('kpiSize');
+  sizeEl.className = stats.size<=150 ? 'val pos' : stats.size<=500 ? 'val neutral' : 'val warn';
+
+  const infEl = document.getElementById('kpiInference');
+  infEl.className = stats.inference<=120 ? 'val pos' : stats.inference<=200 ? 'val neutral' : 'val warn';
+
+  drawArchitecture();
+  drawTradeoffChart();
+  updateFlashBar();
+}
+
+function startHeatmapTransition(){
+  if(animFrame) cancelAnimationFrame(animFrame);
+  // Save current state for animation
+  const oldQ = quantWeights[selectedLayer];
+  prevHeatWeights = oldQ ? new Float32Array(oldQ) : null;
+  applyQuantization();
+  if(prevHeatWeights && prevHeatWeights.length === quantWeights[selectedLayer].length){
+    heatAnimProgress = 0;
+    heatAnimStart = null;
+    animFrame = requestAnimationFrame(drawHeatmap);
+  } else {
+    prevHeatWeights = null;
+    requestAnimationFrame(drawHeatmap);
+  }
+}
+
+// ─── CONTROLS ─────────────────────────────────────────────────────
+function setQuantization(q){
+  currentQuant = q;
+  document.querySelectorAll('.q-btn').forEach(b=> b.classList.toggle('active', b.dataset.q===q));
+  isFlashed = false;
+  document.getElementById('inferBtn').disabled = true;
+  document.getElementById('flashProgressBar').style.width = '0%';
+  document.getElementById('flashStatus').textContent = 'Ready';
+  document.getElementById('flashStatus').style.color = 'var(--dim)';
+  document.getElementById('inferenceResult').classList.remove('show');
+  if(flashInterval){ clearInterval(flashInterval); flashInterval=null; }
+  startHeatmapTransition();
+  updateAll();
+}
+
+function changeModel(m){
+  currentModel = m;
+  selectedLayer = 0;
+  generateWeights(m);
+  isFlashed = false;
+  document.getElementById('inferBtn').disabled = true;
+  document.getElementById('flashProgressBar').style.width = '0%';
+  document.getElementById('flashStatus').textContent = 'Ready';
+  document.getElementById('flashStatus').style.color = 'var(--dim)';
+  document.getElementById('inferenceResult').classList.remove('show');
+  if(flashInterval){ clearInterval(flashInterval); flashInterval=null; }
+  updateAll();
+  requestAnimationFrame(drawHeatmap);
+}
+
+function animateQuantize(){
+  const levels = ['fp32','int8','int4'];
+  const curIdx = levels.indexOf(currentQuant);
+  const nextIdx = (curIdx+1) % levels.length;
+  setQuantization(levels[nextIdx]);
+}
+
+function toggleHelp(){
+  document.getElementById('helpOverlay').classList.toggle('open');
+}
+
+// Guide toggle
+document.getElementById('guideToggle').addEventListener('click', ()=>{
+  const content = document.getElementById('guideContent');
+  const btn = document.getElementById('guideBtn');
+  content.classList.toggle('hide');
+  btn.innerHTML = content.classList.contains('hide') ? 'Show &#x25BE;' : 'Hide &#x25B4;';
+});
+
+// Close help on overlay click
+document.getElementById('helpOverlay').addEventListener('click', (e)=>{
+  if(e.target === document.getElementById('helpOverlay')) toggleHelp();
+});
+
+// ─── RESIZE ───────────────────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{
+    requestAnimationFrame(drawHeatmap);
+    drawTradeoffChart();
+  }, 100);
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────
+generateWeights(currentModel);
+updateAll();
+requestAnimationFrame(drawHeatmap);
+</script>
+
+<!-- Welcome Popup -->
+<style>
+.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease}
+.welcome-overlay.show{opacity:1}
+.welcome-box{background:var(--card,#111827);border:1px solid var(--border,#1e293b);border-radius:14px;max-width:420px;width:90%;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.welcome-box h3{font-size:16px;font-weight:700;color:var(--text,#e2e8f0);margin:0 0 12px}
+.welcome-box p{font-size:13.5px;color:var(--muted,#94a3b8);line-height:1.6;margin:0 0 20px}
+.welcome-box .help-icon-hint{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent,#06b6d4);color:#0b1120;font-weight:700;font-size:13px;vertical-align:middle;margin:0 2px}
+.welcome-box button{background:var(--accent,#06b6d4);color:#0b1120;border:none;padding:9px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.welcome-box button:hover{opacity:.85}
+</style>
+<div class="welcome-overlay" id="welcomePopup">
+  <div class="welcome-box">
+    <h3>Welcome to the TinyML Model Quantization Lab</h3>
+    <p>To get the most out of this demo, click the <span class="help-icon-hint">?</span> button in the top-right corner for a full guide, tutorial, and explanation of every feature.</p>
+    <button onclick="document.getElementById('welcomePopup').classList.remove('show');setTimeout(function(){document.getElementById('welcomePopup').style.display='none'},300)">Got it</button>
+  </div>
+</div>
+<script>
+(function(){
+  var wp = document.getElementById('welcomePopup');
+  if(wp) setTimeout(function(){ wp.classList.add('show'); }, 400);
+})();
+</script>
+</body>
+</html>
