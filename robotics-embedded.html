@@ -113,10 +113,7 @@
         }
 
         .project-card .project-description {
-            display: -webkit-box;
-            -webkit-line-clamp: 4;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            display: block;
         }
     </style>
 </head>
@@ -155,9 +152,10 @@
                 <span class="title-number"><i class="fas fa-microchip"></i></span> Robotics & Embedded Systems
             </h1>
             <p class="section-subtitle">
-                Projects spanning <strong>real-time operating systems</strong>, <strong>autonomous navigation</strong>,
-                <strong>sensor fusion</strong>, <strong>edge ML inference</strong>, and <strong>low-level hardware control</strong>.
-                Interactive simulators and technical deep-dives into systems that run at the intersection of software and the physical world.
+                End-to-end projects across the full embedded stack: <strong>RTOS kernel scheduling</strong>,
+                <strong>autonomous navigation with ROS 2</strong>, <strong>SLAM and sensor fusion</strong>,
+                <strong>edge ML deployment on MCUs</strong>, and <strong>bare-metal register-level I/O</strong>.
+                Each project is a working interactive simulator you can run in-browser — no setup required.
             </p>
         </div>
     </section>
@@ -173,22 +171,23 @@
                 <!-- ROS 2 Nav2 Simulator -->
                 <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/ROS2_Nav2_Simulator.html'">
                     <div class="project-header">
-                        <h3>ROS 2 Nav2 Visualizer</h3>
-                        <span class="project-type">Navigation & Robotics</span>
+                        <h3>ROS 2 Nav2 Simulator</h3>
+                        <span class="project-type">Autonomous Navigation</span>
                     </div>
                     <p class="project-description">
-                        Interactive visualization of the ROS 2 Navigation Stack (Nav2). Explore path planning
-                        algorithms, costmap layers, behavior trees, and robot localization in a VS Code-inspired
-                        interface with real-time navigation simulation.
+                        Full-stack ROS 2 Navigation Stack (Nav2) simulator implementing A* path planning,
+                        costmap inflation layers, behavior tree execution, and AMCL-based localization.
+                        Demonstrates the complete autonomous navigation pipeline from goal pose to
+                        velocity commands with real-time obstacle handling and recovery behaviors.
                     </p>
                     <div class="project-tags">
                         <span class="tag">ROS 2</span>
                         <span class="tag">Nav2</span>
-                        <span class="tag">Path Planning</span>
-                        <span class="tag">Visualization</span>
+                        <span class="tag">A* Path Planning</span>
+                        <span class="tag">Behavior Trees</span>
                     </div>
                     <div class="project-link">
-                        <i class="fas fa-play"></i> Launch Visualizer
+                        <i class="fas fa-play"></i> Launch Simulator
                     </div>
                 </div>
 
@@ -196,43 +195,45 @@
                 <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/freertos-simulator.html'">
                     <div class="project-header">
                         <h3>FreeRTOS Kernel Simulator</h3>
-                        <span class="project-type">Real-Time Systems</span>
+                        <span class="project-type">Real-Time Operating Systems</span>
                     </div>
                     <p class="project-description">
-                        Interactive FreeRTOS kernel simulator with live task scheduling visualization. Explore
-                        preemptive scheduling, priority-based task management, context switching, and RTOS
-                        concepts with configurable presets and real-time execution timelines.
+                        Implements the FreeRTOS preemptive scheduler with priority-based task dispatching,
+                        tick-driven context switching, and ready/blocked/suspended state transitions.
+                        Visualizes kernel internals including task control blocks, stack allocation,
+                        mutex contention, and priority inversion scenarios in real time.
                     </p>
                     <div class="project-tags">
                         <span class="tag">FreeRTOS</span>
-                        <span class="tag">RTOS</span>
-                        <span class="tag">Task Scheduling</span>
-                        <span class="tag">Real-Time</span>
+                        <span class="tag">Preemptive Scheduling</span>
+                        <span class="tag">Context Switching</span>
+                        <span class="tag">RTOS Internals</span>
                     </div>
                     <div class="project-link">
                         <i class="fas fa-play"></i> Launch Simulator
                     </div>
                 </div>
 
-                <!-- SLAM Visualizer -->
+                <!-- SLAM Simulator -->
                 <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/slam-visualizer.html'">
                     <div class="project-header">
-                        <h3>SLAM Mapping Visualizer</h3>
-                        <span class="project-type">Localization & Mapping</span>
+                        <h3>SLAM Mapping Simulator</h3>
+                        <span class="project-type">Perception & Mapping</span>
                     </div>
                     <p class="project-description">
-                        Interactive Simultaneous Localization and Mapping (SLAM) visualizer. Watch a robot
-                        build a map of its environment in real time using lidar-style sensing, loop closure
-                        detection, and occupancy grid mapping with configurable presets.
+                        Simultaneous Localization and Mapping engine with simulated LiDAR raycasting,
+                        occupancy grid construction, and loop closure detection. Implements particle
+                        filter-based pose estimation and scan matching while building probabilistic
+                        maps of unknown environments in real time.
                     </p>
                     <div class="project-tags">
                         <span class="tag">SLAM</span>
-                        <span class="tag">Mapping</span>
-                        <span class="tag">Localization</span>
-                        <span class="tag">Robotics</span>
+                        <span class="tag">LiDAR Simulation</span>
+                        <span class="tag">Particle Filters</span>
+                        <span class="tag">Occupancy Grids</span>
                     </div>
                     <div class="project-link">
-                        <i class="fas fa-play"></i> Launch Visualizer
+                        <i class="fas fa-play"></i> Launch Simulator
                     </div>
                 </div>
 
@@ -240,18 +241,19 @@
                 <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/stm32-io-lab.html'">
                     <div class="project-header">
                         <h3>STM32 Memory-Mapped I/O Lab</h3>
-                        <span class="project-type">Embedded Systems</span>
+                        <span class="project-type">Bare-Metal Embedded</span>
                     </div>
                     <p class="project-description">
-                        Hands-on interactive lab for learning memory-mapped I/O operations on STM32
-                        microcontrollers. Configure GPIO registers, manipulate peripheral memory addresses,
-                        and understand bare-metal hardware control through guided exercises.
+                        Register-level STM32 peripheral control without HAL abstractions. Directly manipulate
+                        GPIO MODER/ODR/IDR registers, configure alternate function mappings, set up
+                        interrupt vectors via NVIC, and control USART/SPI peripherals through raw
+                        memory-mapped addresses on the ARM Cortex-M bus.
                     </p>
                     <div class="project-tags">
                         <span class="tag">STM32</span>
-                        <span class="tag">Memory-Mapped I/O</span>
-                        <span class="tag">Microcontrollers</span>
-                        <span class="tag">Bare Metal</span>
+                        <span class="tag">ARM Cortex-M</span>
+                        <span class="tag">Register-Level I/O</span>
+                        <span class="tag">Bare Metal C</span>
                     </div>
                     <div class="project-link">
                         <i class="fas fa-play"></i> Launch Lab
@@ -262,18 +264,19 @@
                 <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/tinyml-quantization-lab.html'">
                     <div class="project-header">
                         <h3>TinyML Model Quantization Lab</h3>
-                        <span class="project-type">Edge AI</span>
+                        <span class="project-type">Edge ML Deployment</span>
                     </div>
                     <p class="project-description">
-                        Explore TinyML model quantization techniques interactively. Compress neural networks
-                        for microcontroller deployment, compare INT8 vs FP32 inference, analyze accuracy-size
-                        tradeoffs, and understand how models fit on resource-constrained edge devices.
+                        Neural network compression pipeline for microcontroller targets. Apply post-training
+                        INT8/INT4 quantization, analyze per-layer accuracy degradation, compare FP32 vs
+                        quantized inference latency, and validate that models fit within SRAM/Flash
+                        constraints of Cortex-M class devices before deployment.
                     </p>
                     <div class="project-tags">
                         <span class="tag">TinyML</span>
-                        <span class="tag">Quantization</span>
-                        <span class="tag">Neural Networks</span>
-                        <span class="tag">Edge Inference</span>
+                        <span class="tag">INT8 Quantization</span>
+                        <span class="tag">Model Compression</span>
+                        <span class="tag">MCU Deployment</span>
                     </div>
                     <div class="project-link">
                         <i class="fas fa-play"></i> Launch Lab
@@ -284,21 +287,22 @@
                 <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/terminal-heist.html'">
                     <div class="project-header">
                         <h3>Terminal Heist</h3>
-                        <span class="project-type">Interactive Game</span>
+                        <span class="project-type">Systems & CLI</span>
                     </div>
                     <p class="project-description">
-                        A retro terminal-based hacking game with a classic green-on-black aesthetic.
-                        Navigate through systems, solve puzzles, and complete missions in an immersive
-                        command-line experience with audio effects and animated sequences.
+                        Interactive terminal emulator showcasing Linux shell mechanics, process navigation,
+                        and systems-level problem solving. Built from scratch to simulate realistic CLI
+                        workflows including file system traversal, permission handling, and command parsing
+                        within a fully event-driven architecture.
                     </p>
                     <div class="project-tags">
-                        <span class="tag">Terminal</span>
-                        <span class="tag">Game Dev</span>
-                        <span class="tag">Web Audio</span>
-                        <span class="tag">JavaScript</span>
+                        <span class="tag">Linux CLI</span>
+                        <span class="tag">Systems Design</span>
+                        <span class="tag">Shell Emulation</span>
+                        <span class="tag">Event Architecture</span>
                     </div>
                     <div class="project-link">
-                        <i class="fas fa-terminal"></i> Play Game
+                        <i class="fas fa-terminal"></i> Launch Terminal
                     </div>
                 </div>
 
@@ -318,18 +322,19 @@
                 <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/project-autonomous-robot.html'">
                     <div class="project-header">
                         <h3>Autonomous Mobile Robot</h3>
-                        <span class="project-type">Mobile Robotics</span>
+                        <span class="project-type">Full-Stack Robotics</span>
                     </div>
                     <p class="project-description">
-                        Full technical breakdown of an autonomous mobile robot implementation. Covers
-                        ROS-based navigation, sensor integration, path planning algorithms, and real-time
-                        obstacle avoidance for autonomous operation in dynamic environments.
+                        End-to-end autonomous mobile robot architecture: ROS 2 node graph design, LiDAR-based
+                        obstacle detection with costmap integration, Dijkstra/A* global planning, DWA local
+                        planner for dynamic obstacle avoidance, and odometry fusion from wheel encoders
+                        and IMU for robust state estimation.
                     </p>
                     <div class="project-tags">
-                        <span class="tag">ROS</span>
-                        <span class="tag">Autonomous Systems</span>
-                        <span class="tag">Navigation</span>
-                        <span class="tag">Path Planning</span>
+                        <span class="tag">ROS 2</span>
+                        <span class="tag">LiDAR</span>
+                        <span class="tag">DWA Planner</span>
+                        <span class="tag">Odometry Fusion</span>
                     </div>
                     <div class="project-link">
                         <i class="fas fa-arrow-right"></i> View Technical Details
@@ -340,18 +345,19 @@
                 <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/project-edge-ml-stm32.html'">
                     <div class="project-header">
                         <h3>Edge ML Inference on STM32</h3>
-                        <span class="project-type">Edge AI & Embedded</span>
+                        <span class="project-type">On-Device AI</span>
                     </div>
                     <p class="project-description">
-                        Deploying TensorFlow Lite models on STM32 microcontrollers for real-time edge
-                        inference. Covers model optimization, quantization pipelines, memory management,
-                        and achieving sub-millisecond inference on resource-constrained hardware.
+                        TensorFlow Lite Micro deployment on STM32F4 (Cortex-M4F, 1MB Flash, 192KB SRAM).
+                        Full pipeline from model training through post-training quantization, CMSIS-NN
+                        operator fusion, memory arena sizing, and deterministic inference at 168MHz
+                        with sub-millisecond latency for real-time classification tasks.
                     </p>
                     <div class="project-tags">
-                        <span class="tag">TensorFlow Lite</span>
-                        <span class="tag">STM32</span>
-                        <span class="tag">Edge AI</span>
-                        <span class="tag">Embedded ML</span>
+                        <span class="tag">TFLite Micro</span>
+                        <span class="tag">CMSIS-NN</span>
+                        <span class="tag">STM32F4</span>
+                        <span class="tag">On-Device Inference</span>
                     </div>
                     <div class="project-link">
                         <i class="fas fa-arrow-right"></i> View Technical Details
@@ -365,15 +371,16 @@
                         <span class="project-type">Control Systems</span>
                     </div>
                     <p class="project-description">
-                        Implementing Kalman filter-based sensor fusion and PID control for an inverted
-                        pendulum balancing system. Combines IMU data streams in real time with deterministic
-                        control loops running on bare-metal embedded hardware.
+                        Extended Kalman Filter fusing 6-axis IMU (accelerometer + gyroscope) data at 1kHz
+                        for real-time attitude estimation. Drives a cascaded PID controller with
+                        sub-10ms deterministic loop timing on bare-metal firmware, achieving stable
+                        inverted pendulum balancing with tunable gain scheduling and anti-windup logic.
                     </p>
                     <div class="project-tags">
-                        <span class="tag">Sensor Fusion</span>
-                        <span class="tag">Kalman Filter</span>
+                        <span class="tag">Extended Kalman Filter</span>
                         <span class="tag">PID Control</span>
-                        <span class="tag">IMU</span>
+                        <span class="tag">6-Axis IMU</span>
+                        <span class="tag">Real-Time Firmware</span>
                     </div>
                     <div class="project-link">
                         <i class="fas fa-arrow-right"></i> View Technical Details
