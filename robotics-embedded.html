@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robotics & Embedded Systems | Cristian Arenas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .robotics-hero {
+            padding: 140px 0 60px;
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .robotics-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(90deg, rgba(0, 247, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(0, 247, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: 0;
+        }
+
+        .robotics-hero .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .robotics-hero .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            max-width: 750px;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .robotics-hero .section-subtitle strong {
+            color: var(--primary-cyan);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--primary-cyan);
+        }
+
+        .back-link:hover i {
+            transform: translateX(-4px);
+        }
+
+        .back-link i {
+            transition: transform 0.3s ease;
+        }
+
+        .category-label {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--primary-green);
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .category-section {
+            padding: 60px 0;
+        }
+
+        .category-section:nth-child(odd) {
+            background: var(--dark-bg);
+        }
+
+        .category-section:nth-child(even) {
+            background: var(--darker-bg);
+        }
+
+        .category-heading {
+            font-size: 1.6rem;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .category-heading i {
+            color: var(--primary-cyan);
+        }
+
+        .category-heading::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border-color), transparent);
+            margin-left: 1rem;
+        }
+
+        .project-card .project-description {
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="terminal-prompt">cristian@portfolio:~$</span>
+            </div>
+
+            <button class="mobile-menu-toggle" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#skills">Skills</a></li>
+                <li><a href="index.html#projects">Projects</a></li>
+                <li><a href="index.html#demos">Demos</a></li>
+                <li><a href="robotics-embedded.html" style="color: var(--primary-cyan);">Robotics</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero / Header -->
+    <section class="robotics-hero">
+        <div class="container">
+            <a href="index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Portfolio
+            </a>
+            <span class="category-label">// hardware + software</span>
+            <h1 class="section-title" style="margin-bottom: 1.5rem;">
+                <span class="title-number"><i class="fas fa-microchip"></i></span> Robotics & Embedded Systems
+            </h1>
+            <p class="section-subtitle">
+                Projects spanning <strong>real-time operating systems</strong>, <strong>autonomous navigation</strong>,
+                <strong>sensor fusion</strong>, <strong>edge ML inference</strong>, and <strong>low-level hardware control</strong>.
+                Interactive simulators and technical deep-dives into systems that run at the intersection of software and the physical world.
+            </p>
+        </div>
+    </section>
+
+    <!-- Interactive Demos & Simulators -->
+    <section class="category-section">
+        <div class="container">
+            <h2 class="category-heading">
+                <i class="fas fa-play-circle"></i> Interactive Demos & Simulators
+            </h2>
+            <div class="projects-grid">
+
+                <!-- ROS 2 Nav2 Simulator -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/ROS2_Nav2_Simulator.html'">
+                    <div class="project-header">
+                        <h3>ROS 2 Nav2 Visualizer</h3>
+                        <span class="project-type">Navigation & Robotics</span>
+                    </div>
+                    <p class="project-description">
+                        Interactive visualization of the ROS 2 Navigation Stack (Nav2). Explore path planning
+                        algorithms, costmap layers, behavior trees, and robot localization in a VS Code-inspired
+                        interface with real-time navigation simulation.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">ROS 2</span>
+                        <span class="tag">Nav2</span>
+                        <span class="tag">Path Planning</span>
+                        <span class="tag">Visualization</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-play"></i> Launch Visualizer
+                    </div>
+                </div>
+
+                <!-- FreeRTOS Simulator -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/freertos-simulator.html'">
+                    <div class="project-header">
+                        <h3>FreeRTOS Kernel Simulator</h3>
+                        <span class="project-type">Real-Time Systems</span>
+                    </div>
+                    <p class="project-description">
+                        Interactive FreeRTOS kernel simulator with live task scheduling visualization. Explore
+                        preemptive scheduling, priority-based task management, context switching, and RTOS
+                        concepts with configurable presets and real-time execution timelines.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">FreeRTOS</span>
+                        <span class="tag">RTOS</span>
+                        <span class="tag">Task Scheduling</span>
+                        <span class="tag">Real-Time</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-play"></i> Launch Simulator
+                    </div>
+                </div>
+
+                <!-- SLAM Visualizer -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/slam-visualizer.html'">
+                    <div class="project-header">
+                        <h3>SLAM Mapping Visualizer</h3>
+                        <span class="project-type">Localization & Mapping</span>
+                    </div>
+                    <p class="project-description">
+                        Interactive Simultaneous Localization and Mapping (SLAM) visualizer. Watch a robot
+                        build a map of its environment in real time using lidar-style sensing, loop closure
+                        detection, and occupancy grid mapping with configurable presets.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">SLAM</span>
+                        <span class="tag">Mapping</span>
+                        <span class="tag">Localization</span>
+                        <span class="tag">Robotics</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-play"></i> Launch Visualizer
+                    </div>
+                </div>
+
+                <!-- STM32 I/O Lab -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/stm32-io-lab.html'">
+                    <div class="project-header">
+                        <h3>STM32 Memory-Mapped I/O Lab</h3>
+                        <span class="project-type">Embedded Systems</span>
+                    </div>
+                    <p class="project-description">
+                        Hands-on interactive lab for learning memory-mapped I/O operations on STM32
+                        microcontrollers. Configure GPIO registers, manipulate peripheral memory addresses,
+                        and understand bare-metal hardware control through guided exercises.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">STM32</span>
+                        <span class="tag">Memory-Mapped I/O</span>
+                        <span class="tag">Microcontrollers</span>
+                        <span class="tag">Bare Metal</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-play"></i> Launch Lab
+                    </div>
+                </div>
+
+                <!-- TinyML Quantization Lab -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/tinyml-quantization-lab.html'">
+                    <div class="project-header">
+                        <h3>TinyML Model Quantization Lab</h3>
+                        <span class="project-type">Edge AI</span>
+                    </div>
+                    <p class="project-description">
+                        Explore TinyML model quantization techniques interactively. Compress neural networks
+                        for microcontroller deployment, compare INT8 vs FP32 inference, analyze accuracy-size
+                        tradeoffs, and understand how models fit on resource-constrained edge devices.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">TinyML</span>
+                        <span class="tag">Quantization</span>
+                        <span class="tag">Neural Networks</span>
+                        <span class="tag">Edge Inference</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-play"></i> Launch Lab
+                    </div>
+                </div>
+
+                <!-- Terminal Heist -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/terminal-heist.html'">
+                    <div class="project-header">
+                        <h3>Terminal Heist</h3>
+                        <span class="project-type">Interactive Game</span>
+                    </div>
+                    <p class="project-description">
+                        A retro terminal-based hacking game with a classic green-on-black aesthetic.
+                        Navigate through systems, solve puzzles, and complete missions in an immersive
+                        command-line experience with audio effects and animated sequences.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">Terminal</span>
+                        <span class="tag">Game Dev</span>
+                        <span class="tag">Web Audio</span>
+                        <span class="tag">JavaScript</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-terminal"></i> Play Game
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Deep-Dives -->
+    <section class="category-section">
+        <div class="container">
+            <h2 class="category-heading">
+                <i class="fas fa-file-code"></i> Technical Project Deep-Dives
+            </h2>
+            <div class="projects-grid">
+
+                <!-- Autonomous Mobile Robot -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/project-autonomous-robot.html'">
+                    <div class="project-header">
+                        <h3>Autonomous Mobile Robot</h3>
+                        <span class="project-type">Mobile Robotics</span>
+                    </div>
+                    <p class="project-description">
+                        Full technical breakdown of an autonomous mobile robot implementation. Covers
+                        ROS-based navigation, sensor integration, path planning algorithms, and real-time
+                        obstacle avoidance for autonomous operation in dynamic environments.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">ROS</span>
+                        <span class="tag">Autonomous Systems</span>
+                        <span class="tag">Navigation</span>
+                        <span class="tag">Path Planning</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-arrow-right"></i> View Technical Details
+                    </div>
+                </div>
+
+                <!-- Edge ML on STM32 -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/project-edge-ml-stm32.html'">
+                    <div class="project-header">
+                        <h3>Edge ML Inference on STM32</h3>
+                        <span class="project-type">Edge AI & Embedded</span>
+                    </div>
+                    <p class="project-description">
+                        Deploying TensorFlow Lite models on STM32 microcontrollers for real-time edge
+                        inference. Covers model optimization, quantization pipelines, memory management,
+                        and achieving sub-millisecond inference on resource-constrained hardware.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">TensorFlow Lite</span>
+                        <span class="tag">STM32</span>
+                        <span class="tag">Edge AI</span>
+                        <span class="tag">Embedded ML</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-arrow-right"></i> View Technical Details
+                    </div>
+                </div>
+
+                <!-- Sensor Fusion & Balance Controller -->
+                <div class="project-card clickable-card" onclick="window.location.href='Robotics and Embedded Systems/project-sensor-fusion-controller.html'">
+                    <div class="project-header">
+                        <h3>Real-Time Sensor Fusion & Balance Controller</h3>
+                        <span class="project-type">Control Systems</span>
+                    </div>
+                    <p class="project-description">
+                        Implementing Kalman filter-based sensor fusion and PID control for an inverted
+                        pendulum balancing system. Combines IMU data streams in real time with deterministic
+                        control loops running on bare-metal embedded hardware.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">Sensor Fusion</span>
+                        <span class="tag">Kalman Filter</span>
+                        <span class="tag">PID Control</span>
+                        <span class="tag">IMU</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-arrow-right"></i> View Technical Details
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <p>&copy; 2026 Cristian Arenas. Quantitative Investment & AI/ML Engineering.</p>
+                    <p class="footer-subtext"><a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="mailto:cristianiguelsa@gmail.com" aria-label="Email">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollTop" class="scroll-top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="script.js"></script>
+</body>
+</html>
