@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Investment Research & Portfolio Risk Copilot | Cristian Arenas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Project Detail Page Specific Styles */
+        .project-detail {
+            padding-top: 80px;
+            min-height: 100vh;
+            background: var(--dark-bg);
+        }
+
+        .project-hero {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, var(--darker-bg), var(--dark-bg));
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .project-hero h1 {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .meta-item i {
+            color: var(--primary-cyan);
+        }
+
+        .project-tags-large {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .tag-large {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-cyan);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            color: var(--primary-green);
+            transform: translateX(-5px);
+        }
+
+        .project-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .content-section {
+            margin-bottom: 3rem;
+        }
+
+        .content-section h2 {
+            font-size: 2rem;
+            color: var(--primary-cyan);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--primary-cyan);
+            padding-bottom: 0.5rem;
+        }
+
+        .content-section h3 {
+            font-size: 1.5rem;
+            color: var(--primary-green);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-section h4 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .content-section p, .content-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .architecture-diagram {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            overflow-x: auto;
+            color: var(--primary-green);
+        }
+
+        .architecture-diagram pre {
+            margin: 0;
+            white-space: pre;
+        }
+
+        .highlight-box {
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary-cyan);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 5px;
+        }
+
+        .highlight-box strong {
+            color: var(--primary-cyan);
+        }
+
+        .tech-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .tech-item {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            border-color: var(--primary-cyan);
+            transform: translateY(-3px);
+        }
+
+        .tech-item i {
+            color: var(--primary-cyan);
+            margin-right: 0.5rem;
+        }
+
+        .agent-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .agent-card:hover {
+            border-color: var(--primary-cyan);
+        }
+
+        .agent-card h4 {
+            color: var(--primary-cyan);
+            margin-top: 0;
+        }
+
+        .agent-card p {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="terminal-prompt">cristian@portfolio:~$</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#home">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#skills">Skills</a></li>
+                <li><a href="index.html#projects">Projects</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Project Detail Content -->
+    <div class="project-detail">
+        <!-- Project Hero Section -->
+        <div class="project-hero">
+            <div class="container">
+                <a href="index.html#projects" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+
+                <h1>Agentic Investment Research & Portfolio Risk Copilot</h1>
+
+                <div class="project-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>2026</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Agentic AI System</span>
+                    </div>
+                </div>
+
+                <p class="hero-description">
+                    An agentic AI decision-support system with human-in-the-loop controls for investment research,
+                    portfolio monitoring, and memo generation &mdash; coordinating multiple specialized agents across
+                    market data, holdings, manager documents, and portfolio constraints.
+                </p>
+
+                <div class="project-tags-large">
+                    <span class="tag-large">Agentic AI</span>
+                    <span class="tag-large">LangChain</span>
+                    <span class="tag-large">RAG</span>
+                    <span class="tag-large">Python</span>
+                    <span class="tag-large">Tool-Use Agents</span>
+                    <span class="tag-large">LLM Orchestration</span>
+                    <span class="tag-large">FastAPI</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Content -->
+        <div class="project-content">
+
+            <!-- Problem & Motivation -->
+            <section class="content-section">
+                <h2>Problem & Motivation</h2>
+                <p>
+                    Portfolio managers at institutional allocators &mdash; OCIOs, endowments, family offices &mdash;
+                    are responsible for monitoring dozens of managers across public and private markets, tracking
+                    allocation drift against policy targets, synthesizing quarterly letters and DDQs, keeping
+                    up with macro and cross-asset dynamics, and producing written investment memos for committee
+                    review. Each of these tasks requires pulling data from different systems, reading unstructured
+                    documents, running risk calculations, and composing narratives &mdash; a process that is
+                    highly manual, time-intensive, and difficult to scale.
+                </p>
+                <p>
+                    A single chatbot or RAG system is insufficient for this workflow. Investment research is
+                    inherently multi-step: you need to pull the portfolio data <em>before</em> you can compute
+                    drift; you need to read the manager letter <em>before</em> you can assess whether the
+                    strategy has changed; you need both the portfolio state and the market context <em>before</em>
+                    you can write a meaningful memo. These dependencies require coordination, not just retrieval.
+                </p>
+                <p>
+                    The objective was to build an agentic system &mdash; multiple specialized AI agents, each
+                    responsible for a distinct domain, orchestrated to execute multi-step investment workflows
+                    end-to-end &mdash; while maintaining the human-in-the-loop controls and audit trails that
+                    institutional investing demands.
+                </p>
+                <div class="highlight-box">
+                    <strong>Core design constraint:</strong> This is a decision-support system, not an autonomous
+                    investing system. Every output passes through human review before any action is taken. The system
+                    accelerates the PM's workflow &mdash; it does not replace the PM's judgment.
+                </div>
+            </section>
+
+            <!-- System Overview -->
+            <section class="content-section">
+                <h2>System Overview</h2>
+                <p>
+                    The Agentic Investment Research & Portfolio Risk Copilot is a multi-agent AI system designed to
+                    act as a junior investment team for portfolio managers. Rather than a single monolithic model,
+                    the system coordinates five specialized agents that each handle a distinct domain of the
+                    investment workflow:
+                </p>
+                <ul>
+                    <li>Pull holdings, exposures, performance, and risk data from portfolio systems</li>
+                    <li>Retrieve manager letters, factsheets, DDQs, and investment notes</li>
+                    <li>Monitor macro and market signals for changes relevant to portfolio positioning</li>
+                    <li>Identify drift, concentration, liquidity, or regime-related risks</li>
+                    <li>Compare current portfolio exposures against targets or policy constraints</li>
+                    <li>Produce a draft investment memo or portfolio review for human approval</li>
+                </ul>
+                <p>
+                    Each agent has its own tool set, retrieval strategy, and output schema. The orchestration
+                    layer decomposes high-level queries (&ldquo;prepare the weekly portfolio review&rdquo;) into
+                    sub-tasks, routes them to the appropriate agents, resolves inter-agent dependencies, and
+                    assembles the final output &mdash; with explicit human approval checkpoints at every
+                    decision boundary.
+                </p>
+            </section>
+
+            <!-- Architecture -->
+            <section class="content-section">
+                <h2>High-Level Architecture</h2>
+                <div class="architecture-diagram">
+                    <pre>
+                    +---------------------------+
+                    |     Portfolio Manager     |
+                    |    (Human-in-the-Loop)    |
+                    +-------------+-------------+
+                                  |
+                    +-------------v-------------+
+                    |    Orchestration Layer    |
+                    |  (Agent Router & Planner) |
+                    +--+-----+-----+-----+--+--+
+                       |     |     |     |  |
+          +------------+  +--+--+  |  +--+--+-----------+
+          |               |     |  |  |     |           |
++---------v---------+ +---v---+ | +v--v---+ | +---------v---------+
+| Data Ingestion    | |Manager| | | Risk  | | | Memo Generation   |
+| Agent             | |Research| | |Monitor| | | Agent             |
+| (Holdings, NAV,   | |Agent  | | |Agent  | | | (Draft PM Notes,  |
+|  Exposures, Perf) | |(DDQs, | | |(Drift,| | |  IC Memos, Mgr    |
+|                   | |Letters,| | |Conc., | | |  Reviews w/       |
+|                   | |Notes) | | |Liq.)  | | |  Citations)       |
++---------+---------+ +---+---+ | +---+---+ | +---------+---------+
+          |                |     |     |     |           |
+          +-------+--------+  +--v-----v--+  +----------+
+                  |            |  Market   |             |
+                  |            |  Context  |             |
+                  |            |  Agent    |             |
+                  |            | (Macro,   |             |
+                  |            |  Spreads, |             |
+                  |            |  Vol,     |             |
+                  |            |  Credit)  |             |
+                  |            +-----+-----+             |
+                  |                  |                    |
+                  +------------------+--------------------+
+                                     |
+                          +----------v----------+
+                          |   Unified Context   |
+                          |   & Draft Output    |
+                          +----------+----------+
+                                     |
+                          +----------v----------+
+                          |   Human Approval    |
+                          |   & Review Step     |
+                          +---------------------+
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Agent Deep Dives -->
+            <section class="content-section">
+                <h2>Agent Architecture &mdash; Deep Dive</h2>
+                <p>
+                    The system is structured as five specialized agents, each with distinct tool access,
+                    retrieval strategies, and output schemas. The orchestration layer routes queries, manages
+                    inter-agent dependencies, and assembles final outputs. Each agent is a self-contained
+                    reasoning unit with access to a defined set of tools &mdash; it plans its own execution
+                    steps, calls tools as needed, and returns a structured output conforming to a typed schema.
+                </p>
+
+                <div class="agent-card">
+                    <h4>1. Data Ingestion Agent</h4>
+                    <p>
+                        Pulls holdings, exposures, performance, benchmark, and market data from internal
+                        files or third-party providers. This agent acts as the data foundation for every
+                        downstream workflow &mdash; no other agent can operate without a current portfolio
+                        snapshot. Handles schema normalization, identifier resolution
+                        (ticker &rarr; CUSIP/ISIN), currency conversion, and data quality validation.
+                    </p>
+                    <ul>
+                        <li><strong>Data Sources:</strong> Custodian files (CSV/XLSX), fund admin feeds, Bloomberg/FactSet APIs, internal SQL databases, NAV feeds, capital call/distribution notices</li>
+                        <li><strong>Normalization:</strong> Schema alignment via Pydantic models, asset identifier resolution (ticker &rarr; CUSIP/ISIN &rarr; internal ID), currency conversion to base currency, mapping to canonical taxonomy (asset class, sub-strategy, vehicle type)</li>
+                        <li><strong>Validation:</strong> NAV reconciliation (aggregated MV vs reported NAV, threshold &le; 10bps), missing data detection, stale price flagging, duplicate holding detection</li>
+                        <li><strong>Output:</strong> Normalized portfolio snapshot with holdings, weights, exposures, NAVs, performance attribution, and data freshness metadata</li>
+                        <li><strong>Tools:</strong> SQL query executor, CSV/XLSX parser, REST API connectors, Pydantic schema validators, FX rate service</li>
+                    </ul>
+                    <div class="architecture-diagram">
+                        <pre>
+Data Ingestion Agent — Tool Execution Flow:
+
+  query("get current portfolio for Client X")
+      │
+      ├── tool: sql_query → fetch holdings from portfolio DB
+      ├── tool: api_call  → pull latest NAVs from fund admin
+      ├── tool: csv_parse → ingest custodian reconciliation file
+      ├── tool: fx_rates  → convert non-USD positions to base currency
+      ├── tool: id_resolve → map tickers to CUSIP/ISIN
+      └── tool: validate  → run reconciliation checks
+      │
+      └── output: PortfolioSnapshot (typed JSON schema)
+                        </pre>
+                    </div>
+                </div>
+
+                <div class="agent-card">
+                    <h4>2. Manager Research Agent</h4>
+                    <p>
+                        Reads manager letters, DDQs, factsheets, and prior investment memos, then extracts
+                        relevant changes in positioning, performance, liquidity terms, or strategy. This is the
+                        most retrieval-intensive agent &mdash; it operates over a vectorized document store
+                        containing years of manager correspondence and performs multi-step retrieval to build
+                        a comprehensive view of each manager&rsquo;s current state.
+                    </p>
+                    <ul>
+                        <li><strong>Document Types:</strong> Quarterly letters, DDQs, factsheets, IC memos, side letters, subscription docs, annual audited financials</li>
+                        <li><strong>Extraction Targets:</strong> Strategy changes (style drift, new market entry), AUM movements (inflows/outflows, capacity constraints), team changes (key person departures), liquidity term modifications (gate changes, lock-up extensions), performance vs peers (quartile ranking, benchmark-relative returns), fee structure changes</li>
+                        <li><strong>Multi-Step Reasoning:</strong> The agent first retrieves the most recent letter for a given manager, identifies what changed since the prior period, then cross-references against the DDQ and IC memo to flag inconsistencies or material shifts</li>
+                        <li><strong>Tools:</strong> PDF/DOCX parser (layout-aware), vector store retriever (embeddings + hybrid search), structured extraction chains (LLM-powered field extraction), document comparator (diff between periods)</li>
+                    </ul>
+                    <div class="architecture-diagram">
+                        <pre>
+Manager Research Agent — Multi-Step Retrieval:
+
+  query("summarize changes for Manager ABC since last quarter")
+      │
+      ├── step 1: retrieve latest quarterly letter (Q4 2025)
+      ├── step 2: retrieve prior quarterly letter (Q3 2025)
+      ├── step 3: extract structured fields from both
+      │           (AUM, strategy, positioning, liquidity, performance)
+      ├── step 4: diff extraction — identify material changes
+      ├── step 5: cross-reference against DDQ (verify terms unchanged)
+      ├── step 6: pull peer performance from data ingestion agent
+      └── step 7: assemble manager research summary with citations
+      │
+      └── output: ManagerResearchSummary (typed JSON + source refs)
+                        </pre>
+                    </div>
+                </div>
+
+                <div class="agent-card">
+                    <h4>3. Risk Monitoring Agent</h4>
+                    <p>
+                        Checks for allocation drift, concentration, style shifts, liquidity mismatches,
+                        factor exposure changes, and unusual drawdown or volatility behavior. This agent
+                        operates on the portfolio snapshot from the Data Ingestion Agent and compares the
+                        current state against IPS targets, policy constraints, and historical norms.
+                        It produces a structured risk report with severity-classified alerts.
+                    </p>
+                    <ul>
+                        <li><strong>Drift Analysis:</strong> Current weights vs. SAA/TAA targets at every level of the allocation hierarchy (asset class, sub-strategy, manager, vehicle). Tolerance bands are configurable per level &mdash; tighter at the asset class level, wider at the manager level</li>
+                        <li><strong>Concentration Checks:</strong> Single manager concentration, sector/geography concentration, factor concentration (beta, duration, credit quality), vintage year concentration for private markets</li>
+                        <li><strong>Liquidity Analysis:</strong> Redemption terms vs. allocation weight, gate provisions and lock-up schedules, side pocket exposure, capital call commitments vs. available liquidity, aggregate liquidity tier breakdown (daily, monthly, quarterly, illiquid)</li>
+                        <li><strong>Style Drift Detection:</strong> Rolling factor exposure analysis (value, momentum, quality, size), comparison to stated mandate and historical factor profile, flagging of statistically significant exposure changes</li>
+                        <li><strong>Drawdown & Volatility:</strong> Manager-level drawdown monitoring vs. historical max drawdown, rolling volatility vs. expected range, return distribution anomaly detection (unusual skew or kurtosis changes)</li>
+                        <li><strong>Capital Pacing:</strong> Capital call/distribution modeling across PE/PC vintages, cash flow adequacy projections, J-curve position tracking per vintage</li>
+                    </ul>
+                    <div class="architecture-diagram">
+                        <pre>
+Risk Alert Output Schema:
+
+{
+  "alert_id":       "DRIFT-2026-0415-001",
+  "severity":       "warning",          // info | warning | action_required
+  "category":       "allocation_drift",
+  "portfolio":      "Client X — Growth Pool",
+  "description":    "US Large Cap equity overweight: +3.2% vs SAA target",
+  "current_weight": 0.282,
+  "target_weight":  0.250,
+  "tolerance":      0.020,
+  "breach_amount":  0.012,
+  "trend":          "increasing over 3 consecutive months",
+  "suggested_action": "Review rebalancing trade to reduce US LC exposure",
+  "data_source":    "Data Ingestion Agent — snapshot 2026-04-15",
+  "data_freshness": "T-1"
+}
+                        </pre>
+                    </div>
+                </div>
+
+                <div class="agent-card">
+                    <h4>4. Market Context Agent</h4>
+                    <p>
+                        Monitors macro and cross-asset signals such as spreads, rates, volatility, momentum,
+                        and credit conditions, then explains what changed and why it matters for the portfolio.
+                        This agent provides the macro narrative layer that contextualizes portfolio-level
+                        observations &mdash; turning raw data points into investment-relevant insight.
+                    </p>
+                    <ul>
+                        <li><strong>Credit Signals:</strong> IG and HY spreads (OAS), spread rate-of-change, cross-quality spread ratios, distressed debt indicators, new issuance activity</li>
+                        <li><strong>Rates & Curve:</strong> Yield curve shape (2s10s, 2s30s), real yield levels, forward rate expectations, rate volatility (MOVE index), central bank policy signals</li>
+                        <li><strong>Volatility:</strong> VIX levels and term structure, realized vs. implied vol spread, cross-asset vol correlations, skew dynamics, VVIX (volatility of volatility)</li>
+                        <li><strong>Momentum:</strong> Cross-asset trend signals across multiple horizons (1M, 3M, 6M, 12M), breadth measures, sector rotation indicators, relative strength rankings</li>
+                        <li><strong>Macro:</strong> PMI/ISM and direction of change, employment data, inflation expectations (breakevens), economic surprise indices, leading indicator composites</li>
+                        <li><strong>Flows:</strong> Fund flow data across asset classes, ETF creation/redemption activity, safe-haven demand, positioning indicators (CFTC, put/call ratios)</li>
+                    </ul>
+                    <p>
+                        The agent integrates with the ML Regime Classification System (separate production model)
+                        to incorporate the current regime label and confidence score into its macro narrative,
+                        providing continuity across systems.
+                    </p>
+                    <div class="architecture-diagram">
+                        <pre>
+Market Context Agent — Output Structure:
+
+  "market_context": {
+    "regime": {
+      "current_label": "risk-off",
+      "confidence": 0.78,
+      "duration_weeks": 4,
+      "primary_drivers": ["credit spread widening", "momentum deterioration"]
+    },
+    "key_changes_this_week": [
+      { "signal": "HY OAS",      "change": "+42bps",  "significance": "high" },
+      { "signal": "2s10s slope",  "change": "-18bps",  "significance": "medium" },
+      { "signal": "VIX",         "change": "+3.2pts",  "significance": "medium" }
+    ],
+    "portfolio_implications": [
+      "Credit exposure warrants review given spread widening trajectory",
+      "Duration positioning currently benefits from curve flattening",
+      "Equity momentum turning negative across developed markets"
+    ],
+    "sources": ["Bloomberg", "FactSet", "Regime Classifier v2.4.1"]
+  }
+                        </pre>
+                    </div>
+                </div>
+
+                <div class="agent-card">
+                    <h4>5. Memo Generation Agent</h4>
+                    <p>
+                        Combines outputs from all other agents into a clean draft for a weekly PM note,
+                        IC memo, or manager review summary. This is the final-mile agent &mdash; it consumes
+                        structured outputs from every upstream agent and synthesizes them into a coherent
+                        narrative that a portfolio manager can review, edit, and approve for distribution.
+                        Every claim is cited back to its source agent and underlying data.
+                    </p>
+                    <ul>
+                        <li><strong>Output Formats:</strong> Weekly PM note, IC memo, manager review summary, risk alert brief, ad-hoc research response</li>
+                        <li><strong>Template System:</strong> Jinja-based templates per memo type, with dynamic sections that expand or contract based on the volume of material from upstream agents</li>
+                        <li><strong>Citation Architecture:</strong> Every numerical claim, risk flag, and manager observation is tagged with a source reference (agent name, data timestamp, document source). Citations render as inline footnotes in the final output</li>
+                        <li><strong>Multi-Stage LLM Chain:</strong> Draft generation &rarr; tone/compliance review &rarr; numerical accuracy check &rarr; formatting pass</li>
+                        <li><strong>Guardrails:</strong> No fabricated data, all numbers traced to source, compliance-safe language, institutional tone, explicit uncertainty language where confidence is low</li>
+                    </ul>
+                    <div class="architecture-diagram">
+                        <pre>
+Memo Generation — Multi-Stage LLM Chain:
+
+  Stage 1: Draft Generation
+      Input: structured outputs from all 4 upstream agents
+      Output: raw narrative draft with inline data references
+      Model: high-capability LLM, temperature = 0.2
+
+  Stage 2: Tone & Compliance Review
+      Input: draft from Stage 1
+      Task: adjust tone to institutional standards, flag compliance concerns
+      Model: same LLM with compliance-specific system prompt
+      Output: revised draft with compliance annotations
+
+  Stage 3: Numerical Accuracy Validation
+      Input: revised draft + original structured data
+      Task: verify every number in the draft against source data
+      Method: regex extraction of all numbers → lookup against source JSON
+      Output: validated draft (or flagged discrepancies for human review)
+
+  Stage 4: Formatting & Citation
+      Input: validated draft
+      Task: apply template formatting, render citations as footnotes
+      Method: Jinja template engine + citation linker
+      Output: final memo (HTML/PDF) ready for PM review
+                        </pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orchestration -->
+            <section class="content-section">
+                <h2>Orchestration & Agent Coordination</h2>
+
+                <h3>Task Decomposition & Routing</h3>
+                <p>
+                    The orchestration layer receives a high-level query (e.g., &ldquo;prepare the weekly portfolio
+                    review for Client X&rdquo;) and decomposes it into a directed acyclic graph (DAG) of sub-tasks
+                    routed to the appropriate agents. The planner understands agent capabilities and inter-agent
+                    dependencies, ensuring correct execution order without unnecessary serialization.
+                </p>
+                <div class="architecture-diagram">
+                    <pre>
+Workflow DAG — Weekly Portfolio Review:
+
+  ┌─────────────────────────────────────────────────┐
+  │ Phase 1: Data Collection (Parallel)             │
+  │                                                 │
+  │  ┌──────────────┐  ┌──────────────┐  ┌────────┐│
+  │  │ Data Ingest  │  │ Manager      │  │ Market ││
+  │  │ Agent        │  │ Research     │  │ Context││
+  │  │ (portfolio)  │  │ Agent        │  │ Agent  ││
+  │  └──────┬───────┘  └──────┬───────┘  └───┬────┘│
+  └─────────┼─────────────────┼──────────────┼─────┘
+            │                 │              │
+  ┌─────────v─────────────────v──────────────v─────┐
+  │ Phase 2: Analysis (Depends on Phase 1)         │
+  │                                                │
+  │  ┌─────────────────────────────────────────┐   │
+  │  │ Risk Monitoring Agent                   │   │
+  │  │ (requires portfolio snapshot + market   │   │
+  │  │  context to compute drift & risk flags) │   │
+  │  └─────────────────┬───────────────────────┘   │
+  └────────────────────┼───────────────────────────┘
+                       │
+  ┌────────────────────v───────────────────────────┐
+  │ Phase 3: Synthesis (Depends on Phase 2)        │
+  │                                                │
+  │  ┌─────────────────────────────────────────┐   │
+  │  │ Memo Generation Agent                   │   │
+  │  │ (consumes all upstream agent outputs)   │   │
+  │  └─────────────────┬───────────────────────┘   │
+  └────────────────────┼───────────────────────────┘
+                       │
+  ┌────────────────────v───────────────────────────┐
+  │ Phase 4: Human Review                          │
+  │                                                │
+  │  PM reviews draft → approves / requests edits  │
+  └────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>Inter-Agent Communication Protocol</h3>
+                <p>
+                    Agents communicate exclusively through structured JSON payloads conforming to typed
+                    schemas. This ensures composability &mdash; any agent can consume any other agent&rsquo;s
+                    output without brittle string parsing.
+                </p>
+                <ul>
+                    <li>Each agent output includes metadata: source agent, execution timestamp, data freshness, confidence level, data lineage references</li>
+                    <li>The orchestrator maintains a shared context store (key-value) accessible to all agents within a workflow execution</li>
+                    <li>Agents can request data from other agents mid-execution via the orchestrator (e.g., Risk Agent requests additional market context if a novel signal pattern is detected)</li>
+                    <li>All inter-agent messages are logged for audit and debugging</li>
+                </ul>
+
+                <h3>Error Handling & Resilience</h3>
+                <ul>
+                    <li><strong>Retry with backoff:</strong> Tool call failures (API timeouts, DB connection drops) trigger automatic retries with exponential backoff before surfacing to the orchestrator</li>
+                    <li><strong>Graceful degradation:</strong> If the Market Context Agent fails (e.g., market data feed outage), the workflow proceeds with a &ldquo;market context unavailable&rdquo; flag rather than blocking the entire pipeline</li>
+                    <li><strong>Partial output:</strong> The Memo Generation Agent can produce partial memos when upstream data is incomplete, with explicit &ldquo;data pending&rdquo; placeholders and a human notification</li>
+                    <li><strong>Timeout guards:</strong> Each agent has a maximum execution time; if exceeded, current progress is saved and the agent reports partial results</li>
+                    <li><strong>Idempotency:</strong> Workflow re-runs produce the same result given the same input state, enabling safe retries</li>
+                </ul>
+
+                <h3>Human-in-the-Loop Controls</h3>
+                <p>
+                    Every workflow includes explicit approval checkpoints. The system never takes autonomous
+                    action on portfolios &mdash; no trades, no communications, no escalations without human sign-off.
+                </p>
+                <ul>
+                    <li>Draft memos require PM review and sign-off before distribution</li>
+                    <li>Risk alerts are surfaced for human triage, not auto-escalated to clients or committees</li>
+                    <li>Manager research extractions are flagged for analyst verification, especially on material changes (AUM, strategy, team)</li>
+                    <li>All agent outputs include an audit trail with full data provenance</li>
+                    <li>The PM can override, edit, or reject any agent output at any stage</li>
+                    <li>Approval history is logged and timestamped for compliance records</li>
+                </ul>
+            </section>
+
+            <!-- Data Engineering -->
+            <section class="content-section">
+                <h2>Data Engineering Architecture</h2>
+
+                <h3>Data Source Integration</h3>
+                <p>
+                    The system integrates with the existing institutional data infrastructure rather than
+                    replacing it. Data flows are designed to be additive &mdash; the agentic layer reads from
+                    existing systems of record without modifying them.
+                </p>
+                <div class="architecture-diagram">
+                    <pre>
+Data Source Map:
+
+  Portfolio Data (structured)
+  ├── Custodian files     → CSV/XLSX ingest via scheduled jobs
+  ├── Fund admin feeds    → API polling (daily/weekly cadence)
+  ├── Internal portfolio DB → SQL queries (real-time)
+  └── Capital call notices → Email parsing + manual entry validation
+
+  Manager Documents (unstructured)
+  ├── Quarterly letters   → PDF ingestion → RAG pipeline
+  ├── DDQs                → PDF/DOCX ingestion → structured extraction
+  ├── Factsheets          → PDF ingestion → RAG pipeline
+  ├── IC memos (internal) → Document store → RAG pipeline
+  └── Side letters        → PDF ingestion → structured extraction
+
+  Market Data (structured, real-time)
+  ├── Bloomberg Terminal  → API (BLPAPI) for prices, spreads, curves
+  ├── FactSet             → API for factor exposures, analytics
+  ├── Vendor feeds        → Scheduled data pulls
+  └── Internal regime model → JSON output from ML classifier
+                    </pre>
+                </div>
+
+                <h3>Schema Normalization</h3>
+                <p>
+                    Data from heterogeneous sources is normalized into canonical schemas using Pydantic models.
+                    This ensures type safety, enables downstream agents to operate on consistent data structures,
+                    and catches data quality issues at ingestion time rather than during analysis.
+                </p>
+                <ul>
+                    <li>Canonical asset class taxonomy mapping (source-specific labels &rarr; internal classification)</li>
+                    <li>Identifier resolution chain: ticker &rarr; CUSIP &rarr; ISIN &rarr; internal security ID</li>
+                    <li>Currency normalization to base currency with FX rate timestamping</li>
+                    <li>Look-through decomposition for fund-of-funds and commingled vehicles</li>
+                    <li>Reconciliation checks at every boundary (source &harr; normalized &harr; aggregated)</li>
+                </ul>
+
+                <h3>Pipeline Orchestration</h3>
+                <div class="architecture-diagram">
+                    <pre>
+Airflow DAG — Data Pipeline:
+
+dag_agentic_copilot_data/
+├── task_ingest_custodian_files      (daily — file sensor + parse)
+├── task_ingest_fund_admin_navs      (daily — API poll)
+├── task_ingest_market_data          (daily — Bloomberg/FactSet)
+├── task_ingest_capital_activity     (event — email parser trigger)
+├── task_normalize_holdings          (daily — schema alignment)
+├── task_reconcile_navs              (daily — MV vs NAV check)
+├── task_update_document_store       (weekly — new manager docs)
+├── task_embed_new_documents         (weekly — vector embedding)
+├── task_refresh_market_signals      (daily — regime + macro feeds)
+└── task_validate_data_freshness     (daily — staleness check)
+                    </pre>
+                </div>
+            </section>
+
+            <!-- RAG & Retrieval -->
+            <section class="content-section">
+                <h2>RAG & Document Retrieval Architecture</h2>
+
+                <h3>Document Processing Pipeline</h3>
+                <p>
+                    Manager documents (letters, DDQs, factsheets) are ingested through a multi-stage pipeline
+                    designed to preserve document structure &mdash; including tables, headers, footnotes, and
+                    section boundaries &mdash; which are critical for accurate information extraction in
+                    financial documents.
+                </p>
+                <ol>
+                    <li><strong>Ingestion</strong> &mdash; PDF/DOCX parsing with layout-aware extraction using document AI models that preserve table structure, column alignment, and reading order</li>
+                    <li><strong>Pre-processing</strong> &mdash; Header/footer removal, page number stripping, boilerplate detection (disclaimers, legal notices), table extraction into structured format</li>
+                    <li><strong>Chunking</strong> &mdash; Semantic chunking with configurable overlap, preserving section boundaries and table integrity. Tables are kept as atomic chunks to prevent splitting structured data across retrieval boundaries</li>
+                    <li><strong>Embedding</strong> &mdash; Dense vector embeddings generated per chunk, stored in a vector database with associated metadata</li>
+                    <li><strong>Indexing</strong> &mdash; Rich metadata tagging: manager name, fund name, document type, publication date, vintage year, section type (performance, strategy, liquidity, outlook)</li>
+                </ol>
+
+                <h3>Hybrid Retrieval Strategy</h3>
+                <p>
+                    Pure vector similarity search alone is insufficient for investment documents &mdash; a query
+                    about &ldquo;Manager ABC&rsquo;s liquidity terms&rdquo; should never return chunks from Manager DEF,
+                    regardless of semantic similarity. The retrieval pipeline combines:
+                </p>
+                <ul>
+                    <li><strong>Metadata pre-filtering:</strong> Hard filters on manager name, document type, and date range before vector search executes &mdash; ensures results come from the correct document universe</li>
+                    <li><strong>Vector similarity search:</strong> Dense embedding similarity within the filtered set to find semantically relevant passages</li>
+                    <li><strong>Keyword matching:</strong> BM25-style sparse retrieval as a complementary signal, especially useful for specific terms (fund names, ISIN codes, fee percentages) that embeddings may not capture precisely</li>
+                    <li><strong>Cross-encoder re-ranking:</strong> Top-K results from combined retrieval are re-ranked by a cross-encoder model that scores query-passage relevance with higher accuracy than bi-encoder similarity alone</li>
+                    <li><strong>Reciprocal Rank Fusion:</strong> Combining ranked results from vector and keyword retrievers into a unified ranking before re-ranking</li>
+                </ul>
+
+                <h3>Context Window Management</h3>
+                <p>
+                    Investment documents can be long (50+ page DDQs, 20+ page quarterly letters). Effective
+                    retrieval requires maximizing the relevance density of the context window passed to the LLM:
+                </p>
+                <ul>
+                    <li>Relevance-ranked chunk ordering &mdash; most relevant chunks first in the context window</li>
+                    <li>Deduplication &mdash; overlapping chunks from the same document section are merged</li>
+                    <li>Dynamic context budget &mdash; allocates more context window space to the primary document being analyzed, less to supporting references</li>
+                    <li>Source attribution preserved on every chunk &mdash; document name, page number, section header &mdash; enabling citation in downstream memo generation</li>
+                </ul>
+
+                <div class="architecture-diagram">
+                    <pre>
+RAG Pipeline — End-to-End Flow:
+
+  New Document Arrives (e.g., Manager ABC Q4 2025 Letter)
+      │
+      ├── PDF parser → layout-aware text + table extraction
+      ├── Pre-processor → remove boilerplate, extract tables
+      ├── Chunker → semantic chunks with section metadata
+      ├── Embedder → dense vectors per chunk
+      └── Indexer → store in vector DB with metadata tags
+      │
+  Query: "What changed in Manager ABC's strategy this quarter?"
+      │
+      ├── Metadata filter → manager="ABC", type="quarterly letter"
+      ├── Vector search → top-20 by embedding similarity
+      ├── Keyword search → top-20 by BM25 on query terms
+      ├── Reciprocal Rank Fusion → merge ranked lists
+      ├── Cross-encoder re-rank → top-8 final passages
+      └── LLM synthesis → structured extraction with citations
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Prompt Engineering -->
+            <section class="content-section">
+                <h2>Prompt Engineering & LLM Chain Design</h2>
+
+                <h3>Agent-Level Prompt Architecture</h3>
+                <p>
+                    Each agent uses a carefully structured system prompt that defines its role, available tools,
+                    output schema, and behavioral constraints. Prompts are Jinja-templated to inject dynamic
+                    context (portfolio name, date range, specific manager) at execution time.
+                </p>
+
+                <h4>System Prompt Structure (Per Agent)</h4>
+                <ul>
+                    <li><strong>Role definition:</strong> &ldquo;You are the Risk Monitoring Agent for an institutional OCIO platform...&rdquo;</li>
+                    <li><strong>Tool descriptions:</strong> Typed descriptions of each tool the agent can call, including input/output schemas</li>
+                    <li><strong>Output schema:</strong> Explicit JSON schema the agent must conform to, enforced via structured output parsing</li>
+                    <li><strong>Behavioral constraints:</strong> &ldquo;Never fabricate data. Never invent holdings or returns. If data is unavailable, say so explicitly.&rdquo;</li>
+                    <li><strong>Domain vocabulary:</strong> Investment-specific terminology definitions to ensure consistent usage (e.g., &ldquo;drift&rdquo; = weight deviation from SAA target, not style drift)</li>
+                    <li><strong>Examples:</strong> Few-shot examples of correct tool usage and output formatting for the agent&rsquo;s specific domain</li>
+                </ul>
+
+                <h4>Memo Generation — Multi-Stage Chain</h4>
+                <p>
+                    The Memo Generation Agent uses a four-stage LLM chain where each stage has a distinct
+                    system prompt, temperature setting, and validation step:
+                </p>
+                <ul>
+                    <li><strong>Stage 1 &mdash; Draft (temp=0.2):</strong> Synthesize structured agent outputs into a narrative. Prioritize clarity and accuracy over style. Include all relevant data points</li>
+                    <li><strong>Stage 2 &mdash; Tone (temp=0.1):</strong> Adjust language to institutional standards. Remove informal phrasing, ensure balanced and measured commentary, add appropriate caveats and uncertainty language</li>
+                    <li><strong>Stage 3 &mdash; Accuracy (temp=0.0):</strong> Cross-check every number against source data. Flag any discrepancy. This stage uses deterministic settings to ensure reproducibility</li>
+                    <li><strong>Stage 4 &mdash; Format (deterministic):</strong> Apply Jinja template formatting, render citations as footnotes, generate table of contents for longer memos</li>
+                </ul>
+
+                <h3>Guardrail Architecture</h3>
+                <p>
+                    LLM outputs in institutional finance carry real risk &mdash; a fabricated return number
+                    or misattributed risk flag could influence investment decisions. The guardrail system
+                    operates at multiple levels:
+                </p>
+                <ul>
+                    <li><strong>Input guardrails:</strong> Sensitive data (client names, account numbers, SSNs) are redacted or tokenized before reaching the LLM. Tokenized identifiers are re-mapped in post-processing</li>
+                    <li><strong>Behavioral guardrails:</strong> System prompts include explicit &ldquo;never&rdquo; rules &mdash; never fabricate data, never provide investment advice, never speculate on future returns without labeling as forward-looking</li>
+                    <li><strong>Output validation:</strong> Regex extraction of all numerical values in generated text, cross-referenced against source data. Any mismatch triggers a flag for human review rather than silent pass-through</li>
+                    <li><strong>Semantic consistency:</strong> Generated narrative sentiment is compared against the structured data direction (e.g., the text should not describe performance as &ldquo;strong&rdquo; if the return is negative)</li>
+                    <li><strong>Compliance filters:</strong> Output scanned for regulatory-sensitive language (forward-looking statements, guarantees, superlatives about performance) and flagged or rewritten</li>
+                </ul>
+            </section>
+
+            <!-- Risk Engine -->
+            <section class="content-section">
+                <h2>Risk Detection Framework</h2>
+
+                <h3>Monitoring Dimensions</h3>
+                <p>
+                    The Risk Monitoring Agent evaluates the portfolio across six orthogonal risk dimensions,
+                    each with its own threshold logic, severity classification, and escalation path.
+                </p>
+
+                <h4>1. Allocation Drift</h4>
+                <ul>
+                    <li>Current weights vs. SAA/TAA targets at every hierarchy level (asset class &rarr; sub-strategy &rarr; manager &rarr; vehicle)</li>
+                    <li>Configurable tolerance bands per level: &plusmn;2% at asset class, &plusmn;3% at sub-strategy, &plusmn;5% at manager</li>
+                    <li>Trend analysis: is drift increasing, stable, or correcting? Consecutive-month drift acceleration triggers higher severity</li>
+                    <li>Rebalancing cost estimation: projected transaction costs and tax implications of correcting the drift</li>
+                </ul>
+
+                <h4>2. Concentration Risk</h4>
+                <ul>
+                    <li>Single manager: flag if any single manager exceeds N% of total portfolio (configurable per asset class)</li>
+                    <li>Sector/geography: look-through concentration analysis aggregated across all managers</li>
+                    <li>Factor: aggregate factor exposure (beta, duration, credit quality) checked against policy limits</li>
+                    <li>Vintage year: private market vintage concentration &mdash; flag if capital deployed is skewed to &le;2 vintages</li>
+                </ul>
+
+                <h4>3. Liquidity Mismatch</h4>
+                <ul>
+                    <li>Aggregate liquidity tiering: % of portfolio available at T+1, T+30, T+90, T+365, illiquid</li>
+                    <li>Comparison against policy minimum liquidity requirements</li>
+                    <li>Gate and lock-up tracking: flag managers approaching gate thresholds or lock-up expiry</li>
+                    <li>Stress scenario: if 10% of liquid assets needed for capital calls, does remaining liquidity still meet policy?</li>
+                </ul>
+
+                <h4>4. Style Drift</h4>
+                <ul>
+                    <li>Rolling factor exposure analysis (60-day, 120-day windows) vs. mandate definition</li>
+                    <li>Statistical significance testing: is the exposure change within normal variation or a genuine shift?</li>
+                    <li>Cross-reference with Manager Research Agent: does the manager letter acknowledge the positioning change?</li>
+                </ul>
+
+                <h4>5. Regime Sensitivity</h4>
+                <ul>
+                    <li>Integration with ML Regime Classification System: when regime shifts, re-evaluate portfolio positioning</li>
+                    <li>Conditional risk metrics: expected portfolio behavior under current regime vs. alternative regimes</li>
+                    <li>Regime-transition impact: estimated portfolio drag if current positioning is misaligned with emerging regime</li>
+                </ul>
+
+                <h4>6. Capital Pacing</h4>
+                <ul>
+                    <li>Capital call/distribution schedule modeling across all PE/PC/real asset commitments</li>
+                    <li>Cash flow adequacy projection: expected calls vs. available liquidity over 4-quarter forward window</li>
+                    <li>J-curve position tracking: where each vintage sits on its lifecycle curve</li>
+                    <li>Over-commitment analysis: total unfunded commitments vs. NAV, with stress scenarios</li>
+                </ul>
+
+                <h3>Alert Classification & Escalation</h3>
+                <p>
+                    Every alert is classified by severity and routed accordingly:
+                </p>
+                <ul>
+                    <li><strong>Informational:</strong> No action required, logged for awareness. Example: allocation drift within tolerance but trending toward breach</li>
+                    <li><strong>Warning:</strong> Breach detected, PM review recommended. Example: single manager concentration exceeds soft limit</li>
+                    <li><strong>Action Required:</strong> Material breach or multi-dimension risk convergence. Example: liquidity shortfall projected under capital call stress scenario</li>
+                </ul>
+                <p>
+                    Alerts at all levels are surfaced to the PM for human triage &mdash; the system never
+                    auto-escalates to clients, committees, or external parties.
+                </p>
+            </section>
+
+            <!-- Output Format -->
+            <section class="content-section">
+                <h2>Output Format & Workflow Examples</h2>
+
+                <h3>Weekly Portfolio Review Workflow</h3>
+                <p>
+                    The most common workflow. Produces a comprehensive draft covering portfolio state,
+                    risk flags, market context, and manager updates for PM review.
+                </p>
+                <div class="architecture-diagram">
+                    <pre>
+Output: Weekly PM Note — Draft Structure
+
+  1. Portfolio Summary
+     - Current allocation vs. targets (table)
+     - Performance attribution (MTD, QTD, YTD, ITD)
+     - Key changes since last review
+
+  2. Risk Flags
+     - Active alerts by severity (action required → warning → info)
+     - Drift summary with trend indicators
+     - Liquidity position with forward projection
+
+  3. Market Context
+     - Regime classification and confidence
+     - Key signal changes this week
+     - Portfolio implications of current macro environment
+
+  4. Manager Updates
+     - Material changes extracted from recent manager documents
+     - Performance vs peers for managers under review
+     - Upcoming liquidity events (lock-up expiries, gate resets)
+
+  5. Action Items
+     - Suggested rebalancing trades (with cost estimates)
+     - Manager follow-up items
+     - Upcoming capital call/distribution dates
+
+  Footer:
+     - Data sources and freshness timestamps
+     - Agent versions and model versions
+     - Citation footnotes
+
+  Status: DRAFT — Pending PM Review
+                    </pre>
+                </div>
+
+                <h3>Manager Review Workflow</h3>
+                <p>
+                    Triggered ad-hoc when preparing for a manager meeting, annual review, or committee discussion.
+                    The system pulls the full history of a specific manager across all document types and
+                    produces a structured review summary.
+                </p>
+
+                <h3>Risk Alert Workflow</h3>
+                <p>
+                    Triggered when the Risk Monitoring Agent detects a material breach. Produces a focused
+                    alert brief with the specific risk, supporting data, historical context, and suggested
+                    remediation options for the PM.
+                </p>
+            </section>
+
+            <!-- Security & Compliance -->
+            <section class="content-section">
+                <h2>Security & Compliance</h2>
+
+                <h3>Data Security</h3>
+                <ul>
+                    <li>All portfolio and client data encrypted at rest (AES-256) and in transit (TLS 1.3)</li>
+                    <li>Role-based access control with principle of least privilege &mdash; agents have read-only access to source systems</li>
+                    <li>No write-back to portfolio systems &mdash; the agentic layer is read-only; all actions require human execution</li>
+                    <li>Sensitive data redaction before LLM inference &mdash; no PII, client identifiers, or account numbers sent to model endpoints</li>
+                    <li>Tokenized security identifiers in LLM context; re-mapped in post-processing</li>
+                    <li>Secrets managed via AWS Secrets Manager / Azure Key Vault with automatic rotation</li>
+                    <li>Network-level protection: VPC subnets, security groups, private endpoints for all data connections</li>
+                </ul>
+
+                <h3>LLM Guardrails</h3>
+                <ul>
+                    <li>Deterministic temperature settings (0.0–0.2) for reproducible outputs</li>
+                    <li>Explicit constraints embedded in system prompts: never fabricate data, never invent holdings or returns, never provide investment recommendations without human approval</li>
+                    <li>Post-generation validation: regex + semantic checks for numerical accuracy against source data</li>
+                    <li>Compliance-safe language filters aligned with institutional communication standards and regulatory requirements</li>
+                    <li>Forward-looking statement detection and labeling</li>
+                    <li>Output hash logging for reproducibility verification</li>
+                </ul>
+
+                <h3>Audit & Governance</h3>
+                <ul>
+                    <li>Full audit trail: every agent action, tool call, retrieval, and generation logged with timestamps and execution context</li>
+                    <li>Data lineage tracking from source system to final memo output &mdash; every number is traceable to its origin</li>
+                    <li>Human approval records with timestamps, reviewer identity, and any edits made</li>
+                    <li>Model version pinning: every output records the exact model version, prompt version, and agent version used</li>
+                    <li>Aligned with SOC 2 Type II internal controls and NIST 800-53 framework</li>
+                    <li>Retention policies aligned with regulatory requirements (7-year minimum for investment communications)</li>
+                </ul>
+
+                <h3>Operational Controls</h3>
+                <ul>
+                    <li>Agent processes have read-only access to all upstream data sources &mdash; no ability to modify portfolio systems, execute trades, or send communications</li>
+                    <li>Rate limiting on LLM API calls to prevent runaway costs</li>
+                    <li>Circuit breaker pattern: if an agent produces anomalous outputs (e.g., portfolio weights summing to &gt;110%), the workflow halts and alerts</li>
+                    <li>SLA monitoring: weekly review workflow must complete within defined time window</li>
+                </ul>
+            </section>
+
+            <!-- Performance & Scalability -->
+            <section class="content-section">
+                <h2>Performance & Scalability</h2>
+
+                <h3>Execution Performance</h3>
+                <ul>
+                    <li>Full weekly portfolio review workflow: completes in under 5 minutes per portfolio (including all agent execution, retrieval, and memo generation)</li>
+                    <li>Phase 1 (data collection) agents run in parallel, reducing wall-clock time by ~60% vs. sequential execution</li>
+                    <li>RAG retrieval latency: &lt;2 seconds per query (including metadata filtering, vector search, and re-ranking)</li>
+                    <li>Memo generation (4-stage chain): ~30 seconds per memo</li>
+                </ul>
+
+                <h3>Scalability Architecture</h3>
+                <ul>
+                    <li>Stateless agent execution &mdash; each workflow run is independent, enabling horizontal scaling across portfolios</li>
+                    <li>Multiple portfolio reviews can run concurrently with no shared state conflicts</li>
+                    <li>Vector database scales independently of agent compute &mdash; document corpus growth does not degrade query latency</li>
+                    <li>Airflow workers scale via Kubernetes executor for data pipeline tasks</li>
+                </ul>
+
+                <h3>Throughput</h3>
+                <ul>
+                    <li>Designed to support 20+ portfolio reviews per day in batch mode</li>
+                    <li>Ad-hoc queries (single manager research, specific risk check) execute in under 60 seconds</li>
+                    <li>Document store handles 10,000+ documents across 100+ managers with sub-second retrieval</li>
+                </ul>
+            </section>
+
+            <!-- Impact -->
+            <section class="content-section">
+                <h2>Impact</h2>
+                <div class="highlight-box">
+                    <p>The system enables portfolio managers to:</p>
+                    <ul>
+                        <li><strong>Accelerate research workflows</strong> &mdash; multi-step retrieval and synthesis across holdings, market data, and manager documents in minutes instead of hours. Weekly portfolio review preparation reduced from 4+ hours of manual work to a 5-minute automated draft with PM review</li>
+                        <li><strong>Surface risks proactively</strong> &mdash; automated monitoring of drift, concentration, liquidity, and regime changes with configurable alert thresholds. Risk flags that previously required manual calculation are now surfaced automatically with supporting data and trend context</li>
+                        <li><strong>Standardize memo quality</strong> &mdash; consistent, citation-backed drafts for PM notes, IC memos, and manager reviews. Every claim is traceable to its source, eliminating the risk of undocumented assertions in investment communications</li>
+                        <li><strong>Maintain institutional controls</strong> &mdash; human-in-the-loop approval at every decision point with full audit trail. The system augments PM judgment without replacing it, operating within fiduciary constraints</li>
+                        <li><strong>Scale coverage</strong> &mdash; monitor more managers and mandates without proportional headcount increase. The same analyst team can oversee a larger portfolio universe with consistent quality</li>
+                        <li><strong>Improve decision speed</strong> &mdash; when a regime shift or manager event occurs, the system can produce a focused brief with full context in minutes, enabling faster response times on time-sensitive allocation decisions</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Technologies Used -->
+            <section class="content-section">
+                <h2>Technologies Used</h2>
+                <div class="tech-list">
+                    <div class="tech-item">
+                        <i class="fab fa-python"></i> Python
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-robot"></i> LangChain
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-brain"></i> LLM Orchestration
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-search"></i> RAG / Vector Search
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-tools"></i> Tool-Use Agents
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-server"></i> FastAPI
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-database"></i> SQL / PostgreSQL
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-project-diagram"></i> Apache Airflow
+                    </div>
+                    <div class="tech-item">
+                        <i class="fab fa-aws"></i> AWS
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-shield-alt"></i> SOC 2 Controls
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-file-code"></i> Pydantic
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-lock"></i> NIST 800-53
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <p>&copy; 2026 Cristian Arenas. Quantitative Investment & AI/ML Engineering.</p>
+                    <p class="footer-subtext"> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="mailto:cristianmiguelsa@gmail.com">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollTop" class="scroll-top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="script.js"></script>
+</body>
+</html>
