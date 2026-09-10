@@ -311,15 +311,24 @@ body {
 
 /* Hero Image */
 .hero-image {
+    /* Sized to the photo itself. The decorative border is absolutely positioned
+       against this box, so if the container is wider than the image the border
+       detaches and floats off to one side. */
     position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .hero-image img {
+    /* height:auto is load-bearing. The width/height attributes are a
+       presentational hint, so with only max-width set the photo kept a fixed
+       500px height and squashed horizontally on narrow screens. */
     width: 100%;
-    max-width: 400px;
+    height: auto;
+    display: block;
     border-radius: 10px;
     position: relative;
     z-index: 2;
@@ -329,7 +338,6 @@ body {
 .image-border {
     position: absolute;
     width: 100%;
-    max-width: 400px;
     height: 100%;
     border: 3px solid var(--primary-cyan);
     border-radius: 10px;
@@ -717,12 +725,8 @@ body {
         font-size: 1rem;
     }
     
-    .hero-image img {
-        max-width: 250px;  /* Smaller image on mobile */
-    }
-    
-    .image-border {
-        max-width: 250px;
+    .hero-image {
+        max-width: 300px;
     }
     
     .about-content {
@@ -751,6 +755,10 @@ body {
     
     .hero-text h1 {
         font-size: 2rem;  /* Even smaller for small phones */
+    }
+
+    .hero-image {
+        max-width: 240px;
     }
     
     .typing-effect {
