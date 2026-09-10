@@ -133,12 +133,12 @@ table.stress tr:hover{background:var(--accent-bg)}
         <span class="eq">=</span>
         <span class="eq">(1&minus;A)&middot;Rf</span>
         <span class="plus">+</span>
-        <span class="eq">N&middot;(Bench &minus; Rf &minus; Spread &minus; Roll &plusmn; Basis)</span>
+        <span class="eq">N<sub>t</sub>&middot;(Bench &minus; Rf &minus; Spread &minus; Roll &plusmn; Basis)</span>
         <span class="plus">+</span>
         <span class="eq">A&middot;(Rf + &alpha; + &beta;<sub>&alpha;</sub>&middot;(Eq &minus; Rf) &minus; Fees &minus; Drag)</span>
         <span class="minus">&minus;</span>
         <span class="eq">Liquidity cost</span>
-        <span style="color:var(--faint);font-size:11px">&nbsp;N = futures notional, A = alpha allocation (fractions of NAV); monthly steps</span>
+        <span style="color:var(--faint);font-size:11px">&nbsp;N<sub>t</sub> = futures notional <em>actually carried</em> (cut when the collateral account cannot margin it), A = alpha allocation; monthly steps on a stateful cash account</span>
       </div>
       <div class="ctrl-grid">
         <div class="ctrl-group">
@@ -151,7 +151,7 @@ table.stress tr:hover{background:var(--accent-bg)}
           <h4>Beta sleeve (futures)</h4>
           <div class="inp-row"><label for="eqWeight" data-tip="Equity weight of the benchmark. Bond weight = 100% minus this. The futures overlay replicates the same mix with equity index and Treasury futures.">Equity weight</label><div class="inp-wrap"><input class="d-input" type="number" id="eqWeight" value="60" min="0" max="100" step="5"><span class="unit">%</span></div></div>
           <div class="inp-row"><label for="betaNotional" data-tip="Futures notional as % of NAV. 100% = one-for-one benchmark exposure; above 100% is levered beta, financed at cash + spread on the extra notional.">Futures notional (N)</label><div class="inp-wrap"><input class="d-input" type="number" id="betaNotional" value="100" min="100" max="150" step="5"><span class="unit">% NAV</span></div></div>
-          <div class="inp-row"><label for="financingSpread" data-tip="Implied financing spread of the futures over the cash rate (the 'richness' of the calendar roll). Equity index futures have traded around SOFR + 30 to 60 bp in recent years; Treasury futures close to zero. Charged on the whole notional.">Financing spread</label><div class="inp-wrap"><input class="d-input" type="number" id="financingSpread" value="35" min="0" max="200" step="5"><span class="unit">bp/y</span></div></div>
+          <div class="inp-row"><label for="financingSpread" data-tip="Implied financing spread of the futures over the cash rate (the 'richness' of the calendar roll). Equity index futures have traded around SOFR + 30 to 60 bp in recent years; Treasury futures close to zero, so this input is the blended spread over the whole notional. It is multiplied by 2.5 in a crisis and 1.5 in a rate shock, because roll richness widens exactly when you cannot step away.">Financing spread</label><div class="inp-wrap"><input class="d-input" type="number" id="financingSpread" value="35" min="0" max="200" step="5"><span class="unit">bp/y</span></div></div>
           <div class="inp-row"><label for="rollCost" data-tip="Execution cost of the four quarterly rolls (calendar-spread bid/ask plus commissions), annualised. Typically 1 to 2 bp per roll.">Roll execution cost</label><div class="inp-wrap"><input class="d-input" type="number" id="rollCost" value="5" min="0" max="30" step="1"><span class="unit">bp/y</span></div></div>
           <div class="inp-row"><label for="basisNoise" data-tip="Monthly standard deviation of the futures-versus-index tracking difference (dividend estimates, roll timing, bond-future cheapest-to-deliver changes). Zero mean.">Basis noise</label><div class="inp-wrap"><input class="d-input" type="number" id="basisNoise" value="10" min="0" max="60" step="5"><span class="unit">bp/mo</span></div></div>
         </div>
@@ -159,7 +159,7 @@ table.stress tr:hover{background:var(--accent-bg)}
           <h4>Alpha sleeve</h4>
           <div class="inp-row"><label for="alphaAlloc" data-tip="Share of NAV invested in the hedge-fund style alpha sleeve. The rest stays in cash / T-bills that post the futures margin. Alpha sleeve total return = Rf + alpha + beta x (equity - Rf) - fees.">Alpha allocation (A)</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaAlloc" value="50" min="0" max="90" step="5"><span class="unit">% NAV</span></div></div>
           <div class="inp-row"><label for="alphaVol" data-tip="Annualised volatility of the idiosyncratic alpha stream in the calm regime. Multiplied by 2.0 in crises and 1.3 in rate shocks.">Alpha target vol</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaVol" value="6" min="1" max="15" step="0.5"><span class="unit">%/y</span></div></div>
-          <div class="inp-row"><label for="alphaIR" data-tip="Gross information ratio of the alpha stream before fees (expected alpha = IR x vol). A diversified multi-manager book at 1.0 gross is optimistic; after 1.5/20 fees and regime shocks the net IR lands around 0.4 to 0.5. Applies only in calm months.">Gross alpha IR</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaIR" value="1.00" min="-0.5" max="2.0" step="0.05"></div></div>
+          <div class="inp-row"><label for="alphaIR" data-tip="Gross information ratio of the alpha stream before fees (expected alpha = IR x vol). A diversified multi-manager book at 1.0 gross is optimistic. What survives is much less: on the default settings the sleeve's net return over cash is worth about 0.25 of its own volatility, and the programme's information ratio against the benchmark is around 0.1 - fees, regime shocks, decay and financing eat most of a gross IR of 1.0. Applies only in calm months.">Gross alpha IR</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaIR" value="1.00" min="-0.5" max="2.0" step="0.05"></div></div>
           <div class="inp-row"><label for="alphaBeta" data-tip="Stated beta of the alpha sleeve to the equity index. Should be low (0 to 0.3). Multiplied by 1.5 in crisis and rate-shock regimes (correlation spike).">Alpha beta to equities</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaBeta" value="0.15" min="0" max="0.50" step="0.05"></div></div>
         </div>
         <div class="ctrl-group">
@@ -171,9 +171,10 @@ table.stress tr:hover{background:var(--accent-bg)}
         </div>
         <div class="ctrl-group">
           <h4>Collateral &amp; liquidity</h4>
-          <div class="inp-row"><label for="marginReq" data-tip="Initial margin of the futures as % of notional (blended). Exchange margin is roughly 5 to 10% for equity index futures and 1 to 3% for Treasury futures. Posted T-bills keep earning the cash rate.">Initial margin</label><div class="inp-wrap"><input class="d-input" type="number" id="marginReq" value="8" min="3" max="20" step="1"><span class="unit">% notl</span></div></div>
+          <div class="inp-row"><label for="marginReq" data-tip="Initial margin of the futures as % of notional (blended). Exchange margin is roughly 5 to 10% for equity index futures and 1 to 3% for Treasury futures, so a 60/40 overlay blends to about 4 to 7%. Posted T-bills keep earning the cash rate. The requirement is raised 1.6x in a crisis and 1.25x in a rate shock, as clearing houses actually do.">Initial margin</label><div class="inp-wrap"><input class="d-input" type="number" id="marginReq" value="6" min="3" max="20" step="1"><span class="unit">% notl</span></div></div>
           <div class="inp-row"><label for="haircut" data-tip="Haircut applied by the clearing house to T-bill collateral; more collateral has to be posted to cover the same margin.">Collateral haircut</label><div class="inp-wrap"><input class="d-input" type="number" id="haircut" value="2" min="0" max="10" step="0.5"><span class="unit">%</span></div></div>
-          <div class="inp-row"><label for="collateralBuffer" data-tip="Free cash the programme wants to hold beyond initial margin to meet variation-margin calls without redeeming from the (less liquid) alpha sleeve. Falling below it only raises a health warning; a month whose variation margin exceeds free cash is a margin call funded at cash + spread + 100 bp.">Liquidity buffer</label><div class="inp-wrap"><input class="d-input" type="number" id="collateralBuffer" value="5" min="0" max="25" step="1"><span class="unit">% NAV</span></div></div>
+          <div class="inp-row"><label for="collateralBuffer" data-tip="Two uses: the free cash the programme wants to hold above initial margin, and the size of the committed credit line it can draw for one month (at cash + spread + 100 bp) when variation margin exceeds that cash. Once both are exhausted the programme is forced to cut futures notional.">Liquidity buffer / line</label><div class="inp-wrap"><input class="d-input" type="number" id="collateralBuffer" value="5" min="0" max="25" step="1"><span class="unit">% NAV</span></div></div>
+          <div class="inp-row"><label for="sleeveLiq" data-tip="Months between redemption windows of the alpha sleeve. Cash can only be topped up from the sleeve on these dates, so between them variation margin has to be met from the collateral account alone. Most hedge funds are quarterly with 45 to 90 days' notice; 1 month is optimistic.">Sleeve redemption cycle</label><div class="inp-wrap"><input class="d-input" type="number" id="sleeveLiq" value="3" min="1" max="12" step="1"><span class="unit">mo</span></div></div>
         </div>
       </div>
     </div>
@@ -242,36 +243,44 @@ table.stress tr:hover{background:var(--accent-bg)}
       </div>
       <div class="d-help-section">
         <h3>2 &middot; Beta sleeve</h3>
-        <p>Futures prices already embed financing at the cash rate, so the sleeve earns <strong>N &middot; (Benchmark &minus; Rf)</strong>. On top of that the model charges the <strong>financing spread</strong> (implied repo above SOFR, 30&ndash;60 bp for equity index futures in recent years), the <strong>roll execution cost</strong> and a zero-mean <strong>basis noise</strong>. Setting the notional above 100% is levered beta, financed at the same cash + spread on the extra notional.</p>
+        <p>Futures prices already embed financing at the cash rate, so the sleeve earns <strong>N<sub>t</sub> &middot; (Benchmark &minus; Rf)</strong>. On top of that the model charges the <strong>financing spread</strong> (implied repo above SOFR, 30&ndash;60 bp for equity index futures in recent years, close to zero for Treasury futures, so the input is a blended number), the <strong>roll execution cost</strong> and a zero-mean <strong>basis noise</strong>. Both the spread and the basis are <strong>procyclical</strong>: roll richness and index-versus-future dislocation widen precisely when you would want to step away, so the model scales the spread 2.5&times; and the basis 3&times; in a crisis. Setting the notional above 100% is levered beta on the same terms. <strong>N<sub>t</sub></strong> carries a subscript because the notional is not a constant: it is whatever the collateral account can still margin (section 4).</p>
       </div>
       <div class="d-help-section">
         <h3>3 &middot; Alpha sleeve</h3>
         <p>The sleeve behaves like a diversified hedge-fund book: gross monthly return = <strong>Rf + alpha + &beta;<sub>&alpha;</sub> &middot; (Equity &minus; Rf)</strong>, where alpha is drawn with mean IR &times; vol / 12 and standard deviation vol / &radic;12. A <strong>management fee</strong> accrues monthly and a <strong>performance fee</strong> is taken on gains above the sleeve's <strong>high-water mark</strong>. Expected alpha decays linearly with the <strong>alpha decay</strong> rate to mimic crowding. Regime behaviour is fixed and stylised on 2008 and 2022:</p>
         <table>
-          <thead><tr><th>Regime</th><th>Alpha drift</th><th>Alpha vol</th><th>Alpha beta</th><th>Equity / bonds (monthly mean)</th><th>Eq&ndash;bond corr.</th></tr></thead>
+          <thead><tr><th>Regime</th><th>Alpha drift</th><th>Alpha vol</th><th>Alpha beta</th><th>Equity / bonds (monthly mean)</th><th>Eq&ndash;bond corr.</th><th>Margin</th><th>Financing</th><th>Basis</th></tr></thead>
           <tbody>
-            <tr><td>Calm</td><td>IR &times; vol</td><td>&times;1.0</td><td>&times;1.0</td><td>+1.10% / +0.45%</td><td>+0.10</td></tr>
-            <tr><td>Crisis (2008-type, mean 12 mo)</td><td>&minus;0.4 &sigma; per month</td><td>&times;2.0</td><td>&times;1.5</td><td>&minus;3.0% / +0.6%</td><td>&minus;0.35</td></tr>
-            <tr><td>Rate shock (2022-type, mean 9 mo)</td><td>&times;0.25</td><td>&times;1.3</td><td>&times;1.5</td><td>&minus;1.0% / &minus;1.2%</td><td>+0.60</td></tr>
+            <tr><td>Calm</td><td>IR &times; vol</td><td>&times;1.0</td><td>&times;1.0</td><td>+1.10% / +0.45%</td><td>+0.10</td><td>&times;1.0</td><td>&times;1.0</td><td>&times;1.0</td></tr>
+            <tr><td>Crisis (2008-type, mean 12 mo)</td><td>&minus;0.4 &sigma; per month</td><td>&times;2.0</td><td>&times;1.5</td><td>&minus;3.0% / +0.6%</td><td>&minus;0.35</td><td>&times;1.6</td><td>&times;2.5</td><td>&times;3.0</td></tr>
+            <tr><td>Rate shock (2022-type, mean 9 mo)</td><td>&times;0.25</td><td>&times;1.3</td><td>&times;1.5</td><td>&minus;1.0% / &minus;1.2%</td><td>+0.60</td><td>&times;1.25</td><td>&times;1.5</td><td>&times;1.8</td></tr>
           </tbody>
         </table>
-        <p>With the default 6% vol sleeve a 12-month crisis produces a hedge-fund style drawdown of roughly &minus;20%, in line with the 2008 experience of hedge-fund composites.</p>
+        <p>With the default 6% vol sleeve a crisis run of six months or more produces a sleeve trough of roughly &minus;18% (median across 800 seeds), in line with the 2008 experience of hedge-fund composites. The last three columns are the <em>financing</em> side of a stress: margin requirements, roll richness and basis all move against a levered holder at the same time as the alpha stream fails. That simultaneity is the whole point.</p>
       </div>
       <div class="d-help-section">
-        <h3>4 &middot; Collateral &amp; liquidity</h3>
-        <p>Initial margin = margin requirement &times; notional, grossed up for the <strong>collateral haircut</strong>. It is posted from the cash that is not in the alpha sleeve, and that cash keeps earning Rf. What remains is <strong>free cash</strong>; the programme wants it above the <strong>liquidity buffer</strong>. Each month the futures settle variation margin equal to N &times; benchmark return. If a month's loss exceeds free cash, the model records a <strong>margin call</strong> and funds the shortfall for that month at cash + spread + 100 bp. If free cash is negative even before any move, the structure cannot post its margin and the shortfall is permanently borrowed at cash + spread. Forced liquidation of the alpha sleeve is not modelled; in reality it is the main risk of these programmes.</p>
+        <h3>4 &middot; Collateral, margin and the way these programmes actually fail</h3>
+        <p>The collateral account is a <strong>real balance carried month to month</strong>, not a ratio recomputed from scratch. It starts at (1 &minus; A) of NAV in T-bills, earns Rf, and every month it pays or receives the futures variation margin. It is <em>not</em> topped up from the alpha sleeve until that sleeve's <strong>redemption window</strong> opens, which is the input most people get wrong: a quarterly fund with 45 days' notice cannot fund tomorrow's margin call.</p>
+        <p>Three things then have to line up in a bad month:</p>
+        <ul>
+          <li><strong>Variation margin is daily, not monthly.</strong> Settling once a month understates how much cash a drawdown actually consumes, because it ignores the path inside the month. The model samples the intra-month <em>low</em> of the futures P&amp;L exactly, from the Brownian bridge that ends at the realised month return: min = (R &minus; &radic;(R&sup2; &minus; 2&sigma;&sup2;&thinsp;ln&thinsp;U)) / 2 with U uniform. A month that ends down 2% may well have been down 6% on the way.</li>
+          <li><strong>Initial margin rises in stress.</strong> Clearing houses raise performance bonds when volatility spikes &mdash; CME lifted E-mini requirements roughly 60% between February and March 2020. The requirement here is scaled 1.6&times; in a crisis and 1.25&times; in a rate shock, so the collateral you need goes <em>up</em> while the collateral you have goes down.</li>
+          <li><strong>The escape routes are finite.</strong> A shortfall is met first from cash, then from a committed credit line sized to the <strong>liquidity buffer</strong> (one month at Rf + spread + 100 bp). If both are exhausted the programme has no choice: it <strong>cuts futures notional</strong> down to what the remaining collateral can margin, paying 5 bp of traded notional in calm markets and 20 bp in a crisis. That cut happens at the intra-month low, and the notional stays cut until the next redemption window &mdash; so the programme sells beta at the bottom and buys it back higher.</li>
+        </ul>
+        <p>This is <strong>forced de-leveraging</strong>, and it is what closed most 2008-vintage portable-alpha programmes: the alpha sleeve was gated exactly when the beta overlay was calling for cash. The health panel counts these months, the average notional actually carried, and the minimum collateral cushion on the path. At the default 50% alpha allocation none of it triggers; raise the allocation towards 85% or the notional towards 130% and it does. That is the trade-off the simulator exists to show.</p>
       </div>
       <div class="d-help-section">
         <h3>5 &middot; Reading the results</h3>
         <ul>
           <li><strong>Growth / drawdown</strong> charts show the benchmark and the programme on the same seeded path; shaded bands are stress regimes.</li>
           <li><strong>Tracking error</strong> = annualised standard deviation of (PA &minus; benchmark) monthly returns; <strong>information ratio</strong> = annualised active return / tracking error; <strong>Sharpe</strong> = (annualised arithmetic return &minus; Rf) / annualised volatility; <strong>max drawdown</strong> = worst peak-to-trough fall of the $100 path.</li>
-          <li><strong>Return decomposition</strong> sums the arithmetic annualised monthly contributions; the net differs slightly from the geometric CAGR in the table. The alpha sleeve gross bar includes the Rf earned inside the sleeve, the collateral bar the Rf on the rest.</li>
+          <li><strong>Return decomposition</strong> sums the arithmetic annualised monthly contributions; the net differs slightly from the geometric CAGR in the table. The alpha sleeve gross bar includes the Rf earned inside the sleeve, the collateral bar the Rf on the rest. The beta bar is the notional actually carried times (benchmark &minus; Rf), so it falls short of N &times; (benchmark &minus; Rf) whenever the programme was de-levered.</li>
+          <li><strong>One path is not an answer.</strong> On a 3% tracking error the standard error of a 15-year active return is close to 0.9%/y, so the chart you are looking at is one draw out of a very wide distribution. The health panel therefore re-runs the same programme on 96 alternative market paths and reports the 10th, 50th and 90th percentiles of the active return, and how often it is positive. Read those two rows before reading anything else in the KPI table. On the shipped defaults the median path adds only a few tenths of a percent a year and the 10th-to-90th band is several percent wide &mdash; and the default seed happens to sit near the bottom of that band. It has been left there rather than swapped for a flattering one.</li>
         </ul>
       </div>
       <div class="d-help-section">
         <h3>6 &middot; Stress &amp; health</h3>
-        <p>The <strong>stress table</strong> applies one-month shocks calibrated on October 2008, March 2020 and September 2022, with an idiosyncratic alpha shock, a 1.5&times; alpha beta, an adverse one-sigma basis move and a check of whether the month's variation margin exceeds free cash. The <strong>health panel</strong> verifies that the realised alpha vol, beta and regime shares match their targets, and reports margin posting, free cash and margin-call months. All numbers are synthetic and reproducible from the seed.</p>
+        <p>The <strong>stress table</strong> applies one-month shocks calibrated on October 2008, March 2020 and September 2022, with an idiosyncratic alpha shock, a 1.5&times; alpha beta, an adverse one-sigma basis move, and the same collateral machinery as the path simulation: stressed exchange margin, stressed financing, the credit line, then forced de-leveraging. The last column tells you which of those three you land on. The <strong>health panel</strong> verifies that the realised alpha vol, beta and regime shares match their targets, reports margin posting, cushion, margin calls, de-leveraging months and the notional actually carried, and closes with the cross-seed distribution of the active return. All numbers are synthetic and reproducible from the seed.</p>
       </div>
     </div>
   </div>
@@ -283,24 +292,26 @@ table.stress tr:hover{background:var(--accent-bg)}
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A 180-month (15-year) Monte-Carlo comparison of a stock/bond benchmark with a portable-alpha programme on the same seeded path. Market months come from a three-state Markov chain (calm, 2008-type crisis, 2022-type rate shock) with regime-specific means, volatilities and equity&ndash;bond correlation. The programme holds the benchmark synthetically through index futures with notional N, keeps A of NAV in a fee-paying hedge-fund style alpha sleeve with a stated equity beta, earns the cash rate on the remaining collateral, and pays financing spread, roll cost, fees and margin-call funding. Growth, drawdown, KPIs, a contribution waterfall, calibration checks and one-month stress scenarios are shown.</p>
+        <p>A 180-month (15-year) Monte-Carlo comparison of a stock/bond benchmark with a portable-alpha programme on the same seeded path. Market months come from a three-state Markov chain (calm, 2008-type crisis, 2022-type rate shock) with regime-specific means, volatilities and equity&ndash;bond correlation, and with procyclical margin, financing and basis. The programme holds the benchmark synthetically through index futures, keeps A of NAV in a fee-paying hedge-fund style alpha sleeve with a stated equity beta, and runs a <strong>stateful collateral account</strong>: variation margin is paid out of real cash, the intra-month low of the futures P&amp;L is sampled from a Brownian bridge because margin settles daily, the account is only topped up from the sleeve on its redemption dates, and when cash plus a committed credit line can no longer margin the position the programme is <strong>forced to cut notional</strong> at the low. Growth, drawdown, KPIs, a contribution waterfall, calibration and liquidity checks, a cross-seed distribution of the active return, and one-month stress scenarios are shown.</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
         <ul>
-          <li>Calm regime: equity +1.10%/mo, &sigma; 3.7%/mo; bonds +0.45%/mo, &sigma; 1.3%/mo; correlation +0.10. Unconditionally (15% stress) equities &asymp; 7% arithmetic / 15% vol, bonds &asymp; 4% / 5%, cash 4.0% constant.</li>
-          <li>Crisis (mean 12 months): equity &minus;3.0%/mo, &sigma; 7.0%; bonds +0.6%/mo, &sigma; 1.8%; correlation &minus;0.35; alpha drift &minus;0.4&sigma;/mo, alpha vol &times;2, alpha beta &times;1.5.</li>
-          <li>Rate shock (mean 9 months): equity &minus;1.0%/mo, &sigma; 5.0%; bonds &minus;1.2%/mo, &sigma; 1.8%; correlation +0.60; alpha drift &times;0.25, vol &times;1.3, beta &times;1.5.</li>
-          <li>Defaults: 60/40, N = 100%, financing spread 35 bp, roll 5 bp/y, basis 10 bp/mo, A = 50%, alpha vol 6%, gross IR 1.0, alpha beta 0.15, fees 1.5% / 20% above high-water mark, alpha decay 1.0%/y, drag 15 bp/y, initial margin 8% of notional, haircut 2%, liquidity buffer 5%.</li>
-          <li>Monthly rebalancing to target weights; the alpha sleeve is assumed to offer monthly liquidity; shocks are Gaussian; the cash rate is constant.</li>
+          <li>Calm regime: equity +1.10%/mo, &sigma; 3.7%/mo; bonds +0.45%/mo, &sigma; 1.3%/mo; correlation +0.10. Unconditionally, at the 15% stress setting, the chain delivers a 13.7% realised stress share, equities &asymp; 8.1% arithmetic / 14.8% vol, bonds &asymp; 4.2%, the 60/40 benchmark &asymp; 6.6% arithmetic / 9.3% vol (measured over 300 seeds), cash 4.0% constant.</li>
+          <li>Crisis (mean 12 months): equity &minus;3.0%/mo, &sigma; 7.0%; bonds +0.6%/mo, &sigma; 1.8%; correlation &minus;0.35; alpha drift &minus;0.4&sigma;/mo, alpha vol &times;2, alpha beta &times;1.5; initial margin &times;1.6, financing spread &times;2.5, basis &times;3.0.</li>
+          <li>Rate shock (mean 9 months): equity &minus;1.0%/mo, &sigma; 5.0%; bonds &minus;1.2%/mo, &sigma; 1.8%; correlation +0.60; alpha drift &times;0.25, vol &times;1.3, beta &times;1.5; initial margin &times;1.25, financing spread &times;1.5, basis &times;1.8.</li>
+          <li>Futures execution cost on notional traded (forced de-leveraging and rebalances): 5 bp in calm, 10 bp in a rate shock, 20 bp in a crisis.</li>
+          <li>Defaults: 60/40, N = 100%, financing spread 35 bp blended over both legs, roll 5 bp/y, basis 10 bp/mo, A = 50%, alpha vol 6%, gross IR 1.0, alpha beta 0.15, fees 1.5% / 20% above high-water mark with no hurdle, alpha decay 1.0%/y, drag 15 bp/y, initial margin 6% of notional (a 60/40 blend of ~6&ndash;8% equity and ~1&ndash;3% Treasury futures margin), haircut 2%, liquidity buffer / credit line 5% of NAV, sleeve redemption cycle 3 months.</li>
+          <li>The programme rebalances to target weights only on the sleeve's redemption dates; between them the collateral account absorbs everything. Shocks are Gaussian; the cash rate is constant.</li>
         </ul>
       </div>
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li><code>PA = (1&minus;A)&middot;Rf + N&middot;(Bench &minus; Rf &minus; spread &minus; roll + basis) + A&middot;(Rf + &alpha; + &beta;<sub>&alpha;</sub>(Eq &minus; Rf) &minus; mgmt &minus; perf) &minus; A&middot;drag &minus; liquidity</code>, all monthly.</li>
-          <li>Performance fee = rate &times; max(0, sleeve NAV &minus; high-water mark), accrued monthly; the mark is reset to the post-fee NAV.</li>
-          <li>Margin call when <code>N&middot;max(0, &minus;Bench) &gt; (1&minus;A) &minus; margin&middot;N/(1&minus;haircut)</code>; the shortfall is funded for one month at Rf + spread + 100 bp.</li>
+          <li>NAV is carried as two balances, <code>cash</code> and <code>sleeve</code>, and the monthly return is <code>NAV<sub>t</sub>/NAV<sub>t&minus;1</sub> &minus; 1</code>. Cash receives <code>cash&middot;Rf + N<sub>t</sub>&middot;(Bench &minus; Rf) &minus; N&#772;&middot;(spread + roll) &plusmn; N&#772;&middot;basis &minus; liquidity costs</code>; the sleeve compounds at <code>Rf + &alpha; + &beta;<sub>&alpha;</sub>(Eq &minus; Rf) &minus; mgmt &minus; perf &minus; drag</code>. N&#772; is the average of the notional before and after any forced cut.</li>
+          <li>Performance fee = rate &times; max(0, sleeve unit NAV &minus; high-water mark), accrued and crystallised monthly on the unit NAV; the mark resets to the post-fee unit NAV, so subscriptions and redemptions do not reset it.</li>
+          <li>Intra-month low of the futures P&amp;L, sampled exactly from the Brownian bridge ending at the realised excess return R with monthly benchmark variance &sigma;&sup2;: <code>min = (R &minus; &radic;(R&sup2; &minus; 2&sigma;&sup2; ln U))/2</code>, <code>U ~ U(0,1)</code>. Verified against the closed form <code>P(min &lt; a) = exp(&minus;2a(a&minus;R)/&sigma;&sup2;)</code>.</li>
+          <li>Margin call when <code>cash + N<sub>t</sub>&middot;min &lt; margin<sub>regime</sub>&middot;N<sub>t</sub>/(1&minus;haircut)</code>. The shortfall draws on the credit line at Rf + spread + 100 bp; beyond the line the notional is cut to <code>(available collateral)&middot;(1&minus;haircut)/margin<sub>regime</sub></code> and stays cut until the next redemption date.</li>
           <li>Sharpe = (12&middot;mean &minus; Rf) / (&sigma;&radic;12); tracking error = &sigma;(PA &minus; Bench)&middot;&radic;12; information ratio = 12&middot;mean(PA &minus; Bench) / TE; beta = cov / var; max drawdown on the cumulative path.</li>
           <li>Kung &amp; Pohlman (2004), <em>Portable Alpha: Philosophy, Process, and Performance</em>; Grinold &amp; Kahn (2000), <em>Active Portfolio Management</em>; Fung &amp; Hsieh (2004), <em>Hedge Fund Benchmarks: A Risk-Based Approach</em>.</li>
         </ul>
@@ -308,11 +319,15 @@ table.stress tr:hover{background:var(--accent-bg)}
       <div>
         <h3>Limitations</h3>
         <ul>
-          <li>Synthetic Gaussian regime mixture, not historical data; fat tails only arise from regime switching.</li>
-          <li>Constant cash rate and spreads; no term structure, no swap alternative, no taxes or dividend-withholding effects on futures.</li>
-          <li>Single blended margin rate and a monthly settlement approximation of daily variation margin; forced de-leveraging and gating of the alpha sleeve are not modelled.</li>
-          <li>The alpha sleeve is one composite stream; manager dispersion, lock-ups, and performance-fee crystallisation timing (monthly here, usually annual) are simplified.</li>
-          <li>Regime parameters are hand-set stylisations of 2008 and 2022, not estimated.</li>
+          <li>Synthetic Gaussian regime mixture, not historical data; fat tails only arise from regime switching. Jumps, gaps and limit-down sessions are not modelled, so the true tail of the collateral drain is worse than what is shown.</li>
+          <li>Constant cash rate; no term structure, no total-return-swap alternative, no taxes and no dividend-withholding effects on futures.</li>
+          <li>One blended margin rate for both legs, with no cross-margining offset between equity and Treasury futures &mdash; a real clearing member would net some of it, so the margin here is conservative.</li>
+          <li>Variation margin is checked once per month at the sampled intra-month low rather than day by day, and the credit line is assumed committed and always available at the stated rate. Both understate the number of calls; a real facility can be pulled precisely when it is needed.</li>
+          <li>Forced de-leveraging is modelled, but the alpha sleeve is assumed to honour redemptions in full on its redemption dates. <strong>Gates, side-pockets and suspensions are not modelled</strong>, and in 2008 they were the binding constraint: a gated sleeve turns a de-leveraged programme into a permanently de-leveraged one.</li>
+          <li>The alpha sleeve is one composite stream: no manager dispersion, no lock-ups, no notice periods beyond the redemption cycle, and performance fees crystallise monthly rather than annually, which overstates the fee drag on a choppy path.</li>
+          <li>Alpha is drawn independently of the equity shock beyond the stated beta and the regime shift, so tail dependence between the alpha stream and the market is only as strong as those two levers make it.</li>
+          <li>Regime parameters, stress multipliers and execution costs are hand-set stylisations of 2008, 2020 and 2022, not estimated from data.</li>
+          <li>A single 15-year path carries a standard error on the active return of roughly 0.9%/y at a 3% tracking error. Treat the cross-seed rows in the health panel as the result and the charted path as an illustration.</li>
         </ul>
       </div>
     </div>
@@ -379,53 +394,98 @@ function makeNormal(rng){
    aDrift : multiplier on the calm expected alpha (IR x vol / 12)
    aShock : additional alpha drift in units of the monthly alpha sigma
    aVol   : multiplier on alpha volatility      aBeta : multiplier on alpha beta
+   imMult : multiplier on exchange initial margin (clearing houses raise performance bonds
+            in stress: CME lifted E-mini requirements by roughly 60% between Feb and Mar 2020)
+   sprMult: multiplier on the implied futures financing spread (roll richness widens in stress)
+   basMult: multiplier on the futures-versus-index basis noise
    exit   : monthly probability of returning to calm (1 / mean duration)      */
 var REG={
-  calm:  {label:'Calm',      eqMu: 0.0110,eqSig:0.037,bdMu: 0.0045,bdSig:0.013,corr: 0.10,aDrift:1.00,aShock: 0.0,aVol:1.0,aBeta:1.0,exit:0},
-  crisis:{label:'Crisis',    eqMu:-0.0300,eqSig:0.070,bdMu: 0.0060,bdSig:0.018,corr:-0.35,aDrift:0.00,aShock:-0.4,aVol:2.0,aBeta:1.5,exit:1/12},
-  rate:  {label:'Rate shock',eqMu:-0.0100,eqSig:0.050,bdMu:-0.0120,bdSig:0.018,corr: 0.60,aDrift:0.25,aShock: 0.0,aVol:1.3,aBeta:1.5,exit:1/9}
+  calm:  {label:'Calm',      eqMu: 0.0110,eqSig:0.037,bdMu: 0.0045,bdSig:0.013,corr: 0.10,aDrift:1.00,aShock: 0.0,aVol:1.0,aBeta:1.0,imMult:1.0,sprMult:1.0,basMult:1.0,exit:0},
+  crisis:{label:'Crisis',    eqMu:-0.0300,eqSig:0.070,bdMu: 0.0060,bdSig:0.018,corr:-0.35,aDrift:0.00,aShock:-0.4,aVol:2.0,aBeta:1.5,imMult:1.6,sprMult:2.5,basMult:3.0,exit:1/12},
+  rate:  {label:'Rate shock',eqMu:-0.0100,eqSig:0.050,bdMu:-0.0120,bdSig:0.018,corr: 0.60,aDrift:0.25,aShock: 0.0,aVol:1.3,aBeta:1.5,imMult:1.25,sprMult:1.5,basMult:1.8,exit:1/9}
 };
 var CRISIS_SHARE=0.55;   /* share of stress months that are crises; the rest are rate shocks */
 var MONTHS=180;
+/* futures execution cost per unit of notional traded (calendar spread + impact), by regime */
+var TRADE_COST={calm:0.0005,crisis:0.0020,rate:0.0010};
 
-/* capital structure: initial margin grossed up for the haircut, free cash after margin */
+/* target capital structure at a rebalance date: initial margin grossed up for the haircut */
 function structure(p){
   var N=p.betaNotional,A=p.alphaAlloc;
   var im=p.marginReq*N/Math.max(1-p.haircut,0.01);
   var free=(1-A)-im;
   return{N:N,A:A,im:im,free:free,freePos:Math.max(0,free),structShort:Math.max(0,-free)};
 }
+/* largest futures notional a given pool of haircut T-bill collateral can margin */
+function supportable(cashAvail,imRate,haircut){
+  if(imRate<=0)return Math.max(0,cashAvail)*1e6;
+  return Math.max(0,cashAvail)*Math.max(1-haircut,0.01)/imRate;
+}
 
+/* Stateful simulation. The collateral account is a real balance: variation margin is paid out of
+   it every month, it is not topped up from the alpha sleeve until the sleeve's redemption window
+   opens, and when the balance can no longer margin the position the programme is forced to cut
+   futures notional. That forced de-leveraging - selling beta at the low and re-buying it later -
+   is the failure mode that closed most 2008-vintage portable-alpha programmes. */
 function simulate(p){
   var M=MONTHS,rng=mulberry32(p.seed),norm=makeNormal(rng),st=structure(p);
   var sf=Math.min(Math.max(p.stressFreq,0),0.6);
   var pCr=sf>0?CRISIS_SHARE*sf*REG.crisis.exit/(1-sf):0;
   var pRt=sf>0?(1-CRISIS_SHARE)*sf*REG.rate.exit/(1-sf):0;
-  var reg='calm',regimes=[],baseRet=[],paRet=[],eqRets=[],benchRets=[],sleeveRets=[],calls=[];
+  var reg='calm',regimes=[],baseRet=[],paRet=[],eqRets=[],benchRets=[],sleeveRets=[],calls=[],delevs=[],notl=[],cushion=[];
   var comp={cash:[],betaEx:[],fin:[],roll:[],basis:[],alphaGross:[],fees:[],liq:[]};
-  var rfMo=p.cashRate/12,sprMo=p.finSpread/12,rollMo=p.rollCost/12,dragMo=p.drag/12,mgmtMo=p.mgmtFee/12;
+  var rfMo=p.cashRate/12,rollMo=p.rollCost/12,dragMo=p.drag/12,mgmtMo=p.mgmtFee/12;
   var sigMo=p.alphaVol/Math.sqrt(12),muMo=p.alphaIR*p.alphaVol/12;
-  var N=st.N,A=st.A,sleeveNav=1,hwm=1;
+  var N=st.N,A=st.A,hc=Math.max(1-p.haircut,0.01),liqEvery=Math.max(1,Math.round(p.sleeveLiq));
+  /* dollar balances, NAV starts at 1. Futures carry no book value: their P&L settles into cash. */
+  var nav=1,sleeve=A,cash=1-A,sleeveUnit=1,hwmUnit=1;
+  var notional=Math.min(N,supportable(cash,p.marginReq,p.haircut));
   for(var m=0;m<M;m++){
     var u=rng();
     if(reg==='calm'){if(u<pCr)reg='crisis';else if(u<pCr+pRt)reg='rate';}
     else if(u<REG[reg].exit)reg='calm';
     regimes.push(reg);
-    var rg=REG[reg];
+    var rg=REG[reg],navPrev=nav,nOld=notional,tcost=TRADE_COST[reg]||0.0005;
+    var sprMo=p.finSpread*rg.sprMult/12;
     var z1=norm(),z2=norm(),z3=norm(),z4=norm();
     var eqR=rg.eqMu+rg.eqSig*z1;
     var bdR=rg.bdMu+rg.bdSig*(rg.corr*z1+Math.sqrt(1-rg.corr*rg.corr)*z2);
     var benchR=p.eqWeight*eqR+(1-p.eqWeight)*bdR;
     eqRets.push(eqR);benchRets.push(benchR);baseRet.push(benchR);
 
-    /* beta sleeve: futures on the benchmark composite, financed at Rf (embedded) + spread */
-    var betaEx=N*(benchR-rfMo);
-    var fin=-N*sprMo;
-    var roll=-N*rollMo;
-    var basis=N*p.basisSig*z3;
+    /* futures prices embed financing at Rf, so the mark-to-market driver is bench - Rf */
+    var futExc=benchR-rfMo,basisR=p.basisSig*rg.basMult*z3;
 
-    /* collateral yield on the cash not deployed to the alpha sleeve (posted T-bills still earn Rf) */
-    var cash=(1-A)*rfMo;
+    /* Variation margin settles daily, not monthly. Sample the intra-month low of the futures
+       P&L exactly from the Brownian bridge that ends at futExc:
+       min = (R - sqrt(R^2 - 2*sig^2*ln U))/2,  U ~ U(0,1)  (standard bridge-minimum sampler). */
+    var w=p.eqWeight;
+    var vB=w*w*rg.eqSig*rg.eqSig+(1-w)*(1-w)*rg.bdSig*rg.bdSig+2*w*(1-w)*rg.corr*rg.eqSig*rg.bdSig;
+    vB=Math.max(vB,1e-12);
+    var u5=Math.min(Math.max(rng(),1e-12),1-1e-12);
+    var trough=(futExc-Math.sqrt(futExc*futExc-2*vB*Math.log(u5)))/2;
+
+    /* margin test at the intra-month low, with the clearing house raising margin in stress */
+    var imRate=Math.min(p.marginReq*rg.imMult,0.5);
+    var facility=Math.max(0,p.buffer*navPrev);   /* committed one-month credit line, sized to the buffer */
+    var cashLow=cash+nOld*trough,draw=0,tradeCost=0,cut=0,forced=false,call=false;
+    if(cashLow<imRate*nOld/hc-1e-12){
+      call=true;
+      draw=Math.min(imRate*nOld/hc-cashLow,facility);
+      if(cashLow+draw<imRate*nOld/hc-1e-12){
+        forced=true;
+        var maxN=supportable(cashLow+draw,imRate,p.haircut);
+        cut=Math.max(0,nOld-maxN);notional=Math.max(0,nOld-cut);tradeCost+=cut*tcost;
+      }
+    }
+    var nNew=notional,nAvg=(nOld+nNew)/2;
+    /* full notional into the trough, the surviving notional on the way back out */
+    var betaEx=nOld*trough+nNew*(futExc-trough);
+    var fin=-nAvg*sprMo,roll=-nAvg*rollMo,basis=nAvg*basisR;
+
+    /* collateral account: T-bill yield; a negative balance is funded at Rf + spread + 100 bp */
+    var cashInt=cash*rfMo;
+    var liq=(cash<0?cash*(sprMo+0.01/12):0)-draw*(rfMo+sprMo+0.01/12)-tradeCost;
 
     /* alpha sleeve: hedge-fund style stream, gross of fees, then mgmt + perf fee above HWM */
     var decay=Math.max(0,1-p.alphaDecay*(m/12));
@@ -433,25 +493,43 @@ function simulate(p){
     var aEx=aMu+sigMo*rg.aVol*z4;
     var aBeta=p.alphaBeta*rg.aBeta;
     var gross=rfMo+aEx+aBeta*(eqR-rfMo);
-    var navPre=sleeveNav*(1+gross-mgmtMo),perfRet=0,navPost=navPre;
-    if(navPre>hwm){var fee=p.perfFee*(navPre-hwm);perfRet=fee/sleeveNav;navPost=navPre-fee;hwm=navPost;}
-    var netSleeve=navPost/sleeveNav-1;sleeveNav=navPost;
+    var unitPre=sleeveUnit*(1+gross-mgmtMo),perfRet=0,unitPost=unitPre;
+    if(unitPre>hwmUnit){var fee=p.perfFee*(unitPre-hwmUnit);perfRet=fee/sleeveUnit;unitPost=unitPre-fee;hwmUnit=unitPost;}
+    var netSleeve=unitPost/sleeveUnit-1;sleeveUnit=unitPost;
     sleeveRets.push(netSleeve);
-    var alphaGross=A*gross;
-    var fees=-A*(mgmtMo+perfRet+dragMo);
+    var alphaGross=sleeve*gross,fees=-sleeve*(mgmtMo+perfRet+dragMo);
 
-    /* liquidity: this month's variation margin must be met from free cash */
-    var vm=N*benchR;
-    var callShort=Math.max(0,-vm-st.freePos);
-    var liq=-(st.structShort*(rfMo+sprMo)+callShort*(rfMo+sprMo+0.01/12));
-    calls.push(callShort>0);
+    cash=cash+cashInt+betaEx+fin+roll+basis+liq;
+    sleeve=sleeve*(1+netSleeve-dragMo);
 
-    var net=cash+betaEx+fin+roll+basis+alphaGross+fees+liq;
-    paRet.push(net);
-    comp.cash.push(cash);comp.betaEx.push(betaEx);comp.fin.push(fin);comp.roll.push(roll);comp.basis.push(basis);
-    comp.alphaGross.push(alphaGross);comp.fees.push(fees);comp.liq.push(liq);
+    /* month-end re-test: spread, roll and basis bite after the trough */
+    var maxN2=supportable(cash+draw,imRate,p.haircut);
+    if(maxN2<notional-1e-12){
+      call=true;forced=true;
+      var cut2=notional-maxN2;notional=maxN2;
+      var tc2=cut2*tcost;cash-=tc2;liq-=tc2;tradeCost+=tc2;cut+=cut2;
+    }
+    nav=cash+sleeve;
+
+    /* rebalance to target weights only when the sleeve's redemption window opens */
+    if((m+1)%liqEvery===0&&nav>0){
+      var tSleeve=A*nav,tCash=nav-tSleeve;
+      var tN=Math.min(N*nav,supportable(tCash,imRate,p.haircut));
+      var rc=Math.abs(tN-notional)*tcost;
+      notional=tN;sleeve=tSleeve;cash=tCash-rc;liq-=rc;nav=cash+sleeve;
+    }
+    if(nav<1e-6)nav=1e-6;
+
+    paRet.push(nav/navPrev-1);
+    calls.push(call);delevs.push(cut>1e-9);
+    notl.push(navPrev>0?nOld/navPrev:0);
+    cushion.push(nav>0?(cash-imRate*notional/hc)/nav:0);
+    comp.cash.push(cashInt/navPrev);comp.betaEx.push(betaEx/navPrev);comp.fin.push(fin/navPrev);
+    comp.roll.push(roll/navPrev);comp.basis.push(basis/navPrev);
+    comp.alphaGross.push(alphaGross/navPrev);comp.fees.push(fees/navPrev);comp.liq.push(liq/navPrev);
   }
-  return{baseRet:baseRet,paRet:paRet,benchRets:benchRets,eqRets:eqRets,sleeveRets:sleeveRets,regimes:regimes,calls:calls,comp:comp,months:M,st:st};
+  return{baseRet:baseRet,paRet:paRet,benchRets:benchRets,eqRets:eqRets,sleeveRets:sleeveRets,regimes:regimes,
+    calls:calls,delevs:delevs,notl:notl,cushion:cushion,comp:comp,months:M,st:st};
 }
 
 function cumulative(rets){var c=[1];for(var i=0;i<rets.length;i++)c.push(c[c.length-1]*(1+rets[i]));return c;}
@@ -482,6 +560,28 @@ function calcStats(rets,bench,rf){
 }
 
 function annComp(arr){var s=0;for(var i=0;i<arr.length;i++)s+=arr[i];return s/(arr.length/12);}
+
+/* Path uncertainty. The headline chart is ONE draw of a 15-year path; on a 3.3% tracking error
+   the standard error of a 15-year active return is close to 0.9%/y, so a single path says very
+   little. Re-run the same programme on a fixed block of alternative seeds and report the spread.
+   The block is independent of the user's seed, so it does not move when the shown path changes. */
+var SWEEP_N=96,sweepCache={key:null,res:null};
+function seedSweep(p){
+  var key='',k;for(k in p){if(k!=='seed')key+=k+':'+p[k]+';';}
+  if(sweepCache.key===key)return sweepCache.res;
+  var act=[],i,j;
+  for(i=0;i<SWEEP_N;i++){
+    var pp={};for(k in p)pp[k]=p[k];pp.seed=1000+i;
+    var sm=simulate(pp),ex=0,n=sm.months;
+    for(j=0;j<n;j++)ex+=sm.paRet[j]-sm.benchRets[j];
+    act.push(ex/n*12);
+  }
+  act.sort(function(a,b){return a-b;});
+  var win=0;for(i=0;i<act.length;i++)if(act[i]>0)win++;
+  function qt(f){return act[Math.min(act.length-1,Math.max(0,Math.round(f*(act.length-1))))];}
+  var res={n:SWEEP_N,p10:qt(0.10),med:qt(0.50),p90:qt(0.90),win:win/act.length};
+  sweepCache.key=key;sweepCache.res=res;return res;
+}
 
 /* ---------- canvas helpers ---------- */
 function setupCanvas(canvas,h){
@@ -601,13 +701,13 @@ var KPI_TIPS={
 };
 var DECOMP_TIPS={
   'Collateral yield':'(1 - A) x Rf: cash rate earned on the collateral that is not in the alpha sleeve, including the posted margin.',
-  'Beta (index - Rf)':'N x (benchmark - Rf): futures P&L, which already embeds financing at the cash rate.',
+  'Beta (index - Rf)':'Futures P&L, which already embeds financing at the cash rate. It is the notional actually carried times (benchmark - Rf), so it falls short of N x (benchmark - Rf) in any month the programme was forced to de-lever.',
   'Financing spread':'- N x spread: implied futures financing above the cash rate, charged on the whole notional.',
   'Roll cost':'- N x roll execution cost of the quarterly rolls.',
   'Basis noise':'Zero-mean tracking difference between futures and index; its realised sum over the path.',
   'Alpha sleeve gross':'A x (Rf + alpha + beta x (equity - Rf)) before fees; includes the Rf earned inside the sleeve.',
   'Fees & drag':'- A x (management fee + performance fee above the high-water mark + implementation drag).',
-  'Liquidity cost':'Emergency funding of margin-call months (Rf + spread + 100 bp) and of any structural margin shortfall (Rf + spread).'
+  'Liquidity cost':'Draws on the credit line in margin-call months (Rf + spread + 100 bp), funding of any negative collateral balance, and the execution cost of futures traded in forced de-leveraging and at rebalances (5 bp of notional in calm, 20 bp in a crisis).'
 };
 var HEALTH_TIPS={
   'Alpha sleeve vol (net)':'Realised annualised volatility of the net alpha sleeve returns versus the calm-regime target. Regime scaling and the equity beta push it above target; green within 35%.',
@@ -615,18 +715,24 @@ var HEALTH_TIPS={
   'Alpha sleeve net Sharpe':'(12 x mean sleeve return - Rf) / sleeve vol, net of fees. Green above 0.3.',
   'Initial margin posted':'Margin x notional / (1 - haircut), as % of NAV, compared with the cash outside the alpha sleeve. Green if it uses at most 80% of that cash.',
   'Free cash after margin':'Cash outside the alpha sleeve minus posted margin. Green if at or above the liquidity buffer.',
-  'Margin-call months':'Months in which the variation margin (N x benchmark loss) exceeded free cash. Each is funded at Rf + spread + 100 bp for the month. Green if none.',
+  'Margin-call months':'Months in which the intra-month variation-margin drain took the collateral account below the (stress-adjusted) initial-margin requirement. The shortfall is drawn on the committed line at Rf + spread + 100 bp. Green if none.',
+  'Forced de-leveraging months':'Months in which cash plus the credit line could not margin the position and futures notional had to be cut - beta sold at the intra-month low and only restored at the next redemption window. This is the failure mode that closed most 2008-vintage programmes. Green if none.',
+  'Min collateral cushion':'Smallest month-end value of (collateral cash - required initial margin) as % of NAV over the whole path. Green if it never falls below the liquidity buffer.',
+  'Average futures notional':'Mean futures notional actually carried, as % of NAV. Below target means the programme spent time de-levered and did not receive the full benchmark exposure it is measured against.',
   'Regime months':'Crisis and rate-shock months on this path versus the target stress share (green within 10 points).',
-  'Realised basis noise':'Root-mean-square of the basis term in bp of NAV per month, versus N x input.',
-  'Negative alpha months':'Share of months with a negative net sleeve return. Typically 35 to 50% even for skilled managers.'
+  'Realised basis noise':'Root-mean-square of the basis term in bp of NAV per month, versus N x the calm-regime input. It runs above target because basis noise is scaled 3x in a crisis and 1.8x in a rate shock.',
+  'Negative alpha months':'Share of months with a negative net sleeve return. Typically 35 to 50% even for skilled managers.',
+  'Paths beating the benchmark':'Share of the alternative seeds on which the programme\'s 15-year active return was positive. Anything near 50% means the shown path is a coin flip, not evidence of skill.'
 };
 
+HEALTH_TIPS['Active return across '+SWEEP_N+' seeds']='The same programme re-run on '+SWEEP_N+' alternative market paths. The chart above shows one of them; the 10th-to-90th-percentile band is the honest width of the answer. Green if the median path adds value.';
+
 var SCEN=[
-  {name:'Equity crash (Oct-2008 type)',eq:-0.170,bd: 0.015,aShock:-0.045,aBetaX:1.5,tip:'S&P 500 -17%, Treasuries +1.5% (flight to quality). Idiosyncratic alpha shock -4.5% plus 1.5x beta: hedge-fund composites lost about 7% in October 2008.'},
-  {name:'Pandemic shock (Mar-2020 type)',eq:-0.125,bd:-0.005,aShock:-0.060,aBetaX:1.5,tip:'S&P 500 -12.5%, Aggregate -0.5% (dash for cash). Alpha shock -6%: composites lost 8-9% in March 2020; futures basis dislocated.'},
-  {name:'Rate shock (Sep-2022 type)',eq:-0.090,bd:-0.045,aShock:-0.010,aBetaX:1.5,tip:'S&P 500 -9%, Aggregate -4.5%. Both legs of 60/40 fall; alpha shock -1%.'},
-  {name:'Correlation spike',eq:-0.050,bd:-0.020,aShock:-0.015,aBetaX:1.5,tip:'Stocks -5% and bonds -2% together; crowded trades unwind, alpha -1.5%.'},
-  {name:'Mild correction',eq:-0.050,bd: 0.010,aShock:-0.003,aBetaX:1.0,tip:'Ordinary -5% equity pullback with bonds +1%; alpha barely affected.'}
+  {name:'Equity crash (Oct-2008 type)',eq:-0.170,bd: 0.015,aShock:-0.045,aBetaX:1.5,reg:'crisis',tip:'S&P 500 -17%, Treasuries +1.5% (flight to quality). Idiosyncratic alpha shock -4.5% plus 1.5x beta: hedge-fund composites lost about 7% in October 2008.'},
+  {name:'Pandemic shock (Mar-2020 type)',eq:-0.125,bd:-0.005,aShock:-0.060,aBetaX:1.5,reg:'crisis',tip:'S&P 500 -12.5%, Aggregate -0.5% (dash for cash). Alpha shock -6%: composites lost 8-9% in March 2020; futures basis dislocated.'},
+  {name:'Rate shock (Sep-2022 type)',eq:-0.090,bd:-0.045,aShock:-0.010,aBetaX:1.5,reg:'rate',tip:'S&P 500 -9%, Aggregate -4.5%. Both legs of 60/40 fall; alpha shock -1%.'},
+  {name:'Correlation spike',eq:-0.050,bd:-0.020,aShock:-0.015,aBetaX:1.5,reg:'rate',tip:'Stocks -5% and bonds -2% together; crowded trades unwind, alpha -1.5%.'},
+  {name:'Mild correction',eq:-0.050,bd: 0.010,aShock:-0.003,aBetaX:1.0,reg:'calm',tip:'Ordinary -5% equity pullback with bonds +1%; alpha barely affected.'}
 ];
 
 /* ---------- renderers ---------- */
@@ -711,8 +817,8 @@ function renderDecomp(comp){
   canvas._decomp={bars:bars,rowH:rowH,nRows:nRows,rowTop:rowTop};
 }
 
-function renderHealth(sim,p){
-  var n=sim.months,a=sim.sleeveRets,st=sim.st,i;
+function renderHealth(sim,p,paActive){
+  var n=sim.months,a=sim.sleeveRets,st=sim.st,i,sw=seedSweep(p);
   var aMean=0;for(i=0;i<n;i++)aMean+=a[i];aMean/=n;
   var aVar=0;for(i=0;i<n;i++)aVar+=(a[i]-aMean)*(a[i]-aMean);aVar/=(n-1);
   var realVol=Math.sqrt(aVar)*Math.sqrt(12);
@@ -722,9 +828,12 @@ function renderHealth(sim,p){
   var sleeveSharpe=realVol>0?(aMean*12-p.cashRate)/realVol:0;
   var basisSum=0;for(i=0;i<n;i++)basisSum+=sim.comp.basis[i]*sim.comp.basis[i];
   var realBasis=Math.sqrt(basisSum/n)*1e4,tgtBasis=p.basisSig*st.N*1e4;
-  var cr=0,rt=0,mc=0,neg=0;
-  for(i=0;i<n;i++){if(sim.regimes[i]==='crisis')cr++;else if(sim.regimes[i]==='rate')rt++;if(sim.calls[i])mc++;if(a[i]<0)neg++;}
-  var stressShare=(cr+rt)/n;
+  var cr=0,rt=0,mc=0,neg=0,dl=0,nSum=0,minCush=Infinity;
+  for(i=0;i<n;i++){if(sim.regimes[i]==='crisis')cr++;else if(sim.regimes[i]==='rate')rt++;
+    if(sim.calls[i])mc++;if(sim.delevs[i])dl++;if(a[i]<0)neg++;
+    nSum+=sim.notl[i];if(sim.cushion[i]<minCush)minCush=sim.cushion[i];}
+  var stressShare=(cr+rt)/n,avgN=nSum/n;
+  if(!isFinite(minCush))minCush=0;
   var items=[
     {label:'Alpha sleeve vol (net)',val:pct(realVol,1),tgt:'tgt '+pct(p.alphaVol,1),ok:p.alphaVol<=0||Math.abs(realVol-p.alphaVol)/p.alphaVol<0.35},
     {label:'Alpha beta to equities',val:f2(realBeta),tgt:'tgt '+f2(p.alphaBeta),ok:Math.abs(realBeta-p.alphaBeta)<0.15},
@@ -732,9 +841,14 @@ function renderHealth(sim,p){
     {label:'Initial margin posted',val:pct(st.im,1)+' NAV',tgt:'cash '+pct(1-st.A,0),ok:st.im<=0.8*(1-st.A)},
     {label:'Free cash after margin',val:pct(st.free,1),tgt:'buffer '+pct(p.buffer,0),ok:st.free>=p.buffer},
     {label:'Margin-call months',val:mc+' / '+n,tgt:'',ok:mc===0},
+    {label:'Forced de-leveraging months',val:dl+' / '+n,tgt:'',ok:dl===0},
+    {label:'Min collateral cushion',val:pct(minCush,1)+' NAV',tgt:'buffer '+pct(p.buffer,0),ok:minCush>=p.buffer},
+    {label:'Average futures notional',val:pct(avgN,0)+' NAV',tgt:'tgt '+pct(p.betaNotional,0),ok:avgN>=0.98*p.betaNotional},
     {label:'Regime months',val:'crisis '+cr+' · rate '+rt+' ('+pct(stressShare,0)+')',tgt:'tgt '+pct(p.stressFreq,0),ok:Math.abs(stressShare-p.stressFreq)<0.10},
-    {label:'Realised basis noise',val:realBasis.toFixed(1)+' bp/mo',tgt:tgtBasis>0?'tgt '+tgtBasis.toFixed(0)+' bp/mo':'',ok:tgtBasis<=0||Math.abs(realBasis-tgtBasis)/tgtBasis<0.4},
-    {label:'Negative alpha months',val:pct(neg/n,0),tgt:'',ok:neg/n<0.55}
+    {label:'Realised basis noise',val:realBasis.toFixed(1)+' bp/mo',tgt:tgtBasis>0?'calm tgt '+tgtBasis.toFixed(0)+' bp/mo':'',ok:tgtBasis<=0||(realBasis>0.7*tgtBasis&&realBasis<2.2*tgtBasis)},
+    {label:'Negative alpha months',val:pct(neg/n,0),tgt:'',ok:neg/n<0.55},
+    {label:'Active return across '+sw.n+' seeds',val:'p10 '+spct(sw.p10,1)+' \u00b7 med '+spct(sw.med,1)+' \u00b7 p90 '+spct(sw.p90,1),tgt:'this path '+spct(paActive,1),ok:sw.med>0},
+    {label:'Paths beating the benchmark',val:pct(sw.win,0)+' of '+sw.n,tgt:'',ok:sw.win>=0.5}
   ];
   var html='';
   for(i=0;i<items.length;i++){var it=items[i];
@@ -742,41 +856,56 @@ function renderHealth(sim,p){
   document.getElementById('healthBox').innerHTML=html;
 }
 
+/* One-month shock applied to the target structure, using the same collateral machinery as the
+   path simulation: stressed exchange margin, stressed financing, the credit line, then forced
+   de-leveraging when cash plus the line can no longer margin the position. */
 function renderStress(p){
-  var st=structure(p),N=st.N,A=st.A,rfMo=p.cashRate/12,sprMo=p.finSpread/12,html='';
-  for(var i=0;i<SCEN.length;i++){var s=SCEN[i];
+  var st=structure(p),N=st.N,A=st.A,rfMo=p.cashRate/12,hc=Math.max(1-p.haircut,0.01),html='';
+  for(var i=0;i<SCEN.length;i++){var s=SCEN[i],rg=REG[s.reg],tcost=TRADE_COST[s.reg]||0.0005;
     var bench=p.eqWeight*s.eq+(1-p.eqWeight)*s.bd;
-    var cash=(1-A)*rfMo,betaEx=N*(bench-rfMo),fin=-N*sprMo,roll=-N*p.rollCost/12,basis=-N*p.basisSig;
+    var sprMo=p.finSpread*rg.sprMult/12,imRate=Math.min(p.marginReq*rg.imMult,0.5);
+    var cash0=1-A,vm=N*(bench-rfMo),reqIM=imRate*N/hc;
+    var cashLow=cash0+vm,draw=0,cut=0,nNew=N,forced=false,call=false;
+    if(cashLow<reqIM-1e-12){
+      call=true;draw=Math.min(reqIM-cashLow,p.buffer);
+      if(cashLow+draw<reqIM-1e-12){forced=true;nNew=supportable(cashLow+draw,imRate,p.haircut);cut=Math.max(0,N-nNew);}
+    }
+    var nAvg=(N+nNew)/2;
+    var cash=cash0*rfMo,betaEx=N*(bench-rfMo);            /* the shock IS the intra-month low */
+    var fin=-nAvg*sprMo,roll=-nAvg*p.rollCost/12,basis=-nAvg*p.basisSig*rg.basMult;
     var gross=rfMo+s.aShock+p.alphaBeta*s.aBetaX*(s.eq-rfMo);
     var sleeveNet=gross-p.mgmtFee/12;                      /* no performance fee in a losing month */
     var drag=-A*p.drag/12;
-    var vm=N*bench,callShort=Math.max(0,-vm-st.freePos);
-    var liq=-(st.structShort*(rfMo+sprMo)+callShort*(rfMo+sprMo+0.01/12));
+    var liq=-(st.structShort*(rfMo+sprMo)+draw*(rfMo+sprMo+0.01/12)+cut*tcost);
     var pa=cash+betaEx+fin+roll+basis+A*sleeveNet+drag+liq,delta=pa-bench;
     var dc=delta>0.001?'delta-pos':delta<-0.001?'delta-neg':'delta-neut';
     var note,cls='';
     if(vm>=0)note='No variation margin due';
-    else if(callShort>0){note='VM call '+pct(-vm,1)+' of NAV exceeds free cash by '+pct(callShort,1)+' → emergency funding';cls=' class="call"';}
-    else note='VM call '+pct(-vm,1)+' of NAV, covered by free cash ('+pct(st.freePos,1)+')';
+    else if(forced)note='VM '+pct(-vm,1)+' + margin raised to '+pct(imRate,1)+' → notional cut to '+pct(nNew,0)+' NAV (beta sold at the low)';
+    else if(call)note='VM '+pct(-vm,1)+' takes cash below margin; '+pct(draw,1)+' drawn on the credit line';
+    else note='VM '+pct(-vm,1)+' of NAV met from cash; cushion left '+pct(cashLow-reqIM,1);
+    if(forced)cls=' class="call"';else if(call)cls=' class="call"';
     html+='<tr><td data-tip="'+esc(s.tip)+'">'+s.name+'</td><td>'+pct(bench,1)+'</td><td>'+pct(pa,1)+'</td><td class="'+dc+'">'+spct(delta,1)+'</td><td'+cls+'>'+note+'</td></tr>';}
   document.getElementById('stressBody').innerHTML=html;
 }
 
 function renderStatus(sim,p,ms){
-  var cr=0,rt=0,mc=0;
-  for(var i=0;i<sim.months;i++){if(sim.regimes[i]==='crisis')cr++;else if(sim.regimes[i]==='rate')rt++;if(sim.calls[i])mc++;}
+  var cr=0,rt=0,mc=0,dl=0;
+  for(var i=0;i<sim.months;i++){if(sim.regimes[i]==='crisis')cr++;else if(sim.regimes[i]==='rate')rt++;
+    if(sim.calls[i])mc++;if(sim.delevs[i])dl++;}
   document.getElementById('statusBar').innerHTML=[
     'seed <b>'+p.seed+'</b>','<b>'+sim.months+'</b> mo / 15 yr',
     'crisis <b>'+cr+'</b> mo · rate <b>'+rt+'</b> mo',
     'eq/bond <b>'+Math.round(p.eqWeight*100)+'/'+Math.round((1-p.eqWeight)*100)+'</b>',
     'N <b>'+Math.round(p.betaNotional*100)+'%</b>','A <b>'+Math.round(p.alphaAlloc*100)+'%</b> @ '+(p.alphaVol*100).toFixed(1)+'% vol',
-    'margin calls <b class="'+(mc?'warn':'ok')+'">'+mc+'</b>','sim <b>'+ms+' ms</b>'
+    'margin calls <b class="'+(mc?'warn':'ok')+'">'+mc+'</b>',
+    'forced de-lever <b class="'+(dl?'warn':'ok')+'">'+dl+'</b>','sim <b>'+ms+' ms</b>'
   ].join(' · ');
 }
 
 /* ---------- inputs ---------- */
 var DEFAULTS={seed:42,cashRate:4.0,stressFreq:15,eqWeight:60,betaNotional:100,financingSpread:35,rollCost:5,basisNoise:10,
-  alphaAlloc:50,alphaVol:6,alphaIR:1.00,alphaBeta:0.15,mgmtFee:1.5,perfFee:20,alphaDecay:1.0,slippage:15,marginReq:8,haircut:2,collateralBuffer:5};
+  alphaAlloc:50,alphaVol:6,alphaIR:1.00,alphaBeta:0.15,mgmtFee:1.5,perfFee:20,alphaDecay:1.0,slippage:15,marginReq:6,haircut:2,collateralBuffer:5,sleeveLiq:3};
 
 function getParams(){
   function v(id){var el=document.getElementById(id),d=DEFAULTS[id];if(!el)return d;var x=parseFloat(el.value);if(isNaN(x))return d;
@@ -787,7 +916,7 @@ function getParams(){
     finSpread:v('financingSpread')/1e4,rollCost:v('rollCost')/1e4,basisSig:v('basisNoise')/1e4,
     alphaAlloc:v('alphaAlloc')/100,alphaVol:v('alphaVol')/100,alphaIR:v('alphaIR'),alphaBeta:v('alphaBeta'),
     mgmtFee:v('mgmtFee')/100,perfFee:v('perfFee')/100,alphaDecay:v('alphaDecay')/100,drag:v('slippage')/1e4,
-    marginReq:v('marginReq')/100,haircut:v('haircut')/100,buffer:v('collateralBuffer')/100
+    marginReq:v('marginReq')/100,haircut:v('haircut')/100,buffer:v('collateralBuffer')/100,sleeveLiq:v('sleeveLiq')
   };
 }
 
@@ -807,7 +936,7 @@ function runAll(){
                 {data:paS.ddSeries,color:'rgba(16,185,129,0.6)',label:'Portable alpha',fill:true,fillColor:'rgba(16,185,129,0.08)'}],
       nPoints:baseS.ddSeries.length,regimes:sim.regimes,yFmt:function(v){return(v*100).toFixed(0)+'%';},forceZero:true,height:300,yLabel:'Drawdown from peak (%)',xLabel:'Years'
     });
-    renderKPIs(baseS,paS);renderDecomp(sim.comp);renderHealth(sim,p);renderStress(p);
+    renderKPIs(baseS,paS);renderDecomp(sim.comp);renderHealth(sim,p,paS.active);renderStress(p);
     renderStatus(sim,p,(performance.now()-t0).toFixed(0));
   }catch(err){
     var s=document.getElementById('statusBar');
