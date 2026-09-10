@@ -187,7 +187,7 @@ body{line-height:1.5}
 </div>
 
 <div class="page">
-<p class="demo-sub"><b>Mean&ndash;variance optimisation over an eight-asset endowment universe.</b> The covariance matrix is built as <b>&Sigma; = D&nbsp;C&nbsp;D</b> from capital-market assumptions (annual vols on the diagonal of D, a positive semi-definite correlation matrix C), so it is PSD by construction. The efficient frontier is solved numerically &mdash; minimum variance for each level of expected return under long-only, per-asset cap and endowment policy-band constraints &mdash; and every risk number comes from a seeded 200-path &times; 15-year Monte-Carlo simulation of the same assumptions.</p>
+<p class="demo-sub"><b>How an endowment actually sizes private assets.</b> The illiquidity budget is set first, from spending and liquidity needs, and the optimiser then works inside it. Private marks are de-smoothed before they enter the covariance matrix, and each asset class carries an investment-policy range, so the solver cannot park the fund in whatever has the best reported Sharpe. The adopted portfolio is the lowest-risk mix that still clears spending plus inflation.</p>
 
 <div class="grid">
   <!-- CONTROLS -->
@@ -198,10 +198,16 @@ body{line-height:1.5}
       <div class="ctrl-hint">Drives the 200-path Monte Carlo and the random cloud. Same seed = identical output.</div>
       <div class="ctrl-row"><label>Risk-free rate <input type="range" class="d-range" id="rf" min="0" max="8" step="0.25" value="3.75"> <span class="ctrl-val" id="rfVal">3.75%</span></label></div>
       <div class="ctrl-hint">Cash returns this rate; it is the Sharpe / Sortino hurdle.</div>
+      <div class="ctrl-row"><label>Illiquidity budget <input type="range" class="d-range" id="illiqB" min="0" max="45" step="1" value="28"> <span class="ctrl-val" id="illiqBVal">28%</span></label></div>
+      <div class="ctrl-hint">The allocation decision that actually comes first. Private equity and real estate count in full, hedge funds at 50% for gates and lock-ups. Set from liquidity needs, then optimise inside it &mdash; not the other way round.</div>
+      <div class="ctrl-row"><label>Spending rate <input type="range" class="d-range" id="spend" min="2" max="7" step="0.25" value="4.5"> <span class="ctrl-val" id="spendVal">4.5%</span></label></div>
+      <div class="ctrl-hint">Annual draw. Drives the liquidity-coverage test: the daily-liquid sleeve must fund spending and capital calls through a closed market.</div>
       <div class="ctrl-row"><label><input type="checkbox" id="policyBands" checked> Endowment policy bands</label></div>
-      <div class="ctrl-hint">Cash &le; 5% &middot; growth assets &ge; 50% &middot; illiquid (PE + real estate) &le; 50%. Uncheck for long-only + cap only.</div>
+      <div class="ctrl-hint">Cash &le; 5% &middot; listed equity &ge; 30% &middot; growth assets &ge; 50%, alongside the illiquidity budget. Uncheck for long-only + cap only.</div>
+      <div class="ctrl-row"><label><input type="checkbox" id="desmooth" checked> De-smooth private marks</label></div>
+      <div class="ctrl-hint">Appraisal marks are autocorrelated, which understates private risk and correlation. Untick to optimise on reported vols: the same spending hurdle then appears to cost about 9.8% volatility at a 0.32 Sharpe instead of 12.1% at 0.25. The portfolio has not become safer, only the inputs have.</div>
       <div class="ctrl-row"><label>Max weight <input type="range" class="d-range" id="maxW" min="0.15" max="0.60" step="0.05" value="0.35"> <span class="ctrl-val" id="maxWVal">35%</span></label></div>
-      <div class="ctrl-hint">Per-asset cap. Below 1/8 = 12.5% no portfolio could sum to 100%, so the floor is 15%.</div>
+      <div class="ctrl-hint">A hard ceiling applied on top of the policy ranges. With bands on, each class also has its own IPS minimum and maximum (listed equity 15&ndash;40 / 5&ndash;20 / 0&ndash;12%, PE 0&ndash;25%, HF 0&ndash;20%, real estate 0&ndash;12%, Treasuries 5&ndash;30%, cash 0&ndash;5%).</div>
       <div class="ctrl-row"><label>Target vol <input type="range" class="d-range" id="targetVol" min="5" max="18" step="0.5" value="11"> <span class="ctrl-val" id="targetVolVal">11%</span></label></div>
       <div class="ctrl-hint">The frontier point closest to this annualised volatility.</div>
       <div class="ctrl-btns">
@@ -357,7 +363,7 @@ body{line-height:1.5}
       </div>
       <div class="d-help-section">
         <h3>4 &middot; Constraints</h3>
-        <p>Always on: long-only and a per-asset cap. With <strong>endowment policy bands</strong> ticked the feasible set also requires cash &le; 5% (cash drag), growth assets (public equity + private equity + real estate) &ge; 50% (spending-rate requirement) and illiquid assets (private equity + real estate) &le; 50% (liquidity risk). The cloud, the frontier and all three optima share one feasible set, so they are directly comparable. Manually dragged weights are only held to long-only, the cap and the cash limit &mdash; the weights panel flags any policy band you breach.</p>
+        <p>Always on: long-only, a per-asset ceiling, and the <strong>illiquidity budget</strong>, which weights private equity and real estate at 1.0 and hedge funds at 0.5 for gates and lock-ups. With <strong>policy bands</strong> ticked each class also carries its own IPS range and the portfolio must hold at least 30% listed equity and 50% growth assets. Floors are clipped automatically if a tight ceiling or a small budget would otherwise make the feasible set empty. All of these sets are convex, so the solver reaches the intersection by alternating projections: an exact projection onto the box with per-class minimums and maximums, and Euclidean projections onto each halfspace.</p>
       </div>
       <div class="d-help-section">
         <h3>5 &middot; Monte Carlo and risk metrics</h3>
@@ -415,7 +421,7 @@ body{line-height:1.5}
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A constrained mean&ndash;variance optimizer over an eight-asset endowment universe. Capital-market assumptions (expected return, volatility, correlation) define a covariance matrix &Sigma; = D&nbsp;C&nbsp;D that is positive semi-definite by construction. The efficient frontier is solved numerically by projected gradient ascent on <code>&lambda;&mu;&#39;w &minus; w&#39;&Sigma;w</code> across a sweep of risk-aversion levels &lambda;, subject to long-only, a per-asset cap and endowment policy bands, and is drawn against a cloud of 1,400 random feasible portfolios that it dominates by construction. The same assumptions drive a seeded 200-path &times; 180-month log-normal Monte Carlo used for drawdown, VaR, CVaR and downside deviation, plus a four-scenario historical stress replay and a weight-implied factor decomposition.</p>
+        <p>A constrained mean&ndash;variance optimizer over an eight-asset endowment universe, set up the way an investment committee actually runs the decision rather than as a textbook exercise. Three things follow from that. The <strong>illiquidity budget is an input, not an output</strong>: it is chosen from spending and liquidity needs and the optimiser solves inside it. <strong>Private marks are de-smoothed</strong> before they reach the covariance matrix, using the reported series' own autocorrelation, because appraisal-based volatility understates economic risk and would otherwise flatter every private allocation. And <strong>each class carries an investment-policy range</strong>, since no committee hands a solver a single global cap and accepts whatever corner it finds. The portfolio presented as adopted is the least-risk point on the frontier that still clears spending plus assumed inflation, which is the hurdle a perpetual pool has to beat to hold its purchasing power.</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
@@ -443,7 +449,10 @@ body{line-height:1.5}
           <li>Point-estimate CMAs with no estimation error: mean&ndash;variance optimizers are notoriously sensitive to &mu;, and no resampling, shrinkage or Black&ndash;Litterman prior is applied here.</li>
           <li>Gaussian copula with log-normal marginals: no fat tails, no correlation breakdown in crises. The stress panel exists precisely because the Monte Carlo cannot produce those events.</li>
           <li>Private equity and real estate are modelled as liquid, monthly-priced sleeves. Capital calls, J-curves, lock-ups, secondary discounts and the denominator effect are not modelled.</li>
-          <li>No fees, carry, taxes, transaction costs, rebalancing bands or spending policy; monthly rebalancing is assumed free and instantaneous.</li>
+          <li>Capital-market assumptions are long-horizon point estimates entered by hand, not estimated from data, and mean&ndash;variance is highly sensitive to the return inputs. The policy ranges exist partly to contain that sensitivity.</li>
+          <li>No fees, carry, taxes or transaction costs. Rebalancing is assumed free, instantaneous and monthly, which flatters every allocation that drifts.</li>
+          <li>Capital calls and distributions are not modelled as cash flows. The illiquidity budget is a stock constraint; a real pacing model would also test unfunded commitments through a denominator-effect drawdown.</li>
+          <li>De-smoothing uses a first-order autocorrelation adjustment. It is the standard correction, not a precise one, and the true economic volatility of private assets is unobservable.</li>
           <li>Stress shocks are fixed historical index moves applied instantaneously to today&#39;s weights, with no path, no rebalancing and no liquidity constraint.</li>
         </ul>
       </div>
@@ -473,7 +482,7 @@ const CLASS=['eq','eq','eq','alt','alt','alt','fi','cash-row'];
 const CLASS_LABEL=['Public equity','Public equity','Public equity','Private equity','Absolute return','Real assets','Fixed income','Cash'];
 const N=8, T=180, PATHS=200;
 const W_BM=[.6,0,0,0,0,0,.4,0];
-const DEFAULT_W=[.18,.12,.07,.18,.16,.09,.17,.03];
+const DEFAULT_W=[.24,.13,.06,.15,.14,.06,.19,.03];  // listed equity 43%, illiquidity 28%   // listed equity 43%, illiquidity 28% = the default budget
 
 // stress shocks: peak-to-trough index moves, per asset, per scenario
 const STRESS=[
@@ -497,7 +506,7 @@ const FLOAD=[
 const TSY_DUR=6.0;
 
 const APP={
-  state:{seed:100,rf:.0375,policy:true,maxW:.35,targetVol:.11,
+  state:{seed:100,rf:.0375,policy:true,maxW:.35,targetVol:.11,illiq:.28,spend:.045,desmooth:true,
     weights:DEFAULT_W.slice(),
     locked:Array(N).fill(false),lastOpt:null},
   data:null,optResults:null,frontierData:null,drawdownData:null,fcache:null,tvGap:0
@@ -511,7 +520,34 @@ function rng32(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>
 // Private-equity and real-estate vols are de-smoothed (reported appraisal series
 // show roughly half of this, which would make the optimiser over-allocate).
 const MU_CMA=[.068,.072,.079,.094,.056,.066,.044,null];   // null = cash, uses Rf
-const VOL_CMA=[.160,.175,.215,.230,.075,.180,.055,.008];
+
+// Reported volatility, i.e. what the published index actually prints. For private
+// equity and real estate that series is appraisal-based and heavily smoothed, so it
+// materially understates economic risk.
+const VOL_REPORTED=[.160,.175,.215,.145,.055,.115,.055,.008];
+// First-order autocorrelation of the reported series. Zero for genuinely
+// marked-to-market assets; high for quarterly appraisal marks.
+const AUTOCORR=[0,0,0,.45,.30,.65,0,0];
+// Geltner / Getmansky-style unsmoothing: sigma_true = sigma_reported * sqrt((1+rho)/(1-rho)).
+// Private equity .145 -> .235, real estate .115 -> .250, hedge funds .055 -> .075.
+function volVec(desmooth){
+  return VOL_REPORTED.map(function(v,i){
+    return desmooth ? v*Math.sqrt((1+AUTOCORR[i])/(1-AUTOCORR[i])) : v;
+  });
+}
+// Smoothing also hides co-movement. CORR below is the economic matrix; with
+// de-smoothing off, private-vs-public correlations are damped the way the
+// reported series would show them.
+const PRIV_I=[3,4,5], PUB_I=[0,1,2,6];
+function corrMat(desmooth){
+  if(desmooth) return CORR;
+  const C=CORR.map(function(r){return r.slice()});
+  for(var a=0;a<PRIV_I.length;a++)for(var b=0;b<PUB_I.length;b++){
+    var i=PRIV_I[a], j=PUB_I[b];
+    C[i][j]=C[j][i]=CORR[i][j]*0.62;
+  }
+  return C;
+}
 const CORR=[
   [1.00,0.85,0.74,0.72,0.72,0.60,0.05,0.00],
   [0.85,1.00,0.80,0.68,0.72,0.58,0.05,0.00],
@@ -528,11 +564,12 @@ function genData(seed){
   const bm=()=>{const u=Math.max(1e-10,rng()),v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
 
   const mu_a=MU_CMA.map((m,i)=>m===null?APP.state.rf:m);
-  const vol_a=VOL_CMA.slice();
+  const vol_a=volVec(APP.state.desmooth);
+  const C=corrMat(APP.state.desmooth);
 
   // Cholesky of the correlation matrix (it is PSD, min eigenvalue ~0.14)
   const L=[];
-  for(let i=0;i<N;i++){L[i]=[];for(let j=0;j<=i;j++){let s=0;for(let k=0;k<j;k++)s+=L[i][k]*L[j][k];L[i][j]=i===j?Math.sqrt(Math.max(1e-12,CORR[i][i]-s)):(CORR[i][j]-s)/(L[j][j]||1e-12)}for(let j=i+1;j<N;j++)L[i][j]=0}
+  for(let i=0;i<N;i++){L[i]=[];for(let j=0;j<=i;j++){let s=0;for(let k=0;k<j;k++)s+=L[i][k]*L[j][k];L[i][j]=i===j?Math.sqrt(Math.max(1e-12,C[i][i]-s)):(C[i][j]-s)/(L[j][j]||1e-12)}for(let j=i+1;j<N;j++)L[i][j]=0}
 
   // log-normal marginals calibrated so that E[r_month] = mu/12 exactly
   const mu_m=mu_a.map(m=>Math.log(1+m/12));
@@ -552,7 +589,7 @@ function genData(seed){
 
   // Sigma = D C D is positive semi-definite because C is
   const Sigma=[];
-  for(let i=0;i<N;i++){Sigma[i]=[];for(let j=0;j<N;j++)Sigma[i][j]=CORR[i][j]*vol_a[i]*vol_a[j]}
+  for(let i=0;i<N;i++){Sigma[i]=[];for(let j=0;j<N;j++)Sigma[i][j]=C[i][j]*vol_a[i]*vol_a[j]}
   return{returns:rets,panel,mu:mu_a,Sigma};
 }
 
@@ -562,18 +599,47 @@ function simplex(w){const w2=w.map(v=>Math.max(0,v));const s=w2.reduce((a,b)=>a+
 // endowment policy bands
 const CASH_I=7, MAX_CASH=.05;
 const EQ_I=[0,1,2];                            // listed public equity
-const GROWTH_I=[0,1,2,3,5], MIN_GROWTH=.50;    // public equity + private equity + real estate
-const ILLIQ_I=[3,5], MAX_ILLIQ=.50;            // private equity + real estate
+const A_EQ=[1,1,1,0,0,0,0,0];                  // listed-equity floor
+const A_GROWTH=[1,1,1,1,0,1,0,0];              // growth floor
+// Illiquidity weights: private equity and real estate lock capital outright,
+// hedge funds carry gates and lock-ups so they count half.
+const ILLIQ_W=[0,0,0,1,.5,1,0,0];
+// Daily-liquid sleeve used for the spending-coverage test.
+const LIQUID_I=[0,1,2,6,7];
+const MIN_EQ_TARGET=.30, MIN_GROWTH_TARGET=.50;
+// An endowment does not maximise Sharpe. It has to out-earn its own spending
+// plus inflation to keep purchasing power flat, and then takes the least risk
+// that clears that hurdle. This is the portfolio a committee actually adopts.
+const ASSUMED_INFLATION=.023;
+function requiredReturn(){return APP.state.spend+ASSUMED_INFLATION}
+// Floors have to stay reachable: with a tight per-asset cap and a small
+// illiquidity budget an unguarded floor makes the feasible set empty.
+function eqFloor(mxW){return Math.min(MIN_EQ_TARGET, IPS_HI[0]+IPS_HI[1]+IPS_HI[2], 3*mxW-0.01)}
+function growthFloor(mxW,budget){return Math.min(MIN_GROWTH_TARGET, 3*mxW+Math.min(budget,2*mxW)-0.02)}
 
-function capVec(mxW,pol){const c=[];for(let i=0;i<N;i++)c[i]=(pol&&i===CASH_I)?Math.min(mxW,MAX_CASH):mxW;return c}
+// Investment-policy ranges, the way a real IPS is written: a minimum and a
+// maximum per asset class, not one global cap. Without per-class maxima an
+// optimiser parks at whatever has the best Sharpe, which in this universe is
+// hedge funds and private equity, and listed equity collapses to its floor.
+const IPS_LO=[.15,.05,.00,.00,.00,.03,.05,.00];   // real assets carry a 3% floor: inflation protection is a policy requirement, not an optimiser output
+const IPS_HI=[.40,.20,.12,.25,.20,.12,.30,.05];
+function boxVec(mxW,pol){
+  const lo=[],hi=[];
+  for(let i=0;i<N;i++){
+    if(pol){ lo[i]=Math.min(IPS_LO[i],mxW); hi[i]=Math.min(mxW,IPS_HI[i]); }
+    else   { lo[i]=0; hi[i]=(i===CASH_I)?Math.min(mxW,MAX_CASH):mxW; }
+    if(hi[i]<lo[i])hi[i]=lo[i];
+  }
+  return{lo:lo,hi:hi};
+}
 
-// exact Euclidean projection onto {0 <= w_i <= cap_i, sum w = 1}: bisection on the shift
-function projCap(x,cap){
-  let lo=Math.min.apply(null,x)-1.5,hi=Math.max.apply(null,x);
-  const f=th=>{let s=0;for(let i=0;i<N;i++)s+=Math.min(cap[i],Math.max(0,x[i]-th));return s};
-  for(let k=0;k<70;k++){const m=(lo+hi)/2;if(f(m)>1)lo=m;else hi=m}
-  const th=(lo+hi)/2;
-  return x.map((v,i)=>Math.min(cap[i],Math.max(0,v-th)));
+// exact Euclidean projection onto {lo_i <= w_i <= hi_i, sum w = 1}: bisection on the shift
+function projBox(x,lo,hi){
+  let a=Math.min.apply(null,x)-2,b=Math.max.apply(null,x)+2;
+  const f=th=>{let s=0;for(let i=0;i<N;i++)s+=Math.min(hi[i],Math.max(lo[i],x[i]-th));return s};
+  for(let k=0;k<80;k++){const m=(a+b)/2;if(f(m)>1)a=m;else b=m}
+  const th=(a+b)/2;
+  return x.map((v,i)=>Math.min(hi[i],Math.max(lo[i],v-th)));
 }
 // projection onto a group budget constraint (sum over idx >= / <= target), sum-preserving
 function projGroup(w,idx,target,dir){
@@ -584,30 +650,41 @@ function projGroup(w,idx,target,dir){
   const inS=Array(N).fill(false);idx.forEach(i=>inS[i]=true);
   return w.map((v,i)=>inS[i]?v+d:v-e);
 }
-function feasible(w,mxW,pol){
-  for(let i=0;i<N;i++)if(w[i]<-1e-7||w[i]>mxW+1e-7)return false;
+function dot(a,w){let t=0;for(let i=0;i<N;i++)t+=a[i]*w[i];return t}
+// Euclidean projection onto a halfspace a'w <= b (or >= b). Convex, so
+// alternating these with the capped simplex converges.
+function projLE(w,a,b){const s=dot(a,w);if(s<=b+1e-12)return w;const nn=dot(a,a)||1,k=(s-b)/nn;return w.map((v,i)=>v-k*a[i])}
+function projGE(w,a,b){const s=dot(a,w);if(s>=b-1e-12)return w;const nn=dot(a,a)||1,k=(b-s)/nn;return w.map((v,i)=>v+k*a[i])}
+function illiqUsed(w){return dot(ILLIQ_W,w)}
+function liquidShare(w){return LIQUID_I.reduce((a,i)=>a+w[i],0)}
+function feasible(w,mxW,pol,budget){
+  const B=boxVec(mxW,pol);
+  for(let i=0;i<N;i++)if(w[i]<B.lo[i]-1e-7||w[i]>B.hi[i]+1e-7)return false;
   if(Math.abs(w.reduce((a,b)=>a+b,0)-1)>1e-6)return false;
+  if(illiqUsed(w)>budget+1e-6)return false;      // budget binds with or without bands
   if(!pol)return true;
-  if(w[CASH_I]>MAX_CASH+1e-6)return false;
-  if(GROWTH_I.reduce((a,i)=>a+w[i],0)<MIN_GROWTH-1e-6)return false;
-  if(ILLIQ_I.reduce((a,i)=>a+w[i],0)>MAX_ILLIQ+1e-6)return false;
+  if(dot(A_EQ,w)<eqFloor(mxW)-1e-6)return false;
+  if(dot(A_GROWTH,w)<growthFloor(mxW,budget)-1e-6)return false;
   return true;
 }
 // full feasible set: alternating projections (all sets convex, so this converges)
-function projOpt(w,mxW,pol){
-  const cap=capVec(mxW,pol);
-  let x=projCap(w,cap);
-  if(!pol)return x;
-  for(let it=0;it<40;it++){
-    if(feasible(x,mxW,pol))break;
-    x=projGroup(x,ILLIQ_I,MAX_ILLIQ,-1);
-    x=projGroup(x,GROWTH_I,MIN_GROWTH,1);
-    x=projCap(x,cap);
+function projOpt(w,mxW,pol,budget){
+  if(budget===undefined)budget=APP.state.illiq;
+  const B=boxVec(mxW,pol);
+  let x=projBox(w,B.lo,B.hi);
+  for(let it=0;it<80;it++){
+    if(feasible(x,mxW,pol,budget))break;
+    x=projLE(x,ILLIQ_W,budget);
+    if(pol){
+      x=projGE(x,A_EQ,eqFloor(mxW));
+      x=projGE(x,A_GROWTH,growthFloor(mxW,budget));
+    }
+    x=projBox(x,B.lo,B.hi);
   }
   return x;
 }
 // user-set weights only honour long-only, the per-asset cap and the cash cap
-function projW(w,mxW,pol){return projCap(w,capVec(mxW,pol))}
+function projW(w,mxW,pol){const B=boxVec(mxW,pol);return projBox(w,B.lo,B.hi)}
 
 function portMu(w,mu){return w.reduce((s,v,i)=>s+v*mu[i],0)}
 function portVol(w,S){let v=0;for(let i=0;i<N;i++)for(let j=0;j<N;j++)v+=w[i]*S[i][j]*w[j];return Math.sqrt(Math.max(0,v))}
@@ -742,7 +819,7 @@ function randomCloud(mu,S,mxW,pol,seed,n){
 // frontier + random cloud, cached: they only depend on seed, Rf, cap and the policy flag
 function buildFrontier(){
   const{mu,Sigma}=APP.data,st=APP.state;
-  const key=st.seed+'|'+st.rf+'|'+st.maxW+'|'+st.policy;
+  const key=st.seed+'|'+st.rf+'|'+st.maxW+'|'+st.policy+'|'+st.illiq+'|'+st.desmooth;
   if(APP.fcache&&APP.fcache.key===key)return APP.fcache;
   const pts=randomCloud(mu,Sigma,st.maxW,st.policy,st.seed+888,1400);
   const K=48,LAM_MAX=9,cand=[];
@@ -768,7 +845,13 @@ function optimize(){
   let tvP=curve[0],bd=1e9;
   curve.forEach(p=>{const d=Math.abs(p.v/100-tv);if(d<bd){bd=d;tvP=p}});
   APP.tvGap=tvP.v/100-tv;
-  return{minVar,maxSharpe:ms.w,targetVol:tvP.w};
+  // Lowest-risk point on the frontier that still clears spending + inflation.
+  const req=requiredReturn();
+  let pol=null;
+  curve.forEach(p=>{if(p.r>=req-1e-9&&(!pol||p.v<pol.v))pol=p});
+  APP.hurdleMet=!!pol;
+  if(!pol){pol=curve[curve.length-1];}   // hurdle unreachable: show the highest-return point
+  return{minVar,maxSharpe:ms.w,targetVol:tvP.w,policy:pol.w};
 }
 
 // --- DRAW: GROWTH PATH ---
@@ -1000,11 +1083,16 @@ function render(){
   document.getElementById('statusSeed').textContent=APP.state.seed;
   document.getElementById('statusRf').textContent=F(rf*100);
   document.getElementById('statusMaxW').textContent=Math.round(APP.state.maxW*100)+'%';
-  document.getElementById('statusLast').textContent=(APP.state.lastOpt?APP.state.lastOpt+' applied':'Ready')+' · bands '+(APP.state.policy?'on':'off');
+  document.getElementById('statusLast').textContent=(APP.state.lastOpt?APP.state.lastOpt+' applied':'Ready')+' · illiq '+(illiqUsed(APP.state.weights)*100).toFixed(0)+'/'+Math.round(APP.state.illiq*100)+'% · bands '+(APP.state.policy?'on':'off');
 
   // Sync control displays
   document.getElementById('rfVal').textContent=F(rf*100)+'%';
   document.getElementById('maxWVal').textContent=Math.round(APP.state.maxW*100)+'%';
+  document.getElementById('illiqBVal').textContent=Math.round(APP.state.illiq*100)+'%';
+  document.getElementById('spendVal').textContent=(APP.state.spend*100).toFixed(2).replace(/0$/,'')+'%';
+  document.getElementById('illiqB').value=Math.round(APP.state.illiq*100).toString();
+  document.getElementById('spend').value=(APP.state.spend*100).toString();
+  document.getElementById('desmooth').checked=APP.state.desmooth;
   document.getElementById('targetVolVal').textContent=(APP.state.targetVol*100).toFixed(1)+'%';
   document.getElementById('rf').value=(rf*100).toString();
   document.getElementById('maxW').value=APP.state.maxW.toString();
@@ -1073,13 +1161,13 @@ function render(){
   const od=document.getElementById('optResults');
   const tvTarget=Math.round(APP.state.targetVol*100);
   const tvNote=Math.abs(APP.tvGap)>.005?' — closest attainable, target not feasible':'';
-  const optDesc={'Min Variance':'Lowest variance in the feasible set','Max Sharpe':'Tangency portfolio at Rf = '+F(rf*100)+'%','Target Vol':'Frontier point nearest '+tvTarget+'% vol'+tvNote};
+  const optDesc={'Policy Portfolio':'Least risk that still clears '+(requiredReturn()*100).toFixed(2).replace(/0$/,'')+'% = '+(APP.state.spend*100).toFixed(2).replace(/0$/,'')+'% spending + '+(ASSUMED_INFLATION*100).toFixed(1)+'% inflation'+(APP.hurdleMet?'':' — UNREACHABLE, showing the highest-return portfolio'),'Min Variance':'Lowest variance in the feasible set','Max Sharpe':'Tangency portfolio at Rf = '+F(rf*100)+'%','Target Vol':'Frontier point nearest '+tvTarget+'% vol'+tvNote};
   if(APP.optResults){
     od.innerHTML=APP.optResults.map((r,i)=>{
       const applied=w.every((v,j)=>Math.abs(v-r.w[j])<.001);
-      const rec=r.name==='Max Sharpe';
+      const rec=r.name==='Policy Portfolio';
       return'<div class="opt-result'+(rec?' recommended':'')+'" data-idx="'+i+'">'+
-        '<div class="name">'+r.name+(rec?'<span class="badge">Best Sharpe</span>':'')+
+        '<div class="name">'+r.name+(rec?'<span class="badge">Adopted</span>':'')+
         (applied?' <span style="color:var(--green);font-size:.65rem">&#10003; Applied</span>':'')+
         '</div><div class="vals">Ret '+(r.ret>=0?'+':'')+P(r.ret)+' · Vol '+F(r.vol*100)+'% · Sharpe '+F(r.sharpe)+
         '</div><div style="font-size:.62rem;color:var(--faint);margin-top:2px">'+(optDesc[r.name]||'')+'</div></div>';
@@ -1092,8 +1180,21 @@ function render(){
   }
 
   document.getElementById('assumptions').innerHTML=
-    '<b style="color:var(--muted)">Feasible set:</b> long-only · per-asset ≤ '+Math.round(APP.state.maxW*100)+'%'+
-    (APP.state.policy?' · cash ≤ 5% · growth ≥ 50% · illiquid ≤ 50%':' · policy bands off')+
+    (function(){
+      var w=APP.state.weights, used=illiqUsed(w), liq=liquidShare(w),
+          yrs=APP.state.spend>0?liq/APP.state.spend:99,
+          ok=yrs>=3, budget=APP.state.illiq;
+      return '<b style="color:var(--muted)">Feasible set:</b> long-only · per-asset ≤ '+Math.round(APP.state.maxW*100)+'%'+
+        ' · illiquidity budget ≤ '+Math.round(budget*100)+'%'+
+        (APP.state.policy?' · cash ≤ 5% · listed equity ≥ '+Math.round(eqFloor(APP.state.maxW)*100)+'% · growth ≥ '+Math.round(growthFloor(APP.state.maxW,budget)*100)+'%':' · policy bands off')+
+        '<br><b style="color:var(--muted)">Liquidity:</b> illiquidity used '+(used*100).toFixed(1)+'% of a '+Math.round(budget*100)+'% budget'+
+        ' · daily-liquid sleeve '+(liq*100).toFixed(1)+'%'+
+        ' · covers <span style="color:'+(ok?'var(--green)':'var(--red)')+'">'+yrs.toFixed(1)+' years</span> of a '+(APP.state.spend*100).toFixed(2).replace(/0$/,'')+'% draw'+
+        (ok?'':' — below the 3-year floor most committees hold')+
+        '<br><b style="color:var(--muted)">Private marks:</b> '+(APP.state.desmooth
+          ? 'de-smoothed — PE vol '+(volVec(true)[3]*100).toFixed(1)+'% vs '+(VOL_REPORTED[3]*100).toFixed(1)+'% reported, RE '+(volVec(true)[5]*100).toFixed(1)+'% vs '+(VOL_REPORTED[5]*100).toFixed(1)+'%'
+          : '<span style="color:var(--amber)">reported (smoothed)</span> — private risk and correlation understated, so the volatility and Sharpe shown here flatter the portfolio by roughly two points of vol');
+    })()+'<br>'+
     '<br><b style="color:var(--muted)">Parameters:</b> Rf = '+F(rf*100)+'% · seed = '+APP.state.seed+
     ' · 200 paths × 180 months · benchmark 60% US equity / 40% Treasuries'+
     '<br><b style="color:var(--muted)">Median terminal wealth:</b> '+F(st.termMed)+'× (5th pct '+F(st.termP5)+'× · 95th pct '+F(st.termP95)+'×) per $1 over 15 years';
@@ -1132,15 +1233,20 @@ function render(){
     '<span class="lock'+(APP.state.locked[i]?' on':'')+'" data-idx="'+i+'">L</span></div>'
   ).join('')+
   (function(){
-    const gs=GROWTH_I.reduce((a,i)=>a+w[i],0)*100,is=ILLIQ_I.reduce((a,i)=>a+w[i],0)*100,cs=w[CASH_I]*100;
+    const mxW=APP.state.maxW, budget=APP.state.illiq, pol=APP.state.policy;
+    const eq=dot(A_EQ,w)*100, gs=dot(A_GROWTH,w)*100, is=illiqUsed(w)*100, cs=w[CASH_I]*100;
+    const eqMin=eqFloor(mxW)*100, gMin=growthFloor(mxW,budget)*100, bMax=budget*100;
     const bad=[];
-    if(cs>MAX_CASH*100+.05)bad.push('cash > 5%');
-    if(gs<MIN_GROWTH*100-.05)bad.push('growth < 50%');
-    if(is>MAX_ILLIQ*100+.05)bad.push('illiquid > 50%');
-    return '<div class="weight-total">Public equity '+(EQ_I.reduce((a,i)=>a+w[i],0)*100).toFixed(1)+
-      '% · growth '+gs.toFixed(1)+'% · illiquid '+is.toFixed(1)+'% · total 100%'+
-      (bad.length?'<br><span style="color:var(--amber)">outside policy bands: '+bad.join(', ')+'</span>':
-       '<br><span style="color:var(--green)">within policy bands</span>')+'</div>';
+    if(is>bMax+.05)bad.push('illiquidity '+is.toFixed(1)+'% over a '+bMax.toFixed(0)+'% budget');
+    if(pol){
+      if(cs>MAX_CASH*100+.05)bad.push('cash > 5%');
+      if(eq<eqMin-.05)bad.push('listed equity < '+eqMin.toFixed(0)+'%');
+      if(gs<gMin-.05)bad.push('growth < '+gMin.toFixed(0)+'%');
+    }
+    return '<div class="weight-total">Listed equity '+eq.toFixed(1)+
+      '% · growth '+gs.toFixed(1)+'% · illiquidity '+is.toFixed(1)+' / '+bMax.toFixed(0)+'% · total 100%'+
+      (bad.length?'<br><span style="color:var(--amber)">outside policy: '+bad.join(', ')+'</span>':
+       '<br><span style="color:var(--green)">within policy and inside the illiquidity budget</span>')+'</div>';
   })();
 
   document.getElementById('weightRows').querySelectorAll('input[type=range]').forEach(inp=>{
@@ -1243,7 +1349,8 @@ function refreshOpt(){
   APP.optResults=[
     {name:'Min Variance',w:res.minVar,ret:portMu(res.minVar,APP.data.mu),vol:portVol(res.minVar,APP.data.Sigma),sharpe:sharpe(res.minVar,APP.data.mu,APP.data.Sigma,APP.state.rf)},
     {name:'Max Sharpe',w:res.maxSharpe,ret:portMu(res.maxSharpe,APP.data.mu),vol:portVol(res.maxSharpe,APP.data.Sigma),sharpe:sharpe(res.maxSharpe,APP.data.mu,APP.data.Sigma,APP.state.rf)},
-    {name:'Target Vol',w:res.targetVol,ret:portMu(res.targetVol,APP.data.mu),vol:portVol(res.targetVol,APP.data.Sigma),sharpe:sharpe(res.targetVol,APP.data.mu,APP.data.Sigma,APP.state.rf)}
+    {name:'Target Vol',w:res.targetVol,ret:portMu(res.targetVol,APP.data.mu),vol:portVol(res.targetVol,APP.data.Sigma),sharpe:sharpe(res.targetVol,APP.data.mu,APP.data.Sigma,APP.state.rf)},
+    {name:'Policy Portfolio',w:res.policy,ret:portMu(res.policy,APP.data.mu),vol:portVol(res.policy,APP.data.Sigma),sharpe:sharpe(res.policy,APP.data.mu,APP.data.Sigma,APP.state.rf)}
   ];
   if(APP.state.lastOpt){const r=APP.optResults.find(x=>x.name===APP.state.lastOpt);if(r)setW(r.w)}
 }
@@ -1262,6 +1369,9 @@ function bind(){
     APP.state.rf=+this.value/100;APP.data=genData(APP.state.seed);refreshOpt();render();
   };
   $('policyBands').onchange=function(){APP.state.policy=this.checked;refreshOpt();render()};
+  $('illiqB').oninput=function(){APP.state.illiq=+this.value/100;refreshOpt();render()};
+  $('spend').oninput=function(){APP.state.spend=+this.value/100;render()};
+  $('desmooth').onchange=function(){APP.state.desmooth=this.checked;APP.data=genData(APP.state.seed);refreshOpt();render()};
   $('maxW').oninput=function(){APP.state.maxW=+this.value;refreshOpt();render()};
   $('targetVol').oninput=function(){APP.state.targetVol=+this.value/100;refreshOpt();render()};
 
@@ -1270,9 +1380,10 @@ function bind(){
     APP.optResults=[
       {name:'Min Variance',w:res.minVar,ret:portMu(res.minVar,APP.data.mu),vol:portVol(res.minVar,APP.data.Sigma),sharpe:sharpe(res.minVar,APP.data.mu,APP.data.Sigma,APP.state.rf)},
       {name:'Max Sharpe',w:res.maxSharpe,ret:portMu(res.maxSharpe,APP.data.mu),vol:portVol(res.maxSharpe,APP.data.Sigma),sharpe:sharpe(res.maxSharpe,APP.data.mu,APP.data.Sigma,APP.state.rf)},
-      {name:'Target Vol',w:res.targetVol,ret:portMu(res.targetVol,APP.data.mu),vol:portVol(res.targetVol,APP.data.Sigma),sharpe:sharpe(res.targetVol,APP.data.mu,APP.data.Sigma,APP.state.rf)}
+      {name:'Target Vol',w:res.targetVol,ret:portMu(res.targetVol,APP.data.mu),vol:portVol(res.targetVol,APP.data.Sigma),sharpe:sharpe(res.targetVol,APP.data.mu,APP.data.Sigma,APP.state.rf)},
+      {name:'Policy Portfolio',w:res.policy,ret:portMu(res.policy,APP.data.mu),vol:portVol(res.policy,APP.data.Sigma),sharpe:sharpe(res.policy,APP.data.mu,APP.data.Sigma,APP.state.rf)}
     ];
-    setW(res.maxSharpe);APP.state.lastOpt='Max Sharpe';render();
+    setW(res.policy);APP.state.lastOpt='Policy Portfolio';render();
   };
 
   $('btnReset').onclick=function(){
