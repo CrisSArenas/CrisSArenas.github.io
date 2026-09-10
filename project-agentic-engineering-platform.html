@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic Engineering Platform | Cristian Arenas</title>
+<meta name="description" content="Technical write-up of a multi-agent engineering platform: agent definitions, orchestration topology, verification gates, model routing and cost accounting, context budgeting, persistent memory, MCP tool layer, guardrails, and telemetry from a real 11-agent run.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.project-detail{padding-top:80px;min-height:100vh;background:var(--dark-bg)}
+.project-hero{padding:4rem 0;background:linear-gradient(135deg,var(--darker-bg),var(--dark-bg));border-bottom:2px solid var(--border-color)}
+.project-hero h1{font-size:clamp(1.9rem,3.6vw,3rem);color:var(--text-primary);margin-bottom:1rem;line-height:1.15}
+.project-meta{display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:2rem}
+.meta-item{display:flex;align-items:center;gap:.5rem;color:var(--text-secondary)}
+.meta-item i{color:var(--primary-cyan)}
+.project-tags-large{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem}
+.tag-large{padding:.5rem 1rem;background:rgba(59,130,246,.1);color:var(--accent-blue);border:1px solid var(--accent-blue);border-radius:5px;font-size:.9rem}
+.back-button{display:inline-flex;align-items:center;gap:.5rem;color:var(--primary-cyan);text-decoration:none;margin-bottom:2rem;transition:.3s}
+.back-button:hover{color:var(--primary-green);transform:translateX(-5px)}
+.project-content{max-width:1020px;margin:0 auto;padding:3rem 2rem}
+.content-section{margin-bottom:3.5rem;scroll-margin-top:90px}
+.content-section h2{font-size:1.85rem;color:var(--primary-cyan);margin-bottom:1.1rem;border-bottom:2px solid var(--primary-cyan);padding-bottom:.5rem}
+.content-section h3{font-size:1.28rem;color:var(--primary-green);margin-top:2rem;margin-bottom:.8rem}
+.content-section h4{font-size:1.02rem;color:var(--text-primary);margin-top:1.4rem;margin-bottom:.5rem}
+.content-section p,.content-section li{color:var(--text-secondary);line-height:1.8;margin-bottom:1rem}
+.content-section ul,.content-section ol{margin-left:2rem;margin-bottom:1.5rem}
+.content-section li{margin-bottom:.5rem}
+.content-section strong{color:var(--text-primary)}
+.highlight-box{background:var(--card-bg);border-left:4px solid var(--primary-cyan);padding:1.4rem 1.5rem;margin:1.8rem 0;border-radius:5px}
+.highlight-box strong{color:var(--primary-cyan)}
+.warn-box{background:var(--card-bg);border-left:4px solid #f59e0b;padding:1.4rem 1.5rem;margin:1.8rem 0;border-radius:5px}
+.warn-box strong{color:#f59e0b}
+
+/* code blocks */
+.code{background:var(--darker-bg);border:1px solid var(--border-color);border-radius:9px;margin:1.3rem 0;overflow:hidden}
+.code .hdr{display:flex;align-items:center;gap:.6rem;padding:.5rem .9rem;border-bottom:1px solid var(--border-color);background:rgba(0,247,255,.03);font-family:var(--font-mono);font-size:.7rem;color:var(--text-secondary)}
+.code .hdr i{color:var(--primary-cyan)}
+.code .hdr .path{color:var(--primary-cyan)}
+.code pre{margin:0;padding:1rem 1.1rem;overflow-x:auto;font-family:var(--font-mono);font-size:.79rem;line-height:1.72;color:#cbd5e1;white-space:pre}
+.code .k{color:#c084fc}.code .s{color:#86efac}.code .c{color:#64748b;font-style:italic}
+.code .f{color:#22d3ee}.code .n{color:#fbbf24}.code .p{color:#f472b6}
+code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green);background:rgba(0,255,65,.07);padding:.08rem .34rem;border-radius:3px}
+
+table.spec{width:100%;border-collapse:collapse;margin:1.4rem 0;font-size:.87rem}
+table.spec th,table.spec td{text-align:left;padding:.62rem .75rem;border-bottom:1px solid var(--border-color);color:var(--text-secondary);vertical-align:top}
+table.spec th{color:var(--text-primary);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;background:rgba(255,255,255,.02)}
+table.spec td:first-child{color:var(--text-primary);font-weight:600}
+table.spec td.mono,table.spec th.mono{font-family:var(--font-mono);font-size:.8rem}
+table.spec td.num{text-align:right;font-family:var(--font-mono)}
+.table-wrap{overflow-x:auto;border:1px solid var(--border-color);border-radius:9px}
+.table-wrap table.spec{margin:0}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1rem;margin:1.5rem 0 2rem}
+.kpi{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:1rem 1.1rem}
+.kpi .v{font-family:var(--font-mono);font-size:1.45rem;color:var(--primary-cyan);font-weight:600;line-height:1.15}
+.kpi .l{font-size:.79rem;color:var(--text-secondary);margin-top:.3rem;line-height:1.5}
+
+/* roster */
+.roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:.9rem;margin:1.3rem 0}
+.agent-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:1rem 1.1rem;transition:.25s}
+.agent-card:hover{border-color:var(--primary-cyan);transform:translateY(-3px)}
+.agent-card .role{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.11em;text-transform:uppercase;color:var(--primary-green)}
+.agent-card h4{margin:.3rem 0 .4rem;color:var(--text-primary);font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.agent-card h4 i{color:var(--primary-cyan)}
+.agent-card p{font-size:.86rem;margin-bottom:.55rem;line-height:1.65}
+.agent-card .io{font-family:var(--font-mono);font-size:.69rem;color:var(--text-secondary);border-top:1px dashed var(--border-color);padding-top:.45rem;line-height:1.6}
+.agent-card .io b{color:var(--primary-cyan);font-weight:500}
+
+/* interactive */
+.demo{background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;margin:1.6rem 0;overflow:hidden}
+.demo-head{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.1rem;border-bottom:1px solid var(--border-color);background:rgba(0,247,255,.03);flex-wrap:wrap}
+.demo-head .t{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.11em;color:var(--primary-cyan)}
+.demo-head .sp{flex:1}
+.demo-body{padding:1.1rem}
+.ibtn{display:inline-flex;align-items:center;gap:.42rem;padding:.4rem .8rem;border-radius:6px;border:1px solid #334155;background:#1a2332;color:var(--text-primary);font:600 .75rem var(--font-primary);cursor:pointer;transition:.2s;white-space:nowrap}
+.ibtn:hover{border-color:var(--primary-cyan);color:var(--primary-cyan)}
+.ibtn:active{transform:scale(.97)}
+.ibtn.on{background:rgba(0,247,255,.14);border-color:var(--primary-cyan);color:var(--primary-cyan)}
+.gantt-svg{width:100%;height:auto;display:block;overflow:visible}
+.gantt-svg .row:hover rect.b,.gantt-svg .row:focus rect.b{stroke:#fff;stroke-width:1.2}
+.gantt-svg .row:focus{outline:none}
+.legend{display:flex;gap:1.1rem;flex-wrap:wrap;font-size:.74rem;color:var(--text-secondary);margin-top:.7rem}
+.legend span{display:inline-flex;align-items:center;gap:.4rem}
+.legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+.note-sm{font-size:.79rem;color:#64748b;line-height:1.6;margin-top:.7rem}
+#tip{position:fixed;z-index:1200;pointer-events:none;background:rgba(5,8,15,.97);border:1px solid #334155;border-radius:6px;padding:.5rem .68rem;font-family:var(--font-mono);font-size:.72rem;color:var(--text-primary);line-height:1.55;box-shadow:0 12px 32px rgba(0,0,0,.5);display:none;max-width:280px}
+#tip.on{display:block}
+#tip b{color:var(--primary-cyan)}
+
+.ctrl{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
+.ctrl label{font-size:.78rem;color:var(--text-secondary)}
+.ctrl input[type=range]{accent-color:var(--primary-cyan);width:150px}
+.ctrl .val{font-family:var(--font-mono);font-size:.76rem;color:var(--primary-cyan);min-width:52px}
+.routegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.7rem}
+.routecard{border:1px solid var(--border-color);border-radius:8px;padding:.75rem .85rem;background:var(--darker-bg)}
+.routecard .rn{font-size:.85rem;color:var(--text-primary);font-weight:600}
+.routecard .rm{font-family:var(--font-mono);font-size:.69rem;color:var(--primary-green);margin:.2rem 0 .4rem}
+.routecard .rc{font-family:var(--font-mono);font-size:1.02rem;color:var(--primary-cyan)}
+.routecard .rl{font-size:.71rem;color:#64748b}
+
+@media(max-width:768px){
+  .project-content{padding:2rem 1.15rem}
+  .content-section h2{font-size:1.42rem}
+  .code pre{font-size:.72rem}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="nav-brand"><span class="terminal-prompt">cristian@portfolio:~$</span></div>
+    <button class="mobile-menu-toggle" id="mobileMenuBtn" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html#home">Home</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#skills">Skills</a></li>
+      <li><a href="index.html#projects">Projects</a></li>
+      <li><a href="index.html#research">Research</a></li>
+      <li><a href="index.html#demos">Demos</a></li>
+      <li><a href="robotics-embedded.html">Robotics</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="project-detail">
+  <div class="project-hero">
+    <div class="container">
+      <a href="index.html#projects" class="back-button"><i class="fas fa-arrow-left"></i> Back to Projects</a>
+      <h1>Agentic Engineering Platform</h1>
+      <div class="project-meta">
+        <div class="meta-item"><i class="fas fa-calendar"></i><span>2025 &ndash; present</span></div>
+        <div class="meta-item"><i class="fas fa-briefcase"></i><span>Agentic AI Engineering</span></div>
+        <div class="meta-item"><i class="fas fa-code-branch"></i><span>Quant tooling, research code, this site</span></div>
+      </div>
+      <p class="hero-description">
+        A standing team of specialised AI agents that plans, builds, reviews, tests and ships software. This page is
+        the engineering write-up: the agent definition format, the orchestration topology and its concurrency
+        limits, the verification gate that no agent may bypass, model routing and cost accounting, context budgeting
+        arithmetic, the memory subsystem, the tool layer, the guardrails, and telemetry from a real run in which
+        eleven agents rebuilt the interactive demos on this site.
+      </p>
+      <div class="project-tags-large">
+        <span class="tag-large">Multi-Agent Orchestration</span>
+        <span class="tag-large">Claude Agent SDK</span>
+        <span class="tag-large">Model Context Protocol</span>
+        <span class="tag-large">Git Worktrees</span>
+        <span class="tag-large">Persistent Memory</span>
+        <span class="tag-large">Knowledge Graph</span>
+        <span class="tag-large">Headless Browser QA</span>
+        <span class="tag-large">Guardrails</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="project-content">
+
+    <section class="content-section">
+      <h2>1. The design problem</h2>
+      <p>
+        One engineer owning portfolio-management tooling, research code, robotics prototypes and a public site cannot
+        context-switch fast enough with a single chat window. A single assistant also has a structural weakness: it
+        writes the code and then grades its own homework. Both problems have the same shape as an engineering
+        organisation, and the same fix, which is roles with narrow briefs, defined hand-offs, and separation between
+        the thing that produces work and the thing that certifies it.
+      </p>
+      <p>Three constraints drive every decision below:</p>
+      <ol>
+        <li><strong>Context is the scarce resource, not tokens or money.</strong> A 200k-token window fills fast on a 150 KB source file. The architecture exists mostly to keep the orchestrator's window small while the work happens elsewhere.</li>
+        <li><strong>Parallelism multiplies mistakes as readily as output.</strong> Fan-out is only safe behind a mechanical gate that every worker must pass before it may report success.</li>
+        <li><strong>Agents cannot see.</strong> A subagent has no browser and no eyes. Anything visual has to be verified by the orchestrator or it is not verified at all.</li>
+      </ol>
+      <div class="kpi-row">
+        <div class="kpi"><div class="v">13</div><div class="l">standing roles, each a versioned definition file</div></div>
+        <div class="kpi"><div class="v">60+</div><div class="l">skills the agents can invoke by name or trigger</div></div>
+        <div class="kpi"><div class="v">2.34M</div><div class="l">tokens consumed by the 10 completed workers in the run below</div></div>
+        <div class="kpi"><div class="v">217 min</div><div class="l">of agent work, compressed into 38 min of wall clock</div></div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>2. Runtime and topology</h2>
+      <p>
+        The runtime is Claude Code with the Claude Agent SDK. The orchestrator runs in the main loop and holds the
+        conversation. Workers are spawned as sub-agents, each in its own context window with its own tool allow-list
+        and model assignment. There is no shared mutable state between workers. Everything they exchange passes
+        through three channels: the spec file written before fan-out, the filesystem, and a bounded text report on
+        completion.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fas fa-sitemap"></i> topology</div>
+<pre><span class="c">  human (intent, taste, irreversible-action approval)</span>
+        │
+  ┌─────▼──────────────────────────────────────────────────────┐
+  │ ORCHESTRATOR  main loop · holds conversation · small ctx    │
+  │  • writes spec + shared assets BEFORE any fan-out           │
+  │  • spawns workers, never edits the files they own           │
+  │  • is the only component with a browser                     │
+  └─────┬───────────────────────────────────────────────────────┘
+        │ spawn(prompt, tools, model, isolation)
+        │
+  ┌─────▼─────┬───────────┬───────────┬───────────┬────────────┐
+  │ worker 1  │ worker 2  │ worker 3  │    ...    │ worker N   │
+  │ own ctx   │ own ctx   │ own ctx   │           │ own ctx    │
+  │ own tools │ own tools │ own tools │           │ own tools  │
+  └─────┬─────┴─────┬─────┴─────┬─────┴───────────┴─────┬──────┘
+        │           │           │                       │
+        └───────────┴─────┬─────┴───────────────────────┘
+                          │  each MUST pass the gate to report done
+                  ┌───────▼────────┐
+                  │ VERIFICATION   │  parse every inline script,
+                  │ GATE (§5)      │  resolve every DOM id, assert
+                  └───────┬────────┘  structural invariants
+                          │
+        ┌─────────────────▼─────────────────┐
+        │ ORCHESTRATOR re-verification      │  browser probes, pixel
+        │ (the only step with eyes)         │  analysis, interaction
+        └───────────────────────────────────┘
+
+  shared services, read by every component
+  ├── memory store        observations, injected at session start
+  ├── knowledge graph     nodes/edges/communities over the codebase
+  ├── skills library      60+ versioned playbooks with triggers
+  └── MCP tool servers    shell, browser, scheduler, second opinion
+</pre>
+      </div>
+      <p>
+        Workers are <em>leaf</em> nodes by default. A worker that could spawn its own workers makes the concurrency
+        budget unbounded and the failure surface unreadable, so nesting is off unless a task genuinely needs a tree.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>3. Agent definitions</h2>
+      <p>
+        A role is a Markdown file with YAML frontmatter, versioned in the repo alongside the code it operates on.
+        The frontmatter is the contract the runtime enforces: which tools exist for this role, which model backs it,
+        and whether it gets an isolated working copy. The body is the playbook.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fas fa-file-code"></i> <span class="path">.claude/agents/implementer.md</span></div>
+<pre><span class="p">---</span>
+<span class="k">name</span>: implementer
+<span class="k">description</span>: <span class="s">Applies one spec to one file. Reads the whole target first.</span>
+<span class="k">model</span>: opus
+<span class="k">isolation</span>: worktree          <span class="c"># own git worktree, auto-discarded if unchanged</span>
+<span class="k">tools</span>: [Read, Edit, Write, Bash, Glob, Grep]
+<span class="k">disallowed</span>: [Agent, Artifact]   <span class="c"># leaf node: may not fan out further</span>
+<span class="p">---</span>
+
+<span class="c"># Implementer</span>
+
+You own exactly one file. You may not edit any other file.
+
+<span class="c">## Non-negotiable sequence</span>
+1. Read the spec in full, including any ADDENDUM (it overrides the body).
+2. Read the ENTIRE target file before your first edit. Partial context is
+   the single largest source of bad edits in this system.
+3. Make surgical, asserted edits. Never rewrite a file wholesale: a
+   budget exhaustion mid-rewrite leaves a truncated, broken artifact.
+4. Run the verification gate. Paste its exact output in your report.
+5. Report in under 300 words: what was wrong, what you changed, gate output.
+
+<span class="c">## Prohibited</span>
+- Committing, pushing, or any irreversible git operation.
+- Editing shared assets (the orchestrator owns those).
+- Reporting success without a clean gate run.
+</pre>
+      </div>
+      <p>
+        The <code class="inl">isolation: worktree</code> flag is what makes wide fan-out safe on one repository. The
+        runtime creates a detached working copy per worker, so two agents editing neighbouring files cannot produce a
+        torn tree, and a worktree that ends unchanged is discarded automatically.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fab fa-git-alt"></i> worktree lifecycle, per worker</div>
+<pre>git worktree add --detach .worktrees/w-$ID HEAD
+<span class="c"># worker runs entirely inside .worktrees/w-$ID</span>
+git -C .worktrees/w-$ID diff --quiet || git -C .worktrees/w-$ID diff &gt; /tmp/w-$ID.patch
+git worktree remove --force .worktrees/w-$ID
+<span class="c"># orchestrator applies patches in a deterministic order, so a</span>
+<span class="c"># conflicting pair fails loudly at apply time rather than silently</span>
+</pre>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>4. Orchestration patterns</h2>
+      <p>
+        Three patterns cover almost everything. The choice is dictated by whether stages depend on each other and
+        whether the work is homogeneous.
+      </p>
+
+      <h3>Fan-out, for homogeneous independent work</h3>
+      <p>
+        N similar tasks over disjoint files. All workers start at once, each holding a spec pointer rather than the
+        spec text, so the orchestrator's window does not grow with N.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fas fa-code-branch"></i> fan-out with a concurrency ceiling</div>
+<pre><span class="k">const</span> SPEC = <span class="s">'scratchpad/DEMO-STANDARD.md'</span>;  <span class="c">// written before any spawn</span>
+<span class="k">const</span> MAX_CONCURRENT = <span class="n">5</span>;                    <span class="c">// see §7 for why 5, not 11</span>
+
+<span class="k">const</span> results = <span class="k">await</span> pool(MAX_CONCURRENT, TARGETS, (t) =&gt;
+  agent(`Read ${SPEC} in full, including the ADDENDUM.
+         Target: ${t.path}
+         Domain checklist: ${t.checklist}
+         Run the gate. Report per spec §4.`, {
+    label: `migrate:${t.slug}`,
+    model: <span class="s">'opus'</span>,
+    isolation: <span class="s">'worktree'</span>,
+    tools: [<span class="s">'Read'</span>, <span class="s">'Edit'</span>, <span class="s">'Bash'</span>, <span class="s">'Grep'</span>]
+  })
+);
+</pre>
+      </div>
+
+      <h3>Pipeline, for dependent stages that still overlap</h3>
+      <p>
+        Each dimension's verification starts the moment that dimension's review finishes, rather than waiting for
+        every review to complete. On a review-then-verify workload this removes most of the idle wall clock.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fas fa-diagram-project"></i> overlapping review and verify</div>
+<pre><span class="k">const</span> out = <span class="k">await</span> pipeline(
+  DIMENSIONS,
+  d  =&gt; agent(d.reviewPrompt,  { label: `review:${d.key}`,  schema: FINDINGS }),
+  rv =&gt; parallel(rv.findings.map(f =&gt; () =&gt;
+        agent(`Adversarially verify: ${f.title}. Try to disprove it.`,
+              { label: `verify:${f.file}`, schema: VERDICT })
+          .then(v =&gt; ({ ...f, verdict: v }))))
+);
+<span class="k">const</span> confirmed = out.flat().filter(f =&gt; f?.verdict?.isReal);
+<span class="c">// dimension A's findings verify while dimension B is still reviewing</span>
+</pre>
+      </div>
+
+      <h3>Adversarial pairing, for anything subjective</h3>
+      <p>
+        A finding produced by one agent is verified by a second agent whose brief is to break it. This is the same
+        idea as the LLM-as-judge stage in my research system: generation and adjudication are different jobs and
+        should not share a context.
+      </p>
+      <div class="highlight-box">
+        <strong>The rule that matters:</strong> the agent that writes a change never certifies it. Verification is
+        mechanical where it can be, through checkers, tests and pixel probes, and adversarial where it cannot be.
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>5. The verification gate</h2>
+      <p>
+        Fan-out without a gate is a mistake multiplier. Before spawning anyone, the orchestrator writes a checker the
+        workers must run, and the definition of done is its clean output pasted into the report. This is the actual
+        gate used for the demo migration: it compiles every inline script and cross-checks every DOM identifier the
+        scripts reference against the identifiers present in the markup.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fas fa-shield-halved"></i> <span class="path">scratchpad/check-html-js.js</span> (abridged)</div>
+<pre><span class="k">const</span> vm = require(<span class="s">'vm'</span>);
+<span class="k">const</span> html = fs.readFileSync(file, <span class="s">'utf8'</span>);
+
+<span class="c">// 1. every inline script must parse</span>
+<span class="k">while</span> ((m = scriptRe.exec(html))) {
+  <span class="k">if</span> (/\bsrc\s*=/.test(m[<span class="n">1</span>])) <span class="k">continue</span>;         <span class="c">// external, skip</span>
+  <span class="k">try</span> { <span class="k">new</span> vm.Script(m[<span class="n">2</span>], { filename: `${file}#${++n}` }); }
+  <span class="k">catch</span> (e) { fail(`SYNTAX ERROR #${n}: ${e.message}`); }
+  collectRefs(m[<span class="n">2</span>]);                              <span class="c">// getElementById / querySelector('#x')</span>
+}
+
+<span class="c">// 2. every id the JS reaches for must exist, or be provably created at runtime</span>
+<span class="k">const</span> missing = [...wanted].filter(id =&gt; !ids.has(id));
+<span class="k">const</span> dynamic = missing.filter(id =&gt; <span class="k">new</span> RegExp(`id\\s*=\\s*["'\`]${id}`).test(html));
+<span class="k">const</span> real    = missing.filter(id =&gt; !dynamic.includes(id));
+<span class="k">if</span> (real.length) fail(<span class="s">'MISSING IDS: '</span> + real.join(<span class="s">', '</span>));
+
+<span class="c">// 3. structural invariants of the shared design system</span>
+report(`shell link: ${/demo-shell\.css/.test(html) ? <span class="s">'yes'</span> : <span class="s">'NO'</span>}; ` +
+       `demo-nav=${count(<span class="s">'demo-nav'</span>)} demo-status=${count(<span class="s">'demo-status'</span>)} ` +
+       `demo-footer=${count(<span class="s">'demo-footer'</span>)}; resume refs: ${refs}`);
+</pre>
+      </div>
+      <p>
+        It is a blunt instrument and that is the point. It cannot judge whether a chart is meaningful, but it makes
+        an entire class of failure impossible to report as success: a truncated file, a syntax error introduced by a
+        bad edit, or a rename that orphaned a handler. Those are exactly the failures a confident agent otherwise
+        reports as done.
+      </p>
+      <div class="warn-box">
+        <strong>What the gate cannot catch, and how that bit me.</strong> A checker sees text, not pixels. In this
+        run every worker passed the gate while two demos rendered nothing at all in my probes. The cause turned out
+        to be the preview pane being hidden, which suspends animation frames, so anything drawn in a render loop
+        never painted. Calling the draw functions directly proved both were fine. The lesson generalises: a gate
+        proves absence of a known failure class, never presence of correctness, and the orchestrator still has to
+        look.
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>6. Model routing and cost accounting</h2>
+      <p>
+        Routing is per role, not per request. Deep reasoning over a large unfamiliar file goes to the strongest
+        model; bulk search, classification and summarisation go to smaller ones. The economics only work because the
+        expensive roles are the rare ones.
+      </p>
+      <div class="table-wrap">
+        <table class="spec">
+          <thead><tr><th>Role</th><th>Model tier</th><th>Why</th><th class="num">Share of calls</th></tr></thead>
+          <tbody>
+            <tr><td>Implementer</td><td>Frontier</td><td>Whole-file comprehension plus correctness reasoning on domain maths. The one place under-spending shows up immediately as wrong output.</td><td class="num">~55%</td></tr>
+            <tr><td>Planner, reviewers</td><td>Frontier</td><td>Judgment tasks. A cheaper model produces plausible reviews that miss the real defect, which is worse than no review.</td><td class="num">~15%</td></tr>
+            <tr><td>Explorer</td><td>Mid</td><td>Fan-out search returning locations and conclusions, not analysis. Speed and breadth matter more than depth.</td><td class="num">~20%</td></tr>
+            <tr><td>Classification, summarisation</td><td>Small</td><td>Bounded, schema-constrained outputs where the format carries most of the difficulty.</td><td class="num">~10%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Adjust the mix to see the effect on a run of this size:</p>
+      <div class="demo">
+        <div class="demo-head">
+          <span class="t"><i class="fas fa-coins"></i> Routing cost model</span>
+          <span class="sp"></span>
+          <span class="ctrl" style="margin:0">
+            <label for="frontier">Frontier share</label>
+            <input type="range" id="frontier" min="0" max="100" step="5" value="70">
+            <span class="val" id="frontierVal">70%</span>
+          </span>
+        </div>
+        <div class="demo-body">
+          <div class="routegrid" id="routeGrid"></div>
+          <p class="note-sm" id="routeNote"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>7. Context budgeting</h2>
+      <p>
+        This is the constraint that shapes the topology. A worker's window has to hold the spec, the entire target
+        file, its own edits, and the tool output it generates while working. Getting this arithmetic wrong is what
+        produces a truncated file at 80% completion.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fas fa-calculator"></i> per-worker budget, demo migration</div>
+<pre>spec (DEMO-STANDARD.md + addendum)        ~ 3,400 tok
+shared stylesheet (demo-shell.css)        ~ 4,100 tok
+reference implementation (migrated peer)  ~18,000 tok
+target file, read in full                 ~15,000 – 42,000 tok   <span class="c">← dominant, varies 10x</span>
+edit round-trips + tool output            ~40,000 – 90,000 tok
+────────────────────────────────────────────────────────────
+observed total per worker                 190k – 276k tok
+
+<span class="c">// Two consequences fall straight out of this:</span>
+<span class="c">// 1. Whole-file REWRITES are banned. A rewrite re-emits the file as</span>
+<span class="c">//    output tokens, roughly doubling the budget, and a mid-write stop</span>
+<span class="c">//    leaves a truncated artifact rather than an unchanged one.</span>
+<span class="c">//    Surgical asserted edits fail closed: the assert throws, file intact.</span>
+<span class="c">// 2. The orchestrator must NOT read the target files. It holds pointers</span>
+<span class="c">//    (paths, slugs, checklists) and lets workers do the reading.</span>
+</pre>
+      </div>
+      <div class="warn-box">
+        <strong>The concurrency ceiling, learned the hard way.</strong> The first attempt at this run launched
+        eleven workers simultaneously against files up to 155 KB. The session hit its usage limit and all eleven
+        were killed mid-flight. Two had chosen whole-file rewrites and left truncated, unopenable HTML, recovered
+        only because the tree was clean and <code class="inl">git checkout</code> restored them. The fix was two
+        changes: ban rewrites in favour of asserted edits, and cap concurrency at five with the largest target given
+        a slot of its own. The second attempt completed every worker.
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>8. Telemetry from a real run</h2>
+      <p>
+        The bars below are the ten completed workers from the demo migration on this site, with their actual token
+        consumption, tool-call counts and durations. Hover any bar for its numbers.
+      </p>
+      <div class="demo">
+        <div class="demo-head">
+          <span class="t"><i class="fas fa-chart-gantt"></i> Worker telemetry</span>
+          <span class="sp"></span>
+          <button type="button" class="ibtn on" id="sortDur">By duration</button>
+          <button type="button" class="ibtn" id="sortTok">By tokens</button>
+          <button type="button" class="ibtn" id="sortTool">By tool calls</button>
+        </div>
+        <div class="demo-body">
+          <svg id="gantt" class="gantt-svg" viewBox="0 0 760 400" role="img" aria-label="Bar chart of agent worker duration, tokens and tool calls"></svg>
+          <div class="legend">
+            <span><i style="background:#0891b2"></i> Finance demo</span>
+            <span><i style="background:#d97706"></i> Robotics demo</span>
+          </div>
+          <p class="note-sm">
+            Every worker found genuine defects, not only styling. The alpha-signal worker took longest because it
+            discovered the entire signal engine was synthesised from a constants table and had to build a real
+            walk-forward backtest. Total across the ten: 2,339,719 tokens, 329 tool calls, 217 minutes of agent
+            work, compressed into roughly 38 minutes of wall clock by running them concurrently.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>9. The roster</h2>
+      <div class="roster">
+        <div class="agent-card"><span class="role">Orchestration</span><h4><i class="fas fa-chess-king"></i> Lead</h4><p>Reads the request, decides the plan, writes the spec and shared assets, fans work out, integrates, and owns the final answer. The only agent that talks to me, and the only one with a browser.</p><div class="io"><b>in</b> request, memory, repo &nbsp;<b>out</b> spec, delegation, verified result</div></div>
+        <div class="agent-card"><span class="role">Discovery</span><h4><i class="fas fa-magnifying-glass"></i> Explorer</h4><p>Read-only fan-out search across files, symbols and naming conventions. Returns conclusions and locations, never file dumps, so the lead's window stays small.</p><div class="io"><b>in</b> question &nbsp;<b>out</b> locations, structure, evidence</div></div>
+        <div class="agent-card"><span class="role">Design</span><h4><i class="fas fa-compass-drafting"></i> Planner</h4><p>Turns vague intent into a phased plan with critical files, trade-offs and verification steps, reviewed from engineering, product and design angles before anything executes.</p><div class="io"><b>in</b> intent, codebase &nbsp;<b>out</b> phased plan</div></div>
+        <div class="agent-card"><span class="role">Build</span><h4><i class="fas fa-code"></i> Implementer</h4><p>Several at once, each on an isolated worktree with a single owned file. Reads the whole target first, edits surgically, and must pass the gate before reporting.</p><div class="io"><b>in</b> spec, file scope &nbsp;<b>out</b> patch, gate output, notes</div></div>
+        <div class="agent-card"><span class="role">Quality</span><h4><i class="fas fa-magnifying-glass-chart"></i> Code Reviewer</h4><p>Pre-landing review of the diff for correctness, reuse and simplification. Each finding is verified adversarially by a separate agent before it is reported.</p><div class="io"><b>in</b> diff &nbsp;<b>out</b> ranked verified findings</div></div>
+        <div class="agent-card"><span class="role">Quality</span><h4><i class="fas fa-shield-halved"></i> Security Officer</h4><p>Threat-models the change: secrets, injection, auth paths, data exposure, dependency risk. Runs independently of the code reviewer so the two cannot anchor on each other.</p><div class="io"><b>in</b> diff, config &nbsp;<b>out</b> risk register, fixes</div></div>
+        <div class="agent-card"><span class="role">Quality</span><h4><i class="fas fa-eye"></i> Design Reviewer</h4><p>Audits rendered UI for hierarchy, spacing, typography, motion and generic patterns, then fixes them against a written taste standard.</p><div class="io"><b>in</b> rendered UI &nbsp;<b>out</b> design fixes</div></div>
+        <div class="agent-card"><span class="role">Verification</span><h4><i class="fas fa-vial-circle-check"></i> QA Agent</h4><p>Drives the real application in a headless browser: navigates, fills forms, diffs before and after screenshots, tests responsive breakpoints, files bugs with evidence.</p><div class="io"><b>in</b> running app &nbsp;<b>out</b> bug reports, screenshots</div></div>
+        <div class="agent-card"><span class="role">Verification</span><h4><i class="fas fa-bug"></i> Investigator</h4><p>Systematic root-cause debugging: reproduce, bisect, hypothesise, instrument, confirm, then fix the cause rather than the symptom.</p><div class="io"><b>in</b> failure &nbsp;<b>out</b> root cause, fix, regression test</div></div>
+        <div class="agent-card"><span class="role">Release</span><h4><i class="fas fa-rocket"></i> Release Agent</h4><p>Merges base, runs tests, reviews the diff, bumps the version, updates the changelog, commits, pushes and opens the pull request with a written summary.</p><div class="io"><b>in</b> branch &nbsp;<b>out</b> pull request</div></div>
+        <div class="agent-card"><span class="role">Operations</span><h4><i class="fas fa-heart-pulse"></i> Canary</h4><p>Post-deploy monitoring on a schedule: hits live endpoints, compares against a recorded baseline, escalates regressions.</p><div class="io"><b>in</b> deploy &nbsp;<b>out</b> health verdict</div></div>
+        <div class="agent-card"><span class="role">Knowledge</span><h4><i class="fas fa-book"></i> Documentation Agent</h4><p>Generates or updates documentation from the code after a release, so the prose and the implementation cannot drift apart unnoticed.</p><div class="io"><b>in</b> code, diff &nbsp;<b>out</b> docs</div></div>
+        <div class="agent-card"><span class="role">Knowledge</span><h4><i class="fas fa-clock-rotate-left"></i> Retro Agent</h4><p>Weekly pass over the memory store: what shipped, what broke, which playbooks produced bad outcomes. Its output is edits to the skills library.</p><div class="io"><b>in</b> a week of observations &nbsp;<b>out</b> retro, skill edits</div></div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>10. Memory subsystem</h2>
+      <p>
+        A lifecycle hook captures what each session reads, edits and runs, summarises it into typed observations, and
+        injects the relevant ones at the start of the next session in that project. Retrieval is hybrid: full-text
+        over observation bodies, filtered by project and recency, with an explicit search tool for older work.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fas fa-database"></i> observation record</div>
+<pre>{
+  <span class="k">"id"</span>:         <span class="s">"obs_01J8..."</span>,
+  <span class="k">"project"</span>:    <span class="s">"CrisSArenas.github.io"</span>,
+  <span class="k">"session"</span>:    <span class="s">"7a8ed7db-0841-4c7d-9bc1-62e0b30ab6fb"</span>,
+  <span class="k">"type"</span>:       <span class="s">"decision"</span>,        <span class="c">// decision | bugfix | feature | constraint</span>
+  <span class="k">"subject"</span>:    <span class="s">"demo standardisation"</span>,
+  <span class="k">"body"</span>:       <span class="s">"Whole-file rewrites banned for large HTML: a budget stop</span>
+<span class="s">                 mid-write truncates the artifact. Use asserted str.replace</span>
+<span class="s">                 patches, which fail closed and leave the file intact."</span>,
+  <span class="k">"files"</span>:      [<span class="s">"macro-regime-dashboard.html"</span>, <span class="s">"nlp-alpha-lab.html"</span>],
+  <span class="k">"created_at"</span>: <span class="s">"2026-09-09T22:31:04Z"</span>
+}
+</pre>
+      </div>
+      <p>
+        The point is not recall for its own sake. It is that a decision made once, such as the rewrite ban above,
+        survives a context reset and does not have to be rediscovered by hitting the same failure twice. Per-repository
+        instruction files carry the rules a human reviewer would otherwise repeat every time: commit attribution,
+        forbidden paths, how to run and test.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>11. Tool layer and lifecycle hooks</h2>
+      <p>
+        Tools reach agents through Model Context Protocol servers, so adding a capability is a declaration rather
+        than a code change. Each role receives only the servers its brief requires.
+      </p>
+      <div class="code">
+        <div class="hdr"><i class="fas fa-plug"></i> <span class="path">.claude/settings.json</span> (excerpt)</div>
+<pre>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"browser"</span>:   { <span class="k">"command"</span>: <span class="s">"npx"</span>, <span class="k">"args"</span>: [<span class="s">"-y"</span>, <span class="s">"@local/browser-mcp"</span>] },
+    <span class="k">"memory"</span>:    { <span class="k">"command"</span>: <span class="s">"npx"</span>, <span class="k">"args"</span>: [<span class="s">"-y"</span>, <span class="s">"claude-mem"</span>, <span class="s">"mcp"</span>] },
+    <span class="k">"scheduler"</span>: { <span class="k">"command"</span>: <span class="s">"npx"</span>, <span class="k">"args"</span>: [<span class="s">"-y"</span>, <span class="s">"@local/cron-mcp"</span>] }
+  },
+  <span class="k">"hooks"</span>: {
+    <span class="k">"SessionStart"</span>:  [{ <span class="k">"command"</span>: <span class="s">"claude-mem inject --project $CLAUDE_PROJECT"</span> }],
+    <span class="k">"PreToolUse"</span>:    [{ <span class="k">"matcher"</span>: <span class="s">"Bash"</span>,
+                        <span class="k">"command"</span>: <span class="s">"guard-destructive --stdin"</span> }],
+    <span class="k">"PostToolUse"</span>:   [{ <span class="k">"matcher"</span>: <span class="s">"Edit|Write"</span>,
+                        <span class="k">"command"</span>: <span class="s">"record-observation --file $CLAUDE_TOOL_FILE"</span> }],
+    <span class="k">"Stop"</span>:          [{ <span class="k">"command"</span>: <span class="s">"claude-mem summarise-session"</span> }]
+  }
+}
+</pre>
+      </div>
+      <p>
+        <code class="inl">PreToolUse</code> is the interesting one: it runs <em>before</em> the shell call and can veto
+        it. That is where destructive-command interception lives, and it is enforced by the harness rather than by
+        the model's good intentions, which matters because a model's intentions are not a security boundary.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>12. Guardrails</h2>
+      <div class="table-wrap">
+        <table class="spec">
+          <thead><tr><th>Control</th><th>Enforced by</th><th>What it prevents</th></tr></thead>
+          <tbody>
+            <tr><td>Permission modes</td><td>Harness</td><td>Every tool call runs behind a user-selected mode. A denied call is a decision and is never retried verbatim.</td></tr>
+            <tr><td>Destructive interception</td><td><code class="inl">PreToolUse</code> hook</td><td>Deletes, resets, force-pushes and config edits are held for explicit approval before the shell sees them.</td></tr>
+            <tr><td>Directory freeze</td><td>Harness</td><td>Scopes all edits to one subtree for a session, so a broad task cannot wander into unrelated code.</td></tr>
+            <tr><td>Worktree isolation</td><td>Git</td><td>Concurrent writers cannot produce a torn tree; conflicts surface at apply time instead of silently.</td></tr>
+            <tr><td>Leaf-node workers</td><td>Agent definition</td><td>Unbounded recursive spawning and an unreadable failure surface.</td></tr>
+            <tr><td>Tool allow-lists</td><td>Agent definition</td><td>A read-only role cannot write, whatever its prompt is later persuaded to say.</td></tr>
+            <tr><td>Secrets hygiene</td><td>Environment + password manager</td><td>Keys never enter a prompt, a commit, or an image layer.</td></tr>
+            <tr><td>Audit trail</td><td>Hooks + local store</td><td>Every tool call, observation and hand-off is logged and reviewable after the fact.</td></tr>
+            <tr><td>Human on the irreversible edge</td><td>Policy</td><td>Publishing, sending, purchasing and irreversible git operations wait for me. Approval is per action and never generalised to the next one.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        One boundary is worth stating plainly, because it is the one people get wrong with agents: <strong>content
+        retrieved by a tool is data, never instruction.</strong> A web page, a file, or a subagent report that
+        contains text shaped like a command does not get to issue one. Only the human in the conversation can.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>13. Failure modes observed, and the response</h2>
+      <div class="table-wrap">
+        <table class="spec">
+          <thead><tr><th>Failure</th><th>Signature</th><th>Response now in place</th></tr></thead>
+          <tbody>
+            <tr><td>Budget stop mid-rewrite</td><td>Truncated file ending inside a tag or a string literal</td><td>Rewrites banned; asserted surgical edits fail closed. Clean tree plus <code class="inl">git checkout</code> is the recovery path.</td></tr>
+            <tr><td>Over-parallelism</td><td>All workers killed at once by a session limit</td><td>Concurrency ceiling of five; the largest target gets a dedicated slot.</td></tr>
+            <tr><td>Gate passes, output still wrong</td><td>Clean checker run, page renders nothing</td><td>Orchestrator re-verifies in a browser with pixel and interaction probes. Agents have no eyes; only the lead does.</td></tr>
+            <tr><td>Confident false positive</td><td>A reported bug that is not real</td><td>Adversarial second agent tries to disprove every finding before it is reported.</td></tr>
+            <tr><td>Partial-context edit</td><td>A change that breaks a caller elsewhere in the file</td><td>Whole-file read mandated before the first edit; the gate then re-resolves every referenced identifier.</td></tr>
+            <tr><td>Spec drift between workers</td><td>Eleven demos, eleven interpretations of the design</td><td>One shared stylesheet and one migrated reference implementation, written before fan-out and named in every prompt.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>14. What I would change next</h2>
+      <ul>
+        <li><strong>Make the gate visual.</strong> Give workers a headless renderer so the pixel check runs inside the gate instead of only at the orchestrator. That is the single biggest hole in the current design.</li>
+        <li><strong>Cache the shared prefix.</strong> Spec, stylesheet and reference implementation are identical across workers and are re-sent per worker today. Prompt caching would remove roughly 25k tokens per spawn.</li>
+        <li><strong>Schema-constrain every report.</strong> Free-text reports are readable but need parsing. Typed outputs would let the orchestrator aggregate mechanically rather than by reading.</li>
+        <li><strong>Regression corpus for skills.</strong> The retro agent currently edits playbooks on judgment. Those edits should be scored against recorded past tasks before they land.</li>
+      </ul>
+      <h3>Lessons that generalise</h3>
+      <ul>
+        <li>Write the spec and the checker before spawning anyone. Parallelism without a gate multiplies mistakes.</li>
+        <li>Give agents narrow file scopes and mandate whole-file reads. Most bad edits come from partial context.</li>
+        <li>Prefer edits that fail closed. An assertion that throws beats a rewrite that truncates.</li>
+        <li>Memory beats prompting. A recalled decision is cheaper and more reliable than re-explaining it.</li>
+        <li>Keep humans on the irreversible edge. Everything else can be fast.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>15. Where it runs</h2>
+      <ul>
+        <li><strong>Portfolio-management tooling:</strong> dynamic target and rebalancing tools, momentum dashboards, re-underwriting analyses and client reporting, where the reviewer and security roles carry the most weight.</li>
+        <li><strong>Research code:</strong> the experiment pipeline behind my regime-aware transformer paper, where reproducibility gates and the documentation agent keep a single script generating every table and figure.</li>
+        <li><strong>Applied AI systems:</strong> the alternative-data research brain, where the QA agent exercised the live portal and the design reviewer polished the terminal UI.</li>
+        <li><strong>This site:</strong> content, research pages and the eleven interactive demos, standardised by the fan-out documented above.</li>
+      </ul>
+    </section>
+
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-text">
+        <p>&copy; 2026 Cristian Arenas. Quantitative Investment &amp; AI/ML Engineering.</p>
+        <p class="footer-subtext"><a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+      </div>
+      <div class="footer-links">
+        <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://github.com/CrisSArenas" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+        <a href="mailto:cristianmiguelsa@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button id="scrollTop" class="scroll-top" aria-label="Scroll to top"><i class="fas fa-arrow-up"></i></button>
+<div id="tip" role="tooltip"></div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(t,a,txt){ var e=document.createElementNS(NS,t); for(var k in a){ if(a[k]!==null&&a[k]!==undefined) e.setAttribute(k,a[k]); } if(txt!==undefined&&txt!==null) e.textContent=txt; return e; }
+
+  /* ---------- real telemetry from the demo-migration run ---------- */
+  var RUNS = [
+    {n:'ros2-nav2-sim',        tok:301762, tools:66, ms:1707521, kind:'rob'},
+    {n:'alpha-signal-engine',  tok:276119, tools:31, ms:1836413, kind:'fin'},
+    {n:'portfolio-optimizer',  tok:251658, tools:35, ms:1343315, kind:'fin'},
+    {n:'tinyml-quant-lab',     tok:243469, tools:34, ms:1308757, kind:'rob'},
+    {n:'stm32-io-lab',         tok:242499, tools:27, ms:1304729, kind:'rob'},
+    {n:'nlp-alpha-lab',        tok:205903, tools:29, ms:1248853, kind:'fin'},
+    {n:'terminal-heist',       tok:217079, tools:40, ms:1158747, kind:'rob'},
+    {n:'macro-regime-dash',    tok:210893, tools:22, ms:1122134, kind:'fin'},
+    {n:'slam-visualizer',      tok:189724, tools:24, ms:1108084, kind:'rob'},
+    {n:'freertos-simulator',   tok:200613, tools:21, ms:873152,  kind:'rob'}
+  ];
+  var COL = { fin:'#0891b2', rob:'#d97706' };
+  var MODE = { dur:{key:'ms',  lab:'Wall-clock duration (minutes)', fmt:function(v){return (v/60000).toFixed(1);}, unit:' min'},
+               tok:{key:'tok', lab:'Tokens consumed (thousands)',   fmt:function(v){return (v/1000).toFixed(0);}, unit:'k tok'},
+               tool:{key:'tools', lab:'Tool calls', fmt:function(v){return String(v);}, unit:' calls'} };
+
+  var tip = $('tip');
+  function tipShow(e,html){ tip.innerHTML=html; tip.classList.add('on'); tipMove(e); }
+  function tipMove(e){ var x=e.clientX+14,y=e.clientY+14; if(x+tip.offsetWidth>innerWidth-8)x=e.clientX-tip.offsetWidth-14; if(y+tip.offsetHeight>innerHeight-8)y=e.clientY-tip.offsetHeight-14; tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px'; }
+  function tipHide(){ tip.classList.remove('on'); }
+
+  function drawGantt(mode){
+    var svg = $('gantt'); while(svg.firstChild) svg.removeChild(svg.firstChild);
+    var cfg = MODE[mode];
+    var W=760,H=400,L=150,R=64,T=14,B=38;
+    var rows = RUNS.slice().sort(function(a,b){ return b[cfg.key]-a[cfg.key]; });
+    var max = rows[0][cfg.key]*1.06;
+    var x = function(v){ return L + v/max*(W-L-R); };
+    var rowH = (H-T-B)/rows.length;
+
+    for(var g=0; g<=4; g++){
+      var gv = max*g/4;
+      svg.appendChild(el('line',{x1:x(gv),x2:x(gv),y1:T,y2:H-B,stroke:g===0?'#334155':'#1e293b','stroke-width':g===0?1.3:1}));
+      svg.appendChild(el('text',{x:x(gv),y:H-B+16,'text-anchor':'middle',fill:'#94a3b8','font-size':10,'font-family':'JetBrains Mono, monospace'}, cfg.fmt(gv)));
+    }
+    svg.appendChild(el('text',{x:L+(W-L-R)/2,y:H-6,'text-anchor':'middle',fill:'#94a3b8','font-size':10.5}, cfg.lab));
+
+    rows.forEach(function(r,i){
+      var cy = T+rowH*i+rowH/2, bh = Math.min(19, rowH*0.6);
+      var grp = el('g',{class:'row',tabindex:0,role:'img','aria-label':r.n+', '+cfg.fmt(r[cfg.key])+cfg.unit});
+      grp.appendChild(el('rect',{x:0,y:cy-rowH/2,width:W,height:rowH,fill:'transparent'}));
+      grp.appendChild(el('rect',{class:'b',x:L,y:cy-bh/2,width:Math.max(2,x(r[cfg.key])-L),height:bh,rx:3,fill:COL[r.kind]}));
+      grp.appendChild(el('text',{x:L-10,y:cy+4,'text-anchor':'end',fill:'#e4e4e7','font-size':11,'font-family':'JetBrains Mono, monospace'}, r.n));
+      grp.appendChild(el('text',{x:x(r[cfg.key])+7,y:cy+4,fill:'#94a3b8','font-size':10,'font-family':'JetBrains Mono, monospace'}, cfg.fmt(r[cfg.key])));
+      var html = '<b>'+r.n+'</b><br>'+(r.ms/60000).toFixed(1)+' min<br>'+(r.tok/1000).toFixed(1)+'k tokens<br>'+r.tools+' tool calls';
+      grp.addEventListener('mouseenter',function(e){ tipShow(e,html); });
+      grp.addEventListener('mousemove',tipMove);
+      grp.addEventListener('mouseleave',tipHide);
+      grp.addEventListener('focus',function(){ var b=grp.getBoundingClientRect(); tipShow({clientX:b.left+b.width/2,clientY:b.top},html); });
+      grp.addEventListener('blur',tipHide);
+      svg.appendChild(grp);
+    });
+  }
+  function setMode(m){
+    ['sortDur','sortTok','sortTool'].forEach(function(id){ $(id).classList.remove('on'); });
+    $({dur:'sortDur',tok:'sortTok',tool:'sortTool'}[m]).classList.add('on');
+    drawGantt(m);
+  }
+  drawGantt('dur');
+  $('sortDur').addEventListener('click',function(){ setMode('dur'); });
+  $('sortTok').addEventListener('click',function(){ setMode('tok'); });
+  $('sortTool').addEventListener('click',function(){ setMode('tool'); });
+
+  /* ---------- routing cost model ---------- */
+  var TOTAL_TOK = RUNS.reduce(function(a,r){ return a+r.tok; },0);
+  var PRICE = { frontier:{ in:5.00, out:25.00 }, small:{ in:0.80, out:4.00 } }; // $ per 1M tokens, illustrative
+  var OUT_SHARE = 0.18; // measured: output is roughly 18% of a worker's total
+
+  function renderRoute(){
+    var f = +$('frontier').value/100;
+    $('frontierVal').textContent = Math.round(f*100)+'%';
+    function cost(share, p){
+      var tok = TOTAL_TOK*share;
+      return (tok*(1-OUT_SHARE)*p.in + tok*OUT_SHARE*p.out)/1e6;
+    }
+    var cf = cost(f, PRICE.frontier), cs = cost(1-f, PRICE.small), tot = cf+cs;
+    var allFront = cost(1, PRICE.frontier);
+    var saved = allFront - tot;
+    $('routeGrid').innerHTML =
+      '<div class="routecard"><div class="rn">Frontier tier</div><div class="rm">judgment · whole-file reasoning</div>' +
+        '<div class="rc">$'+cf.toFixed(2)+'</div><div class="rl">'+((TOTAL_TOK*f)/1e6).toFixed(2)+'M tokens</div></div>' +
+      '<div class="routecard"><div class="rn">Small tier</div><div class="rm">search · classification · summary</div>' +
+        '<div class="rc">$'+cs.toFixed(2)+'</div><div class="rl">'+((TOTAL_TOK*(1-f))/1e6).toFixed(2)+'M tokens</div></div>' +
+      '<div class="routecard"><div class="rn">Run total</div><div class="rm">this 10-worker migration</div>' +
+        '<div class="rc">$'+tot.toFixed(2)+'</div><div class="rl">2.34M tokens</div></div>' +
+      '<div class="routecard"><div class="rn">Saved vs all-frontier</div><div class="rm">routing benefit</div>' +
+        '<div class="rc">$'+saved.toFixed(2)+'</div><div class="rl">'+(allFront>0?(100*saved/allFront).toFixed(0):0)+'% lower</div></div>';
+    $('routeNote').textContent = 'Assumes output is ' + Math.round(OUT_SHARE*100) + '% of each worker\u2019s tokens, ' +
+      'priced at $' + PRICE.frontier.in.toFixed(2) + '/$' + PRICE.frontier.out.toFixed(2) + ' per million in/out on the frontier tier and $' +
+      PRICE.small.in.toFixed(2) + '/$' + PRICE.small.out.toFixed(2) + ' on the small tier. Prices are illustrative. ' +
+      'The curve is steep at the top end because output tokens on the frontier tier dominate the bill, which is the real argument for routing bulk stages down rather than for shortening prompts.';
+  }
+  $('frontier').addEventListener('input', renderRoute);
+  renderRoute();
+})();
+</script>
+<script src="script.js"></script>
+</body>
+</html>

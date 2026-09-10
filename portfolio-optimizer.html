@@ -3,38 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Portfolio Optimizer | Cristian Arenas</title>
+<title>Multi-Asset Portfolio Optimizer | Cristian Arenas</title>
+<meta name="description" content="Interactive multi-asset optimizer: an eight-asset endowment universe, a positive semi-definite covariance matrix built from capital-market assumptions, a numerically solved constrained efficient frontier, seeded Monte-Carlo risk metrics and historical stress tests.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0a0e27;--surface:#111827;--card:#0f1629;--border:#1e293b;
-  --text:#f1f5f9;--muted:#94a3b8;--dim:#475569;
-  --accent:#06b6d4;--accent-hover:#00f7ff;--accent-bg:rgba(6,182,212,.08);
-  --green:#10b981;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b;--cyan:#06b6d4;
-  --radius:10px;--radius-sm:6px
-}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
-.page{max-width:1560px;margin:0 auto;padding:20px 28px 40px}
-
-/* NAV BAR */
-.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
-.nav .back{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;text-decoration:none}
-.nav .back:hover{color:var(--accent)}
-
-/* STATUS BAR */
-.status-bar{padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--border);font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
-
-/* HEADER */
-.header{display:flex;justify-content:space-between;align-items:center;padding:20px 0 18px;margin-bottom:4px}
-.header h1{font-size:1.4rem;font-weight:700;color:#fff;letter-spacing:-.03em}
-.header h1 span{color:var(--accent)}
-.header .sub{font-size:.78rem;color:var(--muted);margin-top:4px}
-.header-actions{display:flex;gap:8px}
-.btn-ghost{padding:7px 16px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:inherit;font-size:.75rem;border-radius:var(--radius-sm);transition:all .2s}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+/* palette, typography, nav, status strip, buttons, panels and help modal come
+   from assets/css/demo-shell.css - only page-specific layout lives here */
+body{line-height:1.5}
+.page{max-width:1560px;margin:0 auto;padding:6px 28px 40px}
+.demo-sub{color:var(--muted);font-size:.82rem;line-height:1.6;padding:14px 0 4px;max-width:1180px}
+.demo-sub b{color:var(--text);font-weight:600}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
 /* GRID */
 .grid{display:grid;grid-template-columns:240px 1fr 400px;gap:16px;align-items:start;margin-bottom:20px}
@@ -49,13 +34,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 /* CONTROLS */
 .ctrl-row{margin-bottom:10px}
 .ctrl-row label{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:8px;font-weight:500}
-.ctrl-row input[type=number]{width:58px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.75rem;border-radius:var(--radius-sm);text-align:center}
+.ctrl-row input[type=number]{width:58px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.75rem;border-radius:var(--radius-sm);text-align:center}
 .ctrl-row input[type=range]{flex:1;min-width:50px;accent-color:var(--accent);height:4px;cursor:pointer}
 .ctrl-row input[type=range]::-webkit-slider-thumb{width:14px;height:14px}
 .ctrl-row input[type=checkbox]{accent-color:var(--accent)}
-.ctrl-hint{font-size:.68rem;color:var(--dim);margin-top:2px;margin-bottom:10px}
+.ctrl-hint{font-size:.68rem;color:var(--faint);margin-top:2px;margin-bottom:10px}
 .ctrl-btns{display:flex;gap:8px;margin-bottom:4px}
-.ctrl-val{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text);min-width:32px;text-align:right}
+.ctrl-val{font-family:var(--mono);font-size:.75rem;color:var(--text);min-width:32px;text-align:right}
 .btn{padding:9px 22px;background:var(--accent);color:#000;border:none;cursor:pointer;font-family:inherit;font-weight:600;font-size:.78rem;border-radius:var(--radius-sm);transition:all .2s}
 .btn:hover{background:var(--accent-hover);box-shadow:0 4px 16px rgba(6,182,212,.3)}
 .btn.secondary{background:var(--border);color:var(--text)}
@@ -65,7 +50,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .weight-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:.72rem}
 .weight-row .lbl{width:66px;color:var(--muted);font-weight:500;font-size:.68rem;flex-shrink:0}
 .weight-row input[type=range]{flex:1;min-width:50px;accent-color:var(--accent);height:3px;cursor:pointer}
-.weight-row input[type=number]{width:50px;text-align:right;padding:3px 5px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.7rem;border-radius:4px}
+.weight-row input[type=number]{width:50px;text-align:right;padding:3px 5px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.7rem;border-radius:4px}
 .weight-row .lock{cursor:pointer;opacity:.35;user-select:none;transition:all .2s;font-size:.68rem;font-weight:600;width:16px;text-align:center}
 .weight-row .lock:hover{opacity:.7}
 .weight-row .lock.on{opacity:1;color:var(--accent)}
@@ -78,12 +63,26 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .kpi-cell{padding:14px 10px;background:var(--card);text-align:center;transition:background .2s;cursor:help}
 .kpi-cell:hover{background:var(--accent-bg)}
 .kpi-cell .lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:600}
-.kpi-cell .val{font-size:1.15rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kpi-cell .val{font-size:1.15rem;font-weight:700;font-family:var(--mono)}
 .kpi-cell .val.pos{color:var(--green)}
 .kpi-cell .val.neg{color:var(--red)}
 .kpi-secondary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:10px;border-radius:var(--radius-sm);overflow:hidden}
 .kpi-secondary .kpi-cell .val{font-size:.82rem}
-.kpi-tertiary{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);margin-bottom:10px;border-radius:var(--radius-sm);overflow:hidden}
+.kpi-tertiary{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);margin-bottom:10px;border-radius:var(--radius-sm);overflow:hidden}
+.grid-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;align-items:start}
+@media(max-width:900px){.grid-two{grid-template-columns:1fr}}
+.cma-table .warnrow td{color:var(--amber)}
+.bar-cell{position:relative;min-width:120px}
+.bar-cell .bar{display:block;height:7px;border-radius:3px;background:var(--cyan);opacity:.75}
+.bar-cell .bar.neg{background:var(--red)}
+@media(max-width:640px){
+  .page{padding:6px 12px 30px}
+  .kpi,.kpi-secondary,.kpi-tertiary{grid-template-columns:repeat(2,1fr)}
+  .kpi-cell .val{font-size:1rem}
+  .chart-wrap{padding:14px 12px 12px}
+  .chart-wrap .chart-legend{position:static;margin-bottom:8px}
+  .weight-row .lbl{width:58px}
+}
 .kpi-tertiary .kpi-cell{padding:10px 6px}
 .kpi-tertiary .kpi-cell .val{font-size:.75rem}
 
@@ -91,16 +90,16 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .opt-result{padding:12px 14px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;font-size:.78rem;transition:all .2s;border-radius:var(--radius-sm)}
 .opt-result:hover{background:var(--accent-bg);border-color:var(--accent)}
 .opt-result .name{font-weight:600;color:#fff;margin-bottom:3px}
-.opt-result .vals{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.opt-result .vals{font-size:.7rem;color:var(--muted);font-family:var(--mono)}
 .opt-result.recommended{border-color:var(--green);background:rgba(16,185,129,.05)}
 .opt-result .badge{display:none}
 .opt-result.recommended .badge{display:inline-block;font-size:.6rem;background:var(--green);color:#000;padding:1px 6px;margin-left:6px;font-weight:700;border-radius:3px}
-.assumptions{font-size:.68rem;color:var(--dim);padding:12px;background:var(--surface);border-radius:var(--radius-sm);margin-top:12px;line-height:1.6}
+.assumptions{font-size:.68rem;color:var(--faint);padding:12px;background:var(--surface);border-radius:var(--radius-sm);margin-top:12px;line-height:1.6}
 
 /* CMA TABLE */
 .cma-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.68rem;margin-top:8px}
 .cma-table th{padding:6px 8px;color:var(--muted);font-weight:600;text-align:left;border-bottom:1px solid var(--border);font-size:.6rem;text-transform:uppercase;letter-spacing:.04em}
-.cma-table td{padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:.68rem;border-bottom:1px solid rgba(30,35,48,.5)}
+.cma-table td{padding:5px 8px;font-family:var(--mono);font-size:.68rem;border-bottom:1px solid rgba(30,35,48,.5)}
 .cma-table tr:hover td{background:var(--accent-bg)}
 .cma-table .asset-eq{color:var(--blue)}
 .cma-table .asset-fi{color:var(--green)}
@@ -109,10 +108,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 /* SECTION LABEL */
 .section-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.section-label .hint{font-size:.62rem;color:var(--dim);text-transform:none;letter-spacing:0;font-weight:400}
+.section-label .hint{font-size:.62rem;color:var(--faint);text-transform:none;letter-spacing:0;font-weight:400}
 
 /* CHART SUBTITLE */
-.chart-sub{font-size:.62rem;color:var(--dim);margin-top:-6px;margin-bottom:8px}
+.chart-sub{font-size:.62rem;color:var(--faint);margin-top:-6px;margin-bottom:8px}
 
 /* FRONTIER LEGEND */
 .frontier-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.62rem;color:var(--muted);margin-top:8px}
@@ -124,11 +123,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .weight-row.fi .lbl{color:var(--green)}
 .weight-row.alt .lbl{color:var(--amber)}
 .weight-row.cash-row .lbl{color:var(--muted)}
-.weight-total{font-size:.68rem;color:var(--muted);text-align:right;padding:6px 0 0;border-top:1px solid var(--border);margin-top:4px;font-family:'JetBrains Mono',monospace}
+.weight-total{font-size:.68rem;color:var(--muted);text-align:right;padding:6px 0 0;border-top:1px solid var(--border);margin-top:4px;font-family:var(--mono)}
 
 /* CORRELATION */
 .corr-panel{margin-bottom:20px}
-.corr-table{width:100%;border-collapse:separate;border-spacing:2px;font-family:'JetBrains Mono',monospace;font-size:.72rem}
+.corr-table{width:100%;border-collapse:separate;border-spacing:2px;font-family:var(--mono);font-size:.72rem}
 .corr-table th{padding:8px 6px;color:var(--muted);font-weight:600;font-size:.65rem;text-transform:uppercase;letter-spacing:.04em}
 .corr-table td{padding:8px 6px;text-align:center;border-radius:4px;font-weight:500;cursor:help;transition:all .15s}
 .corr-table td:hover{transform:scale(1.08);box-shadow:0 0 12px rgba(6,182,212,.25)}
@@ -151,66 +150,65 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 @media(max-width:900px){.grid-charts{grid-template-columns:1fr}}
 
 /* TOOLTIP */
-.chart-tooltip{position:fixed;font-size:.72rem;font-family:'JetBrains Mono',monospace;color:var(--text);background:rgba(10,14,39,.96);border:1px solid var(--accent);padding:8px 12px;pointer-events:none;opacity:0;z-index:200;border-radius:var(--radius-sm);box-shadow:0 8px 32px rgba(0,0,0,.5);backdrop-filter:blur(8px);max-width:240px;line-height:1.5}
+.chart-tooltip{position:fixed;font-size:.72rem;font-family:var(--mono);color:var(--text);background:rgba(10,14,39,.96);border:1px solid var(--accent);padding:8px 12px;pointer-events:none;opacity:0;z-index:200;border-radius:var(--radius-sm);box-shadow:0 8px 32px rgba(0,0,0,.5);backdrop-filter:blur(8px);max-width:240px;line-height:1.5}
 .chart-tooltip.show{opacity:1}
 .cma-table .pos{color:var(--green)}.cma-table .neg{color:var(--red)}
 .chart-crosshair{position:absolute;pointer-events:none;opacity:0;z-index:4;top:40px;bottom:20px;width:1px;background:var(--accent);transition:none}
 .chart-crosshair.show{opacity:.6}
 
-/* OVERLAY */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;visibility:hidden;transition:all .25s;backdrop-filter:blur(4px)}
-.overlay.show{opacity:1;visibility:visible}
-.overlay-box{max-width:560px;width:100%;max-height:85vh;overflow-y:auto;background:var(--card);border:1px solid var(--border);padding:28px;border-radius:var(--radius);position:relative}
-.overlay-box h2{font-size:1rem;font-weight:600;color:#fff;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
-.overlay-box h3{font-size:.72rem;color:var(--accent);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-.overlay-box p,.overlay-box li{font-size:.78rem;color:var(--text);line-height:1.7;margin-bottom:6px}
-.overlay-box ul{margin-left:18px}
-.overlay-box .formula{font-size:.75rem;font-family:'JetBrains Mono',monospace;background:var(--bg);padding:10px 14px;border-left:3px solid var(--accent);margin:8px 0;color:var(--muted);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
-.overlay-box .btn-close{position:absolute;top:14px;right:14px;background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:4px;transition:all .15s}
-.overlay-box .btn-close:hover{color:var(--accent);border-color:var(--accent)}
-.overlay-box kbd{background:var(--bg);padding:2px 7px;border:1px solid var(--border);font-size:.7rem;border-radius:4px;font-family:'JetBrains Mono',monospace}
+/* help modal extras (base styles come from the shell) */
+.d-help-section .formula{font-size:.74rem;font-family:var(--mono);background:var(--bg);padding:9px 13px;border-left:3px solid var(--cyan);margin:7px 0;color:var(--muted);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.d-help-section table{width:100%;border-collapse:collapse;font-size:.72rem;font-family:var(--mono);margin-top:6px}
+.d-help-section th,.d-help-section td{padding:4px 7px;border-bottom:1px solid var(--border);text-align:right;color:var(--muted)}
+.d-help-section th:first-child,.d-help-section td:first-child{text-align:left;color:var(--text)}
+.d-help-section kbd{background:var(--bg);padding:2px 7px;border:1px solid var(--border);font-size:.7rem;border-radius:4px;font-family:var(--mono)}
 </style>
 </head>
 <body>
-<div class="nav">
-  <a href="index.html" class="back">&#9664; Portfolio</a>
-</div>
-<div class="status-bar">
-  <span>Seed <span id="statusSeed">100</span> · Rf <span id="statusRf">2.50</span>% · MaxW <span id="statusMaxW">0.35</span> · <span id="statusLast">Ready</span></span>
-  <span>15Y synthetic · 8 assets · Deterministic</span>
+<nav class="demo-nav">
+  <a class="demo-brand" href="index.html">cristian@portfolio:~$ <span class="crumb">/ demos / portfolio-optimizer</span></a>
+  <h1 class="demo-title"><i class="fas fa-chart-pie"></i> Multi-Asset Portfolio Optimizer</h1>
+  <div class="demo-links">
+    <a href="index.html#projects">Projects</a>
+    <a href="index.html#research">Research</a>
+    <a href="index.html#demos" class="active">Demos</a>
+    <a href="robotics-embedded.html">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <span class="d-pill live"><span class="pulse"></span> LIVE</span>
+    <button type="button" class="d-btn sm" id="btnCopy"><i class="fas fa-copy"></i> Copy</button>
+    <button type="button" class="d-btn sm" id="btnExport"><i class="fas fa-file-csv"></i> Export</button>
+    <button type="button" class="d-btn sm icon" id="btnGuide" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+<div class="demo-status">
+  <span id="statusBar">seed <b id="statusSeed">100</b> &middot; Rf <b id="statusRf">3.75</b>% &middot; cap <b id="statusMaxW">35%</b> &middot; <b id="statusLast">Ready</b></span>
+  <span><b>Synthetic data</b> &middot; deterministic seed &middot; 200 Monte-Carlo paths &times; 180 months &middot; not investment advice</span>
 </div>
 
 <div class="page">
-<header class="header">
-  <div>
-    <h1>Portfolio <span>Optimizer</span></h1>
-    <p class="sub">Mean-variance optimization across 8 asset classes with Yale endowment constraints</p>
-  </div>
-  <div class="header-actions">
-    <button class="btn-ghost" id="btnCopy">Copy Weights</button>
-    <button class="btn-ghost" id="btnExport">Export CSV</button>
-    <button class="btn-ghost" id="btnGuide">? Guide</button>
-  </div>
-</header>
+<p class="demo-sub"><b>Mean&ndash;variance optimisation over an eight-asset endowment universe.</b> The covariance matrix is built as <b>&Sigma; = D&nbsp;C&nbsp;D</b> from capital-market assumptions (annual vols on the diagonal of D, a positive semi-definite correlation matrix C), so it is PSD by construction. The efficient frontier is solved numerically &mdash; minimum variance for each level of expected return under long-only, per-asset cap and endowment policy-band constraints &mdash; and every risk number comes from a seeded 200-path &times; 15-year Monte-Carlo simulation of the same assumptions.</p>
 
 <div class="grid">
   <!-- CONTROLS -->
   <div class="panel">
     <div class="panel-hdr"><span style="color:var(--accent);margin-right:6px">1</span> Parameters</div>
     <div class="panel-body">
-      <div class="ctrl-row"><label>Simulation Seed <input type="number" id="seed" value="100" min="1" max="9999"></label></div>
-      <div class="ctrl-hint">Changes random path. Same seed = same results.</div>
-      <div class="ctrl-row"><label>Risk-Free Rate <input type="range" id="rf" min="0" max="6" step="0.25" value="2.5"> <span class="ctrl-val" id="rfVal">2.50%</span></label></div>
-      <div class="ctrl-row"><label><input type="checkbox" id="longOnly" checked> Long-only constraint</label></div>
-      <div class="ctrl-row"><label>Max Weight <input type="range" id="maxW" min="0.10" max="0.60" step="0.05" value="0.35"> <span class="ctrl-val" id="maxWVal">35%</span></label></div>
-      <div class="ctrl-hint">Per-asset cap for diversification.</div>
-      <div class="ctrl-row"><label>Target Vol <input type="range" id="targetVol" min="4" max="18" step="0.5" value="10"> <span class="ctrl-val" id="targetVolVal">10%</span></label></div>
-      <div class="ctrl-hint">Used by Target Vol optimization.</div>
+      <div class="ctrl-row"><label>Simulation seed <input type="number" id="seed" value="100" min="1" max="9999"></label></div>
+      <div class="ctrl-hint">Drives the 200-path Monte Carlo and the random cloud. Same seed = identical output.</div>
+      <div class="ctrl-row"><label>Risk-free rate <input type="range" class="d-range" id="rf" min="0" max="8" step="0.25" value="3.75"> <span class="ctrl-val" id="rfVal">3.75%</span></label></div>
+      <div class="ctrl-hint">Cash returns this rate; it is the Sharpe / Sortino hurdle.</div>
+      <div class="ctrl-row"><label><input type="checkbox" id="policyBands" checked> Endowment policy bands</label></div>
+      <div class="ctrl-hint">Cash &le; 5% &middot; growth assets &ge; 50% &middot; illiquid (PE + real estate) &le; 50%. Uncheck for long-only + cap only.</div>
+      <div class="ctrl-row"><label>Max weight <input type="range" class="d-range" id="maxW" min="0.15" max="0.60" step="0.05" value="0.35"> <span class="ctrl-val" id="maxWVal">35%</span></label></div>
+      <div class="ctrl-hint">Per-asset cap. Below 1/8 = 12.5% no portfolio could sum to 100%, so the floor is 15%.</div>
+      <div class="ctrl-row"><label>Target vol <input type="range" class="d-range" id="targetVol" min="5" max="18" step="0.5" value="11"> <span class="ctrl-val" id="targetVolVal">11%</span></label></div>
+      <div class="ctrl-hint">The frontier point closest to this annualised volatility.</div>
       <div class="ctrl-btns">
-        <button class="btn" id="btnOptimize">Optimize</button>
-        <button class="btn secondary" id="btnReset">Reset</button>
+        <button type="button" class="d-btn primary" id="btnOptimize"><i class="fas fa-bolt"></i> Optimize</button>
+        <button type="button" class="d-btn" id="btnReset"><i class="fas fa-rotate-left"></i> Reset</button>
       </div>
-      <p class="ctrl-hint">1. Set parameters → 2. Click Optimize → 3. Click a result to apply</p>
+      <p class="ctrl-hint">1. Set parameters &rarr; 2. Optimize &rarr; 3. Click a result to apply it to the weights.</p>
     </div>
   </div>
 
@@ -219,11 +217,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <div class="panel-hdr"><span style="color:var(--accent);margin-right:6px">2</span> Allocation Weights</div>
     <div class="panel-body">
       <div class="preset-row">
-        <button class="bench-btn" id="benchBtn">60/40</button>
-        <button class="bench-btn preset" data-preset="yale">Yale</button>
-        <button class="bench-btn preset" data-preset="riskparity">Risk Parity</button>
-        <button class="bench-btn preset" data-preset="allweather">All-Weather</button>
-        <button class="bench-btn preset" data-preset="equal">Equal</button>
+        <button type="button" class="bench-btn" id="benchBtn">60/40</button>
+        <button type="button" class="bench-btn preset" data-preset="yale">Endowment</button>
+        <button type="button" class="bench-btn preset" data-preset="riskparity">Risk parity</button>
+        <button type="button" class="bench-btn preset" data-preset="balanced">Balanced 70/30</button>
+        <button type="button" class="bench-btn preset" data-preset="equal">Equal</button>
       </div>
       <div id="weightRows"></div>
     </div>
@@ -244,7 +242,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </div>
 
 <!-- CMA TABLE -->
-<div class="section-label">Capital Market Assumptions <span class="hint">Theoretical inputs driving optimization</span></div>
+<div class="section-label">Capital market assumptions <span class="hint">2026 long-horizon inputs (arithmetic, nominal, USD) driving the optimizer</span></div>
 <div class="panel" style="margin-bottom:20px">
   <div class="panel-body" style="padding:12px 16px;overflow-x:auto">
     <table class="cma-table" id="cmaTable"></table>
@@ -252,7 +250,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </div>
 
 <!-- CORRELATION -->
-<div class="section-label">Correlation Matrix <span class="hint">Cross-asset dependencies</span></div>
+<div class="section-label">Correlation matrix <span class="hint">C in &Sigma; = D C D &mdash; symmetric, unit diagonal, positive semi-definite (min eigenvalue 0.14)</span></div>
 <div class="panel corr-panel" style="margin-bottom:20px">
   <div class="panel-hdr">Pairwise Correlations</div>
   <div class="panel-body" style="overflow-x:auto;padding:16px">
@@ -260,13 +258,32 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   </div>
 </div>
 
+<!-- STRESS & FACTORS -->
+<div class="section-label">Stress tests &amp; factor exposures <span class="hint">Historical shock replay and weight-implied factor loadings</span></div>
+<div class="grid-two">
+  <div class="panel">
+    <div class="panel-hdr">Scenario stress tests</div>
+    <div class="panel-body" style="padding:12px 16px;overflow-x:auto">
+      <table class="cma-table" id="stressTable"></table>
+      <p class="ctrl-hint" style="margin-top:10px">Instantaneous repricing: scenario return = &Sigma; w<sub>i</sub> &middot; shock<sub>i</sub>, peak-to-trough over the stated window. Private-equity and real-estate shocks are appraisal-lagged <em>reported</em> marks, so they understate true economic loss.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-hdr">Factor exposures</div>
+    <div class="panel-body" style="padding:12px 16px;overflow-x:auto">
+      <table class="cma-table" id="factorTable"></table>
+      <p class="ctrl-hint" style="margin-top:10px">Exposure<sub>k</sub> = &Sigma; w<sub>i</sub> &middot; B<sub>ik</sub> with the fixed loading matrix B listed in the guide. Rates duration is reported in years using a 6.0-year Treasury-index duration.</p>
+    </div>
+  </div>
+</div>
+
 <!-- GROWTH CHART -->
-<div class="section-label">Performance <span class="hint">Simulated 15-year backtest</span></div>
+<div class="section-label">Performance <span class="hint">Path 1 of the 200 simulated 15-year paths</span></div>
 <div class="chart-wrap chart-wide" id="pathChartWrap">
-  <div class="chart-title">Growth of $1</div>
+  <div class="chart-title">Growth of $1 &mdash; simulated path 1 of 200</div>
   <div class="chart-legend"><span><span class="dot port"></span>Portfolio</span><span><span class="dot bm"></span>60/40 BM</span></div>
   <div class="chart-crosshair" id="pathCrosshair"></div>
-  <canvas id="pathChart"></canvas>
+  <canvas id="pathChart" aria-label="Growth of one dollar for the portfolio and the 60/40 benchmark over 180 simulated months"></canvas>
 </div>
 
 <!-- BOTTOM CHARTS -->
@@ -274,154 +291,323 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 <div class="grid-charts">
   <div class="chart-wrap chart-trio chart-full" id="riskChartWrap">
     <div class="chart-title">Risk Contribution</div>
-    <div class="chart-sub">% of total portfolio variance by asset</div>
-    <canvas id="riskChart"></canvas>
+    <div class="chart-sub">Share of total portfolio variance: w<sub>i</sub>(&Sigma;w)<sub>i</sub> / w&#39;&Sigma;w</div>
+    <canvas id="riskChart" aria-label="Bar chart of each asset class's share of total portfolio variance"></canvas>
   </div>
   <div class="chart-wrap chart-trio" id="frontierChartWrap">
     <div class="chart-title">Efficient Frontier</div>
-    <div class="chart-sub">σ (x-axis) vs E[R] (y-axis) — hover for details</div>
-    <canvas id="frontierChart"></canvas>
+    <div class="chart-sub">Annualised &sigma; (x) vs expected return (y). Line = constrained frontier, cloud = 1,400 random feasible portfolios.</div>
+    <canvas id="frontierChart" aria-label="Efficient frontier with a cloud of random feasible portfolios and the optimized portfolios marked"></canvas>
     <div class="frontier-legend" id="frontierLegend">
       <span><span class="fdot" style="background:#06b6d4;box-shadow:0 0 6px #06b6d4"></span>Current</span>
       <span><span class="fdot" style="background:#3b82f6"></span>Min Var</span>
       <span><span class="fdot" style="background:#10b981"></span>Max Sharpe</span>
       <span><span class="fdot" style="background:#f59e0b"></span>Target Vol</span>
+      <span><span class="fdot" style="background:#94a3b8"></span>Random feasible</span>
     </div>
   </div>
   <div class="chart-wrap chart-trio" id="ddChartWrap">
     <div class="chart-title">Drawdown</div>
-    <div class="chart-sub">Peak-to-trough decline over time</div>
-    <canvas id="ddChart"></canvas>
+    <div class="chart-sub">Peak-to-trough decline of the same simulated path</div>
+    <canvas id="ddChart" aria-label="Drawdown of the simulated portfolio path over 180 months"></canvas>
   </div>
-</div>
-<div style="text-align:center;padding:28px 0 12px;font-size:.65rem;color:var(--dim);border-top:1px solid var(--border);margin-top:32px">
-  Simulated returns are hypothetical. Past performance does not guarantee future results.
-  Built with mean-variance optimization and Monte Carlo simulation.
 </div>
 </div>
 
 <div class="chart-tooltip" id="chartTooltip"></div>
 
-<!-- GUIDE OVERLAY -->
-<div class="overlay" id="guideOverlay">
-  <div class="overlay-box">
-    <button class="btn-close" id="guideClose">✕</button>
-    <h2>Portfolio Optimizer — Guide</h2>
-    <h3>How It Works</h3>
-    <p><b>1.</b> Set parameters (seed, risk-free rate, constraints) in the left panel.</p>
-    <p><b>2.</b> Adjust allocation weights manually or pick a preset (Yale, Risk Parity, etc.).</p>
-    <p><b>3.</b> Click <b>Optimize</b> to compute three optimal portfolios. Click any result to apply.</p>
-    <p>All weights auto-rescale to 100%. Lock an asset with <b>L</b> to hold it fixed during rebalancing.</p>
-    <h3>Asset Classes</h3>
-    <p><span style="color:var(--blue)">■</span> <b>Equities</b>: US, International, Emerging Markets — growth engines with higher volatility.</p>
-    <p><span style="color:var(--green)">■</span> <b>Fixed Income</b>: US Agg Bonds — low-risk income and diversification.</p>
-    <p><span style="color:var(--amber)">■</span> <b>Credit & Alts</b>: IG/HY Credit, TIPS — yield enhancement and inflation protection.</p>
-    <h3>Key Formulas</h3>
-    <div class="formula">μ_p = w'μ  (portfolio expected return)</div>
-    <div class="formula">σ_p = √(w'Σw)  (portfolio volatility)</div>
-    <div class="formula">Sharpe = (μ_p − Rf) / σ_p</div>
-    <div class="formula">Sortino = (μ_p − Rf) / σ_downside</div>
-    <div class="formula">β = Cov(R_p, R_b) / Var(R_b)  vs 60/40</div>
-    <div class="formula">VaR 95% = 5th pctile monthly return, annualized</div>
-    <div class="formula">Calmar = Annualized Return / Max Drawdown</div>
-    <div class="formula">Info Ratio = (μ_p − μ_b) / Tracking Error</div>
-    <h3>Optimization Methods</h3>
-    <p><b>Min Variance</b>: w ∝ Σ⁻¹·1 — minimizes total risk regardless of return.</p>
-    <p><b>Max Sharpe</b>: w ∝ Σ⁻¹·(μ−Rf) — best risk-adjusted return on the efficient frontier.</p>
-    <p><b>Target Vol</b>: Blends Max Sharpe with cash to match your target volatility level.</p>
-    <h3>Constraints (Yale Model)</h3>
-    <p>Cash ≤ 5% · Equities ≥ 25% · Credit (IG + HY) ≤ 30% · Per-asset cap applied.</p>
-    <p>Inspired by the Yale Endowment's diversification principles: broad equity exposure, limited cash drag, and controlled credit concentration.</p>
-    <h3>Keyboard Shortcuts</h3>
-    <ul><li><kbd>?</kbd> Toggle this guide</li><li><kbd>O</kbd> Run optimization</li><li><kbd>R</kbd> Reset to defaults</li></ul>
+<!-- GUIDE -->
+<div class="d-help-overlay" id="guideOverlay" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="guideTitle"><i class="fas fa-book-open"></i> Guide &mdash; Multi-Asset Portfolio Optimizer</h2>
+      <button type="button" class="d-help-close" id="guideClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; How to drive it</h3>
+        <p><strong>1.</strong> Set the seed, risk-free rate and constraints on the left. <strong>2.</strong> Move the weight sliders or load a preset. <strong>3.</strong> Press <strong>Optimize</strong> to solve the frontier and click any result to apply it. Weights always rescale to 100%; the <strong>L</strong> toggle locks an asset so rescaling leaves it alone.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>2 &middot; Capital market assumptions</h3>
+        <p>Long-horizon, arithmetic, nominal USD assumptions in the spirit of published 2026 CMAs. Cash always returns the risk-free rate you set, so raising Rf lowers every Sharpe ratio and shifts the tangency portfolio.</p>
+        <table>
+          <thead><tr><th>Asset</th><th>E[R]</th><th>Vol</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>US equity</td><td>6.8%</td><td>16.0%</td><td>Growth</td></tr>
+            <tr><td>Intl developed equity</td><td>7.2%</td><td>17.5%</td><td>Growth</td></tr>
+            <tr><td>EM equity</td><td>7.9%</td><td>21.5%</td><td>Growth</td></tr>
+            <tr><td>Private equity</td><td>9.4%</td><td>23.0%</td><td>Growth, illiquid</td></tr>
+            <tr><td>Hedge funds</td><td>5.6%</td><td>7.5%</td><td>Diversifier</td></tr>
+            <tr><td>Real estate</td><td>6.6%</td><td>18.0%</td><td>Real asset, illiquid</td></tr>
+            <tr><td>US Treasuries</td><td>4.4%</td><td>5.5%</td><td>Deflation hedge</td></tr>
+            <tr><td>Cash</td><td>= Rf</td><td>0.8%</td><td>Liquidity</td></tr>
+          </tbody>
+        </table>
+        <p>Private-equity and real-estate volatilities are <em>de-smoothed</em>: reported appraisal-based series show roughly half this volatility, which would make the optimizer massively over-allocate to them.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>3 &middot; Covariance and the optimizer</h3>
+        <div class="formula">&Sigma; = D C D,&nbsp; D = diag(&sigma;),&nbsp; C symmetric with unit diagonal (min eigenvalue 0.14 &rArr; &Sigma; is positive semi-definite)</div>
+        <div class="formula">&mu;<sub>p</sub> = w&#39;&mu;&nbsp; &middot;&nbsp; &sigma;<sub>p</sub> = &radic;(w&#39;&Sigma;w)&nbsp; &middot;&nbsp; Sharpe = (&mu;<sub>p</sub> &minus; R<sub>f</sub>) / &sigma;<sub>p</sub></div>
+        <p>The frontier is <strong>not</strong> the textbook closed form <code>w &prop; &Sigma;<sup>&minus;1</sup>1</code>: that ignores every constraint. Each frontier point solves</p>
+        <div class="formula">max<sub>w</sub> &nbsp;&lambda;&nbsp;&mu;&#39;w &minus; w&#39;&Sigma;w &nbsp; s.t. &nbsp; &Sigma;w<sub>i</sub> = 1, &nbsp; 0 &le; w<sub>i</sub> &le; cap, &nbsp; policy bands</div>
+        <p>by projected gradient ascent, sweeping the risk-aversion parameter &lambda; from 0 (minimum variance) to a level where the return term dominates (maximum return corner). The projection is the exact Euclidean projection onto the capped simplex, alternated with the group constraints. Sweeping &lambda; traces exactly the set of portfolios that minimise variance for their own level of return, so the curve is monotone and no random portfolio can sit above it.</p>
+        <p><strong>Min variance</strong> is &lambda; = 0. <strong>Max Sharpe</strong> is refined with a direct ascent on the Sharpe gradient <code>&mu;/&sigma; &minus; (&mu;&#39;w&minus;R<sub>f</sub>)&Sigma;w/&sigma;&sup3;</code>. <strong>Target vol</strong> is the frontier point whose volatility is closest to your slider; if the target is below the constrained minimum-variance point the optimizer says so instead of pretending.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>4 &middot; Constraints</h3>
+        <p>Always on: long-only and a per-asset cap. With <strong>endowment policy bands</strong> ticked the feasible set also requires cash &le; 5% (cash drag), growth assets (public equity + private equity + real estate) &ge; 50% (spending-rate requirement) and illiquid assets (private equity + real estate) &le; 50% (liquidity risk). The cloud, the frontier and all three optima share one feasible set, so they are directly comparable. Manually dragged weights are only held to long-only, the cap and the cash limit &mdash; the weights panel flags any policy band you breach.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>5 &middot; Monte Carlo and risk metrics</h3>
+        <p>200 seeded paths of 180 monthly returns. Each month draws correlated standard normals through the Cholesky factor of C and maps them to <strong>log-normal</strong> asset returns with <code>r = exp(m &minus; &frac12;s&sup2; + s&middot;z) &minus; 1</code>, calibrated so that E[r] = &mu;/12 exactly. Wealth compounds multiplicatively, so a &minus;50% month cannot be undone by a +50% month.</p>
+        <ul>
+          <li><strong>VaR / CVaR</strong> &mdash; empirical 5% and 1% quantiles of the pooled 36,000 monthly portfolio returns, <em>1-month horizon</em>, reported as positive loss numbers (VaR 95% = 4.8% means a 5% chance of losing at least 4.8% in a month). CVaR is the mean of the returns beyond the quantile.</li>
+          <li><strong>Max drawdown</strong> &mdash; worst peak-to-trough fall of each simulated wealth path; the tile shows the median across the 200 paths and the tooltip the 95th percentile.</li>
+          <li><strong>Worst 12m</strong> &mdash; 5th percentile across paths of that path&#39;s worst rolling 12-month return.</li>
+          <li><strong>Sortino</strong> = (&mu;<sub>p</sub> &minus; R<sub>f</sub>) / target semi-deviation below the monthly R<sub>f</sub>, annualised. <strong>Calmar</strong> = geometric return / median max drawdown.</li>
+          <li><strong>Tracking error, information ratio, beta, active share</strong> are all measured against the 60/40 (60% US equity / 40% Treasuries) benchmark on the displayed path; active share is &frac12;&Sigma;|w<sub>i</sub> &minus; w<sub>b,i</sub>|.</li>
+        </ul>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; Stress tests</h3>
+        <p>Instantaneous repricing of the current weights with peak-to-trough shocks from four episodes. Magnitudes are rounded index moves, not model output:</p>
+        <table>
+          <thead><tr><th>Scenario</th><th>US eq</th><th>EM eq</th><th>PE</th><th>HF</th><th>RE</th><th>UST</th></tr></thead>
+          <tbody>
+            <tr><td>GFC, Oct 2007 &ndash; Mar 2009</td><td>&minus;50%</td><td>&minus;60%</td><td>&minus;30%</td><td>&minus;20%</td><td>&minus;60%</td><td>+10%</td></tr>
+            <tr><td>COVID, 19 Feb &ndash; 23 Mar 2020</td><td>&minus;34%</td><td>&minus;32%</td><td>&minus;20%</td><td>&minus;11%</td><td>&minus;40%</td><td>+8%</td></tr>
+            <tr><td>Rate shock, Jan &ndash; Oct 2022</td><td>&minus;25%</td><td>&minus;29%</td><td>&minus;20%</td><td>&minus;6%</td><td>&minus;28%</td><td>&minus;13%</td></tr>
+            <tr><td>Stagflation (stylised, 12m)</td><td>&minus;20%</td><td>&minus;22%</td><td>&minus;15%</td><td>&minus;5%</td><td>&minus;8%</td><td>&minus;8%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="d-help-section">
+        <h3>7 &middot; Factor exposures</h3>
+        <p>A fixed, hand-specified loading matrix B maps weights to five factors: <code>exposure = w&#39;B</code>. It is a stated mapping, not a regression on the simulated data.</p>
+        <table>
+          <thead><tr><th>Asset</th><th>Equity</th><th>Duration</th><th>Credit</th><th>Inflation</th><th>Illiquidity</th></tr></thead>
+          <tbody>
+            <tr><td>US equity</td><td>1.00</td><td>0.00</td><td>0.05</td><td>0.00</td><td>0.00</td></tr>
+            <tr><td>Intl equity</td><td>1.05</td><td>0.00</td><td>0.05</td><td>0.10</td><td>0.00</td></tr>
+            <tr><td>EM equity</td><td>1.15</td><td>0.00</td><td>0.15</td><td>0.20</td><td>0.10</td></tr>
+            <tr><td>Private equity</td><td>1.25</td><td>0.00</td><td>0.20</td><td>0.00</td><td>1.00</td></tr>
+            <tr><td>Hedge funds</td><td>0.35</td><td>0.05</td><td>0.20</td><td>0.05</td><td>0.40</td></tr>
+            <tr><td>Real estate</td><td>0.70</td><td>0.30</td><td>0.15</td><td>0.35</td><td>0.35</td></tr>
+            <tr><td>US Treasuries</td><td>0.00</td><td>1.00</td><td>0.00</td><td>&minus;0.30</td><td>0.00</td></tr>
+            <tr><td>Cash</td><td>0.00</td><td>0.02</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+          </tbody>
+        </table>
+        <p>Private equity carries an equity beta above 1 because it is levered public equity; the duration factor is scaled so 1.00 = the 6.0-year duration of the Treasury sleeve.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>8 &middot; Keyboard</h3>
+        <ul><li><kbd>?</kbd> toggle this guide &middot; <kbd>Esc</kbd> close</li><li><kbd>O</kbd> optimize &middot; <kbd>R</kbd> reset</li></ul>
+      </div>
+    </div>
   </div>
 </div>
 
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A constrained mean&ndash;variance optimizer over an eight-asset endowment universe. Capital-market assumptions (expected return, volatility, correlation) define a covariance matrix &Sigma; = D&nbsp;C&nbsp;D that is positive semi-definite by construction. The efficient frontier is solved numerically by projected gradient ascent on <code>&lambda;&mu;&#39;w &minus; w&#39;&Sigma;w</code> across a sweep of risk-aversion levels &lambda;, subject to long-only, a per-asset cap and endowment policy bands, and is drawn against a cloud of 1,400 random feasible portfolios that it dominates by construction. The same assumptions drive a seeded 200-path &times; 180-month log-normal Monte Carlo used for drawdown, VaR, CVaR and downside deviation, plus a four-scenario historical stress replay and a weight-implied factor decomposition.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Arithmetic nominal CMAs: US equity 6.8%/16.0%, intl equity 7.2%/17.5%, EM equity 7.9%/21.5%, private equity 9.4%/23.0%, hedge funds 5.6%/7.5%, real estate 6.6%/18.0%, US Treasuries 4.4%/5.5%, cash = R<sub>f</sub> (default 3.75%) at 0.8% vol.</li>
+          <li>Equity&ndash;Treasury correlation +0.05; US&ndash;intl equity +0.85; private equity&ndash;US equity +0.72; hedge funds&ndash;US equity +0.72. Private-equity and real-estate vols are de-smoothed, not reported appraisal vols.</li>
+          <li>Policy bands: cash &le; 5%, growth assets (public equity + PE + real estate) &ge; 50%, illiquid (PE + real estate) &le; 50%, per-asset cap 15&ndash;60% (default 35%). Long-only throughout.</li>
+          <li>Monte Carlo: 200 paths &times; 180 months, Gaussian copula via the Cholesky factor of C, log-normal marginals calibrated so E[r] = &mu;/12; monthly rebalancing back to the target weights; no fees, taxes, transaction costs or capital calls.</li>
+          <li>Benchmark is 60% US equity / 40% US Treasuries. Charts show path 1 of the 200; risk statistics pool all 200.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li><code>&mu;p = w'&mu;</code>, <code>&sigma;p = &radic;(w'&Sigma;w)</code>, <code>Sharpe = (&mu;p &minus; Rf)/&sigma;p</code>, risk contribution <code>= w_i(&Sigma;w)_i / w'&Sigma;w</code>.</li>
+          <li>Frontier: <code>max &lambda;&mu;'w &minus; w'&Sigma;w</code> over the feasible set, &lambda; swept from 0 upward; Euclidean projection onto <code>{0 &le; w &le; cap, &Sigma;w = 1}</code> by bisection on the shift, alternated with the group-constraint projections.</li>
+          <li>VaR<sub>&alpha;</sub> = &minus;quantile<sub>1&minus;&alpha;</sub> of pooled 1-month returns; CVaR<sub>&alpha;</sub> = &minus;mean of returns below that quantile; both positive = loss.</li>
+          <li>Max drawdown from the compounded wealth path <code>W<sub>t</sub> = &prod;(1+r<sub>t</sub>)</code>; Sortino uses the target semi-deviation below monthly R<sub>f</sub>; active share = &frac12;&Sigma;|w &minus; w<sub>b</sub>|.</li>
+          <li>Markowitz (1952), <em>Portfolio Selection</em>; Michaud (1989), <em>The Markowitz Optimization Enigma</em>; Swensen (2009), <em>Pioneering Portfolio Management</em>; Geltner (1991) on appraisal smoothing.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li>Point-estimate CMAs with no estimation error: mean&ndash;variance optimizers are notoriously sensitive to &mu;, and no resampling, shrinkage or Black&ndash;Litterman prior is applied here.</li>
+          <li>Gaussian copula with log-normal marginals: no fat tails, no correlation breakdown in crises. The stress panel exists precisely because the Monte Carlo cannot produce those events.</li>
+          <li>Private equity and real estate are modelled as liquid, monthly-priced sleeves. Capital calls, J-curves, lock-ups, secondary discounts and the denominator effect are not modelled.</li>
+          <li>No fees, carry, taxes, transaction costs, rebalancing bands or spending policy; monthly rebalancing is assumed free and instantaneous.</li>
+          <li>Stress shocks are fixed historical index moves applied instantaneously to today&#39;s weights, with no path, no rebalancing and no liquidity constraint.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Educational demonstration built on synthetic (or stylised historical) data generated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
+  </div>
+</footer>
+
 <script>
 'use strict';
+window.onerror=function(msg,url,line){
+  var b=document.getElementById('statusBar');
+  if(b)b.innerHTML='<span class="warn">JS ERROR: '+msg+' (line '+line+')</span>';
+};
 (function(){
 const F = v => typeof v==='number'&&!isNaN(v)?v.toFixed(2):'—';
 const P = v => typeof v==='number'&&!isNaN(v)?(v*100).toFixed(2)+'%':'—';
 
-const ASSETS=['US_EQ','INTL_EQ','EM_EQ','US_AGG','IG_CREDIT','HY_CREDIT','TIPS','CASH'];
-const LABELS=['US Equity','Intl Equity','EM Equity','US Agg','IG Credit','HY Credit','TIPS','Cash'];
-const N=8, T=180;
-const W_BM=[.6,0,0,.4,0,0,0,0];
+const ASSETS=['US_EQ','INTL_EQ','EM_EQ','PRIV_EQ','HEDGE_FUND','REAL_EST','US_TSY','CASH'];
+const LABELS=['US Equity','Intl Equity','EM Equity','Private Equity','Hedge Funds','Real Estate','US Treasuries','Cash'];
+const SHORT=['US Eq','Intl Eq','EM Eq','PE','HF','RE','UST','Cash'];
+const CLASS=['eq','eq','eq','alt','alt','alt','fi','cash-row'];
+const CLASS_LABEL=['Public equity','Public equity','Public equity','Private equity','Absolute return','Real assets','Fixed income','Cash'];
+const N=8, T=180, PATHS=200;
+const W_BM=[.6,0,0,0,0,0,.4,0];
+const DEFAULT_W=[.18,.12,.07,.18,.16,.09,.17,.03];
+
+// stress shocks: peak-to-trough index moves, per asset, per scenario
+const STRESS=[
+  {name:'GFC',win:'Oct 2007 &ndash; Mar 2009',s:[-.50,-.55,-.60,-.30,-.20,-.60,.10,.03]},
+  {name:'COVID crash',win:'19 Feb &ndash; 23 Mar 2020',s:[-.34,-.33,-.32,-.20,-.11,-.40,.08,.002]},
+  {name:'Rate shock',win:'Jan &ndash; Oct 2022',s:[-.25,-.25,-.29,-.20,-.06,-.28,-.13,.015]},
+  {name:'Stagflation',win:'stylised, 12 months',s:[-.20,-.18,-.22,-.15,-.05,-.08,-.08,.06]}
+];
+// factor loading matrix B (stated mapping, not estimated)
+const FACTORS=['Equity beta','Rates duration','Credit','Inflation','Illiquidity'];
+const FLOAD=[
+  [1.00,0.00,0.05,0.00,0.00],
+  [1.05,0.00,0.05,0.10,0.00],
+  [1.15,0.00,0.15,0.20,0.10],
+  [1.25,0.00,0.20,0.00,1.00],
+  [0.35,0.05,0.20,0.05,0.40],
+  [0.70,0.30,0.15,0.35,0.35],
+  [0.00,1.00,0.00,-0.30,0.00],
+  [0.00,0.02,0.00,0.00,0.00]
+];
+const TSY_DUR=6.0;
 
 const APP={
-  state:{seed:100,rf:.025,longOnly:true,maxW:.35,targetVol:.10,
-    weights:[.30,.20,.08,.25,.08,.04,.03,.02],
+  state:{seed:100,rf:.0375,policy:true,maxW:.35,targetVol:.11,
+    weights:DEFAULT_W.slice(),
     locked:Array(N).fill(false),lastOpt:null},
-  data:null,optResults:null,frontierData:null,drawdownData:null
+  data:null,optResults:null,frontierData:null,drawdownData:null,fcache:null,tvGap:0
 };
 
 // --- PRNG ---
 function rng32(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);return((t+=t<0?0x100000000:0)>>>0)/4294967296}}
 
 // --- DATA GENERATION ---
+// 2026 long-horizon capital market assumptions: arithmetic, nominal, USD.
+// Private-equity and real-estate vols are de-smoothed (reported appraisal series
+// show roughly half of this, which would make the optimiser over-allocate).
+const MU_CMA=[.068,.072,.079,.094,.056,.066,.044,null];   // null = cash, uses Rf
+const VOL_CMA=[.160,.175,.215,.230,.075,.180,.055,.008];
+const CORR=[
+  [1.00,0.85,0.74,0.72,0.72,0.60,0.05,0.00],
+  [0.85,1.00,0.80,0.68,0.72,0.58,0.05,0.00],
+  [0.74,0.80,1.00,0.60,0.68,0.50,0.00,0.00],
+  [0.72,0.68,0.60,1.00,0.60,0.55,0.00,-0.05],
+  [0.72,0.72,0.68,0.60,1.00,0.48,0.05,0.05],
+  [0.60,0.58,0.50,0.55,0.48,1.00,0.20,0.00],
+  [0.05,0.05,0.00,0.00,0.05,0.20,1.00,0.25],
+  [0.00,0.00,0.00,-0.05,0.05,0.00,0.25,1.00]
+];
+
 function genData(seed){
   const rng=rng32(seed);
   const bm=()=>{const u=Math.max(1e-10,rng()),v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
 
-  // Realistic capital market assumptions
-  const mu_a=[.072,.062,.078,.034,.038,.052,.033,APP.state.rf];
-  const vol_a=[.165,.175,.205,.045,.068,.105,.055,.01];
-  const C=[
-    [1,.75,.68,.05,.18,.35,.08,-.05],
-    [.75,1,.72,.03,.15,.32,.06,-.04],
-    [.68,.72,1,.02,.12,.30,.04,-.03],
-    [.05,.03,.02,1,.55,.40,.52,.10],
-    [.18,.15,.12,.55,1,.65,.38,.04],
-    [.35,.32,.30,.40,.65,1,.30,.01],
-    [.08,.06,.04,.52,.38,.30,1,.08],
-    [-.05,-.04,-.03,.10,.04,.01,.08,1]
-  ];
+  const mu_a=MU_CMA.map((m,i)=>m===null?APP.state.rf:m);
+  const vol_a=VOL_CMA.slice();
 
-  // Cholesky
+  // Cholesky of the correlation matrix (it is PSD, min eigenvalue ~0.14)
   const L=[];
-  for(let i=0;i<N;i++){L[i]=[];for(let j=0;j<=i;j++){let s=0;for(let k=0;k<j;k++)s+=L[i][k]*L[j][k];L[i][j]=i===j?Math.sqrt(Math.max(1e-12,C[i][i]-s)):(C[i][j]-s)/(L[j][j]||1e-12)}for(let j=i+1;j<N;j++)L[i][j]=0}
+  for(let i=0;i<N;i++){L[i]=[];for(let j=0;j<=i;j++){let s=0;for(let k=0;k<j;k++)s+=L[i][k]*L[j][k];L[i][j]=i===j?Math.sqrt(Math.max(1e-12,CORR[i][i]-s)):(CORR[i][j]-s)/(L[j][j]||1e-12)}for(let j=i+1;j<N;j++)L[i][j]=0}
 
-  const mu_m=mu_a.map(m=>Math.log(1+m)/12);
+  // log-normal marginals calibrated so that E[r_month] = mu/12 exactly
+  const mu_m=mu_a.map(m=>Math.log(1+m/12));
   const vol_m=vol_a.map(v=>v/Math.sqrt(12));
-  const rets=[];
-  for(let t=0;t<T;t++){
-    const z=[];for(let i=0;i<N;i++)z[i]=bm();
-    const e=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<=i;j++)s+=L[i][j]*z[j];e[i]=s}
-    const r=[];for(let i=0;i<N;i++)r.push(Math.exp(mu_m[i]-.5*vol_m[i]*vol_m[i]+vol_m[i]*e[i])-1);
-    rets.push(r);
+  const panel=new Float64Array(PATHS*T*N);
+  for(let p=0;p<PATHS;p++){
+    for(let t=0;t<T;t++){
+      const z=[];for(let i=0;i<N;i++)z[i]=bm();
+      const o=(p*T+t)*N;
+      for(let i=0;i<N;i++){let e=0;for(let j=0;j<=i;j++)e+=L[i][j]*z[j];
+        panel[o+i]=Math.exp(mu_m[i]-.5*vol_m[i]*vol_m[i]+vol_m[i]*e)-1}
+    }
   }
+  // path 1 is the displayed path
+  const rets=[];
+  for(let t=0;t<T;t++){const r=[];for(let i=0;i<N;i++)r.push(panel[t*N+i]);rets.push(r)}
 
-  // Theoretical covariance (more stable for optimization)
+  // Sigma = D C D is positive semi-definite because C is
   const Sigma=[];
-  for(let i=0;i<N;i++){Sigma[i]=[];for(let j=0;j<N;j++)Sigma[i][j]=C[i][j]*vol_a[i]*vol_a[j]}
-  return{returns:rets,mu:mu_a,Sigma};
+  for(let i=0;i<N;i++){Sigma[i]=[];for(let j=0;j<N;j++)Sigma[i][j]=CORR[i][j]*vol_a[i]*vol_a[j]}
+  return{returns:rets,panel,mu:mu_a,Sigma};
 }
 
 // --- MATH ---
 function simplex(w){const w2=w.map(v=>Math.max(0,v));const s=w2.reduce((a,b)=>a+b,0)||1;return w2.map(v=>v/s)}
 
-const CASH_I=7, MAX_CASH=.05, EQ_I=[0,1,2], CR_I=[4,5], MIN_EQ=.25, MAX_CR=.30;
+// endowment policy bands
+const CASH_I=7, MAX_CASH=.05;
+const EQ_I=[0,1,2];                            // listed public equity
+const GROWTH_I=[0,1,2,3,5], MIN_GROWTH=.50;    // public equity + private equity + real estate
+const ILLIQ_I=[3,5], MAX_ILLIQ=.50;            // private equity + real estate
 
-function projW(w,mxW,lo){
-  let w2=w.map(v=>lo?Math.max(0,v):v);
-  w2=w2.map(v=>Math.min(mxW,Math.max(lo?0:-1,v)));
-  w2=simplex(w2);
-  if(w2[CASH_I]>MAX_CASH){const os=1-w2[CASH_I];w2[CASH_I]=MAX_CASH;if(os>1e-8)for(let i=0;i<N;i++)if(i!==CASH_I)w2[i]*=(1-MAX_CASH)/os}
-  return w2;
+function capVec(mxW,pol){const c=[];for(let i=0;i<N;i++)c[i]=(pol&&i===CASH_I)?Math.min(mxW,MAX_CASH):mxW;return c}
+
+// exact Euclidean projection onto {0 <= w_i <= cap_i, sum w = 1}: bisection on the shift
+function projCap(x,cap){
+  let lo=Math.min.apply(null,x)-1.5,hi=Math.max.apply(null,x);
+  const f=th=>{let s=0;for(let i=0;i<N;i++)s+=Math.min(cap[i],Math.max(0,x[i]-th));return s};
+  for(let k=0;k<70;k++){const m=(lo+hi)/2;if(f(m)>1)lo=m;else hi=m}
+  const th=(lo+hi)/2;
+  return x.map((v,i)=>Math.min(cap[i],Math.max(0,v-th)));
 }
-
-function projOpt(w,mxW,lo){
-  let w2=projW(w,Math.min(mxW,.30),lo);
-  const cs=CR_I.reduce((s,i)=>s+w2[i],0);
-  if(cs>MAX_CR){const sc=MAX_CR/cs;CR_I.forEach(i=>w2[i]*=sc);w2=simplex(w2)}
-  const es=EQ_I.reduce((s,i)=>s+w2[i],0);
-  if(es<MIN_EQ&&es>0){
-    const need=MIN_EQ-es;const rest=[3,4,5,6,7];
-    const rs=rest.reduce((s,i)=>s+w2[i],0);
-    if(rs>1e-8){const sc=Math.max(0,1-need/rs);rest.forEach(i=>w2[i]*=sc);EQ_I.forEach(i=>w2[i]+=w2[i]/es*need);w2=simplex(w2)}
+// projection onto a group budget constraint (sum over idx >= / <= target), sum-preserving
+function projGroup(w,idx,target,dir){
+  const s=idx.reduce((a,i)=>a+w[i],0);
+  if(dir>0?s>=target-1e-12:s<=target+1e-12)return w;
+  const k=N-idx.length;if(k<1)return w;
+  const d=(target-s)/idx.length,e=(target-s)/k;
+  const inS=Array(N).fill(false);idx.forEach(i=>inS[i]=true);
+  return w.map((v,i)=>inS[i]?v+d:v-e);
+}
+function feasible(w,mxW,pol){
+  for(let i=0;i<N;i++)if(w[i]<-1e-7||w[i]>mxW+1e-7)return false;
+  if(Math.abs(w.reduce((a,b)=>a+b,0)-1)>1e-6)return false;
+  if(!pol)return true;
+  if(w[CASH_I]>MAX_CASH+1e-6)return false;
+  if(GROWTH_I.reduce((a,i)=>a+w[i],0)<MIN_GROWTH-1e-6)return false;
+  if(ILLIQ_I.reduce((a,i)=>a+w[i],0)>MAX_ILLIQ+1e-6)return false;
+  return true;
+}
+// full feasible set: alternating projections (all sets convex, so this converges)
+function projOpt(w,mxW,pol){
+  const cap=capVec(mxW,pol);
+  let x=projCap(w,cap);
+  if(!pol)return x;
+  for(let it=0;it<40;it++){
+    if(feasible(x,mxW,pol))break;
+    x=projGroup(x,ILLIQ_I,MAX_ILLIQ,-1);
+    x=projGroup(x,GROWTH_I,MIN_GROWTH,1);
+    x=projCap(x,cap);
   }
-  return w2;
+  return x;
 }
+// user-set weights only honour long-only, the per-asset cap and the cash cap
+function projW(w,mxW,pol){return projCap(w,capVec(mxW,pol))}
 
 function portMu(w,mu){return w.reduce((s,v,i)=>s+v*mu[i],0)}
 function portVol(w,S){let v=0;for(let i=0;i<N;i++)for(let j=0;j<N;j++)v+=w[i]*S[i][j]*w[j];return Math.sqrt(Math.max(0,v))}
@@ -437,18 +623,44 @@ function trackingError(w,wb,rets){
   const v=d.reduce((s,x)=>s+(x-m)**2,0)/(d.length-1)||0;
   return Math.sqrt(v*12)*100;
 }
-function turnover(w,wp){return w.reduce((s,v,i)=>s+Math.abs(v-wp[i]),0)*100}
-function worst12m(p){let w=0;for(let i=12;i<p.length;i++){const r=(p[i]-p[i-12])/p[i-12]*100;w=Math.min(w,r)}return w}
+// active share = half the sum of absolute active weights (vs 60/40)
+function activeShare(w,wb){return w.reduce((s,v,i)=>s+Math.abs(v-wb[i]),0)*50}
 
-function sortinoRatio(w,rets,rf){
-  const rp=rets.map(t=>w.reduce((s,v,i)=>s+v*t[i],0));
-  if(!rp.length)return 0;
-  const rfm=Math.pow(1+rf,1/12)-1;
-  const neg=rp.filter(r=>r<rfm);
-  const dv=neg.length?Math.sqrt(neg.reduce((s,x)=>s+(x-rfm)**2,0)/neg.length)*Math.sqrt(12):.01;
-  return Math.min(5,Math.max(-5,(portMu(w,APP.data.mu)-rf)/Math.max(dv,.01)));
+// --- MONTE-CARLO STATISTICS over all PATHS x T months ---
+function pathStats(w){
+  const pan=APP.data.panel,rf=APP.state.rf;
+  const rp=new Float64Array(PATHS*T),mdds=[],w12s=[],terms=[];
+  const hist=new Float64Array(T+1);
+  for(let p=0;p<PATHS;p++){
+    let wl=1,pk=1,mdd=0;const base=p*T;hist[0]=1;
+    for(let t=0;t<T;t++){
+      let r=0;const o=(base+t)*N;for(let i=0;i<N;i++)r+=w[i]*pan[o+i];
+      rp[base+t]=r;
+      wl*=(1+r);hist[t+1]=wl;                       // log-normal compounding
+      if(wl>pk)pk=wl;
+      const d=(pk-wl)/pk;if(d>mdd)mdd=d;
+    }
+    mdds.push(mdd*100);terms.push(wl);
+    let w12=0;for(let t=12;t<=T;t++){const r=hist[t]/hist[t-12]-1;if(r<w12)w12=r}
+    w12s.push(w12*100);
+  }
+  const srt=Float64Array.from(rp).sort();
+  const q=a=>srt[Math.max(0,Math.min(srt.length-1,Math.floor(a*srt.length)))];
+  const es=a=>{const k=Math.max(1,Math.floor(a*srt.length));let t=0;for(let i=0;i<k;i++)t+=srt[i];return t/k};
+  const rfm=Math.pow(1+rf,1/12)-1;let ds=0;
+  for(let i=0;i<rp.length;i++){const d=Math.min(0,rp[i]-rfm);ds+=d*d}
+  const pc=(a,x)=>{a.sort((u,v)=>u-v);return a[Math.max(0,Math.min(a.length-1,Math.floor(x*a.length)))]};
+  return{var95:-q(.05)*100,var99:-q(.01)*100,cvar95:-es(.05)*100,cvar99:-es(.01)*100,
+    mddMed:pc(mdds,.5),mddP95:pc(mdds,.95),worst12:pc(w12s,.05),
+    downDev:Math.sqrt(ds/rp.length*12),termMed:pc(terms,.5),termP5:pc(terms,.05),termP95:pc(terms,.95)};
 }
-function infoRatio(w,wb,rets){const te=trackingError(w,wb,rets)/100;if(te<1e-8)return 0;return(portMu(w,APP.data.mu)-portMu(wb,APP.data.mu))/te}
+
+function sortinoRatio(w,st,rf){const dd=Math.max(st.downDev,1e-4);return Math.max(-9.99,Math.min(9.99,(portMu(w,APP.data.mu)-rf)/dd))}
+function infoRatio(w,wb,rets){
+  const te=trackingError(w,wb,rets)/100;if(te<1e-8)return 0;
+  const d=rets.map(t=>{let a=0,b=0;for(let i=0;i<N;i++){a+=w[i]*t[i];b+=wb[i]*t[i]}return a-b});
+  return d.reduce((a,b)=>a+b,0)/d.length*12/te;
+}
 function betaCalc(w,wb,rets){
   const rp=rets.map(t=>w.reduce((s,v,i)=>s+v*t[i],0));
   const rb=rets.map(t=>wb.reduce((s,v,i)=>s+v*t[i],0));
@@ -459,92 +671,104 @@ function betaCalc(w,wb,rets){
   const cv=rp.reduce((s,x,i)=>s+(x-mp)*(rb[i]-mb),0)/(rb.length-1);
   return cv/vb;
 }
-function var95(w,rets){
-  const rp=rets.map(t=>w.reduce((s,v,i)=>s+v*t[i],0));
-  if(!rp.length)return 0;
-  const sorted=[...rp].sort((a,b)=>a-b);
-  return(Math.pow(1+sorted[Math.max(0,Math.floor(rp.length*.05))],12)-1)*100;
+// geometric return / median simulated max drawdown
+function calmar(w,st){
+  const g=portMu(w,APP.data.mu)-.5*Math.pow(portVol(w,APP.data.Sigma),2);
+  return st.mddMed>1e-6?g*100/st.mddMed:0;
 }
-function calmar(w,rets){const r=portMu(w,APP.data.mu)*100;const d=maxDD(growthPath(w,rets));return d>0?r/d:0}
 function getCorr(S){const c=[];for(let i=0;i<N;i++){c[i]=[];for(let j=0;j<N;j++){c[i][j]=Math.max(-1,Math.min(1,S[i][j]/(Math.sqrt(S[i][i])*Math.sqrt(S[j][j])+1e-12)))}}return c}
-
-// --- MATRIX INVERSE ---
-function inv(A){
-  const n=A.length,a=A.map(r=>[...r]),I=[];
-  for(let i=0;i<n;i++){I[i]=[];for(let j=0;j<n;j++)I[i][j]=i===j?1:0}
-  for(let c=0;c<n;c++){
-    let p=c;for(let r=c+1;r<n;r++)if(Math.abs(a[r][c])>Math.abs(a[p][c]))p=r;
-    [a[c],a[p]]=[a[p],a[c]];[I[c],I[p]]=[I[p],I[c]];
-    const d=a[c][c]||1e-12;for(let j=0;j<n;j++){a[c][j]/=d;I[c][j]/=d}
-    for(let r=0;r<n;r++)if(r!==c){const f=a[r][c];for(let j=0;j<n;j++){a[r][j]-=f*a[c][j];I[r][j]-=f*I[c][j]}}
-  }
-  return I;
-}
+function factorExposure(w){return FACTORS.map((_,k)=>w.reduce((s,v,i)=>s+v*FLOAD[i][k],0))}
+function stressReturn(w,sh){return w.reduce((s,v,i)=>s+v*sh[i],0)}
 
 // --- PRESETS ---
 const PRESETS={
-  riskparity:()=>{const v=APP.data.Sigma.map((_,i)=>Math.sqrt(APP.data.Sigma[i][i]));const iv=v.map(x=>1/(x+1e-8));const s=iv.reduce((a,b)=>a+b,0);return iv.map(x=>x/s)},
-  allweather:()=>[.20,.15,.05,.30,.10,.05,.12,.03],
-  yale:()=>[.12,.18,.10,.15,.15,.08,.17,.05],
+  // equal risk contribution across the risky sleeve (cash excluded: its ~0 vol
+  // would otherwise absorb the whole portfolio), damped fixed point
+  riskparity:()=>{
+    const S=APP.data.Sigma,M=N-1;let w=Array(N).fill(1/M);w[CASH_I]=0;
+    for(let it=0;it<400;it++){
+      const sw=[];let tot=0;
+      for(let i=0;i<M;i++){let s=0;for(let j=0;j<M;j++)s+=S[i][j]*w[j];sw[i]=s;tot+=w[i]*s}
+      if(tot<1e-14)break;
+      const t=tot/M;let sum=0;
+      for(let i=0;i<M;i++){w[i]=Math.max(1e-6,w[i]*Math.pow(t/Math.max(1e-14,w[i]*sw[i]),.15));sum+=w[i]}
+      for(let i=0;i<M;i++)w[i]/=sum;
+    }
+    return w;
+  },
+  balanced:()=>[.30,.15,.05,.05,.08,.07,.27,.03],
+  yale:()=>[.03,.12,.05,.35,.24,.12,.06,.03],
   equal:()=>Array(N).fill(1/N)
 };
 
-// --- OPTIMIZE ---
-function optimize(){
-  const{mu,Sigma}=APP.data,rf=APP.state.rf,mxW=APP.state.maxW,lo=APP.state.longOnly,tv=APP.state.targetVol;
-  const SR=Sigma.map((r,i)=>r.map((x,j)=>x+(i===j?1e-6:0)));
-  const SI=inv(SR);
-  const ones=Array(N).fill(1);
-  const ex=mu.map(m=>m-rf);
-
-  // Min Variance: w ∝ Σ⁻¹·1
-  const mvR=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=SI[i][j]*ones[j];mvR[i]=s}
-  const mvS=mvR.reduce((a,b)=>a+b,0)||1;
-  let minVar=projOpt(mvR.map(x=>x/mvS),mxW,lo);
-
-  // Max Sharpe: w ∝ Σ⁻¹·(μ−rf)
-  const msR=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=SI[i][j]*ex[j];msR[i]=s}
-  const msS=msR.reduce((a,b)=>a+b,0);
-  let maxS=msS>1e-10?projOpt(msR.map(x=>Math.max(0,x/msS)),mxW,lo):projOpt(Array(N).fill(1/N),mxW,lo);
-
-  // Target Vol: blend with cash if below tangency, or search upward
-  const vTan=portVol(maxS,Sigma);
-  let tvP;
-  if(Math.abs(vTan-tv)<.005){
-    tvP=[...maxS];
-  }else if(tv<vTan&&vTan>1e-8){
-    const a=tv/vTan;
-    const blended=maxS.map((v,i)=>i===CASH_I?a*v+(1-a):a*v);
-    tvP=projOpt(blended,mxW,lo);
-    if(Math.abs(portVol(tvP,Sigma)-tv)>.005){
-      const sr=rng32(APP.state.seed+777);
-      let best=tvP,bd=Math.abs(portVol(tvP,Sigma)-tv);
-      for(let n=0;n<20000;n++){
-        const u=[];let s=0;for(let i=0;i<N;i++){u[i]=-Math.log(Math.max(1e-10,sr()));s+=u[i]}
-        const ww=projOpt(u.map(x=>x/s),mxW,lo);
-        const d=Math.abs(portVol(ww,Sigma)-tv);
-        if(d<bd&&sharpe(ww,mu,Sigma,rf)>.01){bd=d;best=ww}
-      }
-      tvP=best;
-    }
-  }else{
-    // tv > vTan: search for best Sharpe among portfolios near target vol
-    const sr=rng32(APP.state.seed+777);
-    let best=maxS,bd=Math.abs(vTan-tv),bestSh=-1e9;
-    for(let n=0;n<25000;n++){
-      const u=[];let s=0;for(let i=0;i<N;i++){u[i]=-Math.log(Math.max(1e-10,sr()));s+=u[i]}
-      const ww=projOpt(u.map(x=>x/s),mxW,lo);
-      const wVol=portVol(ww,Sigma);
-      const d=Math.abs(wVol-tv);
-      const wSh=sharpe(ww,mu,Sigma,rf);
-      if(d<.015&&wSh>bestSh){bestSh=wSh;best=ww;bd=d}
-      else if(d<bd&&wSh>.01){bd=d;best=ww}
-    }
-    tvP=best;
+// --- OPTIMIZE: constrained mean-variance by projected gradient ---
+// each solve maximises  lambda*mu'w - w'Sigma w  over the feasible set;
+// sweeping lambda from 0 upward traces the frontier (lambda = 0 is minimum variance).
+function mvSolve(mu,S,lam,mxW,pol,w0,iters){
+  let w=projOpt(w0,mxW,pol);
+  let L=0;for(let i=0;i<N;i++)L+=S[i][i];
+  const eta=1/(2*L);
+  for(let it=0;it<iters;it++){
+    const g=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=S[i][j]*w[j];g[i]=lam*mu[i]-2*s}
+    w=projOpt(w.map((v,i)=>v+eta*g[i]),mxW,pol);
   }
-
-  if(sharpe(minVar,mu,Sigma,rf)<.001)minVar=[...maxS];
-  return{minVar,maxSharpe:maxS,targetVol:tvP};
+  return w;
+}
+// direct ascent on the Sharpe gradient  mu/sigma - (mu'w-rf)*Sigma w / sigma^3
+function maxSharpeSolve(mu,S,rf,mxW,pol,w0,iters){
+  let w=projOpt(w0,mxW,pol),bw=w,bs=sharpe(w,mu,S,rf);
+  let sc=0;for(let i=0;i<N;i++)sc+=S[i][i];
+  const eta0=.5*Math.sqrt(sc);
+  for(let it=0;it<iters;it++){
+    const sg=[];let v=0;
+    for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=S[i][j]*w[j];sg[i]=s;v+=w[i]*s}
+    const sd=Math.sqrt(Math.max(1e-12,v)),ex=portMu(w,mu)-rf;
+    const g=[];for(let i=0;i<N;i++)g[i]=mu[i]/sd-ex*sg[i]/(sd*sd*sd);
+    const step=eta0*(1-it/iters);
+    w=projOpt(w.map((x,i)=>x+step*g[i]),mxW,pol);
+    const s2=sharpe(w,mu,S,rf);if(s2>bs){bs=s2;bw=w}
+  }
+  return bw;
+}
+function randomCloud(mu,S,mxW,pol,seed,n){
+  const sr=rng32(seed),pts=[];
+  for(let k=0;k<n;k++){
+    const u=[];let t=0;for(let i=0;i<N;i++){u[i]=-Math.log(Math.max(1e-10,sr()));t+=u[i]}
+    const w=projOpt(u.map(x=>x/t),mxW,pol);
+    pts.push({w,r:portMu(w,mu),v:portVol(w,S)*100});
+  }
+  return pts;
+}
+// frontier + random cloud, cached: they only depend on seed, Rf, cap and the policy flag
+function buildFrontier(){
+  const{mu,Sigma}=APP.data,st=APP.state;
+  const key=st.seed+'|'+st.rf+'|'+st.maxW+'|'+st.policy;
+  if(APP.fcache&&APP.fcache.key===key)return APP.fcache;
+  const pts=randomCloud(mu,Sigma,st.maxW,st.policy,st.seed+888,1400);
+  const K=48,LAM_MAX=9,cand=[];
+  let warm=Array(N).fill(1/N);
+  for(let k=0;k<K;k++){const u=k/(K-1);warm=mvSolve(mu,Sigma,LAM_MAX*u*u,st.maxW,st.policy,warm,160);cand.push(warm)}
+  let cl=null,cv=1e9,cs=null,cbs=-1e9;
+  pts.forEach(p=>{if(p.v<cv){cv=p.v;cl=p.w}const sh=(p.r-st.rf)/(p.v/100||1e-6);if(sh>cbs){cbs=sh;cs=p.w}});
+  cand.push(mvSolve(mu,Sigma,0,st.maxW,st.policy,cl,400));
+  cand.push(maxSharpeSolve(mu,Sigma,st.rf,st.maxW,st.policy,cs,400));
+  const all=cand.map(w=>({w,r:portMu(w,mu),v:portVol(w,Sigma)*100}));
+  all.sort((a,b)=>a.v-b.v||b.r-a.r);
+  const curve=[];let best=-1e9;
+  all.forEach(p=>{if(p.r>best+1e-9){best=p.r;curve.push(p)}});   // upper envelope: monotone by construction
+  APP.fcache={key,pts,curve};
+  return APP.fcache;
+}
+function optimize(){
+  const rf=APP.state.rf,tv=APP.state.targetVol;
+  const curve=buildFrontier().curve;
+  const minVar=curve[0].w;
+  let ms=curve[0],bs=-1e9;
+  curve.forEach(p=>{const sh=(p.r-rf)/(p.v/100||1e-6);if(sh>bs){bs=sh;ms=p}});
+  let tvP=curve[0],bd=1e9;
+  curve.forEach(p=>{const d=Math.abs(p.v/100-tv);if(d<bd){bd=d;tvP=p}});
+  APP.tvGap=tvP.v/100-tv;
+  return{minVar,maxSharpe:ms.w,targetVol:tvP.w};
 }
 
 // --- DRAW: GROWTH PATH ---
@@ -570,7 +794,11 @@ function drawPath(cvs,p,pb){
   c.fillStyle='#64748b';c.font='10px "JetBrains Mono",monospace';c.textAlign='right';
   for(let i=0;i<=4;i++){const v=mn+(mx-mn)*(i/4);c.fillText(v.toFixed(2)+'x',pad.l-6,pad.t+gh*(1-i/4)+4)}
   c.textAlign='center';
-  for(let y=0;y<=15;y+=3){const idx=y*12;if(idx<p.length)c.fillText((2010+y)+'',tx(idx),H-10)}
+  for(let y=0;y<=15;y+=3){const idx=y*12;if(idx<p.length)c.fillText('Y'+y,tx(idx),H-10)}
+  c.fillStyle='#475569';c.font='9px "Inter",sans-serif';
+  c.fillText('simulated year (180 monthly steps)',pad.l+gw/2,H-1);
+  c.save();c.translate(11,pad.t+gh/2);c.rotate(-Math.PI/2);c.textAlign='center';
+  c.fillText('growth of $1',0,0);c.restore();
 
   // Area
   const gr=c.createLinearGradient(0,pad.t,0,H-pad.b);
@@ -644,17 +872,14 @@ function drawFrontier(cvs,mu,S,rf,wCur,optR){
   const dpr=devicePixelRatio||1,rect=cvs.getBoundingClientRect();
   cvs.width=rect.width*dpr;cvs.height=rect.height*dpr;
   const c=cvs.getContext('2d');c.scale(dpr,dpr);
-  const W=rect.width,H=rect.height,pad={l:44,r:12,t:8,b:28};
+  const W=rect.width,H=rect.height,pad={l:52,r:14,t:8,b:34};
   const gw=W-pad.l-pad.r,gh=H-pad.t-pad.b;
-  const sr=rng32(APP.state.seed+888);
-  const pts=[];
-  for(let n=0;n<1200;n++){
-    const u=[];let s=0;for(let i=0;i<N;i++){u[i]=-Math.log(Math.max(1e-10,sr()));s+=u[i]}
-    const ww=projW(u.map(x=>x/s),APP.state.maxW,APP.state.longOnly);
-    pts.push({r:portMu(ww,mu),v:portVol(ww,S)*100});
-  }
-  const vMn=Math.max(0,Math.min(...pts.map(p=>p.v))-1),vMx=Math.max(...pts.map(p=>p.v))+1;
-  const rMn=Math.min(...pts.map(p=>p.r))-.005,rMx=Math.max(...pts.map(p=>p.r))+.005;
+  const fc=buildFrontier(),pts=fc.pts,curve=fc.curve;
+  const curV=portVol(wCur,S)*100,curR=portMu(wCur,mu);
+  const vAll=pts.map(p=>p.v).concat(curve.map(p=>p.v),[curV]);
+  const rAll=pts.map(p=>p.r).concat(curve.map(p=>p.r),[curR]);
+  const vMn=Math.max(0,Math.min.apply(null,vAll)-1),vMx=Math.max.apply(null,vAll)+1;
+  const rMn=Math.min.apply(null,rAll)-.005,rMx=Math.max.apply(null,rAll)+.005;
   const tx=v=>pad.l+((v-vMn)/(vMx-vMn||1))*gw;
   const ty=r=>pad.t+gh*(1-(r-rMn)/(rMx-rMn||1));
 
@@ -665,29 +890,37 @@ function drawFrontier(cvs,mu,S,rf,wCur,optR){
   c.fillStyle='#64748b';c.font='9px "JetBrains Mono",monospace';c.textAlign='right';
   for(let i=0;i<=4;i++){const r=rMn+(rMx-rMn)*(i/4);c.fillText((r*100).toFixed(1)+'%',pad.l-4,ty(r)+3)}
   c.textAlign='center';
-  for(let i=0;i<=4;i++){const v=vMn+(vMx-vMn)*(i/4);c.fillText(v.toFixed(1)+'%',tx(v),H-8)}
+  for(let i=0;i<=4;i++){const v=vMn+(vMx-vMn)*(i/4);c.fillText(v.toFixed(1)+'%',tx(v),H-16)}
+  c.fillStyle='#475569';c.font='9px "Inter",sans-serif';
+  c.fillText('annualised volatility σ (% p.a.)',pad.l+gw/2,H-3);
+  c.save();c.translate(11,pad.t+gh/2);c.rotate(-Math.PI/2);c.textAlign='center';
+  c.fillText('expected return (% p.a.)',0,0);c.restore();
 
-  // Cloud
+  // random feasible portfolios
   pts.forEach(p=>{
     const sh=(p.r-rf)/(p.v/100||.01);
-    const alpha=Math.min(.5,Math.max(.08,sh*.15));
-    c.fillStyle='rgba(6,182,212,'+alpha+')';
-    c.beginPath();c.arc(tx(p.v),ty(p.r),2.5,0,Math.PI*2);c.fill();
+    const alpha=Math.min(.45,Math.max(.07,sh*.5));
+    c.fillStyle='rgba(148,163,184,'+alpha+')';
+    c.beginPath();c.arc(tx(p.v),ty(p.r),2.2,0,Math.PI*2);c.fill();
   });
 
-  // Capital Market Line from Rf through tangency
+  // capital market line from Rf through the tangency portfolio
   if(optR){
     const ms=optR.find(x=>x.name==='Max Sharpe');
     if(ms){
       const tanR=portMu(ms.w,mu),tanV=portVol(ms.w,S)*100;
       if(tanV>1e-4){
         const slope=(tanR-rf)/tanV;
-        const v0=0,r0=rf,v1=vMx,r1=rf+slope*(v1/100)*100;
-        c.strokeStyle='rgba(16,185,129,.25)';c.lineWidth=1;c.setLineDash([6,4]);c.beginPath();
-        c.moveTo(tx(v0),ty(r0));c.lineTo(tx(v1),ty(r1));c.stroke();c.setLineDash([]);
+        c.strokeStyle='rgba(16,185,129,.3)';c.lineWidth=1;c.setLineDash([6,4]);c.beginPath();
+        c.moveTo(tx(0),ty(rf));c.lineTo(tx(vMx),ty(rf+slope*vMx));c.stroke();c.setLineDash([]);
       }
     }
   }
+
+  // the constrained efficient frontier itself
+  c.strokeStyle='#06b6d4';c.lineWidth=2;c.lineJoin='round';c.beginPath();
+  curve.forEach((p,i)=>{i===0?c.moveTo(tx(p.v),ty(p.r)):c.lineTo(tx(p.v),ty(p.r))});
+  c.stroke();
 
   const dot=(ww,col,r,label)=>{
     const ret=portMu(ww,mu),vol=portVol(ww,S)*100;
@@ -703,7 +936,7 @@ function drawFrontier(cvs,mu,S,rf,wCur,optR){
 
   const fromX=px=>vMn+(px-pad.l)/gw*(vMx-vMn);
   const fromY=py=>rMn+(1-(py-pad.t)/gh)*(rMx-rMn);
-  return{pts,tx,ty,fromX,fromY,pad,gw,gh};
+  return{pts,curve,tx,ty,fromX,fromY,pad,gw,gh};
 }
 
 // --- DRAW: DRAWDOWN ---
@@ -725,7 +958,7 @@ function drawDrawdown(cvs,p){
   c.fillStyle='#64748b';c.font='9px "JetBrains Mono",monospace';c.textAlign='right';
   for(let i=0;i<=4;i++)c.fillText('-'+(mxD*i/4).toFixed(1)+'%',pad.l-4,pad.t+gh*(i/4)+3);
   c.textAlign='center';
-  for(let y=0;y<=15;y+=5){const idx=y*12;if(idx<dd.length)c.fillText((2010+y)+'',tx(idx),H-8)}
+  for(let y=0;y<=15;y+=5){const idx=y*12;if(idx<dd.length)c.fillText('Y'+y,tx(idx),H-8)}
 
   const gr=c.createLinearGradient(0,pad.t,0,H-pad.b);
   gr.addColorStop(0,'rgba(239,68,68,.35)');gr.addColorStop(1,'rgba(239,68,68,.03)');
@@ -757,24 +990,25 @@ function render(){
   const w=simplex(APP.state.weights),{mu,Sigma,returns:rets}=APP.data,rf=APP.state.rf;
   const ret=portMu(w,mu),vol=portVol(w,Sigma)*100,sh=sharpe(w,mu,Sigma,rf);
   const p=growthPath(w,rets),pb=growthPath(W_BM,rets);
-  const mdd=maxDD(p),te=trackingError(w,W_BM,rets),to=turnover(w,W_BM),w12=worst12m(p);
+  const st=pathStats(w);
+  const te=trackingError(w,W_BM,rets),as=activeShare(w,W_BM);
   const rc=riskContrib(w,Sigma);
-  const srt=sortinoRatio(w,rets,rf),ir=infoRatio(w,W_BM,rets);
-  const bt=betaCalc(w,W_BM,rets),v95=var95(w,rets),cal=calmar(w,rets);
+  const srt=sortinoRatio(w,st,rf),ir=infoRatio(w,W_BM,rets);
+  const bt=betaCalc(w,W_BM,rets),cal=calmar(w,st);
 
   // Status bar
   document.getElementById('statusSeed').textContent=APP.state.seed;
   document.getElementById('statusRf').textContent=F(rf*100);
   document.getElementById('statusMaxW').textContent=Math.round(APP.state.maxW*100)+'%';
-  document.getElementById('statusLast').textContent=APP.state.lastOpt||'Ready';
+  document.getElementById('statusLast').textContent=(APP.state.lastOpt?APP.state.lastOpt+' applied':'Ready')+' · bands '+(APP.state.policy?'on':'off');
 
   // Sync control displays
   document.getElementById('rfVal').textContent=F(rf*100)+'%';
   document.getElementById('maxWVal').textContent=Math.round(APP.state.maxW*100)+'%';
-  document.getElementById('targetVolVal').textContent=Math.round(APP.state.targetVol*100)+'%';
+  document.getElementById('targetVolVal').textContent=(APP.state.targetVol*100).toFixed(1)+'%';
   document.getElementById('rf').value=(rf*100).toString();
   document.getElementById('maxW').value=APP.state.maxW.toString();
-  document.getElementById('targetVol').value=Math.round(APP.state.targetVol*100).toString();
+  document.getElementById('targetVol').value=(APP.state.targetVol*100).toFixed(1);
 
   // KPIs — conditional coloring
   const retC=ret>=rf?'pos':'neg';
@@ -791,27 +1025,26 @@ function render(){
   ].join('');
 
   document.getElementById('kpiSecondary').innerHTML=[
-    '<div class="kpi-cell" title="Largest peak-to-trough decline in simulated path"><div class="lbl">Max Drawdown</div><div class="val neg">−'+F(mdd)+'%</div></div>',
-    '<div class="kpi-cell" title="Std. dev. of excess return vs 60/40 benchmark, annualized"><div class="lbl">Tracking Error</div><div class="val">'+F(te)+'%</div></div>',
-    '<div class="kpi-cell" title="Sum of absolute weight differences vs 60/40 benchmark"><div class="lbl">Turnover</div><div class="val">'+F(to)+'%</div></div>',
-    '<div class="kpi-cell" title="Worst rolling 12-month return in simulation"><div class="lbl">Worst 12m</div><div class="val neg">'+F(w12)+'%</div></div>'
+    '<div class="kpi-cell" title="Worst peak-to-trough fall of each simulated wealth path. Median of 200 paths; 95th percentile '+F(st.mddP95)+'%; displayed path '+F(maxDD(p))+'%."><div class="lbl">Max DD (median)</div><div class="val neg">−'+F(st.mddMed)+'%</div></div>',
+    '<div class="kpi-cell" title="Annualised std. dev. of the monthly return difference vs the 60/40 benchmark, displayed path"><div class="lbl">Tracking Error</div><div class="val">'+F(te)+'%</div></div>',
+    '<div class="kpi-cell" title="Active share = ½·Σ|w − w_benchmark| vs 60/40 (60% US equity / 40% Treasuries)"><div class="lbl">Active Share</div><div class="val">'+F(as)+'%</div></div>',
+    '<div class="kpi-cell" title="5th percentile across the 200 paths of that path\'s worst rolling 12-month return"><div class="lbl">Worst 12m (5%)</div><div class="val neg">'+F(st.worst12)+'%</div></div>'
   ].join('');
 
   document.getElementById('kpiTertiary').innerHTML=[
-    '<div class="kpi-cell" title="Downside risk-adjusted: (μ − Rf) / σ_downside"><div class="lbl">Sortino</div><div class="val '+srtC+'">'+F(srt)+'</div></div>',
-    '<div class="kpi-cell" title="Active return per unit of tracking error: (μp − μb) / TE"><div class="lbl">Info Ratio</div><div class="val '+irC+'">'+F(ir)+'</div></div>',
-    '<div class="kpi-cell" title="Systematic risk vs 60/40: Cov(Rp,Rb) / Var(Rb)"><div class="lbl">Beta</div><div class="val '+btC+'">'+(Math.abs(bt)>10?'—':F(bt))+'</div></div>',
-    '<div class="kpi-cell" title="Value at Risk: 5th percentile monthly return, annualized"><div class="lbl">VaR 95%</div><div class="val neg">'+F(v95)+'%</div></div>',
-    '<div class="kpi-cell" title="Return efficiency per unit of drawdown: μ / MaxDD"><div class="lbl">Calmar</div><div class="val '+calC+'">'+F(cal)+'</div></div>'
+    '<div class="kpi-cell" title="(μ − Rf) / annualised target semi-deviation below the monthly risk-free rate, pooled over 36,000 simulated months"><div class="lbl">Sortino</div><div class="val '+srtC+'">'+F(srt)+'</div></div>',
+    '<div class="kpi-cell" title="Realised active return vs 60/40 divided by tracking error, displayed path"><div class="lbl">Info Ratio</div><div class="val '+irC+'">'+F(ir)+'</div></div>',
+    '<div class="kpi-cell" title="Systematic risk vs 60/40: Cov(Rp,Rb) / Var(Rb), displayed path"><div class="lbl">Beta</div><div class="val '+btC+'">'+(Math.abs(bt)>10?'—':F(bt))+'</div></div>',
+    '<div class="kpi-cell" title="1-month Value at Risk, empirical 5% / 1% quantile of 36,000 simulated monthly returns. Positive = loss."><div class="lbl">VaR 95/99 (1m)</div><div class="val neg">'+F(st.var95)+' / '+F(st.var99)+'%</div></div>',
+    '<div class="kpi-cell" title="1-month Conditional VaR (expected shortfall): mean monthly return beyond the 5% / 1% quantile. Positive = loss."><div class="lbl">CVaR 95/99 (1m)</div><div class="val neg">'+F(st.cvar95)+' / '+F(st.cvar99)+'%</div></div>',
+    '<div class="kpi-cell" title="Geometric return (μ − ½σ²) divided by the median simulated max drawdown"><div class="lbl">Calmar</div><div class="val '+calC+'">'+F(cal)+'</div></div>'
   ].join('');
 
   // CMA Table
-  const CLASS=['eq','eq','eq','fi','fi','fi','alt','cash-row'];
-  const CLASS_LABEL=['Equity','Equity','Equity','Fixed Income','Credit','Credit','Real Assets','Cash'];
   const cmaEl=document.getElementById('cmaTable');
   if(cmaEl){
     const shA=mu.map((m,i)=>{const v=Math.sqrt(Sigma[i][i]);return v>1e-8?(m-rf)/v:0});
-    cmaEl.innerHTML='<tr><th>Asset</th><th>Class</th><th>E[R] Ann.</th><th>Vol Ann.</th><th>Sharpe</th><th>Weight</th></tr>'+
+    cmaEl.innerHTML='<tr><th>Asset</th><th>Class</th><th>E[R] ann.</th><th>Vol ann.</th><th>Sharpe</th><th>Weight</th></tr>'+
       LABELS.map((name,i)=>{
         const cls=CLASS[i];
         const clr=cls==='eq'?'asset-eq':cls==='fi'?'asset-fi':cls==='alt'?'asset-alt':'asset-cash';
@@ -828,8 +1061,8 @@ function render(){
   const corr=getCorr(Sigma);
   const volP=i=>(Math.sqrt(Sigma[i][i])*100).toFixed(1)+'%';
   document.getElementById('corrTable').innerHTML=
-    '<tr><th></th>'+LABELS.map(a=>'<th>'+a+'</th>').join('')+'</tr>'+
-    LABELS.map((a,i)=>'<tr><th title="Vol: '+volP(i)+'">'+a+'</th>'+corr[i].map((v,j)=>{
+    '<tr><th></th>'+SHORT.map(a=>'<th>'+a+'</th>').join('')+'</tr>'+
+    SHORT.map((a,i)=>'<tr><th title="'+LABELS[i]+' — annualised vol '+volP(i)+'">'+a+'</th>'+corr[i].map((v,j)=>{
       const al=Math.abs(v)*.55;
       const bg=v>=0?'rgba(59,130,246,'+al+')':'rgba(239,68,68,'+al+')';
       const tip=LABELS[i]+' vs '+LABELS[j]+': '+v.toFixed(3);
@@ -839,7 +1072,8 @@ function render(){
   // Opt results with descriptive info
   const od=document.getElementById('optResults');
   const tvTarget=Math.round(APP.state.targetVol*100);
-  const optDesc={'Min Variance':'Lowest possible portfolio risk','Max Sharpe':'Best risk-adjusted return','Target Vol':'Target: '+tvTarget+'% volatility'};
+  const tvNote=Math.abs(APP.tvGap)>.005?' — closest attainable, target not feasible':'';
+  const optDesc={'Min Variance':'Lowest variance in the feasible set','Max Sharpe':'Tangency portfolio at Rf = '+F(rf*100)+'%','Target Vol':'Frontier point nearest '+tvTarget+'% vol'+tvNote};
   if(APP.optResults){
     od.innerHTML=APP.optResults.map((r,i)=>{
       const applied=w.every((v,j)=>Math.abs(v-r.w[j])<.001);
@@ -848,18 +1082,47 @@ function render(){
         '<div class="name">'+r.name+(rec?'<span class="badge">Best Sharpe</span>':'')+
         (applied?' <span style="color:var(--green);font-size:.65rem">&#10003; Applied</span>':'')+
         '</div><div class="vals">Ret '+(r.ret>=0?'+':'')+P(r.ret)+' · Vol '+F(r.vol*100)+'% · Sharpe '+F(r.sharpe)+
-        '</div><div style="font-size:.62rem;color:var(--dim);margin-top:2px">'+(optDesc[r.name]||'')+'</div></div>';
+        '</div><div style="font-size:.62rem;color:var(--faint);margin-top:2px">'+(optDesc[r.name]||'')+'</div></div>';
     }).join('');
     od.querySelectorAll('.opt-result').forEach(el=>{
       el.onclick=()=>{const r=APP.optResults[el.dataset.idx];setW(r.w);APP.state.lastOpt=r.name;render()};
     });
   }else{
-    od.innerHTML='<div class="opt-result" style="cursor:default;opacity:.5"><div class="name">No optimization yet</div><div class="vals" style="margin-top:2px">Click Optimize to compute Min Variance, Max Sharpe, and Target Vol</div></div>';
+    od.innerHTML='<div class="opt-result" style="cursor:default;opacity:.5"><div class="name">No optimization yet</div><div class="vals" style="margin-top:2px">Click Optimize to solve the constrained frontier for Min Variance, Max Sharpe and Target Vol</div></div>';
   }
 
   document.getElementById('assumptions').innerHTML=
-    '<b style="color:var(--muted)">Constraints (Yale Model):</b> Cash ≤ 5% · Equity ≥ 25% · Credit ≤ 30% · Per-asset ≤ '+Math.round(APP.state.maxW*100)+'%'+
-    '<br><b style="color:var(--muted)">Parameters:</b> Rf = '+F(rf*100)+'% · Seed = '+APP.state.seed+' · 15Y monthly simulation · Benchmark = 60/40';
+    '<b style="color:var(--muted)">Feasible set:</b> long-only · per-asset ≤ '+Math.round(APP.state.maxW*100)+'%'+
+    (APP.state.policy?' · cash ≤ 5% · growth ≥ 50% · illiquid ≤ 50%':' · policy bands off')+
+    '<br><b style="color:var(--muted)">Parameters:</b> Rf = '+F(rf*100)+'% · seed = '+APP.state.seed+
+    ' · 200 paths × 180 months · benchmark 60% US equity / 40% Treasuries'+
+    '<br><b style="color:var(--muted)">Median terminal wealth:</b> '+F(st.termMed)+'× (5th pct '+F(st.termP5)+'× · 95th pct '+F(st.termP95)+'×) per $1 over 15 years';
+
+  // Stress tests: instantaneous repricing of the current weights
+  document.getElementById('stressTable').innerHTML=
+    '<tr><th>Scenario</th><th>Window</th><th>Portfolio</th><th>60/40</th><th>Active</th></tr>'+
+    STRESS.map(sc=>{
+      const rp=stressReturn(w,sc.s)*100,rb=stressReturn(W_BM,sc.s)*100,d=rp-rb;
+      return '<tr><td style="font-weight:600;color:var(--text)">'+sc.name+'</td>'+
+        '<td style="color:var(--muted)">'+sc.win+'</td>'+
+        '<td class="'+(rp>=0?'pos':'neg')+'">'+rp.toFixed(1)+'%</td>'+
+        '<td class="'+(rb>=0?'pos':'neg')+'">'+rb.toFixed(1)+'%</td>'+
+        '<td class="'+(d>=0?'pos':'neg')+'">'+(d>=0?'+':'')+d.toFixed(1)+' pp</td></tr>';
+    }).join('');
+
+  // Factor exposures from the stated loading matrix
+  const fx=factorExposure(w),fb=factorExposure(W_BM);
+  let fmax=1e-6;fx.concat(fb).forEach(v=>{fmax=Math.max(fmax,Math.abs(v))});
+  document.getElementById('factorTable').innerHTML=
+    '<tr><th>Factor</th><th>Portfolio</th><th>60/40</th><th>Active</th><th>Scale</th></tr>'+
+    FACTORS.map((nm,k)=>{
+      const a=fx[k],b=fb[k],d=a-b,dur=k===1;
+      const fmt=v=>dur?(v*TSY_DUR).toFixed(2)+'y':v.toFixed(2);
+      return '<tr><td style="font-weight:600;color:var(--text)">'+nm+'</td>'+
+        '<td>'+fmt(a)+'</td><td style="color:var(--muted)">'+fmt(b)+'</td>'+
+        '<td class="'+(d>=0?'pos':'neg')+'">'+(d>=0?'+':'')+fmt(d)+'</td>'+
+        '<td class="bar-cell"><span class="bar'+(a<0?' neg':'')+'" style="width:'+Math.min(100,Math.abs(a)/fmax*100).toFixed(0)+'%"></span></td></tr>';
+    }).join('');
 
   // Weights with asset class coloring
   document.getElementById('weightRows').innerHTML=LABELS.map((name,i)=>
@@ -868,9 +1131,17 @@ function render(){
     '<input type="number" data-idx="'+i+'" value="'+F(w[i]*100)+'" step="0.5" min="0" max="100">'+
     '<span class="lock'+(APP.state.locked[i]?' on':'')+'" data-idx="'+i+'">L</span></div>'
   ).join('')+
-  '<div class="weight-total">Equity '+(EQ_I.reduce((s,i)=>s+w[i],0)*100).toFixed(1)+
-  '% · Credit '+(CR_I.reduce((s,i)=>s+w[i],0)*100).toFixed(1)+
-  '% · Total 100%</div>';
+  (function(){
+    const gs=GROWTH_I.reduce((a,i)=>a+w[i],0)*100,is=ILLIQ_I.reduce((a,i)=>a+w[i],0)*100,cs=w[CASH_I]*100;
+    const bad=[];
+    if(cs>MAX_CASH*100+.05)bad.push('cash > 5%');
+    if(gs<MIN_GROWTH*100-.05)bad.push('growth < 50%');
+    if(is>MAX_ILLIQ*100+.05)bad.push('illiquid > 50%');
+    return '<div class="weight-total">Public equity '+(EQ_I.reduce((a,i)=>a+w[i],0)*100).toFixed(1)+
+      '% · growth '+gs.toFixed(1)+'% · illiquid '+is.toFixed(1)+'% · total 100%'+
+      (bad.length?'<br><span style="color:var(--amber)">outside policy bands: '+bad.join(', ')+'</span>':
+       '<br><span style="color:var(--green)">within policy bands</span>')+'</div>';
+  })();
 
   document.getElementById('weightRows').querySelectorAll('input[type=range]').forEach(inp=>{
     inp.oninput=function(){rescale(+this.dataset.idx,+this.value/100);render()};
@@ -903,9 +1174,9 @@ function render(){
     if(x<pd.pad.l||x>cr.width-pd.pad.r){tt.classList.remove('show');ch.classList.remove('show');return}
     const idx=Math.round((x-pd.pad.l)/pd.gw*(p.length-1));
     const i=Math.max(0,Math.min(idx,p.length-1));
-    const yr=2010+Math.floor(i/12),mo=(i%12)+1;
+    const yr=Math.floor(i/12),mo=(i%12)+1;
     const diff=((p[i]-pb[i])/pb[i]*100);
-    tt.innerHTML='<b>'+yr+'-'+(mo<10?'0':'')+mo+'</b><br>'+
+    tt.innerHTML='<b>month '+i+' (Y'+yr+' M'+mo+')</b><br>'+
       '<span style="color:#06b6d4">Portfolio:</span> '+F(p[i])+'x<br>'+
       '<span style="color:#94a3b8">60/40 BM:</span> '+F(pb[i])+'x<br>'+
       '<span style="color:'+(diff>=0?'#10b981':'#ef4444')+'">Excess: '+(diff>=0?'+':'')+diff.toFixed(1)+'%</span>';
@@ -958,8 +1229,8 @@ function render(){
     if(x<0||x>dd.gw){tt.classList.remove('show');return}
     const idx=Math.round(x/dd.gw*(dd.dd.length-1));
     const i=Math.max(0,Math.min(idx,dd.dd.length-1));
-    const yr=2010+Math.floor(i/12),mo=(i%12)+1;
-    tt.innerHTML='<b>'+yr+'-'+(mo<10?'0':'')+mo+'</b><br>Drawdown: −'+dd.dd[i].toFixed(2)+'%';
+    const yr=Math.floor(i/12),mo=(i%12)+1;
+    tt.innerHTML='<b>month '+i+' (Y'+yr+' M'+mo+')</b><br>Drawdown: −'+dd.dd[i].toFixed(2)+'%';
     tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-10)+'px';tt.classList.add('show');
   };
   dw.onmouseleave=()=>tt.classList.remove('show');
@@ -990,7 +1261,7 @@ function bind(){
   $('rf').oninput=function(){
     APP.state.rf=+this.value/100;APP.data=genData(APP.state.seed);refreshOpt();render();
   };
-  $('longOnly').onchange=function(){APP.state.longOnly=this.checked;refreshOpt();render()};
+  $('policyBands').onchange=function(){APP.state.policy=this.checked;refreshOpt();render()};
   $('maxW').oninput=function(){APP.state.maxW=+this.value;refreshOpt();render()};
   $('targetVol').oninput=function(){APP.state.targetVol=+this.value/100;refreshOpt();render()};
 
@@ -1005,8 +1276,10 @@ function bind(){
   };
 
   $('btnReset').onclick=function(){
-    APP.state.weights=[.30,.20,.08,.25,.08,.04,.03,.02];
-    APP.state.locked=Array(N).fill(false);APP.optResults=null;APP.state.lastOpt=null;render();
+    APP.state.weights=DEFAULT_W.slice();
+    APP.state.locked=Array(N).fill(false);APP.optResults=null;APP.state.lastOpt=null;
+    document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
+    render();
   };
 
   $('benchBtn').onclick=function(){setW(W_BM);document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));render()};
@@ -1015,7 +1288,7 @@ function bind(){
     btn.onclick=function(){
       const k=this.dataset.preset;
       if(PRESETS[k]&&APP.data){
-        setW(projW(PRESETS[k](),APP.state.maxW,APP.state.longOnly));
+        setW(projW(PRESETS[k](),APP.state.maxW,APP.state.policy));
         document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
         this.classList.add('active');render();
       }
@@ -1023,26 +1296,65 @@ function bind(){
   });
 
   $('btnCopy').onclick=function(){
-    const txt=LABELS.map((a,i)=>a+': '+(APP.state.weights[i]*100).toFixed(2)+'%').join('\n');
-    navigator.clipboard.writeText(txt).then(()=>{this.textContent='Copied!';setTimeout(()=>{this.textContent='Copy Weights'},1200)});
+    const w=simplex(APP.state.weights);
+    const txt=LABELS.map((a,i)=>a+': '+(w[i]*100).toFixed(2)+'%').join('\n')+
+      '\nExpected return: '+(portMu(w,APP.data.mu)*100).toFixed(2)+'%'+
+      '\nVolatility: '+(portVol(w,APP.data.Sigma)*100).toFixed(2)+'%'+
+      '\nSharpe: '+sharpe(w,APP.data.mu,APP.data.Sigma,APP.state.rf).toFixed(3);
+    const done=ok=>{
+      this.innerHTML=ok?'<i class="fas fa-check"></i> Copied':'<i class="fas fa-triangle-exclamation"></i> Failed';
+      setTimeout(()=>{this.innerHTML='<i class="fas fa-copy"></i> Copy'},1400);
+    };
+    const fallback=()=>{
+      try{
+        const ta=document.createElement('textarea');ta.value=txt;
+        ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);
+        ta.select();const ok=document.execCommand('copy');document.body.removeChild(ta);done(ok);
+      }catch(e){done(false)}
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(()=>done(true),fallback);
+    }else fallback();
   };
 
   $('btnExport').onclick=function(){
     const w=simplex(APP.state.weights),{mu,Sigma}=APP.data,rf=APP.state.rf;
-    let csv='Asset,Weight,E[R],Volatility,Sharpe\n';
+    const st=pathStats(w),fx=factorExposure(w);
+    let csv='# Multi-Asset Portfolio Optimizer - synthetic data, not investment advice\n';
+    csv+='# seed,'+APP.state.seed+',rf,'+(rf*100).toFixed(2)+'%,max weight,'+(APP.state.maxW*100).toFixed(0)+'%,policy bands,'+(APP.state.policy?'on':'off')+'\n';
+    csv+='Asset,Weight,E[R] ann,Volatility ann,Sharpe\n';
     LABELS.forEach((name,i)=>{
       const v=Math.sqrt(Sigma[i][i]);
       csv+=name+','+(w[i]*100).toFixed(2)+'%,'+(mu[i]*100).toFixed(2)+'%,'+(v*100).toFixed(2)+'%,'+(v>1e-8?((mu[i]-rf)/v).toFixed(3):'N/A')+'\n';
     });
-    csv+='\nPortfolio,'+(portMu(w,mu)*100).toFixed(2)+'%,'+(portVol(w,Sigma)*100).toFixed(2)+'%,'+sharpe(w,mu,Sigma,rf).toFixed(3)+'\n';
-    const blob=new Blob([csv],{type:'text/csv'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='portfolio-'+APP.state.seed+'.csv';a.click();
-    this.textContent='Exported!';setTimeout(()=>{this.textContent='Export CSV'},1200);
+    csv+='\nMetric,Value\n';
+    csv+='Expected return ann,'+(portMu(w,mu)*100).toFixed(2)+'%\n';
+    csv+='Volatility ann,'+(portVol(w,Sigma)*100).toFixed(2)+'%\n';
+    csv+='Sharpe,'+sharpe(w,mu,Sigma,rf).toFixed(3)+'\n';
+    csv+='VaR 95% 1m (loss),'+st.var95.toFixed(2)+'%\n';
+    csv+='VaR 99% 1m (loss),'+st.var99.toFixed(2)+'%\n';
+    csv+='CVaR 95% 1m (loss),'+st.cvar95.toFixed(2)+'%\n';
+    csv+='CVaR 99% 1m (loss),'+st.cvar99.toFixed(2)+'%\n';
+    csv+='Max drawdown median,'+st.mddMed.toFixed(2)+'%\n';
+    csv+='Max drawdown 95th pct,'+st.mddP95.toFixed(2)+'%\n';
+    csv+='Worst 12m 5th pct,'+st.worst12.toFixed(2)+'%\n';
+    csv+='\nScenario,Window,Portfolio,60/40\n';
+    STRESS.forEach(sc=>{csv+=sc.name+','+sc.win.replace(/&ndash;/g,'-')+','+(stressReturn(w,sc.s)*100).toFixed(1)+'%,'+(stressReturn(W_BM,sc.s)*100).toFixed(1)+'%\n'});
+    csv+='\nFactor,Exposure\n';
+    FACTORS.forEach((nm,k)=>{csv+=nm+','+(k===1?(fx[k]*TSY_DUR).toFixed(2)+'y':fx[k].toFixed(2))+'\n'});
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='portfolio-optimizer-seed'+APP.state.seed+'.csv';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    this.innerHTML='<i class="fas fa-check"></i> Exported';
+    setTimeout(()=>{this.innerHTML='<i class="fas fa-file-csv"></i> Export'},1400);
   };
 
   const ov=$('guideOverlay');
   $('btnGuide').onclick=()=>ov.classList.add('show');
   $('guideClose').onclick=()=>ov.classList.remove('show');
+  $('policyBands').checked=APP.state.policy;
   ov.onclick=e=>{if(e.target===ov)ov.classList.remove('show')};
 
   document.onkeydown=e=>{

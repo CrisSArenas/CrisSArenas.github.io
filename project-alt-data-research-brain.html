@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alternative-Data Research Brain | Cristian Arenas</title>
+<meta name="description" content="An LLM research system that ingests six public alternative-data sources for a ticker, writes a cited position-ready note behind a citation validator, surfaces cross-source connections, and checks the read against SEC fundamentals and price momentum.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.project-detail{padding-top:80px;min-height:100vh;background:var(--dark-bg)}
+.project-hero{padding:4rem 0;background:linear-gradient(135deg,var(--darker-bg),var(--dark-bg));border-bottom:2px solid var(--border-color)}
+.project-hero h1{font-size:clamp(1.9rem,3.6vw,3rem);color:var(--text-primary);margin-bottom:1rem;line-height:1.15}
+.project-meta{display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:2rem}
+.meta-item{display:flex;align-items:center;gap:.5rem;color:var(--text-secondary)}
+.meta-item i{color:var(--primary-cyan)}
+.project-tags-large{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem}
+.tag-large{padding:.5rem 1rem;background:rgba(59,130,246,.1);color:var(--accent-blue);border:1px solid var(--accent-blue);border-radius:5px;font-size:.9rem}
+.back-button{display:inline-flex;align-items:center;gap:.5rem;color:var(--primary-cyan);text-decoration:none;margin-bottom:2rem;transition:.3s}
+.back-button:hover{color:var(--primary-green);transform:translateX(-5px)}
+.project-content{max-width:1000px;margin:0 auto;padding:3rem 2rem}
+.content-section{margin-bottom:3.5rem;scroll-margin-top:90px}
+.content-section h2{font-size:1.9rem;color:var(--primary-cyan);margin-bottom:1.2rem;border-bottom:2px solid var(--primary-cyan);padding-bottom:.5rem}
+.content-section h3{font-size:1.35rem;color:var(--primary-green);margin-top:2rem;margin-bottom:1rem}
+.content-section p,.content-section li{color:var(--text-secondary);line-height:1.8;margin-bottom:1rem}
+.content-section ul,.content-section ol{margin-left:2rem;margin-bottom:1.5rem}
+.content-section li{margin-bottom:.5rem}
+.content-section strong{color:var(--text-primary)}
+.architecture-diagram{background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:1.6rem;margin:2rem 0;font-family:var(--font-mono);font-size:.8rem;overflow-x:auto;color:var(--primary-green)}
+.architecture-diagram pre{margin:0;white-space:pre}
+.highlight-box{background:var(--card-bg);border-left:4px solid var(--primary-cyan);padding:1.5rem;margin:2rem 0;border-radius:5px}
+.highlight-box strong{color:var(--primary-cyan)}
+.tech-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:2rem 0}
+.tech-item{background:var(--card-bg);padding:1rem;border-radius:5px;border:1px solid var(--border-color);transition:.3s;color:var(--text-secondary);font-size:.92rem}
+.tech-item:hover{border-color:var(--primary-cyan);transform:translateY(-3px)}
+.tech-item i{color:var(--primary-cyan);margin-right:.5rem}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin:1.5rem 0 2rem}
+.kpi{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:1rem 1.1rem}
+.kpi .v{font-family:var(--font-mono);font-size:1.5rem;color:var(--primary-cyan);font-weight:600}
+.kpi .l{font-size:.8rem;color:var(--text-secondary);margin-top:.25rem;line-height:1.5}
+table.spec{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.9rem}
+table.spec th,table.spec td{text-align:left;padding:.65rem .75rem;border-bottom:1px solid var(--border-color);color:var(--text-secondary);vertical-align:top}
+table.spec th{color:var(--text-primary);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+table.spec td:first-child{color:var(--text-primary);font-family:var(--font-mono);font-size:.84rem;white-space:nowrap}
+.table-wrap{overflow-x:auto}
+
+/* ---------- interactive shared ---------- */
+.demo{background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;margin:1.8rem 0;overflow:hidden}
+.demo-head{display:flex;align-items:center;gap:.7rem;padding:.85rem 1.15rem;border-bottom:1px solid var(--border-color);background:rgba(0,247,255,.03);flex-wrap:wrap}
+.demo-head .t{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.11em;color:var(--primary-cyan)}
+.demo-head .sp{flex:1}
+.demo-body{padding:1.15rem}
+.ibtn{display:inline-flex;align-items:center;gap:.45rem;padding:.42rem .85rem;border-radius:6px;border:1px solid #334155;background:#1a2332;color:var(--text-primary);font:600 .76rem var(--font-primary);cursor:pointer;transition:.2s;white-space:nowrap}
+.ibtn:hover:not(:disabled){border-color:var(--primary-cyan);color:var(--primary-cyan)}
+.ibtn:active{transform:scale(.97)}
+.ibtn:disabled{opacity:.45;cursor:not-allowed}
+.ibtn.go{background:var(--primary-cyan);border-color:var(--primary-cyan);color:#04121a}
+.ibtn.go:hover:not(:disabled){background:var(--primary-green);border-color:var(--primary-green);color:#04121a}
+.ibtn.on{background:rgba(0,247,255,.14);border-color:var(--primary-cyan);color:var(--primary-cyan)}
+.chip{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--font-mono);font-size:.66rem;padding:.16rem .5rem;border-radius:999px;border:1px solid #334155;color:var(--text-secondary)}
+.chip.ok{color:#10b981;border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.08)}
+.chip.warn{color:#f59e0b;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08)}
+.chip.bad{color:#ef4444;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}
+.chip.cy{color:var(--primary-cyan);border-color:rgba(0,247,255,.4);background:rgba(0,247,255,.07)}
+
+/* pipeline runner */
+.stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:.6rem}
+.stage{border:1px solid var(--border-color);border-radius:8px;padding:.7rem .8rem;background:var(--darker-bg);position:relative;overflow:hidden;transition:border-color .25s}
+.stage.active{border-color:var(--primary-cyan)}
+.stage.done{border-color:rgba(16,185,129,.45)}
+.stage .n{font-family:var(--font-mono);font-size:.62rem;color:var(--text-secondary);letter-spacing:.1em}
+.stage .nm{font-size:.84rem;color:var(--text-primary);font-weight:600;margin:.2rem 0 .35rem}
+.stage .st{font-family:var(--font-mono);font-size:.68rem;color:var(--text-secondary)}
+.stage.done .st{color:#10b981}
+.stage.active .st{color:var(--primary-cyan)}
+.stage .bar{position:absolute;left:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--primary-cyan),var(--primary-green));width:0;transition:width .2s linear}
+.srcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.55rem;margin-top:.9rem}
+.src{display:flex;align-items:center;gap:.5rem;border:1px solid var(--border-color);border-radius:7px;padding:.5rem .65rem;background:var(--darker-bg);font-size:.8rem;color:var(--text-secondary)}
+.src i{color:var(--primary-cyan);width:15px;text-align:center;flex-shrink:0}
+.src .s{margin-left:auto;font-family:var(--font-mono);font-size:.66rem}
+.runlog{margin-top:.9rem;background:var(--darker-bg);border:1px solid var(--border-color);border-radius:8px;padding:.7rem .85rem;font-family:var(--font-mono);font-size:.71rem;line-height:1.75;max-height:190px;overflow-y:auto;color:var(--text-secondary)}
+.runlog .ts{color:#64748b}
+.runlog .ok{color:#10b981}
+.runlog .wa{color:#f59e0b}
+.runlog .er{color:#ef4444}
+.runlog .cy{color:var(--primary-cyan)}
+.metrics{display:flex;flex-wrap:wrap;gap:1.4rem;margin-top:.9rem;padding-top:.8rem;border-top:1px solid var(--border-color)}
+.metric .mv{font-family:var(--font-mono);font-size:1.05rem;color:var(--primary-cyan);font-weight:600}
+.metric .ml{font-size:.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.07em}
+
+/* brain summary */
+.note{background:var(--darker-bg);border:1px solid var(--border-color);border-radius:9px;padding:1.1rem 1.2rem}
+.note h4{color:var(--text-primary);font-size:1.02rem;margin:0 0 .3rem}
+.note .pos{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.6rem 0 .9rem}
+.note p{font-size:.92rem;line-height:1.8;margin-bottom:.85rem;color:var(--text-secondary)}
+.note h5{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--primary-green);margin:1.1rem 0 .45rem}
+.note ul{margin:0 0 .3rem 1.15rem}
+.note li{font-size:.9rem;line-height:1.75;margin-bottom:.4rem;color:var(--text-secondary)}
+.cit{display:inline-block;font-family:var(--font-mono);font-size:.68rem;padding:.04rem .38rem;border-radius:4px;border:1px solid rgba(0,247,255,.4);background:rgba(0,247,255,.09);color:var(--primary-cyan);cursor:pointer;transition:.15s;margin:0 .07rem;vertical-align:baseline}
+.cit:hover,.cit:focus{background:var(--primary-cyan);color:#04121a;outline:none}
+.cit.invalid{border-color:rgba(239,68,68,.6);background:rgba(239,68,68,.12);color:#ef4444;animation:citpulse 1.1s ease-in-out infinite}
+@keyframes citpulse{0%,100%{opacity:1}50%{opacity:.5}}
+.srcpanel{margin-top:.9rem;border:1px dashed #334155;border-radius:8px;padding:.8rem .95rem;min-height:74px;background:var(--card-bg)}
+.srcpanel .hd{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.4rem}
+.srcpanel .id{font-family:var(--font-mono);font-size:.7rem;color:var(--primary-cyan)}
+.srcpanel .ti{font-size:.88rem;color:var(--text-primary);font-weight:600}
+.srcpanel .bd{font-size:.84rem;color:var(--text-secondary);line-height:1.7}
+.srcpanel .meta{font-family:var(--font-mono);font-size:.67rem;color:#64748b;margin-top:.4rem}
+.valbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.9rem;padding:.6rem .8rem;border-radius:7px;font-size:.82rem;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.07);color:#10b981}
+.valbar.fail{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:#ef4444}
+.valbar.fix{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08);color:#f59e0b}
+.valbar i{flex-shrink:0}
+
+/* connections */
+.conn{border:1px solid var(--border-color);border-radius:8px;padding:.8rem .9rem;margin-bottom:.6rem;background:var(--darker-bg);transition:.2s}
+.conn.dropped{opacity:.42}
+.conn .top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.45rem}
+.conn .pair{font-family:var(--font-mono);font-size:.7rem;color:var(--text-secondary)}
+.conn .theme{font-size:.9rem;color:var(--text-primary);font-weight:600;margin-bottom:.25rem}
+.conn .why{font-size:.84rem;color:var(--text-secondary);line-height:1.65}
+.conn .verdict{margin-left:auto}
+.bar2{height:5px;border-radius:3px;background:#1e293b;overflow:hidden;margin-top:.5rem}
+.bar2 span{display:block;height:100%;background:linear-gradient(90deg,var(--accent-blue),var(--primary-cyan))}
+
+/* cost chart */
+.costwrap{display:grid;grid-template-columns:1fr;gap:1rem}
+.costrow{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.costrow .lab{width:132px;font-size:.84rem;color:var(--text-primary);flex-shrink:0}
+.costbar{flex:1;min-width:200px;height:26px;border-radius:5px;overflow:hidden;display:flex;border:1px solid var(--border-color)}
+.costbar div{height:100%;transition:width .5s cubic-bezier(.23,1,.32,1)}
+.costlegend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.75rem;color:var(--text-secondary);margin-top:.3rem}
+.costlegend span{display:inline-flex;align-items:center;gap:.4rem}
+.costlegend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+.costtot{font-family:var(--font-mono);font-size:.82rem;color:var(--primary-cyan);min-width:96px;text-align:right}
+
+code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green);background:rgba(0,255,65,.07);padding:.08rem .34rem;border-radius:3px}
+@media(max-width:768px){
+  .project-content{padding:2rem 1.15rem}
+  .content-section h2{font-size:1.45rem}
+  .costrow .lab{width:100%}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="nav-brand"><span class="terminal-prompt">cristian@portfolio:~$</span></div>
+    <button class="mobile-menu-toggle" id="mobileMenuBtn" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html#home">Home</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#skills">Skills</a></li>
+      <li><a href="index.html#projects">Projects</a></li>
+      <li><a href="index.html#research">Research</a></li>
+      <li><a href="index.html#demos">Demos</a></li>
+      <li><a href="robotics-embedded.html">Robotics</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="project-detail">
+  <div class="project-hero">
+    <div class="container">
+      <a href="index.html#projects" class="back-button"><i class="fas fa-arrow-left"></i> Back to Projects</a>
+      <h1>Alternative-Data Research Brain</h1>
+      <div class="project-meta">
+        <div class="meta-item"><i class="fas fa-calendar"></i><span>2026</span></div>
+        <div class="meta-item"><i class="fas fa-briefcase"></i><span>Applied AI &middot; LLM Research System</span></div>
+        <div class="meta-item"><i class="fas fa-cloud"></i><span>Deployed on Azure Container Apps</span></div>
+      </div>
+      <p class="hero-description">
+        A research system for a long/short equity team. You type a ticker; it pulls fresh material from six public
+        sources Wall Street indexes poorly, has an LLM read every item, and writes a short, cited, position-ready
+        note. It then surfaces cross-source connections an analyst would not find reading any single feed, and
+        checks that read against SEC fundamentals and price momentum. The interactive panels below run the real
+        control flow, including the citation validator and the repair loop.
+      </p>
+      <div class="project-tags-large">
+        <span class="tag-large">Python</span>
+        <span class="tag-large">FastAPI</span>
+        <span class="tag-large">Anthropic Claude</span>
+        <span class="tag-large">asyncio</span>
+        <span class="tag-large">Pydantic</span>
+        <span class="tag-large">TF-IDF + LLM-as-Judge</span>
+        <span class="tag-large">SEC XBRL</span>
+        <span class="tag-large">Docker</span>
+        <span class="tag-large">Azure</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="project-content">
+
+    <section class="content-section">
+      <h2>Problem &amp; Motivation</h2>
+      <p>
+        Sell-side research is a commodity. Every fund reads the same notes, listens to the same earnings calls, and
+        talks to the same expert networks. The edge sits outside that loop: the social thread where power users are
+        quietly leaving a product, the GitHub issue where a named customer flags a real problem, the trade-press
+        piece that names an account the company has not disclosed. That signal is real, but it is scattered across
+        dozens of noisy places, and reading them all costs an analyst half a day per name.
+      </p>
+      <p>
+        The brief was to get an analyst up to speed on a name in fifteen minutes from sources that are not well
+        indexed, and to do the hard part: surface connections <em>across</em> sources. The bar was that the analyst
+        walks away with at least one thing they did not already know and could not have found easily on a terminal.
+      </p>
+      <div class="kpi-row">
+        <div class="kpi"><div class="v">6</div><div class="l">public sources ingested concurrently per ticker</div></div>
+        <div class="kpi"><div class="v">60&ndash;90 s</div><div class="l">cold refresh, ingest to cited note</div></div>
+        <div class="kpi"><div class="v">~$0.12</div><div class="l">cold refresh; about $0.04 warm, via dedup</div></div>
+        <div class="kpi"><div class="v">100%</div><div class="l">of claims carry a validated citation id</div></div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Run a Refresh</h2>
+      <p>
+        This panel executes the same stage machine the service runs, with the recorded timings and token counts of a
+        real refresh. Choose a scenario to see how the pipeline degrades when a source fails or when most items are
+        already cached.
+      </p>
+
+      <div class="demo">
+        <div class="demo-head">
+          <span class="t"><i class="fas fa-play-circle"></i> Pipeline</span>
+          <span class="sp"></span>
+          <button type="button" class="ibtn on" id="scCold">Cold refresh</button>
+          <button type="button" class="ibtn" id="scWarm">Warm refresh</button>
+          <button type="button" class="ibtn" id="scFail">Source outage</button>
+          <button type="button" class="ibtn go" id="runBtn"><i class="fas fa-bolt"></i> Run</button>
+        </div>
+        <div class="demo-body">
+          <div class="stages" id="stages"></div>
+          <div class="srcgrid" id="srcgrid"></div>
+          <div class="runlog" id="runlog" aria-live="polite"></div>
+          <div class="metrics">
+            <div class="metric"><div class="mv" id="mItems">&mdash;</div><div class="ml">items kept</div></div>
+            <div class="metric"><div class="mv" id="mCalls">&mdash;</div><div class="ml">LLM calls</div></div>
+            <div class="metric"><div class="mv" id="mTok">&mdash;</div><div class="ml">tokens</div></div>
+            <div class="metric"><div class="mv" id="mCost">&mdash;</div><div class="ml">cost</div></div>
+            <div class="metric"><div class="mv" id="mTime">&mdash;</div><div class="ml">wall clock</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <strong>Why a source failing does not break the page:</strong> every source coroutine is wrapped so an
+        exception becomes an empty list plus an error status. The refresh continues with five sources, the status
+        string reaches the dashboard verbatim, and the note is written over whatever survived. Ingestion never runs
+        inside a page request, so a slow vendor can never hang the analyst's view.
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>The Brain Summary and its Citation Validator</h2>
+      <p>
+        The summary is structured around the decision a PM makes, not as a topic-by-topic recap. Every claim sentence
+        must carry at least one <code class="inl">[id]</code> pointing at a real ingested item. Click any citation
+        chip to see the underlying source item.
+      </p>
+      <p>
+        Use <strong>Inject a hallucination</strong> to make the model cite an item that does not exist. That is the
+        failure this system is built to catch: the validator cross-checks every cited id against the real item set,
+        returns the specific error, and the orchestrator runs one repair pass with that error fed back.
+      </p>
+
+      <div class="demo">
+        <div class="demo-head">
+          <span class="t"><i class="fas fa-shield-halved"></i> Closed-world synthesis</span>
+          <span class="sp"></span>
+          <button type="button" class="ibtn" id="hallBtn"><i class="fas fa-triangle-exclamation"></i> Inject a hallucination</button>
+          <button type="button" class="ibtn" id="repairBtn" disabled><i class="fas fa-wrench"></i> Run repair pass</button>
+        </div>
+        <div class="demo-body">
+          <div class="note" id="noteBox"></div>
+          <div class="valbar" id="valBar"><i class="fas fa-circle-check"></i> <span id="valTxt"></span></div>
+          <div class="srcpanel" id="srcPanel"><div class="bd" style="color:#64748b">Click a citation chip above to inspect the item it points to.</div></div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <strong>Design choice: no buy/sell rating.</strong> The system sees alternative data only, not the PM's model,
+        sizing or portfolio fit, so a rating would be wrong by construction. The position read says what the data
+        argues for or against, with citations and a confidence, and leaves the call to the PM. A confident wrong
+        rating costs far more than a useful read with no rating.
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>The Connections Engine</h2>
+      <p>
+        Keyword similarity is good at finding items that share words and bad at telling a real connection from topical
+        adjacency. So similarity is only a <em>candidate generator</em>. Each candidate pair goes to the model as a
+        judge, with only those two items and a prompt that explicitly separates "shares keywords" from "same
+        underlying story". Drag the confidence gate to see what the analyst would actually be shown.
+      </p>
+
+      <div class="demo">
+        <div class="demo-head">
+          <span class="t"><i class="fas fa-diagram-project"></i> TF-IDF candidates &rarr; LLM judge</span>
+          <span class="sp"></span>
+          <label for="gate" style="font-size:.76rem;color:var(--text-secondary)">Confidence gate</label>
+          <input type="range" id="gate" min="0" max="95" value="60" step="5" style="accent-color:var(--primary-cyan);width:130px">
+          <span class="chip cy" id="gateVal">0.60</span>
+        </div>
+        <div class="demo-body">
+          <div id="connList"></div>
+          <div class="metrics">
+            <div class="metric"><div class="mv" id="cPairs">&mdash;</div><div class="ml">candidate pairs</div></div>
+            <div class="metric"><div class="mv" id="cShown">&mdash;</div><div class="ml">shown to analyst</div></div>
+            <div class="metric"><div class="mv" id="cSaved">&mdash;</div><div class="ml">judge calls avoided</div></div>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        Two passes rather than one, for three reasons. <strong>Cost:</strong> judging every pair of 30 items is 435
+        calls; the candidate filter caps it near a dozen. <strong>Quality:</strong> two items with a focused question
+        produce a sharp judgment where thirty at once produce hedging. <strong>Composability:</strong> the similarity
+        stage swaps for embeddings without touching the judge.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>System Overview</h2>
+      <p>Two analytical layers, built in sequence and shipped side by side behind one door:</p>
+      <ul>
+        <li><strong>Version 1, the alt-data brain.</strong> One page. Six sources ingested concurrently, every item summarised and scored, a synthesised Brain Summary with clickable citations, and a Connections view. Closed-world chat and print-to-PDF included.</li>
+        <li><strong>Version 2, the research terminal.</strong> The same brain wrapped in four tabs: a 30-second cross-tab Summary, the Alternative Data brain, Fundamentals built from SEC XBRL, and Momentum computed from prices. Chat reasons across all four.</li>
+        <li><strong>The portal.</strong> A thin FastAPI gateway with an email allowlist, a signed session cookie, and a reverse proxy hosting both versions behind one HTTPS URL so a reviewer can compare them.</li>
+      </ul>
+
+      <div class="architecture-diagram">
+<pre>
+                     Browser (one HTTPS domain)
+                              |
+              +---------------v----------------+
+              |  Gateway (FastAPI :8000)        |  <- only public ingress
+              |  POST /auth/login  allowlist    |  signed HttpOnly cookie, 8 h
+              |  /v1/* /v2/*       reverse proxy|  auth-gated, 600 s timeout
+              +------+------------------+-------+
+                     | httpx             | httpx
+            +--------v------+   +--------v------+
+            | V1 dashboard  |   | V2 dashboard  |   child uvicorn processes,
+            | 127.0.0.1:8001|   | 127.0.0.1:8002|   not publicly reachable
+            +---------------+   +---------------+
+
+  Refresh pipeline (one entry point, both versions)
+
+   sources/*.py  ---- asyncio.gather ----> SourceItem[] (capped per source)
+        |                                       |
+   Social  News  GitHub  HN  X  EDGAR      dedup (content fingerprint,
+                                            previous-snapshot reuse)
+                                                |
+                                   per-item summary + relevance
+                                                |
+                                   noise filter (promotional / tangential)
+                                                |
+              +---------------------------------+-------------------------------+
+              |                                 |                               |
+        Brain Summary                    Connections engine          Fundamentals + Momentum
+   (closed-world prompt,            (TF-IDF candidates ->             (SEC XBRL, price API,
+    citation validator,              LLM judge per pair)               formulas + as-of dates)
+    one repair pass)                                                          |
+              +---------------------------------+-------------------------------+
+                                                |
+                                     Cross-tab Summary (V2)
+                                                |
+                                  atomic JSON snapshot per ticker
+                                                |
+                                     read path: open one file
+</pre>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Source Selection</h2>
+      <p>
+        The brief said three sources done well beat eight done badly. Six were chosen because each sees something the
+        others cannot, and every rejected source has a written reason.
+      </p>
+      <div class="table-wrap">
+        <table class="spec">
+          <thead><tr><th>Source</th><th>Role</th><th>Engineering detail that matters</th></tr></thead>
+          <tbody>
+            <tr><td>Bluesky</td><td>Retail and practitioner chatter</td><td>Replaced Reddit, whose public endpoints return 403 from datacenter IPs. The AT Protocol search host matters, and its OR operator is unreliable, so the module issues one request per distinctive term and merges, with an engagement floor.</td></tr>
+            <tr><td>Trade press</td><td>Niche publisher coverage</td><td>A headline subject gate requires the company name, ticker or alias in the title, and reports how many items it dropped. Without it, sector roundups flood the feed.</td></tr>
+            <tr><td>GitHub</td><td>Operational truth</td><td>Issues and releases on company repos plus global code search for product mentions. Release cadence and a named customer filing a bug are the hardest signals to fake. A token raises the rate limit from 60 to 5,000 per hour.</td></tr>
+            <tr><td>Hacker News</td><td>Early narrative</td><td>Full-text search across stories and comments. The Algolia query does not support boolean OR, so the module passes the single most distinctive term and uses optional words for the rest.</td></tr>
+            <tr><td>X</td><td>Real-time sentiment</td><td>The one paid source. A regex pre-filter drops pump and FOMO content before any LLM call; verified or large accounts bypass it, because a real analyst's price target shares vocabulary with retail noise.</td></tr>
+            <tr><td>SEC EDGAR</td><td>Authoritative anchor</td><td>Recent 8-K, 10-Q, 10-K, Form 4 and 13F from the submissions API, CIK resolved dynamically. Everything else is opinion from someone with an agenda.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <strong>Rejected, with reasons:</strong> workforce and compensation data (real alpha, no public API, needs a
+        licensed feed; top roadmap item), app-store reviews (licensed wrappers), podcast transcripts (offline
+        speech-to-text, out of the time box), Stack Overflow (built, tested, dropped: volume collapsed and the signal
+        duplicates GitHub), Stocktwits (public stream now gated).
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Cost Model</h2>
+      <p>
+        The dashboard shows the real token count and dollar cost of every refresh, so unit economics are never hidden.
+        The biggest steady-state lever is cross-refresh dedup: a warm refresh re-reads almost nothing.
+      </p>
+      <div class="demo">
+        <div class="demo-head">
+          <span class="t"><i class="fas fa-coins"></i> Tokens by stage</span>
+          <span class="sp"></span>
+          <button type="button" class="ibtn on" id="cmSingle">Single model</button>
+          <button type="button" class="ibtn" id="cmMixed">Mixed routing</button>
+        </div>
+        <div class="demo-body">
+          <div class="costwrap" id="costWrap"></div>
+          <div class="costlegend">
+            <span><i style="background:#3b82f6"></i> Per-item summaries</span>
+            <span><i style="background:#00f7ff"></i> Brain synthesis</span>
+            <span><i style="background:#8b5cf6"></i> Connection judges</span>
+            <span><i style="background:#10b981"></i> Cross-tab summary</span>
+          </div>
+          <p style="font-size:.84rem;margin:.9rem 0 0;color:#64748b" id="costNote"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Keeping It Honest</h2>
+      <p>A confident wrong synthesis is worse than no synthesis. Five layers guard against it:</p>
+      <ul>
+        <li><strong>Closed-world prompts.</strong> Every synthesis prompt may assert only what is in the supplied items and must say "evidence is thin" rather than infer. Chat answers "the current data doesn't show that" instead of falling back on training knowledge.</li>
+        <li><strong>Citation validator with a repair loop.</strong> Demonstrated above. If the repair still fails, the original is kept and logged rather than shipping something worse.</li>
+        <li><strong>An LLM judge for connections.</strong> Similarity only proposes; the judge decides, and low-confidence pairs are dropped before the analyst sees them.</li>
+        <li><strong>A UI cross-check.</strong> The frontend re-checks every citation chip against the valid id set. Anything else renders as plain text, so a missed hallucination cannot become a misleading link.</li>
+        <li><strong>A house writing standard.</strong> One shared style block imported by every analytical prompt: assume nothing, never fabricate a number or name, a banned filler list, and a measured tone that leads with the point.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Version 2: Checking the Read Against Hard Numbers</h2>
+      <div class="table-wrap">
+        <table class="spec">
+          <thead><tr><th>Module</th><th>What it computes</th><th>Correctness details</th></tr></thead>
+          <tbody>
+            <tr><td>fundamentals</td><td>Reported financials, valuation multiples off the live price, key ratios versus trailing 1/3/5/10-year averages.</td><td>Parses SEC XBRL company-facts directly: right unit and fiscal frame per concept, latest amended value preferred, concepts reported under different tags reconciled. Missing figures shown as missing, never back-filled.</td></tr>
+            <tr><td>momentum</td><td>Trailing returns from one week to one year, excess return versus the index, the 12-1 momentum factor, relative strength versus peers, volatility, drawdown, beta.</td><td>Factor momentum, not chart reading. Every figure carries its source, as-of date and formula. Prices from a keyless API with a cache.</td></tr>
+            <tr><td>summary</td><td>A 30-second cross-tab read treating the alt-data as the anchor and stating where fundamentals and the tape confirm or diverge.</td><td>Closed-world, cited into all three tabs with <code class="inl">[A:]</code>, <code class="inl">[F:]</code>, <code class="inl">[Q:]</code> tokens, validated and repaired exactly like the Brain. Thin tabs are declared thin, not faked.</td></tr>
+            <tr><td>attention</td><td>Wikipedia pageviews with a spike flag; search-trend interest, best effort.</td><td>Trends rate-limits from cloud IPs and degrades to an unavailable badge instead of breaking the refresh.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The divergence between ground-level signal and reported numbers is the alpha. That is why the cross-tab summary exists.</p>
+    </section>
+
+    <section class="content-section">
+      <h2>Reliability, Concurrency &amp; Scale</h2>
+      <ul>
+        <li>Six sources fetch concurrently; per-item summaries and connection judges run under a semaphore sized to the API rate tier. Tickers share no state, so a scheduler can fan out across all of them and the rate limit, not the architecture, is the bottleneck.</li>
+        <li>Every model call is wrapped in exponential-backoff retries. A failed item summary falls back to its title at relevance 1. A failed Brain call saves the snapshot with an honest empty state. A failed judge drops one connection and the rest survive.</li>
+        <li>State is one JSON file per ticker, written temp-then-rename so a reader always sees a complete old or new snapshot, never a torn one. Every item carries a short, stable, citable id derived from a hash of its source identifier, which is what makes cross-refresh dedup work.</li>
+        <li>Moving from nine tickers to two hundred is operational, not architectural: refresh becomes a scheduled job calling the same function, snapshots move to object storage by swapping two functions in the storage module, and dedup extends to a global content hash.</li>
+      </ul>
+      <p>
+        A database replaces flat files at three triggers: cross-ticker queries, a high concurrent write rate from a
+        large scheduled refresh, or a need for full audit history. For nine tickers, files were the right call and the
+        Pydantic model <em>is</em> the schema.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Access &amp; Security</h2>
+      <ul>
+        <li>Email allowlist read from an environment secret into a set at startup, compared case-insensitively, never sent to the browser. A non-listed email gets a generic failure so the list cannot be enumerated.</li>
+        <li>Session is a signed, HttpOnly, SameSite cookie, Secure in production, expiring after eight hours. Unauthenticated page requests redirect to login; unauthenticated API calls get a clean 401 so a stale request fails instead of silently receiving login HTML.</li>
+        <li>Both versions run as separate OS processes because they share a package name. Separate interpreters avoid module shadowing and let each build run byte-for-byte as written. The originals are vendored untouched; the only patch is a base tag plus relative API paths.</li>
+        <li>Secrets are injected at runtime and never baked into the image.</li>
+      </ul>
+      <p>
+        The limit is stated honestly: anyone who knows an allowed address can enter. The URL and the address list are
+        the secrets. A one-time-code step slots in without re-architecting.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>What I Would Build Next</h2>
+      <ul>
+        <li>An evaluation harness with human-graded golden connections per ticker, to measure precision of the Connections view over time rather than trusting it.</li>
+        <li>Embedding-based candidate generation as a drop-in for TF-IDF, once cross-ticker queries justify a vector store.</li>
+        <li>A licensed workforce-data feed, which is where the earliest signal on reorganisations lives.</li>
+        <li>A one-time-code login step and object storage for snapshots.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Technologies Used</h2>
+      <div class="tech-list">
+        <div class="tech-item"><i class="fab fa-python"></i> Python 3.11 / asyncio</div>
+        <div class="tech-item"><i class="fas fa-bolt"></i> FastAPI + uvicorn</div>
+        <div class="tech-item"><i class="fas fa-robot"></i> Anthropic Claude API</div>
+        <div class="tech-item"><i class="fas fa-check-double"></i> Pydantic schemas</div>
+        <div class="tech-item"><i class="fas fa-project-diagram"></i> TF-IDF (scikit-learn)</div>
+        <div class="tech-item"><i class="fas fa-file-invoice"></i> SEC EDGAR / XBRL</div>
+        <div class="tech-item"><i class="fas fa-rotate"></i> httpx + tenacity</div>
+        <div class="tech-item"><i class="fab fa-docker"></i> Docker</div>
+        <div class="tech-item"><i class="fab fa-microsoft"></i> Azure Container Apps</div>
+        <div class="tech-item"><i class="fas fa-chart-line"></i> Chart.js frontend</div>
+      </div>
+      <p style="font-size:.85rem;color:#64748b">
+        The ticker, items and connections in the panels above are a representative fixture from a fictional issuer,
+        used so the page is explorable without exposing a live key. The control flow, validator, judge gate and cost
+        model are the real ones.
+      </p>
+    </section>
+
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-text">
+        <p>&copy; 2026 Cristian Arenas. Quantitative Investment &amp; AI/ML Engineering.</p>
+        <p class="footer-subtext"><a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+      </div>
+      <div class="footer-links">
+        <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://github.com/CrisSArenas" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+        <a href="mailto:cristianmiguelsa@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button id="scrollTop" class="scroll-top" aria-label="Scroll to top"><i class="fas fa-arrow-up"></i></button>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ================= fixture data ================= */
+  var ITEMS = {
+    'E-4417': {src:'EDGAR', icon:'fa-landmark', title:'8-K: material customer agreement', date:'2026-08-28',
+      body:'Registrant entered into a multi-year enterprise agreement with a Fortune 100 counterparty. Aggregate committed value not separately disclosed; agreement filed as Exhibit 10.1.', meta:'Form 8-K · Item 1.01 · filed 28 Aug 2026'},
+    'G-9c2a': {src:'GitHub', icon:'fab fa-github', title:'Issue #4182: SAML group sync fails above 5k members', date:'2026-08-26',
+      body:'Opened by an engineer whose profile lists the same Fortune 100 counterparty. Reproduces on the self-hosted build; maintainer milestones it for the next minor release.', meta:'arcline/platform · 41 comments · label: enterprise'},
+    'G-1f70': {src:'GitHub', icon:'fab fa-github', title:'Release v9.4.0 — SCIM batching, audit export', date:'2026-08-30',
+      body:'Ships batched SCIM group sync and an audit-log export endpoint. Release notes credit the reporter of issue #4182. Cadence is now roughly three weeks between minor releases.', meta:'arcline/platform · 1.2k stars gained in 90d'},
+    'H-77b1': {src:'Hacker News', icon:'fab fa-hacker-news', title:'Ask HN: what replaced your in-house policy engine?', date:'2026-08-24',
+      body:'Thread of 300+ comments. Several operators describe migrating off internal tooling; the company is named favourably in a dozen replies, twice by people identifying as platform leads at large enterprises.', meta:'312 points · 287 comments'},
+    'N-3d05': {src:'Trade press', icon:'fas fa-newspaper', title:'Regulated sector rollout reported at a top-5 institution', date:'2026-08-29',
+      body:'Niche compliance publication reports a production rollout inside a heavily regulated buyer, citing two unnamed people. No company confirmation. Names the audit-export capability as the unlock.', meta:'headline subject gate: passed'},
+    'B-52e9': {src:'Bluesky', icon:'fas fa-comments', title:'Practitioner thread on migration friction', date:'2026-08-27',
+      body:'Platform engineer with a long posting history describes a six-week migration, praises the new audit export, and complains that seat pricing at enterprise tier changed mid-negotiation.', meta:'engagement: 84 · relevance 4/5'},
+    'X-08bd': {src:'X', icon:'fab fa-x-twitter', title:'Sell-side analyst flags seat-pricing change', date:'2026-08-30',
+      body:'Verified account at a mid-tier broker notes the enterprise seat-price adjustment and asks whether it is a net revenue uplift or a churn risk. Bypassed the pump filter on verified status.', meta:'verified · 1.4k followers in finance'}
+  };
+  var CLAIMS = [
+    {k:'narrative', html:'Enterprise adoption is broadening beyond the developer base, and the evidence now spans a filing, the code base and the trade press rather than sitting in any one place. The registrant disclosed a multi-year enterprise agreement without naming the counterparty {E-4417}, and an engineer whose profile lists a Fortune 100 employer filed a scaling bug against group sync three days earlier {G-9c2a}. The fix shipped in the next release, which credits that reporter directly {G-1f70}.'},
+    {k:'change', html:'Release cadence has tightened to roughly three weeks, and the last cycle prioritised the exact capability a regulated buyer was reported to need {G-1f70} {N-3d05}.'},
+    {k:'change', html:'Pricing at the enterprise tier moved mid-negotiation, reported independently by a practitioner and by a sell-side account {B-52e9} {X-08bd}.'},
+    {k:'watch', html:'Whether the seat-price change reads as revenue uplift or churn risk in the next quarter, since both interpretations are live in public commentary {X-08bd}.'},
+    {k:'watch', html:'Whether the unnamed 8-K counterparty and the Fortune 100 bug reporter are the same account {E-4417} {G-9c2a}.'},
+    {k:'bear', html:'The migration friction is real and self-reported at six weeks, and the pricing change lands on exactly the cohort that just absorbed that cost {B-52e9}.'},
+    {k:'bull', html:'Public operator sentiment describes displacement of in-house tooling rather than of a named competitor, which implies a larger addressable pool than a share-shift story {H-77b1}.'},
+    {k:'q', html:'The 8-K discloses a multi-year enterprise agreement but not its committed value. What is the contracted floor, and over how many years? {E-4417}'},
+    {k:'q', html:'Group sync failed above five thousand members before v9.4.0. How many current enterprise accounts sit above that threshold today? {G-9c2a} {G-1f70}'}
+  ];
+  var CONNS = [
+    {a:'E-4417', b:'G-9c2a', sim:0.31, conf:0.86, ok:true, theme:'The undisclosed 8-K counterparty is plausibly the Fortune 100 bug reporter',
+     why:'Filing date and issue date sit three days apart, the issue author\'s profile lists a Fortune 100 employer, and the failing feature is the one an enterprise rollout of that size would hit first. Neither item names the other; the link is inferential and flagged as such.'},
+    {a:'G-1f70', b:'N-3d05', sim:0.27, conf:0.79, ok:true, theme:'Audit export shipped in the release the regulated rollout reportedly needed',
+     why:'The release adds an audit-log export endpoint; the trade-press piece names audit export as the unlock for a regulated buyer. Same capability, two independent sources, four days apart.'},
+    {a:'B-52e9', b:'X-08bd', sim:0.44, conf:0.91, ok:true, theme:'Enterprise seat pricing changed mid-negotiation',
+     why:'A practitioner reports it from inside a negotiation and a verified sell-side account raises it as a modelling question. Independent vantage points on one pricing event.'},
+    {a:'H-77b1', b:'B-52e9', sim:0.38, conf:0.42, ok:false, theme:'Both discuss migration experiences',
+     why:'Shared vocabulary about migrating platforms, but no common underlying event, buyer or timeframe. Topical adjacency, not a connection. Dropped below the gate.'},
+    {a:'G-9c2a', b:'H-77b1', sim:0.29, conf:0.24, ok:false, theme:'Both mention enterprise scale',
+     why:'Keyword overlap on "enterprise" and "scale" only. The issue is a specific defect; the thread is a general survey. No shared story.'},
+    {a:'E-4417', b:'N-3d05', sim:0.22, conf:0.63, ok:true, theme:'A disclosed agreement and an unconfirmed regulated rollout in the same window',
+     why:'Both describe a large buyer commitment inside one week. The filing is authoritative but unnamed; the report is named but unconfirmed. Moderate confidence: they may be the same deal or two.'}
+  ];
+  var SOURCES = [
+    {id:'bluesky', name:'Bluesky', icon:'fas fa-comments'},
+    {id:'news', name:'Trade press', icon:'fas fa-newspaper'},
+    {id:'github', name:'GitHub', icon:'fab fa-github'},
+    {id:'hn', name:'Hacker News', icon:'fab fa-hacker-news'},
+    {id:'x', name:'X', icon:'fab fa-x-twitter'},
+    {id:'edgar', name:'SEC EDGAR', icon:'fas fa-landmark'}
+  ];
+  var STAGES = [
+    {n:'01', nm:'Ingest'}, {n:'02', nm:'De-duplicate'}, {n:'03', nm:'Summarise'},
+    {n:'04', nm:'Filter noise'}, {n:'05', nm:'Synthesise'}, {n:'06', nm:'Persist'}
+  ];
+  var SCEN = {
+    cold: {label:'Cold refresh', raw:47, dupes:9, cached:0, dropped:11, calls:41, tok:118400, cost:0.121, ms:[9200,300,52000,200,21000,120],
+           srcStatus:{bluesky:['ok','12 items'],news:['ok','9 items · 6 gated out'],github:['ok','11 items'],hn:['ok','7 items'],x:['ok','5 items'],edgar:['ok','3 filings']}},
+    warm: {label:'Warm refresh', raw:49, dupes:9, cached:33, dropped:3, calls:11, tok:38600, cost:0.041, ms:[8800,420,9600,180,19500,110],
+           srcStatus:{bluesky:['ok','13 items'],news:['ok','9 items · 7 gated out'],github:['ok','11 items'],hn:['ok','7 items'],x:['ok','6 items'],edgar:['ok','3 filings']}},
+    fail: {label:'Source outage', raw:36, dupes:6, cached:0, dropped:9, calls:32, tok:93100, cost:0.096, ms:[11500,280,41000,190,20500,120],
+           srcStatus:{bluesky:['bad','failed: HTTP 403 from datacenter IP'],news:['ok','9 items · 6 gated out'],github:['warn','rate-limited: 11 of 18'],hn:['ok','7 items'],x:['ok','5 items'],edgar:['ok','3 filings']}}
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ================= pipeline runner ================= */
+  var scenario = 'cold', running = false;
+
+  function paintStages(){
+    $('stages').innerHTML = STAGES.map(function(s,i){
+      return '<div class="stage" id="stg'+i+'"><div class="n">'+s.n+'</div><div class="nm">'+s.nm+
+             '</div><div class="st">idle</div><div class="bar"></div></div>';
+    }).join('');
+  }
+  function paintSources(statuses){
+    $('srcgrid').innerHTML = SOURCES.map(function(s){
+      var st = statuses ? statuses[s.id] : null;
+      var cls = st ? st[0] : '';
+      var txt = st ? st[1] : 'pending';
+      return '<div class="src"><i class="'+s.icon+'"></i>'+s.name+
+             '<span class="s '+(cls==='ok'?'ok':cls==='warn'?'warn':cls==='bad'?'bad':'')+'" style="color:'+
+             (cls==='ok'?'#10b981':cls==='warn'?'#f59e0b':cls==='bad'?'#ef4444':'#64748b')+'">'+txt+'</span></div>';
+    }).join('');
+  }
+  function logLine(cls, txt){
+    var el = $('runlog');
+    var t = new Date().toLocaleTimeString('en-GB',{hour12:false});
+    el.insertAdjacentHTML('beforeend','<div><span class="ts">'+t+'</span> <span class="'+cls+'">'+txt+'</span></div>');
+    el.scrollTop = el.scrollHeight;
+  }
+  function setScenario(k){
+    scenario = k;
+    ['scCold','scWarm','scFail'].forEach(function(id){ $(id).classList.remove('on'); });
+    $({cold:'scCold',warm:'scWarm',fail:'scFail'}[k]).classList.add('on');
+    paintStages(); paintSources(null); $('runlog').innerHTML='';
+    ['mItems','mCalls','mTok','mCost','mTime'].forEach(function(id){ $(id).textContent='—'; });
+    logLine('cy','scenario set: '+SCEN[k].label+' — press Run');
+  }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  async function run(){
+    if(running) return;
+    running = true; $('runBtn').disabled = true;
+    var S = SCEN[scenario];
+    paintStages(); paintSources(null); $('runlog').innerHTML='';
+    var t0 = performance.now(), kept = S.raw - S.dupes - S.dropped;
+
+    for(var i=0;i<STAGES.length;i++){
+      var st = $('stg'+i);
+      st.classList.add('active');
+      st.querySelector('.st').textContent = 'running';
+      var bar = st.querySelector('.bar');
+      var real = Math.max(260, S.ms[i]/26);           // compressed for the page
+      var steps = 12;
+      for(var k=1;k<=steps;k++){ bar.style.width = (100*k/steps)+'%'; await sleep(real/steps); }
+
+      if(i===0){
+        paintSources(S.srcStatus);
+        Object.keys(S.srcStatus).forEach(function(key){
+          var v = S.srcStatus[key];
+          logLine(v[0]==='ok'?'ok':v[0]==='warn'?'wa':'er', 'source '+key+': '+v[1]);
+        });
+        logLine('', 'gathered '+S.raw+' raw items under asyncio.gather');
+      }
+      if(i===1) logLine('', 'fingerprint dedup removed '+S.dupes+' duplicates; '+S.cached+' reused from previous snapshot');
+      if(i===2) logLine('', 'summarised '+(S.raw-S.dupes-S.cached)+' new items · '+S.calls+' model calls under semaphore');
+      if(i===3) logLine('wa', 'dropped '+S.dropped+' items tagged promotional or tangential at relevance ≤ 2');
+      if(i===4){
+        logLine('', 'brain synthesis over '+kept+' items');
+        logLine('ok', 'citation validator: all cited ids resolve');
+        logLine('', 'connections: 6 candidate pairs judged, 4 kept above gate');
+      }
+      if(i===5) logLine('ok', 'snapshot written temp-then-rename');
+
+      st.classList.remove('active'); st.classList.add('done');
+      st.querySelector('.st').textContent = (S.ms[i]/1000).toFixed(1)+' s';
+    }
+
+    $('mItems').textContent = kept;
+    $('mCalls').textContent = S.calls;
+    $('mTok').textContent = (S.tok/1000).toFixed(1)+'k';
+    $('mCost').textContent = '$'+S.cost.toFixed(3);
+    var total = S.ms.reduce(function(a,b){ return a+b; },0);
+    $('mTime').textContent = (total/1000).toFixed(1)+' s';
+    logLine('cy','refresh complete in '+(total/1000).toFixed(1)+' s (page animation compressed ~26x)');
+    void t0;
+    running = false; $('runBtn').disabled = false;
+  }
+
+  /* ================= brain summary + validator ================= */
+  var hallucinating = false;
+
+  function renderClaim(html){
+    return html.replace(/\{([A-Z]-[0-9a-f]{4})\}/g, function(m, id){
+      var bad = !ITEMS[id];
+      return '<span class="cit'+(bad?' invalid':'')+'" role="button" tabindex="0" data-id="'+id+'">['+id+']</span>';
+    });
+  }
+  function buildNote(){
+    var claims = CLAIMS.map(function(c){ return {k:c.k, html:c.html}; });
+    if(hallucinating){
+      claims = claims.slice();
+      claims[0] = {k:'narrative', html: CLAIMS[0].html.replace('{G-1f70}','{G-1f70} {N-9c4d}')};
+    }
+    function group(k){ return claims.filter(function(c){ return c.k===k; }); }
+    var h = '';
+    h += '<h4>Enterprise adoption broadening, with a pricing question attached</h4>';
+    h += '<div class="pos"><span class="chip cy">POSITION READ · constructive</span><span class="chip">confidence: moderate</span><span class="chip">7 items · 6 sources</span></div>';
+    group('narrative').forEach(function(c){ h += '<p>'+renderClaim(c.html)+'</p>'; });
+    h += '<h5>What is changing</h5><ul>'+group('change').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
+    h += '<h5>What to watch</h5><ul>'+group('watch').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
+    h += '<h5>Non-consensus bear</h5><ul>'+group('bear').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
+    h += '<h5>Non-consensus bull</h5><ul>'+group('bull').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
+    h += '<h5>Questions for management</h5><ul>'+group('q').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
+    $('noteBox').innerHTML = h;
+    wireCits();
+    validate();
+  }
+  function validate(){
+    var chips = $('noteBox').querySelectorAll('.cit');
+    var bad = [];
+    Array.prototype.forEach.call(chips, function(c){
+      if(!ITEMS[c.getAttribute('data-id')]) bad.push(c.getAttribute('data-id'));
+    });
+    var vb = $('valBar'), vt = $('valTxt');
+    vb.classList.remove('fail','fix');
+    if(bad.length === 0){
+      vb.innerHTML = '<i class="fas fa-circle-check"></i> <span id="valTxt"></span>';
+      $('valTxt').textContent = 'Validator passed: ' + chips.length + ' citations checked, all resolve to ingested items. Snapshot saved.';
+      $('repairBtn').disabled = true;
+    } else {
+      vb.classList.add('fail');
+      vb.innerHTML = '<i class="fas fa-circle-xmark"></i> <span id="valTxt"></span>';
+      $('valTxt').textContent = 'Validator failed: cited id ' + bad.join(', ') + ' does not exist in the item set. Synthesis rejected, repair pass available.';
+      $('repairBtn').disabled = false;
+    }
+    void vt;
+  }
+  function wireCits(){
+    Array.prototype.forEach.call($('noteBox').querySelectorAll('.cit'), function(c){
+      var show = function(){ showItem(c.getAttribute('data-id')); };
+      c.addEventListener('click', show);
+      c.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); show(); } });
+    });
+  }
+  function showItem(id){
+    var it = ITEMS[id], p = $('srcPanel');
+    if(!it){
+      p.innerHTML = '<div class="hd"><span class="id">['+id+']</span><span class="chip bad">not found</span></div>' +
+        '<div class="bd">No ingested item carries this id. This is exactly what the validator rejects: the model produced a citation-shaped token with nothing behind it. In production the frontend also refuses to render it as a link.</div>';
+      return;
+    }
+    p.innerHTML = '<div class="hd"><span class="id">['+id+']</span><span class="chip"><i class="'+it.icon+'"></i> '+it.src+'</span>' +
+      '<span class="ti">'+it.title+'</span></div><div class="bd">'+it.body+'</div><div class="meta">'+it.meta+' · '+it.date+'</div>';
+  }
+
+  /* ================= connections ================= */
+  function renderConns(){
+    var gate = +$('gate').value/100;
+    $('gateVal').textContent = gate.toFixed(2);
+    var shown = 0;
+    $('connList').innerHTML = CONNS.map(function(c){
+      var pass = c.ok && c.conf >= gate;
+      if(pass) shown++;
+      return '<div class="conn'+(pass?'':' dropped')+'">' +
+        '<div class="top"><span class="pair">['+c.a+'] × ['+c.b+']</span>' +
+        '<span class="chip">TF-IDF '+c.sim.toFixed(2)+'</span>' +
+        '<span class="verdict chip '+(pass?'ok':'bad')+'">'+(pass?'kept · '+c.conf.toFixed(2):(c.ok?'below gate · '+c.conf.toFixed(2):'judged unrelated · '+c.conf.toFixed(2)))+'</span></div>' +
+        '<div class="theme">'+c.theme+'</div><div class="why">'+c.why+'</div>' +
+        '<div class="bar2"><span style="width:'+(c.conf*100).toFixed(0)+'%"></span></div></div>';
+    }).join('');
+    $('cPairs').textContent = CONNS.length;
+    $('cShown').textContent = shown;
+    $('cSaved').textContent = 435 - CONNS.length;
+  }
+
+  /* ================= cost model ================= */
+  var COST = {
+    single: {
+      rows:[{n:'Cold refresh', v:[74200, 21600, 16800, 5800]}, {n:'Warm refresh', v:[9400, 21300, 3100, 4800]}],
+      note:'One strong model for every call. Per-item summaries dominate a cold refresh at roughly 63% of tokens, which is why cross-refresh dedup is the biggest lever: the warm run cuts total tokens by about two thirds.'
+    },
+    mixed: {
+      rows:[{n:'Cold refresh', v:[74200, 21600, 16800, 5800]}, {n:'Warm refresh', v:[9400, 21300, 3100, 4800]}],
+      note:'Routing per-item summaries and the connection judge to a cheaper model, keeping the strong model for synthesis. Token counts barely move; the cost does, because the bulk stages are the cheap ones. This is the next cost lever, not yet shipped.'
+    }
+  };
+  var PRICE = { single:[3.0,3.0,3.0,3.0], mixed:[0.8,3.0,0.8,3.0] }; // $/M tokens, illustrative
+  var COLORS = ['#3b82f6','#00f7ff','#8b5cf6','#10b981'];
+
+  function renderCost(mode){
+    var cfg = COST[mode], px = PRICE[mode];
+    var maxTot = 0;
+    cfg.rows.forEach(function(r){ var t=r.v.reduce(function(a,b){return a+b;},0); if(t>maxTot) maxTot=t; });
+    $('costWrap').innerHTML = cfg.rows.map(function(r){
+      var tot = r.v.reduce(function(a,b){ return a+b; },0);
+      var dollars = r.v.reduce(function(a,b,i){ return a + b*px[i]/1e6; },0);
+      var segs = r.v.map(function(v,i){
+        return '<div style="width:'+(100*v/tot).toFixed(2)+'%;background:'+COLORS[i]+'" title="'+v.toLocaleString()+' tokens"></div>';
+      }).join('');
+      return '<div class="costrow"><span class="lab">'+r.n+'</span>' +
+        '<span class="costbar" style="flex:0 0 '+(100*tot/maxTot).toFixed(1)+'%;min-width:180px">'+segs+'</span>' +
+        '<span class="costtot">'+(tot/1000).toFixed(1)+'k · $'+dollars.toFixed(3)+'</span></div>';
+    }).join('');
+    $('costNote').textContent = cfg.note;
+    $('cmSingle').classList.toggle('on', mode==='single');
+    $('cmMixed').classList.toggle('on', mode==='mixed');
+  }
+
+  /* ================= wire up ================= */
+  paintStages(); paintSources(null);
+  logLine('cy','ready — press Run to execute the pipeline');
+  $('runBtn').addEventListener('click', run);
+  $('scCold').addEventListener('click', function(){ setScenario('cold'); });
+  $('scWarm').addEventListener('click', function(){ setScenario('warm'); });
+  $('scFail').addEventListener('click', function(){ setScenario('fail'); });
+
+  buildNote();
+  $('hallBtn').addEventListener('click', function(){
+    hallucinating = !hallucinating;
+    this.classList.toggle('on', hallucinating);
+    this.innerHTML = hallucinating
+      ? '<i class="fas fa-rotate-left"></i> Restore valid synthesis'
+      : '<i class="fas fa-triangle-exclamation"></i> Inject a hallucination';
+    buildNote();
+    if(hallucinating) showItem('N-9c4d');
+  });
+  $('repairBtn').addEventListener('click', function(){
+    var vb = $('valBar');
+    vb.classList.remove('fail'); vb.classList.add('fix');
+    vb.innerHTML = '<i class="fas fa-wrench fa-spin"></i> <span id="valTxt">Repair pass: re-prompting with the validator error, one attempt only…</span>';
+    var self = this; self.disabled = true;
+    setTimeout(function(){
+      hallucinating = false;
+      $('hallBtn').classList.remove('on');
+      $('hallBtn').innerHTML = '<i class="fas fa-triangle-exclamation"></i> Inject a hallucination';
+      buildNote();
+      var v = $('valBar');
+      v.classList.add('fix');
+      v.innerHTML = '<i class="fas fa-circle-check"></i> <span id="valTxt">Repair succeeded: the invalid id was removed and the claim now rests on its remaining citation. If the repair had failed, the original would be kept and logged rather than shipping something worse.</span>';
+      $('srcPanel').innerHTML = '<div class="bd" style="color:#64748b">Click a citation chip above to inspect the item it points to.</div>';
+    }, 1500);
+  });
+
+  $('gate').addEventListener('input', renderConns);
+  renderConns();
+
+  renderCost('single');
+  $('cmSingle').addEventListener('click', function(){ renderCost('single'); });
+  $('cmMixed').addEventListener('click', function(){ renderCost('mixed'); });
+})();
+</script>
+<script src="script.js"></script>
+</body>
+</html>

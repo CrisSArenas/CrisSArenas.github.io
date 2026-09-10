@@ -4,55 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SLAM Mapping Visualizer | Cristian Arenas</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta name="description" content="Browser SLAM sandbox: a differential-drive robot with a simulated 360-beam 2-D LiDAR builds a 5 cm log-odds occupancy grid while a 300-particle Monte-Carlo localisation filter corrects drifting wheel odometry.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0b1120;--card:#111827;--card2:#1a2332;
-  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
-  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
-  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
-}
-body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;overflow-x:hidden}
+body{font-size:14px;line-height:1.6;overflow-x:hidden}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.demo-footer .grid{max-width:none;margin:0;padding:0}
 a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-/* NAV */
-.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
-.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;cursor:pointer;text-decoration:none}
-.nav .back:hover{color:var(--cyan)}
-.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.nav h1 i{color:var(--cyan);font-size:14px}
-.nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
-.live-pill{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:600;color:var(--green);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);letter-spacing:.3px}
-.live-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(16,185,129,.8);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.help-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.help-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
-
-/* HELP MODAL */
-.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.help-overlay.open{display:flex}
-.help-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:0}
-.help-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
-.help-modal-head h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.help-modal-head h2 i{color:var(--cyan)}
-.help-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.help-close:hover{color:var(--red);border-color:var(--red)}
-.help-body{padding:20px 22px}
-.help-section{margin-bottom:20px}
-.help-section:last-child{margin-bottom:0}
-.help-section h3{font-size:12px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.help-section p{font-size:12.5px;color:var(--dim);line-height:1.7;margin-bottom:6px}
-.help-section p strong{color:var(--text)}
-.help-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin-top:6px}
-.help-dl dt{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
-.help-dl dd{color:var(--dim);line-height:1.6}
+.d-help-section dl{margin-top:6px}
+.d-help-section code{font-family:var(--mono);font-size:.74rem;color:var(--cyan-bright);background:var(--accent-bg);padding:1px 5px;border-radius:4px}
 
 /* GUIDE */
 .guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
@@ -72,7 +42,7 @@ a{color:var(--cyan);text-decoration:none}
 
 /* KPI STRIP */
 .kpi-strip{max-width:1440px;margin:16px auto 0;padding:0 16px}
-.kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden}
+.kpi-row{display:grid;grid-template-columns:repeat(9,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden}
 .kpi-cell{padding:14px 10px;background:var(--card);text-align:center;cursor:help;transition:background .2s}
 .kpi-cell:hover{background:rgba(6,182,212,.05)}
 .kpi-cell .lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:600}
@@ -83,8 +53,10 @@ a{color:var(--cyan);text-decoration:none}
 .kpi-cell .val.b{color:var(--blue)}
 .kpi-cell .val.p{color:var(--purple)}
 .kpi-cell .val.o{color:var(--orange)}
+@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(5,1fr)}}
 @media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:500px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi-cell .unit{font-size:9px;color:var(--faint);font-family:var(--mono);margin-top:3px}
 
 /* CONTROLS */
 .controls{max-width:1440px;margin:16px auto 0;padding:0 16px}
@@ -113,6 +85,11 @@ a{color:var(--cyan);text-decoration:none}
 .panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
 .panel-body{padding:16px 18px;position:relative}
 canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+.cap{margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);line-height:1.5}
+.cap .sw{display:inline-block;width:13px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.cap .bx{display:inline-block;width:11px;height:9px;border-radius:2px;vertical-align:middle;margin-right:5px;border:1px solid var(--border-strong)}
 
 /* TELEMETRY TABLE */
 .telem-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
@@ -121,64 +98,79 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .telem-table td:last-child{text-align:right;color:var(--cyan);font-weight:600}
 .telem-section{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;padding:10px 10px 4px;border-bottom:1px solid var(--border)}
 
-/* DISCLAIMER */
-.disclaimer{max-width:1440px;margin:16px auto 30px;padding:0 16px}
-.disclaimer-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:11px;color:var(--dim);line-height:1.6}
-.disclaimer-box strong{color:var(--text)}
-
 @media(max-width:1024px){.grid{grid-template-columns:1fr}.ctrl-body{flex-direction:column;align-items:stretch}}
-@media(max-width:600px){.nav{flex-wrap:wrap;gap:8px}}
+.demo-sub{max-width:1440px;margin:14px auto 0;padding:0 16px;color:var(--muted);font-size:.85rem}
+.demo-sub b{color:var(--text);font-weight:600}
 </style>
 </head>
 <body>
 
-<div class="nav">
-  <a class="back" href="../robotics-embedded.html"><i class="fas fa-chevron-left"></i> Back to Portfolio</a>
-  <h1><i class="fas fa-robot"></i> SLAM Mapping Visualizer</h1>
-  <div class="nav-actions">
-    <span class="live-pill"><span class="pulse"></span> LIVE</span>
-    <button class="help-btn" onclick="toggleHelp()"><i class="fas fa-question"></i></button>
+<nav class="demo-nav">
+  <a class="demo-brand" href="../index.html">cristian@portfolio:~$ <span class="crumb">/ demos / slam</span></a>
+  <h1 class="demo-title"><i class="fas fa-map"></i> SLAM Mapping Visualizer</h1>
+  <div class="demo-links">
+    <a href="../index.html#projects">Projects</a>
+    <a href="../index.html#research">Research</a>
+    <a href="../index.html#demos">Demos</a>
+    <a href="../robotics-embedded.html" class="active">Robotics</a>
   </div>
+  <div class="demo-actions">
+    <span class="d-pill live"><span class="pulse"></span> LIVE</span>
+    <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+<div class="demo-status">
+  <span id="statusBar">initialising&hellip;</span>
+  <span><b>Simulated sensors</b> &middot; seeded PRNG (mulberry32) &middot; idealised LiDAR &amp; odometry models &middot; not hardware-validated</span>
 </div>
 
+<p class="demo-sub">Drive a differential-drive robot with <b>WASD</b>. A simulated 2-D LiDAR raycasts the true map; a <b>log-odds occupancy grid</b> is built from the <b>particle-filter</b> pose estimate, not from ground truth, so mapping and localisation error interact exactly as they do in real grid SLAM.</p>
+
 <!-- HELP MODAL -->
-<div class="help-overlay" id="helpOverlay">
-  <div class="help-modal">
-    <div class="help-modal-head">
-      <h2><i class="fas fa-book-open"></i> SLAM Visualizer Guide</h2>
-      <button class="help-close" onclick="toggleHelp()"><i class="fas fa-times"></i></button>
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; SLAM Mapping Visualizer</h2>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
-    <div class="help-body">
-      <div class="help-section">
-        <h3>What This Tool Does</h3>
-        <p>This visualizer demonstrates <strong>Simultaneous Localization and Mapping (SLAM)</strong> in a browser. Drive a virtual robot through pre-built indoor environments using WASD keys while watching it build an <strong>occupancy grid map</strong> in real time using simulated LiDAR scans.</p>
-        <p>The robot performs <strong>raycasting-based LiDAR simulation</strong> with 180 beams spanning 360 degrees, and updates the map using <strong>log-odds occupancy grid mapping</strong>.</p>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; What is simulated</h3>
+        <p>A differential-drive robot (body radius <strong>0.10 m</strong>) drives through a <strong>7.5 m &times; 7.5 m</strong> line-segment world. Everything runs in the browser from a seeded PRNG: there is no recorded dataset and no hardware in the loop. Three estimates of the pose are tracked at once &mdash; <strong>ground truth</strong> (green), <strong>wheel odometry alone</strong> (dead reckoning) and the <strong>particle-filter estimate</strong> (amber) that the map is actually built from.</p>
       </div>
-      <div class="help-section">
-        <h3>Controls</h3>
-        <dl class="help-dl">
-          <dt>W</dt><dd>Accelerate forward</dd>
-          <dt>S</dt><dd>Brake / reverse</dd>
-          <dt>A</dt><dd>Rotate left (counter-clockwise)</dd>
-          <dt>D</dt><dd>Rotate right (clockwise)</dd>
+      <div class="d-help-section">
+        <h3>2 &middot; Driving &amp; physics</h3>
+        <dl>
+          <dt>W / S</dt><dd>Accelerate forward / reverse at 0.8 m/s&sup2;, capped at <strong>0.50 m/s</strong> forward and 0.30 m/s in reverse.</dd>
+          <dt>A / D</dt><dd>Angular acceleration 4.0 rad/s&sup2;, capped at <strong>&plusmn;1.5 rad/s</strong> (86 &deg;/s).</dd>
+          <dt>Timestep</dt><dd>Fixed <strong>&Delta;t = 1/60 s</strong> integrator with an accumulator, so the physics is frame-rate independent. Released controls decay exponentially (3 s&#8315;&sup1; linear, 6 s&#8315;&sup1; angular).</dd>
         </dl>
       </div>
-      <div class="help-section">
-        <h3>SLAM Concepts</h3>
-        <dl class="help-dl">
-          <dt>Occupancy Grid</dt><dd>A 2D grid where each cell stores a log-odds value representing the probability of being occupied, free, or unknown. Updated via Bresenham-style ray marching.</dd>
-          <dt>LiDAR Raycasting</dt><dd>180 beams sweep 360 degrees around the robot. Each beam marches through the environment checking for wall intersections to determine range measurements.</dd>
-          <dt>Log-Odds Update</dt><dd>Cells along each ray are marked as free (negative update) while the cell at each hit point is marked as occupied (positive update). This Bayesian approach handles noisy measurements gracefully.</dd>
-          <dt>Coverage Mapping</dt><dd>As the robot explores, unknown cells transition to known states. Coverage percentage tracks how much of the navigable environment has been observed.</dd>
-        </dl>
+      <div class="d-help-section">
+        <h3>3 &middot; LiDAR model</h3>
+        <p><strong>360 beams over 360&deg;</strong> (1.0&deg; increment), <strong>6.0 m</strong> maximum range, scanning at <strong>10 Hz</strong> &mdash; roughly an RPLIDAR A1 class sensor. Each beam is raycast analytically against the true wall segments (ray/segment intersection), then corrupted with <strong>&sigma;<sub>r</sub> = 2 cm</strong> Gaussian range noise and <strong>&sigma;<sub>&theta;</sub> = 0.25&deg;</strong> Gaussian bearing noise. Beams that reach 6.0 m without an intersection are reported as max-range returns: they carve free space but never mark an obstacle.</p>
       </div>
-      <div class="help-section">
-        <h3>Panel Descriptions</h3>
-        <dl class="help-dl">
-          <dt>World View</dt><dd>Top-down rendering of the actual environment with walls, the robot (triangle), LiDAR beams (cyan), and path trail (green).</dd>
-          <dt>Occupancy Grid Map</dt><dd>The map being built in real-time. Dark = unknown, dark blue = free space, bright green/cyan = obstacles detected.</dd>
-          <dt>LiDAR Scan View</dt><dd>Polar plot of the current 360-degree LiDAR scan with range rings and angular sector labels.</dd>
-          <dt>Telemetry</dt><dd>Real-time robot pose, velocity, LiDAR statistics, and map coverage metrics.</dd>
+      <div class="d-help-section">
+        <h3>4 &middot; Occupancy grid (mapping)</h3>
+        <p>A <strong>150 &times; 150</strong> grid of <strong>5 cm</strong> cells stores log-odds <code>l = log(p / (1 &minus; p))</code>, initialised at 0 (p = 0.5, unknown). For every beam the cells along the free portion are updated with <code>l += l_free = &minus;0.40</code> (inverse-sensor probability 0.40) and the endpoint cell with <code>l += l_occ = +0.85</code> (probability 0.70); values are clamped to <strong>[&minus;5, +5]</strong>, i.e. p &isin; [0.007, 0.993]. The map panel renders <code>p = 1 &minus; 1/(1 + e&#8319;)</code> directly as a grey scale &mdash; dark grey is confidently free, light grey confidently occupied, and slate blue is a cell that has never been observed.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>5 &middot; Odometry drift &amp; the particle filter</h3>
+        <p>Wheel odometry is deliberately imperfect: a <strong>+3% translation scale error</strong>, 8% proportional noise on each translation increment, 6% on each rotation increment and a <strong>+0.15 &deg;/s gyro bias</strong>. Integrated open loop it walks away from the truth &mdash; that is the orange curve on the error chart.</p>
+        <p><strong>Monte-Carlo localisation with 300 particles</strong> corrects it. Each 10 Hz cycle the particles are propagated with the textbook <em>odometry motion model</em> (&delta;<sub>rot1</sub>, &delta;<sub>trans</sub>, &delta;<sub>rot2</sub> with noise coefficients &alpha;<sub>1..4</sub> = 0.02, 0.02, 0.02, 0.005), then weighted by an <em>endpoint likelihood field</em>: 30 sub-sampled beams are projected from each particle and scored as <code>w &prop; &prod; (0.85&middot;p_occ + 0.15)</code>, where p_occ is the maximum occupancy probability in the 3 &times; 3 neighbourhood of the endpoint cell (a one-cell-&sigma; approximation of a true distance-transform likelihood field). Cells that have never been observed carry no information and are skipped; if fewer than 8 beams land on known cells the weights are left untouched and the filter coasts on odometry. <strong>Low-variance (systematic) resampling</strong> fires whenever the effective sample size N<sub>eff</sub> = 1/&Sigma;w&sup2; drops below N/2 = 150.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; Honest limitations</h3>
+        <p>There is <strong>no loop closure and no pose-graph optimisation</strong> in this demo. Nothing detects a revisited place, and no back-end ever re-optimises past poses, so any error the filter accumulates stays in the map. Real systems (Cartographer, GMapping + scan matching, RTAB-Map) add branch-and-bound scan matching, loop-closure constraints and sparse pose-graph optimisation on top of exactly this front end. The measurement model also scores against the map the robot itself built, so a bad pose can corrupt the map and a corrupt map can then reinforce a bad pose.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>7 &middot; Panels</h3>
+        <dl>
+          <dt>World View</dt><dd>Ground truth: walls, LiDAR beams (cyan), the particle cloud (purple), the true robot (cyan, filled) and the filter estimate (amber, outline). A 1 m scale bar is drawn bottom-left.</dd>
+          <dt>Occupancy Grid</dt><dd>The map as the robot believes it, in the estimate frame. Grey scale = occupancy probability.</dd>
+          <dt>LiDAR Scan</dt><dd>Polar plot in the robot body frame, 0&deg; = forward, rings at 2 / 4 / 6 m. Max-range returns are omitted.</dd>
+          <dt>Charts</dt><dd>Position error (m) for the filter and for raw odometry, and map coverage (%) &mdash; both sampled once per scan at 10 Hz.</dd>
         </dl>
       </div>
     </div>
@@ -190,7 +182,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="guide-box">
     <div class="guide-header" onclick="toggleGuide()">
       <h2><i class="fas fa-compass"></i> Quick Guide</h2>
-      <button class="guide-toggle" id="guideBtn">Hide &#x25B4;</button>
+      <button type="button" class="guide-toggle" id="guideBtn">Hide &#x25B4;</button>
     </div>
     <div class="guide-grid" id="guideContent">
       <div class="guide-card">
@@ -210,8 +202,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       </div>
       <div class="guide-card">
         <span class="step">STEP 4</span>
-        <h3>Compare Views</h3>
-        <p>Toggle between <strong>raw scan view</strong> and <strong>filtered SLAM output</strong></p>
+        <h3>Watch the Drift</h3>
+        <p>Compare the <strong>filter estimate</strong> with raw <strong>odometry</strong> on the error chart</p>
       </div>
     </div>
   </div>
@@ -220,23 +212,25 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <!-- KPI STRIP -->
 <div class="kpi-strip">
   <div class="kpi-row">
-    <div class="kpi-cell"><div class="lbl">Pose X</div><div class="val c" id="kpiX">0</div></div>
-    <div class="kpi-cell"><div class="lbl">Pose Y</div><div class="val c" id="kpiY">0</div></div>
-    <div class="kpi-cell"><div class="lbl">Heading</div><div class="val y" id="kpiHeading">0&deg;</div></div>
-    <div class="kpi-cell"><div class="lbl">Speed</div><div class="val g" id="kpiSpeed">0.0</div></div>
-    <div class="kpi-cell"><div class="lbl">Map Coverage</div><div class="val b" id="kpiCoverage">0%</div></div>
-    <div class="kpi-cell"><div class="lbl">LiDAR Hits</div><div class="val o" id="kpiHits">0</div></div>
-    <div class="kpi-cell"><div class="lbl">Distance</div><div class="val p" id="kpiDist">0</div></div>
+    <div class="kpi-cell" title="Particle-filter estimate of the robot x position, in metres"><div class="lbl">Est. X</div><div class="val c" id="kpiX">0.00</div><div class="unit">m</div></div>
+    <div class="kpi-cell" title="Particle-filter estimate of the robot y position, in metres"><div class="lbl">Est. Y</div><div class="val c" id="kpiY">0.00</div><div class="unit">m</div></div>
+    <div class="kpi-cell" title="Estimated heading, 0 to 360 degrees"><div class="lbl">Heading</div><div class="val y" id="kpiHeading">0&deg;</div><div class="unit">deg</div></div>
+    <div class="kpi-cell" title="True linear speed, capped at 0.50 m/s"><div class="lbl">Speed</div><div class="val g" id="kpiSpeed">0.00</div><div class="unit">m/s</div></div>
+    <div class="kpi-cell" title="Euclidean distance between the filter estimate and the true pose"><div class="lbl">Filter Error</div><div class="val g" id="kpiErr">0.000</div><div class="unit">m</div></div>
+    <div class="kpi-cell" title="Euclidean distance between open-loop wheel odometry and the true pose"><div class="lbl">Odom Error</div><div class="val o" id="kpiOdomErr">0.000</div><div class="unit">m</div></div>
+    <div class="kpi-cell" title="Observed cells as a share of the cells inside the environment bounding box"><div class="lbl">Map Coverage</div><div class="val b" id="kpiCoverage">0%</div><div class="unit">of mappable cells</div></div>
+    <div class="kpi-cell" title="Beams in the last scan that returned a range shorter than 6.0 m"><div class="lbl">LiDAR Returns</div><div class="val o" id="kpiHits">0</div><div class="unit">of 360 beams</div></div>
+    <div class="kpi-cell" title="Path length travelled by the true robot"><div class="lbl">Distance</div><div class="val p" id="kpiDist">0.0</div><div class="unit">m</div></div>
   </div>
 </div>
 
 <!-- CONTROLS -->
 <div class="controls">
   <div class="ctrl-panel">
-    <div class="ctrl-head"><i class="fas fa-sliders-h"></i> Controls & Environments</div>
+    <div class="ctrl-head"><i class="fas fa-sliders-h"></i> Controls &amp; Environments</div>
     <div class="ctrl-body">
       <div class="ctrl-group">
-        <h4>Movement</h4>
+        <h4>Drive (0.50 m/s &middot; 1.5 rad/s)</h4>
         <div style="display:flex;gap:4px;align-items:center">
           <span class="key-hint">W</span>
           <span class="key-hint">A</span>
@@ -247,16 +241,17 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="ctrl-group">
         <h4>Environment</h4>
         <div class="toggle-row">
-          <button class="env-btn" data-env="small" onclick="loadEnv('small')">Small Room</button>
-          <button class="env-btn" data-env="lshape" onclick="loadEnv('lshape')">L-Shaped Corridor</button>
-          <button class="env-btn active" data-env="multi" onclick="loadEnv('multi')">Multi-Room</button>
-          <button class="env-btn" data-env="maze" onclick="loadEnv('maze')">Maze</button>
+          <button type="button" class="env-btn" data-env="small" onclick="loadEnv('small')">Small Room</button>
+          <button type="button" class="env-btn" data-env="lshape" onclick="loadEnv('lshape')">L-Shaped Corridor</button>
+          <button type="button" class="env-btn active" data-env="multi" onclick="loadEnv('multi')">Multi-Room</button>
+          <button type="button" class="env-btn" data-env="maze" onclick="loadEnv('maze')">Maze</button>
         </div>
       </div>
       <div class="ctrl-group">
         <h4>Actions</h4>
         <div class="toggle-row">
-          <button class="env-btn" onclick="resetMap()" style="border-color:var(--yellow);color:var(--yellow)"><i class="fas fa-eraser"></i> Reset Map</button>
+          <button type="button" class="env-btn" onclick="resetMap()" style="border-color:var(--yellow);color:var(--yellow)"><i class="fas fa-eraser"></i> Clear Map</button>
+          <button type="button" class="env-btn" id="relocBtn" title="Re-scatter the particle cloud around the current estimate"><i class="fas fa-arrows-to-dot"></i> Re-scatter Particles</button>
         </div>
       </div>
     </div>
@@ -270,10 +265,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="panel">
     <div class="panel-head">
       <h3><i class="fas fa-globe"></i> World View</h3>
-      <span class="tag">Top-down environment with LiDAR</span>
+      <span class="tag">Ground truth &middot; 7.5 m &times; 7.5 m</span>
     </div>
     <div class="panel-body" style="padding:8px">
-      <canvas id="worldCanvas" style="height:420px;cursor:crosshair"></canvas>
+      <canvas id="worldCanvas" style="height:420px" aria-label="Top-down view of the true environment showing walls, LiDAR beams, the particle cloud, the true robot pose and the estimated pose"></canvas>
+      <div class="cap"><span><i class="sw" style="background:#4b5563"></i> True walls</span><span><i class="sw" style="background:var(--cyan)"></i> LiDAR beams / true robot</span><span><i class="sw" style="background:var(--purple)"></i> Particles (300)</span><span><i class="sw" style="background:var(--amber)"></i> Filter estimate</span><span><i class="sw" style="background:var(--green)"></i> Path travelled</span></div>
     </div>
   </div>
 
@@ -284,7 +280,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <span class="tag" id="coverageTag">Coverage: 0%</span>
     </div>
     <div class="panel-body" style="padding:8px">
-      <canvas id="mapCanvas" style="height:420px"></canvas>
+      <canvas id="mapCanvas" style="height:420px" aria-label="Occupancy grid map rendered as a grey scale of occupancy probability, 150 by 150 cells of 5 centimetres"></canvas>
+      <div class="cap"><span><i class="bx" style="background:#1a2332"></i> Unknown (p = 0.50)</span><span><i class="bx" style="background:#20232a"></i> Free (p &rarr; 0.01)</span><span><i class="bx" style="background:#e8e8e8"></i> Occupied (p &rarr; 0.99)</span><span>5 cm cells &middot; log-odds clamped to &plusmn;5</span></div>
     </div>
   </div>
 
@@ -292,10 +289,31 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="panel">
     <div class="panel-head">
       <h3><i class="fas fa-satellite-dish"></i> LiDAR Scan View</h3>
-      <span class="tag">360&deg; Polar Plot</span>
+      <span class="tag">Body frame &middot; 360 beams @ 10 Hz</span>
     </div>
     <div class="panel-body">
-      <canvas id="lidarCanvas" style="height:350px"></canvas>
+      <canvas id="lidarCanvas" style="height:350px" aria-label="Polar plot of the current LiDAR scan in the robot body frame with range rings at 2, 4 and 6 metres"></canvas>
+      <div class="cap"><span>0&deg; = robot forward</span><span>Rings: 2 / 4 / 6 m</span><span>&sigma;<sub>range</sub> = 2 cm, &sigma;<sub>bearing</sub> = 0.25&deg;</span><span>Max-range returns omitted</span></div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="panel full">
+    <div class="panel-head">
+      <h3><i class="fas fa-chart-line"></i> Localisation Error &amp; Map Coverage</h3>
+      <span class="tag">Sampled once per LiDAR scan (10 Hz)</span>
+    </div>
+    <div class="panel-body">
+      <div class="chart-grid">
+        <div>
+          <canvas id="errChart" style="height:210px" aria-label="Line chart of position error in metres against elapsed time in seconds, for the particle filter and for raw odometry"></canvas>
+          <div class="cap"><span><i class="sw" style="background:#06b6d4"></i> Particle filter vs. truth</span><span><i class="sw" style="background:#f97316"></i> Odometry only vs. truth</span></div>
+        </div>
+        <div>
+          <canvas id="covChart" style="height:210px" aria-label="Line chart of map coverage as a percentage against elapsed time in seconds"></canvas>
+          <div class="cap"><span><i class="sw" style="background:#10b981"></i> Observed cells / cells inside the environment bounding box</span></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -306,45 +324,101 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <span class="tag">Real-time</span>
     </div>
     <div class="panel-body" style="padding:8px 16px">
-      <div class="telem-section">Robot Pose</div>
+      <div class="telem-section">Pose &mdash; filter estimate</div>
       <table class="telem-table">
-        <tr><td>Position X</td><td id="telX">0.0</td></tr>
-        <tr><td>Position Y</td><td id="telY">0.0</td></tr>
-        <tr><td>Heading (Theta)</td><td id="telTheta">0.0&deg;</td></tr>
+        <tr><td>Position X (m)</td><td id="telX">0.00</td></tr>
+        <tr><td>Position Y (m)</td><td id="telY">0.00</td></tr>
+        <tr><td>Heading &theta; (deg)</td><td id="telTheta">0.0&deg;</td></tr>
       </table>
-      <div class="telem-section" style="margin-top:8px">Velocity</div>
+      <div class="telem-section" style="margin-top:8px">Pose &mdash; ground truth</div>
       <table class="telem-table">
-        <tr><td>Linear Velocity</td><td id="telLinVel">0.00</td></tr>
-        <tr><td>Angular Velocity</td><td id="telAngVel">0.00 &deg;/s</td></tr>
+        <tr><td>True X / Y (m)</td><td id="telTrueXY">0.00, 0.00</td></tr>
+        <tr><td>True &theta; (deg)</td><td id="telTrueTheta">0.0&deg;</td></tr>
+        <tr><td>Position error (m)</td><td id="telErrPos">0.000</td></tr>
+        <tr><td>Heading error (deg)</td><td id="telErrHead">0.00&deg;</td></tr>
+        <tr><td>Odometry-only error (m)</td><td id="telOdomErr">0.000</td></tr>
       </table>
-      <div class="telem-section" style="margin-top:8px">LiDAR Stats</div>
+      <div class="telem-section" style="margin-top:8px">Velocity (true)</div>
       <table class="telem-table">
-        <tr><td>Hit Count</td><td id="telHits">0</td></tr>
-        <tr><td>Avg Distance</td><td id="telAvgDist">0.0</td></tr>
-        <tr><td>Min Distance</td><td id="telMinDist">0.0</td></tr>
-        <tr><td>Max Distance</td><td id="telMaxDist">0.0</td></tr>
+        <tr><td>Linear v (m/s)</td><td id="telLinVel">0.000</td></tr>
+        <tr><td>Angular &omega; (deg/s)</td><td id="telAngVel">0.00 &deg;/s</td></tr>
       </table>
-      <div class="telem-section" style="margin-top:8px">Map Stats</div>
+      <div class="telem-section" style="margin-top:8px">LiDAR (360 beams, 6.0 m)</div>
       <table class="telem-table">
-        <tr><td>Cells Explored</td><td id="telExplored">0%</td></tr>
-        <tr><td>Total Cells</td><td id="telTotal">0</td></tr>
-        <tr><td>Occupied Cells</td><td id="telOccupied">0</td></tr>
+        <tr><td>Returns &lt; max range</td><td id="telHits">0</td></tr>
+        <tr><td>Mean range (m)</td><td id="telAvgDist">0.00</td></tr>
+        <tr><td>Min range (m)</td><td id="telMinDist">0.00</td></tr>
+        <tr><td>Max range (m)</td><td id="telMaxDist">0.00</td></tr>
       </table>
-      <div class="telem-section" style="margin-top:8px">Odometry</div>
+      <div class="telem-section" style="margin-top:8px">Particle filter (MCL)</div>
       <table class="telem-table">
-        <tr><td>Total Distance</td><td id="telDist">0.0 px</td></tr>
+        <tr><td>Particles</td><td id="telParticles">300</td></tr>
+        <tr><td>Effective sample size</td><td id="telNeff">300</td></tr>
+        <tr><td>Resamples</td><td id="telResamp">0</td></tr>
+        <tr><td>Informative beams</td><td id="telInform">0 / 30</td></tr>
+      </table>
+      <div class="telem-section" style="margin-top:8px">Occupancy grid (5 cm cells)</div>
+      <table class="telem-table">
+        <tr><td>Coverage</td><td id="telExplored">0%</td></tr>
+        <tr><td>Grid cells</td><td id="telTotal">0</td></tr>
+        <tr><td>Occupied cells (p &gt; 0.65)</td><td id="telOccupied">0</td></tr>
+        <tr><td>Path length (m)</td><td id="telDist">0.0 m</td></tr>
       </table>
     </div>
   </div>
 
 </div>
 
-<!-- DISCLAIMER -->
-<div class="disclaimer">
-  <div class="disclaimer-box">
-    <strong>Note:</strong> This is a simplified educational simulation of SLAM concepts. The occupancy grid uses log-odds updates, and LiDAR simulation uses raycasting against line-segment walls. Real-world SLAM systems involve significantly more complex sensor fusion, loop closure detection, and graph optimization algorithms.
+<div class="d-tooltip" id="chartTip" role="tooltip"></div>
+
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A 2-D grid-SLAM front end running live in the browser. A differential-drive robot moves through a 7.5 m &times; 7.5 m line-segment world under a fixed 1/60 s integrator. Ten times a second a simulated 360-beam LiDAR is raycast analytically against the true walls and corrupted with range and bearing noise. Wheel odometry is integrated with a scale error, proportional noise and a gyro bias, and a 300-particle Monte-Carlo localisation filter corrects it against the map built so far. The occupancy grid is updated with a log-odds inverse sensor model <em>from the filter estimate</em>, so localisation and mapping error feed back into each other as they do on a real robot.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>World 600 units = <code>7.5 m</code>; robot body radius 0.10 m; walls are infinitely thin segments.</li>
+          <li>LiDAR: 360 beams over 360&deg; (1.0&deg;), max range <code>6.0 m</code>, 10 Hz, &sigma;<sub>range</sub> = <code>0.02 m</code>, &sigma;<sub>bearing</sub> = <code>0.25&deg;</code>, no beam dropout, no mixed pixels, no incidence-angle effects.</li>
+          <li>Grid: 150 &times; 150 cells of <code>0.05 m</code>; <code>l_occ = +0.85</code> (p = 0.70), <code>l_free = &minus;0.40</code> (p = 0.40), clamped to <code>[&minus;5, +5]</code>.</li>
+          <li>Odometry: +3% translation scale error, 8% proportional translation noise, 6% proportional rotation noise, +0.15 &deg;/s gyro bias.</li>
+          <li>Filter: 300 particles, motion-model coefficients &alpha;<sub>1..4</sub> = 0.02 / 0.02 / 0.02 / 0.005, 30 sub-sampled beams, z<sub>hit</sub> = 0.85, z<sub>rand</sub> = 0.15, resample when N<sub>eff</sub> &lt; 150.</li>
+          <li>Drive limits: 0.50 m/s forward (0.30 m/s reverse), 1.5 rad/s, 0.8 m/s&sup2; and 4.0 rad/s&sup2;. Deterministic mulberry32 PRNG, seed 1337, reseeded on every environment load.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li>Log-odds update: <code>l&#8348; = l&#8348;&#8331;&#8321; + log(p(m|z) / (1 &minus; p(m|z))) &minus; l&#8320;</code>, with <code>l&#8320; = 0</code> and the inverse sensor model reduced to the two constants above; display probability <code>p = 1 &minus; 1/(1 + e&#8319;)</code>.</li>
+          <li>Odometry motion model: <code>&delta;&#8341;&#8338;&#8348;&#8321;, &delta;&#8348;&#8341;&#8336;&#8345;&#8347;, &delta;&#8341;&#8338;&#8348;&#8322;</code> decomposition with <code>&sigma;&sup2; = &alpha;&#8321;&delta;&sup2;&#8341;&#8338;&#8348; + &alpha;&#8322;&delta;&sup2;&#8348;&#8341;&#8336;&#8345;&#8347;</code> (Thrun, Burgard &amp; Fox, <em>Probabilistic Robotics</em>, Table 5.6).</li>
+          <li>Measurement model: endpoint likelihood field, <code>w &prop; &prod;&#8342; (z_hit&middot;p_occ(x&#8342;) + z_rand)</code>, p_occ taken as the 3&times;3 neighbourhood maximum (&sigma; &asymp; one cell) instead of a distance transform.</li>
+          <li>Low-variance resampling and <code>N_eff = 1 / &Sigma; w&sup2;</code> (Doucet et al., 2000; Grisetti, Stachniss &amp; Burgard, 2007, <em>Improved Techniques for Grid Mapping with Rao-Blackwellized Particle Filters</em>).</li>
+          <li>Moravec &amp; Elfes (1985), <em>High Resolution Maps from Wide Angle Sonar</em>; Thrun, Burgard &amp; Fox (2005), <em>Probabilistic Robotics</em>, ch. 8&ndash;9.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li><strong>No loop closure and no pose-graph optimisation.</strong> Nothing detects a revisited place and no back-end re-optimises past poses, so accumulated error is baked into the map permanently.</li>
+          <li>Rao-Blackwellised SLAM would carry one map per particle; here all particles score against a single shared map, which understates the filter's true uncertainty.</li>
+          <li>The likelihood field is a 3&times;3 maximum rather than a Euclidean distance transform, so the weight surface is coarse and flat-cornered.</li>
+          <li>Kinematics only: no wheel slip, no inertia or mass, no motor dynamics. Collisions are resolved geometrically &mdash; the blocked axis is dropped so the body slides along the wall &mdash; not by contact forces.</li>
+          <li>2-D, static world with perfectly reflective thin walls; no dynamic obstacles, no glass or specular surfaces, no multipath, no sensor dropout.</li>
+          <li>Coverage is measured against the bounding box of the current environment, which includes cells inside walls that can never be observed, so 100% is not reachable.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
   </div>
-</div>
+</footer>
 
 <script>
 // ================================================================
@@ -352,9 +426,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 // ================================================================
 
 // --- UI Helpers ---
-function toggleHelp(){
+function toggleHelp(force){
   const o=document.getElementById('helpOverlay');
-  o.classList.toggle('open');
+  if(force===true)o.classList.add('show');
+  else if(force===false)o.classList.remove('show');
+  else o.classList.toggle('show');
 }
 function toggleGuide(){
   const g=document.getElementById('guideContent');
@@ -375,8 +451,8 @@ function setupCanvas(id){
   return{canvas:c,ctx,w:r.width,h:r.height};
 }
 
-let worldCtx,mapCtx,lidarCtx;
-let worldW,worldH,mapW,mapH,lidarW,lidarH;
+let worldCtx,mapCtx,lidarCtx,errCtx,covCtx;
+let worldW,worldH,mapW,mapH,lidarW,lidarH,errW,errH,covW,covH;
 
 function initCanvases(){
   const w=setupCanvas('worldCanvas');
@@ -385,6 +461,11 @@ function initCanvases(){
   mapCtx=m.ctx;mapW=m.w;mapH=m.h;
   const l=setupCanvas('lidarCanvas');
   lidarCtx=l.ctx;lidarW=l.w;lidarH=l.h;
+  const e=setupCanvas('errChart');
+  errCtx=e.ctx;errW=e.w;errH=e.h;
+  const c=setupCanvas('covChart');
+  covCtx=c.ctx;covW=c.w;covH=c.h;
+  mapDirty=true;
 }
 
 // --- Environments ---
@@ -516,29 +597,99 @@ ENVS.maze=(()=>{
 })();
 
 // --- Robot State ---
-let robot={x:300,y:300,angle:0,vLin:0,vAng:0};
+let robot={x:300,y:300,angle:0,vLin:0,vAng:0};   // ground truth
+let odom={x:300,y:300,angle:0};                  // open-loop wheel odometry
+let lastOdom={x:300,y:300,angle:0};              // odometry at the previous scan
+let est={x:300,y:300,angle:0};                   // particle-filter estimate
 let trail=[];
 let totalDist=0;
 let keys={w:false,a:false,s:false,d:false};
 let currentEnv='multi';
+let simTime=0;
+let mapDirty=true;
 
-// --- Occupancy Grid ---
-const GRID_RES=4; // pixels per grid cell in world coords
-let gridW,gridH,grid; // log-odds grid
-const L_FREE=-0.4;
-const L_OCC=0.85;
-const L_MIN=-5;
-const L_MAX=5;
-const LIDAR_RANGE=150;
-const NUM_BEAMS=180;
+// --- Odometry error model ---
+const ODO_SCALE=1.03;              // +3% systematic translation scale error
+const ODO_NOISE_T=0.08;            // 8% proportional noise on each increment
+const ODO_NOISE_R=0.06;            // 6% proportional noise on each rotation
+const ODO_BIAS_R=0.15*Math.PI/180; // +0.15 deg/s gyro bias
+
+// --- Monte-Carlo localisation ---
+const PF_N=300;
+const PF_A1=0.02, PF_A2=0.02, PF_A3=0.02, PF_A4=0.005; // motion-model alphas
+const PF_BEAM_STEP=12;             // score every 12th beam -> 30 beams
+const Z_HIT=0.85, Z_RAND=0.15;
+let particles=[];
+let pfNeff=PF_N, pfResamples=0, pfInformative=0, pfBeamsUsed=0;
+
+// --- History for the charts (one sample per scan, 10 Hz) ---
+let history=[];
+const HIST_MAX=3000;
+
+// ================================================================
+// UNITS.  The world is 600 internal units across and represents a
+// 7.5 m x 7.5 m indoor space, so 1 unit = 1.25 cm.  Every quantity
+// exposed in the UI is converted to metres / seconds / radians.
+// ================================================================
+const M_PER_U=0.0125;              // 1 world unit  = 0.0125 m
+const U_PER_M=1/M_PER_U;           // 1 m           = 80 units
+
+// --- Deterministic PRNG (mulberry32) so runs are reproducible ---
+const SEED=1337;
+let rngState=SEED>>>0;
+function rnd(){
+  rngState=(rngState+0x6D2B79F5)|0;
+  let t=Math.imul(rngState^(rngState>>>15),1|rngState);
+  t=(t+Math.imul(t^(t>>>7),61|t))^t;
+  return((t^(t>>>14))>>>0)/4294967296;
+}
+function gauss(){ // Box-Muller, unit variance
+  let u=0,v=0;
+  while(u===0)u=rnd();
+  while(v===0)v=rnd();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function wrapPi(a){
+  a=(a+Math.PI)%(2*Math.PI);
+  if(a<0)a+=2*Math.PI;
+  return a-Math.PI;
+}
+
+// --- Occupancy Grid (log-odds) ---
+const GRID_RES=4;                       // 4 units = 0.05 m cells
+const CELL_M=GRID_RES*M_PER_U;          // 0.05 m
+let gridW,gridH,grid;                   // log-odds, 0 = unknown (p = 0.5)
+let mappableCells=1,envBox={x0:0,y0:0,x1:ENV_SIZE,y1:ENV_SIZE};
+const L_FREE=-0.4;                      // inverse sensor model p = 0.40
+const L_OCC=0.85;                       // inverse sensor model p = 0.70
+const L_MIN=-5, L_MAX=5;                // clamp -> p in [0.007, 0.993]
+const L_OCC_THRESH=0.619;               // p > 0.65 counts as occupied
+
+// --- LiDAR model (RPLIDAR A1 class) ---
+const LIDAR_RANGE_M=6.0;
+const LIDAR_RANGE=LIDAR_RANGE_M*U_PER_M;      // 480 units
+const NUM_BEAMS=360;                          // 1.0 deg angular increment
+const SIGMA_RANGE=0.02*U_PER_M;               // 2 cm range noise (1 sigma)
+const SIGMA_BEARING=0.25*Math.PI/180;         // 0.25 deg bearing noise
+const SCAN_HZ=10;
 
 function initGrid(){
   gridW=Math.ceil(ENV_SIZE/GRID_RES);
   gridH=Math.ceil(ENV_SIZE/GRID_RES);
   grid=new Float32Array(gridW*gridH); // 0 = unknown
+  // Coverage denominator: cells inside the bounding box of the environment.
+  const walls=ENVS[currentEnv].walls;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const s of walls){
+    x0=Math.min(x0,s.x1,s.x2); x1=Math.max(x1,s.x1,s.x2);
+    y0=Math.min(y0,s.y1,s.y2); y1=Math.max(y1,s.y1,s.y2);
+  }
+  envBox={x0,y0,x1,y1};
+  mappableCells=Math.max(1,Math.round(((x1-x0)/GRID_RES)*((y1-y0)/GRID_RES)));
   mapImageData=null; // force rebuild of cached image
   mapTmpCanvas=null;
   mapTmpCtx=null;
+  mapDirty=true;
 }
 
 // --- LiDAR Data ---
@@ -565,46 +716,179 @@ function castRay(ox,oy,angle,walls){
   return{dist:minT,hit:minT<LIDAR_RANGE,hx:ox+dx*minT,hy:oy+dy*minT};
 }
 
+// The sensor measures the TRUE world: rays are cast from the true pose with
+// Gaussian bearing noise, and the returned range carries Gaussian noise.
+// The reported bearing is the nominal one, exactly as a real scanner reports it.
 function doLidarScan(){
   const env=ENVS[currentEnv];
   scanData=[];
   const step=Math.PI*2/NUM_BEAMS;
   for(let i=0;i<NUM_BEAMS;i++){
-    const a=robot.angle+i*step;
+    const nominal=i*step;
+    const a=robot.angle+nominal+gauss()*SIGMA_BEARING;
     const r=castRay(robot.x,robot.y,a,env.walls);
-    scanData.push({angle:i*step,dist:r.dist,hit:r.hit,hx:r.hx,hy:r.hy});
+    let d=r.dist,hit=r.hit;
+    if(hit){
+      d=r.dist+gauss()*SIGMA_RANGE;
+      if(d<=0.5)d=0.5;
+      if(d>=LIDAR_RANGE){d=LIDAR_RANGE;hit=false;}
+    }
+    scanData.push({angle:nominal,dist:d,hit,
+      hx:robot.x+Math.cos(a)*d, hy:robot.y+Math.sin(a)*d});
   }
 }
 
 // --- Occupancy Grid Update ---
-let mapUpdateTimer=0;
+// Mapping uses the FILTER ESTIMATE, never ground truth: that is what makes
+// this SLAM rather than mapping with known poses.  Free cells are marched at
+// half-cell steps (so no cell on a diagonal ray is skipped) and stop half a
+// cell short of the endpoint so the hit cell is not written twice.
 function updateOccupancyGrid(){
+  const px=est.x, py=est.y, pa=est.angle;
+  const stepLen=GRID_RES*0.5;
   for(let i=0;i<scanData.length;i++){
     const s=scanData[i];
-    const a=robot.angle+s.angle;
+    const a=pa+s.angle;
     const dx=Math.cos(a), dy=Math.sin(a);
-    const steps=Math.floor(s.dist/GRID_RES);
-    // Mark free cells along ray
-    for(let j=0;j<steps;j++){
-      const wx=robot.x+dx*j*GRID_RES;
-      const wy=robot.y+dy*j*GRID_RES;
-      const gx=Math.floor(wx/GRID_RES);
-      const gy=Math.floor(wy/GRID_RES);
-      if(gx>=0&&gx<gridW&&gy>=0&&gy<gridH){
-        const idx=gy*gridW+gx;
-        grid[idx]=Math.max(L_MIN,grid[idx]+L_FREE);
-      }
+    const freeLen=s.hit?Math.max(0,s.dist-GRID_RES*0.5):s.dist;
+    const steps=Math.floor(freeLen/stepLen);
+    let lastIdx=-1;
+    for(let j=0;j<=steps;j++){
+      const t=j*stepLen;
+      const gx=Math.floor((px+dx*t)/GRID_RES);
+      const gy=Math.floor((py+dy*t)/GRID_RES);
+      if(gx<0||gy<0||gx>=gridW||gy>=gridH)break;
+      const idx=gy*gridW+gx;
+      if(idx===lastIdx)continue;
+      lastIdx=idx;
+      grid[idx]=Math.max(L_MIN,grid[idx]+L_FREE);
     }
-    // Mark occupied cell at hit point
     if(s.hit){
-      const gx=Math.floor(s.hx/GRID_RES);
-      const gy=Math.floor(s.hy/GRID_RES);
+      const gx=Math.floor((px+dx*s.dist)/GRID_RES);
+      const gy=Math.floor((py+dy*s.dist)/GRID_RES);
       if(gx>=0&&gx<gridW&&gy>=0&&gy<gridH){
         const idx=gy*gridW+gx;
         grid[idx]=Math.min(L_MAX,grid[idx]+L_OCC);
       }
     }
   }
+  mapDirty=true;
+}
+
+// ================================================================
+// MONTE-CARLO LOCALISATION (particle filter)
+// ================================================================
+function initParticles(x,y,th){
+  particles=[];
+  for(let i=0;i<PF_N;i++){
+    particles.push({
+      x:x+gauss()*0.02*U_PER_M,
+      y:y+gauss()*0.02*U_PER_M,
+      th:wrapPi(th+gauss()*0.017),   // ~1 deg
+      w:1/PF_N
+    });
+  }
+  pfNeff=PF_N;
+}
+
+// Odometry motion model, Probabilistic Robotics Table 5.6:
+// decompose the odometry increment into rot1 / trans / rot2 and perturb each.
+function pfPredict(){
+  const dx=odom.x-lastOdom.x, dy=odom.y-lastOdom.y;
+  const dTrans=Math.hypot(dx,dy);
+  const dTheta=wrapPi(odom.angle-lastOdom.angle);
+  let r1,r2;
+  if(dTrans<0.5){ r1=0; r2=dTheta; }           // < 6 mm: treat as pure rotation
+  else { r1=wrapPi(Math.atan2(dy,dx)-lastOdom.angle); r2=wrapPi(dTheta-r1); }
+  const tM=dTrans*M_PER_U;
+  if(dTrans<1e-6&&Math.abs(dTheta)<1e-6){lastOdom={x:odom.x,y:odom.y,angle:odom.angle};return;}
+  for(let i=0;i<particles.length;i++){
+    const p=particles[i];
+    const s1=r1-gauss()*Math.sqrt(PF_A1*r1*r1+PF_A2*tM*tM);
+    const st=tM-gauss()*Math.sqrt(PF_A3*tM*tM+PF_A4*(r1*r1+r2*r2));
+    const s2=r2-gauss()*Math.sqrt(PF_A1*r2*r2+PF_A2*tM*tM);
+    p.th=wrapPi(p.th+s1);
+    p.x+=Math.cos(p.th)*st*U_PER_M;
+    p.y+=Math.sin(p.th)*st*U_PER_M;
+    p.th=wrapPi(p.th+s2);
+  }
+  lastOdom={x:odom.x,y:odom.y,angle:odom.angle};
+}
+
+// Occupancy probability of a cell, or -1 if never observed / out of bounds.
+function cellProb(gx,gy){
+  if(gx<0||gy<0||gx>=gridW||gy>=gridH)return -1;
+  const l=grid[gy*gridW+gx];
+  if(l===0)return -1;
+  return 1-1/(1+Math.exp(l));
+}
+
+// Endpoint likelihood field: p_occ is approximated by the 3x3 neighbourhood
+// maximum (sigma ~ one 5 cm cell) instead of a Euclidean distance transform.
+function pfUpdate(){
+  const beams=[];
+  for(let b=0;b<scanData.length;b+=PF_BEAM_STEP){
+    const s=scanData[b];
+    if(s.hit)beams.push(s);
+  }
+  pfBeamsUsed=beams.length;
+  let known=0;
+  for(const s of beams){
+    const a=est.angle+s.angle;
+    if(cellProb(Math.floor((est.x+Math.cos(a)*s.dist)/GRID_RES),
+                Math.floor((est.y+Math.sin(a)*s.dist)/GRID_RES))>=0)known++;
+  }
+  pfInformative=known;
+  // Too little map to localise against: coast on the motion model.
+  if(known<8)return;
+  let maxLog=-Infinity;
+  for(let i=0;i<particles.length;i++){
+    const p=particles[i];
+    let lw=0;
+    for(let k=0;k<beams.length;k++){
+      const s=beams[k];
+      const a=p.th+s.angle;
+      const gx=Math.floor((p.x+Math.cos(a)*s.dist)/GRID_RES);
+      const gy=Math.floor((p.y+Math.sin(a)*s.dist)/GRID_RES);
+      let best=0;
+      for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){
+        const q=cellProb(gx+ox,gy+oy);
+        if(q>best)best=q;
+      }
+      lw+=Math.log(Z_HIT*best+Z_RAND);
+    }
+    p.lw=lw;
+    if(lw>maxLog)maxLog=lw;
+  }
+  let sum=0;
+  for(const p of particles){ p.w=p.w*Math.exp(p.lw-maxLog); sum+=p.w; }
+  if(!(sum>0)){ for(const p of particles)p.w=1/PF_N; pfNeff=PF_N; return; }
+  let ss=0;
+  for(const p of particles){ p.w/=sum; ss+=p.w*p.w; }
+  pfNeff=1/ss;
+  if(pfNeff<PF_N/2){ pfResample(); pfResamples++; }
+}
+
+// Low-variance (systematic) resampling.
+function pfResample(){
+  const out=new Array(PF_N);
+  const r=rnd()/PF_N;
+  let c=particles[0].w, i=0;
+  for(let m=0;m<PF_N;m++){
+    const U=r+m/PF_N;
+    while(U>c&&i<PF_N-1){ i++; c+=particles[i].w; }
+    const s=particles[i];
+    out[m]={x:s.x,y:s.y,th:s.th,w:1/PF_N};
+  }
+  particles=out;
+  pfNeff=PF_N;
+}
+
+// Weighted mean pose (circular mean for the heading).
+function pfEstimate(){
+  let sx=0,sy=0,cs=0,sn=0;
+  for(const p of particles){ sx+=p.w*p.x; sy+=p.w*p.y; cs+=p.w*Math.cos(p.th); sn+=p.w*Math.sin(p.th); }
+  est.x=sx; est.y=sy; est.angle=Math.atan2(sn,cs);
 }
 
 // --- Collision Detection ---
@@ -621,53 +905,67 @@ function pointNearSegment(px,py,seg,radius){
 function canMoveTo(nx,ny){
   const walls=ENVS[currentEnv].walls;
   for(let i=0;i<walls.length;i++){
-    if(pointNearSegment(nx,ny,walls[i],8))return false;
+    if(pointNearSegment(nx,ny,walls[i],ROBOT_R))return false;
   }
   return true;
 }
 
-// --- Physics Update ---
-const MAX_LIN_VEL=2.5;
-const MAX_ANG_VEL=0.045;
-const LIN_ACCEL=0.12;
-const ANG_ACCEL=0.006;
-const LIN_FRICTION=0.92;
-const ANG_FRICTION=0.88;
+// --- Physics Update (fixed timestep, SI units internally) ---
+const DT=1/60;                     // explicit physics timestep, 60 Hz
+const V_MAX=0.5*U_PER_M;           // 0.50 m/s forward
+const V_MAX_REV=0.3*U_PER_M;       // 0.30 m/s reverse
+const W_MAX=1.5;                   // 1.5 rad/s (86 deg/s)
+const A_LIN=0.8*U_PER_M;           // 0.8 m/s^2
+const A_ANG=4.0;                   // 4.0 rad/s^2
+const LIN_DAMP=3.0;                // coast-down rate, 1/s
+const ANG_DAMP=6.0;
+const ROBOT_R=0.10*U_PER_M;        // 0.10 m body radius
 
-function updatePhysics(){
-  // Apply controls
-  if(keys.w)robot.vLin=Math.min(MAX_LIN_VEL,robot.vLin+LIN_ACCEL);
-  if(keys.s)robot.vLin=Math.max(-MAX_LIN_VEL*0.6,robot.vLin-LIN_ACCEL);
-  if(keys.a)robot.vAng-=ANG_ACCEL;
-  if(keys.d)robot.vAng+=ANG_ACCEL;
+function updatePhysics(dt){
+  // Commanded acceleration
+  if(keys.w)robot.vLin+=A_LIN*dt;
+  if(keys.s)robot.vLin-=A_LIN*dt;
+  if(keys.a)robot.vAng-=A_ANG*dt;
+  if(keys.d)robot.vAng+=A_ANG*dt;
 
-  // Friction
-  robot.vLin*=LIN_FRICTION;
-  robot.vAng*=ANG_FRICTION;
-  robot.vAng=Math.max(-MAX_ANG_VEL,Math.min(MAX_ANG_VEL,robot.vAng));
+  // Exponential coast-down when the control is released
+  if(!keys.w&&!keys.s)robot.vLin*=Math.exp(-LIN_DAMP*dt);
+  if(!keys.a&&!keys.d)robot.vAng*=Math.exp(-ANG_DAMP*dt);
 
-  // Clamp small values
-  if(Math.abs(robot.vLin)<0.01)robot.vLin=0;
-  if(Math.abs(robot.vAng)<0.001)robot.vAng=0;
+  robot.vLin=Math.max(-V_MAX_REV,Math.min(V_MAX,robot.vLin));
+  robot.vAng=Math.max(-W_MAX,Math.min(W_MAX,robot.vAng));
+  if(Math.abs(robot.vLin)<0.05)robot.vLin=0;   // < 0.6 mm/s
+  if(Math.abs(robot.vAng)<0.002)robot.vAng=0;
 
-  // Update angle
-  robot.angle+=robot.vAng;
+  const dTh=robot.vAng*dt;
+  robot.angle=wrapPi(robot.angle+dTh);
 
-  // Update position with collision
-  const nx=robot.x+Math.cos(robot.angle)*robot.vLin;
-  const ny=robot.y+Math.sin(robot.angle)*robot.vLin;
+  const nx=robot.x+Math.cos(robot.angle)*robot.vLin*dt;
+  const ny=robot.y+Math.sin(robot.angle)*robot.vLin*dt;
 
+  let ds=0, px=robot.x, py=robot.y;
   if(canMoveTo(nx,ny)){
-    const dx=nx-robot.x, dy=ny-robot.y;
-    totalDist+=Math.hypot(dx,dy);
-    robot.x=nx;
-    robot.y=ny;
+    robot.x=nx; robot.y=ny;
+  }else if(canMoveTo(nx,robot.y)){
+    robot.x=nx; robot.vLin*=0.6;      // slide along the wall
+  }else if(canMoveTo(robot.x,ny)){
+    robot.y=ny; robot.vLin*=0.6;
   }else{
-    robot.vLin*=-0.3; // bounce
+    robot.vLin*=-0.2;                 // damped bump, no motion
   }
+  ds=Math.hypot(robot.x-px,robot.y-py);
+  totalDist+=ds;
+  if(robot.vLin<0)ds=-ds;
+
+  // Wheel odometry: scale error + proportional noise + gyro bias.
+  const dsO=ds*ODO_SCALE+gauss()*ODO_NOISE_T*Math.abs(ds);
+  const dThO=dTh+gauss()*ODO_NOISE_R*Math.abs(dTh)+ODO_BIAS_R*dt;
+  odom.angle=wrapPi(odom.angle+dThO);
+  odom.x+=Math.cos(odom.angle)*dsO;
+  odom.y+=Math.sin(odom.angle)*dsO;
 
   // Trail
-  if(Math.abs(robot.vLin)>0.1){
+  if(Math.abs(robot.vLin)>1){
     trail.push({x:robot.x,y:robot.y,t:performance.now()});
     if(trail.length>2000)trail.shift();
   }
@@ -731,7 +1029,25 @@ function drawWorld(){
     }
   }
 
-  // Robot
+  // Particle cloud (localisation hypotheses)
+  ctx.fillStyle='rgba(139,92,246,0.5)';
+  for(let i=0;i<particles.length;i++){
+    ctx.fillRect(particles[i].x-0.9,particles[i].y-0.9,1.8,1.8);
+  }
+
+  // Particle-filter estimate (outline)
+  ctx.save();
+  ctx.translate(est.x,est.y);
+  ctx.rotate(est.angle);
+  ctx.strokeStyle='rgba(245,158,11,0.95)';
+  ctx.lineWidth=1.6;
+  ctx.beginPath();
+  ctx.moveTo(12,0);ctx.lineTo(-7,-6);ctx.lineTo(-4,0);ctx.lineTo(-7,6);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+
+  // Robot (ground truth)
   ctx.save();
   ctx.translate(robot.x,robot.y);
   ctx.rotate(robot.angle);
@@ -757,6 +1073,20 @@ function drawWorld(){
   ctx.restore();
 
   ctx.restore();
+
+  // 1 m scale bar (screen space)
+  const oneM=U_PER_M*s;
+  ctx.strokeStyle='rgba(148,163,184,0.75)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(12,worldH-14);ctx.lineTo(12+oneM,worldH-14);
+  ctx.moveTo(12,worldH-18);ctx.lineTo(12,worldH-10);
+  ctx.moveTo(12+oneM,worldH-18);ctx.lineTo(12+oneM,worldH-10);
+  ctx.stroke();
+  ctx.fillStyle='rgba(148,163,184,0.9)';
+  ctx.font="10px 'JetBrains Mono',monospace";
+  ctx.textAlign='left';ctx.textBaseline='bottom';
+  ctx.fillText('1 m',12,worldH-20);
 }
 
 // --- Drawing: Occupancy Grid Map ---
@@ -777,35 +1107,29 @@ function drawMap(){
     mapTmpCanvas.width=gridW;mapTmpCanvas.height=gridH;
     mapTmpCtx=mapTmpCanvas.getContext('2d');
   }
-  const d=mapImageData.data;
-  for(let y=0;y<gridH;y++){
-    for(let x=0;x<gridW;x++){
-      const idx=(y*gridW+x);
-      const v=grid[idx];
-      const pi=idx*4;
-      if(v===0){
-        // Unknown
-        d[pi]=0x1a; d[pi+1]=0x23; d[pi+2]=0x32; d[pi+3]=255;
-      }else if(v<0){
-        // Free space - dark blue/black
-        const freeIntensity=Math.min(1,Math.abs(v)/3);
-        d[pi]=Math.floor(10+freeIntensity*10);
-        d[pi+1]=Math.floor(14+freeIntensity*18);
-        d[pi+2]=Math.floor(30+freeIntensity*30);
-        d[pi+3]=255;
-      }else{
-        // Occupied - bright green/cyan
-        const occIntensity=Math.min(1,v/3);
-        d[pi]=Math.floor(6+occIntensity*20);
-        d[pi+1]=Math.floor(100+occIntensity*155);
-        d[pi+2]=Math.floor(130+occIntensity*82);
-        d[pi+3]=255;
+  if(mapDirty){
+    const d=mapImageData.data;
+    for(let y=0;y<gridH;y++){
+      for(let x=0;x<gridW;x++){
+        const idx=(y*gridW+x);
+        const v=grid[idx];
+        const pi=idx*4;
+        if(v===0){
+          // Never observed
+          d[pi]=0x1a; d[pi+1]=0x23; d[pi+2]=0x32; d[pi+3]=255;
+        }else{
+          // Occupancy probability p = 1 - 1/(1+e^l), as a grey scale
+          const p=1-1/(1+Math.exp(v));
+          const g=Math.round(24+p*220);
+          d[pi]=g; d[pi+1]=g; d[pi+2]=g; d[pi+3]=255;
+        }
       }
     }
+    mapTmpCtx.putImageData(mapImageData,0,0);
+    mapDirty=false;
   }
 
   // Draw scaled image using cached offscreen canvas
-  mapTmpCtx.putImageData(mapImageData,0,0);
   ctx.imageSmoothingEnabled=false;
   ctx.drawImage(mapTmpCanvas,0,0,mapW,mapH);
 
@@ -822,12 +1146,22 @@ function drawMap(){
     ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(mapW,py);ctx.stroke();
   }
 
-  // Robot position on map
-  const rx=robot.x/ENV_SIZE*mapW;
-  const ry=robot.y/ENV_SIZE*mapH;
+  // True pose (faint, for comparison)
   ctx.save();
-  ctx.translate(rx,ry);
+  ctx.translate(robot.x/ENV_SIZE*mapW,robot.y/ENV_SIZE*mapH);
   ctx.rotate(robot.angle);
+  ctx.strokeStyle='rgba(16,185,129,0.75)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(6,0);ctx.lineTo(-4,-3.5);ctx.lineTo(-2,0);ctx.lineTo(-4,3.5);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+
+  // Estimated pose the map is actually built from
+  ctx.save();
+  ctx.translate(est.x/ENV_SIZE*mapW,est.y/ENV_SIZE*mapH);
+  ctx.rotate(est.angle);
   ctx.fillStyle='rgba(239,68,68,0.9)';
   ctx.beginPath();
   ctx.moveTo(6,0);
@@ -860,14 +1194,14 @@ function drawLidar(){
     ctx.stroke();
     // Label
     ctx.fillStyle='rgba(148,163,184,0.5)';
-    ctx.font="9px 'Courier New',monospace";
+    ctx.font="9px 'JetBrains Mono',monospace";
     ctx.textAlign='center';
-    ctx.fillText(`${Math.round(LIDAR_RANGE*i/numRings)}px`,cx,cy-r+10);
+    ctx.fillText((LIDAR_RANGE_M*i/numRings).toFixed(0)+' m',cx,cy-r+10);
   }
 
   // Angular sector labels
   ctx.fillStyle='rgba(148,163,184,0.6)';
-  ctx.font="10px 'Courier New',monospace";
+  ctx.font="10px 'JetBrains Mono',monospace";
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   const labels=[{a:0,l:'0\u00B0'},{a:Math.PI/2,l:'90\u00B0'},{a:Math.PI,l:'180\u00B0'},{a:3*Math.PI/2,l:'270\u00B0'}];
@@ -910,69 +1244,243 @@ function drawLidar(){
   ctx.stroke();
 }
 
+// ================================================================
+// CHARTS  (error over time, coverage over time)
+// ================================================================
+let chartGeo={};
+function niceMax(v){
+  if(!(v>0))return 0.1;
+  const e=Math.pow(10,Math.floor(Math.log10(v)));
+  const m=v/e;
+  const n=m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10;
+  return n*e;
+}
+
+function drawChart(ctx,W,H,id,cfg){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0a0e1a';
+  ctx.fillRect(0,0,W,H);
+  const pad={l:52,r:14,t:12,b:36};
+  const pw=Math.max(10,W-pad.l-pad.r), ph=Math.max(10,H-pad.t-pad.b);
+  const n=history.length;
+  const t0=n?history[0].t:0;
+  const t1=n>1?Math.max(history[n-1].t,t0+0.001):t0+10;
+  let ymax=cfg.fixedMax;
+  if(!ymax){
+    let peak=0;
+    for(const s of cfg.series)for(let i=0;i<n;i++){const v=s.get(history[i]);if(v>peak)peak=v;}
+    ymax=niceMax(peak);
+  }
+  // grid + y ticks
+  ctx.font="10px 'JetBrains Mono',monospace";
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ph-ph*i/4;
+    ctx.strokeStyle='rgba(30,41,59,0.85)';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();
+    ctx.fillStyle='rgba(148,163,184,0.85)';
+    ctx.fillText((ymax*i/4).toFixed(cfg.yDec),pad.l-7,y);
+  }
+  // axes
+  ctx.strokeStyle='rgba(51,65,85,1)';
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ph);ctx.lineTo(pad.l+pw,pad.t+ph);ctx.stroke();
+  // x ticks
+  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillStyle='rgba(148,163,184,0.85)';
+  for(let i=0;i<=4;i++){
+    const x=pad.l+pw*i/4;
+    ctx.fillText((t0+(t1-t0)*i/4).toFixed(0),x,pad.t+ph+6);
+  }
+  // axis labels
+  ctx.fillStyle='rgba(148,163,184,0.95)';
+  ctx.fillText(cfg.xLabel,pad.l+pw/2,pad.t+ph+20);
+  ctx.save();
+  ctx.translate(12,pad.t+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(cfg.yLabel,0,0);
+  ctx.restore();
+  // series
+  if(n>1){
+    for(const s of cfg.series){
+      ctx.strokeStyle=s.color;
+      ctx.lineWidth=1.6;
+      ctx.beginPath();
+      for(let i=0;i<n;i++){
+        const x=pad.l+pw*((history[i].t-t0)/(t1-t0));
+        const y=pad.t+ph-ph*Math.max(0,Math.min(1,s.get(history[i])/ymax));
+        if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);
+      }
+      ctx.stroke();
+    }
+  }else{
+    ctx.fillStyle='rgba(148,163,184,0.55)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('drive with WASD to record samples',pad.l+pw/2,pad.t+ph/2);
+  }
+  chartGeo[id]={pad,pw,ph,t0,t1,ymax};
+}
+
+function drawCharts(){
+  if(!errCtx||!covCtx)return;
+  drawChart(errCtx,errW,errH,'errChart',{
+    yLabel:'Position error (m)',
+    xLabel:'Elapsed simulation time (s)',
+    yDec:2,
+    series:[{color:'#06b6d4',get:h=>h.e},{color:'#f97316',get:h=>h.o}]
+  });
+  drawChart(covCtx,covW,covH,'covChart',{
+    yLabel:'Map coverage (%)',
+    xLabel:'Elapsed simulation time (s)',
+    yDec:0,
+    fixedMax:100,
+    series:[{color:'#10b981',get:h=>h.c}]
+  });
+}
+
+function bindChartTip(id,fmt){
+  const c=document.getElementById(id);
+  const tip=document.getElementById('chartTip');
+  if(!c||!tip)return;
+  c.addEventListener('mousemove',e=>{
+    const g=chartGeo[id];
+    if(!g||history.length<2){tip.classList.remove('show');return;}
+    const r=c.getBoundingClientRect();
+    const f=(e.clientX-r.left-g.pad.l)/g.pw;
+    if(f<0||f>1){tip.classList.remove('show');return;}
+    const h=history[Math.max(0,Math.min(history.length-1,Math.round(f*(history.length-1))))];
+    tip.innerHTML=fmt(h);
+    tip.style.left=Math.min(window.innerWidth-210,e.clientX+14)+'px';
+    tip.style.top=Math.max(8,e.clientY-14)+'px';
+    tip.classList.add('show');
+  });
+  c.addEventListener('mouseleave',()=>tip.classList.remove('show'));
+}
+
+// ================================================================
+// STATS & TELEMETRY
+// ================================================================
+let lastCoverage=0, lastOccupied=0;
+
+function computeGridStats(){
+  const gx0=Math.max(0,Math.floor(envBox.x0/GRID_RES));
+  const gx1=Math.min(gridW-1,Math.ceil(envBox.x1/GRID_RES));
+  const gy0=Math.max(0,Math.floor(envBox.y0/GRID_RES));
+  const gy1=Math.min(gridH-1,Math.ceil(envBox.y1/GRID_RES));
+  let explored=0,occ=0;
+  for(let y=gy0;y<=gy1;y++){
+    const row=y*gridW;
+    for(let x=gx0;x<=gx1;x++){
+      const v=grid[row+x];
+      if(v!==0)explored++;
+      if(v>L_OCC_THRESH)occ++;
+    }
+  }
+  lastCoverage=Math.min(100,explored/mappableCells*100);
+  lastOccupied=occ;
+}
+
+function poseErrors(){
+  return{
+    e:Math.hypot(est.x-robot.x,est.y-robot.y)*M_PER_U,
+    o:Math.hypot(odom.x-robot.x,odom.y-robot.y)*M_PER_U,
+    h:Math.abs(wrapPi(est.angle-robot.angle))*180/Math.PI
+  };
+}
+
+const ENV_LABEL={small:'Small Room',lshape:'L-Shaped Corridor',multi:'Multi-Room',maze:'Maze'};
+
+function updateStatus(){
+  const el=document.getElementById('statusBar');
+  if(!el)return;
+  el.innerHTML='env <b>'+ENV_LABEL[currentEnv]+'</b> (7.5&times;7.5 m) &middot; grid <b>'+gridW+'&times;'+gridH+' @ '+(CELL_M*100).toFixed(0)+' cm</b> &middot; LiDAR <b>360 beams / 6.0 m / 10 Hz</b> &middot; MCL <b>'+PF_N+' particles</b>, N_eff <b>'+pfNeff.toFixed(0)+'</b> &middot; t <b>'+simTime.toFixed(1)+' s</b> &middot; seed <b>'+SEED+'</b>';
+}
+
+function setTxt(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+function setHtml(id,v){const el=document.getElementById(id);if(el)el.innerHTML=v;}
+function degOf(rad){return(((rad*180/Math.PI)%360+360)%360);}
+
 // --- Telemetry Update ---
 function updateTelemetry(){
-  const hits=scanData.filter(s=>s.hit);
-  const hitCount=hits.length;
-  const dists=hits.map(s=>s.dist);
-  const avgDist=hitCount>0?dists.reduce((a,b)=>a+b,0)/hitCount:0;
-  const minDist=hitCount>0?Math.min(...dists):0;
-  const maxDist=hitCount>0?Math.max(...dists):0;
-
-  // Count grid states
-  let explored=0, occupied=0;
-  for(let i=0;i<grid.length;i++){
-    if(grid[i]!==0)explored++;
-    if(grid[i]>0.5)occupied++;
+  let hitCount=0,sum=0,mn=Infinity,mx=0;
+  for(const s of scanData){
+    if(!s.hit)continue;
+    hitCount++;sum+=s.dist;
+    if(s.dist<mn)mn=s.dist;
+    if(s.dist>mx)mx=s.dist;
   }
-  const coveragePct=(explored/grid.length*100).toFixed(1);
+  const avg=hitCount?sum/hitCount:0;
+  if(!hitCount)mn=0;
+  const er=poseErrors();
+  const cov=lastCoverage.toFixed(1);
 
   // KPI strip
-  document.getElementById('kpiX').textContent=Math.round(robot.x);
-  document.getElementById('kpiY').textContent=Math.round(robot.y);
-  document.getElementById('kpiHeading').innerHTML=(((robot.angle*180/Math.PI)%360+360)%360).toFixed(0)+'&deg;';
-  document.getElementById('kpiSpeed').textContent=Math.abs(robot.vLin).toFixed(2);
-  document.getElementById('kpiCoverage').textContent=coveragePct+'%';
-  document.getElementById('kpiHits').textContent=hitCount;
-  document.getElementById('kpiDist').textContent=totalDist.toFixed(0);
+  setTxt('kpiX',(est.x*M_PER_U).toFixed(2));
+  setTxt('kpiY',(est.y*M_PER_U).toFixed(2));
+  setHtml('kpiHeading',degOf(est.angle).toFixed(0)+'&deg;');
+  setTxt('kpiSpeed',Math.abs(robot.vLin*M_PER_U).toFixed(2));
+  setTxt('kpiErr',er.e.toFixed(3));
+  setTxt('kpiOdomErr',er.o.toFixed(3));
+  setTxt('kpiCoverage',cov+'%');
+  setTxt('kpiHits',hitCount);
+  setTxt('kpiDist',(totalDist*M_PER_U).toFixed(1));
 
   // Telemetry panel
-  document.getElementById('telX').textContent=robot.x.toFixed(1);
-  document.getElementById('telY').textContent=robot.y.toFixed(1);
-  document.getElementById('telTheta').innerHTML=(((robot.angle*180/Math.PI)%360+360)%360).toFixed(1)+'&deg;';
-  document.getElementById('telLinVel').textContent=robot.vLin.toFixed(3);
-  document.getElementById('telAngVel').innerHTML=(robot.vAng*180/Math.PI).toFixed(2)+' &deg;/s';
-  document.getElementById('telHits').textContent=hitCount;
-  document.getElementById('telAvgDist').textContent=avgDist.toFixed(1);
-  document.getElementById('telMinDist').textContent=minDist.toFixed(1);
-  document.getElementById('telMaxDist').textContent=maxDist.toFixed(1);
-  document.getElementById('telExplored').textContent=coveragePct+'%';
-  document.getElementById('telTotal').textContent=grid.length;
-  document.getElementById('telOccupied').textContent=occupied;
-  document.getElementById('telDist').textContent=totalDist.toFixed(1)+' px';
-  document.getElementById('coverageTag').textContent='Coverage: '+coveragePct+'%';
+  setTxt('telX',(est.x*M_PER_U).toFixed(2));
+  setTxt('telY',(est.y*M_PER_U).toFixed(2));
+  setHtml('telTheta',degOf(est.angle).toFixed(1)+'&deg;');
+  setTxt('telTrueXY',(robot.x*M_PER_U).toFixed(2)+', '+(robot.y*M_PER_U).toFixed(2));
+  setHtml('telTrueTheta',degOf(robot.angle).toFixed(1)+'&deg;');
+  setTxt('telErrPos',er.e.toFixed(3));
+  setHtml('telErrHead',er.h.toFixed(2)+'&deg;');
+  setTxt('telOdomErr',er.o.toFixed(3));
+  setTxt('telLinVel',(robot.vLin*M_PER_U).toFixed(3));
+  setHtml('telAngVel',(robot.vAng*180/Math.PI).toFixed(2)+' &deg;/s');
+  setTxt('telHits',hitCount);
+  setTxt('telAvgDist',(avg*M_PER_U).toFixed(2));
+  setTxt('telMinDist',(mn*M_PER_U).toFixed(2));
+  setTxt('telMaxDist',(mx*M_PER_U).toFixed(2));
+  setTxt('telParticles',PF_N);
+  setTxt('telNeff',pfNeff.toFixed(0));
+  setTxt('telResamp',pfResamples);
+  setTxt('telInform',pfInformative+' / '+pfBeamsUsed);
+  setTxt('telExplored',cov+'%');
+  setTxt('telTotal',gridW*gridH);
+  setTxt('telOccupied',lastOccupied);
+  setTxt('telDist',(totalDist*M_PER_U).toFixed(1)+' m');
+  setTxt('coverageTag','Coverage: '+cov+'%');
 }
 
 // --- Environment Loading ---
 function loadEnv(name){
   currentEnv=name;
   const env=ENVS[name];
-  robot.x=env.startX;
-  robot.y=env.startY;
-  robot.angle=env.startA;
-  robot.vLin=0;
-  robot.vAng=0;
-  trail=[];
-  totalDist=0;
+  const a0=wrapPi(env.startA);
+  robot.x=env.startX; robot.y=env.startY; robot.angle=a0;
+  robot.vLin=0; robot.vAng=0;
+  odom={x:env.startX,y:env.startY,angle:a0};
+  lastOdom={x:env.startX,y:env.startY,angle:a0};
+  est={x:env.startX,y:env.startY,angle:a0};
+  rngState=SEED>>>0;              // reproducible from the same seed
+  initParticles(env.startX,env.startY,a0);
+  trail=[]; totalDist=0; simTime=0;
+  history=[]; pfResamples=0; pfInformative=0; pfBeamsUsed=0;
+  scanData=[]; lastCoverage=0; lastOccupied=0;
   initGrid();
   // Update buttons
   document.querySelectorAll('.env-btn[data-env]').forEach(b=>{
     b.classList.toggle('active',b.dataset.env===name);
   });
+  drawCharts();
+  updateStatus();
 }
 
+// Clear the map only: the robot and the filter keep their current pose.
 function resetMap(){
   initGrid();
+  history=[]; lastCoverage=0; lastOccupied=0;
+  drawCharts();
 }
 
 // --- Keyboard Input ---
@@ -993,17 +1501,40 @@ document.addEventListener('keyup',e=>{
 });
 
 // --- Main Loop ---
-let lastMapUpdate=0;
 let frameCount=0;
+let lastTs=0, accum=0, lastScanTs=-1e9;
 
-function tick(timestamp){
-  updatePhysics();
-  doLidarScan();
+function tick(ts){
+  if(!lastTs)lastTs=ts;
+  let fdt=(ts-lastTs)/1000;
+  lastTs=ts;
+  if(fdt>0.25)fdt=0.25;          // never spiral after a tab switch
+  accum+=fdt;
 
-  // Update occupancy grid at ~10Hz
-  if(timestamp-lastMapUpdate>100){
-    updateOccupancyGrid();
-    lastMapUpdate=timestamp;
+  // Fixed-timestep physics integrator
+  let guard=0;
+  while(accum>=DT&&guard<20){
+    updatePhysics(DT);
+    simTime+=DT;
+    accum-=DT;
+    guard++;
+  }
+  if(guard>=20)accum=0;
+
+  // Sensor + SLAM cycle at the LiDAR scan rate (10 Hz)
+  if(ts-lastScanTs>=1000/SCAN_HZ){
+    lastScanTs=ts;
+    pfPredict();            // propagate particles on the odometry increment
+    doLidarScan();          // measure the true world
+    pfUpdate();             // weight + resample against the map so far
+    pfEstimate();           // weighted mean pose
+    updateOccupancyGrid();  // map from the ESTIMATE, not from ground truth
+    computeGridStats();
+    const er=poseErrors();
+    history.push({t:simTime,e:er.e,o:er.o,c:lastCoverage});
+    if(history.length>HIST_MAX)history.shift();
+    drawCharts();
+    updateStatus();
   }
 
   drawWorld();
@@ -1021,43 +1552,36 @@ function tick(timestamp){
 let resizeTimer;
 window.addEventListener('resize',()=>{
   clearTimeout(resizeTimer);
-  resizeTimer=setTimeout(()=>{initCanvases();},150);
+  resizeTimer=setTimeout(()=>{initCanvases();drawCharts();},150);
 });
 
 // --- Init ---
 function init(){
   initCanvases();
-  initGrid();
   loadEnv('multi');
+
+  const helpBtn=document.getElementById('helpBtn');
+  if(helpBtn)helpBtn.addEventListener('click',()=>toggleHelp());
+  const helpClose=document.getElementById('helpClose');
+  if(helpClose)helpClose.addEventListener('click',()=>toggleHelp(false));
+  const overlay=document.getElementById('helpOverlay');
+  if(overlay)overlay.addEventListener('click',e=>{if(e.target===overlay)toggleHelp(false);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')toggleHelp(false);});
+
+  const resetBtn=document.getElementById('resetBtn');
+  if(resetBtn)resetBtn.addEventListener('click',()=>loadEnv(currentEnv));
+  const relocBtn=document.getElementById('relocBtn');
+  if(relocBtn)relocBtn.addEventListener('click',()=>initParticles(est.x,est.y,est.angle));
+
+  bindChartTip('errChart',h=>'t = '+h.t.toFixed(1)+' s<br>filter '+h.e.toFixed(3)+' m<br>odometry '+h.o.toFixed(3)+' m');
+  bindChartTip('covChart',h=>'t = '+h.t.toFixed(1)+' s<br>coverage '+h.c.toFixed(1)+' %');
+
   requestAnimationFrame(tick);
 }
 
 document.addEventListener('DOMContentLoaded',init);
+
 </script>
 
-<!-- Welcome Popup -->
-<style>
-.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease}
-.welcome-overlay.show{opacity:1}
-.welcome-box{background:var(--card,#111827);border:1px solid var(--border,#1e293b);border-radius:14px;max-width:420px;width:90%;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.welcome-box h3{font-size:16px;font-weight:700;color:var(--text,#e2e8f0);margin:0 0 12px}
-.welcome-box p{font-size:13.5px;color:var(--muted,#94a3b8);line-height:1.6;margin:0 0 20px}
-.welcome-box .help-icon-hint{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent,#06b6d4);color:#0b1120;font-weight:700;font-size:13px;vertical-align:middle;margin:0 2px}
-.welcome-box button{background:var(--accent,#06b6d4);color:#0b1120;border:none;padding:9px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s}
-.welcome-box button:hover{opacity:.85}
-</style>
-<div class="welcome-overlay" id="welcomePopup">
-  <div class="welcome-box">
-    <h3>Welcome to the SLAM Mapping Visualizer</h3>
-    <p>To get the most out of this demo, click the <span class="help-icon-hint">?</span> button in the top-right corner for a full guide, tutorial, and explanation of every feature.</p>
-    <button onclick="document.getElementById('welcomePopup').classList.remove('show');setTimeout(function(){document.getElementById('welcomePopup').style.display='none'},300)">Got it</button>
-  </div>
-</div>
-<script>
-(function(){
-  var wp = document.getElementById('welcomePopup');
-  if(wp) setTimeout(function(){ wp.classList.add('show'); }, 400);
-})();
-</script>
 </body>
 </html>

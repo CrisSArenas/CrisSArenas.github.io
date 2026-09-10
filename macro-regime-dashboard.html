@@ -3,60 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Macro Regime & Tactical Allocation | Cristian Arenas</title>
+<title>Macro Regime &amp; Tactical Allocation | Cristian Arenas</title>
+<meta name="description" content="Interactive macro regime dashboard: growth/inflation quadrant, VIX volatility gauge, cross-asset momentum, regime-driven tactical tilts, Brinson attribution, ex-ante risk decomposition and a Takahashi-Alexander private-capital pacing model on stylised historical quarterly data, Q1 2000 to Q4 2025.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0b1120;--card:#111827;--card2:#1a2332;
-  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
-  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
-  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
-}
-body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+body{font-size:14px;line-height:1.6}
 a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
-/* NAV */
-.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
-.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s}
-.nav .back:hover{color:var(--cyan)}
-.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.nav h1 i{color:var(--cyan);font-size:14px}
-.regime-pill{margin-left:auto;padding:5px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:700;letter-spacing:.5px}
-.pill-goldilocks{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)}
-.pill-reflation{background:rgba(245,158,11,.12);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
-.pill-stagflation{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3)}
-.pill-deflation{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+/* REGIME BADGE — d-pill colour variants */
+.pill-goldilocks{color:var(--green);border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.08)}
+.pill-reflation{color:var(--yellow);border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08)}
+.pill-stagflation{color:var(--red);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08)}
+.pill-deflation{color:var(--blue);border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.08)}
 
-/* GUIDE */
-.guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
-.guide-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.guide-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;cursor:pointer;user-select:none}
-.guide-header h2{font-size:13px;font-weight:600;color:var(--dim);display:flex;align-items:center;gap:8px}
-.guide-header h2 i{color:var(--cyan)}
-.guide-btn{background:var(--card2);border:1px solid var(--border);color:var(--dim);padding:4px 14px;border-radius:6px;font-size:11px;cursor:pointer;transition:.2s}
-.guide-btn:hover{color:var(--cyan);border-color:var(--cyan)}
-.guide-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;border-top:1px solid var(--border)}
-.guide-grid.hide{display:none}
-.guide-card{background:var(--card2);border-radius:8px;padding:12px 14px}
-.guide-card h3{font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.guide-card h3 i{font-size:11px}
-.guide-card p{font-size:12px;color:var(--dim);line-height:1.5}
-.guide-card strong{color:var(--text)}
+.demo-sub{max-width:1440px;margin:14px auto 0;padding:0 16px;color:var(--muted);font-size:.85rem;line-height:1.6}
+.demo-sub b{color:var(--text);font-weight:600}
 
 /* GRID */
 .grid{max-width:1440px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .full{grid-column:1/-1}
 
-/* PANEL */
-.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+/* PANEL (shell .d-panel + local head/body) */
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
 .panel-head h3{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
 .panel-head h3 i{color:var(--cyan);font-size:13px}
-.panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
+.panel-head .tag{font-size:10px;color:var(--faint);font-style:italic;text-align:right;max-width:60%}
 .panel-body{padding:16px 18px}
 
 /* CANVAS */
@@ -68,7 +49,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .slider-row label i{color:var(--cyan)}
 .slider-row input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:var(--border);border-radius:4px;outline:none}
 .slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 0 4px rgba(6,182,212,.15)}
-.slider-row .val{color:var(--cyan);font-family:var(--mono);font-size:16px;font-weight:700;min-width:70px;text-align:right}
+.slider-row .val{color:var(--cyan);font-family:var(--mono);font-size:16px;font-weight:700;min-width:78px;text-align:right}
+.slider-row .hint{font-size:10.5px;color:var(--faint);font-family:var(--mono);white-space:nowrap}
 
 /* MOMENTUM TABLE */
 .mtable{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
@@ -107,13 +89,18 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
 /* PACING */
 .pctrl{margin-bottom:10px}
-.pctrl label{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:4px}
+.pctrl label{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);margin-bottom:4px;line-height:1.35}
 .pctrl label span:last-child{color:var(--cyan);font-family:var(--mono);font-weight:600}
 .pctrl input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:var(--border);border-radius:2px;outline:none}
 .pctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer}
 
 /* TOOLTIP */
-.tip{position:absolute;background:var(--card);border:1px solid var(--cyan);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;display:none;z-index:10;white-space:nowrap;font-family:var(--mono);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.tip{position:absolute;background:rgba(15,22,41,.97);border:1px solid var(--border-strong);border-radius:8px;padding:8px 12px;font-size:11.5px;line-height:1.55;pointer-events:none;display:none;z-index:10;white-space:nowrap;font-family:var(--mono);box-shadow:var(--shadow)}
+.tip strong{color:var(--text)}
+.d-help-section table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
+.d-help-section th,.d-help-section td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--muted)}
+.d-help-section th{color:var(--text);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.d-help-section td:first-child{color:var(--text);font-family:var(--mono);font-size:.74rem}
 
 /* LEGEND */
 .legend{display:flex;gap:14px;margin-top:10px;font-size:11px;flex-wrap:wrap}
@@ -121,246 +108,403 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .legend .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 
 @media(max-width:1024px){.grid{grid-template-columns:1fr}}
-@media(max-width:600px){.nav{flex-wrap:wrap;gap:8px}.slider-row{flex-wrap:wrap}}
+@media(max-width:600px){.slider-row{flex-wrap:wrap}.jc-layout{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
 
-<div class="nav">
-  <a href="index.html" class="back"><i class="fas fa-arrow-left"></i> Portfolio</a>
-  <h1><i class="fas fa-globe"></i> Macro Regime & Tactical Allocation</h1>
-  <div class="regime-pill pill-goldilocks" id="regimeBadge">GOLDILOCKS</div>
+<nav class="demo-nav">
+  <a class="demo-brand" href="index.html">cristian@portfolio:~$ <span class="crumb">/ demos / macro-regime</span></a>
+  <h1 class="demo-title"><i class="fas fa-globe"></i> Macro Regime &amp; Tactical Allocation</h1>
+  <div class="demo-links">
+    <a href="index.html#projects">Projects</a>
+    <a href="index.html#research">Research</a>
+    <a href="index.html#demos" class="active">Demos</a>
+    <a href="robotics-embedded.html">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <span class="d-pill pill-reflation" id="regimeBadge">REFLATION</span>
+    <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+<div class="demo-status">
+  <span id="statusBar">initialising&hellip;</span>
+  <span><b>Stylised historical data</b> &middot; quarterly Q1&nbsp;2000&ndash;Q4&nbsp;2025 &middot; deterministic seed &middot; not investment advice</span>
 </div>
 
-<div class="guide">
-  <div class="guide-box">
-    <div class="guide-header" onclick="toggleGuide()">
-      <h2><i class="fas fa-lightbulb"></i> Quick Guide</h2>
-      <button class="guide-btn" id="guideBtn">HIDE</button>
-    </div>
-    <div class="guide-grid" id="guideGrid">
-      <div class="guide-card">
-        <h3><i class="fas fa-sliders-h"></i> Timeline</h3>
-        <p>Drag the slider through <strong>Q1 2000 – Q4 2025</strong>. All panels use historical regime data and update live.</p>
-      </div>
-      <div class="guide-card">
-        <h3><i class="fas fa-th-large"></i> Regime Quadrant</h3>
-        <p>Growth vs Inflation grid with 4 regimes: <strong>Goldilocks</strong>, <strong>Reflation</strong>, <strong>Stagflation</strong>, <strong>Deflation</strong>.</p>
-      </div>
-      <div class="guide-card">
-        <h3><i class="fas fa-tachometer-alt"></i> VIX Gauge</h3>
-        <p>Implied volatility gauge + historical line chart. Colors show <strong>Low / Normal / Elevated / Crisis</strong>.</p>
-      </div>
-      <div class="guide-card">
-        <h3><i class="fas fa-signal"></i> Momentum</h3>
-        <p>Multi-horizon momentum across 8 asset classes with <strong>BUY / HOLD / SELL</strong> signals.</p>
-      </div>
-      <div class="guide-card">
-        <h3><i class="fas fa-balance-scale"></i> Allocation</h3>
-        <p>Strategic vs tactical allocation. The tilt shows <strong>over/underweight</strong> per regime.</p>
-      </div>
-      <div class="guide-card">
-        <h3><i class="fas fa-landmark"></i> J-Curve</h3>
-        <p><strong>Drag sliders</strong> to model private equity cashflows. See TVPI, DPI, RVPI, IRR live.</p>
-      </div>
-    </div>
-  </div>
-</div>
+<p class="demo-sub">A quarterly <b>macro regime</b> map (growth vs inflation z-scores versus trend) driving <b>tactical tilts</b> around a strategic policy portfolio, with Brinson&ndash;Hood&ndash;Beebower attribution, ex-ante risk decomposition and a Takahashi&ndash;Alexander private-capital pacing model. Drag the timeline to move the as-of quarter &mdash; every panel recomputes. Hover any chart for detail.</p>
 
 <div class="grid">
   <div class="slider-row full">
-    <label><i class="fas fa-clock"></i> Regime Timeline</label>
-    <input type="range" id="timeSlider" min="0" max="103" value="99">
-    <div class="val" id="yearLabel">Q4 2024</div>
+    <label for="timeSlider"><i class="fas fa-clock"></i> As-of quarter</label>
+    <input type="range" class="d-range" id="timeSlider" min="0" max="103" step="1" value="103" aria-label="As-of quarter, Q1 2000 to Q4 2025">
+    <span class="hint">Q1 2000 &rarr; Q4 2025</span>
+    <div class="val" id="yearLabel">Q4 2025</div>
   </div>
 
-  <div class="panel">
+  <div class="d-panel">
     <div class="panel-head">
       <h3><i class="fas fa-th-large"></i> Macro Regime Quadrant</h3>
-      <span class="tag">Growth vs Inflation</span>
+      <span class="tag">Growth z vs inflation z (&sigma; vs trend/target) &middot; cut-off 0&sigma; on both axes</span>
     </div>
     <div class="panel-body" style="position:relative">
-      <canvas id="quadrantCanvas"></canvas>
+      <canvas id="quadrantCanvas" aria-label="Scatter of quarterly growth and inflation z-scores with four named macro regime quadrants"></canvas>
       <div class="tip" id="quadTip"></div>
     </div>
   </div>
 
-  <div class="panel">
+  <div class="d-panel">
     <div class="panel-head">
-      <h3><i class="fas fa-tachometer-alt"></i> Volatility Regime & VIX</h3>
-      <span class="tag">Gauge + Historical</span>
+      <h3><i class="fas fa-tachometer-alt"></i> Volatility Regime &amp; VIX</h3>
+      <span class="tag">Bands: &lt;15 low &middot; 15&ndash;25 normal &middot; 25&ndash;35 elevated &middot; &gt;35 crisis</span>
     </div>
-    <div class="panel-body">
-      <canvas id="vixCanvas"></canvas>
+    <div class="panel-body" style="position:relative">
+      <canvas id="vixCanvas" aria-label="VIX gauge for the selected quarter plus the quarterly VIX history since 2000"></canvas>
+      <div class="tip" id="vixTip"></div>
     </div>
   </div>
 
-  <div class="panel full">
+  <div class="d-panel full">
     <div class="panel-head">
       <h3><i class="fas fa-signal"></i> Cross-Asset Momentum Signals</h3>
-      <span class="tag">3M / 6M / 1Y / 2Y horizons</span>
+      <span class="tag">Factor-implied score over 1/2/4/8 quarters (3M/6M/12M/24M) &middot; composite &gt;&nbsp;+0.15 = BUY, &lt;&nbsp;&minus;0.15 = SELL, else HOLD</span>
     </div>
     <div class="panel-body">
       <table class="mtable" id="momTable"></table>
     </div>
   </div>
 
-  <div class="panel">
+  <div class="d-panel">
     <div class="panel-head">
       <h3><i class="fas fa-balance-scale"></i> Tactical vs Strategic</h3>
-      <span class="tag">Regime-driven tilts</span>
+      <span class="tag">Regime tilts bounded at &plusmn;10pp &middot; weights sum to 100%</span>
     </div>
     <div class="panel-body">
       <div id="allocBars"></div>
       <div class="legend">
-        <span><span class="dot" style="background:rgba(148,163,184,.35)"></span> Strategic</span>
-        <span><span class="dot" style="background:rgba(6,182,212,.5)"></span> Tactical</span>
+        <span><span class="dot" style="background:rgba(148,163,184,.35)"></span> Strategic (policy)</span>
+        <span><span class="dot" style="background:rgba(6,182,212,.5)"></span> Tactical (regime)</span>
+        <span style="color:var(--faint)">bar scale 0&ndash;40% of NAV</span>
       </div>
     </div>
   </div>
 
-  <div class="panel">
+  <div class="d-panel">
     <div class="panel-head">
-      <h3><i class="fas fa-chart-bar"></i> Performance Attribution</h3>
-      <span class="tag">Brinson decomposition</span>
+      <h3><i class="fas fa-chart-pie"></i> Ex-ante Risk Decomposition</h3>
+      <span class="tag">Euler contributions to portfolio &sigma; &middot; sum = 100%</span>
     </div>
     <div class="panel-body">
-      <canvas id="attrCanvas"></canvas>
+      <div id="riskBars"></div>
+      <div class="mrow" id="riskMetrics"></div>
+    </div>
+  </div>
+
+  <div class="d-panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-chart-bar"></i> Performance Attribution</h3>
+      <span class="tag">Brinson&ndash;Hood&ndash;Beebower &middot; allocation + selection + interaction = total active</span>
+    </div>
+    <div class="panel-body">
+      <canvas id="attrCanvas" aria-label="Waterfall of quarterly allocation, selection and interaction effects summing to total active return"></canvas>
       <div class="mrow" id="attrMetrics"></div>
     </div>
   </div>
 
-  <div class="panel">
+  <div class="d-panel">
     <div class="panel-head">
       <h3><i class="fas fa-border-all"></i> Correlation Matrix</h3>
-      <span class="tag">Hover for details</span>
+      <span class="tag">Long-run cross-asset correlations (CMA) &middot; hover a cell</span>
     </div>
     <div class="panel-body" style="position:relative">
-      <canvas id="corrCanvas"></canvas>
+      <canvas id="corrCanvas" aria-label="Heat map of long-run correlations between the eight asset classes"></canvas>
       <div class="tip" id="corrTip"></div>
     </div>
   </div>
 
-  <div class="panel">
+  <div class="d-panel full">
     <div class="panel-head">
-      <h3><i class="fas fa-landmark"></i> Private Capital J-Curve</h3>
-      <span class="tag">Drag sliders to model</span>
+      <h3><i class="fas fa-landmark"></i> Private Capital Pacing &amp; J-Curve</h3>
+      <span class="tag">Takahashi&ndash;Alexander (2002) commitment model &middot; $M, annual periods</span>
     </div>
     <div class="panel-body">
-      <div style="display:grid;grid-template-columns:200px 1fr;gap:16px">
+      <div class="jc-layout" style="display:grid;grid-template-columns:290px 1fr;gap:18px">
         <div>
-          <div class="pctrl"><label><span>Commitment ($M)</span><span id="pcCommit">100</span></label><input type="range" min="20" max="500" value="100" id="slCommit"></div>
-          <div class="pctrl"><label><span>Call Rate (%/yr)</span><span id="pcCall">25</span></label><input type="range" min="10" max="50" value="25" id="slCall"></div>
-          <div class="pctrl"><label><span>Dist. Start (yr)</span><span id="pcDist">3</span></label><input type="range" min="2" max="6" value="3" id="slDist"></div>
-          <div class="pctrl"><label><span>Growth (%)</span><span id="pcGrowth">15</span></label><input type="range" min="5" max="30" value="15" id="slGrowth"></div>
+          <div class="pctrl"><label for="slCommit"><span>Commitment</span><span id="pcCommit">$100M</span></label><input type="range" min="20" max="500" step="10" value="100" id="slCommit" aria-label="Commitment in millions of dollars"></div>
+          <div class="pctrl"><label for="slCall"><span>Contribution rate RC<br><span style="color:var(--faint)">% of uncalled commitment / yr</span></span><span id="pcCall">25%</span></label><input type="range" min="10" max="50" step="1" value="25" id="slCall" aria-label="Rate of contribution, percent of uncalled commitment per year"></div>
+          <div class="pctrl"><label for="slDist"><span>Fund life L<br><span style="color:var(--faint)">years to full wind-down</span></span><span id="pcDist">12 yr</span></label><input type="range" min="8" max="15" step="1" value="12" id="slDist" aria-label="Fund life in years"></div>
+          <div class="pctrl"><label for="slGrowth"><span>Growth rate G<br><span style="color:var(--faint)">annual NAV appreciation</span></span><span id="pcGrowth">15%</span></label><input type="range" min="5" max="30" step="1" value="15" id="slGrowth" aria-label="Annual NAV growth rate, percent"></div>
+          <div class="pctrl"><label for="slBow"><span>Bow factor B<br><span style="color:var(--faint)">back-loads distributions</span></span><span id="pcBow">2.5</span></label><input type="range" min="10" max="50" step="1" value="25" id="slBow" aria-label="Bow factor, tenths"></div>
+          <div class="pctrl"><label for="slYield"><span>Yield floor Y<br><span style="color:var(--faint)">min. annual distribution rate</span></span><span id="pcYield">5%</span></label><input type="range" min="0" max="15" step="1" value="5" id="slYield" aria-label="Yield floor, minimum annual distribution rate in percent"></div>
           <div class="mrow" id="jcurveMetrics" style="flex-direction:column"></div>
         </div>
-        <canvas id="jcurveCanvas"></canvas>
+        <div style="position:relative">
+          <canvas id="jcurveCanvas" aria-label="Cumulative contributions, distributions, NAV and net cashflow J-curve over the fund life"></canvas>
+          <div class="tip" id="jcTip"></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; Macro Regime &amp; Tactical Allocation</h2>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; Data</h3>
+        <p>104 quarters, <strong>Q1 2000 &ndash; Q4 2025</strong>. Growth and inflation are stored as <strong>stylised historical</strong> standardised scores: the inflation score is the CPI y/y deviation from the 2% target divided by a 3.6pp standard deviation (so the score maps back as <code>CPI &asymp; 2% + 7.2 &times; score</code>), and the growth score is a composite growth-momentum reading (ISM new orders, payrolls, real GDP versus trend) clipped to &plusmn;2&sigma;. VIX is the quarterly average close with the intra-quarter high shown separately. The numbers are hand-calibrated to the historical record, not a live data feed; asset returns inside the attribution panel are simulated from a seeded generator (<code>mulberry32</code>, seed shown in the status strip) so every figure is reproducible.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>2 &middot; Regime quadrant</h3>
+        <p>The horizontal axis is the growth z-score, the vertical axis the inflation z-score, both plotted over &plusmn;2&sigma;. The <strong>cut-off is 0&sigma; on each axis</strong> &mdash; growth at trend and inflation at the 2% target:</p>
+        <table>
+          <thead><tr><th>Regime</th><th>Condition</th><th>Typical quarters</th></tr></thead>
+          <tbody>
+            <tr><td>Goldilocks</td><td>growth &gt; 0, inflation &le; 0</td><td>2013&ndash;2016, 2019, H2 2020</td></tr>
+            <tr><td>Reflation</td><td>growth &gt; 0, inflation &gt; 0</td><td>2004&ndash;2006, 2011, 2018, 2021, 2023&ndash;25</td></tr>
+            <tr><td>Stagflation</td><td>growth &le; 0, inflation &gt; 0</td><td>H1 2001, H1 2008, all of 2022</td></tr>
+            <tr><td>Deflation</td><td>growth &le; 0, inflation &le; 0</td><td>2002, Q4 2008&ndash;2009, H1 2020</td></tr>
+          </tbody>
+        </table>
+        <p>The trail shows the previous 20 quarters and the corner percentages the regime shares of the trailing 13 quarters. 2023&ndash;25 sits just inside Reflation: CPI keeps falling but stays above the 2% target, so the point drifts towards the Goldilocks boundary without crossing it.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>3 &middot; VIX gauge</h3>
+        <p>Bands are the standard practitioner cut-offs: <strong>below 15 low</strong>, <strong>15&ndash;25 normal</strong>, <strong>25&ndash;35 elevated</strong>, <strong>above 35 crisis</strong>. The needle and the large number are the quarterly average; the smaller reading is the intra-quarter high (Q4 2008: 58.0 average, 80.9 high; Q1 2020: 57.0 average, 82.7 high). The line chart plots both series to the as-of quarter.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>4 &middot; Momentum signals</h3>
+        <p>Because the data set is quarterly, the four horizons are <strong>1, 2, 4 and 8 quarters</strong> (3M / 6M / 12M / 24M). Each horizon score is a recency-weighted average of a two-factor reading, <code>score = &beta;<sub>g</sub>&middot;growth + &beta;<sub>&pi;</sub>&middot;inflation</code>, with weights 1, 2, 3&hellip; on successively more recent quarters. The composite is the weighted blend <code>(1&middot;m<sub>1Q</sub> + 1.5&middot;m<sub>2Q</sub> + 2.5&middot;m<sub>4Q</sub> + 3&middot;m<sub>8Q</sub>) / 8</code>. The trading rule is explicit: <strong>composite &gt; +0.15 &rarr; BUY, composite &lt; &minus;0.15 &rarr; SELL, otherwise HOLD</strong>. This is a factor-implied score, not realised price momentum.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>5 &middot; Tactical allocation</h3>
+        <p>The strategic policy portfolio is 25 / 15 / 10 / 25 / 5 / 10 / 8 / 2 across US equity, international equity, EM equity, fixed income, high yield, private equity, real assets and cash. Each regime has a fixed tactical vector; every vector sums to <strong>100%</strong> and every tilt is bounded at <strong>&plusmn;10pp</strong> (most are &plusmn;8pp), so the tilts always sum to zero. This is an overlay, not a regime-timing bet.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; Attribution</h3>
+        <p>Standard Brinson&ndash;Hood&ndash;Beebower arithmetic on the eight segments:
+        <code>Allocation = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)&middot;r<sub>b</sub></code>,
+        <code>Selection = &Sigma;w<sub>b</sub>&middot;(r<sub>p</sub>&minus;r<sub>b</sub>)</code>,
+        <code>Interaction = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)&middot;(r<sub>p</sub>&minus;r<sub>b</sub>)</code>.
+        The three terms sum <em>exactly</em> to the total active return <code>&Sigma;w<sub>p</sub>r<sub>p</sub> &minus; &Sigma;w<sub>b</sub>r<sub>b</sub></code>, which is what the last bar shows. Segment returns are driven by the quarter's growth and inflation scores plus seeded noise; the information ratio annualises the trailing 12-quarter active-return mean and standard deviation by &radic;4.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>7 &middot; Risk decomposition</h3>
+        <p>Ex-ante, from the tactical weights, the long-run volatility assumptions and the correlation matrix: <code>&sigma;<sub>p</sub> = &radic;(w'&Sigma;w)</code> and the Euler contribution of asset <em>i</em> is <code>CTR<sub>i</sub> = w<sub>i</sub>&middot;(&Sigma;w)<sub>i</sub> / &sigma;<sub>p</sub></code>. These contributions sum to <strong>&sigma;<sub>p</sub> exactly</strong>, so the percentages sum to 100% &mdash; the panel prints that sum as a check. Ex-ante tracking error uses the same covariance matrix on the active weights.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>8 &middot; Private capital pacing</h3>
+        <p>The Takahashi&ndash;Alexander (2002) model, annual periods:</p>
+        <dl>
+          <dt>C<sub>t</sub></dt><dd>= RC &times; uncalled commitment (drawn at the start of year <em>t</em>)</dd>
+          <dt>NAV<sub>t</sub></dt><dd>= (NAV<sub>t&minus;1</sub> + C<sub>t</sub>) &times; (1 + G)</dd>
+          <dt>RD<sub>t</sub></dt><dd>= max(Y, (t / L)<sup>B</sup>) &mdash; the bow factor B back-loads distributions, the yield Y is a floor</dd>
+          <dt>D<sub>t</sub></dt><dd>= RD<sub>t</sub> &times; NAV<sub>t</sub>; at t = L the rate reaches 1 and the fund fully winds down</dd>
+        </dl>
+        <p>Net IRR is solved with Newton&ndash;Raphson on the annual net cashflow stream (calls at the start of the year, distributions at the end). <strong>Peak net outlay</strong> is the deepest point of the cumulative-cashflow J-curve and <strong>break-even</strong> the first year cumulative distributions exceed cumulative calls.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A quarterly macro-regime dashboard over 104 quarters (Q1 2000 &ndash; Q4 2025). Each quarter carries a growth z-score and an inflation z-score which place it in one of four regimes (Goldilocks, Reflation, Stagflation, Deflation) with the cut-off at 0&sigma; on both axes. The regime drives a bounded tactical overlay on a strategic policy portfolio of eight asset classes; the dashboard then reports the VIX volatility regime, a factor-implied cross-asset momentum table, a Brinson&ndash;Hood&ndash;Beebower attribution of the quarter's active return, an ex-ante Euler risk decomposition, the long-run correlation matrix, and a Takahashi&ndash;Alexander private-capital pacing model with its J-curve.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Inflation score = (CPI y/y &minus; 2%) / 3.6pp; growth score = composite growth momentum vs trend, clipped to &plusmn;2&sigma;. Both are stored at half scale and plotted as z = 2 &times; stored value.</li>
+          <li>VIX bands: &lt;15 low, 15&ndash;25 normal, 25&ndash;35 elevated, &gt;35 crisis. Crisis quarters carry both the average and the intra-quarter high (Q4 2008 58.0 / 80.9; Q1 2020 57.0 / 82.7).</li>
+          <li>Strategic weights 25/15/10/25/5/10/8/2 (%); tactical vectors sum to 100% with tilts bounded at &plusmn;10pp.</li>
+          <li>Capital-market assumptions (annual): expected return 6.8 / 7.2 / 7.8 / 4.5 / 6.2 / 9.5 / 6.2 / 3.6%; volatility 16 / 17 / 21 / 5.5 / 9 / 22 / 14 / 0.6%; equity&ndash;bond correlation +0.05.</li>
+          <li>Momentum rule: composite &gt; +0.15 BUY, &lt; &minus;0.15 SELL, else HOLD, over 1/2/4/8-quarter lookbacks.</li>
+          <li>Pacing defaults: $100M commitment, RC 25% of uncalled per year, fund life 12 years, growth 15%/yr, bow factor 2.5, yield floor 5%.</li>
+          <li>Simulated segment returns use a seeded mulberry32 generator (seed 20260101), so every figure on the page is reproducible.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li>Brinson: <code>alloc = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)r<sub>b</sub></code>, <code>sel = &Sigma;w<sub>b</sub>(r<sub>p</sub>&minus;r<sub>b</sub>)</code>, <code>inter = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)(r<sub>p</sub>&minus;r<sub>b</sub>)</code>; the three sum exactly to <code>&Sigma;w<sub>p</sub>r<sub>p</sub> &minus; &Sigma;w<sub>b</sub>r<sub>b</sub></code>.</li>
+          <li>Risk: <code>&sigma;<sub>p</sub> = &radic;(w'&Sigma;w)</code>, <code>CTR<sub>i</sub> = w<sub>i</sub>(&Sigma;w)<sub>i</sub>/&sigma;<sub>p</sub></code>, <code>&Sigma;<sub>i</sub> CTR<sub>i</sub> = &sigma;<sub>p</sub></code>; ex-ante TE = <code>&radic;(a'&Sigma;a)</code> with <code>a = w<sub>p</sub> &minus; w<sub>b</sub></code>.</li>
+          <li>Information ratio = 4 &middot; mean(active) / (&radic;4 &middot; sd(active)) over the trailing 12 quarters.</li>
+          <li>Pacing: <code>C<sub>t</sub> = RC &middot; uncalled</code>; <code>NAV<sub>t</sub> = (NAV<sub>t&minus;1</sub>+C<sub>t</sub>)(1+G)</code>; <code>D<sub>t</sub> = max(Y,(t/L)<sup>B</sup>) &middot; NAV<sub>t</sub></code>; IRR by Newton&ndash;Raphson on the net cashflow stream.</li>
+          <li>Brinson, Hood &amp; Beebower (1986), <em>Determinants of Portfolio Performance</em>; Takahashi &amp; Alexander (2002), <em>Illiquid Alternative Asset Fund Modeling</em>, JPM; Litterman (1996), <em>Hot Spots and Hedges</em> (Euler risk contributions); Whaley (2009), <em>Understanding the VIX</em>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li>The macro series is a hand-calibrated stylised reconstruction, not a vendor data feed; quarter-by-quarter values are approximations of the historical record and 2025 is partly forward-looking.</li>
+          <li>Regime classification uses hard 0&sigma; cut-offs, so quarters near a boundary flip regime abruptly and the tactical vector jumps with them; no smoothing, hysteresis or transition probabilities are modelled.</li>
+          <li>Momentum is a factor-implied score from the same two macro series, not realised asset price momentum, so it cannot be back-tested as a trading signal.</li>
+          <li>Attribution segment returns are simulated, and the decomposition is single-period arithmetic Brinson &mdash; no multi-period linking, no currency or interaction-with-timing terms, no transaction costs or turnover drag.</li>
+          <li>The correlation matrix and volatilities are static long-run assumptions; correlations rise in crises, which this understates.</li>
+          <li>Private-capital pacing is deterministic: no manager dispersion, no secondary sales, no recycling, no fees or carry, and the fund always fully liquidates at year L.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Educational demonstration built on synthetic (or stylised historical) data generated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
+  </div>
+</footer>
+
 <script>
-function toggleGuide(){
-  const g=document.getElementById('guideGrid'),b=document.getElementById('guideBtn');
-  g.classList.toggle('hide');b.textContent=g.classList.contains('hide')?'SHOW':'HIDE';
-}
+window.onerror=function(msg,url,line){
+  var s=document.getElementById('statusBar');
+  if(s)s.innerHTML='<span style="color:#ef4444">error: '+msg+' (line '+line+')</span>';
+};
 
 // DATA
 const QUARTERS=[];
 for(let y=2000;y<=2025;y++)for(let q=1;q<=4;q++)QUARTERS.push({year:y,q,label:`Q${q} ${y}`});
 
-// Historical macro regime data Q1 2000 – Q4 2025
-// g = normalized growth indicator [-1,+1] (ISM/GDP trend vs potential)
-// inf = normalized inflation indicator [-1,+1] (CPI trend vs 2% target)
+// ---------------------------------------------------------------------------
+// STYLISED HISTORICAL MACRO DATA, Q1 2000 - Q4 2025 (104 quarters).
+// Hand-calibrated to the historical record; not a live data feed.
+//   inf = (CPI y/y - 2% target) / 3.6pp, stored at half scale
+//         -> plotted z = 2*inf, and CPI y/y ~= 2 + 7.2*inf
+//   g   = composite growth momentum vs trend (ISM new orders, payrolls, real
+//         GDP), stored at half scale, plotted z = 2*g, clipped to +/-2 sigma
 const HIST_G_INF=[
-  // 2000: Tech bubble peak → bust
-  {g:.65,inf:-.05},{g:.48,inf:-.10},{g:.18,inf:-.18},{g:-.18,inf:-.15},
-  // 2001: Recession + 9/11 shock
-  {g:-.42,inf:-.22},{g:-.52,inf:-.28},{g:-.68,inf:-.35},{g:-.50,inf:-.28},
-  // 2002: Post-recession weakness
-  {g:-.35,inf:-.22},{g:-.28,inf:-.18},{g:-.20,inf:-.18},{g:-.10,inf:-.12},
-  // 2003: Recovery begins
-  {g:.05,inf:-.12},{g:.22,inf:-.08},{g:.38,inf:-.02},{g:.48,inf:.02},
-  // 2004: Expansion
-  {g:.52,inf:.12},{g:.47,inf:.15},{g:.42,inf:.10},{g:.52,inf:.05},
-  // 2005: Goldilocks
-  {g:.47,inf:.05},{g:.42,inf:.05},{g:.47,inf:.00},{g:.52,inf:-.05},
-  // 2006: Strong growth
-  {g:.57,inf:.08},{g:.52,inf:.12},{g:.47,inf:.08},{g:.52,inf:.05},
-  // 2007: Late cycle → stagflation emerging
-  {g:.42,inf:.15},{g:.35,inf:.25},{g:.18,inf:.38},{g:-.05,inf:.42},
-  // 2008: Global Financial Crisis
-  {g:-.22,inf:.52},{g:-.38,inf:.55},{g:-.58,inf:.32},{g:-.92,inf:-.18},
-  // 2009: Trough + early recovery
-  {g:-.82,inf:-.48},{g:-.68,inf:-.42},{g:-.22,inf:-.32},{g:.05,inf:-.22},
-  // 2010: Recovery
-  {g:.32,inf:-.10},{g:.42,inf:.05},{g:.35,inf:.12},{g:.47,inf:.15},
-  // 2011: Reflation → Euro crisis
-  {g:.42,inf:.32},{g:.35,inf:.35},{g:.12,inf:.20},{g:.08,inf:.10},
-  // 2012: Modest recovery
-  {g:.22,inf:.05},{g:.27,inf:.00},{g:.32,inf:-.05},{g:.37,inf:-.05},
-  // 2013: Goldilocks
-  {g:.42,inf:-.10},{g:.47,inf:-.10},{g:.47,inf:-.10},{g:.52,inf:-.05},
-  // 2014: Solid growth, low inflation
-  {g:.47,inf:-.05},{g:.52,inf:-.10},{g:.52,inf:-.22},{g:.42,inf:-.38},
-  // 2015: Strong USD, oil deflation
-  {g:.32,inf:-.42},{g:.37,inf:-.38},{g:.28,inf:-.32},{g:.18,inf:-.28},
-  // 2016: Slowdown → Trump reflation
-  {g:.08,inf:-.22},{g:.15,inf:-.15},{g:.28,inf:-.05},{g:.38,inf:.10},
-  // 2017: Synchronized global growth
-  {g:.47,inf:.10},{g:.52,inf:.05},{g:.52,inf:.05},{g:.57,inf:.10},
-  // 2018: Tax stimulus → trade war → Q4 selloff
-  {g:.57,inf:.28},{g:.55,inf:.32},{g:.47,inf:.25},{g:.12,inf:.22},
+  // 2000: tech bubble peak -> bust, CPI ~3.2-3.5%
+  {g:.65,inf:.17},{g:.48,inf:.18},{g:.18,inf:.21},{g:-.18,inf:.19},
+  // 2001: recession + 9/11; CPI 3.4% -> 1.9%
+  {g:-.42,inf:.19},{g:-.52,inf:.19},{g:-.68,inf:.10},{g:-.50,inf:-.01},
+  // 2002: post-recession weakness, disinflation (CPI 1.2-2.2%)
+  {g:-.35,inf:-.10},{g:-.28,inf:-.10},{g:-.20,inf:-.06},{g:-.10,inf:.03},
+  // 2003: recovery begins, deflation scare fades
+  {g:.05,inf:.13},{g:.22,inf:.01},{g:.38,inf:.03},{g:.48,inf:-.01},
+  // 2004: expansion, CPI back to ~3%
+  {g:.52,inf:-.03},{g:.47,inf:.13},{g:.42,inf:.10},{g:.52,inf:.19},
+  // 2005: goldilocks/reflation, energy-led CPI ~3.7%
+  {g:.47,inf:.14},{g:.42,inf:.13},{g:.47,inf:.25},{g:.52,inf:.24},
+  // 2006: strong growth, CPI 4.0% -> 1.9%
+  {g:.57,inf:.22},{g:.52,inf:.28},{g:.47,inf:.18},{g:.52,inf:-.01},
+  // 2007: late cycle, oil to $96, growth stalling into Q4
+  {g:.42,inf:.06},{g:.35,inf:.10},{g:.18,inf:.06},{g:-.05,inf:.28},
+  // 2008: oil spike then GFC; CPI peaks 5.3% in Q3, 1.6% by Q4
+  {g:-.22,inf:.31},{g:-.38,inf:.32},{g:-.58,inf:.46},{g:-.92,inf:-.06},
+  // 2009: outright deflation (CPI -1.6% in Q3), trough then recovery
+  {g:-.82,inf:-.28},{g:-.68,inf:-.42},{g:-.22,inf:-.50},{g:.05,inf:-.07},
+  // 2010: recovery, inflation below target
+  {g:.32,inf:.06},{g:.42,inf:-.03},{g:.35,inf:-.11},{g:.47,inf:-.10},
+  // 2011: reflation then euro crisis (CPI to 3.8%)
+  {g:.42,inf:.01},{g:.35,inf:.19},{g:.12,inf:.25},{g:.08,inf:.18},
+  // 2012: modest recovery, inflation drifts back below 2%
+  {g:.22,inf:.11},{g:.27,inf:-.01},{g:.32,inf:-.04},{g:.37,inf:-.01},
+  // 2013: goldilocks, CPI 1.2-1.7%
+  {g:.42,inf:-.04},{g:.47,inf:-.08},{g:.47,inf:-.06},{g:.52,inf:-.11},
+  // 2014: solid growth, oil collapse into Q4
+  {g:.47,inf:-.08},{g:.52,inf:.01},{g:.52,inf:-.03},{g:.42,inf:-.11},
+  // 2015: strong USD, energy deflation (CPI ~0%)
+  {g:.32,inf:-.29},{g:.37,inf:-.28},{g:.28,inf:-.26},{g:.18,inf:-.21},
+  // 2016: industrial slowdown then post-election reflation
+  {g:.08,inf:-.13},{g:.15,inf:-.14},{g:.28,inf:-.13},{g:.38,inf:-.03},
+  // 2017: synchronised global growth, CPI ~2%
+  {g:.47,inf:.07},{g:.52,inf:-.01},{g:.52,inf:.00},{g:.57,inf:.01},
+  // 2018: tax stimulus, trade war, Q4 selloff
+  {g:.57,inf:.03},{g:.55,inf:.10},{g:.47,inf:.08},{g:.12,inf:.03},
   // 2019: Fed pivot, soft landing
-  {g:.28,inf:.05},{g:.32,inf:-.05},{g:.32,inf:-.05},{g:.38,inf:.00},
-  // 2020: COVID shock → V-shape recovery
-  {g:-.22,inf:.05},{g:-.95,inf:-.58},{g:.52,inf:-.28},{g:.42,inf:-.20},
-  // 2021: Strong recovery + inflation surge
-  {g:.62,inf:.18},{g:.78,inf:.48},{g:.62,inf:.68},{g:.52,inf:.78},
-  // 2022: Stagflation
-  {g:.15,inf:.92},{g:-.12,inf:.97},{g:-.07,inf:.82},{g:.03,inf:.65},
-  // 2023: Disinflation, soft landing
-  {g:.28,inf:.45},{g:.38,inf:.28},{g:.47,inf:.18},{g:.52,inf:.08},
-  // 2024: Continued soft landing
-  {g:.47,inf:.12},{g:.42,inf:.08},{g:.42,inf:.08},{g:.38,inf:.10},
-  // 2025: Tariff uncertainty, resilient labor market
-  {g:.32,inf:.15},{g:.28,inf:.22},{g:.30,inf:.18},{g:.32,inf:.12}
+  {g:.28,inf:-.06},{g:.32,inf:-.03},{g:.32,inf:-.03},{g:.38,inf:.00},
+  // 2020: COVID shock (Q2 clipped at -2 sigma) then V-shaped rebound
+  {g:-.40,inf:.00},{g:-1.00,inf:-.22},{g:.52,inf:-.11},{g:.42,inf:-.11},
+  // 2021: reopening boom + inflation surge (CPI 6.7% by Q4)
+  {g:.62,inf:-.01},{g:.78,inf:.39},{g:.62,inf:.46},{g:.52,inf:.65},
+  // 2022: stagflation - CPI 8.0/8.6/8.3/7.1%, two negative GDP quarters
+  {g:-.05,inf:.83},{g:-.15,inf:.92},{g:-.08,inf:.88},{g:-.05,inf:.71},
+  // 2023: rapid disinflation, no recession
+  {g:.28,inf:.53},{g:.35,inf:.28},{g:.45,inf:.21},{g:.50,inf:.17},
+  // 2024: soft landing, CPI ~2.6-3.2% (still above target -> reflation)
+  {g:.47,inf:.17},{g:.42,inf:.17},{g:.42,inf:.08},{g:.38,inf:.10},
+  // 2025: tariff uncertainty, resilient labour market, CPI ~2.4-2.9%
+  {g:.32,inf:.10},{g:.28,inf:.06},{g:.30,inf:.13},{g:.32,inf:.11}
 ];
 
-// Historical VIX quarterly averages (approximate)
+// Quarterly average VIX close. Crisis quarters are shown at their stressed
+// level (Q4 2008 and Q1 2020 average the panic months, not the calm ones).
 const HIST_VIX=[
-  25,23,28,33, // 2000
-  30,26,43,28, // 2001
-  25,30,45,38, // 2002
-  35,22,19,17, // 2003
-  15,18,14,13, // 2004
-  12,13,13,12, // 2005
-  11,18,12,11, // 2006
-  12,14,23,24, // 2007
-  27,22,33,70, // 2008
-  48,36,27,21, // 2009
-  17,33,24,18, // 2010
-  16,16,42,28, // 2011
-  19,22,15,16, // 2012
-  14,16,14,13, // 2013
-  15,12,14,20, // 2014
-  16,13,28,18, // 2015
-  22,15,14,15, // 2016
-  11,11,10,11, // 2017
-  18,16,13,27, // 2018
-  15,13,14,13, // 2019
-  47,35,27,23, // 2020
-  20,17,19,18, // 2021
-  27,28,27,24, // 2022
-  20,15,17,13, // 2023
-  14,13,18,18, // 2024
-  18,22,20,18  // 2025
+  24.6,26.5,21.5,28.0, // 2000
+  28.5,28.0,30.5,28.5, // 2001
+  22.5,23.5,38.0,35.0, // 2002
+  32.0,23.5,20.0,17.5, // 2003
+  16.5,16.5,15.0,13.5, // 2004
+  12.5,14.0,12.0,12.5, // 2005
+  12.0,15.0,13.5,11.0, // 2006
+  13.5,14.0,21.0,22.5, // 2007
+  25.5,21.0,25.0,58.0, // 2008
+  45.0,33.0,26.5,23.0, // 2009
+  20.0,28.5,24.0,18.5, // 2010
+  19.0,17.5,33.0,32.0, // 2011
+  18.5,19.5,16.0,16.5, // 2012
+  13.5,14.5,14.5,14.0, // 2013
+  15.0,12.5,13.0,17.5, // 2014
+  16.5,14.0,19.5,17.5, // 2015
+  20.5,15.0,13.5,14.0, // 2016
+  11.7,11.0,10.9,10.5, // 2017
+  17.5,15.5,12.9,21.0, // 2018
+  16.5,15.5,16.5,13.5, // 2019
+  57.0,34.5,26.8,23.5, // 2020
+  23.5,18.0,18.5,19.5, // 2021
+  27.5,28.5,25.5,25.5, // 2022
+  20.5,16.5,14.8,14.5, // 2023
+  13.7,13.5,17.0,16.0, // 2024
+  17.5,19.0,15.5,14.5  // 2025
 ];
+
+// Highest VIX close inside each quarter (the panic print, not the average).
+const HIST_VIX_HI=[
+  33.5,34.0,28.0,34.0, // 2000
+  38.0,35.0,43.7,35.0, // 2001
+  27.5,29.5,45.1,49.5, // 2002
+  34.7,29.5,23.5,20.5, // 2003
+  21.6,21.0,19.3,16.5, // 2004
+  17.7,17.7,14.7,16.5, // 2005
+  14.5,23.8,18.0,12.5, // 2006
+  19.6,18.9,30.8,31.1, // 2007
+  32.2,25.0,46.7,80.9, // 2008
+  56.7,44.7,31.3,30.7, // 2009
+  27.3,45.8,29.0,22.0, // 2010
+  29.4,20.1,48.0,42.0, // 2011
+  23.9,26.7,19.0,19.1, // 2012
+  19.1,20.5,17.0,16.5, // 2013
+  21.4,15.7,17.6,31.1, // 2014
+  22.4,18.9,40.7,26.1, // 2015
+  28.1,20.5,17.0,22.5, // 2016
+  15.0,16.3,15.5,14.5, // 2017
+  37.3,20.0,16.9,36.1, // 2018
+  20.6,20.6,24.6,17.9, // 2019
+  82.7,44.4,38.3,41.2, // 2020
+  37.2,28.0,25.7,31.1, // 2021
+  36.5,34.0,33.6,34.5, // 2022
+  26.5,21.0,18.0,21.7, // 2023
+  16.0,19.2,38.6,22.5, // 2024
+  29.6,52.3,20.5,19.0  // 2025
+];
+
+// score -> approximate headline CPI y/y, and z-score helpers
+const cpiOf=v=>2+v*7.2;
+const fmtCpi=v=>{const x=cpiOf(v);return(Math.abs(x)<0.05?0:x).toFixed(1);};
+const zOf=v=>v*2;
+const clip=v=>Math.max(-1,Math.min(1,v));
 
 const RD=HIST_G_INF.map((d,i)=>({...QUARTERS[i],...d}));
 
+// Four-quadrant classification. Cut-off is 0 sigma on BOTH axes: growth at
+// trend and inflation at the 2% target.
 function regime(g,inf){
   if(g>0&&inf<=0)return{name:'Goldilocks',cls:'pill-goldilocks',color:'#10b981'};
   if(g>0&&inf>0)return{name:'Reflation',cls:'pill-reflation',color:'#f59e0b'};
@@ -372,29 +516,49 @@ const AC=['US Equity','Intl Equity','EM Equity','Fixed Income','High Yield','Pri
 const MA=['S&P 500','MSCI EAFE','EM Equities','US 10Y Tsy','HY Credit','Gold','Commodities','USD Index'];
 const STRAT=[25,15,10,25,5,10,8,2];
 
+// Regime tactical vectors (% of NAV). Every row sums to 100 and every tilt
+// versus STRAT is bounded at +/-10pp, so the tilts sum to zero: this is a
+// tactical overlay, not a regime-timing bet.
+//              USEq Intl  EM   FI   HY   PE  Real Cash   tilts vs STRAT
 function tactical(r){
   switch(r){
-    case'Goldilocks':return[30,18,12,18,5,10,5,2];
-    case'Reflation':return[22,12,8,15,3,10,25,5];
-    case'Stagflation':return[12,8,5,25,3,8,20,19];
-    case'Deflation':return[18,10,5,38,5,5,4,15];
-    default:return STRAT;
+    case'Goldilocks': return[30,18,12,18,5,10, 5, 2]; // +5 +3 +2 -7  0  0 -3  0
+    case'Reflation':  return[25,16,12,15,5,10,15, 2]; //  0 +1 +2 -10 0  0 +7  0
+    case'Stagflation':return[18,12, 7,25,4, 8,16,10]; // -7 -3 -3  0 -1 -2 +8 +8
+    case'Deflation':  return[19,12, 7,35,3, 9, 7, 8]; // -6 -3 -3 +10 -2 -1 -1 +6
+    default:return STRAT.slice();
   }
 }
 
 const CL=['US Eq','Intl Eq','EM Eq','FI','HY','PE','Real','Cash'];
+// Long-run correlation assumptions. Equity-bond correlation is set modestly
+// POSITIVE (+0.05), consistent with the post-2021 regime, not the negative
+// correlation of the 2000-2019 period.
 const CM=[
-  [1,.82,.72,-.05,.62,.72,.42,.02],
-  [.82,1,.78,.08,.55,.65,.48,.01],
-  [.72,.78,1,.05,.58,.60,.52,.00],
-  [-.05,.08,.05,1,.25,-.08,.12,.05],
-  [.62,.55,.58,.25,1,.50,.38,.03],
-  [.72,.65,.60,-.08,.50,1,.45,.01],
-  [.42,.48,.52,.12,.38,.45,1,.02],
-  [.02,.01,.00,.05,.03,.01,.02,1]
+  [1.00,0.85,0.75,0.05,0.68,0.72,0.55,0.00],
+  [0.85,1.00,0.80,0.08,0.62,0.66,0.58,-0.05],
+  [0.75,0.80,1.00,0.05,0.65,0.60,0.60,-0.15],
+  [0.05,0.08,0.05,1.00,0.30,0.02,0.20,0.10],
+  [0.68,0.62,0.65,0.30,1.00,0.55,0.45,-0.05],
+  [0.72,0.66,0.60,0.02,0.55,1.00,0.48,0.00],
+  [0.55,0.58,0.60,0.20,0.45,0.48,1.00,-0.10],
+  [0.00,-0.05,-0.15,0.10,-0.05,0.00,-0.10,1.00]
 ];
 
-let tIdx=99; // Q4 2024
+// Annualised volatility assumptions (%), 2026 capital-market-assumption style.
+// Private equity is shown de-smoothed (reported appraisal vol is ~12-14%).
+const ANN_VOL=[16.0,17.0,21.0,5.5,9.0,22.0,14.0,0.6];
+const cov=(i,j)=>ANN_VOL[i]*ANN_VOL[j]*CM[i][j]/10000;
+function portVol(w){let v=0;for(let i=0;i<w.length;i++)for(let j=0;j<w.length;j++)v+=w[i]*w[j]*cov(i,j);return Math.sqrt(Math.max(v,0));}
+// Euler / marginal risk contributions: CTR_i = w_i*(Sigma w)_i / sigma_p,
+// which sum to sigma_p exactly.
+function riskContrib(w){
+  const sp=portVol(w);
+  if(sp<=0)return{sp:0,ctr:w.map(()=>0)};
+  return{sp,ctr:w.map((wi,i)=>{let sw=0;for(let j=0;j<w.length;j++)sw+=cov(i,j)*w[j];return wi*sw/sp;})};
+}
+
+let tIdx=103; // Q4 2025 (latest quarter in the data set)
 function cur(){return RD[Math.min(tIdx,RD.length-1)];}
 
 function setup(canvas,h){
@@ -411,7 +575,7 @@ function drawQuadrant(){
   const c=document.getElementById('quadrantCanvas');
   const{ctx,W,H}=setup(c,400);
   ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  const p={l:50,r:25,t:25,b:40},pw=W-p.l-p.r,ph=H-p.t-p.b;
+  const p={l:64,r:25,t:25,b:52},pw=W-p.l-p.r,ph=H-p.t-p.b;
   const cx=p.l+pw/2,cy=p.t+ph/2;
   const sx=v=>p.l+(v+1)/2*pw,sy=v=>H-p.b-(v+1)/2*ph;
 
@@ -430,9 +594,19 @@ function drawQuadrant(){
   ctx.beginPath();ctx.moveTo(p.l,cy);ctx.lineTo(W-p.r,cy);ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.fillStyle='#64748b';ctx.font='11px sans-serif';ctx.textAlign='center';
-  ctx.fillText('Growth \u2192',W-p.r-35,cy+16);ctx.fillText('\u2190 Contraction',p.l+45,cy+16);
-  ctx.save();ctx.translate(p.l-12,cy);ctx.rotate(-Math.PI/2);ctx.fillText('Inflation \u2192',0,-12);ctx.restore();
+  ctx.font='10px sans-serif';
+  for(let z=-2;z<=2;z++){
+    if(z===0)continue;
+    const x=sx(z/2),y=sy(z/2);
+    ctx.strokeStyle='rgba(148,163,184,.22)';
+    ctx.beginPath();ctx.moveTo(x,cy-4);ctx.lineTo(x,cy+4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx-4,y);ctx.lineTo(cx+4,y);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.textAlign='center';ctx.fillText(z+'\u03c3',x,H-p.b+14);
+    ctx.textAlign='right';ctx.fillText(z+'\u03c3',p.l-6,y+3);
+  }
+  ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.textAlign='center';
+  ctx.fillText('Growth z-score vs trend \u2192',cx,H-p.b+34);
+  ctx.save();ctx.translate(p.l-34,cy);ctx.rotate(-Math.PI/2);ctx.fillText('Inflation z-score vs 2% target \u2192',0,0);ctx.restore();
 
   const d=cur(),ts=Math.max(0,tIdx-20);
   ctx.strokeStyle='rgba(6,182,212,.15)';ctx.lineWidth=1.5;ctx.beginPath();
@@ -461,11 +635,14 @@ function drawQuadrant(){
   const cnt={Goldilocks:0,Reflation:0,Stagflation:0,Deflation:0};
   rc.forEach(r=>{cnt[regime(r.g,r.inf).name]++});
   const tot=rc.length||1;
-  ctx.font='10px var(--mono)';ctx.textAlign='right';
+  ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='right';
   ctx.fillStyle='#10b981';ctx.fillText(`Goldilocks ${(cnt.Goldilocks/tot*100).toFixed(0)}%`,W-p.r-5,H-p.b-5);
   ctx.fillStyle='#f59e0b';ctx.fillText(`Reflation ${(cnt.Reflation/tot*100).toFixed(0)}%`,W-p.r-5,p.t+38);
   ctx.fillStyle='#ef4444';ctx.fillText(`Stagflation ${(cnt.Stagflation/tot*100).toFixed(0)}%`,p.l+85,p.t+38);
-  ctx.fillStyle='#3b82f6';ctx.fillText(`Deflation ${(cnt.Deflation/tot*100).toFixed(0)}%`,p.l+85,H-p.b-5);
+  ctx.fillStyle='#3b82f6';ctx.fillText(`Deflation ${(cnt.Deflation/tot*100).toFixed(0)}%`,p.l+90,H-p.b-5);
+  ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.font='9px sans-serif';
+  ctx.fillText('trail = last 20 quarters \u00b7 shares = last 13',p.l+2,p.t-8);
+  c._m={p,sx,sy,ts,ti:tIdx};
 }
 
 // VIX
@@ -474,54 +651,63 @@ function drawVIX(){
   const{ctx,W,H}=setup(c,400);
   ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
 
-  const vd=HIST_VIX;
-  const cv=vd[Math.min(tIdx,vd.length-1)];
+  const vd=HIST_VIX,qi=Math.min(tIdx,vd.length-1);
+  const cv=vd[qi],hi=HIST_VIX_HI[qi];
 
   const gH=165,gCx=W/2,gCy=gH-10,gR=Math.min(W/2-40,125);
   const aS=Math.PI;
-  // Gauge zones aligned to text thresholds: LOW <15, NORMAL 15-20, ELEVATED 20-30, CRISIS >30
-  // VIX range 9-80 → normalized fractions
-  const vz=v=>(v-9)/71;
-  [{f:0,t:vz(15),c:'#10b981'},{f:vz(15),t:vz(20),c:'#f59e0b'},{f:vz(20),t:vz(30),c:'#f97316'},{f:vz(30),t:1,c:'#ef4444'}].forEach(z=>{
+  // Gauge bands: LOW <15, NORMAL 15-25, ELEVATED 25-35, CRISIS >35
+  // Displayed range 10-85, wide enough for the 2008 and 2020 peaks
+  const VMIN=10,VMAX=85,vz=v=>Math.min(1,Math.max(0,(v-VMIN)/(VMAX-VMIN)));
+  [{f:0,t:vz(15),c:'#10b981'},{f:vz(15),t:vz(25),c:'#f59e0b'},{f:vz(25),t:vz(35),c:'#f97316'},{f:vz(35),t:1,c:'#ef4444'}].forEach(z=>{
     ctx.beginPath();ctx.arc(gCx,gCy,gR,aS+z.f*Math.PI,aS+z.t*Math.PI);
     ctx.strokeStyle=z.c;ctx.lineWidth=20;ctx.lineCap='butt';ctx.stroke();
   });
 
-  const vn=Math.min(1,Math.max(0,(cv-9)/71)),na=aS+vn*Math.PI;
+  const vn=vz(cv),na=aS+vn*Math.PI;
   ctx.save();ctx.translate(gCx,gCy);ctx.rotate(na);
   ctx.fillStyle='#e2e8f0';ctx.beginPath();ctx.moveTo(0,-3);ctx.lineTo(gR-10,0);ctx.lineTo(0,3);ctx.closePath();ctx.fill();
   ctx.restore();
   ctx.fillStyle='#06b6d4';ctx.beginPath();ctx.arc(gCx,gCy,6,0,Math.PI*2);ctx.fill();
 
-  const vc=cv<15?'#10b981':cv<20?'#f59e0b':cv<30?'#f97316':'#ef4444';
-  const vl=cv<15?'LOW':cv<20?'NORMAL':cv<30?'ELEVATED':'CRISIS';
-  ctx.fillStyle=vc;ctx.font='bold 26px var(--mono)';ctx.textAlign='center';ctx.fillText(cv.toFixed(1),gCx,gCy+36);
-  ctx.font='11px sans-serif';ctx.fillText(vl,gCx,gCy+52);
-  ctx.font='9px var(--mono)';ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.fillText('9',gCx-gR-5,gCy+10);
-  ctx.textAlign='right';ctx.fillText('80',gCx+gR+5,gCy+10);
+  const vc=cv<15?'#10b981':cv<25?'#f59e0b':cv<35?'#f97316':'#ef4444';
+  const vl=cv<15?'LOW':cv<25?'NORMAL':cv<35?'ELEVATED':'CRISIS';
+  ctx.fillStyle=vc;ctx.font="bold 26px 'JetBrains Mono',monospace";ctx.textAlign='center';ctx.fillText(cv.toFixed(1),gCx,gCy+34);
+  ctx.font='11px sans-serif';ctx.fillText(vl+'  \u00b7  quarterly average',gCx,gCy+50);
+  ctx.fillStyle='#94a3b8';ctx.font="10px 'JetBrains Mono',monospace";ctx.fillText('intra-quarter high '+hi.toFixed(1),gCx,gCy+66);
+  ctx.font="9px 'JetBrains Mono',monospace";ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.fillText('10',gCx-gR-9,gCy+10);
+  ctx.textAlign='right';ctx.fillText('85',gCx+gR+9,gCy+10);
 
-  const cT=gH+30,cH=H-cT-35,cL=50,cR=W-20,cW=cR-cL;
+  const cT=gH+52,cH=H-cT-40,cL=54,cR=W-26,cW=cR-cL;
   ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;
-  const vm=Math.max(...vd.slice(0,tIdx+1))*1.1;
+  const vm=Math.max(...HIST_VIX_HI.slice(0,tIdx+1))*1.08;
   for(let i=0;i<=4;i++){const y=cT+cH*i/4;ctx.beginPath();ctx.moveTo(cL,y);ctx.lineTo(cR,y);ctx.stroke();
-    ctx.fillStyle='#64748b';ctx.font='9px var(--mono)';ctx.textAlign='right';ctx.fillText((vm*(4-i)/4).toFixed(0),cL-5,y+3);}
+    ctx.fillStyle='#64748b';ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='right';ctx.fillText((vm*(4-i)/4).toFixed(0),cL-5,y+3);}
 
   const n=Math.min(tIdx+1,vd.length);
-  ctx.strokeStyle='rgba(6,182,212,.7)';ctx.lineWidth=1.5;ctx.beginPath();
+  ctx.strokeStyle='rgba(148,163,184,.35)';ctx.lineWidth=1;ctx.beginPath();
+  for(let i=0;i<n;i++){const x=cL+(i/(RD.length-1))*cW,y=cT+cH*(1-HIST_VIX_HI[i]/vm);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+  ctx.strokeStyle='rgba(6,182,212,.85)';ctx.lineWidth=1.5;ctx.beginPath();
   for(let i=0;i<n;i++){const x=cL+(i/(RD.length-1))*cW,y=cT+cH*(1-vd[i]/vm);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
   ctx.stroke();
 
-  [15,20,30].forEach((lv,li)=>{
+  [15,25,35].forEach((lv,li)=>{
     const y=cT+cH*(1-lv/vm);
     if(y>cT&&y<cT+cH){
       ctx.strokeStyle=['rgba(16,185,129,.2)','rgba(245,158,11,.2)','rgba(239,68,68,.2)'][li];
       ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(cL,y);ctx.lineTo(cR,y);ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle=['#10b981','#f59e0b','#ef4444'][li];ctx.font='8px var(--mono)';ctx.textAlign='left';ctx.fillText(lv,cR+3,y+3);
+      ctx.fillStyle=['#10b981','#f59e0b','#ef4444'][li];ctx.font='8px "JetBrains Mono",monospace';ctx.textAlign='left';ctx.fillText(lv,cR+3,y+3);
     }
   });
 
-  ctx.fillStyle='#64748b';ctx.font='9px var(--mono)';ctx.textAlign='center';
+  ctx.fillStyle='#64748b';ctx.font="9px 'JetBrains Mono',monospace";ctx.textAlign='center';
   for(let y=2000;y<=2025;y+=5){const i=(y-2000)*4,x=cL+(i/(RD.length-1))*cW;ctx.fillText(y,x,cT+cH+14);}
+  ctx.save();ctx.translate(cL-38,cT+cH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText('VIX (index level)',0,0);ctx.restore();
+  ctx.textAlign='left';ctx.font='9px sans-serif';
+  ctx.fillStyle='#06b6d4';ctx.fillText('\u2014 quarterly average',cL+2,cT-8);
+  ctx.fillStyle='#94a3b8';ctx.fillText('\u2014 intra-quarter high',cL+124,cT-8);
+  c._m={cL,cT,cH,cW,n,vm};
 }
 
 // Factor sensitivities per asset: [growth_beta, inflation_beta]
@@ -553,7 +739,7 @@ function calcMom(assetIdx,quarters){
 
 // MOMENTUM — horizons aligned to quarterly data granularity
 function drawMomentum(){
-  const d=cur(),t=document.getElementById('momTable');
+  const t=document.getElementById('momTable');
   const md=MA.map((n,i)=>{
     const m1q=calcMom(i,1),m2q=calcMom(i,2),m4q=calcMom(i,4),m8q=calcMom(i,8);
     return{n,m1q,m2q,m4q,m8q,comp:(m1q+m2q*1.5+m4q*2.5+m8q*3)/8};
@@ -562,8 +748,9 @@ function drawMomentum(){
   const st=v=>v>.3?'\u25B2\u25B2':v>.1?'\u25B2':v<-.3?'\u25BC\u25BC':v<-.1?'\u25BC':'\u25CF';
   const bg=v=>v>.15?'<span class="badge badge-buy">BUY</span>':v<-.15?'<span class="badge badge-sell">SELL</span>':'<span class="badge badge-hold">HOLD</span>';
   const fmt=v=>(v>=0?'+':'')+v.toFixed(2);
-  let h='<tr><th>Asset</th><th>3M</th><th>6M</th><th>1Y</th><th>2Y</th><th>Signal</th></tr>';
-  md.forEach(r=>{h+=`<tr><td>${r.n}</td><td class="${sc(r.m1q)}">${st(r.m1q)} ${fmt(r.m1q)}</td><td class="${sc(r.m2q)}">${st(r.m2q)} ${fmt(r.m2q)}</td><td class="${sc(r.m4q)}">${st(r.m4q)} ${fmt(r.m4q)}</td><td class="${sc(r.m8q)}">${st(r.m8q)} ${fmt(r.m8q)}</td><td>${bg(r.comp)}</td></tr>`;});
+  let h='<thead><tr><th>Asset</th><th>3M (1Q)</th><th>6M (2Q)</th><th>12M (4Q)</th><th>24M (8Q)</th><th>Composite</th><th>Signal</th></tr></thead><tbody>';
+  md.forEach(r=>{h+=`<tr><td>${r.n}</td><td class="${sc(r.m1q)}">${st(r.m1q)} ${fmt(r.m1q)}</td><td class="${sc(r.m2q)}">${st(r.m2q)} ${fmt(r.m2q)}</td><td class="${sc(r.m4q)}">${st(r.m4q)} ${fmt(r.m4q)}</td><td class="${sc(r.m8q)}">${st(r.m8q)} ${fmt(r.m8q)}</td><td class="${sc(r.comp)}"><b>${fmt(r.comp)}</b></td><td>${bg(r.comp)}</td></tr>`;});
+  h+='</tbody>';
   t.innerHTML=h;
 }
 
@@ -572,24 +759,36 @@ function drawAlloc(){
   const d=cur(),rn=regime(d.g,d.inf).name,tac=tactical(rn),c=document.getElementById('allocBars');c.innerHTML='';
   AC.forEach((n,i)=>{
     const tilt=tac[i]-STRAT[i],tc=tilt>0?'var(--green)':tilt<0?'var(--red)':'var(--dim)',ts=tilt>0?'+':'';
-    c.innerHTML+=`<div class="arow"><div class="lbl">${n}</div><div class="bars"><div class="bar" style="width:${STRAT[i]/40*100}%;background:rgba(148,163,184,.2)"></div></div><div class="bars"><div class="bar" style="width:${tac[i]/40*100}%;background:rgba(6,182,212,.35)"></div></div><div class="nums"><span class="s">${STRAT[i]}%</span><span class="t">${tac[i]}%</span><span class="d" style="color:${tc}">${ts}${tilt}</span></div></div>`;
+    c.innerHTML+=`<div class="arow" title="${n}: strategic ${STRAT[i]}%, tactical ${tac[i]}%, tilt ${ts}${tilt}pp"><div class="lbl">${n}</div><div class="bars"><div class="bar" style="width:${STRAT[i]/40*100}%;background:rgba(148,163,184,.2)"></div></div><div class="bars"><div class="bar" style="width:${tac[i]/40*100}%;background:rgba(6,182,212,.35)"></div></div><div class="nums"><span class="s">${STRAT[i]}%</span><span class="t">${tac[i]}%</span><span class="d" style="color:${tc}">${ts}${tilt}</span></div></div>`;
   });
+  const sS=STRAT.reduce((a,b)=>a+b,0),sT=tac.reduce((a,b)=>a+b,0);
+  const mx=Math.max(...tac.map((v,i)=>Math.abs(v-STRAT[i])));
+  c.innerHTML+=`<div class="arow" style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
+    <div class="lbl" style="color:var(--text);font-weight:600">Total</div>
+    <div class="bars"></div><div class="bars"></div>
+    <div class="nums"><span class="s">${sS}%</span><span class="t">${sT}%</span><span class="d" style="color:var(--dim)">0</span></div></div>
+    <div style="font-size:10.5px;color:var(--faint);font-family:var(--mono);margin-top:6px">regime <b style="color:var(--text)">${rn}</b> &middot; largest tilt ${mx}pp &middot; bound &plusmn;10pp &middot; tilts sum to 0</div>`;
 }
 
 // ATTRIBUTION — Proper Brinson-Hood-Beebower decomposition
 // [annualized_base_return, growth_beta, inflation_beta, quarterly_vol]
+// Expected returns are long-run capital-market assumptions; quarterly vol is
+// the annual assumption in ANN_VOL divided by 2.
 const ASSET_PARAMS=[
-  [0.10, 0.040,-0.012, 0.08],  // US Equity: pro-growth, inflation drag via rates
-  [0.08, 0.030,-0.010, 0.09],  // Intl Equity
-  [0.09, 0.050,-0.008, 0.11],  // EM Equity: high growth beta
-  [0.04,-0.020,-0.018, 0.03],  // Fixed Income: inverse growth (rates fall → price up), inverse inflation
-  [0.06, 0.030,-0.006, 0.04],  // High Yield: credit cycle, mild inflation drag
-  [0.12, 0.040,-0.010, 0.07],  // Priv. Equity
-  [0.05, 0.010, 0.020, 0.06],  // Real Assets: inflation beneficiary
-  [0.03, 0.005, 0.005, 0.002]  // Cash: near-risk-free, tiny vol
+  [0.068, 0.040,-0.012, 0.0800], // US Equity: pro-growth, inflation drag via rates
+  [0.072, 0.030,-0.010, 0.0850], // Intl Equity
+  [0.078, 0.050,-0.008, 0.1050], // EM Equity: high growth beta
+  [0.045,-0.020,-0.018, 0.0275], // Fixed Income: duration gains when growth/inflation fall
+  [0.062, 0.030,-0.006, 0.0450], // High Yield: credit cycle, mild inflation drag
+  [0.095, 0.040,-0.010, 0.1100], // Priv. Equity (de-smoothed)
+  [0.062, 0.010, 0.020, 0.0700], // Real Assets: inflation beneficiary
+  [0.036, 0.005, 0.005, 0.0030]  // Cash
 ];
 
-function seededRand(seed){const x=(Math.sin(seed)*43758.5453)%1;return Math.abs(x)*0.98+0.01;}
+const SEED=20260101;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+// deterministic uniform in (0,1) keyed on an arbitrary real
+function seededRand(key){return mulberry32((SEED+Math.round(key*1000))>>>0)()*0.998+0.001;}
 function seededNorm(s1,s2){const u=seededRand(s1),v=seededRand(s2);const n=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);return Math.max(-2.5,Math.min(2.5,n));}
 
 function simAssetReturns(qi){
@@ -615,17 +814,16 @@ function computeBrinson(qi){
     return r+alpha;
   });
 
-  let alloc=0,sel=0,inter=0;
+  let alloc=0,sel=0,inter=0,rpTot=0,rbTot=0;
   for(let i=0;i<wb.length;i++){
     alloc+=(wp[i]-wb[i])*rb[i];
     sel+=wb[i]*(rp[i]-rb[i]);
     inter+=(wp[i]-wb[i])*(rp[i]-rb[i]);
+    rpTot+=wp[i]*rp[i];rbTot+=wb[i]*rb[i];
   }
-
-  const fxNoise=seededNorm(qi*23.1+0.5,qi*17.9+3.2)*0.003;
-  const currency=d.inf*-0.002+fxNoise;
-  const total=alloc+sel+inter+currency;
-  return{alloc,sel,inter,currency,total};
+  // Identity: alloc + sel + inter === (sum wp*rp) - (sum wb*rb), exactly.
+  const total=alloc+sel+inter;
+  return{alloc,sel,inter,total,rpTot,rbTot};
 }
 
 function fmtBps(v){
@@ -639,7 +837,7 @@ function drawAttr(){
   ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
 
   const qi=Math.min(tIdx,RD.length-1);
-  const{alloc:ae,sel:se,inter:ie,currency:ce,total:ta}=computeBrinson(qi);
+  const{alloc:ae,sel:se,inter:ie,total:ta,rpTot,rbTot}=computeBrinson(qi);
 
   attrHistory.length=0;
   const lookback=Math.min(qi+1,12);
@@ -650,14 +848,14 @@ function drawAttr(){
   const te=Math.sqrt(attrHistory.reduce((s,v)=>s+(v-meanAR)**2,0)/Math.max(attrHistory.length-1,1));
   const ir=te>0.0001?(meanAR/te)*Math.sqrt(4):0;
 
-  const items=[{l:'Allocation',v:ae},{l:'Selection',v:se},{l:'Interaction',v:ie},{l:'Currency',v:ce},{l:'Total Active',v:ta,tot:true}];
+  const items=[{l:'Allocation',v:ae},{l:'Selection',v:se},{l:'Interaction',v:ie},{l:'Total Active',v:ta,tot:true}];
   const p={l:75,r:25,t:25,b:45},pw=W-p.l-p.r,ph=H-p.t-p.b,bW=pw/items.length*.55,gap=pw/items.length;
   const maxBps=Math.max(...items.map(i=>Math.abs(i.v*10000)))*1.4||50;
   const mv=maxBps/10000;
   const zY=p.t+ph/2,sv=v=>zY-v/mv*(ph/2);
 
   ctx.strokeStyle='rgba(148,163,184,.25)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.l,zY);ctx.lineTo(W-p.r,zY);ctx.stroke();
-  ctx.font='9px var(--mono)';ctx.fillStyle='#64748b';ctx.textAlign='right';
+  ctx.font='9px "JetBrains Mono",monospace';ctx.fillStyle='#64748b';ctx.textAlign='right';
   const gridBps=maxBps>200?Math.ceil(maxBps/200)*100:maxBps>80?Math.ceil(maxBps/100)*50:maxBps>30?Math.ceil(maxBps/40)*20:Math.ceil(maxBps/10)*5;
   for(let step=-2;step<=2;step++){
     if(step===0)continue;
@@ -666,6 +864,8 @@ function drawAttr(){
     ctx.fillText(bpVal.toFixed(0)+' bps',p.l-6,y+3);
   }
   ctx.fillText('0',p.l-6,zY+3);
+  ctx.textAlign='left';ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';
+  ctx.fillText('Contribution to quarterly active return (bps)',6,12);
 
   let rs=0;
   items.forEach((it,i)=>{
@@ -678,20 +878,44 @@ function drawAttr(){
     const rx=Math.min(4,bH/2);
     ctx.beginPath();ctx.moveTo(x+rx,yTop);ctx.lineTo(x+bW-rx,yTop);ctx.quadraticCurveTo(x+bW,yTop,x+bW,yTop+rx);ctx.lineTo(x+bW,yBot-rx);ctx.quadraticCurveTo(x+bW,yBot,x+bW-rx,yBot);ctx.lineTo(x+rx,yBot);ctx.quadraticCurveTo(x,yBot,x,yBot-rx);ctx.lineTo(x,yTop+rx);ctx.quadraticCurveTo(x,yTop,x+rx,yTop);ctx.fill();
     ctx.globalAlpha=1;
-    ctx.fillStyle=col;ctx.font='bold 11px var(--mono)';ctx.textAlign='center';
+    ctx.fillStyle=col;ctx.font='bold 11px "JetBrains Mono",monospace';ctx.textAlign='center';
     ctx.fillText(fmtBps(it.v),x+bW/2,it.v>=0?yTop-7:yBot+13);
     ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.fillText(it.l,x+bW/2,H-p.b+14);
-    if(!it.tot&&i<items.length-2){
+    if(!it.tot&&i<items.length-1){
       ctx.strokeStyle='rgba(148,163,184,.25)';ctx.setLineDash([3,3]);ctx.lineWidth=1;
       const nx=p.l+gap*(i+1)+gap/2-bW/2,cy=sv(rs);
       ctx.beginPath();ctx.moveTo(x+bW+2,cy);ctx.lineTo(nx-2,cy);ctx.stroke();ctx.setLineDash([]);
     }
   });
 
+  const chk=Math.abs((ae+se+ie)-ta)<1e-12;
   document.getElementById('attrMetrics').innerHTML=`
+    <div class="mcard"><div class="v c">${(rpTot*100).toFixed(2)}%</div><div class="l">Portfolio (qtr)</div></div>
+    <div class="mcard"><div class="v" style="color:var(--dim)">${(rbTot*100).toFixed(2)}%</div><div class="l">Benchmark (qtr)</div></div>
     <div class="mcard"><div class="v ${ta>=0?'g':'r'}">${fmtBps(ta)}</div><div class="l">Total Active</div></div>
-    <div class="mcard"><div class="v c">${ir.toFixed(2)}</div><div class="l">Info Ratio</div></div>
-    <div class="mcard"><div class="v ${ae>=0?'g':'r'}">${fmtBps(ae)}</div><div class="l">Alloc Effect</div></div>`;
+    <div class="mcard"><div class="v c">${ir.toFixed(2)}</div><div class="l">Info Ratio 12Q</div></div>
+    <div class="mcard"><div class="v ${chk?'g':'r'}">${chk?'\u2713':'\u2717'}</div><div class="l">A+S+I = Total</div></div>`;
+}
+
+// RISK DECOMPOSITION - Euler contributions to ex-ante portfolio volatility
+function drawRisk(){
+  const d=cur(),rn=regime(d.g,d.inf).name;
+  const wp=tactical(rn).map(x=>x/100),wb=STRAT.map(x=>x/100);
+  const{sp,ctr}=riskContrib(wp);
+  const spb=portVol(wb),te=portVol(wp.map((x,i)=>x-wb[i]));
+  const cols=['#06b6d4','#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#f97316','#94a3b8'];
+  const mx=Math.max(...ctr.map(Math.abs))||1;
+  let h='',sum=0;
+  AC.forEach((n,i)=>{
+    const pct=sp>0?ctr[i]/sp*100:0;sum+=pct;
+    h+=`<div class="arow" title="${n}: ${(wp[i]*100).toFixed(0)}% weight, ${ANN_VOL[i].toFixed(1)}% vol, ${pct.toFixed(1)}% of portfolio risk"><div class="lbl">${n}</div><div class="bars"><div class="bar" style="width:${Math.max(Math.abs(ctr[i])/mx*100,1.5)}%;background:${cols[i]}44;border-left:3px solid ${cols[i]}"></div></div><div class="nums"><span class="t">${pct.toFixed(1)}%</span><span class="s">${(wp[i]*100).toFixed(0)}% w</span></div></div>`;
+  });
+  document.getElementById('riskBars').innerHTML=h;
+  document.getElementById('riskMetrics').innerHTML=`
+    <div class="mcard"><div class="v c">${(sp*100).toFixed(1)}%</div><div class="l">Portfolio &sigma;</div></div>
+    <div class="mcard"><div class="v" style="color:var(--dim)">${(spb*100).toFixed(1)}%</div><div class="l">Benchmark &sigma;</div></div>
+    <div class="mcard"><div class="v y">${(te*10000).toFixed(0)}</div><div class="l">Ex-ante TE (bps)</div></div>
+    <div class="mcard"><div class="v ${Math.abs(sum-100)<0.05?'g':'r'}">${sum.toFixed(1)}%</div><div class="l">&Sigma; contributions</div></div>`;
 }
 
 // CORRELATION
@@ -707,10 +931,10 @@ function drawCorr(){
     if(v>=0){const t=v;r=Math.round(8+t*10);g=Math.round(13+t*70);b=Math.round(26+t*180);}
     else{const t=-v;r=Math.round(8+t*210);g=Math.round(13+t*20);b=Math.round(26+t*20);}
     ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(x+1,y+1,cw-2,ch-2);
-    ctx.fillStyle=Math.abs(v)>.4?'#e2e8f0':'#94a3b8';ctx.font='10px var(--mono)';ctx.textAlign='center';ctx.fillText(v.toFixed(2),x+cw/2,y+ch/2+4);
+    ctx.fillStyle=Math.abs(v)>.4?'#e2e8f0':'#94a3b8';ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.fillText(v.toFixed(2),x+cw/2,y+ch/2+4);
   }}
 
-  ctx.fillStyle='#94a3b8';ctx.font='10px var(--mono)';
+  ctx.fillStyle='#94a3b8';ctx.font='10px "JetBrains Mono",monospace';
   CL.forEach((l,i)=>{
     ctx.textAlign='right';ctx.fillText(l,p.l-6,p.t+i*ch+ch/2+3);
     ctx.save();ctx.translate(p.l+i*cw+cw/2,H-p.b+8);ctx.rotate(-Math.PI/4);ctx.textAlign='right';ctx.fillText(l,0,0);ctx.restore();
@@ -729,88 +953,188 @@ document.getElementById('corrCanvas')?.addEventListener('mousemove',function(e){
 });
 document.getElementById('corrCanvas')?.addEventListener('mouseleave',()=>{document.getElementById('corrTip').style.display='none';});
 
-// J-CURVE
-function drawJCurve(){
-  const commit=+document.getElementById('slCommit').value,callR=+document.getElementById('slCall').value/100;
-  const distS=+document.getElementById('slDist').value,growth=+document.getElementById('slGrowth').value/100;
-  document.getElementById('pcCommit').textContent=commit;document.getElementById('pcCall').textContent=+document.getElementById('slCall').value;
-  document.getElementById('pcDist').textContent=distS;document.getElementById('pcGrowth').textContent=+document.getElementById('slGrowth').value;
-
-  const yrs=10,data=[];let calC=0,distC=0,nav=0;
-  for(let y=0;y<=yrs;y++){
-    const rem=commit-calC,cal=y===0?0:Math.min(rem,commit*callR*(y<=3?1:.4));calC+=cal;nav+=cal;
-    if(y>=distS){const ds=nav*(.15+y*.03);distC+=ds;nav-=ds;nav*=(1+growth*(1-y/yrs));}
-    else nav*=(1+growth*.3);
-    data.push({y,cal:calC,dist:distC,nav,cf:-calC+distC});
+// PRIVATE CAPITAL PACING - Takahashi & Alexander (2002) commitment model.
+//   C_t   = RC x uncalled commitment            (drawn at the start of year t)
+//   NAV_t = (NAV_{t-1} + C_t) x (1 + G)
+//   RD_t  = max(Y, (t / L)^B)                   (bow factor B, yield floor Y)
+//   D_t   = RD_t x NAV_t                        (at t = L, RD = 1 -> wind-down)
+// Newton-Raphson IRR on the annual net cashflow stream.
+function solveIRR(cfs){
+  let r=0.10;
+  for(let iter=0;iter<200;iter++){
+    let npv=0,dnpv=0;
+    for(let t=0;t<cfs.length;t++){
+      const df=Math.pow(1+r,-t);
+      npv+=cfs[t]*df;
+      dnpv-=t*cfs[t]*df/(1+r);
+    }
+    if(Math.abs(dnpv)<1e-12)break;
+    const nr=r-npv/dnpv;
+    if(!isFinite(nr))break;
+    if(Math.abs(nr-r)<1e-9){r=nr;break;}
+    r=Math.max(-0.9,Math.min(5,nr));
   }
+  return r;
+}
+
+function drawJCurve(){
+  const commit=+document.getElementById('slCommit').value;
+  const RC=+document.getElementById('slCall').value/100;
+  const L=+document.getElementById('slDist').value;
+  const G=+document.getElementById('slGrowth').value/100;
+  const B=+document.getElementById('slBow').value/10;
+  const Y=+document.getElementById('slYield').value/100;
+  document.getElementById('pcCommit').textContent='$'+commit+'M';
+  document.getElementById('pcCall').textContent=(RC*100).toFixed(0)+'%';
+  document.getElementById('pcDist').textContent=L+' yr';
+  document.getElementById('pcGrowth').textContent=(G*100).toFixed(0)+'%';
+  document.getElementById('pcBow').textContent=B.toFixed(1);
+  document.getElementById('pcYield').textContent=(Y*100).toFixed(0)+'%';
+
+  const data=[{y:0,cal:0,dist:0,nav:0,cf:0}],cfs=new Array(L+1).fill(0);
+  let uncalled=commit,calC=0,distC=0,nav=0;
+  for(let y=1;y<=L;y++){
+    const C=RC*uncalled;uncalled-=C;calC+=C;cfs[y-1]-=C;
+    nav=(nav+C)*(1+G);
+    const D=Math.max(Y,Math.pow(y/L,B))*nav;
+    nav-=D;distC+=D;cfs[y]+=D;
+    data.push({y,cal:calC,dist:distC,nav,cf:distC-calC});
+  }
+  const yrs=L;
 
   const c=document.getElementById('jcurveCanvas');
-  const{ctx,W,H}=setup(c,280);
+  const{ctx,W,H}=setup(c,300);
   ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  const p={l:55,r:20,t:20,b:35},pw=W-p.l-p.r,ph=H-p.t-p.b;
-  const maxV=Math.max(...data.map(d=>Math.max(d.cal,d.dist,d.nav,Math.abs(d.cf))))*1.15;
-  const minCF=Math.min(...data.map(d=>d.cf)),range=maxV-Math.min(0,minCF);
-  const sy=v=>H-p.b-(v-Math.min(0,minCF))/range*ph,sx=i=>(i/yrs)*pw+p.l;
+  const p={l:64,r:24,t:26,b:44},pw=W-p.l-p.r,ph=H-p.t-p.b;
+  const maxV=Math.max(...data.map(d=>Math.max(d.cal,d.dist,d.nav,d.cf)))*1.12;
+  const minV=Math.min(0,...data.map(d=>d.cf))*1.12;
+  const range=(maxV-minV)||1;
+  const sy=v=>H-p.b-(v-minV)/range*ph,sx=i=>p.l+(i/yrs)*pw;
 
-  ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;
-  for(let i=0;i<=4;i++){const v=Math.min(0,minCF)+range*i/4,y=sy(v);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();
-    ctx.fillStyle='#64748b';ctx.font='9px var(--mono)';ctx.textAlign='right';ctx.fillText('$'+v.toFixed(0)+'M',p.l-5,y+3);}
-
-  ctx.strokeStyle='rgba(148,163,184,.2)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.l,sy(0));ctx.lineTo(W-p.r,sy(0));ctx.stroke();
+  ctx.font="9px \"JetBrains Mono\",monospace";
+  for(let i=0;i<=4;i++){
+    const v=minV+range*i/4,y=sy(v);
+    ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.fillText('$'+v.toFixed(0)+'M',p.l-6,y+3);
+  }
+  ctx.strokeStyle='rgba(148,163,184,.28)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(p.l,sy(0));ctx.lineTo(W-p.r,sy(0));ctx.stroke();
 
   const dl=(k,col,dash)=>{ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash(dash?[4,4]:[]);ctx.beginPath();data.forEach((d,i)=>{i===0?ctx.moveTo(sx(i),sy(d[k])):ctx.lineTo(sx(i),sy(d[k]));});ctx.stroke();ctx.setLineDash([]);};
   dl('cal','#ef4444',true);dl('dist','#10b981',true);dl('nav','#06b6d4',false);
-
   ctx.strokeStyle='#f59e0b';ctx.lineWidth=2.5;ctx.shadowColor='rgba(245,158,11,.3)';ctx.shadowBlur=5;
   ctx.beginPath();data.forEach((d,i)=>{i===0?ctx.moveTo(sx(i),sy(d.cf)):ctx.lineTo(sx(i),sy(d.cf));});ctx.stroke();ctx.shadowBlur=0;
 
-  ctx.fillStyle='#64748b';ctx.textAlign='center';for(let i=0;i<=yrs;i+=2)ctx.fillText('Y'+i,sx(i),H-p.b+14);
-  ctx.font='9px var(--mono)';ctx.textAlign='left';
-  [{l:'J-Curve',c:'#f59e0b'},{l:'NAV',c:'#06b6d4'},{l:'Called',c:'#ef4444'},{l:'Distributed',c:'#10b981'}].forEach((l,i)=>{
-    ctx.fillStyle=l.c;ctx.fillRect(p.l+i*90,H-12,8,8);ctx.fillStyle='#94a3b8';ctx.fillText(l.l,p.l+i*90+12,H-4);
+  ctx.fillStyle='#64748b';ctx.textAlign='center';ctx.font="9px \"JetBrains Mono\",monospace";
+  const step=yrs>12?3:2;
+  for(let i=0;i<=yrs;i+=step)ctx.fillText('Y'+i,sx(i),H-p.b+15);
+  ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';
+  ctx.fillText('Fund year',(p.l+W-p.r)/2,H-p.b+30);
+  ctx.save();ctx.translate(p.l-44,p.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('Cumulative $M',0,0);ctx.restore();
+  ctx.textAlign='left';
+  [{l:'Net cashflow (J-curve)',c:'#f59e0b'},{l:'NAV',c:'#06b6d4'},{l:'Cum. called',c:'#ef4444'},{l:'Cum. distributed',c:'#10b981'}].forEach((l,i)=>{
+    const lx=p.l+i*Math.min(140,pw/4);
+    ctx.fillStyle=l.c;ctx.fillRect(lx,p.t-16,10,3);
+    ctx.fillStyle='#94a3b8';ctx.fillText(l.l,lx+14,p.t-13);
   });
+  c._m={p,pw,yrs,data,sx,sy};
 
-  const fn=data[data.length-1].nav,td=data[data.length-1].dist,tvpi=(td+fn)/calC,dpi=td/calC,rvpi=fn/calC;
-  // Proper IRR via Newton's method on the net cashflow stream
-  const cfs=data.map((d,i)=>{
-    const callIn=i===0?0:(d.cal-(i>0?data[i-1].cal:0));
-    const distOut=i===0?0:(d.dist-(i>0?data[i-1].dist:0));
-    return-callIn+distOut;
-  });
-  cfs[cfs.length-1]+=fn;
-  function solveIRR(cfs){
-    let r=0.10;
-    for(let iter=0;iter<100;iter++){
-      let npv=0,dnpv=0;
-      for(let t=0;t<cfs.length;t++){
-        const df=Math.pow(1+r,-t);
-        npv+=cfs[t]*df;
-        dnpv-=t*cfs[t]*df/(1+r);
-      }
-      if(Math.abs(dnpv)<1e-12)break;
-      const nr=r-npv/dnpv;
-      if(Math.abs(nr-r)<1e-8)break;
-      r=Math.max(-0.5,Math.min(5,nr));
-    }
-    return r;
-  }
+  const fn=data[yrs].nav,td=data[yrs].dist;
+  const tvpi=calC>0?(td+fn)/calC:0;
+  const peak=-Math.min(0,...data.map(d=>d.cf));
+  let be=null;for(let i=1;i<=yrs;i++){if(data[i].cf>=0){be=i;break;}}
   const irr=solveIRR(cfs);
   document.getElementById('jcurveMetrics').innerHTML=`
-    <div class="mcard"><div class="v c">${tvpi.toFixed(2)}x</div><div class="l">TVPI</div></div>
-    <div class="mcard"><div class="v g">${dpi.toFixed(2)}x</div><div class="l">DPI</div></div>
-    <div class="mcard"><div class="v y">${rvpi.toFixed(2)}x</div><div class="l">RVPI</div></div>
-    <div class="mcard"><div class="v g">${(irr*100).toFixed(1)}%</div><div class="l">IRR</div></div>`;
+    <div class="mcard"><div class="v c">${tvpi.toFixed(2)}x</div><div class="l">TVPI (gross of fees)</div></div>
+    <div class="mcard"><div class="v g">${(irr*100).toFixed(1)}%</div><div class="l">IRR (gross)</div></div>
+    <div class="mcard"><div class="v y">$${peak.toFixed(0)}M</div><div class="l">Peak net outlay</div></div>
+    <div class="mcard"><div class="v ${be?'g':'r'}">${be?('Y'+be):'>L'}</div><div class="l">Break-even year</div></div>
+    <div class="mcard"><div class="v" style="color:var(--dim)">${(calC/commit*100).toFixed(0)}%</div><div class="l">Commitment called</div></div>`;
 }
 
 function renderAll(){
   const d=cur(),rg=regime(d.g,d.inf);
-  const b=document.getElementById('regimeBadge');b.textContent=rg.name.toUpperCase();b.className='regime-pill '+rg.cls;
+  const b=document.getElementById('regimeBadge');
+  b.textContent=rg.name.toUpperCase();b.className='d-pill '+rg.cls;
   document.getElementById('yearLabel').textContent=d.label;
-  drawQuadrant();drawVIX();drawMomentum();drawAlloc();drawAttr();drawCorr();drawJCurve();
+  drawQuadrant();drawVIX();drawMomentum();drawAlloc();drawRisk();drawAttr();drawCorr();drawJCurve();
+  const v=HIST_VIX[Math.min(tIdx,HIST_VIX.length-1)];
+  const vl=v<15?'low':v<25?'normal':v<35?'elevated':'crisis';
+  document.getElementById('statusBar').innerHTML=
+    'as-of <b>'+d.label+'</b> \u00b7 regime <b>'+rg.name+'</b> \u00b7 growth <b>'+zOf(d.g).toFixed(2)+'\u03c3</b>'+
+    ' \u00b7 inflation <b>'+zOf(d.inf).toFixed(2)+'\u03c3</b> (CPI \u2248 '+fmtCpi(d.inf)+'%)'+
+    ' \u00b7 VIX <b>'+v.toFixed(1)+'</b> ('+vl+') \u00b7 seed <b>'+SEED+'</b>';
 }
 
+/* ---------------------------------------------------------------- controls */
 document.getElementById('timeSlider').addEventListener('input',e=>{tIdx=+e.target.value;renderAll();});
-['slCommit','slCall','slDist','slGrowth'].forEach(id=>{document.getElementById(id).addEventListener('input',drawJCurve);});
+['slCommit','slCall','slDist','slGrowth','slBow','slYield'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',drawJCurve);
+});
+const DEFAULTS={timeSlider:103,slCommit:100,slCall:25,slDist:12,slGrowth:15,slBow:25,slYield:5};
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  Object.keys(DEFAULTS).forEach(k=>{document.getElementById(k).value=DEFAULTS[k];});
+  tIdx=DEFAULTS.timeSlider;renderAll();
+});
+
+/* -------------------------------------------------------------- help modal */
+const helpOverlay=document.getElementById('helpOverlay');
+document.getElementById('helpBtn').addEventListener('click',()=>helpOverlay.classList.add('show'));
+document.getElementById('helpClose').addEventListener('click',()=>helpOverlay.classList.remove('show'));
+helpOverlay.addEventListener('click',e=>{if(e.target===helpOverlay)helpOverlay.classList.remove('show');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')helpOverlay.classList.remove('show');});
+
+/* ----------------------------------------------------------- chart tooltips */
+function showTip(tip,host,mx,my,html){
+  tip.innerHTML=html;tip.style.display='block';
+  tip.style.left=Math.max(4,Math.min(mx+14,host.clientWidth-tip.offsetWidth-8))+'px';
+  tip.style.top=Math.max(4,my-16)+'px';
+}
+function hideTip(id){const t=document.getElementById(id);if(t)t.style.display='none';}
+
+const quadCv=document.getElementById('quadrantCanvas');
+quadCv.addEventListener('mousemove',function(e){
+  const m=this._m,tip=document.getElementById('quadTip');
+  if(!m){hideTip('quadTip');return;}
+  const r=this.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  let best=-1,bd=1e9;
+  for(let i=m.ts;i<=m.ti&&i<RD.length;i++){
+    const dx=m.sx(clip(RD[i].g))-mx,dy=m.sy(clip(RD[i].inf))-my,dd=dx*dx+dy*dy;
+    if(dd<bd){bd=dd;best=i;}
+  }
+  if(best>=0&&bd<400){
+    const q=RD[best],rg=regime(q.g,q.inf);
+    showTip(tip,this,mx,my,'<strong>'+q.label+'</strong><br>growth '+zOf(q.g).toFixed(2)+'\u03c3 \u00b7 inflation '+zOf(q.inf).toFixed(2)+'\u03c3<br>CPI \u2248 '+fmtCpi(q.inf)+'% \u00b7 VIX '+HIST_VIX[best].toFixed(1)+'<br><span style="color:'+rg.color+'">'+rg.name+'</span>');
+  }else hideTip('quadTip');
+});
+quadCv.addEventListener('mouseleave',()=>hideTip('quadTip'));
+
+const vixCv=document.getElementById('vixCanvas');
+vixCv.addEventListener('mousemove',function(e){
+  const m=this._m,tip=document.getElementById('vixTip');
+  if(!m){hideTip('vixTip');return;}
+  const r=this.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  if(my<m.cT-14||my>m.cT+m.cH+8||mx<m.cL-4||mx>m.cL+m.cW+4){hideTip('vixTip');return;}
+  const i=Math.round((mx-m.cL)/m.cW*(RD.length-1));
+  if(i<0||i>=m.n){hideTip('vixTip');return;}
+  const av=HIST_VIX[i],hv=HIST_VIX_HI[i];
+  const bd=av<15?'low':av<25?'normal':av<35?'elevated':'crisis';
+  showTip(tip,this,mx,my,'<strong>'+RD[i].label+'</strong><br>avg VIX '+av.toFixed(1)+' ('+bd+')<br>quarter high '+hv.toFixed(1));
+});
+vixCv.addEventListener('mouseleave',()=>hideTip('vixTip'));
+
+const jcCv=document.getElementById('jcurveCanvas');
+jcCv.addEventListener('mousemove',function(e){
+  const m=this._m,tip=document.getElementById('jcTip');
+  if(!m){hideTip('jcTip');return;}
+  const r=this.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const i=Math.round((mx-m.p.l)/m.pw*m.yrs);
+  if(i<0||i>m.yrs){hideTip('jcTip');return;}
+  const d=m.data[i];
+  showTip(tip,this,mx,my,'<strong>Year '+d.y+'</strong><br>called '+d.cal.toFixed(1)+'M \u00b7 distributed '+d.dist.toFixed(1)+'M<br>NAV '+d.nav.toFixed(1)+'M \u00b7 net CF '+(d.cf>=0?'+':'')+d.cf.toFixed(1)+'M');
+});
+jcCv.addEventListener('mouseleave',()=>hideTip('jcTip'));
 
 renderAll();
 let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderAll,200);});

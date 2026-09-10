@@ -4,322 +4,366 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portable Alpha Simulator | Cristian Arenas</title>
+<meta name="description" content="Interactive portable-alpha simulator: synthetic 60/40 beta through index futures financed at cash plus a spread, a fee-paying hedge-fund alpha sleeve and collateral yield, stress-tested across calm, crisis and rate-shock regimes on seeded synthetic data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0b1120;--card:#111827;--card2:#1a2332;
-  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
-  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
-  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
-}
-body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+body{font-size:14px;line-height:1.6}
 a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
-.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
-.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s}
-.nav .back:hover{color:var(--cyan)}
-.nav h1{font-size:15px;font-weight:600;color:var(--text)}
-.nav .run-pill{margin-left:auto;display:flex;gap:8px;align-items:center}
-.btn{padding:6px 18px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;font-family:'Inter','Segoe UI',sans-serif}
-.btn-reset{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
-.btn-reset:hover{color:var(--cyan);border-color:var(--cyan)}
+.demo-sub{max-width:1440px;margin:14px auto 0;padding:0 16px;color:var(--muted);font-size:.85rem}
+.demo-sub b{color:var(--text);font-weight:600}
 
-.guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
-.guide-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.guide-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;cursor:pointer;user-select:none}
-.guide-header h2{font-size:13px;font-weight:600;color:var(--dim)}
-.guide-toggle{background:var(--card2);border:1px solid var(--border);color:var(--dim);padding:4px 14px;border-radius:6px;font-size:11px;cursor:pointer;transition:.2s;font-family:var(--mono)}
-.guide-toggle:hover{color:var(--cyan);border-color:var(--cyan)}
-.guide-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;border-top:1px solid var(--border)}
-.guide-grid.hide{display:none}
-.guide-card{background:var(--card2);border-radius:8px;padding:12px 14px}
-.guide-card .step{display:inline-block;background:rgba(6,182,212,.15);color:var(--cyan);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;font-family:var(--mono)}
-.guide-card h3{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
-.guide-card p{font-size:11.5px;color:var(--dim);line-height:1.5}
-.guide-card strong{color:var(--text)}
-
-.grid{max-width:1440px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid{max-width:1440px;margin:14px auto 0;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .full{grid-column:1/-1}
 
-.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .panel-head h3{font-size:13px;font-weight:600;color:var(--text)}
-.panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
+.panel-head .tag{font-size:10.5px;color:var(--faint);font-style:italic}
 .panel-body{padding:16px 18px}
+.tbl-wrap{overflow-x:auto}
 
-.ctrl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:18px}
 .ctrl-group h4{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
-.inp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
-.inp-row label{color:var(--dim);font-size:11.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:6px;cursor:help;border-bottom:1px dotted rgba(148,163,184,.25)}
-.inp-wrap{display:flex;align-items:center;gap:3px}
-.inp-wrap input[type="number"]{
-  background:rgba(0,0,0,.25);border:1px solid var(--border);color:var(--text);
-  font-family:var(--mono);font-size:12px;padding:4px 6px;width:72px;text-align:right;border-radius:4px;transition:border-color .2s;
-}
-.inp-wrap input[type="number"]:focus{border-color:var(--cyan);outline:none;box-shadow:0 0 0 2px rgba(6,182,212,.15)}
-.inp-wrap input[type="number"]::-webkit-inner-spin-button{opacity:0.4}
-.inp-wrap .unit{color:var(--dim);font-size:10px;font-family:var(--mono);min-width:26px}
+.inp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:6px}
+.inp-row label{color:var(--muted);font-size:11.5px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help;border-bottom:1px dotted rgba(148,163,184,.25)}
+.inp-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.inp-wrap .d-input{width:74px;text-align:right;padding:4px 6px;font-size:12px}
+.inp-wrap .d-input::-webkit-inner-spin-button{opacity:.4}
+.inp-wrap .unit{color:var(--faint);font-size:10px;font-family:var(--mono);min-width:30px}
 
-.formula-bar{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:var(--dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.formula-bar{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:14px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.5}
 .formula-bar .eq{font-family:var(--mono);font-size:11px;color:var(--text)}
 .formula-bar .plus{color:var(--green);font-weight:700;font-family:var(--mono)}
 .formula-bar .minus{color:var(--red);font-weight:700;font-family:var(--mono)}
 
-canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+canvas{display:block;width:100%;border-radius:6px;background:var(--surface)}
 
 table.kpi{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
-table.kpi th{color:var(--dim);font-weight:600;padding:8px 8px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+table.kpi th{color:var(--muted);font-weight:600;padding:8px 8px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 table.kpi th:first-child{text-align:left}
-table.kpi td{padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px}
+table.kpi td{padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap}
 table.kpi td:first-child{text-align:left;font-family:inherit;cursor:help;border-bottom:1px dotted rgba(148,163,184,.2)}
-table.kpi tr:hover{background:rgba(6,182,212,.03)}
+table.kpi tr:hover{background:var(--accent-bg)}
 .delta-pos{color:var(--green);font-weight:600}
 .delta-neg{color:var(--red);font-weight:600}
-.delta-neut{color:var(--dim)}
+.delta-neut{color:var(--muted)}
 
-.decomp-row{display:flex;align-items:center;margin-bottom:5px;padding:4px 0;cursor:help}
-.decomp-row:hover{background:rgba(6,182,212,.03);border-radius:4px}
-.decomp-name{width:140px;color:var(--dim);font-size:12px;flex-shrink:0;border-bottom:1px dotted rgba(148,163,184,.2)}
-.decomp-val{width:65px;text-align:right;font-family:var(--mono);font-size:12px;flex-shrink:0;margin-right:10px}
-.decomp-bar-wrap{flex:1;height:20px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.1);border-radius:4px;overflow:hidden}
-.decomp-bar{display:block;height:100%;border-radius:3px;min-width:4px;transition:width .3s}
-.decomp-bar.pos{background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.5)}
-.decomp-bar.neg{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.5)}
-.decomp-net{border-top:1px solid var(--border);margin-top:8px;padding-top:8px}
-.decomp-net .decomp-name{font-weight:700;color:var(--text);border-bottom:none}
-.decomp-net .decomp-val{font-weight:700;color:var(--cyan)}
-.decomp-net .decomp-bar{background:#06b6d4;box-shadow:0 0 8px rgba(6,182,212,.5)}
-
-.health-row{display:flex;align-items:center;margin-bottom:6px;padding:4px 0;cursor:help}
-.health-row:hover{background:rgba(6,182,212,.03);border-radius:4px}
-.health-dot{width:8px;height:8px;border-radius:50%;margin-right:8px;flex-shrink:0}
+.health-row{display:flex;align-items:center;margin-bottom:6px;padding:4px 0;cursor:help;gap:6px;flex-wrap:wrap}
+.health-row:hover{background:var(--accent-bg);border-radius:4px}
+.health-dot{width:8px;height:8px;border-radius:50%;margin-right:4px;flex-shrink:0}
 .health-dot.ok{background:var(--green);box-shadow:0 0 4px rgba(16,185,129,.4)}
-.health-dot.warn{background:var(--yellow);box-shadow:0 0 4px rgba(245,158,11,.4)}
-.health-label{flex:1;font-size:12px;color:var(--dim);border-bottom:1px dotted rgba(148,163,184,.2)}
-.health-val{font-family:var(--mono);font-size:12px;color:var(--text);margin-left:8px}
-.health-tgt{font-size:10px;color:var(--dim);margin-left:6px;font-family:var(--mono)}
+.health-dot.warn{background:var(--amber);box-shadow:0 0 4px rgba(245,158,11,.4)}
+.health-label{flex:1;font-size:12px;color:var(--muted);border-bottom:1px dotted rgba(148,163,184,.2);min-width:140px}
+.health-val{font-family:var(--mono);font-size:12px;color:var(--text)}
+.health-tgt{font-size:10px;color:var(--faint);font-family:var(--mono)}
 
 table.stress{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-table.stress th{color:var(--dim);font-weight:600;padding:8px 6px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.3px}
-table.stress th:first-child{text-align:left}
-table.stress td{padding:8px 6px;text-align:right;font-family:var(--mono);font-size:12px}
+table.stress th{color:var(--muted);font-weight:600;padding:8px 6px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+table.stress th:first-child,table.stress th:last-child{text-align:left}
+table.stress td{padding:8px 6px;text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap}
 table.stress td:first-child{text-align:left;font-family:inherit;cursor:help;border-bottom:1px dotted rgba(148,163,184,.2)}
-table.stress td:last-child{text-align:left;font-family:inherit;color:var(--dim);font-size:11px;max-width:130px}
-table.stress tr:hover{background:rgba(6,182,212,.03)}
+table.stress td:last-child{text-align:left;font-family:inherit;color:var(--muted);font-size:11px;white-space:normal;min-width:150px}
+table.stress td.call{color:var(--amber)}
+table.stress tr:hover{background:var(--accent-bg)}
 
-.chart-legend{display:flex;gap:16px;margin-top:10px;font-size:11px;flex-wrap:wrap;align-items:center}
-.chart-legend span{display:flex;align-items:center;gap:5px;color:var(--dim)}
-.chart-legend .dot{width:10px;height:3px;border-radius:2px;display:inline-block}
+.chart-legend{display:flex;gap:14px;margin-top:10px;font-size:11px;flex-wrap:wrap;align-items:center}
+.chart-legend span{display:flex;align-items:center;gap:5px;color:var(--muted)}
+.chart-legend .dot{width:12px;height:3px;border-radius:2px;display:inline-block}
+.chart-legend .box{width:14px;height:10px;border-radius:2px;display:inline-block}
 
-.tip{position:fixed;background:var(--card);border:1px solid var(--cyan);border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;display:none;z-index:1000;max-width:320px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.d-tooltip .ct-head{color:var(--muted);font-size:10px;margin-bottom:4px}
+.d-tooltip .ct-row{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.d-tooltip .ct-dot{width:8px;height:3px;border-radius:2px;flex-shrink:0}
+.d-tooltip .ct-label{color:var(--muted);font-size:10px}
+.d-tooltip .ct-val{color:var(--text);font-weight:600;margin-left:auto}
+.d-tooltip .ct-note{color:var(--muted);margin-top:4px;font-size:11px;font-family:var(--sans)}
+#globalTip{font-family:var(--sans);font-weight:400;font-size:12px}
 
-.chart-tip{position:absolute;background:var(--card);border:1px solid var(--cyan);border-radius:8px;padding:8px 12px;font-size:11px;pointer-events:none;display:none;z-index:10;white-space:nowrap;font-family:var(--mono);box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.chart-tip .ct-row{display:flex;align-items:center;gap:6px;margin-bottom:2px}
-.chart-tip .ct-row:last-child{margin-bottom:0}
-.chart-tip .ct-dot{width:8px;height:3px;border-radius:2px;flex-shrink:0}
-.chart-tip .ct-label{color:var(--dim);font-size:10px}
-.chart-tip .ct-val{color:var(--text);font-weight:600;margin-left:auto}
+.d-help-section table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
+.d-help-section th,.d-help-section td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--muted)}
+.d-help-section th{color:var(--text);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.d-help-section td:first-child{color:var(--text);font-family:var(--mono);font-size:.74rem}
 
-.status-bar{max-width:1440px;margin:0 auto 16px;padding:0 16px}
-.status-inner{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:10px;color:var(--dim);letter-spacing:.3px;display:flex;align-items:center;gap:6px;font-family:var(--mono);flex-wrap:wrap}
-.status-inner .sep{color:var(--border)}
-.status-inner .val{color:var(--cyan);font-weight:600}
-
-@media(max-width:1100px){.ctrl-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:768px){.grid{grid-template-columns:1fr}.ctrl-grid{grid-template-columns:1fr}}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<div class="nav">
-  <a href="index.html" class="back">&#9664; Portfolio</a>
-  <h1>Portable Alpha Simulator</h1>
-  <div class="run-pill">
-    <button class="btn btn-reset" onclick="resetDefaults()">RESET DEFAULTS</button>
+<nav class="demo-nav">
+  <a class="demo-brand" href="index.html">cristian@portfolio:~$ <span class="crumb">/ demos / portable-alpha</span></a>
+  <h1 class="demo-title"><i class="fas fa-layer-group"></i> Portable Alpha Simulator</h1>
+  <div class="demo-links">
+    <a href="index.html#projects">Projects</a>
+    <a href="index.html#research">Research</a>
+    <a href="index.html#demos" class="active">Demos</a>
+    <a href="robotics-embedded.html">Robotics</a>
   </div>
+  <div class="demo-actions">
+    <span class="d-pill live"><span class="pulse"></span> LIVE</span>
+    <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+<div class="demo-status">
+  <span id="statusBar">initialising&hellip;</span>
+  <span><b>Synthetic data</b> &middot; deterministic seed &middot; 3-regime Monte-Carlo, 180 months &middot; not investment advice</span>
 </div>
 
-<div class="guide">
-  <div class="guide-box">
-    <div class="guide-header" onclick="toggleGuide()">
-      <h2>Quick Guide &mdash; How to Use This Simulator</h2>
-      <button class="guide-toggle" id="guideBtn" onclick="event.stopPropagation();toggleGuide()">HIDE</button>
-    </div>
-    <div class="guide-grid" id="guideGrid">
-      <div class="guide-card">
-        <span class="step">STEP 1</span>
-        <h3>Understand the Concept</h3>
-        <p>This tool compares a <strong>traditional 60/40 portfolio</strong> against a <strong>portable alpha</strong> strategy that uses synthetic beta (futures) + an alpha overlay + collateral yield, minus real-world costs.</p>
-      </div>
-      <div class="guide-card">
-        <span class="step">STEP 2</span>
-        <h3>Set Benchmark / Beta</h3>
-        <p>Configure the <strong>equity/bond split</strong> and <strong>beta notional</strong> (futures exposure). Adjust <strong>basis noise</strong> and <strong>roll cost</strong> to model replication frictions.</p>
-      </div>
-      <div class="guide-card">
-        <span class="step">STEP 3</span>
-        <h3>Configure Alpha Overlay</h3>
-        <p>Set the alpha sleeve's <strong>allocation, target vol, IR</strong> (expected Sharpe of alpha), <strong>beta leakage</strong>, and <strong>slippage</strong>. These define your alpha engine.</p>
-      </div>
-      <div class="guide-card">
-        <span class="step">STEP 4</span>
-        <h3>Tune Costs &amp; Funding</h3>
-        <p>Set <strong>margin requirement</strong>, <strong>collateral buffer</strong>, and <strong>financing spread</strong>. If total exposure exceeds capacity, financing costs kick in.</p>
-      </div>
-      <div class="guide-card">
-        <span class="step">STEP 5</span>
-        <h3>Analyze Results</h3>
-        <p>Change any input and the simulation <strong>auto-updates instantly</strong>. Study the <strong>growth chart</strong>, <strong>drawdown</strong>, <strong>KPI table</strong>, and <strong>return decomposition</strong>. Click <strong>Reset Defaults</strong> to restore initial values.</p>
-      </div>
-      <div class="guide-card">
-        <span class="step">STEP 6</span>
-        <h3>Stress Test</h3>
-        <p>Check the <strong>Stress Scenarios</strong> table for one-month shocks. Review <strong>Simulation Health</strong> to verify the model behaves as configured. <strong>Hover any dotted label</strong> for an explanation.</p>
-      </div>
-    </div>
-  </div>
-</div>
+<p class="demo-sub"><b>Portable alpha</b> obtains the benchmark (60/40) exposure synthetically with index futures financed at cash + a spread, keeps the freed-up capital in a fee-paying hedge-fund style alpha sleeve, and earns the cash rate on the unencumbered collateral. Every change re-runs the simulation instantly; hover any dotted label for an explanation.</p>
 
 <div class="grid">
-  <div class="panel full">
+  <div class="d-panel full">
     <div class="panel-head">
       <h3>Parameters</h3>
       <span class="tag">Hover any dotted label for explanation &bull; Changes auto-update</span>
     </div>
     <div class="panel-body">
       <div class="formula-bar">
-        <span>PA Return</span>
+        <span>PA return</span>
         <span class="eq">=</span>
-        <span class="eq">Rf</span>
+        <span class="eq">(1&minus;A)&middot;Rf</span>
         <span class="plus">+</span>
-        <span class="eq">Beta x (Bench - Rf)</span>
+        <span class="eq">N&middot;(Bench &minus; Rf &minus; Spread &minus; Roll &plusmn; Basis)</span>
         <span class="plus">+</span>
-        <span class="eq">Alpha x AlphaExcess</span>
-        <span class="minus">-</span>
-        <span class="eq">Roll</span>
-        <span class="minus">-</span>
-        <span class="eq">Slippage</span>
-        <span class="minus">-</span>
-        <span class="eq">Financing</span>
-        <span class="plus">+/-</span>
-        <span class="eq">Basis</span>
+        <span class="eq">A&middot;(Rf + &alpha; + &beta;<sub>&alpha;</sub>&middot;(Eq &minus; Rf) &minus; Fees &minus; Drag)</span>
+        <span class="minus">&minus;</span>
+        <span class="eq">Liquidity cost</span>
+        <span style="color:var(--faint);font-size:11px">&nbsp;N = futures notional, A = alpha allocation (fractions of NAV); monthly steps</span>
       </div>
       <div class="ctrl-grid">
         <div class="ctrl-group">
           <h4>General</h4>
-          <div class="inp-row"><label data-tip="Random seed for the simulation. Same seed = identical results every time. Change to explore different market paths.">Seed</label><div class="inp-wrap"><input type="number" id="seed" value="42" min="1" max="9999" step="1"></div></div>
-          <div class="inp-row"><label data-tip="Risk-free rate (T-bill yield). The return earned on cash collateral posted for futures margin. Also the base cost embedded in futures pricing.">Cash / Rf Rate</label><div class="inp-wrap"><input type="number" id="cashRate" value="4.5" min="0" max="12" step="0.1"><span class="unit">%</span></div></div>
-          <div class="inp-row"><label data-tip="Target fraction of months in stress regime. Stress periods cluster via Markov switching and cause higher vol, negative equity drift, alpha deterioration, and amplified costs.">Stress Frequency</label><div class="inp-wrap"><input type="number" id="stressFreq" value="15" min="0" max="50" step="1"><span class="unit">%</span></div></div>
+          <div class="inp-row"><label for="seed" data-tip="Seed of the mulberry32 pseudo-random generator. The same seed always reproduces the same market path; change it to explore other paths.">Seed</label><div class="inp-wrap"><input class="d-input" type="number" id="seed" value="42" min="1" max="9999" step="1"></div></div>
+          <div class="inp-row"><label for="cashRate" data-tip="Cash / risk-free rate (SOFR or T-bill yield), annualised and held constant. Earned on unencumbered collateral and inside the alpha sleeve; it is also the implied financing rate embedded in futures prices.">Cash / Rf rate</label><div class="inp-wrap"><input class="d-input" type="number" id="cashRate" value="4.0" min="0" max="10" step="0.25"><span class="unit">%/y</span></div></div>
+          <div class="inp-row"><label for="stressFreq" data-tip="Target share of months spent in a stress regime (55% of them 2008-type crises with a mean length of 12 months, 45% 2022-type rate shocks with a mean length of 9 months). Regimes switch through a Markov chain, so stress clusters.">Stress share of months</label><div class="inp-wrap"><input class="d-input" type="number" id="stressFreq" value="15" min="0" max="50" step="1"><span class="unit">%</span></div></div>
         </div>
         <div class="ctrl-group">
-          <h4>Benchmark / Beta Sleeve</h4>
-          <div class="inp-row"><label data-tip="Equity weight in the benchmark portfolio. Bond weight = 100% minus equity weight. Default 60/40 mimics a traditional institutional allocation.">Equity Weight</label><div class="inp-wrap"><input type="number" id="eqWeight" value="60" min="0" max="100" step="5"><span class="unit">%</span></div></div>
-          <div class="inp-row"><label data-tip="Notional exposure to the benchmark obtained via futures, as % of NAV. 100% = full replication. Over 100% = levered beta. Futures P&L = Notional x (Benchmark - Rf).">Beta Notional</label><div class="inp-wrap"><input type="number" id="betaNotional" value="100" min="50" max="150" step="5"><span class="unit">%</span></div></div>
-          <div class="inp-row"><label data-tip="Monthly standard deviation of tracking error between futures replication and the spot benchmark (in basis points). Models real-world basis risk from index composition, dividends, and roll timing.">Basis Noise</label><div class="inp-wrap"><input type="number" id="basisNoise" value="15" min="0" max="100" step="5"><span class="unit">bps</span></div></div>
-          <div class="inp-row"><label data-tip="Annual cost of rolling futures contracts to maintain continuous exposure (basis points/year). Reflects the futures roll yield drag due to contango or backwardation.">Roll Cost</label><div class="inp-wrap"><input type="number" id="rollCost" value="25" min="0" max="100" step="5"><span class="unit">bp/y</span></div></div>
+          <h4>Beta sleeve (futures)</h4>
+          <div class="inp-row"><label for="eqWeight" data-tip="Equity weight of the benchmark. Bond weight = 100% minus this. The futures overlay replicates the same mix with equity index and Treasury futures.">Equity weight</label><div class="inp-wrap"><input class="d-input" type="number" id="eqWeight" value="60" min="0" max="100" step="5"><span class="unit">%</span></div></div>
+          <div class="inp-row"><label for="betaNotional" data-tip="Futures notional as % of NAV. 100% = one-for-one benchmark exposure; above 100% is levered beta, financed at cash + spread on the extra notional.">Futures notional (N)</label><div class="inp-wrap"><input class="d-input" type="number" id="betaNotional" value="100" min="100" max="150" step="5"><span class="unit">% NAV</span></div></div>
+          <div class="inp-row"><label for="financingSpread" data-tip="Implied financing spread of the futures over the cash rate (the 'richness' of the calendar roll). Equity index futures have traded around SOFR + 30 to 60 bp in recent years; Treasury futures close to zero. Charged on the whole notional.">Financing spread</label><div class="inp-wrap"><input class="d-input" type="number" id="financingSpread" value="35" min="0" max="200" step="5"><span class="unit">bp/y</span></div></div>
+          <div class="inp-row"><label for="rollCost" data-tip="Execution cost of the four quarterly rolls (calendar-spread bid/ask plus commissions), annualised. Typically 1 to 2 bp per roll.">Roll execution cost</label><div class="inp-wrap"><input class="d-input" type="number" id="rollCost" value="5" min="0" max="30" step="1"><span class="unit">bp/y</span></div></div>
+          <div class="inp-row"><label for="basisNoise" data-tip="Monthly standard deviation of the futures-versus-index tracking difference (dividend estimates, roll timing, bond-future cheapest-to-deliver changes). Zero mean.">Basis noise</label><div class="inp-wrap"><input class="d-input" type="number" id="basisNoise" value="10" min="0" max="60" step="5"><span class="unit">bp/mo</span></div></div>
         </div>
         <div class="ctrl-group">
-          <h4>Alpha Overlay</h4>
-          <div class="inp-row"><label data-tip="Fraction of NAV deployed to the alpha strategy. The alpha sleeve generates excess returns (above cash) with its own risk profile. Higher allocation = more alpha contribution but also more alpha risk.">Alpha Allocation</label><div class="inp-wrap"><input type="number" id="alphaAlloc" value="30" min="0" max="100" step="5"><span class="unit">%</span></div></div>
-          <div class="inp-row"><label data-tip="Annualized volatility target for the alpha sleeve. The strategy's risk budget. Higher vol = wider return distribution. Combined with IR, determines expected excess return.">Alpha Target Vol</label><div class="inp-wrap"><input type="number" id="alphaVol" value="6" min="0.5" max="20" step="0.5"><span class="unit">%</span></div></div>
-          <div class="inp-row"><label data-tip="Information Ratio: expected annualized excess return divided by tracking vol. IR 0.5 = modest skill, 0.8 = good, 1.0+ = exceptional. Expected alpha = IR x Vol.">Alpha Target IR</label><div class="inp-wrap"><input type="number" id="alphaIR" value="0.80" min="-0.5" max="2.0" step="0.05"></div></div>
-          <div class="inp-row"><label data-tip="Unintended equity beta in the alpha sleeve. 0.00 = perfectly market-neutral. Real strategies often have small residual market exposure (0.03 to 0.10 typical).">Alpha Beta Leakage</label><div class="inp-wrap"><input type="number" id="alphaLeakage" value="0.05" min="0" max="0.50" step="0.01"></div></div>
-          <div class="inp-row"><label data-tip="Annual implementation drag from trading costs, market impact, and capacity constraints (basis points/year). Amplified 2.5x during stress regimes due to wider spreads and lower liquidity.">Slippage / Capacity</label><div class="inp-wrap"><input type="number" id="slippage" value="40" min="0" max="200" step="5"><span class="unit">bp/y</span></div></div>
+          <h4>Alpha sleeve</h4>
+          <div class="inp-row"><label for="alphaAlloc" data-tip="Share of NAV invested in the hedge-fund style alpha sleeve. The rest stays in cash / T-bills that post the futures margin. Alpha sleeve total return = Rf + alpha + beta x (equity - Rf) - fees.">Alpha allocation (A)</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaAlloc" value="50" min="0" max="90" step="5"><span class="unit">% NAV</span></div></div>
+          <div class="inp-row"><label for="alphaVol" data-tip="Annualised volatility of the idiosyncratic alpha stream in the calm regime. Multiplied by 2.0 in crises and 1.3 in rate shocks.">Alpha target vol</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaVol" value="6" min="1" max="15" step="0.5"><span class="unit">%/y</span></div></div>
+          <div class="inp-row"><label for="alphaIR" data-tip="Gross information ratio of the alpha stream before fees (expected alpha = IR x vol). A diversified multi-manager book at 1.0 gross is optimistic; after 1.5/20 fees and regime shocks the net IR lands around 0.4 to 0.5. Applies only in calm months.">Gross alpha IR</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaIR" value="1.00" min="-0.5" max="2.0" step="0.05"></div></div>
+          <div class="inp-row"><label for="alphaBeta" data-tip="Stated beta of the alpha sleeve to the equity index. Should be low (0 to 0.3). Multiplied by 1.5 in crisis and rate-shock regimes (correlation spike).">Alpha beta to equities</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaBeta" value="0.15" min="0" max="0.50" step="0.05"></div></div>
         </div>
         <div class="ctrl-group">
-          <h4>Collateral / Funding</h4>
-          <div class="inp-row"><label data-tip="Initial margin required for futures positions as a percentage of notional exposure. Posted as cash/T-bills that earn the risk-free rate (already embedded in futures pricing).">Margin Requirement</label><div class="inp-wrap"><input type="number" id="marginReq" value="15" min="5" max="50" step="1"><span class="unit">%</span></div></div>
-          <div class="inp-row"><label data-tip="Minimum free cash buffer the portfolio must maintain above the margin requirement. If free capital drops below this, a financing cost is triggered to reflect borrowing/liquidity stress.">Collateral Buffer</label><div class="inp-wrap"><input type="number" id="collateralBuffer" value="5" min="0" max="20" step="1"><span class="unit">%</span></div></div>
-          <div class="inp-row"><label data-tip="Borrowing spread applied to the leveraged portion of the portfolio (total exposure above 100% of NAV). With Beta 100% + Alpha 30% = 130% exposure, the 30% excess is financed at this rate. Additional penalty if cash usage exceeds buffer.">Financing Spread</label><div class="inp-wrap"><input type="number" id="financingSpread" value="150" min="0" max="500" step="10"><span class="unit">bps</span></div></div>
+          <h4>Fees &amp; decay</h4>
+          <div class="inp-row"><label for="mgmtFee" data-tip="Management fee of the alpha sleeve, accrued monthly on the sleeve's NAV.">Management fee</label><div class="inp-wrap"><input class="d-input" type="number" id="mgmtFee" value="1.5" min="0" max="3" step="0.25"><span class="unit">%/y</span></div></div>
+          <div class="inp-row"><label for="perfFee" data-tip="Performance fee on gains above the sleeve's high-water mark, accrued monthly (no hurdle). Nothing is charged while the sleeve is below its previous peak.">Performance fee</label><div class="inp-wrap"><input class="d-input" type="number" id="perfFee" value="20" min="0" max="30" step="2.5"><span class="unit">%</span></div></div>
+          <div class="inp-row"><label for="alphaDecay" data-tip="Crowding / capacity decay: the expected alpha shrinks linearly by this share of its starting value every year (1%/y means the expected alpha is 15% lower by year 15).">Alpha decay</label><div class="inp-wrap"><input class="d-input" type="number" id="alphaDecay" value="1.0" min="0" max="10" step="0.5"><span class="unit">%/y</span></div></div>
+          <div class="inp-row"><label for="slippage" data-tip="Programme-level drag on the alpha allocation on top of manager fees: managed-account platform costs, FX hedging, cash drag between allocations. Typically 10 to 30 bp.">Implementation drag</label><div class="inp-wrap"><input class="d-input" type="number" id="slippage" value="15" min="0" max="100" step="5"><span class="unit">bp/y</span></div></div>
+        </div>
+        <div class="ctrl-group">
+          <h4>Collateral &amp; liquidity</h4>
+          <div class="inp-row"><label for="marginReq" data-tip="Initial margin of the futures as % of notional (blended). Exchange margin is roughly 5 to 10% for equity index futures and 1 to 3% for Treasury futures. Posted T-bills keep earning the cash rate.">Initial margin</label><div class="inp-wrap"><input class="d-input" type="number" id="marginReq" value="8" min="3" max="20" step="1"><span class="unit">% notl</span></div></div>
+          <div class="inp-row"><label for="haircut" data-tip="Haircut applied by the clearing house to T-bill collateral; more collateral has to be posted to cover the same margin.">Collateral haircut</label><div class="inp-wrap"><input class="d-input" type="number" id="haircut" value="2" min="0" max="10" step="0.5"><span class="unit">%</span></div></div>
+          <div class="inp-row"><label for="collateralBuffer" data-tip="Free cash the programme wants to hold beyond initial margin to meet variation-margin calls without redeeming from the (less liquid) alpha sleeve. Falling below it only raises a health warning; a month whose variation margin exceeds free cash is a margin call funded at cash + spread + 100 bp.">Liquidity buffer</label><div class="inp-wrap"><input class="d-input" type="number" id="collateralBuffer" value="5" min="0" max="25" step="1"><span class="unit">% NAV</span></div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="panel">
+  <div class="d-panel">
     <div class="panel-head"><h3>Growth of $100</h3><span class="tag">Hover chart for values</span></div>
-    <div class="panel-body" style="position:relative">
-      <canvas id="growthCanvas"></canvas>
-      <div class="chart-tip" id="growthTip"></div>
+    <div class="panel-body">
+      <canvas id="growthCanvas" role="img" aria-label="Growth of 100 dollars: benchmark versus portable alpha over 15 simulated years, with stress regimes shaded"></canvas>
       <div class="chart-legend">
-        <span><span class="dot" style="background:var(--blue)"></span> Base 60/40</span>
-        <span><span class="dot" style="background:var(--green)"></span> Portable Alpha</span>
-        <span><span class="dot" style="background:rgba(239,68,68,.3);width:14px;height:10px;border-radius:2px"></span> Stress regime</span>
+        <span><span class="dot" style="background:var(--blue)"></span> Benchmark (eq/bond)</span>
+        <span><span class="dot" style="background:var(--green)"></span> Portable alpha</span>
+        <span><span class="box" style="background:rgba(239,68,68,.28)"></span> Crisis regime</span>
+        <span><span class="box" style="background:rgba(245,158,11,.28)"></span> Rate-shock regime</span>
       </div>
     </div>
   </div>
-  <div class="panel">
+  <div class="d-panel">
     <div class="panel-head"><h3>Drawdown</h3><span class="tag">Peak-to-trough decline</span></div>
-    <div class="panel-body" style="position:relative">
-      <canvas id="ddCanvas"></canvas>
-      <div class="chart-tip" id="ddTip"></div>
+    <div class="panel-body">
+      <canvas id="ddCanvas" role="img" aria-label="Drawdown from peak: benchmark versus portable alpha over 15 simulated years"></canvas>
       <div class="chart-legend">
-        <span><span class="dot" style="background:rgba(59,130,246,.5)"></span> Base DD</span>
-        <span><span class="dot" style="background:rgba(16,185,129,.5)"></span> PA DD</span>
+        <span><span class="dot" style="background:rgba(59,130,246,.6)"></span> Benchmark drawdown</span>
+        <span><span class="dot" style="background:rgba(16,185,129,.6)"></span> Portable alpha drawdown</span>
       </div>
     </div>
   </div>
 
-  <div class="panel">
-    <div class="panel-head"><h3>Performance Comparison</h3><span class="tag">Base vs Portable Alpha</span></div>
+  <div class="d-panel">
+    <div class="panel-head"><h3>Performance comparison</h3><span class="tag">Benchmark vs portable alpha, 180 months</span></div>
+    <div class="panel-body tbl-wrap">
+      <table class="kpi"><thead><tr><th>Metric</th><th>Benchmark</th><th>Port. alpha</th><th>Delta</th></tr></thead><tbody id="kpiBody"></tbody></table>
+    </div>
+  </div>
+  <div class="d-panel">
+    <div class="panel-head"><h3>Return decomposition</h3><span class="tag">Waterfall of arithmetic annualised contributions</span></div>
     <div class="panel-body">
-      <table class="kpi"><thead><tr><th></th><th>Base</th><th>Port. Alpha</th><th>Delta</th></tr></thead><tbody id="kpiBody"></tbody></table>
+      <canvas id="decompCanvas" role="img" aria-label="Waterfall of annualised return contributions: collateral yield, beta sleeve, financing spread, roll cost, basis noise, alpha sleeve gross, fees and drag, liquidity cost, net"></canvas>
     </div>
   </div>
-  <div class="panel">
-    <div class="panel-head"><h3>Return Decomposition</h3><span class="tag">Waterfall: how components build to net return</span></div>
-    <div class="panel-body" style="position:relative">
-      <canvas id="decompCanvas"></canvas>
-      <div class="chart-tip" id="decompTip"></div>
-    </div>
-  </div>
-  <div class="panel">
-    <div class="panel-head"><h3>Simulation Health</h3><span class="tag">Model calibration check</span></div>
+  <div class="d-panel">
+    <div class="panel-head"><h3>Simulation health</h3><span class="tag">Calibration &amp; liquidity checks</span></div>
     <div class="panel-body"><div id="healthBox"></div></div>
   </div>
-  <div class="panel">
-    <div class="panel-head"><h3>Stress Scenarios</h3><span class="tag">One-month stylized shocks</span></div>
-    <div class="panel-body">
-      <table class="stress"><thead><tr><th>Scenario</th><th>Base</th><th>PA</th><th>Delta</th><th>Driver</th></tr></thead><tbody id="stressBody"></tbody></table>
+  <div class="d-panel">
+    <div class="panel-head"><h3>Stress scenarios</h3><span class="tag">One-month stylised shocks</span></div>
+    <div class="panel-body tbl-wrap">
+      <table class="stress"><thead><tr><th>Scenario</th><th>Bench</th><th>PA</th><th>Delta</th><th>Variation margin / liquidity</th></tr></thead><tbody id="stressBody"></tbody></table>
     </div>
   </div>
 </div>
 
-<div class="status-bar"><div class="status-inner" id="statusBar"></div></div>
-<div class="tip" id="globalTip"></div>
+<div class="d-tooltip" id="globalTip" role="tooltip"></div>
+<div class="d-tooltip" id="chartTip" role="tooltip"></div>
+
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; Portable Alpha Simulator</h2>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; The idea</h3>
+        <p>A traditional <strong>60/40</strong> fund buys stocks and bonds with all of its capital. A <strong>portable alpha</strong> programme gets the same 60/40 exposure with <strong>index futures</strong> (or total-return swaps), which only require a few percent of initial margin. The freed-up capital is invested in an <strong>alpha sleeve</strong> (a hedge-fund style, low-beta return stream) and the remaining cash / T-bills earns the cash rate while serving as collateral. With a 100% notional the identity is simply <strong>PA = Benchmark + A&middot;(alpha net of fees) &minus; financing frictions</strong>: the alpha is "ported" on top of the benchmark.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>2 &middot; Beta sleeve</h3>
+        <p>Futures prices already embed financing at the cash rate, so the sleeve earns <strong>N &middot; (Benchmark &minus; Rf)</strong>. On top of that the model charges the <strong>financing spread</strong> (implied repo above SOFR, 30&ndash;60 bp for equity index futures in recent years), the <strong>roll execution cost</strong> and a zero-mean <strong>basis noise</strong>. Setting the notional above 100% is levered beta, financed at the same cash + spread on the extra notional.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>3 &middot; Alpha sleeve</h3>
+        <p>The sleeve behaves like a diversified hedge-fund book: gross monthly return = <strong>Rf + alpha + &beta;<sub>&alpha;</sub> &middot; (Equity &minus; Rf)</strong>, where alpha is drawn with mean IR &times; vol / 12 and standard deviation vol / &radic;12. A <strong>management fee</strong> accrues monthly and a <strong>performance fee</strong> is taken on gains above the sleeve's <strong>high-water mark</strong>. Expected alpha decays linearly with the <strong>alpha decay</strong> rate to mimic crowding. Regime behaviour is fixed and stylised on 2008 and 2022:</p>
+        <table>
+          <thead><tr><th>Regime</th><th>Alpha drift</th><th>Alpha vol</th><th>Alpha beta</th><th>Equity / bonds (monthly mean)</th><th>Eq&ndash;bond corr.</th></tr></thead>
+          <tbody>
+            <tr><td>Calm</td><td>IR &times; vol</td><td>&times;1.0</td><td>&times;1.0</td><td>+1.10% / +0.45%</td><td>+0.10</td></tr>
+            <tr><td>Crisis (2008-type, mean 12 mo)</td><td>&minus;0.4 &sigma; per month</td><td>&times;2.0</td><td>&times;1.5</td><td>&minus;3.0% / +0.6%</td><td>&minus;0.35</td></tr>
+            <tr><td>Rate shock (2022-type, mean 9 mo)</td><td>&times;0.25</td><td>&times;1.3</td><td>&times;1.5</td><td>&minus;1.0% / &minus;1.2%</td><td>+0.60</td></tr>
+          </tbody>
+        </table>
+        <p>With the default 6% vol sleeve a 12-month crisis produces a hedge-fund style drawdown of roughly &minus;20%, in line with the 2008 experience of hedge-fund composites.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>4 &middot; Collateral &amp; liquidity</h3>
+        <p>Initial margin = margin requirement &times; notional, grossed up for the <strong>collateral haircut</strong>. It is posted from the cash that is not in the alpha sleeve, and that cash keeps earning Rf. What remains is <strong>free cash</strong>; the programme wants it above the <strong>liquidity buffer</strong>. Each month the futures settle variation margin equal to N &times; benchmark return. If a month's loss exceeds free cash, the model records a <strong>margin call</strong> and funds the shortfall for that month at cash + spread + 100 bp. If free cash is negative even before any move, the structure cannot post its margin and the shortfall is permanently borrowed at cash + spread. Forced liquidation of the alpha sleeve is not modelled; in reality it is the main risk of these programmes.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>5 &middot; Reading the results</h3>
+        <ul>
+          <li><strong>Growth / drawdown</strong> charts show the benchmark and the programme on the same seeded path; shaded bands are stress regimes.</li>
+          <li><strong>Tracking error</strong> = annualised standard deviation of (PA &minus; benchmark) monthly returns; <strong>information ratio</strong> = annualised active return / tracking error; <strong>Sharpe</strong> = (annualised arithmetic return &minus; Rf) / annualised volatility; <strong>max drawdown</strong> = worst peak-to-trough fall of the $100 path.</li>
+          <li><strong>Return decomposition</strong> sums the arithmetic annualised monthly contributions; the net differs slightly from the geometric CAGR in the table. The alpha sleeve gross bar includes the Rf earned inside the sleeve, the collateral bar the Rf on the rest.</li>
+        </ul>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; Stress &amp; health</h3>
+        <p>The <strong>stress table</strong> applies one-month shocks calibrated on October 2008, March 2020 and September 2022, with an idiosyncratic alpha shock, a 1.5&times; alpha beta, an adverse one-sigma basis move and a check of whether the month's variation margin exceeds free cash. The <strong>health panel</strong> verifies that the realised alpha vol, beta and regime shares match their targets, and reports margin posting, free cash and margin-call months. All numbers are synthetic and reproducible from the seed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A 180-month (15-year) Monte-Carlo comparison of a stock/bond benchmark with a portable-alpha programme on the same seeded path. Market months come from a three-state Markov chain (calm, 2008-type crisis, 2022-type rate shock) with regime-specific means, volatilities and equity&ndash;bond correlation. The programme holds the benchmark synthetically through index futures with notional N, keeps A of NAV in a fee-paying hedge-fund style alpha sleeve with a stated equity beta, earns the cash rate on the remaining collateral, and pays financing spread, roll cost, fees and margin-call funding. Growth, drawdown, KPIs, a contribution waterfall, calibration checks and one-month stress scenarios are shown.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Calm regime: equity +1.10%/mo, &sigma; 3.7%/mo; bonds +0.45%/mo, &sigma; 1.3%/mo; correlation +0.10. Unconditionally (15% stress) equities &asymp; 7% arithmetic / 15% vol, bonds &asymp; 4% / 5%, cash 4.0% constant.</li>
+          <li>Crisis (mean 12 months): equity &minus;3.0%/mo, &sigma; 7.0%; bonds +0.6%/mo, &sigma; 1.8%; correlation &minus;0.35; alpha drift &minus;0.4&sigma;/mo, alpha vol &times;2, alpha beta &times;1.5.</li>
+          <li>Rate shock (mean 9 months): equity &minus;1.0%/mo, &sigma; 5.0%; bonds &minus;1.2%/mo, &sigma; 1.8%; correlation +0.60; alpha drift &times;0.25, vol &times;1.3, beta &times;1.5.</li>
+          <li>Defaults: 60/40, N = 100%, financing spread 35 bp, roll 5 bp/y, basis 10 bp/mo, A = 50%, alpha vol 6%, gross IR 1.0, alpha beta 0.15, fees 1.5% / 20% above high-water mark, alpha decay 1.0%/y, drag 15 bp/y, initial margin 8% of notional, haircut 2%, liquidity buffer 5%.</li>
+          <li>Monthly rebalancing to target weights; the alpha sleeve is assumed to offer monthly liquidity; shocks are Gaussian; the cash rate is constant.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li><code>PA = (1&minus;A)&middot;Rf + N&middot;(Bench &minus; Rf &minus; spread &minus; roll + basis) + A&middot;(Rf + &alpha; + &beta;<sub>&alpha;</sub>(Eq &minus; Rf) &minus; mgmt &minus; perf) &minus; A&middot;drag &minus; liquidity</code>, all monthly.</li>
+          <li>Performance fee = rate &times; max(0, sleeve NAV &minus; high-water mark), accrued monthly; the mark is reset to the post-fee NAV.</li>
+          <li>Margin call when <code>N&middot;max(0, &minus;Bench) &gt; (1&minus;A) &minus; margin&middot;N/(1&minus;haircut)</code>; the shortfall is funded for one month at Rf + spread + 100 bp.</li>
+          <li>Sharpe = (12&middot;mean &minus; Rf) / (&sigma;&radic;12); tracking error = &sigma;(PA &minus; Bench)&middot;&radic;12; information ratio = 12&middot;mean(PA &minus; Bench) / TE; beta = cov / var; max drawdown on the cumulative path.</li>
+          <li>Kung &amp; Pohlman (2004), <em>Portable Alpha: Philosophy, Process, and Performance</em>; Grinold &amp; Kahn (2000), <em>Active Portfolio Management</em>; Fung &amp; Hsieh (2004), <em>Hedge Fund Benchmarks: A Risk-Based Approach</em>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li>Synthetic Gaussian regime mixture, not historical data; fat tails only arise from regime switching.</li>
+          <li>Constant cash rate and spreads; no term structure, no swap alternative, no taxes or dividend-withholding effects on futures.</li>
+          <li>Single blended margin rate and a monthly settlement approximation of daily variation margin; forced de-leveraging and gating of the alpha sleeve are not modelled.</li>
+          <li>The alpha sleeve is one composite stream; manager dispersion, lock-ups, and performance-fee crystallisation timing (monthly here, usually annual) are simplified.</li>
+          <li>Regime parameters are hand-set stylisations of 2008 and 2022, not estimated.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Educational demonstration built on synthetic (or stylised historical) data generated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
+  </div>
+</footer>
 
 <script>
-window.onerror=function(msg,url,line,col,err){
+window.onerror=function(msg,url,line){
   var s=document.getElementById('statusBar');
-  if(s)s.innerHTML='<span style="color:#ef4444">JS ERROR: '+msg+' (line '+line+')</span>';
+  if(s)s.innerHTML='<span class="warn">JS ERROR: '+msg+' (line '+line+')</span>';
   return false;
 };
 
-function toggleGuide(){
-  var g=document.getElementById('guideGrid'),b=document.getElementById('guideBtn');
-  g.classList.toggle('hide');b.textContent=g.classList.contains('hide')?'SHOW':'HIDE';
-}
+/* ---------- palette (read from the shell stylesheet) ---------- */
+var CSSV=getComputedStyle(document.documentElement);
+function cv(n,fb){var v=CSSV.getPropertyValue(n);v=v?v.trim():'';return v||fb;}
+var COL={bg:cv('--surface','#0f1629'),grid:cv('--border','#1e293b'),strong:cv('--border-strong','#334155'),axis:cv('--faint','#64748b'),
+  text:cv('--text','#f1f5f9'),muted:cv('--muted','#94a3b8'),cyan:cv('--cyan','#06b6d4'),green:cv('--green','#10b981'),
+  red:cv('--red','#ef4444'),blue:cv('--blue','#3b82f6'),amber:cv('--amber','#f59e0b')};
+var FONT_MONO="'JetBrains Mono','Courier New',monospace",FONT_SANS="'Inter','Segoe UI',system-ui,sans-serif";
 
-var globalTip=document.getElementById('globalTip');
+/* ---------- help modal ---------- */
+var helpOv=document.getElementById('helpOverlay');
+function openHelp(){helpOv.classList.add('show');document.getElementById('helpClose').focus();}
+function closeHelp(){helpOv.classList.remove('show');document.getElementById('helpBtn').focus();}
+document.getElementById('helpBtn').addEventListener('click',openHelp);
+document.getElementById('helpClose').addEventListener('click',closeHelp);
+helpOv.addEventListener('click',function(e){if(e.target===helpOv)closeHelp();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&helpOv.classList.contains('show'))closeHelp();});
+
+/* ---------- tooltips ---------- */
+var globalTip=document.getElementById('globalTip'),chartTip=document.getElementById('chartTip');
+function placeTip(tip,e){
+  var x=e.clientX+14,y=e.clientY+14,r=tip.getBoundingClientRect();
+  if(x+r.width>window.innerWidth-8)x=Math.max(8,e.clientX-r.width-14);
+  if(y+r.height>window.innerHeight-8)y=Math.max(8,e.clientY-r.height-14);
+  tip.style.left=x+'px';tip.style.top=y+'px';
+}
 document.addEventListener('mouseover',function(e){
-  var t=e.target.closest('[data-tip]');
-  if(!t)return;globalTip.innerHTML=t.getAttribute('data-tip');globalTip.style.display='block';posTip(e);
+  var t=e.target.closest?e.target.closest('[data-tip]'):null;if(!t)return;
+  globalTip.textContent=t.getAttribute('data-tip');globalTip.classList.add('show');placeTip(globalTip,e);
 });
-document.addEventListener('mousemove',function(e){if(globalTip.style.display==='block')posTip(e);});
-document.addEventListener('mouseout',function(e){if(e.target.closest('[data-tip]'))globalTip.style.display='none';});
-function posTip(e){
-  var p=12,x=e.clientX+p,y=e.clientY+p;
-  globalTip.style.left=x+'px';globalTip.style.top=y+'px';
-  requestAnimationFrame(function(){
-    var r=globalTip.getBoundingClientRect();
-    if(r.right>window.innerWidth-8)globalTip.style.left=(e.clientX-r.width-p)+'px';
-    if(r.bottom>window.innerHeight-8)globalTip.style.top=(e.clientY-r.height-p)+'px';
-  });
-}
+document.addEventListener('mousemove',function(e){if(globalTip.classList.contains('show'))placeTip(globalTip,e);});
+document.addEventListener('mouseout',function(e){if(e.target.closest&&e.target.closest('[data-tip]'))globalTip.classList.remove('show');});
 
+/* ---------- seeded PRNG ---------- */
 function mulberry32(seed){
   return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);
   t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
@@ -331,51 +375,83 @@ function makeNormal(rng){
   spare=r*Math.sin(2*Math.PI*u2);return r*Math.cos(2*Math.PI*u2);};
 }
 
-var MKT={
-  calm:{eqMu:0.008,eqSig:0.038,bdMu:0.003,bdSig:0.011,corr:0.10},
-  stress:{eqMu:-0.020,eqSig:0.075,bdMu:0.005,bdSig:0.022,corr:-0.30}
+/* ---------- regimes (monthly parameters, stylised on 2008 / 2022) ----------
+   aDrift : multiplier on the calm expected alpha (IR x vol / 12)
+   aShock : additional alpha drift in units of the monthly alpha sigma
+   aVol   : multiplier on alpha volatility      aBeta : multiplier on alpha beta
+   exit   : monthly probability of returning to calm (1 / mean duration)      */
+var REG={
+  calm:  {label:'Calm',      eqMu: 0.0110,eqSig:0.037,bdMu: 0.0045,bdSig:0.013,corr: 0.10,aDrift:1.00,aShock: 0.0,aVol:1.0,aBeta:1.0,exit:0},
+  crisis:{label:'Crisis',    eqMu:-0.0300,eqSig:0.070,bdMu: 0.0060,bdSig:0.018,corr:-0.35,aDrift:0.00,aShock:-0.4,aVol:2.0,aBeta:1.5,exit:1/12},
+  rate:  {label:'Rate shock',eqMu:-0.0100,eqSig:0.050,bdMu:-0.0120,bdSig:0.018,corr: 0.60,aDrift:0.25,aShock: 0.0,aVol:1.3,aBeta:1.5,exit:1/9}
 };
+var CRISIS_SHARE=0.55;   /* share of stress months that are crises; the rest are rate shocks */
+var MONTHS=180;
+
+/* capital structure: initial margin grossed up for the haircut, free cash after margin */
+function structure(p){
+  var N=p.betaNotional,A=p.alphaAlloc;
+  var im=p.marginReq*N/Math.max(1-p.haircut,0.01);
+  var free=(1-A)-im;
+  return{N:N,A:A,im:im,free:free,freePos:Math.max(0,free),structShort:Math.max(0,-free)};
+}
 
 function simulate(p){
-  var M=180,rng=mulberry32(p.seed),norm=makeNormal(rng);
-  var qSC=0.40,sf=Math.max(0.001,Math.min(p.stressFreq,0.95)),pCS=sf*qSC/(1-sf);
-  var regime='calm',regimes=[],baseRet=[],paRet=[],eqRets=[],benchRets=[],alphaRets=[];
-  var comp={cash:[],betaEx:[],alpha:[],roll:[],basis:[],slip:[],fin:[]};
+  var M=MONTHS,rng=mulberry32(p.seed),norm=makeNormal(rng),st=structure(p);
+  var sf=Math.min(Math.max(p.stressFreq,0),0.6);
+  var pCr=sf>0?CRISIS_SHARE*sf*REG.crisis.exit/(1-sf):0;
+  var pRt=sf>0?(1-CRISIS_SHARE)*sf*REG.rate.exit/(1-sf):0;
+  var reg='calm',regimes=[],baseRet=[],paRet=[],eqRets=[],benchRets=[],sleeveRets=[],calls=[];
+  var comp={cash:[],betaEx:[],fin:[],roll:[],basis:[],alphaGross:[],fees:[],liq:[]};
+  var rfMo=p.cashRate/12,sprMo=p.finSpread/12,rollMo=p.rollCost/12,dragMo=p.drag/12,mgmtMo=p.mgmtFee/12;
+  var sigMo=p.alphaVol/Math.sqrt(12),muMo=p.alphaIR*p.alphaVol/12;
+  var N=st.N,A=st.A,sleeveNav=1,hwm=1;
   for(var m=0;m<M;m++){
     var u=rng();
-    if(regime==='calm'&&u<pCS)regime='stress';
-    else if(regime==='stress'&&u<qSC)regime='calm';
-    regimes.push(regime);
-    var mk=MKT[regime],rfMo=p.cashRate/12;
+    if(reg==='calm'){if(u<pCr)reg='crisis';else if(u<pCr+pRt)reg='rate';}
+    else if(u<REG[reg].exit)reg='calm';
+    regimes.push(reg);
+    var rg=REG[reg];
     var z1=norm(),z2=norm(),z3=norm(),z4=norm();
-    var eqR=mk.eqMu+mk.eqSig*z1;
-    var bdR=mk.bdMu+mk.bdSig*(mk.corr*z1+Math.sqrt(1-mk.corr*mk.corr)*z2);
+    var eqR=rg.eqMu+rg.eqSig*z1;
+    var bdR=rg.bdMu+rg.bdSig*(rg.corr*z1+Math.sqrt(1-rg.corr*rg.corr)*z2);
     var benchR=p.eqWeight*eqR+(1-p.eqWeight)*bdR;
     eqRets.push(eqR);benchRets.push(benchR);baseRet.push(benchR);
-    var cashYield=rfMo;
-    var betaExcess=p.betaNotional*(benchR-rfMo);
-    var basisNoise=p.betaNotional*p.basisNoiseDec*z3;
-    var rollDrag=-p.betaNotional*p.rollCostMo;
-    var isStress=regime==='stress';
-    var aMeanMo=(p.alphaIR*p.alphaVol)/12*(isStress?0.20:1.0);
-    var aVolMo=(p.alphaVol/Math.sqrt(12))*(isStress?1.50:1.0);
-    var aRet=aMeanMo+aVolMo*z4+p.alphaLeakage*eqR;
-    alphaRets.push(aRet);
-    var alphaContrib=p.alphaAlloc*aRet;
-    var slipDrag=-p.alphaAlloc*p.slippageMo*(isStress?2.5:1.0);
-    var totalExp=p.betaNotional+p.alphaAlloc;
-    var leverage=Math.max(0,totalExp-1.0);
-    var capUsed=p.marginReq*p.betaNotional+p.alphaAlloc;
-    var shortfall=Math.max(0,p.collateralBuffer-(1.0-capUsed));
-    var leverageCost=leverage*p.finSpreadMo;
-    var shortfallCost=shortfall*p.finSpreadMo*2.0;
-    var finCost=-(leverageCost+shortfallCost)*(isStress?1.5:1.0);
-    var net=cashYield+betaExcess+basisNoise+rollDrag+alphaContrib+slipDrag+finCost;
+
+    /* beta sleeve: futures on the benchmark composite, financed at Rf (embedded) + spread */
+    var betaEx=N*(benchR-rfMo);
+    var fin=-N*sprMo;
+    var roll=-N*rollMo;
+    var basis=N*p.basisSig*z3;
+
+    /* collateral yield on the cash not deployed to the alpha sleeve (posted T-bills still earn Rf) */
+    var cash=(1-A)*rfMo;
+
+    /* alpha sleeve: hedge-fund style stream, gross of fees, then mgmt + perf fee above HWM */
+    var decay=Math.max(0,1-p.alphaDecay*(m/12));
+    var aMu=muMo*decay*rg.aDrift+rg.aShock*sigMo;
+    var aEx=aMu+sigMo*rg.aVol*z4;
+    var aBeta=p.alphaBeta*rg.aBeta;
+    var gross=rfMo+aEx+aBeta*(eqR-rfMo);
+    var navPre=sleeveNav*(1+gross-mgmtMo),perfRet=0,navPost=navPre;
+    if(navPre>hwm){var fee=p.perfFee*(navPre-hwm);perfRet=fee/sleeveNav;navPost=navPre-fee;hwm=navPost;}
+    var netSleeve=navPost/sleeveNav-1;sleeveNav=navPost;
+    sleeveRets.push(netSleeve);
+    var alphaGross=A*gross;
+    var fees=-A*(mgmtMo+perfRet+dragMo);
+
+    /* liquidity: this month's variation margin must be met from free cash */
+    var vm=N*benchR;
+    var callShort=Math.max(0,-vm-st.freePos);
+    var liq=-(st.structShort*(rfMo+sprMo)+callShort*(rfMo+sprMo+0.01/12));
+    calls.push(callShort>0);
+
+    var net=cash+betaEx+fin+roll+basis+alphaGross+fees+liq;
     paRet.push(net);
-    comp.cash.push(cashYield);comp.betaEx.push(betaExcess);comp.alpha.push(alphaContrib);
-    comp.roll.push(rollDrag);comp.basis.push(basisNoise);comp.slip.push(slipDrag);comp.fin.push(finCost);
+    comp.cash.push(cash);comp.betaEx.push(betaEx);comp.fin.push(fin);comp.roll.push(roll);comp.basis.push(basis);
+    comp.alphaGross.push(alphaGross);comp.fees.push(fees);comp.liq.push(liq);
   }
-  return{baseRet:baseRet,paRet:paRet,benchRets:benchRets,eqRets:eqRets,alphaRets:alphaRets,regimes:regimes,comp:comp,months:M};
+  return{baseRet:baseRet,paRet:paRet,benchRets:benchRets,eqRets:eqRets,sleeveRets:sleeveRets,regimes:regimes,calls:calls,comp:comp,months:M,st:st};
 }
 
 function cumulative(rets){var c=[1];for(var i=0;i<rets.length;i++)c.push(c[c.length-1]*(1+rets[i]));return c;}
@@ -384,34 +460,35 @@ function calcStats(rets,bench,rf){
   var n=rets.length,yrs=n/12,cum=cumulative(rets),fv=cum[cum.length-1];
   var cagr=Math.pow(fv,1/yrs)-1;
   var mean=0;for(var i=0;i<n;i++)mean+=rets[i];mean/=n;
-  var vari=0;for(var i=0;i<n;i++)vari+=(rets[i]-mean)*(rets[i]-mean);vari/=(n-1);
+  var vari=0;for(i=0;i<n;i++)vari+=(rets[i]-mean)*(rets[i]-mean);vari/=(n-1);
   var vol=Math.sqrt(vari)*Math.sqrt(12);
-  var sharpe=vol>0?(cagr-rf)/vol:0;
+  var sharpe=vol>0?(mean*12-rf)/vol:0;
   var peak=cum[0],maxDD=0,ddSeries=[0];
-  for(var i=1;i<cum.length;i++){peak=Math.max(peak,cum[i]);var dd=(cum[i]-peak)/peak;ddSeries.push(dd);maxDD=Math.min(maxDD,dd);}
-  var te=null,ir=null,beta=null;
+  for(i=1;i<cum.length;i++){peak=Math.max(peak,cum[i]);var dd=(cum[i]-peak)/peak;ddSeries.push(dd);maxDD=Math.min(maxDD,dd);}
+  var te=null,ir=null,beta=null,active=null;
   if(bench){
-    var ex=[];for(var i=0;i<n;i++)ex.push(rets[i]-bench[i]);
-    var exMean=0;for(var i=0;i<n;i++)exMean+=ex[i];exMean/=n;
-    var exVar=0;for(var i=0;i<n;i++)exVar+=(ex[i]-exMean)*(ex[i]-exMean);exVar/=(n-1);
-    te=Math.sqrt(exVar)*Math.sqrt(12);ir=te>0?(exMean*12)/te:0;
-    var bMean=0;for(var i=0;i<n;i++)bMean+=bench[i];bMean/=n;
+    var ex=[];for(i=0;i<n;i++)ex.push(rets[i]-bench[i]);
+    var exMean=0;for(i=0;i<n;i++)exMean+=ex[i];exMean/=n;
+    var exVar=0;for(i=0;i<n;i++)exVar+=(ex[i]-exMean)*(ex[i]-exMean);exVar/=(n-1);
+    te=Math.sqrt(exVar)*Math.sqrt(12);active=exMean*12;ir=te>0?active/te:0;
+    var bMean=0;for(i=0;i<n;i++)bMean+=bench[i];bMean/=n;
     var cov=0,bVar=0;
-    for(var i=0;i<n;i++){cov+=(rets[i]-mean)*(bench[i]-bMean);bVar+=(bench[i]-bMean)*(bench[i]-bMean);}
+    for(i=0;i<n;i++){cov+=(rets[i]-mean)*(bench[i]-bMean);bVar+=(bench[i]-bMean)*(bench[i]-bMean);}
     beta=bVar>0?cov/bVar:1;
   }
   var worst12=Infinity;
-  for(var i=0;i<=n-12;i++){var c12=1;for(var j=0;j<12;j++)c12*=(1+rets[i+j]);worst12=Math.min(worst12,c12-1);}
-  return{cagr:cagr,vol:vol,sharpe:sharpe,maxDD:maxDD,te:te,ir:ir,beta:beta,worst12:worst12,cum:cum,ddSeries:ddSeries};
+  for(i=0;i<=n-12;i++){var c12=1;for(var j=0;j<12;j++)c12*=(1+rets[i+j]);worst12=Math.min(worst12,c12-1);}
+  return{cagr:cagr,mean:mean,vol:vol,sharpe:sharpe,maxDD:maxDD,te:te,ir:ir,beta:beta,active:active,worst12:worst12,cum:cum,ddSeries:ddSeries};
 }
 
 function annComp(arr){var s=0;for(var i=0;i<arr.length;i++)s+=arr[i];return s/(arr.length/12);}
 
+/* ---------- canvas helpers ---------- */
 function setupCanvas(canvas,h){
   var dpr=window.devicePixelRatio||1;
   var W=canvas.clientWidth||canvas.parentElement.clientWidth||600;
-  canvas.style.height=h+'px';canvas.width=W*dpr;canvas.height=h*dpr;
-  var ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  canvas.style.height=h+'px';canvas.width=Math.round(W*dpr);canvas.height=Math.round(h*dpr);
+  var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
   return{ctx:ctx,W:W,H:h};
 }
 
@@ -422,336 +499,296 @@ function niceStep(rough){
 
 function drawChart(canvas,cfg){
   var r=setupCanvas(canvas,cfg.height||300),ctx=r.ctx,W=r.W,H=r.H;
-  var pad={t:25,r:14,b:28,l:52},pW=W-pad.l-pad.r,pH=H-pad.t-pad.b;
-  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  var yMin=Infinity,yMax=-Infinity;
-  for(var d=0;d<cfg.datasets.length;d++)for(var i=0;i<cfg.datasets[d].data.length;i++){
+  var pad={t:26,r:14,b:36,l:56},pW=W-pad.l-pad.r,pH=H-pad.t-pad.b;
+  ctx.fillStyle=COL.bg;ctx.fillRect(0,0,W,H);
+  var yMin=Infinity,yMax=-Infinity,d,i;
+  for(d=0;d<cfg.datasets.length;d++)for(i=0;i<cfg.datasets[d].data.length;i++){
     var v=cfg.datasets[d].data[i];if(v<yMin)yMin=v;if(v>yMax)yMax=v;
   }
   if(cfg.forceZero){if(yMin>0)yMin=0;if(yMax<0)yMax=0;}
   var ym=(yMax-yMin)*0.08||0.01;yMin-=ym;yMax+=ym;var yRange=yMax-yMin;
-  function toX(i){return pad.l+(i/(cfg.nPoints-1))*pW;}
-  function toY(v){return pad.t+(1-(v-yMin)/yRange)*pH;}
+  function toX(k){return pad.l+(k/(cfg.nPoints-1))*pW;}
+  function toY(val){return pad.t+(1-(val-yMin)/yRange)*pH;}
+  canvas._chart={pad:pad,pW:pW,pH:pH,nPoints:cfg.nPoints,datasets:cfg.datasets,regimes:cfg.regimes,yFmt:cfg.yFmt};
 
-  canvas._chart={pad:pad,pW:pW,pH:pH,nPoints:cfg.nPoints,datasets:cfg.datasets,toX:toX,toY:toY,regimes:cfg.regimes,yFmt:cfg.yFmt};
-
-  if(cfg.regimes){for(var i=0;i<cfg.regimes.length;i++){
-    if(cfg.regimes[i]==='stress'){var x=toX(i),w=Math.max(pW/(cfg.nPoints-1),1);
-    ctx.fillStyle='rgba(239,68,68,0.08)';ctx.fillRect(x,pad.t,w+1,pH);}
-  }}
+  if(cfg.regimes){var cw=Math.max(pW/(cfg.nPoints-1),1);
+    for(i=0;i<cfg.regimes.length;i++){var rk=cfg.regimes[i];if(rk==='calm')continue;
+      ctx.fillStyle=rk==='crisis'?'rgba(239,68,68,0.10)':'rgba(245,158,11,0.10)';
+      ctx.fillRect(toX(i),pad.t,cw+1,pH);}
+  }
 
   var step=niceStep((yMax-yMin)/5),gs=Math.ceil(yMin/step)*step;
-  ctx.textAlign='right';ctx.textBaseline='middle';
+  ctx.textAlign='right';ctx.textBaseline='middle';ctx.font='10px '+FONT_MONO;
   for(var y=gs;y<=yMax+step*0.01;y+=step){
     var py=toY(y);if(py<pad.t-2||py>pad.t+pH+2)continue;
-    ctx.strokeStyle='#151d2a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(pad.l+pW,py);ctx.stroke();
-    ctx.fillStyle='#64748b';ctx.font="10px 'Courier New',monospace";ctx.fillText(cfg.yFmt(y),pad.l-6,py);
+    ctx.strokeStyle=COL.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(pad.l+pW,py);ctx.stroke();
+    ctx.fillStyle=COL.axis;ctx.fillText(cfg.yFmt(y),pad.l-6,py);
   }
-  if(cfg.forceZero&&yMin<0&&yMax>0){var py0=toY(0);ctx.strokeStyle='#2a3444';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,py0);ctx.lineTo(pad.l+pW,py0);ctx.stroke();}
+  if(cfg.forceZero&&yMin<0&&yMax>0){var py0=toY(0);ctx.strokeStyle=COL.strong;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,py0);ctx.lineTo(pad.l+pW,py0);ctx.stroke();}
 
-  for(var d=0;d<cfg.datasets.length;d++){
-    var ds=cfg.datasets[d];
+  for(d=0;d<cfg.datasets.length;d++){
+    var ds=cfg.datasets[d],x,yy;
     if(ds.fill){var baseY=cfg.forceZero?toY(0):pad.t+pH;ctx.beginPath();
-      for(var i=0;i<ds.data.length;i++){var x=toX(i),y=toY(ds.data[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+      for(i=0;i<ds.data.length;i++){x=toX(i);yy=toY(ds.data[i]);if(i===0)ctx.moveTo(x,yy);else ctx.lineTo(x,yy);}
       ctx.lineTo(toX(ds.data.length-1),baseY);ctx.lineTo(toX(0),baseY);ctx.closePath();ctx.fillStyle=ds.fillColor||'rgba(100,100,100,0.1)';ctx.fill();}
     ctx.strokeStyle=ds.color;ctx.lineWidth=2;ctx.beginPath();
-    for(var i=0;i<ds.data.length;i++){var x=toX(i),y=toY(ds.data[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+    for(i=0;i<ds.data.length;i++){x=toX(i);yy=toY(ds.data[i]);if(i===0)ctx.moveTo(x,yy);else ctx.lineTo(x,yy);}
     ctx.stroke();
   }
 
-  ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#64748b';ctx.font='10px sans-serif';
-  for(var yr=0;yr<=15;yr+=3){var i=yr*12;if(i>=cfg.nPoints)break;ctx.fillText('Y'+yr,toX(i),pad.t+pH+8);}
-  ctx.strokeStyle='#1e293b';ctx.lineWidth=1;ctx.strokeRect(pad.l,pad.t,pW,pH);
+  ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle=COL.axis;ctx.font='10px '+FONT_MONO;
+  for(var yr=0;yr<=15;yr+=3){var k=yr*12;if(k>=cfg.nPoints)break;ctx.fillText(String(yr),toX(k),pad.t+pH+7);}
+  ctx.strokeStyle=COL.grid;ctx.lineWidth=1;ctx.strokeRect(pad.l,pad.t,pW,pH);
+  ctx.fillStyle=COL.muted;ctx.font='10px '+FONT_SANS;
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(cfg.yLabel||'',pad.l,6);
+  ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(cfg.xLabel||'Years',pad.l+pW/2,H-3);
 }
 
-function attachChartTip(canvasId,tipId){
-  var canvas=document.getElementById(canvasId),tip=document.getElementById(tipId);
-  if(!canvas||!tip)return;
+function attachChartTip(canvasId){
+  var canvas=document.getElementById(canvasId);if(!canvas)return;
   canvas.addEventListener('mousemove',function(e){
     var c=this._chart;if(!c)return;
     var rect=this.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
     var idx=Math.round((mx-c.pad.l)/c.pW*(c.nPoints-1));
-    if(idx<0||idx>=c.nPoints||mx<c.pad.l||mx>c.pad.l+c.pW||my<c.pad.t||my>c.pad.t+c.pH){tip.style.display='none';return;}
+    if(idx<0||idx>=c.nPoints||mx<c.pad.l||mx>c.pad.l+c.pW||my<c.pad.t||my>c.pad.t+c.pH){chartTip.classList.remove('show');return;}
     var yr=Math.floor(idx/12),mo=idx%12;
-    var reg=c.regimes&&c.regimes[Math.min(idx,c.regimes.length-1)]==='stress';
-    var html='<div style="color:#94a3b8;font-size:10px;margin-bottom:4px">Year '+yr+', Month '+mo+(reg?' <span style="color:#ef4444">[STRESS]</span>':'')+'</div>';
+    var rk=c.regimes?c.regimes[Math.min(idx,c.regimes.length-1)]:'calm';
+    var regHtml=rk==='crisis'?' &middot; <span style="color:'+COL.red+'">CRISIS</span>':rk==='rate'?' &middot; <span style="color:'+COL.amber+'">RATE SHOCK</span>':'';
+    var html='<div class="ct-head">Year '+yr+', month '+mo+regHtml+'</div>';
     for(var d=0;d<c.datasets.length;d++){var ds=c.datasets[d],v=ds.data[idx];
       html+='<div class="ct-row"><span class="ct-dot" style="background:'+ds.color+'"></span><span class="ct-label">'+ds.label+'</span><span class="ct-val">'+c.yFmt(v)+'</span></div>';}
-    tip.innerHTML=html;tip.style.display='block';
-    var tx=mx+14,ty=my-10;if(tx+180>rect.width)tx=mx-180;if(ty<0)ty=10;
-    tip.style.left=tx+'px';tip.style.top=ty+'px';
+    if(c.datasets.length===2){var dv=c.datasets[1].data[idx]-c.datasets[0].data[idx];
+      html+='<div class="ct-row"><span class="ct-dot" style="background:'+COL.cyan+'"></span><span class="ct-label">PA &minus; bench</span><span class="ct-val">'+(dv>=0?'+':'')+c.yFmt(dv)+'</span></div>';}
+    chartTip.innerHTML=html;chartTip.classList.add('show');placeTip(chartTip,e);
   });
-  canvas.addEventListener('mouseleave',function(){tip.style.display='none';});
+  canvas.addEventListener('mouseleave',function(){chartTip.classList.remove('show');});
 }
 
-function attachDecompTip(canvasId,tipId){
-  var canvas=document.getElementById(canvasId),tip=document.getElementById(tipId);
-  if(!canvas||!tip)return;
-  tip.style.position='fixed';
+function attachDecompTip(canvasId){
+  var canvas=document.getElementById(canvasId);if(!canvas)return;
   canvas.addEventListener('mousemove',function(e){
     var d=this._decomp;if(!d)return;
-    var rect=this.getBoundingClientRect(),my=e.clientY-rect.top;
-    var idx=-1;
+    var rect=this.getBoundingClientRect(),my=e.clientY-rect.top,idx=-1;
     for(var i=0;i<d.nRows;i++){var ry=d.rowTop(i);if(my>=ry&&my<ry+d.rowH){idx=i;break;}}
-    if(idx<0){tip.style.display='none';return;}
-    var b=d.bars[idx];
-    var col=b.isNet?'#06b6d4':(b.val>=0?'#10b981':'#ef4444');
+    if(idx<0){chartTip.classList.remove('show');return;}
+    var b=d.bars[idx],col=b.isNet?COL.cyan:(b.val>=0?COL.green:COL.red);
     var html='<div style="margin-bottom:4px"><strong>'+b.name+'</strong></div>';
-    html+='<div>Contribution: <strong style="color:'+col+'">'+spct(b.val)+'</strong></div>';
+    html+='<div>Contribution: <strong style="color:'+col+'">'+spct(b.val)+'</strong> /y</div>';
     if(!b.isNet)html+='<div>Running total: <strong>'+spct(b.to)+'</strong></div>';
-    if(b.tip)html+='<div style="color:#94a3b8;margin-top:4px;font-size:11px">'+b.tip+'</div>';
-    tip.innerHTML=html;tip.style.display='block';
-    var tx=e.clientX+14,ty=e.clientY-10;
-    tip.style.left=tx+'px';tip.style.top=ty+'px';
-    requestAnimationFrame(function(){
-      var tr=tip.getBoundingClientRect();
-      if(tr.right>window.innerWidth-8)tip.style.left=(e.clientX-tr.width-14)+'px';
-      if(tr.bottom>window.innerHeight-8)tip.style.top=(e.clientY-tr.height-14)+'px';
-    });
+    if(b.tip)html+='<div class="ct-note">'+b.tip+'</div>';
+    chartTip.innerHTML=html;chartTip.classList.add('show');placeTip(chartTip,e);
   });
-  canvas.addEventListener('mouseleave',function(){tip.style.display='none';});
+  canvas.addEventListener('mouseleave',function(){chartTip.classList.remove('show');});
 }
 
+/* ---------- formatting ---------- */
 function pct(v,d){d=d!=null?d:2;return(v*100).toFixed(d)+'%';}
 function spct(v,d){d=d!=null?d:2;return(v>=0?'+':'')+(v*100).toFixed(d)+'%';}
 function f2(v){return v.toFixed(2);}
 function sf2(v){return(v>=0?'+':'')+v.toFixed(2);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
 var KPI_TIPS={
-  'Ann. Return':'CAGR: Compound Annual Growth Rate over the 15-year simulation. Geometric mean of annual returns.',
-  'Volatility':'Annualized standard deviation of monthly returns. Measures total portfolio risk.',
-  'Sharpe Ratio':'(Annualized Return - Risk-Free Rate) / Volatility. Risk-adjusted return measure. Higher = better.',
-  'Max Drawdown':'Largest peak-to-trough decline. The worst loss experienced from any high-water mark.',
-  'Tracking Error':'Annualized std dev of the difference between PA and benchmark returns. Measures active risk.',
-  'Beta to Bench':'Regression slope of PA returns vs benchmark. 1.0 = perfect match. Deviations from alpha leakage and costs.',
-  'Info. Ratio':'Annualized excess return / Tracking Error. Measures how efficiently active risk converts to active return.',
-  'Worst 12m':'Minimum rolling 12-month cumulative return. The worst 1-year outcome during the simulation.',
+  'Ann. return (CAGR)':'Compound annual growth rate of the $100 path over the 15 simulated years (geometric).',
+  'Volatility':'Annualised standard deviation of monthly returns (sigma x sqrt(12)).',
+  'Sharpe ratio':'(12 x mean monthly return - cash rate) / annualised volatility.',
+  'Max drawdown':'Largest peak-to-trough decline of the cumulative path.',
+  'Worst 12 months':'Minimum rolling 12-month cumulative return.',
+  'Active return':'Annualised arithmetic mean of (PA - benchmark) monthly returns.',
+  'Tracking error':'Annualised standard deviation of (PA - benchmark) monthly returns: the active risk of the programme.',
+  'Information ratio':'Active return / tracking error. How efficiently active risk is converted into active return.',
+  'Beta to benchmark':'OLS slope of PA monthly returns on benchmark returns. Above 1 comes from levered notional or the alpha sleeve\'s equity beta.'
 };
 var DECOMP_TIPS={
-  'Collateral / Rf':'Risk-free yield earned on all capital. Cash collateral (T-bills) earns interest, making futures replication approximate spot return.',
-  'Beta Excess Return':'Futures P&L above the cash rate = Notional x (Benchmark - Rf). Excess return from synthetic beta.',
-  'Alpha Overlay':'Excess return from the alpha strategy x allocation. The "portable" alpha value-add.',
-  'Basis Noise':'Stochastic tracking error from imperfect beta replication. Averages near zero over time.',
-  'Roll Cost':'Systematic drag from rolling futures contracts. A deterministic annual cost.',
-  'Slippage / Drag':'Implementation friction: trading costs, market impact, capacity constraints. Amplified 2.5x in stress.',
-  'Financing Cost':'Cost of leverage: charged on total exposure (beta + alpha) above 100% of NAV at the financing spread. Additional penalty if margin + alpha exceeds cash minus buffer. Amplified 1.5x in stress.',
+  'Collateral yield':'(1 - A) x Rf: cash rate earned on the collateral that is not in the alpha sleeve, including the posted margin.',
+  'Beta (index - Rf)':'N x (benchmark - Rf): futures P&L, which already embeds financing at the cash rate.',
+  'Financing spread':'- N x spread: implied futures financing above the cash rate, charged on the whole notional.',
+  'Roll cost':'- N x roll execution cost of the quarterly rolls.',
+  'Basis noise':'Zero-mean tracking difference between futures and index; its realised sum over the path.',
+  'Alpha sleeve gross':'A x (Rf + alpha + beta x (equity - Rf)) before fees; includes the Rf earned inside the sleeve.',
+  'Fees & drag':'- A x (management fee + performance fee above the high-water mark + implementation drag).',
+  'Liquidity cost':'Emergency funding of margin-call months (Rf + spread + 100 bp) and of any structural margin shortfall (Rf + spread).'
 };
 var HEALTH_TIPS={
-  'Realized Alpha Vol':'Actual annualized volatility of the alpha sleeve vs target. Green = within 35% of target.',
-  'Realized Alpha Leakage':'Regression beta of alpha returns to equity returns. Measures residual market exposure.',
-  'Capital Utilization':'Margin posted for futures + alpha allocation as % of NAV. Above 95% = warning (tight on cash).',
-  'Effective Leverage':'Total notional exposure (beta + alpha) above 100% of NAV. This portion is financed at the financing spread. Above 35% = warning.',
-  'Realized Basis Noise':'Actual monthly std dev of basis noise in the beta sleeve (bps). Should be close to input.',
-  'Stress Months':'Count and % of months in stress regime. Driven by Markov switching.',
-  'Neg Alpha Months':'% of months where alpha sleeve had negative returns. Typically 40-50% even for skilled strategies.',
-};
-var STRESS_TIPS={
-  'Equity Crash':'Equities -20%, bonds +2% (flight to quality). Alpha severely stressed.',
-  'Rate Shock +200bp':'Equities -5%, bonds -4% (duration hit). Both legs suffer.',
-  'Correlation Spike':'Equities -15%, bonds -1.5%. Diversification breaks down.',
-  'Liquidity Crunch':'Equities -10%, bonds +1%. Alpha -5% override (margin calls).',
-  'Mild Correction':'Equities -7%, bonds +1.2%. Normal pullback.',
+  'Alpha sleeve vol (net)':'Realised annualised volatility of the net alpha sleeve returns versus the calm-regime target. Regime scaling and the equity beta push it above target; green within 35%.',
+  'Alpha beta to equities':'OLS beta of the net sleeve returns on equity returns versus the stated beta (green within 0.15).',
+  'Alpha sleeve net Sharpe':'(12 x mean sleeve return - Rf) / sleeve vol, net of fees. Green above 0.3.',
+  'Initial margin posted':'Margin x notional / (1 - haircut), as % of NAV, compared with the cash outside the alpha sleeve. Green if it uses at most 80% of that cash.',
+  'Free cash after margin':'Cash outside the alpha sleeve minus posted margin. Green if at or above the liquidity buffer.',
+  'Margin-call months':'Months in which the variation margin (N x benchmark loss) exceeded free cash. Each is funded at Rf + spread + 100 bp for the month. Green if none.',
+  'Regime months':'Crisis and rate-shock months on this path versus the target stress share (green within 10 points).',
+  'Realised basis noise':'Root-mean-square of the basis term in bp of NAV per month, versus N x input.',
+  'Negative alpha months':'Share of months with a negative net sleeve return. Typically 35 to 50% even for skilled managers.'
 };
 
-function renderKPIs(baseS,paS,rf){
+var SCEN=[
+  {name:'Equity crash (Oct-2008 type)',eq:-0.170,bd: 0.015,aShock:-0.045,aBetaX:1.5,tip:'S&P 500 -17%, Treasuries +1.5% (flight to quality). Idiosyncratic alpha shock -4.5% plus 1.5x beta: hedge-fund composites lost about 7% in October 2008.'},
+  {name:'Pandemic shock (Mar-2020 type)',eq:-0.125,bd:-0.005,aShock:-0.060,aBetaX:1.5,tip:'S&P 500 -12.5%, Aggregate -0.5% (dash for cash). Alpha shock -6%: composites lost 8-9% in March 2020; futures basis dislocated.'},
+  {name:'Rate shock (Sep-2022 type)',eq:-0.090,bd:-0.045,aShock:-0.010,aBetaX:1.5,tip:'S&P 500 -9%, Aggregate -4.5%. Both legs of 60/40 fall; alpha shock -1%.'},
+  {name:'Correlation spike',eq:-0.050,bd:-0.020,aShock:-0.015,aBetaX:1.5,tip:'Stocks -5% and bonds -2% together; crowded trades unwind, alpha -1.5%.'},
+  {name:'Mild correction',eq:-0.050,bd: 0.010,aShock:-0.003,aBetaX:1.0,tip:'Ordinary -5% equity pullback with bonds +1%; alpha barely affected.'}
+];
+
+/* ---------- renderers ---------- */
+function renderKPIs(baseS,paS){
   var rows=[
-    ['Ann. Return',pct(baseS.cagr),pct(paS.cagr),paS.cagr-baseS.cagr],
+    ['Ann. return (CAGR)',pct(baseS.cagr),pct(paS.cagr),paS.cagr-baseS.cagr],
     ['Volatility',pct(baseS.vol),pct(paS.vol),paS.vol-baseS.vol],
-    ['Sharpe Ratio',f2(baseS.sharpe),f2(paS.sharpe),paS.sharpe-baseS.sharpe],
-    ['Max Drawdown',pct(baseS.maxDD),pct(paS.maxDD),paS.maxDD-baseS.maxDD],
-    ['Tracking Error','--',paS.te!==null?pct(paS.te):'--',null],
-    ['Beta to Bench','1.00',paS.beta!==null?f2(paS.beta):'--',null],
-    ['Info. Ratio','--',paS.ir!==null?f2(paS.ir):'--',null],
-    ['Worst 12m',pct(baseS.worst12),pct(paS.worst12),paS.worst12-baseS.worst12],
+    ['Sharpe ratio',f2(baseS.sharpe),f2(paS.sharpe),paS.sharpe-baseS.sharpe],
+    ['Max drawdown',pct(baseS.maxDD),pct(paS.maxDD),paS.maxDD-baseS.maxDD],
+    ['Worst 12 months',pct(baseS.worst12),pct(paS.worst12),paS.worst12-baseS.worst12],
+    ['Active return','&mdash;',spct(paS.active),null],
+    ['Tracking error','&mdash;',pct(paS.te),null],
+    ['Information ratio','&mdash;',sf2(paS.ir),null],
+    ['Beta to benchmark','1.00',f2(paS.beta),null]
   ];
   var html='';
-  for(var i=0;i<rows.length;i++){var r=rows[i];
-    var dc='delta-neut',dv='--';
-    if(r[3]!==null){var isVol=r[0]==='Volatility',isMDD=r[0]==='Max Drawdown';
-      if(isMDD){dc=r[3]>0?'delta-pos':r[3]<0?'delta-neg':'delta-neut';dv=spct(r[3]);}
+  for(var i=0;i<rows.length;i++){var r=rows[i],dc='delta-neut',dv='&mdash;';
+    if(r[3]!==null){var isVol=r[0]==='Volatility',isMDD=r[0]==='Max drawdown';
+      if(isMDD){dc=r[3]>0.001?'delta-pos':r[3]<-0.001?'delta-neg':'delta-neut';dv=spct(r[3]);}
       else if(isVol){dc=r[3]>0.005?'delta-neg':r[3]<-0.005?'delta-pos':'delta-neut';dv=spct(r[3]);}
-      else{dc=r[3]>0.001?'delta-pos':r[3]<-0.001?'delta-neg':'delta-neut';dv=r[0]==='Sharpe Ratio'?sf2(r[3]):spct(r[3]);}}
-    var tip=KPI_TIPS[r[0]]||'';
-    html+='<tr><td data-tip="'+tip+'">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td class="'+dc+'">'+dv+'</td></tr>';
+      else{dc=r[3]>0.001?'delta-pos':r[3]<-0.001?'delta-neg':'delta-neut';dv=r[0]==='Sharpe ratio'?sf2(r[3]):spct(r[3]);}}
+    html+='<tr><td data-tip="'+esc(KPI_TIPS[r[0]]||'')+'">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td class="'+dc+'">'+dv+'</td></tr>';
   }
   document.getElementById('kpiBody').innerHTML=html;
 }
 
 function renderDecomp(comp){
   var items=[
-    {name:'Collateral / Rf',val:annComp(comp.cash)},{name:'Beta Excess',val:annComp(comp.betaEx)},
-    {name:'Alpha Overlay',val:annComp(comp.alpha)},{name:'Basis Noise',val:annComp(comp.basis)},
-    {name:'Roll Cost',val:annComp(comp.roll)},{name:'Slippage',val:annComp(comp.slip)},
-    {name:'Financing',val:annComp(comp.fin)}];
-  var net=0;
-  for(var i=0;i<items.length;i++)net+=items[i].val;
+    {name:'Collateral yield',val:annComp(comp.cash)},{name:'Beta (index - Rf)',val:annComp(comp.betaEx)},
+    {name:'Financing spread',val:annComp(comp.fin)},{name:'Roll cost',val:annComp(comp.roll)},
+    {name:'Basis noise',val:annComp(comp.basis)},{name:'Alpha sleeve gross',val:annComp(comp.alphaGross)},
+    {name:'Fees & drag',val:annComp(comp.fees)},{name:'Liquidity cost',val:annComp(comp.liq)}];
+  var net=0,i;
+  for(i=0;i<items.length;i++)net+=items[i].val;
   var cum=0,bars=[];
-  for(var i=0;i<items.length;i++){
-    var s=cum;cum+=items[i].val;
-    bars.push({name:items[i].name,val:items[i].val,from:s,to:cum,tip:DECOMP_TIPS[items[i].name]||''});
-  }
-  bars.push({name:'NET RETURN',val:net,from:0,to:net,isNet:true,tip:'Net annualized PA return. Sum of all components above.'});
+  for(i=0;i<items.length;i++){var s=cum;cum+=items[i].val;bars.push({name:items[i].name,val:items[i].val,from:s,to:cum,tip:DECOMP_TIPS[items[i].name]||''});}
+  bars.push({name:'NET RETURN',val:net,from:0,to:net,isNet:true,tip:'Arithmetic annualised sum of the contributions above; the CAGR in the table is the geometric equivalent.'});
 
   var canvas=document.getElementById('decompCanvas');
-  var nRows=bars.length,rowH=36,barH=22,gapH=10;
-  var pad={t:16,r:80,b:32,l:128};
+  var nRows=bars.length,rowH=34,barH=20,gapH=10;
+  var narrow=(canvas.clientWidth||600)<480;
+  var pad={t:16,r:narrow?62:80,b:32,l:narrow?112:140};
   var totalH=pad.t+(nRows-1)*rowH+gapH+rowH+pad.b;
-
   var sr=setupCanvas(canvas,totalH),ctx=sr.ctx,W=sr.W,cW=W-pad.l-pad.r;
 
   var xMin=0,xMax=0;
-  for(var i=0;i<bars.length;i++){
+  for(i=0;i<bars.length;i++){
     if(bars[i].from<xMin)xMin=bars[i].from;if(bars[i].to<xMin)xMin=bars[i].to;
     if(bars[i].from>xMax)xMax=bars[i].from;if(bars[i].to>xMax)xMax=bars[i].to;
   }
   var xm=(xMax-xMin)*0.12||0.005;xMin-=xm;xMax+=xm;var xRange=xMax-xMin;
   function toX(v){return pad.l+(v-xMin)/xRange*cW;}
-  function rowTop(i){return pad.t+i*rowH+(i===nRows-1?gapH:0);}
+  function rowTop(k){return pad.t+k*rowH+(k===nRows-1?gapH:0);}
 
-  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,totalH);
-
-  var step=niceStep(xRange/6),gs=Math.ceil(xMin/step)*step;
-  var gridBot=rowTop(nRows-1)+rowH;
-  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillStyle=COL.bg;ctx.fillRect(0,0,W,totalH);
+  var step=niceStep(xRange/6),gs=Math.ceil(xMin/step)*step,gridBot=rowTop(nRows-1)+rowH;
+  ctx.textAlign='center';ctx.textBaseline='top';ctx.font='10px '+FONT_MONO;
   for(var v=gs;v<=xMax+step*0.01;v+=step){
     var px=toX(v);if(px<pad.l-2||px>pad.l+cW+2)continue;
-    ctx.strokeStyle='#151d2a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,pad.t);ctx.lineTo(px,gridBot);ctx.stroke();
-    ctx.fillStyle='#64748b';ctx.font="10px 'Courier New',monospace";
-    ctx.fillText((v*100).toFixed(1)+'%',px,gridBot+8);
+    ctx.strokeStyle=COL.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,pad.t);ctx.lineTo(px,gridBot);ctx.stroke();
+    ctx.fillStyle=COL.axis;ctx.fillText((v*100).toFixed(1)+'%',px,gridBot+8);
   }
-
+  ctx.fillStyle=COL.muted;ctx.font='10px '+FONT_SANS;ctx.textAlign='right';ctx.textBaseline='top';
+  ctx.fillText('% of NAV per year',pad.l+cW,gridBot+18);
   var x0=toX(0);
-  ctx.strokeStyle='rgba(148,163,184,0.35)';ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(x0,pad.t-4);ctx.lineTo(x0,gridBot+2);ctx.stroke();
+  ctx.strokeStyle='rgba(148,163,184,0.35)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0,pad.t-4);ctx.lineTo(x0,gridBot+2);ctx.stroke();
 
-  for(var i=0;i<nRows;i++){
+  for(i=0;i<nRows;i++){
     var b=bars[i],ry=rowTop(i),by=ry+(rowH-barH)/2;
-    var x1=toX(b.from),x2=toX(b.to);
-    var bx=Math.min(x1,x2),bw=Math.max(Math.abs(x2-x1),3);
-    var rad=Math.min(3,bw/2);
-
-    if(b.isNet)ctx.fillStyle='#06b6d4';
-    else if(b.val>=0)ctx.fillStyle='#10b981';
-    else ctx.fillStyle='#ef4444';
-
-    ctx.beginPath();
-    ctx.moveTo(bx+rad,by);ctx.arcTo(bx+bw,by,bx+bw,by+barH,rad);
-    ctx.arcTo(bx+bw,by+barH,bx,by+barH,rad);ctx.arcTo(bx,by+barH,bx,by,rad);
-    ctx.arcTo(bx,by,bx+bw,by,rad);ctx.closePath();ctx.fill();
-
-    if(i<nRows-2){
-      var nextY=rowTop(i+1)+(rowH-barH)/2;
-      ctx.strokeStyle='rgba(148,163,184,0.2)';ctx.lineWidth=1;
-      ctx.setLineDash([3,2]);ctx.beginPath();ctx.moveTo(x2,by+barH);ctx.lineTo(x2,nextY);ctx.stroke();ctx.setLineDash([]);
-    }
-
-    if(i===nRows-2){
-      var sepY=ry+rowH+gapH/2;
-      ctx.strokeStyle='#1e293b';ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(pad.l-5,sepY);ctx.lineTo(pad.l+cW+5,sepY);ctx.stroke();
-    }
-
-    ctx.textAlign='right';ctx.textBaseline='middle';
-    ctx.fillStyle=b.isNet?'#f1f5f9':'#94a3b8';
-    ctx.font=(b.isNet?'bold ':'')+'12px sans-serif';
-    ctx.fillText(b.name,pad.l-10,ry+rowH/2);
-
-    ctx.textAlign='left';ctx.textBaseline='middle';
-    ctx.fillStyle=b.isNet?'#06b6d4':(b.val>=0?'#10b981':'#ef4444');
-    ctx.font="bold 12px 'Courier New',monospace";
-    ctx.fillText(spct(b.val),pad.l+cW+8,ry+rowH/2);
+    var x1=toX(b.from),x2=toX(b.to),bx=Math.min(x1,x2),bw=Math.max(Math.abs(x2-x1),3),rad=Math.min(3,bw/2);
+    ctx.fillStyle=b.isNet?COL.cyan:(b.val>=0?COL.green:COL.red);
+    ctx.beginPath();ctx.moveTo(bx+rad,by);ctx.arcTo(bx+bw,by,bx+bw,by+barH,rad);ctx.arcTo(bx+bw,by+barH,bx,by+barH,rad);
+    ctx.arcTo(bx,by+barH,bx,by,rad);ctx.arcTo(bx,by,bx+bw,by,rad);ctx.closePath();ctx.fill();
+    if(i<nRows-2){var nextY=rowTop(i+1)+(rowH-barH)/2;
+      ctx.strokeStyle='rgba(148,163,184,0.2)';ctx.lineWidth=1;ctx.setLineDash([3,2]);ctx.beginPath();ctx.moveTo(x2,by+barH);ctx.lineTo(x2,nextY);ctx.stroke();ctx.setLineDash([]);}
+    if(i===nRows-2){var sepY=ry+rowH+gapH/2;ctx.strokeStyle=COL.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l-5,sepY);ctx.lineTo(pad.l+cW+5,sepY);ctx.stroke();}
+    ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillStyle=b.isNet?COL.text:COL.muted;
+    ctx.font=(b.isNet?'600 ':'')+(narrow?'11px ':'12px ')+FONT_SANS;ctx.fillText(b.name,pad.l-10,ry+rowH/2);
+    ctx.textAlign='left';ctx.fillStyle=b.isNet?COL.cyan:(b.val>=0?COL.green:COL.red);
+    ctx.font='600 '+(narrow?'11px ':'12px ')+FONT_MONO;ctx.fillText(spct(b.val),pad.l+cW+8,ry+rowH/2);
   }
-  canvas._decomp={bars:bars,pad:pad,rowH:rowH,gapH:gapH,nRows:nRows,rowTop:rowTop};
+  canvas._decomp={bars:bars,rowH:rowH,nRows:nRows,rowTop:rowTop};
 }
 
 function renderHealth(sim,p){
-  var n=sim.months,aRets=sim.alphaRets;
-  var aMean=0;for(var i=0;i<n;i++)aMean+=aRets[i];aMean/=n;
-  var aVar=0;for(var i=0;i<n;i++)aVar+=(aRets[i]-aMean)*(aRets[i]-aMean);aVar/=(n-1);
-  var realAlphaVol=Math.sqrt(aVar)*Math.sqrt(12);
-  var eRets=sim.eqRets,eMean=0;for(var i=0;i<n;i++)eMean+=eRets[i];eMean/=n;
-  var cov=0,eVar=0;for(var i=0;i<n;i++){cov+=(aRets[i]-aMean)*(eRets[i]-eMean);eVar+=(eRets[i]-eMean)*(eRets[i]-eMean);}
-  var realLeakage=eVar>0?cov/eVar:0;
-  var capUsed=p.marginReq*p.betaNotional+p.alphaAlloc;
-  var totalExp=p.betaNotional+p.alphaAlloc;
-  var leverage=Math.max(0,totalExp-1.0);
-  var basisSum=0;for(var i=0;i<n;i++)basisSum+=sim.comp.basis[i]*sim.comp.basis[i];
-  var realBasisMo=Math.sqrt(basisSum/n)*10000;
-  var tgtBasisMo=p.basisNoiseDec*p.betaNotional*10000;
-  var stressCount=0;for(var i=0;i<n;i++)if(sim.regimes[i]==='stress')stressCount++;
-  var negAlpha=0;for(var i=0;i<n;i++)if(aRets[i]<0)negAlpha++;
+  var n=sim.months,a=sim.sleeveRets,st=sim.st,i;
+  var aMean=0;for(i=0;i<n;i++)aMean+=a[i];aMean/=n;
+  var aVar=0;for(i=0;i<n;i++)aVar+=(a[i]-aMean)*(a[i]-aMean);aVar/=(n-1);
+  var realVol=Math.sqrt(aVar)*Math.sqrt(12);
+  var e=sim.eqRets,eMean=0;for(i=0;i<n;i++)eMean+=e[i];eMean/=n;
+  var cov=0,eVar=0;for(i=0;i<n;i++){cov+=(a[i]-aMean)*(e[i]-eMean);eVar+=(e[i]-eMean)*(e[i]-eMean);}
+  var realBeta=eVar>0?cov/eVar:0;
+  var sleeveSharpe=realVol>0?(aMean*12-p.cashRate)/realVol:0;
+  var basisSum=0;for(i=0;i<n;i++)basisSum+=sim.comp.basis[i]*sim.comp.basis[i];
+  var realBasis=Math.sqrt(basisSum/n)*1e4,tgtBasis=p.basisSig*st.N*1e4;
+  var cr=0,rt=0,mc=0,neg=0;
+  for(i=0;i<n;i++){if(sim.regimes[i]==='crisis')cr++;else if(sim.regimes[i]==='rate')rt++;if(sim.calls[i])mc++;if(a[i]<0)neg++;}
+  var stressShare=(cr+rt)/n;
   var items=[
-    {label:'Realized Alpha Vol',val:pct(realAlphaVol),tgt:pct(p.alphaVol),ok:Math.abs(realAlphaVol-p.alphaVol)/Math.max(p.alphaVol,0.001)<0.35},
-    {label:'Realized Alpha Leakage',val:f2(realLeakage),tgt:f2(p.alphaLeakage),ok:Math.abs(realLeakage-p.alphaLeakage)<0.15},
-    {label:'Capital Utilization',val:pct(capUsed,0),tgt:null,ok:capUsed<0.95},
-    {label:'Effective Leverage',val:pct(leverage,0),tgt:null,ok:leverage<0.35},
-    {label:'Realized Basis Noise',val:realBasisMo.toFixed(1)+' bp/mo',tgt:tgtBasisMo>0?tgtBasisMo.toFixed(0)+' bp/mo':null,ok:tgtBasisMo<=0||Math.abs(realBasisMo-tgtBasisMo)/tgtBasisMo<0.4},
-    {label:'Stress Months',val:stressCount+' / '+n+' ('+(stressCount/n*100).toFixed(1)+'%)',tgt:null,ok:Math.abs(stressCount/n-p.stressFreq)<0.10},
-    {label:'Neg Alpha Months',val:(negAlpha/n*100).toFixed(0)+'%',tgt:null,ok:negAlpha/n<0.55},
+    {label:'Alpha sleeve vol (net)',val:pct(realVol,1),tgt:'tgt '+pct(p.alphaVol,1),ok:p.alphaVol<=0||Math.abs(realVol-p.alphaVol)/p.alphaVol<0.35},
+    {label:'Alpha beta to equities',val:f2(realBeta),tgt:'tgt '+f2(p.alphaBeta),ok:Math.abs(realBeta-p.alphaBeta)<0.15},
+    {label:'Alpha sleeve net Sharpe',val:f2(sleeveSharpe),tgt:'',ok:sleeveSharpe>0.3},
+    {label:'Initial margin posted',val:pct(st.im,1)+' NAV',tgt:'cash '+pct(1-st.A,0),ok:st.im<=0.8*(1-st.A)},
+    {label:'Free cash after margin',val:pct(st.free,1),tgt:'buffer '+pct(p.buffer,0),ok:st.free>=p.buffer},
+    {label:'Margin-call months',val:mc+' / '+n,tgt:'',ok:mc===0},
+    {label:'Regime months',val:'crisis '+cr+' · rate '+rt+' ('+pct(stressShare,0)+')',tgt:'tgt '+pct(p.stressFreq,0),ok:Math.abs(stressShare-p.stressFreq)<0.10},
+    {label:'Realised basis noise',val:realBasis.toFixed(1)+' bp/mo',tgt:tgtBasis>0?'tgt '+tgtBasis.toFixed(0)+' bp/mo':'',ok:tgtBasis<=0||Math.abs(realBasis-tgtBasis)/tgtBasis<0.4},
+    {label:'Negative alpha months',val:pct(neg/n,0),tgt:'',ok:neg/n<0.55}
   ];
   var html='';
-  for(var i=0;i<items.length;i++){var it=items[i],cls=it.ok?'ok':'warn';
-    var tip=HEALTH_TIPS[it.label]||'';
-    html+='<div class="health-row" data-tip="'+tip+'"><span class="health-dot '+cls+'"></span><span class="health-label">'+it.label+'</span><span class="health-val">'+it.val+'</span>'+(it.tgt?'<span class="health-tgt">tgt '+it.tgt+'</span>':'')+'</div>';}
+  for(i=0;i<items.length;i++){var it=items[i];
+    html+='<div class="health-row" data-tip="'+esc(HEALTH_TIPS[it.label]||'')+'"><span class="health-dot '+(it.ok?'ok':'warn')+'"></span><span class="health-label">'+it.label+'</span><span class="health-val">'+it.val+'</span>'+(it.tgt?'<span class="health-tgt">'+it.tgt+'</span>':'')+'</div>';}
   document.getElementById('healthBox').innerHTML=html;
 }
 
 function renderStress(p){
-  var scenarios=[
-    {name:'Equity Crash',eq:-0.20,bd:0.020,aFactor:3.0,aOverride:-0.030,note:'Flight to quality; alpha crowding'},
-    {name:'Rate Shock +200bp',eq:-0.05,bd:-0.040,aFactor:1.5,aOverride:null,note:'Duration hit; spreads widen'},
-    {name:'Correlation Spike',eq:-0.15,bd:-0.015,aFactor:2.0,aOverride:-0.020,note:'Diversification breakdown'},
-    {name:'Liquidity Crunch',eq:-0.10,bd:0.010,aFactor:4.0,aOverride:-0.050,note:'Redemptions; margin calls'},
-    {name:'Mild Correction',eq:-0.07,bd:0.012,aFactor:1.2,aOverride:null,note:'Normal pullback'},
-  ];
-  var rfMo=p.cashRate/12,html='';
-  for(var i=0;i<scenarios.length;i++){var s=scenarios[i];
-    var bench=p.eqWeight*s.eq+(1-p.eqWeight)*s.bd,base=bench;
-    var cash=rfMo,betaEx=p.betaNotional*(bench-rfMo),roll=-p.betaNotional*p.rollCostMo;
-    var basisDrag=-p.betaNotional*p.basisNoiseDec*0.5;
-    var alphaGross=s.aOverride!==null?s.aOverride:(p.alphaIR*p.alphaVol/12)*(1/s.aFactor);
-    var alphaLeak=p.alphaLeakage*s.eq;var alphaC=p.alphaAlloc*(alphaGross+alphaLeak);
-    var slip=-p.alphaAlloc*p.slippageMo*s.aFactor;
-    var totalExp=p.betaNotional+p.alphaAlloc;
-    var leverage=Math.max(0,totalExp-1.0);
-    var capUsed=p.marginReq*p.betaNotional+p.alphaAlloc;
-    var shortfall=Math.max(0,p.collateralBuffer-(1-capUsed));
-    var fin=-(leverage*p.finSpreadMo+shortfall*p.finSpreadMo*2.0)*s.aFactor;
-    var pa=cash+betaEx+roll+basisDrag+alphaC+slip+fin,delta=pa-base;
+  var st=structure(p),N=st.N,A=st.A,rfMo=p.cashRate/12,sprMo=p.finSpread/12,html='';
+  for(var i=0;i<SCEN.length;i++){var s=SCEN[i];
+    var bench=p.eqWeight*s.eq+(1-p.eqWeight)*s.bd;
+    var cash=(1-A)*rfMo,betaEx=N*(bench-rfMo),fin=-N*sprMo,roll=-N*p.rollCost/12,basis=-N*p.basisSig;
+    var gross=rfMo+s.aShock+p.alphaBeta*s.aBetaX*(s.eq-rfMo);
+    var sleeveNet=gross-p.mgmtFee/12;                      /* no performance fee in a losing month */
+    var drag=-A*p.drag/12;
+    var vm=N*bench,callShort=Math.max(0,-vm-st.freePos);
+    var liq=-(st.structShort*(rfMo+sprMo)+callShort*(rfMo+sprMo+0.01/12));
+    var pa=cash+betaEx+fin+roll+basis+A*sleeveNet+drag+liq,delta=pa-bench;
     var dc=delta>0.001?'delta-pos':delta<-0.001?'delta-neg':'delta-neut';
-    var tip=STRESS_TIPS[s.name]||'';
-    html+='<tr><td data-tip="'+tip+'">'+s.name+'</td><td>'+pct(base)+'</td><td>'+pct(pa)+'</td><td class="'+dc+'">'+spct(delta)+'</td><td>'+s.note+'</td></tr>';}
+    var note,cls='';
+    if(vm>=0)note='No variation margin due';
+    else if(callShort>0){note='VM call '+pct(-vm,1)+' of NAV exceeds free cash by '+pct(callShort,1)+' → emergency funding';cls=' class="call"';}
+    else note='VM call '+pct(-vm,1)+' of NAV, covered by free cash ('+pct(st.freePos,1)+')';
+    html+='<tr><td data-tip="'+esc(s.tip)+'">'+s.name+'</td><td>'+pct(bench,1)+'</td><td>'+pct(pa,1)+'</td><td class="'+dc+'">'+spct(delta,1)+'</td><td'+cls+'>'+note+'</td></tr>';}
   document.getElementById('stressBody').innerHTML=html;
 }
 
 function renderStatus(sim,p,ms){
-  var sc=0;for(var i=0;i<sim.regimes.length;i++)if(sim.regimes[i]==='stress')sc++;
-  var V=function(x){return'<span class="val">'+x+'</span>';};
+  var cr=0,rt=0,mc=0;
+  for(var i=0;i<sim.months;i++){if(sim.regimes[i]==='crisis')cr++;else if(sim.regimes[i]==='rate')rt++;if(sim.calls[i])mc++;}
   document.getElementById('statusBar').innerHTML=[
-    'SEED '+V(p.seed),V(sim.months)+' MO / 15 YR',
-    'STRESS '+V(sc)+' MO ('+(sc/sim.months*100).toFixed(1)+'%)',
-    'EQ/BOND '+V(Math.round(p.eqWeight*100))+'/'+V(Math.round((1-p.eqWeight)*100)),
-    'BETA '+V(Math.round(p.betaNotional*100))+'%',
-    'ALPHA '+V(Math.round(p.alphaAlloc*100))+'% @ '+V((p.alphaVol*100).toFixed(1))+'% VOL',
-    'SIM '+V(ms)+'ms'
-  ].join(' <span class="sep">&middot;</span> ');
+    'seed <b>'+p.seed+'</b>','<b>'+sim.months+'</b> mo / 15 yr',
+    'crisis <b>'+cr+'</b> mo · rate <b>'+rt+'</b> mo',
+    'eq/bond <b>'+Math.round(p.eqWeight*100)+'/'+Math.round((1-p.eqWeight)*100)+'</b>',
+    'N <b>'+Math.round(p.betaNotional*100)+'%</b>','A <b>'+Math.round(p.alphaAlloc*100)+'%</b> @ '+(p.alphaVol*100).toFixed(1)+'% vol',
+    'margin calls <b class="'+(mc?'warn':'ok')+'">'+mc+'</b>','sim <b>'+ms+' ms</b>'
+  ].join(' · ');
 }
 
+/* ---------- inputs ---------- */
+var DEFAULTS={seed:42,cashRate:4.0,stressFreq:15,eqWeight:60,betaNotional:100,financingSpread:35,rollCost:5,basisNoise:10,
+  alphaAlloc:50,alphaVol:6,alphaIR:1.00,alphaBeta:0.15,mgmtFee:1.5,perfFee:20,alphaDecay:1.0,slippage:15,marginReq:8,haircut:2,collateralBuffer:5};
+
 function getParams(){
-  function v(id){var el=document.getElementById(id);return el?parseFloat(el.value):0;}
-  var raw={
-    seed:Math.max(1,Math.round(v('seed')))||42,
-    cashRate:(v('cashRate')||0)/100,stressFreq:(v('stressFreq')||0)/100,
-    eqWeight:(v('eqWeight')||0)/100,betaNotional:(v('betaNotional')||0)/100,
-    basisNoise:v('basisNoise')||0,rollCost:v('rollCost')||0,
-    alphaAlloc:(v('alphaAlloc')||0)/100,alphaVol:(v('alphaVol')||0)/100,
-    alphaIR:v('alphaIR')||0,alphaLeakage:v('alphaLeakage')||0,slippage:v('slippage')||0,
-    marginReq:(v('marginReq')||0)/100,collateralBuffer:(v('collateralBuffer')||0)/100,
-    financingSpread:v('financingSpread')||0
+  function v(id){var el=document.getElementById(id),d=DEFAULTS[id];if(!el)return d;var x=parseFloat(el.value);if(isNaN(x))return d;
+    var lo=parseFloat(el.min),hi=parseFloat(el.max);if(!isNaN(lo))x=Math.max(lo,x);if(!isNaN(hi))x=Math.min(hi,x);return x;}
+  return{
+    seed:Math.round(v('seed')),cashRate:v('cashRate')/100,stressFreq:v('stressFreq')/100,
+    eqWeight:v('eqWeight')/100,betaNotional:v('betaNotional')/100,
+    finSpread:v('financingSpread')/1e4,rollCost:v('rollCost')/1e4,basisSig:v('basisNoise')/1e4,
+    alphaAlloc:v('alphaAlloc')/100,alphaVol:v('alphaVol')/100,alphaIR:v('alphaIR'),alphaBeta:v('alphaBeta'),
+    mgmtFee:v('mgmtFee')/100,perfFee:v('perfFee')/100,alphaDecay:v('alphaDecay')/100,drag:v('slippage')/1e4,
+    marginReq:v('marginReq')/100,haircut:v('haircut')/100,buffer:v('collateralBuffer')/100
   };
-  raw.basisNoiseDec=raw.basisNoise/10000;raw.rollCostMo=raw.rollCost/10000/12;
-  raw.slippageMo=raw.slippage/10000/12;raw.finSpreadMo=raw.financingSpread/10000/12;
-  return raw;
 }
 
 function runAll(){
@@ -760,41 +797,40 @@ function runAll(){
     var baseS=calcStats(sim.baseRet,null,rf),paS=calcStats(sim.paRet,sim.benchRets,rf);
     var baseCum=[],paCum=[];
     for(var i=0;i<baseS.cum.length;i++){baseCum.push(baseS.cum[i]*100);paCum.push(paS.cum[i]*100);}
-
+    var eqLbl='Benchmark '+Math.round(p.eqWeight*100)+'/'+Math.round((1-p.eqWeight)*100);
     drawChart(document.getElementById('growthCanvas'),{
-      datasets:[{data:baseCum,color:'#3b82f6',label:'Base 60/40',fill:false},{data:paCum,color:'#10b981',label:'Portable Alpha',fill:false}],
-      nPoints:baseCum.length,regimes:sim.regimes,yFmt:function(v){return'$'+v.toFixed(0);},height:300
+      datasets:[{data:baseCum,color:COL.blue,label:eqLbl,fill:false},{data:paCum,color:COL.green,label:'Portable alpha',fill:false}],
+      nPoints:baseCum.length,regimes:sim.regimes,yFmt:function(v){return'$'+v.toFixed(0);},height:300,yLabel:'Value of $100 (USD)',xLabel:'Years'
     });
     drawChart(document.getElementById('ddCanvas'),{
-      datasets:[{data:baseS.ddSeries,color:'rgba(59,130,246,0.6)',label:'Base DD',fill:true,fillColor:'rgba(59,130,246,0.08)'},
-                {data:paS.ddSeries,color:'rgba(16,185,129,0.6)',label:'PA DD',fill:true,fillColor:'rgba(16,185,129,0.08)'}],
-      nPoints:baseS.ddSeries.length,regimes:sim.regimes,yFmt:function(v){return(v*100).toFixed(0)+'%';},forceZero:true,height:300
+      datasets:[{data:baseS.ddSeries,color:'rgba(59,130,246,0.6)',label:eqLbl,fill:true,fillColor:'rgba(59,130,246,0.08)'},
+                {data:paS.ddSeries,color:'rgba(16,185,129,0.6)',label:'Portable alpha',fill:true,fillColor:'rgba(16,185,129,0.08)'}],
+      nPoints:baseS.ddSeries.length,regimes:sim.regimes,yFmt:function(v){return(v*100).toFixed(0)+'%';},forceZero:true,height:300,yLabel:'Drawdown from peak (%)',xLabel:'Years'
     });
-
-    renderKPIs(baseS,paS,rf);renderDecomp(sim.comp);renderHealth(sim,p);renderStress(p);
+    renderKPIs(baseS,paS);renderDecomp(sim.comp);renderHealth(sim,p);renderStress(p);
     renderStatus(sim,p,(performance.now()-t0).toFixed(0));
   }catch(err){
     var s=document.getElementById('statusBar');
-    if(s)s.innerHTML='<span style="color:#ef4444">ERROR: '+err.message+'</span>';
+    if(s)s.innerHTML='<span class="warn">ERROR: '+err.message+'</span>';
   }
 }
 
 function resetDefaults(){
-  var D={seed:42,cashRate:4.5,stressFreq:15,eqWeight:60,betaNotional:100,basisNoise:15,rollCost:25,alphaAlloc:30,alphaVol:6,alphaIR:0.80,alphaLeakage:0.05,slippage:40,marginReq:15,collateralBuffer:5,financingSpread:150};
-  for(var k in D){var el=document.getElementById(k);if(el)el.value=D[k];}
+  for(var k in DEFAULTS){var el=document.getElementById(k);if(el)el.value=DEFAULTS[k];}
   runAll();
 }
+document.getElementById('resetBtn').addEventListener('click',resetDefaults);
 
 var dbTimer;
 function scheduleRun(){clearTimeout(dbTimer);dbTimer=setTimeout(runAll,120);}
 var inputs=document.querySelectorAll('.ctrl-group input');
-for(var i=0;i<inputs.length;i++)inputs[i].addEventListener('input',scheduleRun);
+for(var ii=0;ii<inputs.length;ii++){inputs[ii].addEventListener('input',scheduleRun);inputs[ii].addEventListener('change',scheduleRun);}
 
-attachChartTip('growthCanvas','growthTip');
-attachChartTip('ddCanvas','ddTip');
-attachDecompTip('decompCanvas','decompTip');
+attachChartTip('growthCanvas');
+attachChartTip('ddCanvas');
+attachDecompTip('decompCanvas');
 
-setTimeout(runAll,50);
+runAll();
 var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(runAll,200);});
 </script>
 </body>

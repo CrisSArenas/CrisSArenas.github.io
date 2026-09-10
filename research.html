@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research | Cristian Arenas</title>
+<meta name="description" content="Independent research by Cristian Arenas on deep learning for portfolio construction: regime-aware transformer architectures, cross-attention regime discovery, and honest evaluation protocols.">
+<meta property="og:title" content="Research | Cristian Arenas">
+<meta property="og:description" content="Deep learning for portfolio construction: regime-aware transformers, cross-attention regime discovery, and honest evaluation protocols.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.rhero{padding:140px 0 60px;background:linear-gradient(135deg,var(--darker-bg) 0%,var(--dark-bg) 100%);position:relative;overflow:hidden}
+.rhero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(0,247,255,.03) 1px,transparent 1px),linear-gradient(rgba(0,247,255,.03) 1px,transparent 1px);background-size:50px 50px;animation:gridMove 20s linear infinite}
+.rhero .container{position:relative;z-index:1}
+.rhero .sub{color:var(--text-secondary);font-size:1.12rem;max-width:760px;line-height:1.8;margin-bottom:0}
+.rhero .sub strong{color:var(--primary-cyan)}
+.back-link{display:inline-flex;align-items:center;gap:.5rem;color:var(--text-secondary);text-decoration:none;font-size:.95rem;margin-bottom:2rem;transition:.3s}
+.back-link:hover{color:var(--primary-cyan)}
+.back-link:hover i{transform:translateX(-4px)}
+.back-link i{transition:transform .3s}
+.cat-label{display:inline-block;font-family:var(--font-mono);font-size:.85rem;color:var(--primary-green);margin-bottom:.5rem;letter-spacing:2px;text-transform:uppercase}
+.rsec{padding:60px 0}
+.rsec:nth-child(even){background:var(--darker-bg)}
+.rsec h2{font-size:1.6rem;color:var(--text-primary);margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+.rsec h2 i{color:var(--primary-cyan)}
+.rsec .intro{color:var(--text-secondary);max-width:760px;line-height:1.75;margin-bottom:2rem}
+
+/* paper entry */
+.entry{background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:2rem;position:relative;overflow:hidden;transition:border-color .3s ease,box-shadow .3s ease}
+.entry::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--primary-cyan),var(--primary-green))}
+.entry:hover{border-color:var(--primary-cyan);box-shadow:0 15px 40px rgba(0,247,255,.12)}
+.entry .status{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--primary-green)}
+.entry h3{font-size:1.45rem;line-height:1.3;margin:.6rem 0 .7rem;letter-spacing:-.01em}
+.entry h3 a{color:var(--text-primary);text-decoration:none;transition:color .2s}
+.entry h3 a:hover{color:var(--primary-cyan)}
+.entry .auth{color:var(--text-secondary);font-size:.95rem;margin-bottom:1rem}
+.entry .auth strong{color:var(--text-primary)}
+.meta-pills{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.2rem}
+.mp{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.05em;padding:.28rem .7rem;border-radius:999px;border:1px solid var(--border-color);color:var(--text-secondary)}
+.mp.a{color:var(--primary-cyan);border-color:rgba(0,247,255,.35);background:rgba(0,247,255,.06)}
+.entry p.summary{color:var(--text-secondary);line-height:1.8;margin-bottom:1.2rem;max-width:78ch}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1rem;margin:1.5rem 0}
+.finding{background:var(--darker-bg);border:1px solid var(--border-color);border-radius:8px;padding:.9rem 1rem}
+.finding .v{font-family:var(--font-mono);font-size:1.15rem;color:var(--primary-cyan);font-weight:600;line-height:1.2}
+.finding .l{font-size:.8rem;color:var(--text-secondary);margin-top:.3rem;line-height:1.5}
+.entry .acts{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem}
+.entry .acts .btn{padding:.7rem 1.25rem;font-size:.92rem}
+
+/* areas + repro */
+.areas{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1.1rem}
+.area{background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:1.2rem 1.3rem;transition:border-color .25s,transform .25s}
+.area:hover{border-color:var(--primary-cyan);transform:translateY(-3px)}
+.area i{color:var(--primary-cyan);font-size:1.15rem}
+.area h4{font-size:1rem;color:var(--text-primary);margin:.6rem 0 .45rem}
+.area p{font-size:.88rem;color:var(--text-secondary);line-height:1.65;margin:0}
+.repro{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.6rem}
+.repro h4{font-size:.95rem;color:var(--text-primary);margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
+.repro h4 i{color:var(--primary-green);font-size:.9rem}
+.repro p,.repro li{color:var(--text-secondary);font-size:.88rem;line-height:1.7}
+.repro ul{margin:0 0 0 1.1rem}
+.note{margin-top:2rem;padding:1rem 1.2rem;border:1px dashed var(--border-color);border-radius:8px;color:var(--text-secondary);font-size:.85rem;line-height:1.7}
+.note strong{color:var(--text-primary)}
+@media(max-width:768px){.rhero{padding:110px 0 40px}.entry{padding:1.4rem}.entry h3{font-size:1.2rem}}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="nav-brand"><span class="terminal-prompt">cristian@portfolio:~$</span></div>
+    <button class="mobile-menu-toggle" id="mobileMenuBtn" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#skills">Skills</a></li>
+      <li><a href="index.html#projects">Projects</a></li>
+      <li><a href="research.html" class="active">Research</a></li>
+      <li><a href="index.html#demos">Demos</a></li>
+      <li><a href="robotics-embedded.html">Robotics</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="rhero">
+  <div class="container">
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Portfolio</a>
+    <span class="cat-label">// deep learning &times; portfolio construction</span>
+    <h1 class="section-title" style="margin-bottom:1.5rem"><span class="title-number"><i class="fas fa-flask"></i></span> Research</h1>
+    <p class="sub">
+      Independent research on <strong>learned representations for multi-asset allocation</strong>: whether a model can
+      discover market regimes and an allocation policy at the same time, and whether that actually helps. Each paper
+      has an <strong>interactive summary</strong> built from its own result tables, a link to the published version,
+      and the full PDF.
+    </p>
+  </div>
+</section>
+
+<section class="rsec">
+  <div class="container">
+    <h2><i class="fas fa-file-lines"></i> Papers</h2>
+    <p class="intro">One working paper, with a second study on real-market validation in progress.</p>
+
+    <article class="entry">
+      <span class="status">Working paper &middot; SSRN &middot; 2026</span>
+      <h3><a href="research-regime-aware-transformer.html">Regime-Aware Transformer Architectures with Cross-Attention Regime Discovery for Multi-Asset Portfolio Construction</a></h3>
+      <p class="auth"><strong>Cristian Miguel Sanchez Arenas</strong> &middot; Independent Researcher</p>
+      <div class="meta-pills">
+        <span class="mp a">SSRN 6517438</span>
+        <span class="mp">26 pages</span>
+        <span class="mp">9 baselines + oracle</span>
+        <span class="mp">3 DGPs &times; 3 seeds</span>
+        <span class="mp">10,000-rep bootstrap</span>
+      </div>
+      <p class="summary">
+        Traditional regime-aware allocation runs in two stages: classify the market regime, then optimize the
+        portfolio conditional on that label. The discrete label between the stages throws away uncertainty and
+        transition dynamics, and the classifier is optimizing the wrong objective. This paper proposes Cross-Attention
+        Regime Discovery, which replaces that interface: learnable regime queries attend over a transformer's temporal
+        representation to produce soft regime assignments and regime-specific allocation heads, trained end to end
+        against a single portfolio objective. It is then evaluated honestly, across three data generating processes,
+        three seeds, ten alternatives and a block bootstrap, and the result is not a clean win.
+      </p>
+      <div class="findings">
+        <div class="finding"><div class="v">Neural &gt; traditional</div><div class="l">Every neural allocator beats every classical baseline on all three processes, mostly by taking less risk</div></div>
+        <div class="finding"><div class="v">No architecture wins</div><div class="l">A 16k-parameter LSTM matches or beats the transformer; zero pairwise differences reach significance</div></div>
+        <div class="finding"><div class="v">The regime paradox</div><div class="l">The mixture model identifies regimes far better (ARI 0.59 vs 0.03) and allocates far worse (0.44 vs 0.82)</div></div>
+        <div class="finding"><div class="v">Constraints pay</div><div class="l">Position bounds cost raw Sharpe but halve turnover against the two-stage pipeline</div></div>
+      </div>
+      <div class="acts">
+        <a class="btn btn-primary" href="research-regime-aware-transformer.html"><i class="fas fa-chart-simple"></i> Explore interactive summary</a>
+        <a class="btn btn-secondary" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6517438" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Read on SSRN</a>
+        <a class="btn btn-ghost" href="assets/research/Arenas-2026-Regime-Aware-Transformer-CARD.pdf" download><i class="fas fa-file-arrow-down"></i> Download PDF</a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="rsec">
+  <div class="container">
+    <h2><i class="fas fa-compass"></i> Research areas</h2>
+    <p class="intro">Where the work sits, and where it is going next.</p>
+    <div class="areas">
+      <div class="area"><i class="fas fa-layer-group"></i><h4>End-to-end allocation</h4><p>Training a single model against a portfolio objective instead of chaining a forecast, a classifier and an optimizer, each optimizing something different.</p></div>
+      <div class="area"><i class="fas fa-wave-square"></i><h4>Regime representation</h4><p>Soft, learned regime structure rather than discrete labels, and the open question of what a portfolio-relevant regime actually is.</p></div>
+      <div class="area"><i class="fas fa-eye"></i><h4>Interpretability</h4><p>Attention over the lookback window as an explanation of which observations drive a regime, so a risk committee can interrogate the model.</p></div>
+      <div class="area"><i class="fas fa-scale-balanced"></i><h4>Honest evaluation</h4><p>Multiple data generating processes, multiple seeds, strong baselines, bootstrap intervals, and reporting the null result when that is the result.</p></div>
+      <div class="area"><i class="fas fa-coins"></i><h4>Cost-aware construction</h4><p>Turnover and transaction costs inside the objective, not bolted on afterwards, so stability is rewarded during training.</p></div>
+      <div class="area"><i class="fas fa-chart-line"></i><h4>Real-market validation</h4><p>Taking the same protocol to liquid ETF universes with rolling out-of-sample windows. In progress.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="rsec">
+  <div class="container">
+    <h2><i class="fas fa-flask-vial"></i> Method &amp; reproducibility</h2>
+    <p class="intro">The standards every study on this page is held to.</p>
+    <div class="repro">
+      <div>
+        <h4><i class="fas fa-dice"></i> Controlled seeds</h4>
+        <p>Python, NumPy and PyTorch seeds are fixed, deterministic mode is enabled, and every configuration runs across multiple seeds. Results are reported as mean and standard deviation, never as a single favourable run.</p>
+      </div>
+      <div>
+        <h4><i class="fas fa-ruler-combined"></i> Strong baselines</h4>
+        <p>Equal weight, minimum variance with Ledoit-Wolf shrinkage, risk parity, hierarchical risk parity, a two-stage mixture-model pipeline, and neural alternatives. Plus an infeasible oracle that receives the true regime labels as an upper reference.</p>
+      </div>
+      <div>
+        <h4><i class="fas fa-chart-area"></i> Statistical testing</h4>
+        <p>Sharpe ratio differences are tested with a circular block bootstrap that respects serial dependence. Confidence intervals are reported in full, including the wide ones.</p>
+      </div>
+      <div>
+        <h4><i class="fas fa-receipt"></i> Costs and turnover</h4>
+        <p>Every performance claim is repeated after proportional transaction costs, and turnover is reported so the reader can apply their own cost assumption.</p>
+      </div>
+      <div>
+        <h4><i class="fas fa-triangle-exclamation"></i> Stated limitations</h4>
+        <p>Synthetic data is labelled as synthetic. Where a study cannot support a claim, it says so. Negative and null results are published rather than dropped.</p>
+      </div>
+      <div>
+        <h4><i class="fas fa-code"></i> Reproducible pipeline</h4>
+        <p>One pipeline regenerates every table and figure in the paper from the configuration files, so a reviewer can rerun the study rather than trust the write-up.</p>
+      </div>
+    </div>
+    <div class="note">
+      <strong>On synthetic data.</strong> The current paper is a controlled methodological study. Ground truth regimes
+      are known, which allows evaluation that real market data does not permit, and it is the only way to ask whether
+      a model recovers the structure it claims to. It also means the results are not evidence of real-world portfolio
+      performance, and should not be read that way. Real-market validation is the next study, not a footnote to this one.
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-text">
+        <p>&copy; 2026 Cristian Arenas. Quantitative Investment &amp; AI/ML Engineering.</p>
+        <p class="footer-subtext"><a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+      </div>
+      <div class="footer-links">
+        <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://github.com/CrisSArenas" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+        <a href="mailto:cristianmiguelsa@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button id="scrollTop" class="scroll-top" aria-label="Scroll to top"><i class="fas fa-arrow-up"></i></button>
+<script src="script.js"></script>
+</body>
+</html>

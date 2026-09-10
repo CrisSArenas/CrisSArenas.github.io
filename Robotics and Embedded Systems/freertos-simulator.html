@@ -4,41 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FreeRTOS Kernel Simulator | Cristian Arenas</title>
+<meta name="description" content="Interactive FreeRTOS kernel simulator: fixed-priority preemptive scheduling with round-robin time slicing, mutexes with the priority-inheritance protocol, counting semaphores, rate-monotonic utilisation analysis and deadline-miss detection.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0b1120;--card:#111827;--card2:#1a2332;
-  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
-  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
-  --purple:#8b5cf6;--orange:#f97316;--pink:#ec4899;--mono:'Courier New',monospace;
-}
-body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+body{font-size:14px;line-height:1.6}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-/* NAV */
-.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
-.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;cursor:pointer}
-.nav .back:hover{color:var(--cyan)}
-.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.nav h1 i{color:var(--cyan);font-size:14px}
-.nav .nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.btn{padding:6px 18px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;font-family:'Inter','Segoe UI',sans-serif}
-.preset-btn{padding:5px 12px;font-size:10px;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:5px;transition:all .15s;font-weight:600;font-family:var(--mono);user-select:none;white-space:nowrap}
-.preset-btn:hover{border-color:var(--cyan);color:var(--text)}
-.preset-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1)}
-.live-pill{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:600;color:var(--green);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);letter-spacing:.3px}
-.live-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(16,185,129,.8);animation:pulse 2s infinite}
-.live-pill.paused{color:var(--dim);border-color:var(--border);background:transparent}
-.live-pill.paused .pulse{background:var(--dim);box-shadow:none;animation:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-/* HELP BTN */
-.help-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.help-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+/* nav bits layered on top of the shell */
+.preset-btn.active{border-color:var(--cyan);color:var(--cyan-bright);background:var(--accent-bg)}
+.d-pill.paused{color:var(--faint);border-color:var(--border);background:transparent}
+.d-pill.paused .pulse{background:var(--faint);animation:none}
+.demo-sub{max-width:1440px;margin:14px auto 0;padding:0 16px;color:var(--muted);font-size:.85rem}
+.demo-sub b{color:var(--text);font-weight:600}
 
 /* GUIDE */
 .guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
@@ -67,6 +54,7 @@ a{color:var(--cyan);text-decoration:none}
 .kpi-cell .val.neg{color:var(--red)}
 .kpi-cell .val.neutral{color:var(--cyan)}
 .kpi-cell .val.warn{color:var(--orange)}
+.kpi-cell .sub{font-size:9px;color:var(--faint);font-family:var(--mono);margin-top:3px}
 @media(max-width:900px){.kpi-row{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:500px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
 
@@ -95,7 +83,7 @@ a{color:var(--cyan);text-decoration:none}
 .toggle-sw input:checked+.toggle-track::before{transform:translateX(18px);background:var(--green)}
 .toggle-lbl{font-size:11px;color:var(--dim);font-weight:500}
 .toggle-lbl.on{color:var(--green)}
-.add-btn{padding:5px 12px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:5px;transition:all .15s;font-weight:600;display:flex;align-items:center;gap:5px;font-family:'Inter','Segoe UI',sans-serif}
+.add-btn{padding:5px 12px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:5px;transition:all .15s;font-weight:600;display:flex;align-items:center;gap:5px;font-family:var(--sans)}
 .add-btn:hover{border-color:var(--cyan);color:var(--text)}
 .add-btn i{font-size:10px}
 
@@ -182,25 +170,6 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .pi-banner.show{display:flex;align-items:center;gap:6px}
 @keyframes piFlash{0%,100%{opacity:1}50%{opacity:.5}}
 
-/* HELP MODAL */
-.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.help-overlay.open{display:flex}
-.help-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:0}
-.help-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
-.help-modal-head h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.help-modal-head h2 i{color:var(--cyan)}
-.help-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.help-close:hover{color:var(--red);border-color:var(--red)}
-.help-body{padding:20px 22px}
-.help-section{margin-bottom:20px}
-.help-section:last-child{margin-bottom:0}
-.help-section h3{font-size:12px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.help-section p{font-size:12.5px;color:var(--dim);line-height:1.7;margin-bottom:6px}
-.help-section p strong{color:var(--text)}
-.help-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin-top:6px}
-.help-dl dt{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
-.help-dl dd{color:var(--dim);line-height:1.6}
-
 /* ADD MODALS */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .modal-overlay.show{display:flex}
@@ -212,89 +181,86 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .form-group input,.form-group select{width:100%;padding:8px 10px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;border-radius:6px;outline:none;transition:border-color .2s}
 .form-group input:focus,.form-group select:focus{border-color:var(--cyan)}
 .form-actions{display:flex;gap:8px;margin-top:16px}
-.form-actions button{flex:1;padding:8px;font-family:'Inter','Segoe UI',sans-serif;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);transition:all .2s;font-weight:600}
+.form-actions button{flex:1;padding:8px;font-family:var(--sans);font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);transition:all .2s;font-weight:600}
 .btn-confirm{background:var(--cyan);color:var(--bg);border-color:var(--cyan) !important;font-weight:700}
 .btn-confirm:hover{background:#22d3ee}
 .btn-cancel{background:var(--card2);color:var(--dim)}
 .btn-cancel:hover{border-color:var(--red);color:var(--red)}
 
-/* DISCLAIMER */
-.disclaimer{max-width:1440px;margin:16px auto 30px;padding:0 16px}
-.disclaimer-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:11px;color:var(--dim);line-height:1.6}
-.disclaimer-box strong{color:var(--text)}
-
 @media(max-width:600px){
-  .nav{flex-wrap:wrap;gap:8px;padding:10px 16px}
-  .nav .nav-actions{flex-wrap:wrap;gap:6px}
   .ctrl-body{gap:12px}
+  .kpi-cell{padding:10px 5px}
+  .kpi-cell .val{font-size:.95rem}
+  .guide,.kpi-strip,.controls,.grid{padding:0 10px}
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav class="nav">
-  <a class="back" href="../robotics-embedded.html"><i class="fas fa-chevron-left"></i> Back to Portfolio</a>
-  <h1><i class="fas fa-microchip"></i> FreeRTOS Kernel Simulator</h1>
-  <div class="nav-actions">
-    <button class="preset-btn" onclick="loadPreset('basic')" title="3 tasks, no shared resources">Basic</button>
-    <button class="preset-btn" onclick="loadPreset('inversion')" title="Classic unbounded priority inversion">Inversion</button>
-    <button class="preset-btn" onclick="loadPreset('inheritance')" title="Priority inheritance protocol">Inheritance</button>
-    <button class="preset-btn" onclick="loadPreset('deadline')" title="Overloaded CPU deadline miss">Deadline</button>
-    <button class="preset-btn" onclick="loadPreset('producer-consumer')" title="Semaphore-based pattern">Prod-Con</button>
-    <span class="live-pill" id="livePill"><span class="pulse"></span> LIVE</span>
-    <button class="help-btn" onclick="toggleHelp()" title="Help &amp; Guide"><i class="fas fa-question"></i></button>
+<nav class="demo-nav">
+  <a class="demo-brand" href="../index.html">cristian@portfolio:~$ <span class="crumb">/ demos / freertos</span></a>
+  <h1 class="demo-title"><i class="fas fa-microchip"></i> FreeRTOS Kernel Simulator</h1>
+  <div class="demo-links">
+    <a href="../index.html#projects">Projects</a>
+    <a href="../index.html#research">Research</a>
+    <a href="../index.html#demos">Demos</a>
+    <a href="../robotics-embedded.html" class="active">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <button type="button" class="d-btn sm preset-btn" onclick="loadPreset('basic')" title="Three periodic tasks, rate-monotonic priorities, no shared resources">Basic</button>
+    <button type="button" class="d-btn sm preset-btn" onclick="loadPreset('inversion')" title="Unbounded priority inversion, inheritance OFF">Inversion</button>
+    <button type="button" class="d-btn sm preset-btn" onclick="loadPreset('inheritance')" title="Same scenario with the priority-inheritance protocol ON">Inheritance</button>
+    <button type="button" class="d-btn sm preset-btn" onclick="loadPreset('deadline')" title="U = 113% &gt; 100%: unavoidable deadline misses">Deadline</button>
+    <button type="button" class="d-btn sm preset-btn" onclick="loadPreset('producer-consumer')" title="Counting semaphore (no priority inheritance)">Prod-Con</button>
+    <span class="d-pill live" id="livePill"><span class="pulse"></span> LIVE</span>
+    <button type="button" class="d-btn sm icon" onclick="toggleHelp()" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
   </div>
 </nav>
+<div class="demo-status">
+  <span id="statusBar">initialising&hellip;</span>
+  <span><b>Simulated kernel</b> &middot; deterministic, no RNG &middot; Cortex-M4F @168&nbsp;MHz, context switch 84&nbsp;cycles &asymp; 0.50&nbsp;&micro;s &middot; not hardware-validated</span>
+</div>
 
-<!-- HELP MODAL -->
-<div class="help-overlay" id="helpOverlay">
-  <div class="help-modal">
-    <div class="help-modal-head">
-      <h2><i class="fas fa-book-open"></i> FreeRTOS Concepts Guide</h2>
-      <button class="help-close" onclick="toggleHelp()"><i class="fas fa-times"></i></button>
+<p class="demo-sub">A <b>fixed-priority preemptive</b> FreeRTOS scheduler: higher number = higher priority, priority&nbsp;0 is reserved for the idle task, equal priorities share the CPU by 1-tick round-robin slices, and mutexes optionally apply the <b>priority-inheritance protocol</b> (mutexes only &mdash; never semaphores or queues).</p>
+
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; FreeRTOS Kernel Simulator</h2>
+      <button type="button" class="d-help-close" onclick="toggleHelp()" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
-    <div class="help-body">
-      <div class="help-section">
-        <h3>What This Simulator Does</h3>
-        <p>This interactive simulator demonstrates a <strong>FreeRTOS-style preemptive priority scheduler</strong>. It models real-time tasks with configurable periods and execution times, mutex-based resource sharing with optional priority inheritance, and counting semaphores for producer-consumer patterns. The Gantt chart visualizes scheduling decisions tick-by-tick.</p>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; What this models</h3>
+        <p>A <strong>fixed-priority preemptive</strong> kernel in the style of FreeRTOS v10/v11. Every tick the kernel releases due periodic jobs, expires delays, then runs the highest-priority ready task; equal-priority tasks share the CPU with a <strong>1-tick round-robin slice</strong> (<code>configUSE_TIME_SLICING = 1</code>). Priorities are <strong>0&ndash;7</strong> (<code>configMAX_PRIORITIES = 8</code>), <strong>higher number = higher priority</strong>, and priority&nbsp;0 is reserved for the idle task (<code>tskIDLE_PRIORITY</code>), so application tasks use 1&ndash;7. The tick rate defaults to <strong>1000&nbsp;Hz</strong> (<code>configTICK_RATE_HZ</code>) and is selectable down to 100&nbsp;Hz.</p>
       </div>
-      <div class="help-section">
-        <h3>Task States</h3>
-        <dl class="help-dl">
-          <dt>READY</dt>
-          <dd>Task is eligible to run and waiting in the ready queue. The scheduler picks the highest-priority ready task.</dd>
-          <dt>RUNNING</dt>
-          <dd>Task is currently executing on the CPU. Only one task runs at a time.</dd>
-          <dt>BLOCKED</dt>
-          <dd>Task is waiting for an event: a delay expiry (vTaskDelay), a mutex (xSemaphoreTake), or a semaphore.</dd>
-          <dt>SUSPENDED</dt>
-          <dd>Task is paused via vTaskSuspend and will not run until vTaskResume is called.</dd>
+      <div class="d-help-section">
+        <h3>2 &middot; Task states</h3>
+        <dl>
+          <dt>Running</dt><dd>Holding the CPU. Exactly one task (or the idle task) runs at a time on this single core.</dd>
+          <dt>Ready</dt><dd>Runnable and queued. The scheduler picks the highest priority, oldest-ready-first within a priority.</dd>
+          <dt>Blocked</dt><dd>Waiting with a timeout or forever: <code>vTaskDelay</code> / <code>vTaskDelayUntil</code>, <code>xSemaphoreTake</code>, <code>xQueueReceive</code>.</dd>
+          <dt>Suspended</dt><dd>Removed from scheduling by <code>vTaskSuspend</code> until <code>vTaskResume</code>. Use the pause icon in the statistics table.</dd>
         </dl>
       </div>
-      <div class="help-section">
-        <h3>Priority Inversion</h3>
-        <p>Occurs when a <strong>high-priority task</strong> is blocked waiting for a mutex held by a <strong>low-priority task</strong>, while a <strong>medium-priority task</strong> preempts the low-priority task. This causes the high-priority task to wait indefinitely (unbounded inversion).</p>
-        <p><strong>Priority Inheritance Protocol</strong> solves this by temporarily boosting the low-priority task's priority to match the blocked high-priority task, preventing the medium-priority task from preempting it.</p>
+      <div class="d-help-section">
+        <h3>3 &middot; Priority inversion and inheritance</h3>
+        <p><strong>Bounded inversion</strong> is normal: a high-priority task waiting on a mutex held by a low-priority task waits at most for the critical section. It becomes <strong>unbounded</strong> when a medium-priority task &mdash; which needs nothing from the mutex &mdash; preempts the holder, so the high-priority task now waits for unrelated work. That is the <em>Inversion</em> preset, and the red banner and red Gantt outline mark the ticks where it is active.</p>
+        <p>The <strong>priority-inheritance protocol</strong> raises the mutex holder to the priority of its highest waiter and restores its base priority on the give. FreeRTOS implements this for <strong>mutexes only</strong> (<code>xSemaphoreCreateMutex</code>); binary and counting semaphores and queues have no owner, so they cannot inherit &mdash; which is why the <em>Prod-Con</em> preset shows no inheritance.</p>
       </div>
-      <div class="help-section">
-        <h3>Scheduling Algorithm</h3>
-        <dl class="help-dl">
-          <dt>Preemptive</dt>
-          <dd>A higher-priority task that becomes ready will immediately preempt the currently running task.</dd>
-          <dt>Round-Robin</dt>
-          <dd>Tasks at the same priority level share CPU time in round-robin fashion.</dd>
-          <dt>Periodic Tasks</dt>
-          <dd>Tasks with a non-zero period are reactivated every T ticks. If a task does not complete before its next activation, a deadline miss is recorded.</dd>
-        </dl>
+      <div class="d-help-section">
+        <h3>4 &middot; Utilisation and deadlines</h3>
+        <p>Each periodic task has a period <strong>T</strong> and a worst-case execution time <strong>C</strong>, with an implicit deadline <strong>D = T</strong>. The scheduler load is <strong>U = &Sigma; C<sub>i</sub>/T<sub>i</sub></strong>. Liu &amp; Layland's rate-monotonic bound is <strong>n(2<sup>1/n</sup> &minus; 1)</strong> &mdash; 0.828 for n=2, 0.780 for n=3, tending to ln&nbsp;2 &asymp; 0.693. Below the bound, RM priority assignment is guaranteed schedulable; between the bound and 1.0 it may still work (test it here); above 1.0 misses are unavoidable, which is what the <em>Deadline</em> preset shows at U = 113%.</p>
       </div>
-      <div class="help-section">
-        <h3>Keyboard Shortcuts</h3>
-        <dl class="help-dl">
-          <dt>Space</dt>
-          <dd>Toggle Play / Pause</dd>
-          <dt>Escape</dt>
-          <dd>Close modals</dd>
+      <div class="d-help-section">
+        <h3>5 &middot; Cost model</h3>
+        <p>A PendSV context switch on a Cortex-M4F costs roughly <strong>84 cycles &asymp; 0.50&nbsp;&micro;s at 168&nbsp;MHz</strong>. The simulator counts switches and reports the accumulated overhead analytically; it does not steal ticks, because a switch is far shorter than one 1&nbsp;ms tick.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; Keyboard</h3>
+        <dl>
+          <dt>Space</dt><dd>Play / pause</dd>
+          <dt>Escape</dt><dd>Close this guide or any dialog</dd>
         </dl>
       </div>
     </div>
@@ -304,15 +270,15 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <!-- GUIDE -->
 <div class="guide">
   <div class="guide-box">
-    <div class="guide-header" onclick="toggleGuide()">
+    <div class="guide-header">
       <h2><i class="fas fa-compass"></i> How to Use This Simulator</h2>
-      <button class="guide-toggle" id="guideBtn">Hide &#x25B4;</button>
+      <button type="button" class="guide-toggle" id="guideBtn" onclick="toggleGuide()" aria-expanded="true">Hide &#x25B4;</button>
     </div>
     <div class="guide-grid" id="guideContent">
       <div class="guide-card">
         <span class="step">STEP 1</span>
         <h3>Select a Preset</h3>
-        <p>Choose a scenario: <strong>Basic Scheduling</strong>, <strong>Priority Inversion</strong>, <strong>Inheritance</strong>, <strong>Deadline Miss</strong>, or <strong>Producer-Consumer</strong>.</p>
+        <p>Choose a scenario from the top bar: <strong>Basic</strong> (rate-monotonic, U=57%), <strong>Inversion</strong>, <strong>Inheritance</strong>, <strong>Deadline</strong> (U=113%) or <strong>Prod-Con</strong>.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 2</span>
@@ -327,7 +293,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="guide-card">
         <span class="step">STEP 4</span>
         <h3>Toggle Priority Inheritance</h3>
-        <p>Enable <strong>Priority Inheritance</strong> to see how it resolves priority inversion. Compare the Gantt charts before and after.</p>
+        <p>Enable <strong>Priority Inheritance</strong> and reload the <strong>Inversion</strong> preset: the mutex holder is raised to its waiter's priority, so the medium task can no longer preempt it. Mutexes only &mdash; semaphores never inherit.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 5</span>
@@ -341,14 +307,14 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <!-- KPI STRIP -->
 <div class="kpi-strip">
   <div class="kpi-row">
-    <div class="kpi-cell" title="Current simulation tick count"><div class="lbl">Tick Count</div><div class="val neutral" id="kTick">0</div></div>
-    <div class="kpi-cell" title="Percentage of time CPU is executing tasks"><div class="lbl">CPU Util %</div><div class="val pos" id="kCPU">0.0</div></div>
+    <div class="kpi-cell" title="Kernel tick counter, as returned by xTaskGetTickCount()"><div class="lbl">Tick Count</div><div class="val neutral" id="kTick">0</div></div>
+    <div class="kpi-cell" title="Measured share of elapsed ticks in which a task (not the idle task) held the CPU"><div class="lbl">CPU Busy %</div><div class="val pos" id="kCPU">0.0</div></div>
     <div class="kpi-cell" title="Number of context switches"><div class="lbl">Ctx Switches</div><div class="val neutral" id="kCtx">0</div></div>
-    <div class="kpi-cell" title="Percentage of time CPU was idle"><div class="lbl">Idle Time %</div><div class="val neutral" id="kIdle">100.0</div></div>
+    <div class="kpi-cell" title="Share of elapsed ticks spent in the idle task (prvIdleTask, priority 0)"><div class="lbl">Idle (P0) %</div><div class="val neutral" id="kIdle">100.0</div></div>
     <div class="kpi-cell" title="Number of priority inversions detected"><div class="lbl">Inversions</div><div class="val neutral" id="kInv">0</div></div>
-    <div class="kpi-cell" title="Number of active (non-suspended) tasks"><div class="lbl">Active Tasks</div><div class="val neutral" id="kActive">0</div></div>
+    <div class="kpi-cell" title="Scheduler load U = sum of C_i / T_i over the periodic tasks, against the Liu &amp; Layland rate-monotonic bound n(2^(1/n) - 1)"><div class="lbl">Util U = &Sigma;C/T</div><div class="val neutral" id="kUtilU">0.0%</div><div class="sub" id="kBound">RM bound &mdash;</div></div>
     <div class="kpi-cell" title="Currently running task name"><div class="lbl">Running</div><div class="val pos" id="kRunning">IDLE</div></div>
-    <div class="kpi-cell" title="Elapsed simulation time (1 tick = 1 ms)"><div class="lbl">Elapsed (ms)</div><div class="val neutral" id="kElapsed">0</div></div>
+    <div class="kpi-cell" title="Elapsed kernel time = ticks / configTICK_RATE_HZ"><div class="lbl">Elapsed (ms)</div><div class="val neutral" id="kElapsed">0</div></div>
   </div>
 </div>
 
@@ -359,15 +325,24 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="ctrl-body">
       <div class="ctrl-group">
         <h4>Transport</h4>
-        <button class="sim-btn" id="btnPlay" onclick="simPlay()" title="Play (Space)"><i class="fas fa-play"></i></button>
-        <button class="sim-btn" id="btnPause" onclick="simPause()" title="Pause (Space)"><i class="fas fa-pause"></i></button>
-        <button class="sim-btn" id="btnStep" onclick="simStep()" title="Step (1 tick)"><i class="fas fa-forward-step"></i></button>
-        <button class="sim-btn reset" id="btnReset" onclick="simReset()" title="Reset"><i class="fas fa-rotate-left"></i></button>
+        <button type="button" class="sim-btn" id="btnPlay" onclick="simPlay()" title="Play (Space)" aria-label="Play"><i class="fas fa-play"></i></button>
+        <button type="button" class="sim-btn" id="btnPause" onclick="simPause()" title="Pause (Space)" aria-label="Pause"><i class="fas fa-pause"></i></button>
+        <button type="button" class="sim-btn" id="btnStep" onclick="simStep()" title="Step one kernel tick" aria-label="Step one tick"><i class="fas fa-forward-step"></i></button>
+        <button type="button" class="sim-btn reset" id="btnReset" onclick="simReset()" title="Reset the kernel" aria-label="Reset"><i class="fas fa-rotate-left"></i></button>
       </div>
       <div class="ctrl-group">
-        <h4>Speed</h4>
+        <h4>Tick rate</h4>
+        <select class="d-select" id="tickRateSel" title="configTICK_RATE_HZ" aria-label="configTICK_RATE_HZ">
+          <option value="100">100 Hz (10 ms)</option>
+          <option value="250">250 Hz (4 ms)</option>
+          <option value="500">500 Hz (2 ms)</option>
+          <option value="1000" selected>1000 Hz (1 ms)</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <h4>Playback</h4>
         <div class="slider-ctrl">
-          <input type="range" id="speedSlider" min="1" max="50" value="10" oninput="updateSpeed(this.value)">
+          <input type="range" id="speedSlider" class="d-range" min="1" max="50" value="10" oninput="updateSpeed(this.value)" title="Wall-clock replay speed, ticks drawn per second" aria-label="Playback speed in ticks per second">
           <span class="sval" id="speedVal">10 t/s</span>
         </div>
       </div>
@@ -379,11 +354,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         </div>
       </div>
       <div class="ctrl-group">
-        <button class="add-btn" onclick="showAddTaskModal()"><i class="fas fa-plus"></i> Add Task</button>
-        <button class="add-btn" onclick="showAddMutexModal()"><i class="fas fa-lock"></i> Add Mutex</button>
-        <button class="add-btn" onclick="showAddSemModal()"><i class="fas fa-traffic-light"></i> Add Semaphore</button>
+        <button type="button" class="add-btn" onclick="showAddTaskModal()"><i class="fas fa-plus"></i> Add Task</button>
+        <button type="button" class="add-btn" onclick="showAddMutexModal()"><i class="fas fa-lock"></i> Add Mutex</button>
+        <button type="button" class="add-btn" onclick="showAddSemModal()"><i class="fas fa-traffic-light"></i> Add Semaphore</button>
       </div>
-      <div class="pi-banner" id="piBanner"><i class="fas fa-exclamation-triangle"></i> PRIORITY INVERSION ACTIVE</div>
+      <div class="pi-banner" id="piBanner" role="status"><i class="fas fa-exclamation-triangle"></i> UNBOUNDED PRIORITY INVERSION ACTIVE</div>
     </div>
   </div>
 </div>
@@ -393,17 +368,18 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="panel full">
     <div class="panel-head">
       <h3><i class="fas fa-chart-gantt"></i> Real-Time Gantt Chart</h3>
-      <span class="tag">preemptive priority scheduling</span>
+      <span class="tag">fixed-priority preemptive &middot; hover a cell for detail</span>
     </div>
     <div class="panel-body" style="padding:12px;overflow-x:auto;" id="ganttContainer">
-      <canvas id="ganttCanvas"></canvas>
+      <canvas id="ganttCanvas" aria-label="Gantt chart of task states per kernel tick; one row per task plus the idle task, x axis is the tick counter" role="img"></canvas>
+      <div class="d-tooltip" id="ganttTip"></div>
       <div class="legend" style="margin-top:12px">
         <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan)"></span> Running</div>
         <div class="legend-item"><span class="legend-swatch" style="background:rgba(6,182,212,.15);border:1px dashed rgba(6,182,212,.4)"></span> Blocked</div>
         <div class="legend-item"><span class="legend-swatch" style="border:1px solid rgba(6,182,212,.35);background:transparent"></span> Ready</div>
         <div class="legend-item"><span class="legend-swatch" style="background:var(--yellow)"></span> Mutex Hold</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--orange)"></span> Ctx Switch</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,.3);border:1px solid var(--red)"></span> Inversion</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--orange)"></span> Ctx Switch (84 cyc &asymp; 0.5 &micro;s)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,.3);border:1px solid var(--red)"></span> Unbounded inversion</div>
       </div>
     </div>
   </div>
@@ -430,18 +406,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="panel">
     <div class="panel-head">
       <h3><i class="fas fa-terminal"></i> Event Log</h3>
-      <button class="log-clear-btn" onclick="clearLog()"><i class="fas fa-trash"></i> Clear</button>
+      <button type="button" class="log-clear-btn" onclick="clearLog()"><i class="fas fa-trash"></i> Clear</button>
     </div>
     <div class="panel-body" style="padding:12px 18px;">
       <div class="log-scroll" id="logContent"></div>
     </div>
-  </div>
-</div>
-
-<!-- DISCLAIMER -->
-<div class="disclaimer">
-  <div class="disclaimer-box">
-    <strong>Note:</strong> This is an educational FreeRTOS kernel simulator for demonstration purposes. It models preemptive priority scheduling, mutex-based synchronization with priority inheritance, counting semaphores, and deadline miss detection. Timing behavior is simplified (1 tick = 1 ms) and does not account for real interrupt latency or hardware-specific behavior.
   </div>
 </div>
 
@@ -454,15 +423,15 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <input type="text" id="inpTaskName" placeholder="e.g., Task_Sensor" maxlength="20">
     </div>
     <div class="form-group">
-      <label>Priority (uxPriority) 0-7</label>
-      <input type="number" id="inpTaskPri" min="0" max="7" value="3">
+      <label>Priority (uxPriority) 1-7 &mdash; 0 is tskIDLE_PRIORITY</label>
+      <input type="number" id="inpTaskPri" min="1" max="7" value="3">
     </div>
     <div class="form-group">
-      <label>Period (ticks) &mdash; 0 = aperiodic</label>
+      <label>Period T (ticks) &mdash; deadline D = T, 0 = aperiodic</label>
       <input type="number" id="inpTaskPeriod" min="0" max="200" value="20">
     </div>
     <div class="form-group">
-      <label>Execution Time (ticks per period)</label>
+      <label>WCET C (ticks of CPU per job)</label>
       <input type="number" id="inpTaskExec" min="1" max="100" value="5">
     </div>
     <div class="form-group">
@@ -478,8 +447,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <input type="number" id="inpTaskMutexOff" min="0" max="50" value="1">
     </div>
     <div class="form-actions">
-      <button class="btn-cancel" onclick="closeModals()">Cancel</button>
-      <button class="btn-confirm" onclick="addTaskFromModal()">Create Task</button>
+      <button type="button" class="btn-cancel" onclick="closeModals()">Cancel</button>
+      <button type="button" class="btn-confirm" onclick="addTaskFromModal()">Create Task</button>
     </div>
   </div>
 </div>
@@ -493,8 +462,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <input type="text" id="inpMutexName" placeholder="e.g., Mutex_SPI" maxlength="20">
     </div>
     <div class="form-actions">
-      <button class="btn-cancel" onclick="closeModals()">Cancel</button>
-      <button class="btn-confirm" onclick="addMutexFromModal()">Create Mutex</button>
+      <button type="button" class="btn-cancel" onclick="closeModals()">Cancel</button>
+      <button type="button" class="btn-confirm" onclick="addMutexFromModal()">Create Mutex</button>
     </div>
   </div>
 </div>
@@ -516,8 +485,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <input type="number" id="inpSemInit" min="0" max="100" value="0">
     </div>
     <div class="form-actions">
-      <button class="btn-cancel" onclick="closeModals()">Cancel</button>
-      <button class="btn-confirm" onclick="addSemFromModal()">Create Semaphore</button>
+      <button type="button" class="btn-cancel" onclick="closeModals()">Cancel</button>
+      <button type="button" class="btn-confirm" onclick="addSemFromModal()">Create Semaphore</button>
     </div>
   </div>
 </div>
@@ -538,6 +507,15 @@ const TASK_COLORS = [
 ];
 
 const STATE = { READY:'Ready', RUNNING:'Running', BLOCKED:'Blocked', SUSPENDED:'Suspended' };
+
+// Target model: STM32F4-class Cortex-M4F. A PendSV context switch is ~84 cycles,
+// i.e. ~0.50 us at 168 MHz -- far below one 1 ms kernel tick, so it is accounted
+// analytically rather than by consuming a tick.
+const CPU_CLOCK_HZ = 168e6;
+const CTX_SWITCH_CYCLES = 84;
+const CTX_SWITCH_US = CTX_SWITCH_CYCLES / (CPU_CLOCK_HZ / 1e6);
+const TIME_SLICE_TICKS = 1;   // configUSE_TIME_SLICING = 1
+const IDLE_PRIORITY = 0;      // tskIDLE_PRIORITY
 
 // ============================================================
 // Kernel Data Structures
@@ -562,9 +540,10 @@ let nextMutexId = 0;
 let nextSemId = 0;
 let inversionsDetected = 0;
 let activePreset = null;
-let roundRobinIndex = {};
 let contextSwitchTicks = [];
-let lastRunningTaskId = null;
+let lastRunningTaskId = -1;
+let tickRateHz = 1000;        // configTICK_RATE_HZ
+let readySeq = 0;
 
 // Gantt rendering
 const ganttCellWidth = 14;
@@ -586,6 +565,8 @@ class Task {
     this.execTime = cfg.execTime;
     this.color = cfg.color || TASK_COLORS[this.id % TASK_COLORS.length];
     this.state = STATE.READY;
+    this.readyStamp = 0;
+    this.sliceUsed = 0;
     this.execRemaining = this.execTime;
     this.nextActivation = 0;
     this.ticksRunning = 0;
@@ -601,7 +582,6 @@ class Task {
     this.holdingMutex = null;
     this.blockedOnMutex = null;
     this.mutexTicksHeld = 0;
-    this.mutexAcquireCountdown = 0;
     this.hasAcquiredMutexThisPeriod = false;
     this.semAction = cfg.semAction || null;
     this.blockedOnSem = null;
@@ -667,20 +647,33 @@ function getReadyTasks() {
   return tasks.filter(function(t){ return t.state === STATE.READY && !t.isSuspended; });
 }
 
+// Highest priority wins; within a priority the ready list is FIFO (longest
+// continuously ready first), which is what makes the 1-tick round-robin slice
+// rotate fairly. Pure: calling it never changes scheduler state.
 function getHighestPriorityReady() {
   var ready = getReadyTasks();
   if (ready.length === 0) return null;
-  var maxPri = -1;
+  var best = null;
   for (var i = 0; i < ready.length; i++) {
-    if (ready[i].priority > maxPri) maxPri = ready[i].priority;
+    var t = ready[i];
+    if (!best) { best = t; continue; }
+    if (t.priority > best.priority) { best = t; continue; }
+    if (t.priority < best.priority) continue;
+    var a = t.readyStamp || Infinity, b = best.readyStamp || Infinity;
+    if (a < b || (a === b && t.id < best.id)) best = t;
   }
-  var topTasks = ready.filter(function(t){ return t.priority === maxPri; });
-  if (topTasks.length === 1) return topTasks[0];
-  if (!(maxPri in roundRobinIndex)) roundRobinIndex[maxPri] = 0;
-  var idx = roundRobinIndex[maxPri] % topTasks.length;
-  var selected = topTasks[idx];
-  roundRobinIndex[maxPri] = (idx + 1) % topTasks.length;
-  return selected;
+  return best;
+}
+
+// U = sum(C_i / T_i) over the periodic tasks, with the Liu & Layland (1973)
+// rate-monotonic bound n * (2^(1/n) - 1).
+function schedUtilisation() {
+  var u = 0, k = 0;
+  for (var i = 0; i < tasks.length; i++) {
+    var t = tasks[i];
+    if (t.period > 0 && !t.isSuspended) { u += t.execTime / t.period; k++; }
+  }
+  return { u: u, n: k, bound: k > 0 ? k * (Math.pow(2, 1 / k) - 1) : 0 };
 }
 
 function schedulerTick() {
@@ -697,7 +690,7 @@ function schedulerTick() {
         task.ticksBlocked++;
         if (task.delayRemaining === 0 && !task.blockedOnMutex && !task.blockedOnSem) {
           task.state = STATE.READY;
-          addLog(currentTick, task.name + ' unblocked (vTaskDelay expired)', 'sched');
+          addLog(currentTick, task.name + ' ready again (' + (task.period > 0 ? 'vTaskDelayUntil' : 'vTaskDelay') + ' elapsed)', 'sched');
         }
       } else {
         task.ticksBlocked++;
@@ -705,26 +698,30 @@ function schedulerTick() {
     }
   }
 
-  // Phase 2: Periodic task activations
+  // Phase 2: release the next job of every periodic task whose period elapsed.
+  // Deadlines are implicit (D = T): unfinished work at the release instant is a miss.
   for (var i = 0; i < tasks.length; i++) {
     var task = tasks[i];
     if (task.isSuspended) continue;
-    if (task.period > 0 && currentTick >= task.nextActivation && task.state !== STATE.RUNNING) {
-      if (task.state === STATE.BLOCKED && (task.blockedOnMutex || task.blockedOnSem)) continue;
-      if (task.execRemaining <= 0 || task.state === STATE.BLOCKED) {
-        if (task.execRemaining > 0 && task.period > 0) {
-          task.deadlineMisses++;
-          addLog(currentTick, 'DEADLINE MISS: ' + task.name + ' did not complete within period (' + task.period + ' ticks)', 'deadline');
-        }
-        task.execRemaining = task.execTime;
-        task.nextActivation = currentTick + task.period;
-        task.activationCount++;
-        task.currentResponseStart = currentTick;
-        task.hasAcquiredMutexThisPeriod = false;
-        task.hasDoneSemActionThisPeriod = false;
-        task.mutexAcquireCountdown = 0;
-        if (task.state !== STATE.RUNNING) task.state = STATE.READY;
-      }
+    if (task.period <= 0 || currentTick < task.nextActivation) continue;
+
+    if (task.execRemaining > 0) {
+      task.deadlineMisses++;
+      addLog(currentTick, 'DEADLINE MISS: ' + task.name + ' still owed ' + task.execRemaining + '/' + task.execTime +
+        ' ticks of CPU at its deadline (D = T = ' + task.period + ' ticks)', 'deadline');
+    }
+    task.execRemaining = task.execTime;
+    do { task.nextActivation += task.period; } while (task.nextActivation <= currentTick);
+    task.activationCount++;
+    task.currentResponseStart = currentTick;
+    task.hasAcquiredMutexThisPeriod = false;
+    task.hasDoneSemActionThisPeriod = false;
+
+    if (task.state === STATE.BLOCKED && !task.blockedOnMutex && !task.blockedOnSem) {
+      task.delayRemaining = 0;
+      task.state = STATE.READY;
+    } else if (task.state !== STATE.RUNNING && task.state !== STATE.BLOCKED) {
+      task.state = STATE.READY;
     }
   }
 
@@ -743,27 +740,35 @@ function schedulerTick() {
         currentRunningTask.state = STATE.BLOCKED;
         currentRunningTask.delayRemaining = Math.max(0, currentRunningTask.nextActivation - currentTick);
         if (currentRunningTask.delayRemaining === 0) currentRunningTask.state = STATE.READY;
-        addLog(currentTick, currentRunningTask.name + ' completed execution, waiting for next period', 'sched');
+        addLog(currentTick, currentRunningTask.name + ': job done, vTaskDelayUntil(&xLastWakeTime, ' +
+          currentRunningTask.period + ') until tick ' + currentRunningTask.nextActivation, 'sched');
       } else {
         currentRunningTask.state = STATE.BLOCKED;
         currentRunningTask.delayRemaining = 999999;
-        addLog(currentTick, currentRunningTask.name + ' completed (aperiodic)', 'sched');
+        addLog(currentTick, currentRunningTask.name + ': aperiodic job done, vTaskSuspend(NULL)', 'sched');
       }
       currentRunningTask = null;
     } else if (nextTask && nextTask.id !== currentRunningTask.id && nextTask.priority > currentRunningTask.priority) {
       addLog(currentTick, nextTask.name + ' (pri=' + nextTask.priority + ') preempted ' + currentRunningTask.name + ' (pri=' + currentRunningTask.priority + ')', 'preempt');
       currentRunningTask.state = STATE.READY;
       currentRunningTask = null;
-      contextSwitchCount++;
+    } else if (nextTask && nextTask.id !== currentRunningTask.id && nextTask.priority === currentRunningTask.priority &&
+               currentRunningTask.sliceUsed >= TIME_SLICE_TICKS) {
+      // configUSE_TIME_SLICING: equal priorities round-robin one tick at a time
+      addLog(currentTick, 'taskYIELD(): time slice expired, ' + currentRunningTask.name + ' yields to ' +
+        nextTask.name + ' (both pri=' + nextTask.priority + ')', 'sched');
+      currentRunningTask.state = STATE.READY;
+      currentRunningTask.sliceUsed = 0;
+      currentRunningTask = null;
     }
   }
 
   if (!currentRunningTask) {
     nextTask = getHighestPriorityReady();
     if (nextTask) {
-      contextSwitchCount++;
       currentRunningTask = nextTask;
       currentRunningTask.state = STATE.RUNNING;
+      currentRunningTask.sliceUsed = 0;
     }
   }
 
@@ -772,8 +777,8 @@ function schedulerTick() {
     var t = currentRunningTask;
     t.state = STATE.RUNNING;
     t.ticksRunning++;
+    t.sliceUsed++;
     var ticksIntoExec = t.execTime - t.execRemaining;
-    t.mutexAcquireCountdown = ticksIntoExec;
 
     // Mutex acquisition
     if (t.needsMutex && !t.hasAcquiredMutexThisPeriod && ticksIntoExec >= t.mutexAcquireOffset) {
@@ -784,21 +789,25 @@ function schedulerTick() {
           t.holdingMutex = mutex.name;
           t.mutexTicksHeld = 0;
           t.hasAcquiredMutexThisPeriod = true;
-          addLog(currentTick, t.name + ' acquired ' + mutex.name + ' (xSemaphoreTake)', 'mutex');
+          addLog(currentTick, t.name + ': xSemaphoreTake(' + mutex.name + ', portMAX_DELAY) = pdTRUE', 'mutex');
         } else {
           var owner = tasks.find(function(x){ return x.id === mutex.owner; });
           t.state = STATE.BLOCKED;
           t.blockedOnMutex = mutex.name;
           if (mutex.waitQueue.indexOf(t.id) === -1) mutex.waitQueue.push(t.id);
-          addLog(currentTick, t.name + ' blocked on ' + mutex.name + ' (held by ' + (owner ? owner.name : 'unknown') + ')', 'mutex');
+          addLog(currentTick, t.name + ': xSemaphoreTake(' + mutex.name + ', portMAX_DELAY) blocks - held by ' + (owner ? owner.name : 'unknown'), 'mutex');
 
           if (owner && owner.basePriority < t.basePriority) {
             inversionsDetected++;
-            addLog(currentTick, 'PRIORITY INVERSION DETECTED: ' + t.name + ' (pri=' + t.basePriority + ') blocked by ' + owner.name + ' (pri=' + owner.basePriority + ') via ' + mutex.name, 'inversion');
-            if (priorityInheritanceEnabled) {
+            addLog(currentTick, 'PRIORITY INVERSION: ' + t.name + ' (pri=' + t.basePriority + ') waits on ' + mutex.name +
+              ' held by ' + owner.name + ' (pri=' + owner.basePriority + ') - bounded by the critical section, unbounded as soon as a mid-priority task runs', 'inversion');
+            // FreeRTOS raises the holder to the priority of its highest waiter, and
+            // only for mutexes -- semaphores and queues have no owner to boost.
+            if (priorityInheritanceEnabled && owner.priority < t.priority) {
               var oldPri = owner.priority;
-              owner.priority = t.priority;
-              addLog(currentTick, 'PRIORITY INHERITANCE: ' + owner.name + ' priority boosted ' + oldPri + ' -> ' + owner.priority, 'inherit');
+              owner.priority = Math.max(owner.priority, t.priority);
+              addLog(currentTick, 'PRIORITY INHERITANCE (mutex only): ' + owner.name + ' raised ' + oldPri + ' -> ' +
+                owner.priority + ', the priority of its highest waiter', 'inherit');
             }
           }
 
@@ -807,12 +816,11 @@ function schedulerTick() {
           if (newTask) {
             currentRunningTask = newTask;
             currentRunningTask.state = STATE.RUNNING;
+            currentRunningTask.sliceUsed = 1;
             currentRunningTask.ticksRunning++;
             currentRunningTask.execRemaining--;
-            contextSwitchCount++;
           }
-          recordGanttTick();
-          updateReadyTicks();
+          finishTick();
           return;
         }
       }
@@ -826,7 +834,7 @@ function schedulerTick() {
           var giveCount = t.semAction.count || 1;
           if (sem.count < sem.maxCount) {
             sem.count = Math.min(sem.maxCount, sem.count + giveCount);
-            addLog(currentTick, t.name + ' gave ' + sem.name + ' (count=' + sem.count + '/' + sem.maxCount + ')', 'semaphore');
+            addLog(currentTick, t.name + ': xSemaphoreGive(' + sem.name + ') - count=' + sem.count + '/' + sem.maxCount, 'semaphore');
             t.hasDoneSemActionThisPeriod = true;
             while (sem.count > 0 && sem.waitQueue.length > 0) {
               var waiterId = sem.waitQueue.shift();
@@ -836,31 +844,30 @@ function schedulerTick() {
                 waiter.blockedOnSem = null;
                 waiter.state = STATE.READY;
                 waiter.hasDoneSemActionThisPeriod = true;
-                addLog(currentTick, waiter.name + ' unblocked (' + sem.name + ' available, count=' + sem.count + ')', 'semaphore');
+                addLog(currentTick, waiter.name + ': xSemaphoreTake(' + sem.name + ') returns - count=' + sem.count, 'semaphore');
               }
             }
           }
         } else if (t.semAction.type === 'take') {
           if (sem.count > 0) {
             sem.count--;
-            addLog(currentTick, t.name + ' took ' + sem.name + ' (count=' + sem.count + '/' + sem.maxCount + ')', 'semaphore');
+            addLog(currentTick, t.name + ': xSemaphoreTake(' + sem.name + ', portMAX_DELAY) = pdTRUE - count=' + sem.count + '/' + sem.maxCount, 'semaphore');
             t.hasDoneSemActionThisPeriod = true;
           } else {
             t.state = STATE.BLOCKED;
             t.blockedOnSem = sem.name;
             if (sem.waitQueue.indexOf(t.id) === -1) sem.waitQueue.push(t.id);
-            addLog(currentTick, t.name + ' blocked on ' + sem.name + ' (count=0)', 'semaphore');
+            addLog(currentTick, t.name + ': xSemaphoreTake(' + sem.name + ', portMAX_DELAY) blocks - count=0 (no priority inheritance on semaphores)', 'semaphore');
             currentRunningTask = null;
             var newTask2 = getHighestPriorityReady();
             if (newTask2) {
               currentRunningTask = newTask2;
               currentRunningTask.state = STATE.RUNNING;
+              currentRunningTask.sliceUsed = 1;
               currentRunningTask.ticksRunning++;
               currentRunningTask.execRemaining--;
-              contextSwitchCount++;
             }
-            recordGanttTick();
-            updateReadyTicks();
+            finishTick();
             return;
           }
         }
@@ -873,9 +880,9 @@ function schedulerTick() {
       if (t.mutexTicksHeld >= t.mutexHoldDuration) {
         var mutex2 = mutexes.find(function(m){ return m.name === t.holdingMutex; });
         if (mutex2) {
-          addLog(currentTick, t.name + ' released ' + mutex2.name + ' (xSemaphoreGive)', 'mutex');
-          if (priorityInheritanceEnabled && t.priority !== t.basePriority) {
-            addLog(currentTick, 'PRIORITY RESTORED: ' + t.name + ' priority ' + t.priority + ' -> ' + t.basePriority, 'inherit');
+          addLog(currentTick, t.name + ': xSemaphoreGive(' + mutex2.name + ')', 'mutex');
+          if (t.priority !== t.basePriority) {
+            addLog(currentTick, 'PRIORITY RESTORED: ' + t.name + ' drops from the inherited ' + t.priority + ' back to its base priority ' + t.basePriority, 'inherit');
             t.priority = t.basePriority;
           }
           mutex2.owner = null;
@@ -894,7 +901,7 @@ function schedulerTick() {
               nextWaiter.blockedOnMutex = null;
               nextWaiter.hasAcquiredMutexThisPeriod = true;
               nextWaiter.state = STATE.READY;
-              addLog(currentTick, nextWaiter.name + ' acquired ' + mutex2.name + ' (unblocked)', 'mutex');
+              addLog(currentTick, nextWaiter.name + ': xSemaphoreTake(' + mutex2.name + ') returns, highest-priority waiter takes the mutex', 'mutex');
             }
           }
         }
@@ -910,19 +917,35 @@ function schedulerTick() {
     idleTicks++;
   }
 
+  finishTick();
+}
+
+// One place where a tick is closed out, so the switch counter, the Gantt row and
+// the event log can never disagree: a switch is exactly a change of the task
+// holding the CPU (idle counts as a task, id -1).
+function finishTick() {
   var currentId = currentRunningTask ? currentRunningTask.id : -1;
-  if (lastRunningTaskId !== null && currentId !== lastRunningTaskId) {
+  if (currentId !== lastRunningTaskId) {
+    contextSwitchCount++;
     contextSwitchTicks.push(currentTick);
   }
   lastRunningTaskId = currentId;
-
   recordGanttTick();
   updateReadyTicks();
 }
 
+// Ready-list ordering: the first tick a task is found ready it is stamped, and the
+// stamp is cleared as soon as it leaves Ready, so the smallest stamp is the task
+// that has been waiting longest at that priority (FIFO, as in FreeRTOS).
 function updateReadyTicks() {
   for (var i = 0; i < tasks.length; i++) {
-    if (tasks[i].state === STATE.READY) tasks[i].ticksReady++;
+    var t = tasks[i];
+    if (t.state === STATE.READY) {
+      t.ticksReady++;
+      if (!t.readyStamp) t.readyStamp = ++readySeq;
+    } else {
+      t.readyStamp = 0;
+    }
   }
 }
 
@@ -946,7 +969,7 @@ function recordGanttTick() {
   ganttHistory.push({
     tick: currentTick,
     slots: tasks.map(function(t){ return {
-      taskId: t.id, state: t.state, color: t.color, name: t.name,
+      taskId: t.id, state: t.state, color: t.color, name: t.name, pri: t.priority, basePri: t.basePriority,
       holdingMutex: t.holdingMutex,
       blockedOn: t.blockedOnMutex || t.blockedOnSem || null
     }; }),
@@ -1008,8 +1031,8 @@ function simReset() {
   currentRunningTask = null;
   inversionsDetected = 0;
   contextSwitchTicks = [];
-  lastRunningTaskId = null;
-  roundRobinIndex = {};
+  lastRunningTaskId = -1;
+  readySeq = 0;
 
   for (var i = 0; i < tasks.length; i++) {
     var t = tasks[i];
@@ -1030,16 +1053,17 @@ function simReset() {
     t.delayRemaining = 0;
     t.isSuspended = false;
     t.priority = t.basePriority;
+    t.sliceUsed = 0;
+    t.readyStamp = 0;
     t.hasAcquiredMutexThisPeriod = false;
     t.hasDoneSemActionThisPeriod = false;
-    t.mutexAcquireCountdown = 0;
   }
   for (var i = 0; i < mutexes.length; i++) { mutexes[i].owner = null; mutexes[i].waitQueue = []; }
   for (var i = 0; i < semaphores.length; i++) { semaphores[i].count = semaphores[i].initialCount || 0; semaphores[i].waitQueue = []; }
 
   document.getElementById('logContent').innerHTML = '';
   document.getElementById('piBanner').classList.remove('show');
-  addLog(0, 'Kernel reset. vTaskStartScheduler() ready.', 'sched');
+  addLog(0, 'vTaskStartScheduler(): tick ' + tickRateHz + ' Hz, idle task at tskIDLE_PRIORITY (0), time slice ' + TIME_SLICE_TICKS + ' tick', 'sched');
   renderAll();
 }
 window.simReset = simReset;
@@ -1080,11 +1104,13 @@ function renderAll() {
 
 // ===== KPIs =====
 
+function msPerTick() { return 1000 / tickRateHz; }
+
 function renderKPIs() {
   var cpuUtil = totalTicks > 0 ? ((1 - idleTicks / totalTicks) * 100).toFixed(1) : '0.0';
   var idlePct = totalTicks > 0 ? (idleTicks / totalTicks * 100).toFixed(1) : '100.0';
-  var activeTasks = tasks.filter(function(t){ return !t.isSuspended; }).length;
   var runName = currentRunningTask ? currentRunningTask.name : 'IDLE';
+  var util = schedUtilisation();
 
   document.getElementById('kTick').textContent = currentTick;
   var cpuEl = document.getElementById('kCPU');
@@ -1098,14 +1124,26 @@ function renderKPIs() {
   invEl.textContent = inversionsDetected;
   invEl.className = 'val ' + (inversionsDetected > 0 ? 'neg' : 'neutral');
 
-  document.getElementById('kActive').textContent = activeTasks;
+  var uEl = document.getElementById('kUtilU');
+  uEl.textContent = (util.u * 100).toFixed(1) + '%';
+  uEl.className = 'val ' + (util.u > 1 ? 'neg' : util.u > util.bound ? 'warn' : 'pos');
+  document.getElementById('kBound').innerHTML = 'RM bound ' + (util.bound * 100).toFixed(1) + '% (n=' + util.n + ')';
 
   var runEl = document.getElementById('kRunning');
   runEl.textContent = runName;
   runEl.className = 'val ' + (runName === 'IDLE' ? 'neutral' : 'pos');
   runEl.style.fontSize = runName.length > 8 ? '0.85rem' : '1.1rem';
 
-  document.getElementById('kElapsed').textContent = currentTick;
+  document.getElementById('kElapsed').textContent = (currentTick * msPerTick()).toFixed(msPerTick() >= 1 ? 0 : 1);
+
+  var verdict = util.u > 1 ? '<span class="warn">infeasible, U &gt; 100%</span>'
+              : util.u > util.bound ? '<span class="warn">above the RM bound, test it</span>'
+              : '<span class="ok">under the RM bound</span>';
+  var st = document.getElementById('statusBar');
+  if (st) st.innerHTML = 'preset <b>' + (PRESET_LABELS[activePreset] || 'custom') + '</b> &middot; configTICK_RATE_HZ <b>' +
+    tickRateHz + '</b> (' + msPerTick().toFixed(msPerTick() >= 1 ? 0 : 1) + ' ms/tick) &middot; slice <b>' + TIME_SLICE_TICKS +
+    '</b> tick &middot; inheritance <b>' + (priorityInheritanceEnabled ? 'ON' : 'OFF') + '</b> &middot; t=<b>' + currentTick +
+    '</b> &middot; U=<b>' + (util.u * 100).toFixed(1) + '%</b> vs ' + (util.bound * 100).toFixed(1) + '% ' + verdict;
 }
 
 // ===== GANTT CHART =====
@@ -1136,7 +1174,7 @@ function renderGantt() {
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
   // Background
-  ctx.fillStyle = '#0b1120';
+  ctx.fillStyle = '#0a0e27';
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   var headerH = 24;
@@ -1145,7 +1183,7 @@ function renderGantt() {
 
   // Tick numbers
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '9px Courier New';
+  ctx.font = '9px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   for (var i = 0; i < numTicks; i++) {
     if (i % 5 === 0) {
@@ -1160,9 +1198,15 @@ function renderGantt() {
     }
   }
 
-  // Task rows
+  // x-axis caption (units)
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#64748b';
+  ctx.font = '9px "JetBrains Mono", monospace';
+  ctx.fillText('tick (1 tick = ' + msPerTick().toFixed(msPerTick() >= 1 ? 0 : 1) + ' ms)', 6, headerH - 5);
+
+  // Task rows, with the idle task last
   var allRows = tasks.map(function(t){ return {id:t.id, name:t.name, color:t.color}; });
-  allRows.push({id:-1, name:'IDLE', color:'#475569'});
+  allRows.push({id:-1, name:'IDLE  P0', color:'#475569'});
 
   for (var r = 0; r < allRows.length; r++) {
     var row = allRows[r];
@@ -1195,7 +1239,7 @@ function renderGantt() {
       var tk = tasks.find(function(t){ return t.id === row.id; });
       if (tk) {
         ctx.fillStyle = '#94a3b8';
-        ctx.font = '8px Courier New';
+        ctx.font = '8px "JetBrains Mono", monospace';
         ctx.fillText('P' + tk.priority, ganttLabelWidth - 24, y + ganttRowHeight / 2 + 3);
       }
     }
@@ -1242,7 +1286,7 @@ function renderGantt() {
 
             if (slot.holdingMutex) {
               ctx.fillStyle = '#f59e0b';
-              ctx.font = 'bold 7px Courier New';
+              ctx.font = 'bold 7px "JetBrains Mono", monospace';
               ctx.textAlign = 'center';
               ctx.fillText('M', cx + cw / 2, cy + ch / 2 + 2);
             }
@@ -1256,7 +1300,7 @@ function renderGantt() {
             ctx.setLineDash([]);
             if (slot.blockedOn) {
               ctx.fillStyle = hexToRGBA('#ef4444', 0.6);
-              ctx.font = '6px Courier New';
+              ctx.font = '6px "JetBrains Mono", monospace';
               ctx.textAlign = 'center';
               ctx.fillText('B', cx + cw / 2, cy + ch / 2 + 2);
             }
@@ -1319,6 +1363,39 @@ function renderGantt() {
   if (ganttHistory.length * ganttCellWidth > container.clientWidth - ganttLabelWidth - 50) {
     container.scrollLeft = ganttHistory.length * ganttCellWidth - container.clientWidth + ganttLabelWidth + 100;
   }
+}
+
+function initGanttTooltip() {
+  var canvas = document.getElementById('ganttCanvas');
+  var tip = document.getElementById('ganttTip');
+  function hide(){ tip.classList.remove('show'); }
+  canvas.addEventListener('mouseleave', hide);
+  canvas.addEventListener('mousemove', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var col = Math.floor((e.clientX - rect.left - ganttLabelWidth) / ganttCellWidth);
+    var row = Math.floor((e.clientY - rect.top - 24) / ganttRowHeight);
+    if (col < 0 || col >= ganttHistory.length || row < 0 || row > tasks.length) { hide(); return; }
+    var entry = ganttHistory[col];
+    var html;
+    if (row === tasks.length) {
+      html = '<b>IDLE</b> &middot; tick ' + entry.tick + '<br>' +
+             (entry.runningTaskId === null ? 'prvIdleTask (priority 0) has the CPU' : 'CPU busy with an application task');
+    } else {
+      var slot = null, want = tasks[row].id;
+      for (var i = 0; i < entry.slots.length; i++) { if (entry.slots[i].taskId === want) { slot = entry.slots[i]; break; } }
+      if (!slot) { hide(); return; }
+      html = '<b>' + slot.name + '</b> &middot; tick ' + entry.tick +
+             '<br>state: ' + slot.state +
+             '<br>priority: ' + slot.pri + (slot.pri !== slot.basePri ? ' (inherited, base ' + slot.basePri + ')' : '') +
+             (slot.holdingMutex ? '<br>holds ' + slot.holdingMutex : '') +
+             (slot.blockedOn ? '<br>waiting on ' + slot.blockedOn : '') +
+             (entry.isInversion ? '<br>unbounded priority inversion' : '');
+    }
+    tip.innerHTML = html;
+    tip.style.left = Math.min(e.clientX + 14, window.innerWidth - 300) + 'px';
+    tip.style.top = (e.clientY + 14) + 'px';
+    tip.classList.add('show');
+  });
 }
 
 // ===== STATE CARDS =====
@@ -1449,34 +1526,48 @@ function renderStats() {
   var cpuUtil = totalTicks > 0 ? ((1 - idleTicks / totalTicks) * 100).toFixed(1) : '0.0';
   var idlePct = totalTicks > 0 ? (idleTicks / totalTicks * 100).toFixed(1) : '100.0';
 
+  var util = schedUtilisation();
+  var elapsedMs = currentTick * msPerTick();
+  var ctxUs = contextSwitchCount * CTX_SWITCH_US;
+  var ctxPct = elapsedMs > 0 ? (ctxUs / (elapsedMs * 1000) * 100) : 0;
+  var misses = 0, suspended = 0;
+  for (var k = 0; k < tasks.length; k++) { misses += tasks[k].deadlineMisses; if (tasks[k].isSuspended) suspended++; }
+
   var html = '<table class="stat-table"><thead><tr><th style="text-align:left">Metric</th><th>Value</th></tr></thead><tbody>';
-  html += '<tr><td>CPU Utilization</td><td class="' + (parseFloat(cpuUtil) > 90 ? 'tneg' : parseFloat(cpuUtil) > 70 ? 'twarn' : 'tpos') + '">' + cpuUtil + '%</td></tr>';
-  html += '<tr><td>Idle Time</td><td>' + idlePct + '%</td></tr>';
-  html += '<tr><td>Context Switches</td><td>' + contextSwitchCount + '</td></tr>';
-  html += '<tr><td>Total Ticks</td><td>' + totalTicks + '</td></tr>';
-  html += '<tr><td>Priority Inversions</td><td class="' + (inversionsDetected > 0 ? 'tneg' : '') + '">' + inversionsDetected + '</td></tr>';
+  html += '<tr><td>CPU busy (measured)</td><td class="' + (parseFloat(cpuUtil) > 90 ? 'tneg' : parseFloat(cpuUtil) > 70 ? 'twarn' : 'tpos') + '">' + cpuUtil + '%</td></tr>';
+  html += '<tr><td>Idle task (P0)</td><td>' + idlePct + '%</td></tr>';
+  html += '<tr><td>Load U = &Sigma; C<sub>i</sub>/T<sub>i</sub></td><td class="' + (util.u > 1 ? 'tneg' : util.u > util.bound ? 'twarn' : 'tpos') + '">' + (util.u * 100).toFixed(1) + '%</td></tr>';
+  html += '<tr><td>RM bound n(2<sup>1/n</sup>&minus;1), n=' + util.n + '</td><td>' + (util.bound * 100).toFixed(1) + '%</td></tr>';
+  html += '<tr><td>Context switches</td><td>' + contextSwitchCount + '</td></tr>';
+  html += '<tr><td>Switch overhead @' + CTX_SWITCH_CYCLES + ' cyc</td><td>' + ctxUs.toFixed(1) + ' &micro;s (' + ctxPct.toFixed(2) + '% of ' + elapsedMs.toFixed(0) + ' ms)</td></tr>';
+  html += '<tr><td>Elapsed</td><td>' + currentTick + ' ticks @' + tickRateHz + ' Hz</td></tr>';
+  html += '<tr><td>Priority inversions</td><td class="' + (inversionsDetected > 0 ? 'tneg' : '') + '">' + inversionsDetected + '</td></tr>';
+  html += '<tr><td>Deadline misses (all tasks)</td><td class="' + (misses > 0 ? 'tneg' : 'tpos') + '">' + misses + '</td></tr>';
+  html += '<tr><td>Tasks (running set / suspended)</td><td>' + (tasks.length - suspended) + ' / ' + suspended + '</td></tr>';
   html += '</tbody></table>';
 
   if (tasks.length > 0) {
-    html += '<table class="stat-table" style="margin-top:12px"><thead><tr><th style="text-align:left">Task</th><th>Run</th><th>Blocked</th><th>Ready</th><th>WCRT</th><th>DL Miss</th></tr></thead><tbody>';
+    html += '<table class="stat-table" style="margin-top:12px"><thead><tr><th style="text-align:left">Task</th><th>pri</th><th>C/T</th><th>CPU%</th><th>Blk</th><th>Rdy</th><th>WCRT</th><th>DL</th></tr></thead><tbody>';
     for (var i = 0; i < tasks.length; i++) {
       var t = tasks[i];
-      var totalT = t.ticksRunning + t.ticksBlocked + t.ticksReady;
-      var rp = totalT > 0 ? (t.ticksRunning / totalT * 100).toFixed(0) : '0';
-      var bp = totalT > 0 ? (t.ticksBlocked / totalT * 100).toFixed(0) : '0';
-      var wp = totalT > 0 ? (t.ticksReady / totalT * 100).toFixed(0) : '0';
+      var share = totalTicks > 0 ? (t.ticksRunning / totalTicks * 100) : 0;
+      var ui = t.period > 0 ? (t.execTime / t.period * 100).toFixed(1) + '%' : 'aperiodic';
+      var priTxt = t.priority !== t.basePriority ? t.basePriority + '&rarr;' + t.priority : String(t.priority);
 
       html += '<tr><td><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + t.color + ';margin-right:6px;vertical-align:middle"></span>' + t.name +
-        '<button onclick="toggleSuspend(' + t.id + ')" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:10px;padding:0 3px;margin-left:4px" title="' + (t.isSuspended ? 'Resume' : 'Suspend') + '"><i class="fas fa-' + (t.isSuspended ? 'play' : 'pause') + '"></i></button>' +
-        '<button onclick="removeTask(' + t.id + ')" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:10px;padding:0 3px" title="Delete"><i class="fas fa-times"></i></button>' +
+        '<button type="button" onclick="toggleSuspend(' + t.id + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;padding:0 3px;margin-left:4px" title="' + (t.isSuspended ? 'vTaskResume' : 'vTaskSuspend') + '" aria-label="' + (t.isSuspended ? 'Resume' : 'Suspend') + ' ' + t.name + '"><i class="fas fa-' + (t.isSuspended ? 'play' : 'pause') + '"></i></button>' +
+        '<button type="button" onclick="removeTask(' + t.id + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;padding:0 3px" title="vTaskDelete" aria-label="Delete ' + t.name + '"><i class="fas fa-times"></i></button>' +
         '</td>' +
-        '<td>' + t.ticksRunning + ' <span style="color:var(--dim);font-size:10px">(' + rp + '%)</span></td>' +
-        '<td>' + t.ticksBlocked + ' <span style="color:var(--dim);font-size:10px">(' + bp + '%)</span></td>' +
-        '<td>' + t.ticksReady + ' <span style="color:var(--dim);font-size:10px">(' + wp + '%)</span></td>' +
-        '<td>' + t.worstResponseTime + '</td>' +
+        '<td>' + priTxt + '</td>' +
+        '<td>' + (t.period > 0 ? t.execTime + '/' + t.period : t.execTime + '/&mdash;') + ' <span style="color:var(--faint);font-size:10px">' + ui + '</span></td>' +
+        '<td>' + share.toFixed(1) + '%</td>' +
+        '<td>' + t.ticksBlocked + '</td>' +
+        '<td>' + t.ticksReady + '</td>' +
+        '<td>' + t.worstResponseTime + (t.period > 0 && t.worstResponseTime > t.period ? ' <span class="tneg">&gt;T</span>' : '') + '</td>' +
         '<td class="' + (t.deadlineMisses > 0 ? 'tneg' : 'tpos') + '">' + t.deadlineMisses + '</td></tr>';
     }
     html += '</tbody></table>';
+    html += '<div style="font-size:10px;color:var(--faint);margin-top:8px;line-height:1.6">CPU% = task run ticks / elapsed ticks &middot; C/T = worst-case execution time over period (U<sub>i</sub>) &middot; Blk / Rdy = ticks spent Blocked / Ready &middot; WCRT = worst observed response time in ticks (release to job completion) &middot; DL = deadline misses (D = T).</div>';
   }
 
   panel.innerHTML = html;
@@ -1523,7 +1614,7 @@ function addTaskFromModal() {
 
   var t = new Task({
     name: name,
-    priority: Math.min(7, Math.max(0, priority)),
+    priority: Math.min(7, Math.max(1, priority)),   // 0 is reserved for the idle task
     period: period,
     execTime: execTime,
     needsMutex: mutex,
@@ -1597,6 +1688,23 @@ window.toggleSuspend = toggleSuspend;
 // Preset Scenarios
 // ============================================================
 
+var PRESET_LABELS = {
+  'basic': 'Basic (RM set)',
+  'inversion': 'Unbounded inversion',
+  'inheritance': 'Priority inheritance',
+  'deadline': 'Overload, U = 113%',
+  'producer-consumer': 'Producer / consumer'
+};
+
+// Hold a task in the Blocked state until `tick`, so a scenario can stage arrivals.
+function releaseAt(task, tick) {
+  task.nextActivation = tick;
+  task.execRemaining = 0;
+  task.state = STATE.BLOCKED;
+  task.delayRemaining = tick;
+  task.activationCount = 0;
+}
+
 function loadPreset(name) {
   simPause();
   tasks = [];
@@ -1610,8 +1718,8 @@ function loadPreset(name) {
   currentRunningTask = null;
   inversionsDetected = 0;
   contextSwitchTicks = [];
-  lastRunningTaskId = null;
-  roundRobinIndex = {};
+  lastRunningTaskId = -1;
+  readySeq = 0;
   nextTaskId = 0;
   nextMutexId = 0;
   nextSemId = 0;
@@ -1631,12 +1739,13 @@ function loadPreset(name) {
       document.getElementById('piLabel').textContent = 'OFF';
       document.getElementById('piLabel').className = 'toggle-lbl';
 
-      tasks.push(new Task({ name: 'Task_High', priority: 6, period: 20, execTime: 4 }));
+      tasks.push(new Task({ name: 'Task_High', priority: 6, period: 10, execTime: 2 }));
       tasks.push(new Task({ name: 'Task_Med', priority: 4, period: 15, execTime: 3 }));
       tasks.push(new Task({ name: 'Task_Low', priority: 2, period: 30, execTime: 5 }));
 
-      addLog(0, 'Loaded preset: Basic Scheduling (3 tasks, no shared resources)', 'sched');
-      addLog(0, 'Task_High(P6,T=20,C=4) | Task_Med(P4,T=15,C=3) | Task_Low(P2,T=30,C=5)', 'info');
+      addLog(0, 'Preset: basic rate-monotonic task set, no shared resources', 'sched');
+      addLog(0, 'Task_High(P6,T=10,C=2) | Task_Med(P4,T=15,C=3) | Task_Low(P2,T=30,C=5) - shorter period, higher priority', 'info');
+      addLog(0, 'U = 0.200 + 0.200 + 0.167 = 0.567 < RM bound 3(2^(1/3)-1) = 0.780, so every deadline is guaranteed', 'info');
       break;
 
     case 'inversion':
@@ -1646,21 +1755,21 @@ function loadPreset(name) {
       document.getElementById('piLabel').textContent = 'OFF';
       document.getElementById('piLabel').className = 'toggle-lbl';
 
-      mutexes.push(new Mutex('Mutex_Shared'));
-      tasks.push(new Task({ name: 'Task_High', priority: 6, period: 30, execTime: 5, needsMutex: 'Mutex_Shared', mutexHoldDuration: 3, mutexAcquireOffset: 1 }));
-      tasks.push(new Task({ name: 'Task_Med', priority: 4, period: 12, execTime: 4 }));
-      tasks.push(new Task({ name: 'Task_Low', priority: 2, period: 25, execTime: 8, needsMutex: 'Mutex_Shared', mutexHoldDuration: 6, mutexAcquireOffset: 1 }));
+      mutexes.push(new Mutex('Mutex_SPI'));
+      tasks.push(new Task({ name: 'Task_High', priority: 6, period: 30, execTime: 5, needsMutex: 'Mutex_SPI', mutexHoldDuration: 3, mutexAcquireOffset: 1 }));
+      tasks.push(new Task({ name: 'Task_Med', priority: 4, period: 12, execTime: 3 }));
+      tasks.push(new Task({ name: 'Task_Low', priority: 2, period: 40, execTime: 10, needsMutex: 'Mutex_SPI', mutexHoldDuration: 6, mutexAcquireOffset: 1 }));
 
-      tasks[0].nextActivation = 5;
-      tasks[0].execRemaining = 0;
-      tasks[0].state = STATE.BLOCKED;
-      tasks[0].delayRemaining = 5;
-      tasks[0].activationCount = 0;
+      // Staged arrivals: Task_Low owns Mutex_SPI from tick 2, Task_High blocks on it
+      // at tick 5, and Task_Med - which needs nothing from the mutex - then runs.
+      releaseAt(tasks[0], 4);
+      releaseAt(tasks[1], 5);
 
-      addLog(0, 'Loaded preset: Priority Inversion (unbounded)', 'sched');
-      addLog(0, 'Task_Low acquires Mutex_Shared first. Task_High arrives later and blocks.', 'info');
-      addLog(0, 'Task_Med (medium priority) preempts Task_Low, causing unbounded inversion.', 'inversion');
-      addLog(0, 'Toggle Priority Inheritance ON to see the fix.', 'info');
+      addLog(0, 'Preset: unbounded priority inversion (inheritance OFF)', 'sched');
+      addLog(0, 'Task_Low(P2) takes Mutex_SPI at tick 2; Task_High(P6) blocks on it at tick 5', 'info');
+      addLog(0, 'Task_Med(P4) then preempts the mutex holder, so Task_High waits on work it has no relation to: the inversion is unbounded by the critical section', 'inversion');
+      addLog(0, 'U = 0.167 + 0.250 + 0.250 = 0.667, so the long response time is blocking, not overload', 'info');
+      addLog(0, 'Switch on Priority Inheritance (or load the Inheritance preset) to bound it', 'info');
       break;
 
     case 'inheritance':
@@ -1670,21 +1779,18 @@ function loadPreset(name) {
       document.getElementById('piLabel').textContent = 'ON';
       document.getElementById('piLabel').className = 'toggle-lbl on';
 
-      mutexes.push(new Mutex('Mutex_Shared'));
-      tasks.push(new Task({ name: 'Task_High', priority: 6, period: 30, execTime: 5, needsMutex: 'Mutex_Shared', mutexHoldDuration: 3, mutexAcquireOffset: 1 }));
-      tasks.push(new Task({ name: 'Task_Med', priority: 4, period: 12, execTime: 4 }));
-      tasks.push(new Task({ name: 'Task_Low', priority: 2, period: 25, execTime: 8, needsMutex: 'Mutex_Shared', mutexHoldDuration: 6, mutexAcquireOffset: 1 }));
+      mutexes.push(new Mutex('Mutex_SPI'));
+      tasks.push(new Task({ name: 'Task_High', priority: 6, period: 30, execTime: 5, needsMutex: 'Mutex_SPI', mutexHoldDuration: 3, mutexAcquireOffset: 1 }));
+      tasks.push(new Task({ name: 'Task_Med', priority: 4, period: 12, execTime: 3 }));
+      tasks.push(new Task({ name: 'Task_Low', priority: 2, period: 40, execTime: 10, needsMutex: 'Mutex_SPI', mutexHoldDuration: 6, mutexAcquireOffset: 1 }));
 
-      tasks[0].nextActivation = 5;
-      tasks[0].execRemaining = 0;
-      tasks[0].state = STATE.BLOCKED;
-      tasks[0].delayRemaining = 5;
-      tasks[0].activationCount = 0;
+      releaseAt(tasks[0], 4);
+      releaseAt(tasks[1], 5);
 
-      addLog(0, 'Loaded preset: Priority Inheritance Protocol', 'sched');
-      addLog(0, 'Same as Priority Inversion scenario, but with inheritance ENABLED.', 'info');
-      addLog(0, 'When Task_High blocks on Mutex_Shared, Task_Low priority is boosted.', 'inherit');
-      addLog(0, 'This prevents Task_Med from preempting Task_Low while it holds the mutex.', 'info');
+      addLog(0, 'Preset: priority-inheritance protocol (identical arrivals to the Inversion preset)', 'sched');
+      addLog(0, 'When Task_High blocks on Mutex_SPI, the holder Task_Low is raised 2 -> 6, the priority of its highest waiter', 'inherit');
+      addLog(0, 'Task_Med(P4) can no longer preempt the holder, so Task_High waits only for the critical section: blocking is bounded', 'info');
+      addLog(0, 'xSemaphoreGive() drops Task_Low back to its base priority 2 - inheritance applies to mutexes only, never to semaphores or queues', 'inherit');
       break;
 
     case 'deadline':
@@ -1698,10 +1804,10 @@ function loadPreset(name) {
       tasks.push(new Task({ name: 'Task_Comm', priority: 5, period: 15, execTime: 5 }));
       tasks.push(new Task({ name: 'Task_Log', priority: 3, period: 20, execTime: 8 }));
 
-      addLog(0, 'Loaded preset: Deadline Miss (Overloaded CPU)', 'sched');
-      addLog(0, 'Total utilization: 40% + 33% + 40% = 113% > 100%', 'deadline');
-      addLog(0, 'Task_Log WILL miss deadlines due to insufficient CPU time.', 'deadline');
-      addLog(0, 'Watch WCRT and Deadline Miss counters in stats panel.', 'info');
+      addLog(0, 'Preset: overloaded CPU, rate-monotonic priorities', 'sched');
+      addLog(0, 'U = 4/10 + 5/15 + 8/20 = 0.400 + 0.333 + 0.400 = 1.133 (113.3%)', 'deadline');
+      addLog(0, 'RM bound for n=3 is 3(2^(1/3)-1) = 0.780; U above 1.0 is infeasible on one core whatever the priority assignment', 'deadline');
+      addLog(0, 'Task_Log (lowest priority) is starved first: watch its WCRT exceed T and its DL counter climb', 'info');
       break;
 
     case 'producer-consumer':
@@ -1715,12 +1821,13 @@ function loadPreset(name) {
       semaphores.push(sem);
       tasks.push(new Task({ name: 'Producer', priority: 4, period: 8, execTime: 3, semAction: { name: 'Sem_Buffer', type: 'give', offset: 2, count: 1 } }));
       tasks.push(new Task({ name: 'Consumer', priority: 5, period: 12, execTime: 4, semAction: { name: 'Sem_Buffer', type: 'take', offset: 1, count: 1 } }));
-      tasks.push(new Task({ name: 'Task_Idle_Work', priority: 1, period: 20, execTime: 2 }));
+      tasks.push(new Task({ name: 'Task_Telemetry', priority: 1, period: 20, execTime: 2 }));
 
-      addLog(0, 'Loaded preset: Producer-Consumer Pattern', 'sched');
-      addLog(0, 'Producer(P4,T=8) gives to Sem_Buffer every period.', 'semaphore');
-      addLog(0, 'Consumer(P5,T=12) takes from Sem_Buffer. Blocks if count=0.', 'semaphore');
-      addLog(0, 'Sem_Buffer: max=5, initial=0', 'info');
+      addLog(0, 'Preset: producer / consumer over a counting semaphore', 'sched');
+      addLog(0, 'Producer(P4,T=8,C=3): xSemaphoreGive(Sem_Buffer) once per job', 'semaphore');
+      addLog(0, 'Consumer(P5,T=12,C=4): xSemaphoreTake(Sem_Buffer, portMAX_DELAY), blocks while the buffer is empty', 'semaphore');
+      addLog(0, 'A counting semaphore is a queue of length 5 with no stored data (xQueueSend / xQueueReceive underneath) and has no owner, so there is NO priority inheritance here', 'info');
+      addLog(0, 'U = 3/8 + 4/12 + 2/20 = 0.808 against an RM bound of 0.780, and the priorities are deliberately not rate-monotonic: the Consumer has the longer period but the higher priority', 'info');
       break;
   }
 
@@ -1743,8 +1850,7 @@ window.loadPreset = loadPreset;
 // ============================================================
 
 function toggleHelp() {
-  var overlay = document.getElementById('helpOverlay');
-  overlay.classList.toggle('open');
+  document.getElementById('helpOverlay').classList.toggle('show');
 }
 window.toggleHelp = toggleHelp;
 
@@ -1754,9 +1860,11 @@ function toggleGuide() {
   if (content.classList.contains('hide')) {
     content.classList.remove('hide');
     btn.innerHTML = 'Hide &#x25B4;';
+    btn.setAttribute('aria-expanded', 'true');
   } else {
     content.classList.add('hide');
     btn.innerHTML = 'Show &#x25BE;';
+    btn.setAttribute('aria-expanded', 'false');
   }
 }
 window.toggleGuide = toggleGuide;
@@ -1766,7 +1874,19 @@ window.toggleGuide = toggleGuide;
 // ============================================================
 
 function init() {
-  window.addEventListener('resize', function(){ renderAll(); });
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderAll, 150);
+  });
+
+  document.getElementById('tickRateSel').addEventListener('change', function(){
+    tickRateHz = parseInt(this.value, 10) || 1000;
+    addLog(currentTick, 'configTICK_RATE_HZ = ' + tickRateHz + ' (' + msPerTick().toFixed(msPerTick() >= 1 ? 0 : 1) + ' ms per tick)', 'info');
+    renderAll();
+  });
+
+  initGanttTooltip();
 
   // Close modals on overlay click
   var overlays = document.querySelectorAll('.modal-overlay');
@@ -1777,7 +1897,7 @@ function init() {
   // Keyboard shortcuts
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-      var helpOpen = document.getElementById('helpOverlay').classList.contains('open');
+      var helpOpen = document.getElementById('helpOverlay').classList.contains('show');
       var modalOpen = false;
       var modals = document.querySelectorAll('.modal-overlay');
       for (var j = 0; j < modals.length; j++) { if (modals[j].classList.contains('show')) modalOpen = true; }
@@ -1803,29 +1923,55 @@ document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 
-<!-- Welcome Popup -->
-<style>
-.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease}
-.welcome-overlay.show{opacity:1}
-.welcome-box{background:var(--card,#111827);border:1px solid var(--border,#1e293b);border-radius:14px;max-width:420px;width:90%;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.welcome-box h3{font-size:16px;font-weight:700;color:var(--text,#e2e8f0);margin:0 0 12px}
-.welcome-box p{font-size:13.5px;color:var(--muted,#94a3b8);line-height:1.6;margin:0 0 20px}
-.welcome-box .help-icon-hint{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent,#06b6d4);color:#0b1120;font-weight:700;font-size:13px;vertical-align:middle;margin:0 2px}
-.welcome-box button{background:var(--accent,#06b6d4);color:#0b1120;border:none;padding:9px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s}
-.welcome-box button:hover{opacity:.85}
-</style>
-<div class="welcome-overlay" id="welcomePopup">
-  <div class="welcome-box">
-    <h3>Welcome to the FreeRTOS Kernel Simulator</h3>
-    <p>To get the most out of this demo, click the <span class="help-icon-hint">?</span> button in the top-right corner for a full guide, tutorial, and explanation of every feature.</p>
-    <button onclick="document.getElementById('welcomePopup').classList.remove('show');setTimeout(function(){document.getElementById('welcomePopup').style.display='none'},300)">Got it</button>
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A tick-driven FreeRTOS-style kernel on a single core. Each tick the simulator expires delays, releases the periodic jobs whose period elapsed, then dispatches the highest-priority ready task; equal priorities rotate on a one-tick round-robin slice. Tasks share a mutex (with an optional priority-inheritance protocol) and a counting semaphore, and every scheduling decision is written to the event log, the Gantt chart and the per-task statistics from the same tick record, so the three always agree.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Priorities 0&ndash;7 (<code>configMAX_PRIORITIES = 8</code>), higher number = higher priority; priority 0 is the idle task (<code>tskIDLE_PRIORITY</code>), so application tasks use 1&ndash;7.</li>
+          <li>Tick rate 1000&nbsp;Hz by default (<code>configTICK_RATE_HZ</code>), selectable 100 / 250 / 500 / 1000&nbsp;Hz; one tick is the scheduling quantum.</li>
+          <li>Preemptive with time slicing: <code>configUSE_PREEMPTION = 1</code>, <code>configUSE_TIME_SLICING = 1</code>, slice = 1 tick.</li>
+          <li>Context switch modelled at 84 cycles &asymp; 0.50&nbsp;&micro;s on a 168&nbsp;MHz Cortex-M4F; the overhead is reported analytically and does not consume a tick.</li>
+          <li>Periodic tasks have implicit deadlines <code>D = T</code>; a job still owing CPU at its next release is a deadline miss.</li>
+          <li>Presets: Basic <code>U = 0.567</code>; Inversion / Inheritance <code>U = 0.667</code> with a 6-tick critical section on <code>Mutex_SPI</code>; Deadline <code>U = 1.133</code>; Producer/Consumer <code>U = 0.808</code> on a counting semaphore of length 5.</li>
+          <li>Fully deterministic: no random number generator, so the same preset always produces the same trace.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li>Scheduler load <code>U = &Sigma; C_i / T_i</code>; rate-monotonic sufficient bound <code>n(2^(1/n) &minus; 1)</code> &rarr; 0.828 (n=2), 0.780 (n=3), ln&nbsp;2 &asymp; 0.693 as n&rarr;&infin;.</li>
+          <li>Measured CPU busy <code>= 1 &minus; idle ticks / elapsed ticks</code>; per-task share <code>= run ticks / elapsed ticks</code>.</li>
+          <li>Priority inheritance: on block, <code>holder.priority = max(holder.priority, waiter.priority)</code>; on <code>xSemaphoreGive</code> the holder returns to its base priority. Mutexes only &mdash; semaphores and queues have no owner.</li>
+          <li>Switch overhead <code>= switches &times; 84 / 168&nbsp;MHz</code>.</li>
+          <li>Liu &amp; Layland (1973), <em>Scheduling Algorithms for Multiprogramming in a Hard-Real-Time Environment</em>; Sha, Rajkumar &amp; Lehoczky (1990), <em>Priority Inheritance Protocols</em>; Barry, <em>Mastering the FreeRTOS Real Time Kernel</em>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li>Time is quantised to whole ticks: sub-tick execution, tick-ISR jitter, interrupt latency and ISR-to-task handoff are not modelled.</li>
+          <li>No stacks, heap, <code>configTOTAL_HEAP_SIZE</code>, queue payloads, event groups, task notifications, software timers or tickless idle.</li>
+          <li>Priority inheritance is single level: nested mutexes, transitive inheritance and the priority-ceiling protocol are not implemented, and deadlock is not detected.</li>
+          <li>One mutex and one semaphore action per task per job; critical sections are a fixed number of ticks rather than data dependent.</li>
+          <li>WCRT is the worst response observed in this run, not an analytic worst case; C is a fixed budget, not a measured WCET.</li>
+          <li>Single core, no SMP, no cache or flash wait-state effects, and the switch cost is a stated constant rather than a measurement.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
   </div>
-</div>
-<script>
-(function(){
-  var wp = document.getElementById('welcomePopup');
-  if(wp) setTimeout(function(){ wp.classList.add('show'); }, 400);
-})();
-</script>
+</footer>
+
 </body>
 </html>

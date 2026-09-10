@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROS 2 Navigation Stack - Nav2 Visualizer</title>
+    <title>ROS 2 Nav2 Simulator | Cristian Arenas</title>
+    <meta name="description" content="Browser Nav2 sandbox: A* on a 5 cm inflated costmap, a regulated pure pursuit controller on TurtleBot3 Waffle limits, an AMCL-style particle cloud and the real navigate_to_pose behaviour tree with round-robin recoveries.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/demo-shell.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Roboto:wght@300;400;500;600&display=swap');
 
         * {
             margin: 0;
@@ -14,100 +20,83 @@
         }
 
         body {
-            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #1e1e1e;
-            color: #cccccc;
-            overflow: hidden;
-            height: 100vh;
+            font-size: 14px;
+            overflow-x: hidden;
         }
+
+        :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+        .demo-sub {
+            padding: 10px 20px 0;
+            color: var(--muted);
+            font-size: 0.85rem;
+            max-width: 1560px;
+            margin: 0 auto;
+        }
+        .demo-sub b { color: var(--text); font-weight: 600; }
+
+        .hint-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 20px 0;
+            padding: 8px 12px;
+            border: 1px solid var(--border-strong);
+            border-left: 3px solid var(--cyan);
+            border-radius: var(--radius-sm);
+            background: var(--card);
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+        .hint-bar i { color: var(--cyan); }
+        .hint-bar.hidden { display: none; }
+        .hint-bar kbd {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            background: var(--card2);
+            border: 1px solid var(--border-strong);
+            border-radius: 4px;
+            padding: 1px 6px;
+            color: var(--cyan-bright);
+        }
+        .hint-bar .close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--faint);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .hint-bar .close:hover { color: var(--text); }
 
         .main-container {
             display: grid;
-            grid-template-rows: 38px 1fr 320px 22px;
-            grid-template-columns: 52px 25% 1fr;
-            height: 100vh;
-        }
-
-        /* Top Menu */
-        .top-menu {
-            grid-column: 1 / -1;
-            background: #2d2d30;
-            border-bottom: 1px solid #3e3e42;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-        }
-
-        .back-link {
-            color: #cccccc;
-            text-decoration: none;
-            font-size: 13px;
-            font-family: 'Roboto', sans-serif;
-            padding: 6px 12px;
-            border-radius: 3px;
-            margin-right: 8px;
-            white-space: nowrap;
-        }
-
-        .back-link:hover {
-            background: #3e3e42;
-            color: #ffffff;
-        }
-
-        .menu-section {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-right: 20px;
-        }
-
-        .menu-item {
-            padding: 6px 12px;
-            font-size: 13px;
-            color: #cccccc;
-            background: none;
-            border: none;
-            cursor: pointer;
-            border-radius: 3px;
-            font-family: 'Roboto', sans-serif;
-        }
-
-        .menu-item:hover {
-            background: #3e3e42;
-        }
-
-        .app-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: #cccccc;
-            margin-right: auto;
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 11px;
-            color: #858585;
-            font-family: 'Roboto Mono', monospace;
+            grid-template-rows: 1fr 260px 26px;
+            grid-template-columns: 52px minmax(240px, 23%) 1fr;
+            height: calc(100vh - 148px);
+            min-height: 560px;
+            margin-top: 10px;
         }
 
         .status-dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #4ec9b0;
+            background: var(--cyan);
         }
 
         .status-dot.inactive {
-            background: #858585;
+            background: var(--muted);
         }
 
         /* Toolbar */
         .toolbar {
-            grid-row: 2 / 4;
-            background: #252526;
-            border-right: 1px solid #3e3e42;
+            grid-row: 1 / 3;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             padding: 8px 0;
@@ -119,7 +108,7 @@
             margin: 4px 8px;
             background: none;
             border: 1px solid transparent;
-            color: #cccccc;
+            color: var(--text);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -132,21 +121,21 @@
         }
 
         .tool-item:hover {
-            background: #2d2d30;
-            border-color: #3e3e42;
+            background: var(--card);
+            border-color: var(--border);
         }
 
         .tool-item.active {
-            background: #094771;
-            border-color: #007acc;
+            background: rgba(6, 182, 212, 0.18);
+            border-color: var(--cyan);
         }
 
         .tool-item::after {
             content: attr(data-label);
             position: absolute;
             left: 56px;
-            background: #3e3e42;
-            color: #cccccc;
+            background: var(--border);
+            color: var(--text);
             padding: 4px 8px;
             border-radius: 3px;
             font-size: 11px;
@@ -168,8 +157,8 @@
         /* Viewport */
         .viewport {
             grid-column: 3;
-            grid-row: 2;
-            background: #1e1e1e;
+            grid-row: 1;
+            background: var(--bg);
             display: flex;
             flex-direction: column;
             min-width: 0;
@@ -179,8 +168,8 @@
 
         .viewport-toolbar {
             height: 32px;
-            background: #2d2d30;
-            border-bottom: 1px solid #3e3e42;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             padding: 0 12px;
@@ -189,8 +178,8 @@
 
         .viewport-label {
             font-size: 11px;
-            color: #858585;
-            font-family: 'Roboto Mono', monospace;
+            color: var(--muted);
+            font-family: var(--mono);
         }
 
         .viewport-buttons {
@@ -201,29 +190,29 @@
         .viewport-btn {
             padding: 4px 10px;
             font-size: 11px;
-            background: #3e3e42;
-            border: 1px solid #555555;
-            color: #cccccc;
+            background: var(--border);
+            border: 1px solid var(--border-strong);
+            color: var(--text);
             cursor: pointer;
             border-radius: 3px;
-            font-family: 'Roboto', sans-serif;
+            font-family: var(--sans);
             transition: all 0.15s;
         }
 
         .viewport-btn:hover {
-            background: #505050;
+            background: var(--card2);
         }
 
         .viewport-btn.active {
-            background: #094771;
-            border-color: #007acc;
+            background: rgba(6, 182, 212, 0.18);
+            border-color: var(--cyan);
             color: #ffffff;
         }
 
         .canvas-wrapper {
             flex: 1;
             position: relative;
-            background: #0d1117;
+            background: var(--bg);
             width: 100%;
             overflow: hidden;
             min-height: 0;
@@ -239,11 +228,11 @@
             position: absolute;
             bottom: 12px;
             left: 12px;
-            background: rgba(30, 30, 30, 0.95);
-            border: 1px solid #3e3e42;
+            background: rgba(15, 22, 41, 0.95);
+            border: 1px solid var(--border);
             padding: 12px 16px;
             border-radius: 4px;
-            font-family: 'Roboto Mono', monospace;
+            font-family: var(--mono);
             font-size: 11px;
             backdrop-filter: blur(8px);
         }
@@ -256,11 +245,11 @@
         }
 
         .overlay-label {
-            color: #858585;
+            color: var(--muted);
         }
 
         .overlay-value {
-            color: #4ec9b0;
+            color: var(--cyan);
             font-weight: 500;
         }
 
@@ -268,10 +257,10 @@
             position: absolute;
             top: 12px;
             right: 12px;
-            background: rgba(30, 30, 30, 0.95);
-            border: 1px solid #3e3e42;
+            background: rgba(15, 22, 41, 0.95);
+            border: 1px solid var(--border);
             border-radius: 4px;
-            font-family: 'Roboto', sans-serif;
+            font-family: var(--sans);
             font-size: 11px;
             backdrop-filter: blur(8px);
         }
@@ -282,7 +271,7 @@
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            border-bottom: 1px solid #3e3e42;
+            border-bottom: 1px solid var(--border);
         }
 
         .legend-header:hover {
@@ -290,7 +279,7 @@
         }
 
         .legend-title {
-            color: #cccccc;
+            color: var(--text);
             font-weight: 500;
             font-size: 10px;
             text-transform: uppercase;
@@ -298,7 +287,7 @@
         }
 
         .legend-toggle {
-            color: #858585;
+            color: var(--muted);
             font-size: 12px;
             transition: transform 0.2s;
         }
@@ -324,7 +313,7 @@
             align-items: center;
             gap: 8px;
             margin: 6px 0;
-            color: #858585;
+            color: var(--muted);
         }
 
         .legend-color {
@@ -337,25 +326,26 @@
         /* Sidebar */
         .sidebar {
             grid-column: 2;
-            grid-row: 2 / 4;
-            background: #252526;
-            border-right: 1px solid #3e3e42;
+            grid-row: 1 / 3;
+            min-width: 0;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
             overflow-y: auto;
         }
 
         .sidebar-panel {
-            border-bottom: 1px solid #3e3e42;
+            border-bottom: 1px solid var(--border);
         }
 
         .panel-title {
-            background: #2d2d30;
+            background: var(--card);
             padding: 8px 12px;
             font-size: 11px;
             font-weight: 500;
-            color: #cccccc;
+            color: var(--text);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            border-bottom: 1px solid #3e3e42;
+            border-bottom: 1px solid var(--border);
         }
 
         .panel-body {
@@ -375,19 +365,19 @@
         }
 
         .param-name {
-            color: #9cdcfe;
+            color: var(--blue);
         }
 
         .param-val {
-            color: #b5cea8;
-            font-family: 'Roboto Mono', monospace;
+            color: var(--green);
+            font-family: var(--mono);
             font-weight: 500;
         }
 
         .param-slider {
             width: 100%;
             height: 3px;
-            background: #3e3e42;
+            background: var(--border);
             outline: none;
             -webkit-appearance: none;
             border-radius: 2px;
@@ -397,7 +387,7 @@
             -webkit-appearance: none;
             width: 12px;
             height: 12px;
-            background: #007acc;
+            background: var(--cyan);
             border-radius: 50%;
             cursor: pointer;
         }
@@ -405,14 +395,14 @@
         .param-slider::-moz-range-thumb {
             width: 12px;
             height: 12px;
-            background: #007acc;
+            background: var(--cyan);
             border-radius: 50%;
             cursor: pointer;
             border: none;
         }
 
         .tf-tree {
-            font-family: 'Roboto Mono', monospace;
+            font-family: var(--mono);
             font-size: 11px;
             line-height: 1.8;
         }
@@ -420,14 +410,14 @@
         .tf-item {
             padding-left: 16px;
             position: relative;
-            color: #4ec9b0;
+            color: var(--cyan);
         }
 
         .tf-item::before {
             content: '├─';
             position: absolute;
             left: 0;
-            color: #555555;
+            color: var(--border-strong);
         }
 
         .tf-item:last-child::before {
@@ -435,7 +425,7 @@
         }
 
         .topic-list {
-            font-family: 'Roboto Mono', monospace;
+            font-family: var(--mono);
             font-size: 11px;
         }
 
@@ -443,19 +433,19 @@
             display: flex;
             justify-content: space-between;
             padding: 4px 0;
-            color: #cccccc;
+            color: var(--text);
         }
 
         .topic-path {
-            color: #9cdcfe;
+            color: var(--blue);
         }
 
         .topic-hz {
-            color: #b5cea8;
+            color: var(--green);
         }
 
         .bt-container {
-            font-family: 'Roboto Mono', monospace;
+            font-family: var(--mono);
             font-size: 11px;
             line-height: 1.8;
         }
@@ -463,24 +453,24 @@
         .bt-item {
             padding: 4px 8px;
             margin: 2px 0;
-            border-left: 3px solid #555555;
-            color: #858585;
+            border-left: 3px solid var(--border-strong);
+            color: var(--muted);
         }
 
         .bt-item.active {
-            border-color: #4ec9b0;
-            color: #4ec9b0;
+            border-color: var(--cyan);
+            color: var(--cyan);
         }
 
         .bt-item.running {
-            border-color: #3b82f6;
-            color: #3b82f6;
+            border-color: var(--blue);
+            color: var(--blue);
             animation: pulse 1.5s infinite;
         }
 
         .bt-item.success {
-            border-color: #4ec9b0;
-            color: #4ec9b0;
+            border-color: var(--cyan);
+            color: var(--cyan);
         }
 
         @keyframes pulse {
@@ -504,9 +494,9 @@
         /* Console */
         .console {
             grid-column: 3;
-            grid-row: 3;
-            background: #1a1a1a;
-            border-top: 3px solid #007acc;
+            grid-row: 2;
+            background: var(--bg);
+            border-top: 2px solid var(--cyan);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -514,8 +504,8 @@
 
         .console-toolbar {
             height: 32px;
-            background: #252526;
-            border-bottom: 1px solid #007acc;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             padding: 0 16px;
@@ -524,7 +514,7 @@
 
         .console-label {
             font-size: 11px;
-            color: #4ec9b0;
+            color: var(--cyan);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -534,32 +524,32 @@
             padding: 3px 8px;
             font-size: 10px;
             background: none;
-            border: 1px solid #555555;
-            color: #cccccc;
+            border: 1px solid var(--border-strong);
+            color: var(--text);
             cursor: pointer;
             border-radius: 2px;
-            font-family: 'Roboto', sans-serif;
+            font-family: var(--sans);
         }
 
         .console-btn:hover {
-            background: #3e3e42;
+            background: var(--border);
         }
 
         .console-output {
             flex: 1;
             overflow-y: auto;
             padding: 8px 12px;
-            font-family: 'Roboto Mono', monospace;
+            font-family: var(--mono);
             font-size: 11px;
             line-height: 1.6;
-            background: #1e1e1e;
-            color: #cccccc;
+            background: var(--bg);
+            color: var(--text);
             min-height: 0;
         }
-        
+
         .console-output:empty::before {
             content: 'Console initialized. Waiting for navigation events...';
-            color: #858585;
+            color: var(--muted);
             font-style: italic;
         }
 
@@ -569,7 +559,7 @@
         }
 
         .log-time {
-            color: #858585;
+            color: var(--muted);
         }
 
         .log-level {
@@ -578,36 +568,44 @@
         }
 
         .log-level.INFO {
-            color: #4ec9b0;
+            color: var(--cyan);
             font-weight: 600;
         }
 
         .log-level.WARN {
-            color: #dcdcaa;
+            color: var(--amber);
             font-weight: 600;
         }
 
         .log-level.ERROR {
-            color: #f48771;
+            color: var(--red);
             font-weight: 600;
         }
 
+        .log-node {
+            color: var(--purple);
+            font-weight: 500;
+        }
+
         .log-text {
-            color: #d4d4d4;
+            color: var(--text);
         }
 
         /* Status Bar */
         .status-bar {
             grid-column: 1 / -1;
-            grid-row: 4;
-            background: #007acc;
+            grid-row: 3;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
             display: flex;
             align-items: center;
             padding: 0 12px;
-            font-size: 11px;
-            color: #ffffff;
+            font-family: var(--mono);
+            font-size: 10.5px;
+            color: var(--muted);
             justify-content: space-between;
         }
+        .status-bar b { color: var(--cyan); font-weight: 600; }
 
         .status-section {
             display: flex;
@@ -619,143 +617,36 @@
             gap: 6px;
         }
 
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
-
-        .modal-overlay.show {
-            display: flex;
-        }
-
-        .modal {
-            background: #2d2d30;
-            border: 1px solid #3e3e42;
-            border-radius: 4px;
-            width: 520px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid #3e3e42;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-size: 14px;
-            font-weight: 500;
-            color: #cccccc;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: #858585;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-close:hover {
-            color: #cccccc;
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .help-section {
-            margin-bottom: 24px;
-        }
-
-        .help-heading {
-            font-size: 13px;
-            font-weight: 500;
-            color: #4ec9b0;
-            margin-bottom: 8px;
-        }
-
-        .help-text {
-            font-size: 12px;
-            line-height: 1.6;
-            color: #cccccc;
-            margin-bottom: 8px;
-        }
-
-        .shortcut-list {
-            margin-top: 12px;
-        }
-
-        .shortcut-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 0;
-            font-size: 12px;
-            color: #cccccc;
-        }
-
+        /* Help modal extras (base styles come from demo-shell.css) */
+        .shortcut-list { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; align-items: center; }
         .shortcut-key {
-            background: #3e3e42;
-            padding: 4px 10px;
-            border-radius: 3px;
-            font-family: 'Roboto Mono', monospace;
-            font-size: 11px;
-            color: #4ec9b0;
+            background: var(--card2);
+            border: 1px solid var(--border-strong);
+            padding: 3px 9px;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--cyan-bright);
+            justify-self: start;
         }
-
-        /* Alerts */
-        .alert-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #f48771;
-            color: #ffffff;
-            padding: 12px 20px;
-            text-align: center;
-            font-size: 13px;
-            display: none;
-            z-index: 3000;
-        }
-
-        .alert-bar.show {
-            display: block;
-        }
+        .d-help-section code { font-family: var(--mono); font-size: .74rem; color: var(--cyan-bright); background: var(--accent-bg); padding: 1px 5px; border-radius: 4px; }
+        .d-help-section table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+        .d-help-section th, .d-help-section td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); color: var(--muted); }
+        .d-help-section th { color: var(--text); font-weight: 600; font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; }
+        .d-help-section td.p { font-family: var(--mono); color: var(--cyan); white-space: nowrap; }
 
         .mode-indicator {
-            position: fixed;
-            top: 60px;
-            right: 20px;
-            background: rgba(45, 45, 48, 0.95);
-            border: 1px solid #3e3e42;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-size: 11px;
-            color: #4ec9b0;
-            font-family: 'Roboto Mono', monospace;
-            z-index: 1500;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
+            padding: 2px 4px 2px 10px;
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            background: var(--accent-bg);
+            border-radius: 999px;
+            font-size: 10.5px;
+            color: var(--cyan);
+            font-family: var(--mono);
+            white-space: nowrap;
         }
 
         .mode-indicator.hidden {
@@ -765,7 +656,7 @@
         .mode-close {
             background: none;
             border: none;
-            color: #858585;
+            color: var(--muted);
             font-size: 18px;
             cursor: pointer;
             padding: 0;
@@ -778,7 +669,7 @@
         }
 
         .mode-close:hover {
-            color: #cccccc;
+            color: var(--text);
         }
 
         .instruction-banner {
@@ -786,7 +677,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 122, 204, 0.95);
+            background: rgba(6, 182, 212, 0.95);
             color: #ffffff;
             padding: 16px 32px;
             border-radius: 4px;
@@ -800,61 +691,13 @@
             display: block;
         }
 
-        /* Welcome Screen */
-        .welcome-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            backdrop-filter: blur(4px);
-        }
-
-        .welcome-overlay.hide {
-            display: none;
-        }
-
-        .welcome-content {
-            background: #2d2d30;
-            border: 1px solid #007acc;
-            border-radius: 6px;
-            width: 720px;
-            max-width: 90vw;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        }
-
-        .welcome-header {
-            background: linear-gradient(135deg, #007acc 0%, #005a9e 100%);
-            padding: 24px 32px;
-            border-bottom: 1px solid #007acc;
-        }
-
-        .welcome-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-
-        .welcome-subtitle {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.85);
-        }
-
         /* Obstacle Control Panel */
         .obstacle-panel {
-            position: fixed;
-            bottom: 180px;
-            left: 64px;
-            background: rgba(45, 45, 48, 0.95);
-            border: 1px solid #3e3e42;
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(17, 24, 39, 0.95);
+            border: 1px solid var(--border);
             padding: 12px 16px;
             border-radius: 4px;
             font-size: 11px;
@@ -871,7 +714,7 @@
         .obstacle-panel-title {
             font-size: 11px;
             font-weight: 500;
-            color: #4ec9b0;
+            color: var(--cyan);
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -889,21 +732,21 @@
             align-items: center;
             gap: 8px;
             padding: 6px 8px;
-            background: #1e1e1e;
-            border: 1px solid #3e3e42;
+            background: var(--bg);
+            border: 1px solid var(--border);
             border-radius: 3px;
             cursor: pointer;
             transition: all 0.15s;
         }
 
         .obstacle-type-option:hover {
-            background: #2d2d30;
-            border-color: #007acc;
+            background: var(--card);
+            border-color: var(--cyan);
         }
 
         .obstacle-type-option.selected {
-            background: #094771;
-            border-color: #007acc;
+            background: rgba(6, 182, 212, 0.18);
+            border-color: var(--cyan);
         }
 
         .obstacle-type-option input[type="radio"] {
@@ -912,7 +755,7 @@
 
         .obstacle-type-option label {
             cursor: pointer;
-            color: #cccccc;
+            color: var(--text);
             flex: 1;
         }
 
@@ -921,14 +764,14 @@
             align-items: center;
             justify-content: space-between;
             padding: 8px;
-            background: #1e1e1e;
-            border: 1px solid #3e3e42;
+            background: var(--bg);
+            border: 1px solid var(--border);
             border-radius: 3px;
             margin-top: 8px;
         }
 
         .movement-toggle label {
-            color: #cccccc;
+            color: var(--text);
             font-size: 11px;
         }
 
@@ -939,7 +782,7 @@
 
         /* Environment Selector - moved to sidebar */
         .environment-selector {
-            border-bottom: 1px solid #3e3e42;
+            border-bottom: 1px solid var(--border);
         }
 
         .environment-header {
@@ -949,7 +792,7 @@
         }
 
         .environment-toggle {
-            color: #858585;
+            color: var(--muted);
             font-size: 12px;
             transition: transform 0.2s;
         }
@@ -980,21 +823,21 @@
             align-items: center;
             gap: 10px;
             padding: 8px 10px;
-            background: #1e1e1e;
-            border: 1px solid #3e3e42;
+            background: var(--bg);
+            border: 1px solid var(--border);
             border-radius: 3px;
             cursor: pointer;
             transition: all 0.15s;
         }
 
         .environment-option:hover {
-            background: #2d2d30;
-            border-color: #007acc;
+            background: var(--card);
+            border-color: var(--cyan);
         }
 
         .environment-option.selected {
-            background: #094771;
-            border-color: #007acc;
+            background: rgba(6, 182, 212, 0.18);
+            border-color: var(--cyan);
         }
 
         .environment-option input[type="radio"] {
@@ -1003,407 +846,196 @@
 
         .environment-option label {
             cursor: pointer;
-            color: #cccccc;
+            color: var(--text);
             flex: 1;
             font-size: 12px;
         }
 
         .environment-desc {
             font-size: 10px;
-            color: #858585;
+            color: var(--muted);
             margin-top: 2px;
         }
 
-        .welcome-body {
-            padding: 32px;
-        }
+        /* Behaviour tree panel */
+        .bt-item.idle { opacity: .55; }
+        .bt-sub { padding-left: 14px; }
+        .bt-sub2 { padding-left: 28px; }
 
-        .welcome-section {
-            margin-bottom: 28px;
-        }
+        /* Localisation panel */
+        .loc-row { display: flex; justify-content: space-between; padding: 3px 0; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+        .loc-row b { color: var(--green); font-weight: 500; }
 
-        .welcome-section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #4ec9b0;
-            margin-bottom: 12px;
-        }
-
-        .welcome-text {
-            font-size: 13px;
-            line-height: 1.7;
-            color: #cccccc;
-            margin-bottom: 12px;
-        }
-
-        .welcome-list {
-            list-style: none;
-            padding-left: 0;
-            margin: 12px 0;
-        }
-
-        .welcome-list li {
-            padding: 8px 12px;
-            margin: 6px 0;
-            background: #1e1e1e;
-            border-left: 3px solid #007acc;
-            font-size: 13px;
-            color: #cccccc;
-            border-radius: 2px;
-        }
-
-        .welcome-list strong {
-            color: #4ec9b0;
-            font-weight: 500;
-        }
-
-        .welcome-feature-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin: 16px 0;
-        }
-
-        .welcome-feature {
-            background: #1e1e1e;
-            padding: 16px;
-            border-radius: 4px;
-            border: 1px solid #3e3e42;
-        }
-
-        .welcome-feature-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: #9cdcfe;
-            margin-bottom: 6px;
-        }
-
-        .welcome-feature-desc {
-            font-size: 12px;
-            color: #858585;
-            line-height: 1.5;
-        }
-
-        .welcome-footer {
-            padding: 20px 32px;
-            background: #252526;
-            border-top: 1px solid #3e3e42;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .welcome-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: #cccccc;
-        }
-
-        .welcome-btn {
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: 500;
-            background: #007acc;
-            border: none;
-            color: #ffffff;
-            cursor: pointer;
-            border-radius: 4px;
-            font-family: 'Roboto', sans-serif;
-            transition: all 0.2s;
-        }
-
-        .welcome-btn:hover {
-            background: #005a9e;
-        }
-
-        .keyboard-hint {
-            display: inline-block;
-            background: #3e3e42;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-family: 'Roboto Mono', monospace;
-            font-size: 12px;
-            color: #4ec9b0;
-            margin: 0 4px;
+        @media (max-width: 900px) {
+            .main-container { display: flex; flex-direction: column; height: auto; min-height: 0; }
+            .toolbar { flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); padding: 6px; }
+            .tool-item::after { display: none; }
+            .toolbar-spacer { flex: 1; }
+            .viewport { height: 58vh; min-height: 320px; }
+            .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 420px; }
+            .console { height: 220px; }
+            .status-bar { flex-wrap: wrap; gap: 8px; padding: 6px 12px; }
+            .viewport-toolbar { height: auto; flex-wrap: wrap; gap: 6px; padding: 6px 10px; }
+            .demo-sub, .hint-bar { margin-left: 12px; margin-right: 12px; padding-left: 0; }
+            .hint-bar { padding-left: 10px; }
         }
     </style>
 </head>
 <body>
-    <div class="alert-bar" id="alertBar"></div>
-    <div class="mode-indicator" id="modeIndicator">
-        <span>Click on map to set navigation goal</span>
-        <button class="mode-close" onclick="hideModeIndicator()">×</button>
+
+<nav class="demo-nav">
+  <a class="demo-brand" href="../index.html">cristian@portfolio:~$ <span class="crumb">/ demos / ros2-nav2</span></a>
+  <h1 class="demo-title"><i class="fas fa-robot"></i> ROS 2 Nav2 Simulator</h1>
+  <div class="demo-links">
+    <a href="../index.html#projects">Projects</a>
+    <a href="../index.html#research">Research</a>
+    <a href="../index.html#demos">Demos</a>
+    <a href="../robotics-embedded.html" class="active">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <span class="d-pill live"><span class="pulse"></span> LIVE</span>
+    <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+<div class="demo-status">
+  <span>TurtleBot3 Waffle &middot; costmap <b>0.05 m</b> &middot; inflation <b>0.55 m</b> &middot; planner <b>A*</b> @1&nbsp;Hz &middot; controller <b>RegulatedPurePursuit</b> @20&nbsp;Hz &middot; RTF <b>3.0&times;</b> &middot; render <b id="fpsValue">60</b> fps</span>
+  <span><b>Simulated robot</b> &middot; seeded PRNG (mulberry32) &middot; idealised LiDAR, odometry and dynamics &middot; not hardware-validated</span>
+</div>
+
+<p class="demo-sub"><b>A*</b> on an inflated 5&nbsp;cm costmap plans the path, <b>regulated pure pursuit</b> drives a TurtleBot3 Waffle inside real velocity and acceleration limits, an <b>AMCL-style</b> cloud tracks the pose, and the <b>navigate_to_pose</b> behaviour tree replans at 1&nbsp;Hz and falls through round-robin recoveries when the path stays blocked.</p>
+
+<div class="hint-bar" id="hintBar">
+  <i class="fas fa-lightbulb"></i>
+  <span>Press <kbd>G</kbd> then click the map to send a goal. <kbd>O</kbd> drops a dynamic obstacle in the robot's way to trigger replanning and recoveries. <kbd>H</kbd> opens the full guide.</span>
+  <button type="button" class="close" id="hintClose" aria-label="Dismiss hint"><i class="fas fa-xmark"></i></button>
+</div>
+
+    <div class="instruction-banner" id="instructionBanner" role="status" aria-live="polite"></div>
+
+<!-- HELP MODAL -->
+<div class="d-help-overlay" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; ROS 2 Nav2 Simulator</h2>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
-    <div class="instruction-banner" id="instructionBanner"></div>
+    <div class="d-help-body">
 
-    <!-- Obstacle Control Panel -->
-    <div class="obstacle-panel" id="obstaclePanel">
-        <div class="obstacle-panel-title">Obstacle Options</div>
-        <div class="obstacle-type-selector">
-            <div class="obstacle-type-option selected" data-type="box">
-                <input type="radio" name="obstacleType" id="typeBox" value="box" checked>
-                <label for="typeBox">Box / Crate</label>
-            </div>
-            <div class="obstacle-type-option" data-type="person">
-                <input type="radio" name="obstacleType" id="typePerson" value="person">
-                <label for="typePerson">Person</label>
-            </div>
-            <div class="obstacle-type-option" data-type="robot">
-                <input type="radio" name="obstacleType" id="typeRobot" value="robot">
-                <label for="typeRobot">Robot</label>
-            </div>
-            <div class="obstacle-type-option" data-type="furniture">
-                <input type="radio" name="obstacleType" id="typeFurniture" value="furniture">
-                <label for="typeFurniture">Furniture</label>
-            </div>
+      <div class="d-help-section">
+        <h3>1 &middot; What this simulator is</h3>
+        <p>A from-scratch reimplementation of the <strong>ROS 2 Nav2</strong> navigation pipeline running entirely in the browser: no ROS, no rosbag, no hardware. The differential-drive robot is modelled on a <strong>TurtleBot3 Waffle</strong> (footprint radius 0.22&nbsp;m, <code>max_vel_x</code> 0.26&nbsp;m/s, <code>max_vel_theta</code> 1.82&nbsp;rad/s, <code>acc_lim_x</code> 2.5&nbsp;m/s&sup2;, <code>acc_lim_theta</code> 3.2&nbsp;rad/s&sup2;). The world is a 2-D axis-aligned map of walls and obstacles; the simulation runs at a <strong>real-time factor of 3.0&times;</strong> so a 0.26&nbsp;m/s robot is watchable, which is why the on-screen clock advances faster than wall time.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>2 &middot; Costmap &amp; inflation layer</h3>
+        <p>Both costmaps use a <strong>0.05&nbsp;m</strong> grid, the Nav2 default. Cell cost comes from the standard inflation-layer formula applied to the Euclidean distance <code>d</code> from the cell to the nearest obstacle surface:</p>
+        <table>
+          <tr><th>Parameter</th><th>Value</th><th>Meaning</th></tr>
+          <tr><td class="p">resolution</td><td class="p">0.05 m</td><td>global &amp; local costmap cell size</td></tr>
+          <tr><td class="p">inscribed_radius</td><td class="p">0.22 m</td><td>robot footprint radius; <code>d &le; r</code> &rArr; cost 253</td></tr>
+          <tr><td class="p">inflation_radius</td><td class="p">0.55 m</td><td>cost decays to 0 beyond this</td></tr>
+          <tr><td class="p">cost_scaling_factor</td><td class="p">3.0</td><td>exponential decay rate</td></tr>
+        </table>
+        <p style="margin-top:8px"><code>cost = 253 &middot; exp(&minus;3.0 &middot; (d &minus; 0.22))</code> for 0.22&nbsp;m &lt; d &lt; 0.55&nbsp;m; cells inside an obstacle are <strong>lethal (254)</strong>. Walls (static layer) and obstacles (obstacle layer) are rasterised into one 8-bit grid, and <code>d</code> comes from a <strong>3&times;3 chamfer distance transform</strong> over that grid &mdash; the same O(cells) trick <code>nav2_costmap_2d</code> uses instead of a brute-force distance query, which is what makes every planner and controller lookup O(1). The whole grid is rebuilt at <strong>5&nbsp;Hz</strong>, so moving obstacles genuinely change the cost the planner sees. The <em>Global Costmap</em> button draws the entire grid; the <em>Local Costmap</em> button draws the 3&nbsp;m&nbsp;&times;&nbsp;3&nbsp;m rolling window the controller actually checks, with its live count of cells at or above the inscribed cost.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>3 &middot; Global planner (planner_server)</h3>
+        <p><strong>A* over the inflated costmap</strong>, 8-connected, expanded on a 0.20&nbsp;m search lattice (four costmap cells) so the search stays interactive. The heuristic is the <strong>octile distance</strong> in metres with unit step cost &mdash; exactly admissible and consistent for 8-connected motion, and used <em>unweighted</em> (<code>f = g + h</code>), so the returned path is optimal on that lattice. Any cell whose cost is &ge; 253 (inscribed or lethal) is rejected outright, so <strong>the path can never cross a lethal cell</strong>; the remaining inflation cost is added to <code>g</code> as a penalty, which pushes the path towards the centre of free space instead of hugging walls. The result is then shortened by a line-of-sight pass that re-checks the same costmap.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>4 &middot; Local controller (controller_server)</h3>
+        <p><strong>Regulated pure pursuit.</strong> Steering curvature is <code>&kappa; = 2&middot;sin(&alpha;) / L_d</code> where <code>&alpha;</code> is the heading error to the lookahead point and <code>L_d</code> is the lookahead distance, and the command is <code>&omega; = &kappa;&middot;v</code>. The lookahead is velocity-scaled, <code>L_d = clamp(v &middot; 1.5 s, 0.30 m, 0.90 m)</code>. Three regulation heuristics reduce <code>v</code>: <em>curvature</em> (below a 0.90&nbsp;m turning radius), <em>proximity</em> (inside the inflation layer) and <em>approach</em> (linear ramp inside 0.6&nbsp;m of the goal). Above a heading error of 0.785&nbsp;rad the controller rotates in place first. Both <code>v</code> and <code>&omega;</code> are then rate-limited by the acceleration limits above. Nav2 also ships <strong>DWB</strong> (trajectory rollout with critics) and <strong>MPPI</strong> (sampling-based model-predictive control) as alternative controller plugins; only regulated pure pursuit is implemented here.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>5 &middot; AMCL-style localisation</h3>
+        <p>A <strong>500-particle</strong> filter runs beside the simulator. Particles are propagated with the sampled odometry motion model (&delta;<sub>rot1</sub>, &delta;<sub>trans</sub>, &delta;<sub>rot2</sub> with noise coefficients &alpha;<sub>1..4</sub>), weighted by an <strong>8-beam likelihood-field endpoint model</strong> against analytically raycast ranges, and <strong>low-variance resampled</strong> whenever <code>N_eff = 1/&Sigma;w&sup2;</code> falls below N/2. Like AMCL it only updates after <code>update_min_d</code> = 0.20&nbsp;m or <code>update_min_a</code> = 0.20&nbsp;rad of motion. Press <strong>P</strong> and click to teleport the robot: the cloud is re-scattered with 0.5&nbsp;m / 0.5&nbsp;rad spread and you can watch it reconverge. It is called <em>AMCL-style</em> and not AMCL because the particle count is fixed (no KLD adaptive resampling) and, honestly, <strong>the controller still drives on ground truth</strong> &mdash; the filter is observed, not closed into the loop.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>6 &middot; Behaviour tree (bt_navigator)</h3>
+        <p>The tree executed is the shape of Nav2's <code>navigate_to_pose_w_replanning_and_recovery.xml</code>, and the sidebar highlights the node that is actually ticking:</p>
+        <pre style="font-family:var(--mono);font-size:.74rem;color:var(--muted);line-height:1.6;margin:6px 0 0">RecoveryNode (NavigateToPose)
+├─ PipelineSequence
+│   ├─ RateController 1 Hz → ComputePathToPose
+│   └─ FollowPath
+└─ RoundRobin (recoveries)
+    ├─ ClearEntireCostmap
+    ├─ Spin 1.57 rad
+    ├─ BackUp 0.15 m
+    └─ Wait 5 s</pre>
+        <p style="margin-top:8px">The <code>RateController</code> re-plans once a second and immediately if a waypoint inside the local window turns lethal. If planning fails, the round robin runs the <em>next</em> recovery in the list and re-ticks the pipeline; it only gives up after all four have been tried without a path. That is why placing an obstacle on the path first produces a silent replan, and walling the robot in produces the full recovery sequence. One honest caveat: <code>ClearEntireCostmap</code> rebuilds the grid rather than wiping an accumulated obstacle layer, because obstacles here are ground truth rather than remembered sensor marks &mdash; it returns SUCCESS but rarely changes anything, so in practice <em>Spin</em> and <em>BackUp</em> do the useful work.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>7 &middot; Keyboard shortcuts</h3>
+        <div class="shortcut-list">
+          <span class="shortcut-key">G</span><span>Select the 2D Nav Goal tool</span>
+          <span class="shortcut-key">O</span><span>Select the obstacle tool (opens obstacle options)</span>
+          <span class="shortcut-key">P</span><span>Select the 2D Pose Estimate tool (re-scatters the particle cloud)</span>
+          <span class="shortcut-key">Space</span><span>Pause / resume navigation</span>
+          <span class="shortcut-key">R</span><span>Reset the simulation and rebuild the map</span>
+          <span class="shortcut-key">H</span><span>Open this guide (<strong>?</strong> also works)</span>
+          <span class="shortcut-key">Esc</span><span>Close this guide / dismiss the hint bar</span>
         </div>
-        <div class="movement-toggle">
-            <label for="obstacleMoving">Moving Obstacle</label>
-            <input type="checkbox" id="obstacleMoving">
-        </div>
+      </div>
+
+      <div class="d-help-section">
+        <h3>8 &middot; Reading the console</h3>
+        <p>Log lines use the ROS 2 format <code>[LEVEL] [stamp] [node]: message</code>, with the node that would really emit them &mdash; <code>[planner_server]</code>, <code>[controller_server]</code>, <code>[bt_navigator]</code>, <code>[behavior_server]</code>, <code>[amcl]</code>, <code>[local_costmap]</code>, <code>[lifecycle_manager]</code>. The timestamp is simulated seconds since the page loaded, not epoch time.</p>
+      </div>
+
     </div>
-
-    <!-- Welcome Screen -->
-    <div class="welcome-overlay" id="welcomeOverlay">
-        <div class="welcome-content">
-            <div class="welcome-header">
-                <div class="welcome-title">ROS 2 Navigation Stack Simulator</div>
-                <div class="welcome-subtitle">Professional Nav2 Visualization & Testing Environment</div>
-            </div>
-            <div class="welcome-body">
-                <div class="welcome-section">
-                    <div class="welcome-section-title">
-                        What is this simulator?
-                    </div>
-                    <p class="welcome-text">
-                        This is a real-time simulation of ROS 2 Navigation Stack (Nav2), demonstrating autonomous mobile robot navigation in a realistic indoor environment. The simulator implements actual robotics algorithms used in production systems including A* path planning, Pure Pursuit trajectory following, and intelligent recovery behaviors.
-                    </p>
-                    <p class="welcome-text">
-                        Experience how professional robots navigate autonomously, avoid obstacles, and recover from challenging situations—all running directly in your browser.
-                    </p>
-                </div>
-
-                <div class="welcome-section">
-                    <div class="welcome-section-title">
-                        Key Features
-                    </div>
-                    <div class="welcome-feature-grid">
-                        <div class="welcome-feature">
-                            <div class="welcome-feature-title">Global Path Planning</div>
-                            <div class="welcome-feature-desc">A* algorithm computes optimal collision-free paths through complex environments</div>
-                        </div>
-                        <div class="welcome-feature">
-                            <div class="welcome-feature-title">Local Control</div>
-                            <div class="welcome-feature-desc">Pure Pursuit controller with adaptive lookahead for smooth trajectory following</div>
-                        </div>
-                        <div class="welcome-feature">
-                            <div class="welcome-feature-title">Dynamic Obstacles</div>
-                            <div class="welcome-feature-desc">Real-time obstacle detection and automatic path replanning</div>
-                        </div>
-                        <div class="welcome-feature">
-                            <div class="welcome-feature-title">Recovery Behaviors</div>
-                            <div class="welcome-feature-desc">Smart recovery system: backup, rotate, and replan when stuck</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="welcome-section">
-                    <div class="welcome-section-title">
-                        Quick Start Guide
-                    </div>
-                    <ul class="welcome-list">
-                        <li><strong>Set Navigation Goal:</strong> Click the goal tool <span class="keyboard-hint">G</span> then click anywhere on the map. The robot will autonomously navigate to that position.</li>
-                        <li><strong>Add Dynamic Obstacles:</strong> Select the obstacle tool <span class="keyboard-hint">O</span> and click to place moving people, boxes, or other robots.</li>
-                        <li><strong>Watch the Magic:</strong> Observe how the robot automatically avoids obstacles, replans paths, and recovers when stuck.</li>
-                        <li><strong>Adjust Parameters:</strong> Use the sidebar to tune velocity limits, goal tolerance, and visualization options.</li>
-                        <li><strong>Pause/Resume:</strong> Press <span class="keyboard-hint">Space</span> to pause navigation and inspect the current state.</li>
-                    </ul>
-                </div>
-
-                <div class="welcome-section">
-                    <div class="welcome-section-title">
-                        Technical Details
-                    </div>
-                    <p class="welcome-text">
-                        <strong>Architecture:</strong> Implements ROS 2 Nav2 behavior tree with ComputePathToPose, FollowPath, and RecoveryNode plugins.
-                    </p>
-                    <p class="welcome-text">
-                        <strong>Algorithms:</strong> NavFn planner (A* with octile heuristic), Pure Pursuit controller with obstacle avoidance, dynamic window approach for safety.
-                    </p>
-                    <p class="welcome-text">
-                        <strong>Costmaps:</strong> Global costmap for long-term planning, local costmap for real-time collision avoidance, inflation layers for safety margins.
-                    </p>
-                </div>
-            </div>
-            <div class="welcome-footer">
-                <p style="font-size:12px;color:#888;margin-bottom:10px;">Tip: Click the <strong style="color:#cccccc;">Help</strong> button in the top bar anytime for a quick reference guide.</p>
-                <label class="welcome-checkbox">
-                    <input type="checkbox" id="dontShowAgain">
-                    <span>Don't show this again</span>
-                </label>
-                <button class="welcome-btn" onclick="closeWelcome()">Start Simulation</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="helpModal">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title">Navigation Quick Reference</div>
-                <button class="modal-close" onclick="hideHelp()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="help-section">
-                    <div class="help-heading">Setting Navigation Goals</div>
-                    <div class="help-text">Select the "Goal" tool from the toolbar (or press <strong>G</strong>) and click anywhere on the map. The robot will:</div>
-                    <div class="help-text">
-                        1. <strong>Plan:</strong> Compute an optimal collision-free path using A* algorithm<br>
-                        2. <strong>Navigate:</strong> Follow the path using Pure Pursuit controller<br>
-                        3. <strong>Adapt:</strong> Automatically replan if obstacles block the path<br>
-                        4. <strong>Recover:</strong> Execute recovery behaviors if stuck
-                    </div>
-                </div>
-
-                <div class="help-section">
-                    <div class="help-heading">Costmap Layers Explained</div>
-                    <div class="help-text"><strong>Global Costmap (Blue Grid):</strong> Static map with inflated obstacle boundaries. Used by the global planner to compute long-term paths. Shows the entire environment at once.</div>
-                    <div class="help-text"><strong>Local Costmap (Blue Circle):</strong> Dynamic sensor-based map around the robot. Used by the local controller for real-time collision avoidance. Updates constantly with sensor data.</div>
-                    <div class="help-text"><strong>Inflation Layer (Red Halos):</strong> Safety margin visualization showing where the robot prefers not to travel. Helps maintain safe clearance from obstacles.</div>
-                </div>
-
-                <div class="help-section">
-                    <div class="help-heading">Dynamic Obstacles & Testing</div>
-                    <div class="help-text">Use the "Obstacle" tool (press <strong>O</strong>) to add dynamic entities:</div>
-                    <div class="help-text">
-                        • <strong>Boxes:</strong> Static obstacles (crates, furniture)<br>
-                        • <strong>People:</strong> Moving pedestrians<br>
-                        • <strong>Robots:</strong> Other autonomous agents
-                    </div>
-                    <div class="help-text">The navigation system automatically detects when obstacles block the path and triggers replanning. Try placing obstacles in the robot's path to see recovery behaviors in action!</div>
-                </div>
-
-                <div class="help-section">
-                    <div class="help-heading">Parameter Tuning</div>
-                    <div class="help-text">
-                        <strong>max_vel_x:</strong> Maximum forward velocity. Higher = faster but less safe<br>
-                        <strong>max_vel_theta:</strong> Maximum rotational velocity. Affects turning agility<br>
-                        <strong>xy_goal_tolerance:</strong> Distance threshold to consider goal reached
-                    </div>
-                </div>
-
-                <div class="help-section">
-                    <div class="help-heading">Recovery Behaviors</div>
-                    <div class="help-text">When the robot gets stuck (no progress for 3+ seconds), it automatically:</div>
-                    <div class="help-text">
-                        1. <strong>Backup:</strong> Reverse slowly for 1.5 seconds<br>
-                        2. <strong>Rotate:</strong> Spin in place to scan for clear paths<br>
-                        3. <strong>Replan:</strong> Compute a new path from current position
-                    </div>
-                    <div class="help-text">Watch the Behavior Tree panel to see which recovery behavior is active!</div>
-                </div>
-
-                <div class="help-section">
-                    <div class="help-heading">Keyboard Shortcuts</div>
-                    <div class="shortcut-list">
-                        <div class="shortcut-row">
-                            <span>Set Navigation Goal</span>
-                            <span class="shortcut-key">G</span>
-                        </div>
-                        <div class="shortcut-row">
-                            <span>Add Dynamic Obstacle</span>
-                            <span class="shortcut-key">O</span>
-                        </div>
-                        <div class="shortcut-row">
-                            <span>Set Initial Pose (Relocalize)</span>
-                            <span class="shortcut-key">P</span>
-                        </div>
-                        <div class="shortcut-row">
-                            <span>Pause/Resume Navigation</span>
-                            <span class="shortcut-key">Space</span>
-                        </div>
-                        <div class="shortcut-row">
-                            <span>Reset Simulation</span>
-                            <span class="shortcut-key">R</span>
-                        </div>
-                        <div class="shortcut-row">
-                            <span>Toggle Help</span>
-                            <span class="shortcut-key">H or ?</span>
-                        </div>
-                        <div class="shortcut-row">
-                            <span>Close Modals</span>
-                            <span class="shortcut-key">Esc</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="help-section">
-                    <div class="help-heading">Pro Tips</div>
-                    <div class="help-text">
-                        • Watch the console for detailed navigation events and diagnostics<br>
-                        • The "Replans" counter shows how many times the path was recomputed<br>
-                        • Toggle visualization layers to understand different aspects of navigation<br>
-                        • The laser scan visualization shows the robot's perception range<br>
-                        • Local trajectory (dashed line) predicts robot movement for next 1.5 seconds
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
+</div>
 
     <div class="main-container">
-        <div class="top-menu">
-            <a class="back-link" href="../robotics-embedded.html">&#9664; Back to Portfolio</a>
-            <div class="app-title">ROS 2 Navigation Stack Visualizer</div>
-            <div class="menu-section">
-                <button class="menu-item" onclick="showHelp()">Help</button>
-                <button class="menu-item" onclick="resetSimulation()">Reset</button>
-            </div>
-            <div class="status-indicator">
-                <span>FPS:</span>
-                <span id="fpsValue">60</span>
-            </div>
-        </div>
-
         <div class="toolbar">
-            <div class="tool-item active" id="toolGoal" data-label="2D Nav Goal (G)">
+            <button type="button" class="tool-item active" id="toolGoal" data-label="2D Nav Goal (G)" aria-label="2D Nav Goal tool">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                     <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
                     <circle cx="10" cy="10" r="3" fill="currentColor"/>
                 </svg>
-            </div>
-            <div class="tool-item" id="toolObstacle" data-label="Add Obstacle (O)">
+            </button>
+            <button type="button" class="tool-item" id="toolObstacle" data-label="Add Obstacle (O)" aria-label="Add obstacle tool">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                     <rect x="3" y="3" width="14" height="14" fill="currentColor"/>
                 </svg>
-            </div>
-            <div class="tool-item" id="toolPose" data-label="Initial Pose (P)">
+            </button>
+            <button type="button" class="tool-item" id="toolPose" data-label="Initial Pose (P)" aria-label="2D Pose Estimate tool">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10 2 L10 18 M10 2 L14 6 M10 2 L6 6" stroke="currentColor" stroke-width="2" fill="none"/>
                 </svg>
-            </div>
+            </button>
             <div class="toolbar-spacer"></div>
-            <div class="tool-item" id="toolPause" data-label="Pause (Space)">
+            <button type="button" class="tool-item" id="toolPause" data-label="Pause (Space)" aria-label="Pause or resume navigation">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                     <rect x="6" y="4" width="3" height="12" fill="currentColor"/>
                     <rect x="11" y="4" width="3" height="12" fill="currentColor"/>
                 </svg>
-            </div>
+            </button>
         </div>
 
         <div class="viewport">
             <div class="viewport-toolbar">
-                <div class="viewport-label">/map — nav_msgs/OccupancyGrid</div>
+                <div class="viewport-label">/map &mdash; nav_msgs/OccupancyGrid</div>
+                <div class="mode-indicator" id="modeIndicator">
+                    <span>Click on map to set navigation goal</span>
+                    <button type="button" class="mode-close" onclick="hideModeIndicator()" aria-label="Hide tool hint">&times;</button>
+                </div>
                 <div class="viewport-buttons">
-                    <button class="viewport-btn active" id="btnGlobalCostmap">Global Costmap</button>
-                    <button class="viewport-btn" id="btnLocalCostmap">Local Costmap</button>
-                    <button class="viewport-btn" id="btnInflation">Inflation</button>
-                    <button class="viewport-btn active" id="btnPath">Path</button>
+                    <button type="button" class="viewport-btn active" id="btnGlobalCostmap">Global Costmap</button>
+                    <button type="button" class="viewport-btn" id="btnLocalCostmap">Local Costmap</button>
+                    <button type="button" class="viewport-btn" id="btnInflation">Obstacle Inflation</button>
+                    <button type="button" class="viewport-btn active" id="btnPath">Path</button>
+                    <button type="button" class="viewport-btn active" id="btnParticles">Particles</button>
                 </div>
             </div>
             <div class="canvas-wrapper">
-                <canvas id="mainCanvas"></canvas>
+                <canvas id="mainCanvas" aria-label="Nav2 map view: occupancy grid, costmaps, global plan, laser scan, particle cloud and the robot" role="img"></canvas>
                 <div class="viewport-overlay">
                     <div class="overlay-row">
                         <span class="overlay-label">x, y, θ:</span>
@@ -1429,7 +1061,7 @@
                     </div>
                     <div class="legend-body">
                         <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, #4ec9b0, #3a9d8f); box-shadow: 0 0 8px #4ec9b0;"></div>
+                        <div class="legend-color" style="background: linear-gradient(135deg, #06b6d4, #0e7490); box-shadow: 0 0 8px #06b6d4;"></div>
                         <span>Robot</span>
                     </div>
                     <div class="legend-item">
@@ -1452,6 +1084,36 @@
                         <div class="legend-color" style="background: #3a3f47;"></div>
                         <span>Walls</span>
                     </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #8b5cf6; border-radius: 50%;"></div>
+                        <span>AMCL particles</span>
+                    </div>
+                    </div>
+                </div>
+                <!-- Obstacle Control Panel -->
+                <div class="obstacle-panel" id="obstaclePanel">
+                    <div class="obstacle-panel-title">Obstacle Options</div>
+                    <div class="obstacle-type-selector">
+                        <div class="obstacle-type-option selected" data-type="box">
+                            <input type="radio" name="obstacleType" id="typeBox" value="box" checked>
+                            <label for="typeBox">Box / Crate</label>
+                        </div>
+                        <div class="obstacle-type-option" data-type="person">
+                            <input type="radio" name="obstacleType" id="typePerson" value="person">
+                            <label for="typePerson">Person</label>
+                        </div>
+                        <div class="obstacle-type-option" data-type="robot">
+                            <input type="radio" name="obstacleType" id="typeRobot" value="robot">
+                            <label for="typeRobot">Robot</label>
+                        </div>
+                        <div class="obstacle-type-option" data-type="furniture">
+                            <input type="radio" name="obstacleType" id="typeFurniture" value="furniture">
+                            <label for="typeFurniture">Furniture</label>
+                        </div>
+                    </div>
+                    <div class="movement-toggle">
+                        <label for="obstacleMoving">Moving Obstacle</label>
+                        <input type="checkbox" id="obstacleMoving">
                     </div>
                 </div>
             </div>
@@ -1496,23 +1158,29 @@
                     <div class="param-item">
                         <div class="param-header">
                             <span class="param-name">max_vel_x</span>
-                            <span class="param-val" id="maxVelDisplay">0.50 m/s</span>
+                            <span class="param-val" id="maxVelDisplay">0.26 m/s</span>
                         </div>
-                        <input type="range" class="param-slider" id="maxVelSlider" min="0.1" max="1.0" step="0.05" value="0.5">
+                        <input type="range" class="param-slider" id="maxVelSlider" min="0.05" max="0.26" step="0.01" value="0.26" aria-label="max_vel_x in metres per second">
                     </div>
                     <div class="param-item">
                         <div class="param-header">
                             <span class="param-name">max_vel_theta</span>
-                            <span class="param-val" id="maxAngDisplay">1.00 rad/s</span>
+                            <span class="param-val" id="maxAngDisplay">1.82 rad/s</span>
                         </div>
-                        <input type="range" class="param-slider" id="maxAngSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+                        <input type="range" class="param-slider" id="maxAngSlider" min="0.4" max="1.82" step="0.02" value="1.82" aria-label="max_vel_theta in radians per second">
                     </div>
                     <div class="param-item">
                         <div class="param-header">
                             <span class="param-name">xy_goal_tolerance</span>
-                            <span class="param-val" id="tolDisplay">0.10 m</span>
+                            <span class="param-val" id="tolDisplay">0.25 m</span>
                         </div>
-                        <input type="range" class="param-slider" id="tolSlider" min="0.05" max="0.5" step="0.05" value="0.1">
+                        <input type="range" class="param-slider" id="tolSlider" min="0.05" max="0.5" step="0.05" value="0.25" aria-label="xy_goal_tolerance in metres">
+                    </div>
+                    <div class="param-item" style="margin-bottom:0">
+                        <div class="param-header"><span class="param-name">inflation_radius</span><span class="param-val">0.55 m</span></div>
+                        <div class="param-header"><span class="param-name">cost_scaling_factor</span><span class="param-val">3.0</span></div>
+                        <div class="param-header"><span class="param-name">resolution</span><span class="param-val">0.05 m</span></div>
+                        <div class="param-header" style="margin-bottom:0"><span class="param-name">robot_radius</span><span class="param-val">0.22 m</span></div>
                     </div>
                 </div>
             </div>
@@ -1521,7 +1189,7 @@
                 <div class="panel-title">Transform Tree</div>
                 <div class="panel-body">
                     <div class="tf-tree">
-                        <div style="color: #4ec9b0;">map</div>
+                        <div style="color: var(--cyan);">map</div>
                         <div class="tf-item">odom</div>
                         <div class="tf-item" style="padding-left: 32px;">base_footprint</div>
                         <div class="tf-item" style="padding-left: 48px;">base_link</div>
@@ -1536,11 +1204,15 @@
                     <div class="topic-list">
                         <div class="topic-row">
                             <span class="topic-path">/scan</span>
-                            <span class="topic-hz">10 Hz</span>
+                            <span class="topic-hz">5 Hz</span>
                         </div>
                         <div class="topic-row">
                             <span class="topic-path">/odom</span>
-                            <span class="topic-hz">50 Hz</span>
+                            <span class="topic-hz">30 Hz</span>
+                        </div>
+                        <div class="topic-row">
+                            <span class="topic-path">/amcl_pose</span>
+                            <span class="topic-hz" id="amclHz">— Hz</span>
                         </div>
                         <div class="topic-row">
                             <span class="topic-path">/cmd_vel</span>
@@ -1562,11 +1234,27 @@
                 <div class="panel-title">Behavior Tree</div>
                 <div class="panel-body">
                     <div class="bt-container">
-                        <div class="bt-item" id="btNav">NavigateToPose</div>
-                        <div class="bt-item" id="btCompute">├─ ComputePathToPose</div>
-                        <div class="bt-item" id="btFollow">├─ FollowPath</div>
-                        <div class="bt-item" id="btRecovery">└─ RecoveryNode</div>
+                        <div class="bt-item" id="btNav">RecoveryNode / NavigateToPose</div>
+                        <div class="bt-item bt-sub" id="btPipeline">├─ PipelineSequence</div>
+                        <div class="bt-item bt-sub2" id="btCompute">│&nbsp;&nbsp;├─ RateController 1 Hz → ComputePathToPose</div>
+                        <div class="bt-item bt-sub2" id="btFollow">│&nbsp;&nbsp;└─ FollowPath</div>
+                        <div class="bt-item bt-sub" id="btRecovery">└─ RoundRobin (recoveries)</div>
+                        <div class="bt-item bt-sub2" id="btClear">&nbsp;&nbsp;&nbsp;├─ ClearEntireCostmap</div>
+                        <div class="bt-item bt-sub2" id="btSpin">&nbsp;&nbsp;&nbsp;├─ Spin 1.57 rad</div>
+                        <div class="bt-item bt-sub2" id="btBackup">&nbsp;&nbsp;&nbsp;├─ BackUp 0.15 m</div>
+                        <div class="bt-item bt-sub2" id="btWait">&nbsp;&nbsp;&nbsp;└─ Wait 5 s</div>
                     </div>
+                </div>
+            </div>
+
+            <div class="sidebar-panel">
+                <div class="panel-title">AMCL-style Localisation</div>
+                <div class="panel-body">
+                    <div class="loc-row"><span>particles</span><b id="locCount">500</b></div>
+                    <div class="loc-row"><span>N_eff</span><b id="locNeff">—</b></div>
+                    <div class="loc-row"><span>cloud &sigma;_xy</span><b id="locSpread">—</b></div>
+                    <div class="loc-row"><span>|est − truth|</span><b id="locErr">—</b></div>
+                    <div class="loc-row"><span>resamples</span><b id="locResample">0</b></div>
                 </div>
             </div>
 
@@ -1575,19 +1263,19 @@
                 <div class="panel-body">
                     <div class="checkbox-row">
                         <input type="checkbox" id="chkFootprint" checked>
-                        <label>Robot Footprint</label>
+                        <label for="chkFootprint">Robot Footprint</label>
                     </div>
                     <div class="checkbox-row">
                         <input type="checkbox" id="chkLaser" checked>
-                        <label>Laser Scan</label>
+                        <label for="chkLaser">Laser Scan</label>
                     </div>
                     <div class="checkbox-row">
                         <input type="checkbox" id="chkPath" checked>
-                        <label>Global Path</label>
+                        <label for="chkPath">Global Path</label>
                     </div>
                     <div class="checkbox-row">
                         <input type="checkbox" id="chkLocal" checked>
-                        <label>Local Trajectory</label>
+                        <label for="chkLocal">Local Trajectory</label>
                     </div>
                 </div>
             </div>
@@ -1595,8 +1283,8 @@
 
         <div class="console">
             <div class="console-toolbar">
-                <div class="console-label">Console Output</div>
-                <button class="console-btn" onclick="clearConsole()">Clear</button>
+                <div class="console-label">/rosout &mdash; console output</div>
+                <button type="button" class="console-btn" onclick="clearConsole()">Clear</button>
             </div>
             <div class="console-output" id="consoleOutput"></div>
         </div>
@@ -1608,37 +1296,142 @@
                     <span id="navStatus">Navigation Active</span>
                 </div>
                 <div class="status-info">
-                    <span>State:</span>
-                    <span id="stateDisplay">Ready</span>
+                    <span>state:</span>
+                    <b id="stateDisplay">Ready</b>
+                </div>
+                <div class="status-info">
+                    <span>bt_node:</span>
+                    <b id="btStateDisplay">idle</b>
                 </div>
             </div>
             <div class="status-section">
                 <div class="status-info">
-                    <span>Replans:</span>
-                    <span id="replansDisplay">0</span>
+                    <span>sim_time:</span>
+                    <b id="simTimeDisplay">0.0 s</b>
+                </div>
+                <div class="status-info">
+                    <span>replans:</span>
+                    <b id="replansDisplay">0</b>
+                </div>
+                <div class="status-info">
+                    <span>recoveries:</span>
+                    <b id="recoveryDisplay">0</b>
                 </div>
             </div>
         </div>
     </div>
 
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>The ROS 2 <strong>Nav2</strong> navigation pipeline, reimplemented in plain JavaScript. A static map of axis-aligned walls plus dynamic obstacles is rasterised into a <strong>0.05 m</strong> costmap and inflated with a chamfer distance transform, rebuilt at 5 Hz. <code>planner_server</code> runs <strong>A*</strong> over that costmap with an admissible octile heuristic; <code>controller_server</code> runs a <strong>regulated pure pursuit</strong> controller inside TurtleBot3 Waffle velocity and acceleration limits; <code>bt_navigator</code> ticks the <code>navigate_to_pose_w_replanning_and_recovery</code> tree, replanning at 1 Hz and falling through a round robin of recoveries when no path exists. A 500-particle <strong>AMCL-style</strong> filter estimates the pose alongside, and a rolling 3 m local costmap is rebuilt at 5 Hz from live obstacle positions.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Robot: TurtleBot3 Waffle, differential drive, footprint radius <code>0.22 m</code>, <code>max_vel_x 0.26 m/s</code>, <code>max_vel_theta 1.82 rad/s</code>, <code>acc_lim_x 2.5 m/s&sup2;</code>, <code>acc_lim_theta 3.2 rad/s&sup2;</code>.</li>
+          <li>Costmaps: resolution <code>0.05 m</code>, <code>inflation_radius 0.55 m</code>, <code>cost_scaling_factor 3.0</code>, lethal 254 / inscribed 253; static + obstacle layers rasterised into one grid and inflated by a 3&times;3 chamfer distance transform, rebuilt at 5 Hz; local window <code>3 &times; 3 m</code>.</li>
+          <li>Planner: A* on a <code>0.20 m</code> 8-connected lattice over that costmap, octile heuristic, unweighted <code>f = g + h</code>, 12 000 expansion cap, replanning at <code>1 Hz</code> (RateController).</li>
+          <li>Controller: <code>lookahead_time 1.5 s</code> clamped to <code>[0.30, 0.90] m</code>, <code>regulated_linear_scaling_min_radius 0.90 m</code>, <code>rotate_to_heading_min_angle 0.785 rad</code>, <code>rotate_to_heading_angular_vel 1.8 rad/s</code>, control loop 20 Hz.</li>
+          <li>Localisation: 500 particles, motion-model coefficients &alpha;<sub>1..4</sub> = 0.05 / 0.05 / 0.05 / 0.02, 8-beam likelihood field (z<sub>hit</sub> 0.85, &sigma;<sub>hit</sub> 0.12 m, z<sub>rand</sub> 0.15), <code>update_min_d 0.20 m</code>, <code>update_min_a 0.20 rad</code>, resample when N<sub>eff</sub> &lt; N/2.</li>
+          <li>LiDAR: 120 beams over 360&deg; drawn from the 360-sample LDS-01 pattern, <code>3.5 m</code> max range, analytic ray/AABB and ray/circle intersection, no noise on the rendered scan (the filter adds &sigma; = 0.02 m).</li>
+          <li>Determinism: mulberry32 PRNG, seed <code>20260909</code>, reseeded on every reset. Simulation advances at a real-time factor of <code>3.0&times;</code>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li>Inflation layer: <code>cost = 253 &middot; exp(&minus;cost_scaling_factor &middot; (d &minus; inscribed_radius))</code> for <code>inscribed_radius &lt; d &lt; inflation_radius</code>, with <code>d</code> from a two-sweep 3&times;3 chamfer distance transform (1, &radic;2 weights) &mdash; within a few percent of the exact Euclidean distance.</li>
+          <li>Octile heuristic: <code>h = (dx + dy) + (&radic;2 &minus; 2)&middot;min(dx, dy)</code> &mdash; admissible and consistent for 8-connected grids with unit/&radic;2 step costs.</li>
+          <li>Pure pursuit: <code>&kappa; = 2&middot;sin(&alpha;) / L_d</code>, <code>&omega; = &kappa;&middot;v</code>, with curvature, proximity and approach regulation (Macenski, Moore, Lu, Merzlyakov &amp; Ferguson, 2023, <em>From the desks of ROS maintainers: a survey of modern &amp; capable mobile robotics algorithms in the robot operating system 2</em>).</li>
+          <li>Particle filter: sampled odometry motion model and likelihood-field range model, low-variance resampling, <code>N_eff = 1 / &Sigma;w&sup2;</code> (Thrun, Burgard &amp; Fox, 2005, <em>Probabilistic Robotics</em>, ch. 5, 6 and 8).</li>
+          <li>Behaviour tree and lifecycle architecture: Macenski, Mart&iacute;n, White &amp; Clavero (2020), <em>The Marathon 2: A Navigation System</em> (IROS).</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li><strong>The controller drives on ground truth, not on the AMCL-style estimate.</strong> The particle cloud is displayed and scored honestly, but localisation error is never fed back into planning, so the demo cannot show a robot getting lost.</li>
+          <li>No real ROS: no DDS, no lifecycle transitions, no action servers or preemption, no TF buffering or extrapolation. The transform tree and topic rates in the sidebar are labels, not live publishers.</li>
+          <li>A* runs on a 0.20 m lattice over the 0.05 m costmap, so the plan is optimal on that lattice, not on the full-resolution grid. Nav2's NavFn/Smac planners search the full costmap.</li>
+          <li>Kinematics only: no mass, wheel slip, motor dynamics or IMU; collisions simply stop the robot rather than being resolved physically.</li>
+          <li>2-D, axis-aligned world with perfectly reflective surfaces; the laser has no dropout, mixed pixels or incidence-angle effects, and the costmap has no sensor field-of-view or clearing raycasts &mdash; every obstacle is always visible, whereas a real obstacle layer only marks what the LiDAR currently sees.</li>
+          <li>Distances behind the inflation layer come from a chamfer transform on cell centres, so cost boundaries can be off by up to half a cell (2.5 cm).</li>
+          <li><code>ClearEntireCostmap</code> rebuilds the grid instead of clearing remembered sensor marks (there are none), so that recovery almost always succeeds without changing anything.</li>
+          <li>Simulation runs 3&times; faster than wall time so a 0.26 m/s robot stays watchable; on-screen distances and velocities are physical, elapsed times are not.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
+  </div>
+</footer>
+
     <script>
         const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
-        
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            const rect = container.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-        }
-        
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
-        // Configuration
-        const SCALE = 40;
-        const ROBOT_RADIUS = 0.25;
-        const SAFETY_MARGIN = 0.15;
+        // ---- deterministic PRNG (mulberry32) -------------------------------
+        const SEED = 20260909;
+        let rng = mulberry32(SEED);
+        function mulberry32(a) {
+            return function () {
+                a |= 0; a = a + 0x6D2B79F5 | 0;
+                let t = Math.imul(a ^ a >>> 15, 1 | a);
+                t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+        function randn() {
+            let u = 0, v = 0;
+            while (u === 0) u = rng();
+            while (v === 0) v = rng();
+            return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+        }
+        function angNorm(a) {
+            while (a > Math.PI) a -= 2 * Math.PI;
+            while (a < -Math.PI) a += 2 * Math.PI;
+            return a;
+        }
+
+        // ---- view / canvas -------------------------------------------------
+        const DPR = Math.min(window.devicePixelRatio || 1, 2);
+        let viewW = 0, viewH = 0;
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            viewW = Math.max(320, Math.round(rect.width));
+            viewH = Math.max(240, Math.round(rect.height));
+            canvas.width = Math.round(viewW * DPR);
+            canvas.height = Math.round(viewH * DPR);
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        }
+        resizeCanvas();
+
+        // ---- Nav2 parameters (nav2_params.yaml equivalents) -----------------
+        const SCALE = 40;                       // px per metre
+        const RTF = 3.0;                        // real-time factor (sim s per wall s)
+        const CONTROL_DT = 0.05;                // controller_frequency 20 Hz
+        const ROBOT_RADIUS = 0.22;              // TurtleBot3 Waffle inscribed radius [m]
+        const COSTMAP_RES = 0.05;               // costmap resolution [m/cell]
+        const INFLATION_RADIUS = 0.55;          // inflation_layer.inflation_radius [m]
+        const COST_SCALING_FACTOR = 3.0;        // inflation_layer.cost_scaling_factor
+        const LETHAL_COST = 254, INSCRIBED_COST = 253;
+        const PLANNER_LATTICE = 0.20;           // A* search step (4 costmap cells) [m]
+        const MAX_VEL_X = 0.26, MAX_VEL_THETA = 1.82;
+        const ACC_LIM_X = 2.5, ACC_LIM_THETA = 3.2;
+        const LOOKAHEAD_TIME = 1.5, MIN_LOOKAHEAD = 0.30, MAX_LOOKAHEAD = 0.90;
+        const MIN_TURNING_RADIUS = 0.90;        // regulated_linear_scaling_min_radius
+        const ROTATE_TO_HEADING_MIN_ANGLE = 0.785, ROTATE_TO_HEADING_VEL = 1.8;
+        const LIDAR_BEAMS = 120, LIDAR_RANGE = 3.5;   // LDS-01 class
+        const LOCAL_COSTMAP_SIZE = 3.0;         // rolling window [m]
+        const LOCAL_CELLS = Math.round(LOCAL_COSTMAP_SIZE / COSTMAP_RES);
+        let simTime = 0;
 
         // State
         let mode = 'goal';
@@ -1656,17 +1449,18 @@
             x: 0,
             y: 0,
             theta: 0,
+            v: 0,
             vx: 0,
             vy: 0,
             omega: 0,
-            maxV: 0.5,
-            maxOmega: 1.0
+            maxV: MAX_VEL_X,
+            maxOmega: MAX_VEL_THETA
         };
-        
+
         // Obstacle placement settings
         let selectedObstacleType = 'box';
         let obstacleMoving = false;
-        
+
         // Environment selection
         let selectedEnvironment = 'warehouse';
 
@@ -1684,14 +1478,40 @@
         let recoveryTimer = 0;
         let lastLogTime = 0;
         let lastWaypointCount = 0;
+        let recoveryCount = 0;
+        let recoveryIndex = 0;
+        let spinAccum = 0;
+        let backupStart = null;
+        let showParticles = true;
+        let planQuiet = false;
+        let blockTimer = 0;
+        const RECOVERIES = ['clear', 'spin', 'backup', 'wait'];
+        const RECOVERY_LABEL = { clear: 'ClearEntireCostmap', spin: 'Spin 1.57 rad', backup: 'BackUp 0.15 m', wait: 'Wait 5 s' };
+
+        // ---- AMCL-style particle filter ------------------------------------
+        const NUM_PARTICLES = 500, AMCL_BEAMS = 8;
+        const Z_HIT = 0.85, Z_RAND = 0.15, SIGMA_HIT = 0.12;
+        const ALPHA1 = 0.05, ALPHA2 = 0.05, ALPHA3 = 0.05, ALPHA4 = 0.02;
+        const UPDATE_MIN_D = 0.20, UPDATE_MIN_A = 0.20;
+        let particles = [], lastAmclPose = null, amclEst = null;
+        let amclNeff = NUM_PARTICLES, amclResamples = 0, amclSpread = 0;
+
+        // ---- costmap layers -------------------------------------------------
+        const staticCostCanvas = document.createElement('canvas');
+        const localCostCanvas = document.createElement('canvas');
+        localCostCanvas.width = LOCAL_CELLS; localCostCanvas.height = LOCAL_CELLS;
+        let localOriginX = 0, localOriginY = 0, localCostTimer = 0, localLethalCells = 0;
+        let costW = 0, costH = 0;
+        let costGrid = null, distGrid = null;
 
         // Build environment based on selection
         function buildEnvironment() {
-            worldWidth = canvas.width / SCALE;
-            worldHeight = canvas.height / SCALE;
+            worldWidth = viewW / SCALE;
+            worldHeight = viewH / SCALE;
+            rng = mulberry32(SEED);
             walls = [];
             obstacles = [];
-            
+
             if (selectedEnvironment === 'house') {
                 buildHouseEnvironment();
             } else if (selectedEnvironment === 'warehouse') {
@@ -1699,14 +1519,15 @@
             } else if (selectedEnvironment === 'industrial') {
                 buildIndustrialEnvironment();
             }
+            buildCostmap();
         }
-        
+
         // Build open-concept house environment - realistic modern floor plan
         function buildHouseEnvironment() {
 
             const wallThickness = 0.2;
             const doorWidth = 2.0; // Standard doorway width
-            
+
             // Exterior walls - complete boundary
             walls.push({x: 0, y: 0, w: worldWidth, h: wallThickness}); // Top
             walls.push({x: 0, y: 0, w: wallThickness, h: worldHeight}); // Left
@@ -1717,11 +1538,11 @@
             // Left 40% = Living/Dining open space
             // Center 35% = Kitchen with peninsula
             // Right 25% = Bedroom with bathroom
-            
+
             // Vertical divider between living area and bedroom (with doorway)
             const bedroomWallX = worldWidth * 0.65;
             const doorCenterY = worldHeight * 0.45;
-            
+
             // Top segment of bedroom wall (above door)
             walls.push({
                 x: bedroomWallX,
@@ -1729,7 +1550,7 @@
                 w: wallThickness,
                 h: doorCenterY - doorWidth/2 - wallThickness
             });
-            
+
             // Bottom segment of bedroom wall (below door)
             walls.push({
                 x: bedroomWallX,
@@ -1750,7 +1571,7 @@
             // Bathroom wall (inside bedroom, top-right corner)
             const bathroomWallY = worldHeight * 0.35;
             const bathroomDoorX = bedroomWallX + (worldWidth - bedroomWallX) * 0.45;
-            
+
             // Horizontal bathroom wall (with doorway)
             walls.push({
                 x: bedroomWallX + wallThickness,
@@ -1807,7 +1628,7 @@
                     height: 0.5,
                     label: 'TV'
                 },
-                
+
                 // DINING AREA (left-center)
                 // Dining table
                 {
@@ -1822,7 +1643,7 @@
                     height: 1.0,
                     label: 'Dining'
                 },
-                
+
                 // KITCHEN (center area, near peninsula)
                 // Kitchen island/counter
                 {
@@ -1850,7 +1671,7 @@
                     height: 0.8,
                     label: 'Fridge'
                 },
-                
+
                 // BEDROOM (right side, below bathroom)
                 // Bed
                 {
@@ -1891,7 +1712,7 @@
                     height: 0.6,
                     label: 'Dresser'
                 },
-                
+
                 // BATHROOM (top-right corner)
                 // Toilet
                 {
@@ -1919,7 +1740,7 @@
                     height: 0.5,
                     label: 'Sink'
                 },
-                
+
                 // DYNAMIC OBSTACLES - Moving agents in open areas
                 // Person walking in living room
                 {
@@ -1953,28 +1774,28 @@
                 }
             ];
         }
-        
+
         // Build warehouse environment
         function buildWarehouseEnvironment() {
             const wallThickness = 0.15;
-            
+
             // Exterior walls
             walls.push({x: 0, y: 0, w: worldWidth, h: wallThickness}); // Top
             walls.push({x: 0, y: 0, w: wallThickness, h: worldHeight}); // Left
             walls.push({x: 0, y: worldHeight - wallThickness, w: worldWidth, h: wallThickness}); // Bottom
             walls.push({x: worldWidth - wallThickness, y: 0, w: wallThickness, h: worldHeight}); // Right
-            
+
             // Create storage rack aisles (3 columns, well spaced)
             const aisleWidth = 3.5; // Wide aisles for robot navigation
             const rackWidth = 1.5;
             const rackHeight = worldHeight * 0.5;
             const startX = worldWidth * 0.2;
             const startY = (worldHeight - rackHeight) / 2;
-            
+
             // Three storage rack columns
             for (let i = 0; i < 3; i++) {
                 const x = startX + i * (rackWidth + aisleWidth);
-                
+
                 walls.push({
                     x: x,
                     y: startY,
@@ -1982,7 +1803,7 @@
                     h: rackHeight
                 });
             }
-            
+
             // Office area (top left corner) - L-shaped
             walls.push({
                 x: wallThickness,
@@ -2002,7 +1823,7 @@
                 w: worldWidth * 0.15 - wallThickness,
                 h: wallThickness
             });
-            
+
             // Warehouse obstacles - strategically placed in open areas
             obstacles = [
                 // Pallet in loading zone (bottom right, away from racks)
@@ -2078,20 +1899,20 @@
                 }
             ];
         }
-        
+
         // Build industrial complex environment
         function buildIndustrialEnvironment() {
             const wallThickness = 0.15;
-            
+
             // Exterior walls
             walls.push({x: 0, y: 0, w: worldWidth, h: wallThickness}); // Top
             walls.push({x: 0, y: 0, w: wallThickness, h: worldHeight}); // Left
             walls.push({x: 0, y: worldHeight - wallThickness, w: worldWidth, h: wallThickness}); // Bottom
             walls.push({x: worldWidth - wallThickness, y: 0, w: wallThickness, h: worldHeight}); // Right
-            
+
             const spacing = 1.5;
             const lineWidth = worldWidth * 0.35;
-            
+
             // Assembly line 1 (top area) - parallel walls creating a corridor
             const line1Y = worldHeight * 0.25;
             walls.push({
@@ -2106,7 +1927,7 @@
                 w: lineWidth,
                 h: wallThickness
             });
-            
+
             // Assembly line 2 (bottom area) - parallel walls creating a corridor
             const line2Y = worldHeight * 0.65;
             walls.push({
@@ -2121,7 +1942,7 @@
                 w: lineWidth,
                 h: wallThickness
             });
-            
+
             // Quality control room (top right) - U-shaped enclosure
             const qcX = worldWidth - 5.0;
             const qcY = wallThickness + 1.0;
@@ -2143,7 +1964,7 @@
                 w: wallThickness,
                 h: 2.5
             });
-            
+
             // Material storage cage (center)
             const storageX = worldWidth * 0.5;
             const storageY = worldHeight * 0.45;
@@ -2159,7 +1980,7 @@
                 w: wallThickness,
                 h: 2.0
             });
-            
+
             // Industrial obstacles - placed in accessible areas
             obstacles = [
                 // CNC Machine 1 (in first assembly line)
@@ -2287,7 +2108,7 @@
         }
 
         buildEnvironment();
-        
+
         // Find safe starting position for robot
         function findSafeStartPosition() {
             // Try several potential starting positions
@@ -2298,13 +2119,13 @@
                 {x: 3.0, y: worldHeight - 3.0},
                 {x: worldWidth - 3.0, y: 3.0},
             ];
-            
+
             for (let candidate of candidates) {
                 if (isValidPos(candidate.x, candidate.y, ROBOT_RADIUS + 0.2)) {
                     return candidate;
                 }
             }
-            
+
             // If no candidates work, search the grid
             for (let x = 2.0; x < worldWidth - 2.0; x += 1.0) {
                 for (let y = 2.0; y < worldHeight - 2.0; y += 1.0) {
@@ -2313,9 +2134,271 @@
                     }
                 }
             }
-            
+
             // Fallback - force position in top left
             return {x: 2.0, y: 2.0};
+        }
+
+        // ---- costmap: rasterised grid + inflation layer ----------------------
+        // nav2_costmap_2d stores an 8-bit cost per cell. Here the static layer (walls)
+        // and the obstacle layer are rasterised into one grid, then the inflation layer
+        // is produced with a 3x3 chamfer distance transform, which is O(cells) and lets
+        // every planner / controller query be a single array lookup.
+        function costFromDistance(d) {
+            if (d <= 0) return LETHAL_COST;
+            if (d <= ROBOT_RADIUS) return INSCRIBED_COST;
+            if (d >= INFLATION_RADIUS) return 0;
+            return Math.round((INSCRIBED_COST - 1) * Math.exp(-COST_SCALING_FACTOR * (d - ROBOT_RADIUS)));
+        }
+
+        function buildCostmap() {
+            costW = Math.max(1, Math.ceil(worldWidth / COSTMAP_RES));
+            costH = Math.max(1, Math.ceil(worldHeight / COSTMAP_RES));
+            if (!costGrid || costGrid.length !== costW * costH) {
+                costGrid = new Uint8Array(costW * costH);
+                distGrid = new Float32Array(costW * costH);
+            }
+            const BIG = 1e9;
+            distGrid.fill(BIG);
+
+            const markRect = (x0, y0, x1, y1) => {
+                const i0 = Math.max(0, Math.floor(x0 / COSTMAP_RES));
+                const i1 = Math.min(costW - 1, Math.floor(x1 / COSTMAP_RES));
+                const j0 = Math.max(0, Math.floor(y0 / COSTMAP_RES));
+                const j1 = Math.min(costH - 1, Math.floor(y1 / COSTMAP_RES));
+                for (let j = j0; j <= j1; j++) {
+                    const row = j * costW;
+                    for (let i = i0; i <= i1; i++) distGrid[row + i] = 0;
+                }
+            };
+            const markCircle = (cx, cy, r) => {
+                const i0 = Math.max(0, Math.floor((cx - r) / COSTMAP_RES));
+                const i1 = Math.min(costW - 1, Math.floor((cx + r) / COSTMAP_RES));
+                const j0 = Math.max(0, Math.floor((cy - r) / COSTMAP_RES));
+                const j1 = Math.min(costH - 1, Math.floor((cy + r) / COSTMAP_RES));
+                const r2 = r * r;
+                for (let j = j0; j <= j1; j++) {
+                    const y = (j + 0.5) * COSTMAP_RES, row = j * costW;
+                    for (let i = i0; i <= i1; i++) {
+                        const x = (i + 0.5) * COSTMAP_RES;
+                        if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r2) distGrid[row + i] = 0;
+                    }
+                }
+            };
+
+            for (const w of walls) markRect(w.x, w.y, w.x + w.w, w.y + w.h);          // static layer
+            for (const o of obstacles) {                                              // obstacle layer
+                if (o.shape === 'rect') markRect(o.x - o.width / 2, o.y - o.height / 2, o.x + o.width / 2, o.y + o.height / 2);
+                else markCircle(o.x, o.y, o.r);
+            }
+
+            // chamfer distance transform, forward then backward sweep (distances in cells)
+            const d2 = Math.SQRT2;
+            for (let j = 0; j < costH; j++) {
+                const row = j * costW;
+                for (let i = 0; i < costW; i++) {
+                    const k = row + i;
+                    let v = distGrid[k];
+                    if (v === 0) continue;
+                    if (i > 0 && distGrid[k - 1] + 1 < v) v = distGrid[k - 1] + 1;
+                    if (j > 0) {
+                        if (distGrid[k - costW] + 1 < v) v = distGrid[k - costW] + 1;
+                        if (i > 0 && distGrid[k - costW - 1] + d2 < v) v = distGrid[k - costW - 1] + d2;
+                        if (i < costW - 1 && distGrid[k - costW + 1] + d2 < v) v = distGrid[k - costW + 1] + d2;
+                    }
+                    distGrid[k] = v;
+                }
+            }
+            for (let j = costH - 1; j >= 0; j--) {
+                const row = j * costW;
+                for (let i = costW - 1; i >= 0; i--) {
+                    const k = row + i;
+                    let v = distGrid[k];
+                    if (v === 0) { costGrid[k] = LETHAL_COST; continue; }
+                    if (i < costW - 1 && distGrid[k + 1] + 1 < v) v = distGrid[k + 1] + 1;
+                    if (j < costH - 1) {
+                        if (distGrid[k + costW] + 1 < v) v = distGrid[k + costW] + 1;
+                        if (i > 0 && distGrid[k + costW - 1] + d2 < v) v = distGrid[k + costW - 1] + d2;
+                        if (i < costW - 1 && distGrid[k + costW + 1] + d2 < v) v = distGrid[k + costW + 1] + d2;
+                    }
+                    distGrid[k] = v;
+                    costGrid[k] = costFromDistance(v * COSTMAP_RES);
+                }
+            }
+        }
+
+        // O(1) costmap query used by the planner, the controller and the BT.
+        function cellCost(x, y) {
+            if (!costGrid) return LETHAL_COST;
+            const i = Math.floor(x / COSTMAP_RES), j = Math.floor(y / COSTMAP_RES);
+            if (i < 0 || j < 0 || i >= costW || j >= costH) return LETHAL_COST;
+            return costGrid[j * costW + i];
+        }
+        // A pose the robot footprint may occupy: never lethal, never inside the inscribed band.
+        function isTraversable(x, y) { return cellCost(x, y) < INSCRIBED_COST; }
+
+        function costColour(cost, data, k) {
+            if (cost >= LETHAL_COST) { data[k] = 236; data[k + 1] = 72; data[k + 2] = 153; data[k + 3] = 165; }
+            else if (cost >= INSCRIBED_COST) { data[k] = 239; data[k + 1] = 68; data[k + 2] = 68; data[k + 3] = 120; }
+            else if (cost > 0) {
+                const t = cost / (INSCRIBED_COST - 1);
+                data[k] = Math.round(6 + t * 50); data[k + 1] = Math.round(182 - t * 70); data[k + 2] = 212;
+                data[k + 3] = Math.round(16 + t * 90);
+            } else { data[k + 3] = 0; }
+        }
+
+        // Paint the costmap into the two RViz-style overlays.
+        function refreshCostImages() {
+            if (!costGrid) return;
+            if (showGlobal) {
+                if (staticCostCanvas.width !== costW || staticCostCanvas.height !== costH) {
+                    staticCostCanvas.width = costW; staticCostCanvas.height = costH;
+                }
+                const c = staticCostCanvas.getContext('2d');
+                const img = c.createImageData(costW, costH);
+                for (let k = 0, n = costGrid.length; k < n; k++) costColour(costGrid[k], img.data, k * 4);
+                c.putImageData(img, 0, 0);
+            }
+            localOriginX = robot.x - LOCAL_COSTMAP_SIZE / 2;
+            localOriginY = robot.y - LOCAL_COSTMAP_SIZE / 2;
+            const lc = localCostCanvas.getContext('2d');
+            const limg = lc.createImageData(LOCAL_CELLS, LOCAL_CELLS);
+            const i0 = Math.floor(localOriginX / COSTMAP_RES), j0 = Math.floor(localOriginY / COSTMAP_RES);
+            let lethal = 0;
+            for (let j = 0; j < LOCAL_CELLS; j++) {
+                for (let i = 0; i < LOCAL_CELLS; i++) {
+                    const gi = i0 + i, gj = j0 + j;
+                    const cost = (gi < 0 || gj < 0 || gi >= costW || gj >= costH) ? LETHAL_COST : costGrid[gj * costW + gi];
+                    if (cost >= INSCRIBED_COST) lethal++;
+                    costColour(cost, limg.data, (j * LOCAL_CELLS + i) * 4);
+                }
+            }
+            lc.putImageData(limg, 0, 0);
+            localLethalCells = lethal;
+        }
+
+        // Costmap update cycle (5 Hz), also the ClearEntireCostmap behaviour.
+        function updateLocalCostmap() {
+            buildCostmap();
+            refreshCostImages();
+        }
+
+        // ---- analytic raycasting (LiDAR + particle filter) -------------------
+        function rayAABB(ox, oy, dx, dy, x0, y0, x1, y1) {
+            let tmin = -Infinity, tmax = Infinity;
+            if (Math.abs(dx) < 1e-9) { if (ox < x0 || ox > x1) return -1; }
+            else {
+                let t1 = (x0 - ox) / dx, t2 = (x1 - ox) / dx;
+                if (t1 > t2) { const t = t1; t1 = t2; t2 = t; }
+                tmin = Math.max(tmin, t1); tmax = Math.min(tmax, t2);
+            }
+            if (Math.abs(dy) < 1e-9) { if (oy < y0 || oy > y1) return -1; }
+            else {
+                let t1 = (y0 - oy) / dy, t2 = (y1 - oy) / dy;
+                if (t1 > t2) { const t = t1; t1 = t2; t2 = t; }
+                tmin = Math.max(tmin, t1); tmax = Math.min(tmax, t2);
+            }
+            if (tmax < Math.max(tmin, 0)) return -1;
+            return tmin >= 0 ? tmin : 0;
+        }
+        function rayCircle(ox, oy, dx, dy, cx, cy, r) {
+            const ex = ox - cx, ey = oy - cy;
+            const b = ex * dx + ey * dy;
+            const cc = ex * ex + ey * ey - r * r;
+            const disc = b * b - cc;
+            if (disc < 0) return -1;
+            const sq = Math.sqrt(disc);
+            let t = -b - sq;
+            if (t < 0) t = -b + sq;
+            return t >= 0 ? t : -1;
+        }
+        function rayCast(ox, oy, ang, maxRange) {
+            const dx = Math.cos(ang), dy = Math.sin(ang);
+            let best = maxRange;
+            for (const w of walls) {
+                const t = rayAABB(ox, oy, dx, dy, w.x, w.y, w.x + w.w, w.y + w.h);
+                if (t >= 0 && t < best) best = t;
+            }
+            for (const o of obstacles) {
+                const t = o.shape === 'rect'
+                    ? rayAABB(ox, oy, dx, dy, o.x - o.width / 2, o.y - o.height / 2, o.x + o.width / 2, o.y + o.height / 2)
+                    : rayCircle(ox, oy, dx, dy, o.x, o.y, o.r);
+                if (t >= 0 && t < best) best = t;
+            }
+            return best;
+        }
+
+        // ---- AMCL-style Monte-Carlo localisation ----------------------------
+        function initParticles(x, y, th, sxy, sth) {
+            particles = [];
+            for (let i = 0; i < NUM_PARTICLES; i++) {
+                particles.push({ x: x + randn() * sxy, y: y + randn() * sxy, th: angNorm(th + randn() * sth), w: 1 / NUM_PARTICLES });
+            }
+            lastAmclPose = { x: x, y: y, th: th };
+            amclEst = { x: x, y: y, th: th };
+            amclNeff = NUM_PARTICLES;
+            amclSpread = sxy;
+        }
+        function resampleParticles() {
+            const out = [], step = 1 / NUM_PARTICLES;
+            const r = rng() * step;
+            let c = particles[0].w, i = 0;
+            for (let m = 0; m < NUM_PARTICLES; m++) {
+                const u = r + m * step;
+                while (u > c && i < NUM_PARTICLES - 1) { i++; c += particles[i].w; }
+                const p = particles[i];
+                out.push({ x: p.x, y: p.y, th: p.th, w: step });
+            }
+            particles = out;
+            amclResamples++;
+        }
+        function amclUpdate() {
+            if (!lastAmclPose || particles.length === 0) return false;
+            const dxw = robot.x - lastAmclPose.x, dyw = robot.y - lastAmclPose.y;
+            const dtrans = Math.sqrt(dxw * dxw + dyw * dyw);
+            const drot = angNorm(robot.theta - lastAmclPose.th);
+            if (dtrans < UPDATE_MIN_D && Math.abs(drot) < UPDATE_MIN_A) return false;
+
+            const rot1 = dtrans > 1e-4 ? angNorm(Math.atan2(dyw, dxw) - lastAmclPose.th) : 0;
+            const rot2 = angNorm(drot - rot1);
+            for (const p of particles) {
+                const r1 = rot1 - randn() * Math.sqrt(ALPHA1 * rot1 * rot1 + ALPHA2 * dtrans * dtrans);
+                const tr = dtrans - randn() * Math.sqrt(ALPHA3 * dtrans * dtrans + ALPHA4 * (rot1 * rot1 + rot2 * rot2));
+                const r2 = rot2 - randn() * Math.sqrt(ALPHA1 * rot2 * rot2 + ALPHA2 * dtrans * dtrans);
+                p.x += tr * Math.cos(p.th + r1);
+                p.y += tr * Math.sin(p.th + r1);
+                p.th = angNorm(p.th + r1 + r2);
+            }
+
+            const zs = [];
+            for (let b = 0; b < AMCL_BEAMS; b++) {
+                const a = angNorm(robot.theta + (b / AMCL_BEAMS) * 2 * Math.PI);
+                zs.push(rayCast(robot.x, robot.y, a, LIDAR_RANGE) + randn() * 0.02);
+            }
+            let sum = 0;
+            for (const p of particles) {
+                let logw = 0;
+                for (let b = 0; b < AMCL_BEAMS; b++) {
+                    const a = angNorm(p.th + (b / AMCL_BEAMS) * 2 * Math.PI);
+                    const e = zs[b] - rayCast(p.x, p.y, a, LIDAR_RANGE);
+                    logw += Math.log(Z_HIT * Math.exp(-e * e / (2 * SIGMA_HIT * SIGMA_HIT)) + Z_RAND);
+                }
+                p.w = Math.exp(logw);
+                sum += p.w;
+            }
+            if (!(sum > 0) || !isFinite(sum)) { for (const p of particles) p.w = 1 / NUM_PARTICLES; }
+            else { for (const p of particles) p.w /= sum; }
+
+            let ex = 0, ey = 0, sc = 0, ss = 0, sq = 0;
+            for (const p of particles) { ex += p.w * p.x; ey += p.w * p.y; sc += p.w * Math.cos(p.th); ss += p.w * Math.sin(p.th); sq += p.w * p.w; }
+            amclEst = { x: ex, y: ey, th: Math.atan2(ss, sc) };
+            amclNeff = 1 / sq;
+            let varxy = 0;
+            for (const p of particles) varxy += p.w * ((p.x - ex) ** 2 + (p.y - ey) ** 2);
+            amclSpread = Math.sqrt(varxy);
+            if (amclNeff < NUM_PARTICLES / 2) resampleParticles();
+            lastAmclPose = { x: robot.x, y: robot.y, th: robot.theta };
+            return true;
         }
 
         // Enhanced collision checking with proper boundary respect
@@ -2340,7 +2423,7 @@
                 if (obs.shape === 'rect') {
                     const hw = obs.width / 2;
                     const hh = obs.height / 2;
-                    const margin = checkRadius + SAFETY_MARGIN;
+                    const margin = checkRadius;
                     if (x + margin > obs.x - hw && x - margin < obs.x + hw &&
                         y + margin > obs.y - hh && y - margin < obs.y + hh) {
                         return false;
@@ -2349,7 +2432,7 @@
                     const dx = x - obs.x;
                     const dy = y - obs.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < obs.r + checkRadius + SAFETY_MARGIN) {
+                    if (dist < obs.r + checkRadius) {
                         return false;
                     }
                 }
@@ -2358,122 +2441,133 @@
             return true;
         }
 
-        // Improved A* pathfinding with better heuristics
+        // A* over the inflated costmap. Octile heuristic in metres: admissible and
+        // consistent for the 8-connected lattice, used unweighted (f = g + h), so the
+        // returned plan is optimal on the search lattice. Binary heap + g-score map.
         function computePath(start, end) {
-            if (!isValidPos(end.x, end.y)) {
-                addLog('ERROR', 'Goal position is invalid or in collision');
+            if (cellCost(end.x, end.y) >= INSCRIBED_COST) {
+                if (!planQuiet) addLog('ERROR', 'Goal rejected: cell cost >= 253 (inscribed or lethal)', 'planner_server');
                 return [];
             }
+            // If the robot itself sits inside the inscribed band, only lethal cells are
+            // refused, otherwise no successor could ever be generated.
+            const blockedCost = cellCost(start.x, start.y) >= INSCRIBED_COST ? LETHAL_COST : INSCRIBED_COST;
 
-            const gridSize = 0.2; // Finer grid for better paths
-            const heuristic = (a, b) => {
-                const dx = Math.abs(a.x - b.x);
-                const dy = Math.abs(a.y - b.y);
-                // Octile distance heuristic (optimal for 8-directional movement)
-                const D = 1.0;
-                const D2 = Math.sqrt(2);
-                return D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
+            const gridSize = PLANNER_LATTICE;
+            const D2 = Math.SQRT2;
+            const heuristic = (ax, ay, bx, by) => {
+                const dx = Math.abs(ax - bx);
+                const dy = Math.abs(ay - by);
+                return (dx + dy) + (D2 - 2) * Math.min(dx, dy);   // octile distance [m]
             };
+            const key = (x, y) => Math.round(x / gridSize) * 100000 + Math.round(y / gridSize);
 
-            const openSet = [{
-                x: start.x,
-                y: start.y,
-                g: 0,
-                h: heuristic(start, end),
-                f: heuristic(start, end),
-                parent: null
-            }];
+            // ---- binary min-heap on f ----
+            const heap = [];
+            function hpush(n) {
+                heap.push(n);
+                let i = heap.length - 1;
+                while (i > 0) {
+                    const p = (i - 1) >> 1;
+                    if (heap[p].f <= heap[i].f) break;
+                    const t = heap[p]; heap[p] = heap[i]; heap[i] = t;
+                    i = p;
+                }
+            }
+            function hpop() {
+                const top = heap[0];
+                const last = heap.pop();
+                if (heap.length) {
+                    heap[0] = last;
+                    let i = 0;
+                    for (;;) {
+                        const l = 2 * i + 1, r = l + 1;
+                        let m = i;
+                        if (l < heap.length && heap[l].f < heap[m].f) m = l;
+                        if (r < heap.length && heap[r].f < heap[m].f) m = r;
+                        if (m === i) break;
+                        const t = heap[m]; heap[m] = heap[i]; heap[i] = t;
+                        i = m;
+                    }
+                }
+                return top;
+            }
 
-            const closedSet = new Map();
+            const gScore = new Map();
+            const closed = new Set();
+            gScore.set(key(start.x, start.y), 0);
+            hpush({ x: start.x, y: start.y, g: 0, f: heuristic(start.x, start.y, end.x, end.y), parent: null });
+
+            const moves = [
+                { dx: gridSize, dy: 0, cost: 1.0 },
+                { dx: -gridSize, dy: 0, cost: 1.0 },
+                { dx: 0, dy: gridSize, cost: 1.0 },
+                { dx: 0, dy: -gridSize, cost: 1.0 },
+                { dx: gridSize, dy: gridSize, cost: D2 },
+                { dx: -gridSize, dy: -gridSize, cost: D2 },
+                { dx: gridSize, dy: -gridSize, cost: D2 },
+                { dx: -gridSize, dy: gridSize, cost: D2 }
+            ];
+
             let iterations = 0;
-            const maxIterations = 8000; // Increased for finer grid
+            const maxIterations = 12000;
 
-            while (openSet.length > 0 && iterations < maxIterations) {
+            while (heap.length > 0 && iterations < maxIterations) {
                 iterations++;
-                
-                // Get node with lowest f score (use binary heap in production)
-                openSet.sort((a, b) => a.f - b.f);
-                const current = openSet.shift();
+                const current = hpop();
+                const ck = key(current.x, current.y);
+                if (closed.has(ck)) continue;
+                closed.add(ck);
 
-                const key = `${Math.round(current.x/gridSize)},${Math.round(current.y/gridSize)}`;
-                if (closedSet.has(key)) continue;
-                closedSet.set(key, current);
-
-                // Check if we reached the goal
-                const distToGoal = heuristic(current, end);
-                if (distToGoal < gridSize * 1.5) {
+                if (heuristic(current.x, current.y, end.x, end.y) < gridSize * 1.5) {
                     const path = [];
                     let node = current;
                     while (node) {
-                        path.unshift({x: node.x, y: node.y});
+                        path.unshift({ x: node.x, y: node.y });
                         node = node.parent;
                     }
-                    // Add final goal position
-                    if (path.length > 0 && (Math.abs(path[path.length-1].x - end.x) > 0.01 || 
-                                            Math.abs(path[path.length-1].y - end.y) > 0.01)) {
-                        path.push({x: end.x, y: end.y});
+                    const tail = path[path.length - 1];
+                    if (Math.abs(tail.x - end.x) > 0.01 || Math.abs(tail.y - end.y) > 0.01) {
+                        path.push({ x: end.x, y: end.y });
                     }
-                    
-                    addLog('INFO', `Path computed: ${path.length} waypoints, ${iterations} iterations`);
-                    return smoothPath(path);
+                    const out = smoothPath(path);
+                    if (!planQuiet) addLog('INFO', `Plan found: ${out.length} poses, ${iterations} A* expansions, lattice ${gridSize.toFixed(2)} m`, 'planner_server');
+                    return out;
                 }
 
-                // Explore neighbors with 8-directional movement
-                const moves = [
-                    {dx: gridSize, dy: 0, cost: 1.0},
-                    {dx: -gridSize, dy: 0, cost: 1.0},
-                    {dx: 0, dy: gridSize, cost: 1.0},
-                    {dx: 0, dy: -gridSize, cost: 1.0},
-                    {dx: gridSize, dy: gridSize, cost: 1.414},
-                    {dx: -gridSize, dy: -gridSize, cost: 1.414},
-                    {dx: gridSize, dy: -gridSize, cost: 1.414},
-                    {dx: -gridSize, dy: gridSize, cost: 1.414},
-                ];
-
-                for (let move of moves) {
+                for (const move of moves) {
                     const nx = current.x + move.dx;
                     const ny = current.y + move.dy;
+                    const nk = key(nx, ny);
+                    if (closed.has(nk)) continue;
 
-                    // Skip if out of bounds or in collision
-                    if (!isValidPos(nx, ny, ROBOT_RADIUS + SAFETY_MARGIN)) continue;
+                    // Costmap gate: never expand an inscribed or lethal cell.
+                    const cost = cellCost(nx, ny);
+                    if (cost >= blockedCost) continue;
 
-                    const g = current.g + move.cost * gridSize;
-                    const h = heuristic({x: nx, y: ny}, end);
-                    const f = g + h * 1.1; // Slight heuristic weight
-
-                    const neighborKey = `${Math.round(nx/gridSize)},${Math.round(ny/gridSize)}`;
-                    if (!closedSet.has(neighborKey)) {
-                        // Check if this neighbor is already in open set
-                        const existingIdx = openSet.findIndex(n => 
-                            Math.abs(n.x - nx) < gridSize/2 && Math.abs(n.y - ny) < gridSize/2
-                        );
-                        
-                        if (existingIdx >= 0) {
-                            // Update if we found a better path
-                            if (g < openSet[existingIdx].g) {
-                                openSet[existingIdx] = {x: nx, y: ny, g, h, f, parent: current};
-                            }
-                        } else {
-                            openSet.push({x: nx, y: ny, g, h, f, parent: current});
-                        }
-                    }
+                    // Step cost + inflation penalty, so the plan prefers open space.
+                    const g = current.g + move.cost * gridSize * (1 + 0.8 * (cost / (INSCRIBED_COST - 1)));
+                    const prev = gScore.get(nk);
+                    if (prev !== undefined && prev <= g) continue;
+                    gScore.set(nk, g);
+                    hpush({ x: nx, y: ny, g: g, f: g + heuristic(nx, ny, end.x, end.y), parent: current });
                 }
             }
 
-            addLog('WARN', `Path planning failed after ${iterations} iterations`);
+            if (!planQuiet) addLog('WARN', `ComputePathToPose failed after ${iterations} expansions - no valid plan`, 'planner_server');
             return [];
         }
 
         // Improved path smoothing with safety checks
         function smoothPath(path) {
             if (path.length <= 2) return path;
-            
+
             const smoothed = [path[0]];
             let current = 0;
-            
+
             while (current < path.length - 1) {
                 let farthest = current + 1;
-                
+
                 // Linear search for farthest visible point (safer than binary search)
                 for (let i = current + 1; i < path.length; i++) {
                     if (isLineOfSightClear(path[current], path[i])) {
@@ -2482,23 +2576,23 @@
                         break; // Stop at first non-visible point
                     }
                 }
-                
+
                 // Don't skip too many waypoints at once for safety
                 const maxSkip = Math.min(farthest, current + 5);
                 smoothed.push(path[maxSkip]);
                 current = maxSkip;
             }
-            
+
             // Ensure we have the final point
             if (smoothed[smoothed.length - 1] !== path[path.length - 1]) {
                 const lastSmoothed = smoothed[smoothed.length - 1];
                 const lastPath = path[path.length - 1];
-                if (Math.abs(lastSmoothed.x - lastPath.x) > 0.1 || 
+                if (Math.abs(lastSmoothed.x - lastPath.x) > 0.1 ||
                     Math.abs(lastSmoothed.y - lastPath.y) > 0.1) {
                     smoothed.push(path[path.length - 1]);
                 }
             }
-            
+
             return smoothed;
         }
 
@@ -2506,168 +2600,203 @@
         function isLineOfSightClear(p1, p2) {
             const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
             const steps = Math.ceil(dist / 0.08); // Denser sampling for better accuracy
-            
+
             for (let i = 0; i <= steps; i++) {
                 const t = i / steps;
                 const x = p1.x + (p2.x - p1.x) * t;
                 const y = p1.y + (p2.y - p1.y) * t;
-                
-                // Use full safety margin for line of sight checks
-                if (!isValidPos(x, y, ROBOT_RADIUS + SAFETY_MARGIN)) {
+
+                // Same costmap gate the planner used
+                if (!isTraversable(x, y)) {
                     return false;
                 }
             }
-            
+
             return true;
         }
 
-        // Console logging
-        function addLog(level, msg) {
+        // Console logging in the ROS 2 format: [LEVEL] [stamp] [node]: message
+        function addLog(level, msg, node) {
             const output = document.getElementById('consoleOutput');
-            if (!output) {
-                console.error('Console output element not found');
-                return;
-            }
-            
-            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            if (!output) return;
             const line = document.createElement('div');
             line.className = 'console-line';
-            line.innerHTML = `
-                <span class="log-time">[${time}]</span>
-                <span class="log-level ${level}">[${level}]</span>
-                <span class="log-text">${msg}</span>
-            `;
+            const span = (cls, txt) => {
+                const e = document.createElement('span');
+                e.className = cls;
+                e.textContent = txt;
+                return e;
+            };
+            line.appendChild(span('log-level ' + level, '[' + level + ']'));
+            line.appendChild(document.createTextNode(' '));
+            line.appendChild(span('log-time', '[' + simTime.toFixed(3) + ']'));
+            line.appendChild(document.createTextNode(' '));
+            line.appendChild(span('log-node', '[' + (node || 'bt_navigator') + ']:'));
+            line.appendChild(document.createTextNode(' '));
+            line.appendChild(span('log-text', msg));
             output.appendChild(line);
+            while (output.childElementCount > 400) output.removeChild(output.firstChild);
             output.scrollTop = output.scrollHeight;
-            
-            // Force visibility
-            output.style.display = 'block';
         }
 
         function clearConsole() {
             document.getElementById('consoleOutput').innerHTML = '';
         }
 
-        // Behavior tree visualization
-        function updateBT(state) {
-            const items = ['btNav', 'btCompute', 'btFollow', 'btRecovery'];
-            items.forEach(id => {
-                document.getElementById(id).className = 'bt-item';
-            });
+        // Behaviour tree visualisation - mirrors navigate_to_pose_w_replanning_and_recovery
+        const BT_IDS = ['btNav', 'btPipeline', 'btCompute', 'btFollow', 'btRecovery', 'btClear', 'btSpin', 'btBackup', 'btWait'];
+        const BT_BASE = {};
+        BT_IDS.forEach(id => { BT_BASE[id] = document.getElementById(id).className; });
+        const BT_NODE_ID = { clear: 'btClear', spin: 'btSpin', backup: 'btBackup', wait: 'btWait' };
+        const BT_TEXT = { compute: 'ComputePathToPose', follow: 'FollowPath', clear: 'ClearEntireCostmap', spin: 'Spin', backup: 'BackUp', wait: 'Wait' };
 
-            if (state === 'planning') {
-                document.getElementById('btNav').className = 'bt-item active';
-                document.getElementById('btCompute').className = 'bt-item running';
-            } else if (state === 'following') {
-                document.getElementById('btNav').className = 'bt-item success';
-                document.getElementById('btCompute').className = 'bt-item success';
-                document.getElementById('btFollow').className = 'bt-item running';
-            } else if (state === 'recovery') {
-                document.getElementById('btRecovery').className = 'bt-item running';
+        function btSet(id, cls) {
+            document.getElementById(id).className = BT_BASE[id] + (cls ? ' ' + cls : '');
+        }
+        function updateBT(state) {
+            BT_IDS.forEach(id => btSet(id, 'idle'));
+            const label = BT_TEXT[state];
+            if (!label) {
+                document.getElementById('btStateDisplay').textContent = 'idle';
+                return;
             }
+            btSet('btNav', 'active');
+            if (state === 'compute' || state === 'follow') {
+                btSet('btPipeline', 'active');
+                btSet('btCompute', state === 'compute' ? 'running' : 'success');
+                if (state === 'follow') btSet('btFollow', 'running');
+            } else {
+                btSet('btRecovery', 'running');
+                btSet(BT_NODE_ID[state], 'running');
+            }
+            document.getElementById('btStateDisplay').textContent = label;
         }
 
-        // Improved robot update with Pure Pursuit controller and recovery behaviors
+        // Rate-limited velocity command with Nav2 acceleration limits.
+        function applyCmdVel(vCmd, wCmd, dt) {
+            vCmd = Math.max(-robot.maxV, Math.min(robot.maxV, vCmd));
+            wCmd = Math.max(-robot.maxOmega, Math.min(robot.maxOmega, wCmd));
+            const dvMax = ACC_LIM_X * dt, dwMax = ACC_LIM_THETA * dt;
+            robot.v += Math.max(-dvMax, Math.min(dvMax, vCmd - robot.v));
+            robot.omega += Math.max(-dwMax, Math.min(dwMax, wCmd - robot.omega));
+            robot.theta = angNorm(robot.theta + robot.omega * dt);
+            robot.vx = Math.cos(robot.theta) * robot.v;
+            robot.vy = Math.sin(robot.theta) * robot.v;
+        }
+
+        function startRecovery() {
+            recoveryMode = RECOVERIES[Math.min(recoveryIndex, RECOVERIES.length - 1)];
+            recoveryIndex++;
+            recoveryTimer = 0;
+            spinAccum = 0;
+            backupStart = { x: robot.x, y: robot.y };
+            recoveryCount++;
+            document.getElementById('recoveryDisplay').textContent = recoveryCount;
+            updateBT(recoveryMode);
+            document.getElementById('stateDisplay').textContent = 'Recovering';
+            addLog('WARN', `RoundRobin child ${recoveryIndex}/${RECOVERIES.length}: ${RECOVERY_LABEL[recoveryMode]}`, 'behavior_server');
+        }
+
+        // One Nav2 control cycle: BT tick, then controller_server at 20 Hz.
         function updateRobot(dt) {
             if (paused || !goal) {
+                robot.v = 0;
                 robot.vx = 0;
                 robot.vy = 0;
                 robot.omega = 0;
                 return;
             }
 
-            // Check if we reached the goal
             const goalDx = goal.x - robot.x;
             const goalDy = goal.y - robot.y;
             const goalDist = Math.sqrt(goalDx * goalDx + goalDy * goalDy);
             const tol = parseFloat(document.getElementById('tolSlider').value);
 
+            // ---- goal check -------------------------------------------------
             if (goalDist < tol) {
+                robot.v = 0;
                 robot.vx = 0;
                 robot.vy = 0;
                 robot.omega = 0;
-                addLog('INFO', 'Goal reached successfully');
+                addLog('INFO', `Goal succeeded: ${goalDist.toFixed(3)} m from target (xy_goal_tolerance ${tol.toFixed(2)} m)`, 'bt_navigator');
                 goal = null;
                 globalPath = [];
+                localTraj = [];
                 stuckTimer = 0;
                 recoveryMode = null;
+                recoveryIndex = 0;
                 updateBT('');
                 document.getElementById('stateDisplay').textContent = 'Goal Reached';
                 document.getElementById('planHz').textContent = '— Hz';
                 setTimeout(() => {
-                    document.getElementById('stateDisplay').textContent = 'Ready';
+                    const el = document.getElementById('stateDisplay');
+                    if (el.textContent === 'Goal Reached') el.textContent = 'Ready';
                 }, 3000);
                 return;
             }
 
-            // Handle recovery behaviors
+            // ---- RoundRobin recoveries: Clear -> Spin -> BackUp -> Wait ------
             if (recoveryMode) {
                 recoveryTimer += dt;
-                
-                if (recoveryMode === 'rotate') {
-                    // Rotate in place to find clear path
-                    robot.omega = robot.maxOmega * 0.7;
-                    robot.theta += robot.omega * dt;
-                    while (robot.theta > Math.PI) robot.theta -= 2 * Math.PI;
-                    while (robot.theta < -Math.PI) robot.theta += 2 * Math.PI;
-                    robot.vx = 0;
-                    robot.vy = 0;
-                    
-                    if (recoveryTimer > 2.0) { // Rotate for 2 seconds
-                        recoveryMode = 'replan';
-                        recoveryTimer = 0;
-                        addLog('INFO', 'Recovery rotation complete, attempting replan');
-                    }
+                let done = false;
+
+                if (recoveryMode === 'clear') {
+                    updateLocalCostmap();
+                    done = true;
+                } else if (recoveryMode === 'spin') {
+                    applyCmdVel(0, Math.min(ROTATE_TO_HEADING_VEL, robot.maxOmega), dt);
+                    spinAccum += Math.abs(robot.omega) * dt;
+                    if (spinAccum >= 1.57) done = true;
                 } else if (recoveryMode === 'backup') {
-                    // Back up slowly
-                    const backupSpeed = -robot.maxV * 0.3;
-                    robot.vx = Math.cos(robot.theta) * backupSpeed;
-                    robot.vy = Math.sin(robot.theta) * backupSpeed;
-                    robot.omega = 0;
-                    
+                    applyCmdVel(-0.10, 0, dt);
                     moveRobot(dt);
-                    
-                    if (recoveryTimer > 1.5) { // Back up for 1.5 seconds
-                        recoveryMode = 'rotate';
-                        recoveryTimer = 0;
-                        addLog('INFO', 'Backup complete, attempting rotation recovery');
-                    }
-                } else if (recoveryMode === 'replan') {
+                    const travelled = Math.sqrt((robot.x - backupStart.x) ** 2 + (robot.y - backupStart.y) ** 2);
+                    if (travelled >= 0.15 || recoveryTimer > 4.0) done = true;
+                } else if (recoveryMode === 'wait') {
+                    applyCmdVel(0, 0, dt);
+                    if (recoveryTimer >= 5.0) done = true;
+                }
+
+                if (done) {
+                    addLog('INFO', `${RECOVERY_LABEL[recoveryMode]} returned SUCCESS`, 'behavior_server');
+                    recoveryMode = null;
+                    applyCmdVel(0, 0, dt);
+                    updateBT('compute');
                     const newPath = computePath(robot, goal);
                     if (newPath.length > 0) {
                         globalPath = newPath;
                         replans++;
-                        document.getElementById('replansDisplay').textContent = replans;
-                        addLog('INFO', 'Recovery successful - new path found');
-                        recoveryMode = null;
-                        recoveryTimer = 0;
+                        recoveryIndex = 0;
                         stuckTimer = 0;
-                        updateBT('following');
+                        replanTimer = 0;
+                        document.getElementById('replansDisplay').textContent = replans;
+                        addLog('INFO', 'Recovery cleared the blockage, resuming FollowPath', 'bt_navigator');
+                        updateBT('follow');
+                        document.getElementById('stateDisplay').textContent = 'Navigating';
+                    } else if (recoveryIndex >= RECOVERIES.length) {
+                        addLog('ERROR', 'All RoundRobin recoveries exhausted - NavigateToPose ABORTED', 'bt_navigator');
+                        goal = null;
+                        globalPath = [];
+                        localTraj = [];
+                        recoveryIndex = 0;
+                        updateBT('');
+                        document.getElementById('stateDisplay').textContent = 'Aborted';
+                        document.getElementById('planHz').textContent = '— Hz';
                     } else {
-                        // If replan fails, try backing up
-                        recoveryMode = 'backup';
-                        recoveryTimer = 0;
-                        addLog('WARN', 'Replan failed, attempting backup recovery');
+                        startRecovery();
                     }
                 }
-                
+
                 updateDisplays();
                 return;
             }
 
-            // Remove waypoints that are behind the robot (more conservative)
+            // ---- drop waypoints the robot has already passed -----------------
             while (globalPath.length > 2) {
                 const dx = globalPath[0].x - robot.x;
                 const dy = globalPath[0].y - robot.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                
-                // Check if waypoint is behind robot
-                const toWaypoint = Math.atan2(dy, dx);
-                let angleDiff = toWaypoint - robot.theta;
-                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-                
-                // Only remove if close AND roughly behind or very close
+                const angleDiff = angNorm(Math.atan2(dy, dx) - robot.theta);
                 if (dist < 0.25 || (dist < 0.5 && Math.abs(angleDiff) > Math.PI * 0.6)) {
                     globalPath.shift();
                 } else {
@@ -2675,214 +2804,116 @@
                 }
             }
 
-            // Check if path needs replanning (more comprehensive)
+            // ---- costmap monitoring: is the plan still collision free? -------
             replanTimer += dt;
-            if (replanTimer > 0.5) { // Check every 0.5 seconds
-                replanTimer = 0;
-                
-                // Check if current path is blocked (look further ahead)
-                let pathBlocked = false;
-                let blockedIndex = -1;
-                const checkAhead = Math.min(10, globalPath.length);
+            blockTimer += dt;
+            if (blockTimer >= 0.25) {
+                blockTimer = 0;
+                let pathBlocked = false, blockedIndex = -1;
+                const checkAhead = Math.min(12, globalPath.length);
                 for (let i = 0; i < checkAhead; i++) {
-                    if (!isValidPos(globalPath[i].x, globalPath[i].y, ROBOT_RADIUS + SAFETY_MARGIN)) {
+                    if (cellCost(globalPath[i].x, globalPath[i].y) >= INSCRIBED_COST) {
                         pathBlocked = true;
                         blockedIndex = i;
                         break;
                     }
                 }
-
-                if (pathBlocked || (globalPath.length === 0 && goalDist > tol * 2)) {
-                    if (pathBlocked) {
-                        addLog('WARN', `Obstacle detected blocking waypoint ${blockedIndex}, replanning path...`);
-                    } else {
-                        addLog('WARN', 'Path empty, replanning...');
-                    }
-                    updateBT('planning');
+                if (pathBlocked || globalPath.length === 0) {
+                    addLog('WARN', pathBlocked
+                        ? `Plan pose ${blockedIndex} is now cost ${cellCost(globalPath[blockedIndex].x, globalPath[blockedIndex].y)} in the local costmap - replanning`
+                        : 'FollowPath has no plan - requesting ComputePathToPose', 'controller_server');
+                    updateBT('compute');
+                    replanTimer = 0;
                     const newPath = computePath(robot, goal);
                     if (newPath.length > 0) {
                         globalPath = newPath;
                         replans++;
                         stuckTimer = 0;
                         document.getElementById('replansDisplay').textContent = replans;
-                        addLog('INFO', 'New path computed successfully');
-                        updateBT('following');
+                        updateBT('follow');
                     } else {
-                        addLog('ERROR', 'Unable to find valid path, starting recovery');
-                        updateBT('recovery');
-                        recoveryMode = 'rotate';
-                        recoveryTimer = 0;
+                        addLog('ERROR', 'ComputePathToPose returned FAILURE - falling through to RoundRobin recoveries', 'bt_navigator');
+                        startRecovery();
                     }
                     return;
                 }
             }
 
-            // Check if robot is making progress (stuck detection)
-            const currentSpeed = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
-            if (currentSpeed < robot.maxV * 0.1 && goalDist > tol * 2) {
+            // ---- RateController 1 Hz -> ComputePathToPose (routine replan) ---
+            if (replanTimer >= 1.0) {
+                replanTimer = 0;
+                planQuiet = true;
+                const periodic = computePath(robot, goal);
+                planQuiet = false;
+                if (periodic.length > 0) globalPath = periodic;
+            }
+
+            // ---- progress watchdog -------------------------------------------
+            if (Math.abs(robot.v) < 0.03 && goalDist > tol * 2) {
                 stuckTimer += dt;
-                if (stuckTimer > 3.0) { // Stuck for 3 seconds
-                    addLog('WARN', 'Robot appears stuck, initiating recovery behavior');
-                    updateBT('recovery');
-                    recoveryMode = 'backup';
-                    recoveryTimer = 0;
+                if (stuckTimer > 3.0) {
+                    addLog('WARN', 'No progress for 3.0 s - FollowPath returned FAILURE', 'controller_server');
                     stuckTimer = 0;
+                    startRecovery();
                     return;
                 }
             } else {
                 stuckTimer = 0;
             }
 
-            // If no path, try direct approach to goal
-            if (globalPath.length === 0) {
-                if (goalDist < tol * 3 && isLineOfSightClear(robot, goal)) {
-                    const targetAngle = Math.atan2(goalDy, goalDx);
-                    let angleDiff = targetAngle - robot.theta;
-                    while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-                    while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-                    
-                    robot.omega = Math.max(-robot.maxOmega, Math.min(robot.maxOmega, angleDiff * 2.5));
-                    robot.theta += robot.omega * dt;
-                    while (robot.theta > Math.PI) robot.theta -= 2 * Math.PI;
-                    while (robot.theta < -Math.PI) robot.theta += 2 * Math.PI;
-                    
-                    const speed = Math.min(robot.maxV * 0.5, goalDist * 0.7);
-                    robot.vx = Math.cos(robot.theta) * speed;
-                    robot.vy = Math.sin(robot.theta) * speed;
-                    
-                    moveRobot(dt);
-                    updateDisplays();
-                }
-                return;
-            }
+            if (globalPath.length === 0) return;
 
-            // Pure Pursuit Algorithm - improved lookahead
-            const speedFactor = Math.min(1.0, currentSpeed / robot.maxV);
-            const baseLookahead = 0.5 + speedFactor * 0.5; // Adaptive: 0.5-1.0m based on speed
-            const lookaheadDist = Math.min(baseLookahead, goalDist * 0.7);
-            
-            // Find the point on the path closest to lookahead distance
+            // ---- Regulated Pure Pursuit (controller_server) -------------------
+            // L_d = clamp(v * lookahead_time, min, max); kappa = 2 sin(alpha) / L_d; w = kappa * v
+            const lookahead = Math.min(MAX_LOOKAHEAD, Math.max(MIN_LOOKAHEAD, Math.abs(robot.v) * LOOKAHEAD_TIME));
             let targetPoint = null;
-            let closestIdx = 0;
-            let minDistDiff = Infinity;
-            
             for (let i = 0; i < globalPath.length; i++) {
-                const dx = globalPath[i].x - robot.x;
-                const dy = globalPath[i].y - robot.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                
-                const distDiff = Math.abs(dist - lookaheadDist);
-                if (distDiff < minDistDiff && dist >= lookaheadDist * 0.5) {
-                    minDistDiff = distDiff;
+                const d = Math.sqrt((globalPath[i].x - robot.x) ** 2 + (globalPath[i].y - robot.y) ** 2);
+                if (d >= lookahead) {
                     targetPoint = globalPath[i];
-                    closestIdx = i;
+                    break;
                 }
             }
-            
-            // If no good lookahead point found, use nearest path point ahead
-            if (!targetPoint && globalPath.length > 0) {
-                targetPoint = globalPath[Math.min(1, globalPath.length - 1)];
-            }
+            if (!targetPoint) targetPoint = globalPath[globalPath.length - 1] || goal;
 
-            if (!targetPoint) {
-                // Fallback: go directly to goal
-                targetPoint = goal;
-            }
-
-            // Local obstacle avoidance - check immediate vicinity
-            const obstacleInPath = !isValidPos(
-                robot.x + Math.cos(robot.theta) * (ROBOT_RADIUS + 0.3),
-                robot.y + Math.sin(robot.theta) * (ROBOT_RADIUS + 0.3),
-                ROBOT_RADIUS
-            );
-
-            // Calculate target angle
             const dx = targetPoint.x - robot.x;
             const dy = targetPoint.y - robot.y;
-            const targetAngle = Math.atan2(dy, dx);
+            const Ld = Math.max(0.05, Math.sqrt(dx * dx + dy * dy));
+            const alpha = angNorm(Math.atan2(dy, dx) - robot.theta);
 
-            // Calculate angle difference (error)
-            let angleDiff = targetAngle - robot.theta;
-            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-
-            // Pure Pursuit steering control
-            const L = Math.sqrt(dx * dx + dy * dy); // Distance to target point
-            const alpha = angleDiff; // Angle to target
-            
-            // Calculate angular velocity using Pure Pursuit formula
-            let angularVelocity;
-            
-            if (L > 0.01) {
-                // Improved Pure Pursuit with curvature limiting
-                angularVelocity = (2 * robot.maxV * Math.sin(alpha)) / L;
-                // Limit angular velocity
-                angularVelocity = Math.max(-robot.maxOmega, Math.min(robot.maxOmega, angularVelocity));
+            let vCmd, wCmd;
+            if (Math.abs(alpha) > ROTATE_TO_HEADING_MIN_ANGLE) {
+                // rotate_to_heading: stop, turn towards the carrot, then drive
+                vCmd = 0;
+                wCmd = Math.sign(alpha) * Math.min(ROTATE_TO_HEADING_VEL, robot.maxOmega);
             } else {
-                angularVelocity = 0;
-            }
-            
-            robot.omega = angularVelocity;
-            robot.theta += robot.omega * dt;
-            while (robot.theta > Math.PI) robot.theta -= 2 * Math.PI;
-            while (robot.theta < -Math.PI) robot.theta += 2 * Math.PI;
-
-            // Linear velocity control with better speed regulation
-            let speed;
-            const absAngleDiff = Math.abs(angleDiff);
-            
-            if (obstacleInPath) {
-                // Obstacle directly ahead - slow down significantly
-                speed = robot.maxV * 0.15;
-            } else if (absAngleDiff < Math.PI / 12) {
-                // Very well aligned - full speed
-                speed = robot.maxV;
-            } else if (absAngleDiff < Math.PI / 6) {
-                // Well aligned - 80% speed
-                speed = robot.maxV * 0.8;
-            } else if (absAngleDiff < Math.PI / 4) {
-                // Medium alignment - 60% speed
-                speed = robot.maxV * 0.6;
-            } else if (absAngleDiff < Math.PI / 2) {
-                // Poor alignment - 35% speed
-                speed = robot.maxV * 0.35;
-            } else {
-                // Very poor alignment - rotate in place
-                speed = robot.maxV * 0.1;
+                const curvature = 2 * Math.sin(alpha) / Ld;
+                vCmd = robot.maxV;
+                // 1. curvature regulation
+                const radius = Math.abs(curvature) > 1e-6 ? 1 / Math.abs(curvature) : Infinity;
+                if (radius < MIN_TURNING_RADIUS) vCmd *= radius / MIN_TURNING_RADIUS;
+                // 2. proximity regulation - slow down inside the inflation layer
+                const c = cellCost(robot.x, robot.y);
+                if (c > 0) vCmd *= Math.max(0.25, 1 - 0.75 * (c / (INSCRIBED_COST - 1)));
+                // 3. approach regulation - linear ramp into the goal
+                if (goalDist < 0.6) vCmd *= Math.max(0.15, goalDist / 0.6);
+                vCmd = Math.max(0.04, Math.min(vCmd, robot.maxV));
+                wCmd = curvature * vCmd;
             }
 
-            // Slow down near goal for smooth arrival
-            if (goalDist < 2.0) {
-                const goalFactor = Math.max(0.25, goalDist / 2.0);
-                speed *= goalFactor;
-            }
-
-            // Slow down for tight turns
-            const curvature = Math.abs(robot.omega);
-            if (curvature > robot.maxOmega * 0.5) {
-                const curvatureFactor = 1.0 - (curvature / robot.maxOmega) * 0.5;
-                speed *= curvatureFactor;
-            }
-
-            robot.vx = Math.cos(robot.theta) * speed;
-            robot.vy = Math.sin(robot.theta) * speed;
-
+            applyCmdVel(vCmd, wCmd, dt);
             moveRobot(dt);
 
-            // Generate local trajectory for visualization
+            // forward-simulated 1.5 s trajectory (the dashed local plan)
             localTraj = [];
-            let simX = robot.x;
-            let simY = robot.y;
-            let simTheta = robot.theta;
-            const simSpeed = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
+            let simX = robot.x, simY = robot.y, simTheta = robot.theta;
             for (let t = 0; t < 1.5; t += 0.1) {
-                simX += Math.cos(simTheta) * simSpeed * 0.1;
-                simY += Math.sin(simTheta) * simSpeed * 0.1;
-                simTheta += robot.omega * 0.1;
-                localTraj.push({x: simX, y: simY});
+                simTheta = angNorm(simTheta + robot.omega * 0.1);
+                simX += Math.cos(simTheta) * robot.v * 0.1;
+                simY += Math.sin(simTheta) * robot.v * 0.1;
+                localTraj.push({ x: simX, y: simY });
             }
 
-            // Update displays
             updateDisplays();
         }
 
@@ -2899,7 +2930,7 @@
                 // Try moving only in X direction
                 const xOnlyValid = isValidPos(robot.x + robot.vx * dt, robot.y);
                 const yOnlyValid = isValidPos(robot.x, robot.y + robot.vy * dt);
-                
+
                 if (xOnlyValid) {
                     // Can move in X, obstacle in Y direction
                     robot.x += robot.vx * dt;
@@ -2913,7 +2944,7 @@
                     const slowSpeed = 0.15;
                     const slowX = robot.x + Math.cos(robot.theta) * slowSpeed * robot.maxV * dt;
                     const slowY = robot.y + Math.sin(robot.theta) * slowSpeed * robot.maxV * dt;
-                    
+
                     if (isValidPos(slowX, slowY)) {
                         robot.x = slowX;
                         robot.y = slowY;
@@ -2931,7 +2962,7 @@
             const boundaryMargin = ROBOT_RADIUS + 0.3;
             robot.x = Math.max(boundaryMargin, Math.min(worldWidth - boundaryMargin, robot.x));
             robot.y = Math.max(boundaryMargin, Math.min(worldHeight - boundaryMargin, robot.y));
-            
+
             // If we hit a boundary, zero out velocity in that direction
             if (robot.x <= boundaryMargin || robot.x >= worldWidth - boundaryMargin) {
                 robot.vx = 0;
@@ -2939,22 +2970,26 @@
             if (robot.y <= boundaryMargin || robot.y >= worldHeight - boundaryMargin) {
                 robot.vy = 0;
             }
+
+            // keep the scalar speed consistent with the motion that actually happened
+            const mag = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
+            robot.v = robot.v < 0 ? -mag : mag;
         }
 
         // Update displays
         function updateDisplays() {
-            document.getElementById('poseDisplay').textContent = 
+            document.getElementById('poseDisplay').textContent =
                 `${robot.x.toFixed(2)}, ${robot.y.toFixed(2)}, ${robot.theta.toFixed(2)}`;
-            
-            const v = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
-            document.getElementById('velDisplay').textContent = `${v.toFixed(2)} m/s`;
-            
+
+            const v = Math.abs(robot.v);
+            document.getElementById('velDisplay').textContent = `${robot.v.toFixed(2)} m/s`;
+
             if (goal) {
                 const dx = goal.x - robot.x;
                 const dy = goal.y - robot.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 document.getElementById('distDisplay').textContent = `${dist.toFixed(2)} m`;
-                
+
                 let pathLen = 0;
                 for (let i = 1; i < globalPath.length; i++) {
                     const dx = globalPath[i].x - globalPath[i-1].x;
@@ -2962,35 +2997,48 @@
                     pathLen += Math.sqrt(dx * dx + dy * dy);
                 }
                 document.getElementById('pathDisplay').textContent = `${pathLen.toFixed(2)} m`;
-                document.getElementById('planHz').textContent = '10 Hz';
-                
+                document.getElementById('planHz').textContent = '1 Hz';
+
                 // Periodic console logging during navigation (every 2 seconds)
                 const currentTime = Date.now();
                 if (currentTime - lastLogTime > 2000) {
                     lastLogTime = currentTime;
-                    
+
                     // Log velocity change
                     if (v > 0.01) {
-                        addLog('INFO', `Navigating: velocity ${v.toFixed(2)} m/s, distance to goal ${dist.toFixed(2)} m`);
+                        addLog('INFO', `cmd_vel: v = ${robot.v.toFixed(2)} m/s, w = ${robot.omega.toFixed(2)} rad/s, ${dist.toFixed(2)} m to goal`, 'controller_server');
                     }
-                    
+
                     // Log waypoint progress
                     if (globalPath.length !== lastWaypointCount) {
                         if (lastWaypointCount > globalPath.length && lastWaypointCount > 0) {
-                            addLog('INFO', `Waypoint reached, ${globalPath.length} waypoints remaining`);
+                            addLog('INFO', `Plan pose consumed, ${globalPath.length} poses remaining`, 'controller_server');
                         }
                         lastWaypointCount = globalPath.length;
                     }
-                    
+
                     // Log if robot is moving slowly (potential issue)
                     if (v < 0.05 && dist > 0.5) {
-                        addLog('WARN', 'Low velocity detected, checking for obstacles');
+                        addLog('WARN', `Velocity regulated to ${v.toFixed(2)} m/s - robot is inside the inflation layer (cost ${cellCost(robot.x, robot.y)})`, 'controller_server');
                     }
                 }
             } else {
                 document.getElementById('distDisplay').textContent = '—';
                 document.getElementById('pathDisplay').textContent = '—';
                 document.getElementById('planHz').textContent = '— Hz';
+            }
+        }
+
+        // AMCL sidebar panel
+        function updateLocPanel() {
+            document.getElementById('locCount').textContent = particles.length;
+            document.getElementById('locNeff').textContent = amclNeff.toFixed(0);
+            document.getElementById('locSpread').textContent = amclSpread.toFixed(3) + ' m';
+            document.getElementById('locResample').textContent = amclResamples;
+            document.getElementById('amclHz').textContent = 'on motion';
+            if (amclEst) {
+                const e = Math.sqrt((amclEst.x - robot.x) ** 2 + (amclEst.y - robot.y) ** 2);
+                document.getElementById('locErr').textContent = e.toFixed(3) + ' m';
             }
         }
 
@@ -3006,7 +3054,7 @@
                 let hitWall = false;
                 for (let wall of walls) {
                     let collision = false;
-                    
+
                     if (obs.shape === 'rect') {
                         const hw = obs.width / 2;
                         const hh = obs.height / 2;
@@ -3016,7 +3064,7 @@
                         collision = (newX - obs.r < wall.x + wall.w && newX + obs.r > wall.x &&
                                    newY - obs.r < wall.y + wall.h && newY + obs.r > wall.y);
                     }
-                    
+
                     if (collision) {
                         hitWall = true;
                         break;
@@ -3044,18 +3092,18 @@
         // Render function with enhanced visuals
         function render() {
             // Background with subtle gradient
-            const bgGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-            bgGrad.addColorStop(0, '#0d1117');
-            bgGrad.addColorStop(1, '#161b22');
+            const bgGrad = ctx.createLinearGradient(0, 0, viewW, viewH);
+            bgGrad.addColorStop(0, '#0a0e27');
+            bgGrad.addColorStop(1, '#0f1629');
             ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, viewW, viewH);
 
             // Floor tiles for realism
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
             ctx.lineWidth = 1;
             const tileSize = SCALE * 2;
-            for (let x = 0; x < canvas.width; x += tileSize) {
-                for (let y = 0; y < canvas.height; y += tileSize) {
+            for (let x = 0; x < viewW; x += tileSize) {
+                for (let y = 0; y < viewH; y += tileSize) {
                     if ((Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0) {
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.01)';
                         ctx.fillRect(x, y, tileSize, tileSize);
@@ -3066,16 +3114,16 @@
             // Grid with subtle depth
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += SCALE) {
+            for (let x = 0; x < viewW; x += SCALE) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
+                ctx.lineTo(x, viewH);
                 ctx.stroke();
             }
-            for (let y = 0; y < canvas.height; y += SCALE) {
+            for (let y = 0; y < viewH; y += SCALE) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
+                ctx.lineTo(viewW, y);
                 ctx.stroke();
             }
 
@@ -3085,50 +3133,45 @@
                 const y = wall.y * SCALE;
                 const w = wall.w * SCALE;
                 const h = wall.h * SCALE;
-                
+
                 // Shadow
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.fillRect(x + 3, y + 3, w, h);
-                
+
                 // Wall gradient for 3D effect
                 const grad = ctx.createLinearGradient(x, y, x + w, y + h);
                 grad.addColorStop(0, '#3a3f47');
                 grad.addColorStop(1, '#2a2e33');
                 ctx.fillStyle = grad;
                 ctx.fillRect(x, y, w, h);
-                
+
                 // Highlight edge for depth
                 ctx.strokeStyle = '#4a4f57';
                 ctx.lineWidth = 1;
                 ctx.strokeRect(x, y, w, h);
             }
 
-            // Global costmap inflation
-            if (showGlobal && showInflation) {
-                ctx.fillStyle = 'rgba(248, 113, 113, 0.08)';
-                for (let wall of walls) {
-                    const inf = 0.3;
-                    ctx.fillRect(
-                        (wall.x - inf) * SCALE,
-                        (wall.y - inf) * SCALE,
-                        (wall.w + inf * 2) * SCALE,
-                        (wall.h + inf * 2) * SCALE
-                    );
-                }
+            // Global costmap: static layer + inflation layer, 0.05 m cells
+            if (showGlobal && staticCostCanvas.width > 1) {
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(staticCostCanvas, 0, 0,
+                    staticCostCanvas.width * COSTMAP_RES * SCALE,
+                    staticCostCanvas.height * COSTMAP_RES * SCALE);
+                ctx.imageSmoothingEnabled = true;
             }
 
             // Obstacles with enhanced visuals
             for (let obs of obstacles) {
                 const centerX = obs.x * SCALE;
                 const centerY = obs.y * SCALE;
-                
+
                 // Inflation layer
                 if (showInflation) {
                     ctx.fillStyle = 'rgba(248, 113, 113, 0.12)';
                     if (obs.shape === 'rect') {
                         const hw = obs.width / 2;
                         const hh = obs.height / 2;
-                        const inf = ROBOT_RADIUS + SAFETY_MARGIN;
+                        const inf = INFLATION_RADIUS;
                         ctx.fillRect(
                             (obs.x - hw - inf) * SCALE,
                             (obs.y - hh - inf) * SCALE,
@@ -3139,7 +3182,7 @@
                         ctx.beginPath();
                         ctx.arc(
                             centerX, centerY,
-                            (obs.r + ROBOT_RADIUS + SAFETY_MARGIN) * SCALE,
+                            (obs.r + INFLATION_RADIUS) * SCALE,
                             0, Math.PI * 2
                         );
                         ctx.fill();
@@ -3154,11 +3197,11 @@
                     const y = (obs.y - hh) * SCALE;
                     const w = obs.width * SCALE;
                     const h = obs.height * SCALE;
-                    
+
                     // Shadow
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
                     ctx.fillRect(x + 4, y + 4, w, h);
-                    
+
                     // Main object with gradient
                     let grad;
                     switch(obs.type) {
@@ -3191,28 +3234,28 @@
                             ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
                             break;
                     }
-                    
+
                     // Border
                     ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(x, y, w, h);
-                    
+
                 } else {
                     // Circular obstacles (people, robots)
                     const radius = obs.r * SCALE;
-                    
+
                     // Shadow
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
                     ctx.beginPath();
                     ctx.arc(centerX + 3, centerY + 3, radius, 0, Math.PI * 2);
                     ctx.fill();
-                    
+
                     // Main object with radial gradient
                     const grad = ctx.createRadialGradient(
                         centerX - radius * 0.3, centerY - radius * 0.3, 0,
                         centerX, centerY, radius
                     );
-                    
+
                     switch(obs.type) {
                         case 'person':
                             grad.addColorStop(0, '#60a5fa');
@@ -3252,7 +3295,7 @@
                             ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
                             ctx.fill();
                     }
-                    
+
                     // Border
                     ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
                     ctx.lineWidth = 2;
@@ -3266,10 +3309,10 @@
                     const angle = Math.atan2(obs.vy, obs.vx);
                     const arrowLen = 0.5;
                     const arrowWidth = 0.15;
-                    
+
                     const tipX = (obs.x + Math.cos(angle) * arrowLen) * SCALE;
                     const tipY = (obs.y + Math.sin(angle) * arrowLen) * SCALE;
-                    
+
                     // Arrow shaft
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
                     ctx.lineWidth = 3;
@@ -3277,7 +3320,7 @@
                     ctx.moveTo(centerX, centerY);
                     ctx.lineTo(tipX, tipY);
                     ctx.stroke();
-                    
+
                     // Arrow head
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                     ctx.beginPath();
@@ -3293,56 +3336,34 @@
                     ctx.closePath();
                     ctx.fill();
                 }
-                
+
                 // Draw labels for furniture
                 if (obs.type === 'furniture' && obs.label) {
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                    ctx.font = '11px "Roboto", sans-serif';
+                    ctx.font = "11px Inter, system-ui, sans-serif";
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(obs.label, centerX, centerY);
                 }
             }
 
-            // Local costmap with scanning effect
+            // Local costmap: 3 x 3 m rolling window, rebuilt at 5 Hz from live obstacles
             if (showLocal) {
-                const radius = 2.0;
-                const robotX = robot.x * SCALE;
-                const robotY = robot.y * SCALE;
-                
-                // Outer boundary
-                ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([10, 5]);
-                ctx.beginPath();
-                ctx.arc(robotX, robotY, radius * SCALE, 0, Math.PI * 2);
-                ctx.stroke();
+                const px = localOriginX * SCALE, py = localOriginY * SCALE;
+                const size = LOCAL_COSTMAP_SIZE * SCALE;
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(localCostCanvas, px, py, size, size);
+                ctx.imageSmoothingEnabled = true;
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.45)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(px, py, size, size);
                 ctx.setLineDash([]);
-                
-                // Gradient fill
-                const grad = ctx.createRadialGradient(
-                    robotX, robotY, 0,
-                    robotX, robotY, radius * SCALE
-                );
-                grad.addColorStop(0, 'rgba(59, 130, 246, 0.15)');
-                grad.addColorStop(0.7, 'rgba(59, 130, 246, 0.05)');
-                grad.addColorStop(1, 'rgba(59, 130, 246, 0)');
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(robotX, robotY, radius * SCALE, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Rotating scan line effect
-                const scanAngle = (Date.now() % 2000) / 2000 * Math.PI * 2;
-                ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(robotX, robotY);
-                ctx.lineTo(
-                    robotX + Math.cos(scanAngle) * radius * SCALE,
-                    robotY + Math.sin(scanAngle) * radius * SCALE
-                );
-                ctx.stroke();
+                ctx.fillStyle = 'rgba(148, 163, 184, 0.85)';
+                ctx.font = "10px 'JetBrains Mono', monospace";
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`local_costmap 3.0 x 3.0 m @ 0.05 m - ${localLethalCells} cells >= inscribed`, px + 2, py - 4);
             }
 
             // Global path with gradient and glow
@@ -3359,7 +3380,7 @@
                 }
                 ctx.stroke();
                 ctx.shadowBlur = 0;
-                
+
                 // Main path line
                 ctx.strokeStyle = '#3b82f6';
                 ctx.lineWidth = 4;
@@ -3375,18 +3396,18 @@
                     const p = globalPath[i];
                     const px = p.x * SCALE;
                     const py = p.y * SCALE;
-                    
+
                     // Progress gradient (from start to goal)
                     const progress = i / (globalPath.length - 1);
                     const grad = ctx.createRadialGradient(px, py, 0, px, py, 4);
                     grad.addColorStop(0, `rgba(59, 130, 246, ${1 - progress * 0.5})`);
                     grad.addColorStop(1, `rgba(37, 99, 235, ${1 - progress * 0.5})`);
-                    
+
                     ctx.fillStyle = grad;
                     ctx.beginPath();
                     ctx.arc(px, py, 4, 0, Math.PI * 2);
                     ctx.fill();
-                    
+
                     // Outer ring
                     ctx.strokeStyle = '#60a5fa';
                     ctx.lineWidth = 1;
@@ -3400,7 +3421,7 @@
             if (showLocalTraj && localTraj.length > 1) {
                 ctx.lineWidth = 3;
                 ctx.setLineDash([8, 4]);
-                
+
                 // Draw trajectory with fading opacity
                 for (let i = 1; i < localTraj.length; i++) {
                     const alpha = 0.6 - (i / localTraj.length) * 0.4;
@@ -3413,67 +3434,64 @@
                 ctx.setLineDash([]);
             }
 
-            // Laser scan with realistic effects
+            // /scan - LDS-01 class 2-D LiDAR, analytic ray/AABB and ray/circle casting
             if (showLaser) {
-                const numRays = 32;
-                const maxRange = 3.0;
                 const robotX = robot.x * SCALE;
                 const robotY = robot.y * SCALE;
 
-                for (let i = 0; i < numRays; i++) {
-                    const angle = robot.theta - Math.PI + (i / numRays) * 2 * Math.PI;
-                    const endX = robot.x + Math.cos(angle) * maxRange;
-                    const endY = robot.y + Math.sin(angle) * maxRange;
+                for (let i = 0; i < LIDAR_BEAMS; i++) {
+                    const angle = angNorm(robot.theta - Math.PI + (i / LIDAR_BEAMS) * 2 * Math.PI);
+                    const hitDist = rayCast(robot.x, robot.y, angle, LIDAR_RANGE);
+                    const hitX = robot.x + Math.cos(angle) * hitDist;
+                    const hitY = robot.y + Math.sin(angle) * hitDist;
 
-                    let hitX = endX;
-                    let hitY = endY;
-                    let hitDist = maxRange;
-
-                    for (let d = 0.1; d < maxRange; d += 0.1) {
-                        const testX = robot.x + Math.cos(angle) * d;
-                        const testY = robot.y + Math.sin(angle) * d;
-                        
-                        if (!isValidPos(testX, testY, 0)) {
-                            hitX = testX;
-                            hitY = testY;
-                            hitDist = d;
-                            break;
-                        }
-                    }
-
-                    // Laser ray with distance-based opacity
-                    const alpha = 0.15 * (1 - hitDist / maxRange);
-                    ctx.strokeStyle = `rgba(78, 201, 176, ${alpha})`;
+                    const alpha = 0.16 * (1 - hitDist / LIDAR_RANGE);
+                    ctx.strokeStyle = `rgba(6, 182, 212, ${alpha})`;
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(robotX, robotY);
                     ctx.lineTo(hitX * SCALE, hitY * SCALE);
                     ctx.stroke();
 
-                    // Hit point with glow
-                    if (hitDist < maxRange) {
-                        const pointAlpha = 0.8 * (1 - hitDist / maxRange);
-                        
-                        // Glow effect
-                        ctx.fillStyle = `rgba(78, 201, 176, ${pointAlpha * 0.3})`;
+                    if (hitDist < LIDAR_RANGE) {
+                        const pointAlpha = 0.85 * (1 - hitDist / LIDAR_RANGE);
+                        ctx.fillStyle = `rgba(6, 182, 212, ${pointAlpha * 0.3})`;
                         ctx.beginPath();
-                        ctx.arc(hitX * SCALE, hitY * SCALE, 5, 0, Math.PI * 2);
+                        ctx.arc(hitX * SCALE, hitY * SCALE, 4, 0, Math.PI * 2);
                         ctx.fill();
-                        
-                        // Point
-                        ctx.fillStyle = `rgba(78, 201, 176, ${pointAlpha})`;
+                        ctx.fillStyle = `rgba(0, 247, 255, ${pointAlpha})`;
                         ctx.beginPath();
-                        ctx.arc(hitX * SCALE, hitY * SCALE, 2.5, 0, Math.PI * 2);
+                        ctx.arc(hitX * SCALE, hitY * SCALE, 2, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 }
-                
-                // Laser scanner housing on robot
-                ctx.strokeStyle = 'rgba(78, 201, 176, 0.5)';
+
+                ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(robotX, robotY, ROBOT_RADIUS * SCALE * 0.3, 0, Math.PI * 2);
                 ctx.stroke();
+            }
+
+            // AMCL-style particle cloud and its weighted mean pose
+            if (showParticles && particles.length) {
+                ctx.fillStyle = 'rgba(139, 92, 246, 0.5)';
+                for (const p of particles) {
+                    ctx.fillRect(p.x * SCALE - 1, p.y * SCALE - 1, 2.2, 2.2);
+                }
+                if (amclEst) {
+                    const ex = amclEst.x * SCALE, ey = amclEst.y * SCALE;
+                    ctx.strokeStyle = '#8b5cf6';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(ex, ey, ROBOT_RADIUS * SCALE, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(ex, ey);
+                    ctx.lineTo(ex + Math.cos(amclEst.th) * ROBOT_RADIUS * SCALE,
+                               ey + Math.sin(amclEst.th) * ROBOT_RADIUS * SCALE);
+                    ctx.stroke();
+                }
             }
 
             // Robot with enhanced 3D appearance
@@ -3481,15 +3499,15 @@
                 const robotX = robot.x * SCALE;
                 const robotY = robot.y * SCALE;
                 const robotR = ROBOT_RADIUS * SCALE;
-                
+
                 // Shadow
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.beginPath();
                 ctx.arc(robotX + 4, robotY + 4, robotR * 0.8, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Footprint circle (safety boundary)
-                ctx.strokeStyle = 'rgba(78, 201, 176, 0.4)';
+                ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
                 ctx.lineWidth = 2;
                 ctx.setLineDash([5, 5]);
                 ctx.beginPath();
@@ -3509,11 +3527,11 @@
                 ctx.beginPath();
                 ctx.arc(robotX, robotY, robotR * 0.8, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Robot border with glow
-                ctx.strokeStyle = '#4ec9b0';
+                ctx.strokeStyle = '#06b6d4';
                 ctx.lineWidth = 3;
-                ctx.shadowColor = '#4ec9b0';
+                ctx.shadowColor = '#06b6d4';
                 ctx.shadowBlur = 10;
                 ctx.beginPath();
                 ctx.arc(robotX, robotY, robotR * 0.8, 0, Math.PI * 2);
@@ -3524,21 +3542,21 @@
                 const arrowLen = robotR * 0.9;
                 const arrowTipX = robotX + Math.cos(robot.theta) * arrowLen;
                 const arrowTipY = robotY + Math.sin(robot.theta) * arrowLen;
-                
+
                 // Arrow glow
-                ctx.strokeStyle = '#4ec9b0';
+                ctx.strokeStyle = '#06b6d4';
                 ctx.lineWidth = 5;
-                ctx.shadowColor = '#4ec9b0';
+                ctx.shadowColor = '#06b6d4';
                 ctx.shadowBlur = 8;
                 ctx.beginPath();
                 ctx.moveTo(robotX, robotY);
                 ctx.lineTo(arrowTipX, arrowTipY);
                 ctx.stroke();
                 ctx.shadowBlur = 0;
-                
+
                 // Arrow head
                 const arrowHeadLen = robotR * 0.3;
-                ctx.fillStyle = '#4ec9b0';
+                ctx.fillStyle = '#06b6d4';
                 ctx.beginPath();
                 ctx.moveTo(arrowTipX, arrowTipY);
                 ctx.lineTo(
@@ -3551,18 +3569,18 @@
                 );
                 ctx.closePath();
                 ctx.fill();
-                
+
                 // Robot center dot
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.arc(robotX, robotY, robotR * 0.15, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Speed indicator (pulsing rings when moving)
                 const speed = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
                 if (speed > 0.05) {
                     const pulsePhase = (Date.now() % 1000) / 1000;
-                    ctx.strokeStyle = `rgba(78, 201, 176, ${0.5 - pulsePhase * 0.5})`;
+                    ctx.strokeStyle = `rgba(6, 182, 212, ${0.5 - pulsePhase * 0.5})`;
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.arc(robotX, robotY, robotR * (0.9 + pulsePhase * 0.4), 0, Math.PI * 2);
@@ -3576,14 +3594,14 @@
                 const goalY = goal.y * SCALE;
                 const pulsePhase = (Date.now() % 1500) / 1500;
                 const pulseSize = 1 + Math.sin(pulsePhase * Math.PI * 2) * 0.2;
-                
+
                 // Outer pulsing ring
                 ctx.strokeStyle = `rgba(245, 158, 11, ${0.4 - pulsePhase * 0.3})`;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(goalX, goalY, 0.4 * SCALE * pulseSize, 0, Math.PI * 2);
                 ctx.stroke();
-                
+
                 // Inner filled circle with gradient
                 const goalGrad = ctx.createRadialGradient(
                     goalX, goalY, 0,
@@ -3595,7 +3613,7 @@
                 ctx.beginPath();
                 ctx.arc(goalX, goalY, 0.3 * SCALE, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Border
                 ctx.strokeStyle = '#f59e0b';
                 ctx.lineWidth = 3;
@@ -3616,7 +3634,7 @@
                 ctx.moveTo(goalX - crossSize, goalY);
                 ctx.lineTo(goalX + crossSize, goalY);
                 ctx.stroke();
-                
+
                 // Center dot
                 ctx.fillStyle = '#fbbf24';
                 ctx.beginPath();
@@ -3632,45 +3650,49 @@
             const y = (e.clientY - rect.top) / SCALE;
 
             if (mode === 'goal') {
-                if (!isValidPos(x, y)) {
-                    addLog('WARN', 'Invalid goal position - in collision or out of bounds');
+                if (!isTraversable(x, y)) {
+                    addLog('WARN', 'Goal rejected: cell is lethal or inside the inscribed radius', 'bt_navigator');
                     showInstruction('Cannot set goal in collision or out of bounds');
                     return;
                 }
 
                 goal = {x, y};
-                updateBT('planning');
+                recoveryMode = null;
+                recoveryIndex = 0;
+                replanTimer = 0;
+                blockTimer = 0;
+                stuckTimer = 0;
+                updateBT('compute');
                 document.getElementById('stateDisplay').textContent = 'Planning';
-                addLog('INFO', `New goal received: (${x.toFixed(2)}, ${y.toFixed(2)})`);
-                
+                addLog('INFO', `NavigateToPose goal accepted: (${x.toFixed(2)}, ${y.toFixed(2)}) in frame map`, 'bt_navigator');
+
                 globalPath = computePath(robot, goal);
-                
+
                 if (globalPath.length > 0) {
-                    updateBT('following');
+                    updateBT('follow');
                     document.getElementById('stateDisplay').textContent = 'Navigating';
-                    document.getElementById('planHz').textContent = '10 Hz';
-                    addLog('INFO', 'Path computed, navigation started');
+                    document.getElementById('planHz').textContent = '1 Hz';
                     showInstruction('Navigation started');
                 } else {
-                    updateBT('recovery');
-                    addLog('ERROR', 'Failed to compute path to goal');
+                    addLog('ERROR', 'No plan to goal - entering RoundRobin recoveries', 'bt_navigator');
                     showInstruction('No valid path to goal');
+                    startRecovery();
                 }
             } else if (mode === 'obstacle') {
                 const type = selectedObstacleType;
                 const isMoving = obstacleMoving;
-                
+
                 let obstacleData;
                 switch(type) {
                     case 'box':
                         obstacleData = {
                             type: 'box',
                             shape: 'rect',
-                            width: 0.6 + Math.random() * 0.4,
-                            height: 0.6 + Math.random() * 0.4,
+                            width: 0.6 + rng() * 0.4,
+                            height: 0.6 + rng() * 0.4,
                             r: 0.4,
-                            vx: isMoving ? (Math.random() - 0.5) * 0.2 : 0,
-                            vy: isMoving ? (Math.random() - 0.5) * 0.2 : 0
+                            vx: isMoving ? (rng() - 0.5) * 0.2 : 0,
+                            vy: isMoving ? (rng() - 0.5) * 0.2 : 0
                         };
                         break;
                     case 'person':
@@ -3678,8 +3700,8 @@
                             type: 'person',
                             shape: 'circle',
                             r: 0.3,
-                            vx: isMoving ? (Math.random() - 0.5) * 0.2 : 0,
-                            vy: isMoving ? (Math.random() - 0.5) * 0.2 : 0
+                            vx: isMoving ? (rng() - 0.5) * 0.2 : 0,
+                            vy: isMoving ? (rng() - 0.5) * 0.2 : 0
                         };
                         break;
                     case 'robot':
@@ -3687,16 +3709,16 @@
                             type: 'robot',
                             shape: 'circle',
                             r: 0.25,
-                            vx: isMoving ? (Math.random() - 0.5) * 0.15 : 0,
-                            vy: isMoving ? (Math.random() - 0.5) * 0.15 : 0
+                            vx: isMoving ? (rng() - 0.5) * 0.15 : 0,
+                            vy: isMoving ? (rng() - 0.5) * 0.15 : 0
                         };
                         break;
                     case 'furniture':
                         obstacleData = {
                             type: 'furniture',
                             shape: 'rect',
-                            width: 1.0 + Math.random() * 0.8,
-                            height: 0.8 + Math.random() * 0.4,
+                            width: 1.0 + rng() * 0.8,
+                            height: 0.8 + rng() * 0.4,
                             r: 0.5,
                             vx: 0,
                             vy: 0,
@@ -3704,28 +3726,36 @@
                         };
                         break;
                 }
-                
+
                 obstacles.push({
-                    x, 
+                    x,
                     y,
                     ...obstacleData
                 });
-                
+
                 const movingText = isMoving ? ' (moving)' : ' (static)';
-                addLog('WARN', `${obstacleData.type} obstacle added${movingText}`);
+                addLog('WARN', `Obstacle layer updated: ${obstacleData.type}${movingText} at (${x.toFixed(2)}, ${y.toFixed(2)})`, 'local_costmap');
+                updateLocalCostmap();
                 showInstruction(`${obstacleData.type} added${movingText}`);
             } else if (mode === 'pose') {
                 if (!isValidPos(x, y)) {
-                    addLog('WARN', 'Invalid pose - in collision or out of bounds');
+                    addLog('WARN', 'Initial pose rejected: cell is lethal or inside the inscribed radius', 'amcl');
                     showInstruction('Cannot set pose in collision or out of bounds');
                     return;
                 }
-                
+
                 robot.x = x;
                 robot.y = y;
                 robot.theta = 0;
-                addLog('INFO', `Initial pose set to (${x.toFixed(2)}, ${y.toFixed(2)}, 0.00)`);
-                showInstruction('Robot pose updated');
+                robot.v = 0;
+                robot.vx = 0;
+                robot.vy = 0;
+                robot.omega = 0;
+                initParticles(x, y, 0, 0.5, 0.5);
+                updateLocalCostmap();
+                updateLocPanel();
+                addLog('INFO', `setInitialPose (${x.toFixed(2)}, ${y.toFixed(2)}, 0.00) - re-scattering ${NUM_PARTICLES} particles, cov 0.5 m / 0.5 rad`, 'amcl');
+                showInstruction('Pose reset - watch the particle cloud reconverge');
             }
         });
 
@@ -3745,7 +3775,7 @@
             document.getElementById('obstaclePanel').classList.add('show');
             updateModeIndicator('Click on map to place obstacle');
         });
-        
+
         // Obstacle type selection
         document.querySelectorAll('.obstacle-type-option').forEach(option => {
             option.addEventListener('click', function() {
@@ -3755,12 +3785,12 @@
                 selectedObstacleType = this.dataset.type;
             });
         });
-        
+
         // Movement toggle
         document.getElementById('obstacleMoving').addEventListener('change', function() {
             obstacleMoving = this.checked;
         });
-        
+
         // Environment selection
         document.querySelectorAll('.environment-option').forEach(option => {
             option.addEventListener('click', function() {
@@ -3768,9 +3798,9 @@
                 this.classList.add('selected');
                 this.querySelector('input[type="radio"]').checked = true;
                 selectedEnvironment = this.dataset.env;
-                
+
                 // Rebuild environment and reset robot
-                addLog('INFO', `Switching to ${selectedEnvironment} environment`);
+                addLog('INFO', `Loading map: ${selectedEnvironment}`, 'map_server');
                 resetSimulation();
             });
         });
@@ -3787,13 +3817,13 @@
             paused = !paused;
             this.classList.toggle('active');
             if (paused) {
-                addLog('WARN', 'Navigation paused');
+                addLog('WARN', 'Deactivating navigation lifecycle nodes', 'lifecycle_manager');
                 document.getElementById('stateDisplay').textContent = 'Paused';
                 document.getElementById('navDot').classList.add('inactive');
                 document.getElementById('navStatus').textContent = 'Navigation Inactive';
                 showInstruction('Navigation paused - press Space or click pause to resume');
             } else {
-                addLog('INFO', 'Navigation resumed');
+                addLog('INFO', 'Activating navigation lifecycle nodes', 'lifecycle_manager');
                 document.getElementById('stateDisplay').textContent = goal ? 'Navigating' : 'Ready';
                 document.getElementById('navDot').classList.remove('inactive');
                 document.getElementById('navStatus').textContent = 'Navigation Active';
@@ -3873,32 +3903,27 @@
             showLocalTraj = this.checked;
         });
 
-        // Welcome screen
-        function closeWelcome() {
-            const dontShow = document.getElementById('dontShowAgain').checked;
-            if (dontShow) {
-                localStorage.setItem('hideWelcome', 'true');
-            }
-            document.getElementById('welcomeOverlay').classList.add('hide');
+        // First-visit hint banner (dismissible, never blocks the page)
+        function dismissHint() {
+            document.getElementById('hintBar').classList.add('hidden');
+            try { localStorage.setItem('nav2HintDismissed', '1'); } catch (e) { /* private mode */ }
+        }
+        function restoreHint() {
+            let dismissed = null;
+            try { dismissed = localStorage.getItem('nav2HintDismissed'); } catch (e) { /* private mode */ }
+            if (dismissed === '1') document.getElementById('hintBar').classList.add('hidden');
         }
 
-        function checkWelcomeScreen() {
-            const hideWelcome = localStorage.getItem('hideWelcome');
-            if (hideWelcome === 'true') {
-                document.getElementById('welcomeOverlay').classList.add('hide');
-            }
-        }
-        
         // Toggle environment selector
         function toggleEnvironmentSelector() {
             document.querySelector('.environment-selector').classList.toggle('collapsed');
         }
-        
+
         // Toggle legend
         function toggleLegend() {
             document.querySelector('.legend-overlay').classList.toggle('collapsed');
         }
-        
+
         // Hide mode indicator
         function hideModeIndicator() {
             document.getElementById('modeIndicator').classList.add('hidden');
@@ -3923,27 +3948,37 @@
             stuckTimer = 0;
             recoveryMode = null;
             recoveryTimer = 0;
+            recoveryIndex = 0;
+            recoveryCount = 0;
+            blockTimer = 0;
             lastLogTime = 0;
             lastWaypointCount = 0;
+            amclResamples = 0;
+            simTime = 0;
             paused = false;
             document.getElementById('toolPause').classList.remove('active');
             document.getElementById('replansDisplay').textContent = '0';
-            
+            document.getElementById('recoveryDisplay').textContent = '0';
+
             buildEnvironment();
-            
+
             // Find safe starting position
             const startPos = findSafeStartPosition();
             robot = {
                 x: startPos.x,
                 y: startPos.y,
                 theta: 0,
+                v: 0,
                 vx: 0,
                 vy: 0,
                 omega: 0,
                 maxV: parseFloat(document.getElementById('maxVelSlider').value),
                 maxOmega: parseFloat(document.getElementById('maxAngSlider').value)
             };
-            
+            initParticles(robot.x, robot.y, robot.theta, 0.10, 0.05);
+            updateLocalCostmap();
+            updateLocPanel();
+
             clearConsole();
             const envNames = {
                 'house': 'Open-Concept House',
@@ -3951,29 +3986,30 @@
                 'industrial': 'Industrial Manufacturing Complex'
             };
             const envName = envNames[selectedEnvironment] || selectedEnvironment;
-            
-            addLog('INFO', '--- Navigation System Reset ---');
-            addLog('INFO', 'ROS 2 Humble - Nav2 lifecycle nodes starting');
-            addLog('INFO', `Environment: ${envName}`);
-            addLog('INFO', `Map dimensions: ${worldWidth.toFixed(1)}m x ${worldHeight.toFixed(1)}m`);
-            addLog('INFO', 'Planner: NavFn (A* octile distance)');
-            addLog('INFO', 'Controller: Pure Pursuit (adaptive)');
-            addLog('INFO', 'Recovery: [backup, rotate, replan]');
-            addLog('INFO', `Robot position: (${startPos.x.toFixed(2)}, ${startPos.y.toFixed(2)}, 0.00)`);
-            addLog('INFO', `Obstacles: ${obstacles.length} total, ${obstacles.filter(o => o.vx !== 0 || o.vy !== 0).length} dynamic`);
-            addLog('INFO', 'System ready - set navigation goal to begin');
-            addLog('INFO', '---');
-            
+
+            addLog('INFO', 'Configuring and activating: map_server, amcl, planner_server, controller_server, behavior_server, bt_navigator', 'lifecycle_manager');
+            addLog('INFO', `Map "${envName}" loaded: ${worldWidth.toFixed(1)} x ${worldHeight.toFixed(1)} m, resolution ${COSTMAP_RES.toFixed(2)} m/cell`, 'map_server');
+            addLog('INFO', `Inflation layer: inflation_radius ${INFLATION_RADIUS.toFixed(2)} m, cost_scaling_factor ${COST_SCALING_FACTOR.toFixed(1)}, inscribed_radius ${ROBOT_RADIUS.toFixed(2)} m`, 'global_costmap');
+            addLog('INFO', `Rolling window ${LOCAL_COSTMAP_SIZE.toFixed(1)} x ${LOCAL_COSTMAP_SIZE.toFixed(1)} m at 5 Hz, ${obstacles.length} obstacles (${obstacles.filter(o => o.vx !== 0 || o.vy !== 0).length} dynamic)`, 'local_costmap');
+            addLog('INFO', `Plugin GridBased ready: A*, ${PLANNER_LATTICE.toFixed(2)} m lattice, octile heuristic, unweighted f = g + h`, 'planner_server');
+            addLog('INFO', `Plugin FollowPath ready: RegulatedPurePursuit, max_vel_x ${robot.maxV.toFixed(2)} m/s, max_vel_theta ${robot.maxOmega.toFixed(2)} rad/s, lookahead ${MIN_LOOKAHEAD.toFixed(2)}-${MAX_LOOKAHEAD.toFixed(2)} m`, 'controller_server');
+            addLog('INFO', 'Behaviors loaded: clear_costmap, spin, backup, wait', 'behavior_server');
+            addLog('INFO', `${NUM_PARTICLES} particles initialised at (${startPos.x.toFixed(2)}, ${startPos.y.toFixed(2)}, 0.00), cov 0.10 m / 0.05 rad`, 'amcl');
+            addLog('INFO', 'Loaded BT: navigate_to_pose_w_replanning_and_recovery.xml - waiting for a goal', 'bt_navigator');
+
             updateBT('');
             document.getElementById('stateDisplay').textContent = 'Ready';
             document.getElementById('navDot').classList.remove('inactive');
             document.getElementById('navStatus').textContent = 'Navigation Active';
-            
+
             updateDisplays();
         }
 
-        // Keyboard shortcuts
+        // Keyboard shortcuts (every one of these is documented in the guide)
         document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') && e.key === ' ') return;
             if (e.key === 'g' || e.key === 'G') {
                 document.getElementById('toolGoal').click();
             } else if (e.key === 'o' || e.key === 'O') {
@@ -3989,46 +4025,77 @@
                 showHelp();
             } else if (e.key === 'Escape') {
                 hideHelp();
+                dismissHint();
             }
         });
 
-        // Animation loop
+        // Animation loop: fixed 20 Hz control steps, advanced at the real-time factor.
         let lastTime = performance.now();
         let frameCount = 0;
         let fpsTimer = 0;
+        let stepAccum = 0;
 
         function animate(time) {
             requestAnimationFrame(animate);
 
-            const dt = Math.min((time - lastTime) / 1000, 0.1);
+            const frameDt = Math.min((time - lastTime) / 1000, 0.25);
             lastTime = time;
 
             frameCount++;
-            fpsTimer += dt;
+            fpsTimer += frameDt;
             if (fpsTimer >= 1.0) {
                 document.getElementById('fpsValue').textContent = frameCount;
+                document.getElementById('simTimeDisplay').textContent = simTime.toFixed(1) + ' s';
                 frameCount = 0;
                 fpsTimer = 0;
             }
 
             if (!paused) {
-                updateRobot(dt);
-                updateObstacles(dt);
+                stepAccum += frameDt * RTF;
+                let steps = 0;
+                while (stepAccum >= CONTROL_DT && steps < 6) {
+                    simTime += CONTROL_DT;
+                    updateRobot(CONTROL_DT);
+                    updateObstacles(CONTROL_DT);
+                    localCostTimer += CONTROL_DT;
+                    if (localCostTimer >= 0.2) {
+                        localCostTimer = 0;
+                        updateLocalCostmap();
+                    }
+                    if (amclUpdate()) updateLocPanel();
+                    stepAccum -= CONTROL_DT;
+                    steps++;
+                }
+                if (stepAccum > CONTROL_DT * 6) stepAccum = 0;
             }
             render();
         }
 
-        // Initialize
-        checkWelcomeScreen();
-        
-        // Add initial welcome message to console to make it clearly visible
-        addLog('INFO', '========================================');
-        addLog('INFO', 'ROS 2 Navigation Stack Visualizer v1.0');
-        addLog('INFO', '========================================');
-        addLog('INFO', 'Console Output Active');
-        addLog('INFO', 'System initializing...');
-        addLog('INFO', '');
-        
+        // ---- shell wiring -----------------------------------------------------
+        document.getElementById('helpBtn').addEventListener('click', showHelp);
+        document.getElementById('helpClose').addEventListener('click', hideHelp);
+        document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+        document.getElementById('helpModal').addEventListener('click', (e) => {
+            if (e.target.id === 'helpModal') hideHelp();
+        });
+        document.getElementById('hintClose').addEventListener('click', dismissHint);
+        document.getElementById('btnParticles').addEventListener('click', function () {
+            showParticles = !showParticles;
+            this.classList.toggle('active');
+        });
+
+        // Debounced resize: the world size is derived from the canvas, so the map is rebuilt.
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                resizeCanvas();
+                resetSimulation();
+            }, 250);
+        });
+
+        // ---- boot -------------------------------------------------------------
+        restoreHint();
         resetSimulation();
         animate(performance.now());
     </script>

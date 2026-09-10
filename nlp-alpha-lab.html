@@ -4,35 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NLP Earnings Sentiment Alpha Lab | Cristian Arenas</title>
+<meta name="description" content="Interactive NLP alpha lab: a Loughran-McDonald-style finance lexicon with negation and section weighting scores synthetic earnings-call transcripts, then fuses the sentiment z-score with analyst-revision, options-flow and supply-chain signals into a user-weighted composite backtested net of transaction costs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0b1120;--card:#111827;--card2:#1a2332;
-  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
-  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
-  --purple:#8b5cf6;--orange:#f97316;--pink:#ec4899;--mono:'Courier New',monospace;
-}
-body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+body{font-size:14px;line-height:1.6}
 a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-
-.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
-.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;cursor:pointer}
-.nav .back:hover{color:var(--cyan)}
-.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.nav h1 i{color:var(--cyan);font-size:14px}
-.nav .nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
-.btn{padding:6px 18px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;font-family:inherit}
-.btn-reset{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
-.btn-reset:hover{color:var(--cyan);border-color:var(--cyan)}
-.live-pill{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:600;color:var(--green);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25)}
-.live-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(16,185,129,.8);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-.status-bar{padding:8px 24px;background:var(--card);border-bottom:1px solid var(--border);font-size:11px;color:var(--dim);display:flex;justify-content:space-between;font-family:var(--mono);letter-spacing:.02em}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
 /* GUIDE */
 .guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
@@ -52,13 +38,12 @@ a{color:var(--cyan);text-decoration:none}
 
 /* KPI */
 .kpi-strip{max-width:1440px;margin:16px auto 0;padding:0 16px}
-.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:1px;background:var(--border);border-radius:10px;overflow:hidden}
 .kpi-cell{padding:14px 10px;background:var(--card);text-align:center;cursor:help;transition:background .2s}
 .kpi-cell:hover{background:rgba(6,182,212,.05)}
 .kpi-cell .lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:600}
 .kpi-cell .val{font-size:1.1rem;font-weight:700;font-family:var(--mono)}
 .kpi-cell .val.pos{color:var(--green)}.kpi-cell .val.neg{color:var(--red)}.kpi-cell .val.neutral{color:var(--cyan)}
-@media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
 
 /* CONTROLS */
 .controls{max-width:1440px;margin:16px auto 0;padding:0 16px}
@@ -69,11 +54,20 @@ a{color:var(--cyan);text-decoration:none}
 .ctrl-group{flex:1;min-width:140px}
 .ctrl-group h4{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 .transcript-btns{display:flex;flex-wrap:wrap;gap:5px}
+.tr-btn,.sig-chip{font-family:inherit}
 .tr-btn{padding:5px 12px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:5px;transition:all .15s;font-weight:500;user-select:none}
 .tr-btn:hover{border-color:var(--cyan);color:var(--text)}
 .tr-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1)}
 .tr-btn .ticker{font-family:var(--mono);font-weight:700}
-.signal-chips{display:flex;flex-wrap:wrap;gap:5px}
+.signal-chips{display:block}
+.sig-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.sig-row .sig-chip{min-width:152px;justify-content:flex-start}
+.sig-row.off{opacity:.42}
+.sig-row .w-range{flex:1;min-width:70px}
+.sig-row .w-val{font-family:var(--mono);font-size:11px;color:var(--cyan);min-width:40px;text-align:right;font-weight:700}
+.wsum{font-size:10px;color:var(--faint);font-family:var(--mono);margin-top:6px}
+.synth-note{font-size:11px;color:var(--faint);margin-bottom:9px;display:flex;align-items:flex-start;gap:6px;line-height:1.5}
+.synth-note i{color:var(--amber);margin-top:2px}
 .sig-chip{padding:4px 10px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:5px;transition:all .15s;font-weight:500;user-select:none;display:flex;align-items:center;gap:5px}
 .sig-chip:hover{border-color:var(--cyan);color:var(--text)}
 .sig-chip.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1)}
@@ -135,7 +129,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 .tt-swatch{width:8px;height:8px;border-radius:2px;flex-shrink:0;display:inline-block;vertical-align:middle;margin-right:4px}
 .tt-divider{height:1px;background:var(--border);margin:5px 0}
 
-.perf-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.tbl-wrap{overflow-x:auto}
+.perf-table{width:100%;min-width:540px;border-collapse:separate;border-spacing:0;font-size:12px}
 .perf-table th{color:var(--dim);font-weight:600;padding:10px 10px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
 .perf-table th:first-child{text-align:left}
 .perf-table td{padding:10px 10px;text-align:right;font-family:var(--mono);font-size:12px;border-bottom:1px solid rgba(30,41,59,.4)}
@@ -144,162 +139,139 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 .tpos{color:var(--green);font-weight:600}.tneg{color:var(--red);font-weight:600}.tneut{color:var(--dim)}
 
 .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:11px;color:var(--dim)}
+@media(max-width:640px){
+  .ctrl-group{min-width:0!important;flex:1 1 100%!important}
+  .sig-row .sig-chip{min-width:118px;font-size:10.5px}
+  .sig-row .w-range{min-width:52px}
+  .guide,.kpi-strip,.controls,.grid{padding:0 12px}
+}
 .legend-item{display:flex;align-items:center;gap:5px}
 .legend-swatch{width:12px;height:3px;border-radius:2px}
 
-.disclaimer{max-width:1440px;margin:16px auto 30px;padding:0 16px}
-.disclaimer-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:11px;color:var(--dim);line-height:1.6}
-.disclaimer-box strong{color:var(--text)}
-
-/* HELP MODAL */
-.help-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.help-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
-.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.help-overlay.open{display:flex}
-.help-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:0}
-.help-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
-.help-modal-head h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.help-modal-head h2 i{color:var(--cyan)}
-.help-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.help-close:hover{color:var(--red);border-color:var(--red)}
-.help-body{padding:20px 22px}
-.help-section{margin-bottom:20px}
-.help-section:last-child{margin-bottom:0}
-.help-section h3{font-size:12px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.help-section p{font-size:12.5px;color:var(--dim);line-height:1.7;margin-bottom:6px}
-.help-section p strong{color:var(--text)}
-.help-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin-top:6px}
-.help-dl dt{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
-.help-dl dd{color:var(--dim);line-height:1.6}
 </style>
 </head>
 <body>
 
 <div class="tt" id="tooltip"></div>
 
-<nav class="nav">
-  <a class="back" href="index.html#demos"><i class="fas fa-chevron-left"></i> Back to Portfolio</a>
-  <h1><i class="fas fa-language"></i> NLP Earnings Sentiment Alpha Lab</h1>
-  <div class="nav-actions">
-    <div class="live-pill"><span class="pulse"></span> LIVE</div>
-    <button class="btn btn-reset" id="resetBtn"><i class="fas fa-redo"></i> Reset</button>
-    <button class="help-btn" id="helpBtn" title="Help &amp; Guide"><i class="fas fa-question"></i></button>
+<nav class="demo-nav">
+  <a class="demo-brand" href="index.html">cristian@portfolio:~$ <span class="crumb">/ demos / nlp-alpha-lab</span></a>
+  <h1 class="demo-title"><i class="fas fa-language"></i> NLP Earnings Sentiment Alpha Lab</h1>
+  <div class="demo-links">
+    <a href="index.html#projects">Projects</a>
+    <a href="index.html#research">Research</a>
+    <a href="index.html#demos" class="active">Demos</a>
+    <a href="robotics-embedded.html">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <span class="d-pill live"><span class="pulse"></span> LIVE</span>
+    <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
   </div>
 </nav>
+<div class="demo-status">
+  <span id="statusLeft">initialising&hellip;</span>
+  <span id="statusRight"><b>Synthetic transcripts</b> &middot; fictional issuers &middot; deterministic seed &middot; net of costs &middot; not investment advice</span>
+</div>
 
-<div class="help-overlay" id="helpOverlay">
-  <div class="help-modal">
-    <div class="help-modal-head">
-      <h2><i class="fas fa-book-open"></i> Understanding This Lab</h2>
-      <button class="help-close" id="helpClose"><i class="fas fa-times"></i></button>
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; NLP Earnings Sentiment Alpha Lab</h2>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
-    <div class="help-body">
-      <div class="help-section">
-        <h3>What This Tool Does</h3>
-        <p>This lab demonstrates how <strong>NLP (Natural Language Processing)</strong> extracts investment signals from earnings call transcripts. It scores individual words for sentiment, aggregates them into document-level signals, and combines them with alternative data sources to generate alpha predictions that are backtested against a market benchmark.</p>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; What this lab does</h3>
+        <p>It runs a complete, if miniature, text-to-portfolio pipeline. A <strong>finance sentiment lexicon</strong> in the Loughran&ndash;McDonald style scores every word of a synthetic earnings-call transcript; sentence tone is aggregated with <strong>section weights</strong> into a document tone in &minus;1&hellip;+1; that tone is <strong>z-scored</strong> against a stylised cross-section and blended with three other signal z-scores into a <strong>composite</strong>; the composite&rsquo;s information coefficient then drives a 60-month long/short overlay backtest <strong>net of transaction costs</strong>. Every transcript, name and number on this page is synthetic.</p>
       </div>
-      <div class="help-section">
-        <h3>Reading the Attention Heatmap</h3>
-        <p>Each word in the transcript is scored by the NLP model. <strong style="color:#10b981">Green highlighted words</strong> are positive sentiment (e.g., "record-breaking", "exceeded", "outstanding"). <strong style="color:#ef4444">Red highlighted words</strong> are negative sentiment (e.g., "declined", "deteriorated", "compressed"). Intensity indicates confidence: darker shading means a stronger signal.</p>
-        <p>The model focuses on <strong>financially relevant adjectives and verbs</strong>, not neutral nouns or connectors. This mimics how transformer-based models like FinBERT assign attention weights.</p>
+      <div class="d-help-section">
+        <h3>2 &middot; How the words are scored (this is the actual code)</h3>
+        <p>The transcript is tokenised on whitespace and each token is looked up in a hand-built finance lexicon of roughly 200 terms with polarities in &minus;3&hellip;+3. Two modifiers are applied, exactly as shown in the heatmap:</p>
+        <ul>
+          <li><strong>Negation</strong> &mdash; if a negator (<code>no</code>, <code>not</code>, <code>never</code>, <code>without</code>, <code>fails</code>, <code>despite</code>&hellip;) appears within the three preceding tokens, the polarity is flipped. Loughran&ndash;McDonald negate positives only; this demo flips both directions, so &ldquo;no sign of <em>softening</em>&rdquo; scores positive.</li>
+          <li><strong>Amplifiers / diminishers</strong> &mdash; <code>significantly</code>, <code>dramatically</code>, <code>overwhelmingly</code> multiply the next scored token by 1.3&ndash;1.6; <code>slightly</code>, <code>modestly</code>, <code>somewhat</code> by 0.5&ndash;0.7. Scores are clipped to &plusmn;3.</li>
+        </ul>
+        <p>Sentence tone = <code>tanh( &Sigma; w<sub>i</sub> / (3&middot;&radic;n) )</code> over the n tokens of the sentence, so a long neutral sentence cannot be dominated by one word. Document tone = <code>tanh( 1.5 &middot; &Sigma;<sub>s</sub> &omega;<sub>s</sub>&middot;raw<sub>s</sub> / &Sigma;<sub>s</sub> &omega;<sub>s</sub> )</code> with section weights <strong>&omega; = 0.8</strong> (CEO prepared remarks), <strong>1.0</strong> (CFO prepared remarks) and <strong>1.4</strong> (analyst Q&amp;A) &mdash; unscripted answers carry more information than a scripted script. Hover any highlighted word to see its lexicon polarity, whether it was negated, the multiplier applied and the resulting score. There is no transformer here and none is claimed.</p>
       </div>
-      <div class="help-section">
-        <h3>Key Metrics Explained</h3>
-        <dl class="help-dl">
-          <dt>Sentiment</dt>
-          <dd>The overall document sentiment score from -1 (very negative) to +1 (very positive). Aggregated from word-level scores across the full transcript. AAPL and NVDA tend positive; TSLA tends negative.</dd>
-          <dt>Signal Str.</dt>
-          <dd>Combined signal strength from all active alternative data sources. Represents the total alpha potential of the selected signal combination.</dd>
-          <dt>NLP Sharpe</dt>
-          <dd>Sharpe ratio of the NLP composite strategy. Measures risk-adjusted total returns. Values of 0.7-1.3 are typical for well-constructed NLP alpha strategies.</dd>
-          <dt>Signal IC</dt>
-          <dd>Information Coefficient at the selected holding period. Measures how well the composite signal predicts forward returns. NLP signals typically have IC of 0.02-0.04.</dd>
-          <dt>Ann. Alpha</dt>
-          <dd>Annualized alpha (excess return over benchmark) generated by the composite NLP strategy. Realistic NLP alpha is 1-4% annually.</dd>
-          <dt>Half-Life</dt>
-          <dd>Number of trading days until the composite signal loses half its predictive power. NLP signals typically have half-lives of 20-60 days, shorter than fundamental signals.</dd>
+      <div class="d-help-section">
+        <h3>3 &middot; From tone to a tradable signal</h3>
+        <p>Document tone is standardised against a stylised cross-section (mean +0.10, s.d. 0.28 &mdash; earnings-call language is positively skewed) to give <code>z<sub>NLP</sub></code>. The other three signal z-scores are fixed synthetic values stored with each transcript. The composite is
+        <code>z<sub>c</sub> = &Sigma; w<sub>i</sub> z<sub>i</sub> / &radic;(w&rsquo;Cw)</code>, so it is itself unit-variance, and its information coefficient follows the same Grinold&ndash;Kahn combination rule
+        <code>IC<sub>c</sub>(h) = &Sigma; w<sub>i</sub> IC<sub>i</sub>(h) / &radic;(w&rsquo;Cw)</code>. Weights are yours to set and are renormalised to sum to 1; C is the assumed signal correlation matrix (0.10&ndash;0.35). Because the signals are correlated the composite beats the best single signal only modestly &mdash; about 0.048 against 0.045 at the default settings.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>4 &middot; Signal decay and the holding period</h3>
+        <p>Each signal&rsquo;s IC decays exponentially in the forward holding period h:
+        <code>IC<sub>i</sub>(h) = IC<sub>i</sub>(1) &middot; 2<sup>&minus;(h&minus;1)/HL<sub>i</sub></sup></code>.</p>
+        <table>
+          <thead><tr><th>Signal</th><th>IC at h=1</th><th>Half-life</th><th>IC at h=21</th><th>Turnover &kappa;</th></tr></thead>
+          <tbody>
+            <tr><td>NLP sentiment</td><td>0.052</td><td>28 d</td><td>0.032</td><td>0.65</td></tr>
+            <tr><td>Analyst revisions</td><td>0.058</td><td>55 d</td><td>0.045</td><td>0.35</td></tr>
+            <tr><td>Options flow</td><td>0.049</td><td>18 d</td><td>0.023</td><td>0.85</td></tr>
+            <tr><td>Supply chain</td><td>0.031</td><td>70 d</td><td>0.025</td><td>0.30</td></tr>
+          </tbody>
+        </table>
+        <p>The dashed cyan line on the decay chart marks the holding period you selected. Half-life is read off the composite curve by linear interpolation, which is why it moves when you change the weights.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>5 &middot; The backtest</h3>
+        <p>The overlay is sized to a constant <strong>4.5% tracking error</strong>. Gross skill uses the fundamental law with a transfer coefficient:
+        <code>IR<sub>gross</sub> = TC &middot; IC(h) &middot; &radic;(N<sub>eff</sub> &middot; 252/h)</code> with <strong>TC = 0.45</strong> and <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per rebalance &mdash; far below the nominal universe size, because cross-sectional bets share common factor exposure. Costs are real: two-way annual turnover is <code>2&kappa;&middot;252/h</code> and the cost per unit of turnover is <code>8 bp + 6 bp&middot;&radic;(f/12)</code>, a square-root market-impact term that penalises fast trading. <strong>Net alpha = gross alpha &minus; cost</strong>, and net is always below gross. Trading faster raises IC but raises costs faster still, so net alpha peaks around a two-to-three-week horizon and turns negative below about a week.</p>
+        <p>Monthly active returns are drawn as shuffled normal quantiles standardised to exactly the modelled mean and volatility, so the realised annual alpha, tracking error, information ratio and hit rate in the table match the model rather than drifting with sampling noise, while the path &mdash; and therefore the max drawdown &mdash; stays a genuine random walk from the seed.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; Reading the panels</h3>
+        <dl>
+          <dt>Heatmap</dt><dd>Green / red shading is the computed word score after negation and amplification, on a &plusmn;3 scale. Grey words are not in the lexicon and contribute nothing.</dd>
+          <dt>Sentence tone</dt><dd>One bar per sentence, in document order, in &minus;1&hellip;+1. The tooltip shows the section weight applied to that sentence.</dd>
+          <dt>Sector map</dt><dd>Stylised supply-chain linkage: sector tone = <code>tanh(&beta;<sub>sector</sub>&middot;z<sub>c</sub>&middot;0.35 + &epsilon;)</code>. The issuer&rsquo;s own sector has &beta; = 1. This is an illustration of read-across, not an estimated model.</dd>
+          <dt>Scatter</dt><dd>A synthetic cross-section of 90 names constructed so that the <em>sample</em> correlation between the composite score and the forward return is exactly the IC printed on the chart. The ringed point is the selected issuer at its own composite z.</dd>
+          <dt>Growth chart</dt><dd>Benchmark plus overlay, growth of 1.00 over 60 months. Red shading marks composite drawdown.</dd>
+          <dt>Contribution</dt><dd>Normalised weight per signal, its standalone IC at the selected horizon, and its marginal contribution to the composite IC. The header compares the composite with the best single signal.</dd>
         </dl>
       </div>
-      <div class="help-section">
-        <h3>Understanding the Charts</h3>
-        <dl class="help-dl">
-          <dt>Sentence Sentiment</dt>
-          <dd>Bar chart decomposing the transcript into individual sentences. Bars above zero are positive sentences; below zero are negative. Shows how sentiment is distributed through the earnings call (CEO vs CFO vs Q&amp;A).</dd>
-          <dt>Sector Heatmap</dt>
-          <dd>Cross-sector sentiment derived from the selected transcript. Shows how the NLP model extrapolates company-specific sentiment to broader sectors based on supply chain and industry linkages.</dd>
-          <dt>Signal Decay Curve</dt>
-          <dd>Shows how each signal's IC (predictive power) fades over forward holding days 1-63. Options Flow decays fastest (short-lived); Supply Chain and Analyst Revisions persist longest.</dd>
-          <dt>Sentiment vs Return</dt>
-          <dd>Scatter plot of NLP sentiment score vs forward period returns across a simulated cross-section of stocks. The regression line slope and IC annotation show the signal's predictive relationship.</dd>
-          <dt>Cumulative Alpha Returns</dt>
-          <dd>Backtest equity curves over 60 months for: NLP Composite (all signals), NLP Only (sentiment signal alone), Traditional Factors (without NLP), and Benchmark. Red shading marks drawdown periods.</dd>
-          <dt>Signal Contribution</dt>
-          <dd>Horizontal bars showing each signal's weight in the composite, along with its IC and alpha contribution. Helps understand which alternative data source drives the most value.</dd>
+      <div class="d-help-section">
+        <h3>7 &middot; Controls</h3>
+        <dl>
+          <dt>Transcript</dt><dd>Four synthetic calls from fictional issuers. Changes the heatmap, sentence tone, document tone, composite z, sector map and the highlighted scatter point. It does <em>not</em> change the backtest: IC is a universe-level statistic and cannot be re-estimated from one call.</dd>
+          <dt>Signal toggles</dt><dd>Drop a signal from the composite. At least one must stay on.</dd>
+          <dt>Weights</dt><dd>Raw sliders renormalised to sum to 1. They move the composite IC, the composite turnover (and therefore the cost drag), the half-life and every backtest number.</dd>
+          <dt>Holding period</dt><dd>Forward horizon in trading days, 5&ndash;63. Drives IC decay, breadth, turnover and cost.</dd>
         </dl>
-      </div>
-      <div class="help-section">
-        <h3>Alternative Data Signals</h3>
-        <dl class="help-dl">
-          <dt>NLP Sentiment</dt>
-          <dd>Derived from earnings call transcripts using word-level sentiment scoring. Captures management tone and language that may predict future stock performance.</dd>
-          <dt>Analyst Revisions</dt>
-          <dd>Tracks changes in sell-side analyst earnings estimates. Upward revisions signal improving fundamentals. Typically the most persistent alternative signal (highest IC).</dd>
-          <dt>Options Flow</dt>
-          <dd>Monitors unusual options activity (put/call ratios, volume spikes). Can indicate informed trading. Fast-decaying signal with lower IC but provides independent information.</dd>
-          <dt>Supply Chain</dt>
-          <dd>Analyzes supply chain data (shipping volumes, supplier sentiment, inventory levels). Slower-moving signal that captures fundamental trends before they appear in financial statements.</dd>
-        </dl>
-      </div>
-      <div class="help-section">
-        <h3>Controls Guide</h3>
-        <dl class="help-dl">
-          <dt>Earnings Transcript</dt>
-          <dd>Select from 4 company transcripts with different sentiment profiles. AAPL and NVDA are positive; META is mixed; TSLA is negative. Each changes all charts and metrics.</dd>
-          <dt>Signal Toggles</dt>
-          <dd>Enable/disable individual alternative data signals. Combining uncorrelated signals generally improves risk-adjusted returns. At least one signal must remain active.</dd>
-          <dt>Holding Period</dt>
-          <dd>Forward holding period in trading days (5-63). Shorter periods capture faster signals but have higher turnover. Longer periods let slow signals compound but fast signals decay.</dd>
-        </dl>
-      </div>
-      <div class="help-section">
-        <h3>Performance Table</h3>
-        <p><strong>Ann. Return</strong> is total annualized return including benchmark. <strong>Ann. Alpha</strong> is the excess return over benchmark. <strong>Sharpe (alpha)</strong> is the information ratio of the alpha stream. <strong>Max Drawdown</strong> shows worst peak-to-trough decline. <strong>Signal IC</strong> is the composite signal's Information Coefficient at the selected holding period.</p>
       </div>
     </div>
   </div>
 </div>
 
-<div class="status-bar">
-  <span>NLP PIPELINE &mdash; Tokenize &rarr; Embed &rarr; Score &rarr; Aggregate &rarr; Signal</span>
-  <span id="statusRight">Transcript: AAPL Q4 2024 &bull; Signals: 4/4 &bull; Holding: 21d</span>
-</div>
 
 <div class="guide">
   <div class="guide-box">
     <div class="guide-header" id="guideToggle">
       <h2><i class="fas fa-compass"></i> How This Lab Works</h2>
-      <button class="guide-toggle">Hide &#x25B4;</button>
+      <button type="button" class="guide-toggle">Hide &#x25B4;</button>
     </div>
     <div class="guide-grid" id="guideContent">
       <div class="guide-card">
         <span class="step">STEP 1</span>
         <h3>Select Transcript</h3>
-        <p>Choose a <strong>simulated earnings call</strong> from major companies. Each has different sentiment characteristics and NLP complexity.</p>
+        <p>Pick one of four <strong>synthetic calls</strong> from fictional issuers. Each has a different tone profile and a different mix of negated and amplified phrases.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 2</span>
-        <h3>View Attention Heatmap</h3>
-        <p>See <strong>word-level sentiment scoring</strong> as the NLP model highlights positive and negative phrases that drive the alpha signal.</p>
+        <h3>Read the Heatmap</h3>
+        <p>Every token is scored by a <strong>Loughran-McDonald-style lexicon</strong> with a three-token negation window and amplifier multipliers. Hover a word for its arithmetic.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 3</span>
         <h3>Combine Signals</h3>
-        <p>Toggle <strong>alternative data signals</strong>: NLP Sentiment, Analyst Revisions, Options Flow, and Supply Chain. Each adds orthogonal alpha.</p>
+        <p>Toggle and <strong>weight</strong> four signals. Weights renormalise to 1 and the composite IC follows the correlation-adjusted combination rule.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 4</span>
         <h3>Analyze Alpha</h3>
-        <p><strong>Hover over charts</strong> to explore signal decay, sector heatmaps, sentiment-return relationships, and cumulative backtest returns.</p>
+        <p>Watch gross alpha, <strong>transaction costs</strong> and net alpha trade off as you change the holding period. Net is always below gross.</p>
       </div>
     </div>
   </div>
@@ -307,12 +279,14 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="kpi-strip">
   <div class="kpi-row">
-    <div class="kpi-cell" title="Overall document sentiment score"><div class="lbl">Sentiment</div><div class="val neutral" id="kSent">--</div></div>
-    <div class="kpi-cell" title="Composite alpha signal strength"><div class="lbl">Signal Str.</div><div class="val neutral" id="kSignal">--</div></div>
-    <div class="kpi-cell" title="Annualized Sharpe ratio of NLP strategy"><div class="lbl">NLP Sharpe</div><div class="val neutral" id="kSharpe">--</div></div>
-    <div class="kpi-cell" title="Information Coefficient of NLP signal"><div class="lbl">Signal IC</div><div class="val neutral" id="kIC">--</div></div>
-    <div class="kpi-cell" title="Annualized alpha from NLP signal"><div class="lbl">Ann. Alpha</div><div class="val neutral" id="kAlpha">--</div></div>
-    <div class="kpi-cell" title="Signal half-life in trading days"><div class="lbl">Half-Life</div><div class="val neutral" id="kHalfLife">--</div></div>
+    <div class="kpi-cell" title="Document tone from the finance lexicon, tanh-squashed to the range -1 to +1"><div class="lbl">Doc tone</div><div class="val neutral" id="kSent">--</div></div>
+    <div class="kpi-cell" title="Composite signal z-score for the selected issuer, unit variance by construction"><div class="lbl">Composite z</div><div class="val neutral" id="kSignal">--</div></div>
+    <div class="kpi-cell" title="Composite information coefficient at the selected holding period"><div class="lbl">Composite IC</div><div class="val neutral" id="kIC">--</div></div>
+    <div class="kpi-cell" title="Annualised alpha after transaction costs"><div class="lbl">Net alpha</div><div class="val neutral" id="kAlpha">--</div></div>
+    <div class="kpi-cell" title="Net alpha divided by the 4.5% tracking error"><div class="lbl">Info ratio</div><div class="val neutral" id="kSharpe">--</div></div>
+    <div class="kpi-cell" title="Share of the 60 backtest months with positive active return"><div class="lbl">Hit rate</div><div class="val neutral" id="kHit">--</div></div>
+    <div class="kpi-cell" title="Worst peak-to-trough fall of the composite total-return path"><div class="lbl">Max DD</div><div class="val neutral" id="kMaxDD">--</div></div>
+    <div class="kpi-cell" title="Forward horizon at which the composite IC has halved"><div class="lbl">IC half-life</div><div class="val neutral" id="kHalfLife">--</div></div>
   </div>
 </div>
 
@@ -321,15 +295,15 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
     <div class="ctrl-head"><i class="fas fa-sliders-h"></i> NLP Configuration</div>
     <div class="ctrl-body">
       <div class="ctrl-group" style="min-width:280px;flex:2">
-        <h4>Earnings Transcript</h4>
+        <h4>Synthetic Transcript</h4>
         <div class="transcript-btns" id="transcriptBtns"></div>
       </div>
-      <div class="ctrl-group" style="min-width:260px;flex:2">
-        <h4>Alternative Data Signals</h4>
+      <div class="ctrl-group" style="min-width:340px;flex:3">
+        <h4>Signals &amp; Composite Weights</h4>
         <div class="signal-chips" id="signalChips"></div>
       </div>
       <div class="ctrl-group">
-        <h4>Holding Period (days)</h4>
+        <h4>Holding Period (trading days)</h4>
         <div class="slider-ctrl">
           <input type="range" id="holdSlider" min="5" max="63" step="1" value="21">
           <span class="sval" id="holdVal">21</span>
@@ -341,12 +315,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="grid">
   <div class="panel full">
-    <div class="panel-head"><h3><i class="fas fa-highlighter"></i> NLP Attention Heatmap</h3><span class="tag" id="transcriptTag">AAPL Q4 2024 Earnings Call</span></div>
+    <div class="panel-head"><h3><i class="fas fa-highlighter"></i> Lexicon Sentiment Heatmap</h3><span class="tag" id="transcriptTag">&mdash;</span></div>
     <div class="panel-body">
+      <p class="synth-note"><i class="fas fa-triangle-exclamation"></i> <span><b>Synthetic transcript.</b> The issuer, the speakers and the words are invented for this demo &mdash; nothing here is a real earnings call and no real company is described. Shading is the score the lexicon actually computes for that token, after negation and amplification; hover a word for the arithmetic.</span></p>
       <div class="transcript-box" id="transcriptBox"></div>
       <div class="sent-legend">
-        Sentiment: <span class="sl-neg">Negative</span> <span class="sl-neu">Neutral</span> <span class="sl-pos">Positive</span>
-        &nbsp;&mdash;&nbsp; Intensity scales with model attention weight
+        Token score: <span class="sl-neg">&minus;3&hellip;&minus;1</span> <span class="sl-neu">not in lexicon</span> <span class="sl-pos">+1&hellip;+3</span>
+        &nbsp;&mdash;&nbsp; <span id="lexStats">&mdash;</span>
       </div>
     </div>
   </div>
@@ -354,36 +329,37 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="grid">
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-chart-bar"></i> Sentence Sentiment Scores</h3><span class="tag">document decomposition</span></div>
-    <div class="panel-body"><canvas id="cvSentence" height="260"></canvas></div>
+    <div class="panel-head"><h3><i class="fas fa-chart-bar"></i> Sentence Tone</h3><span class="tag">section-weighted decomposition</span></div>
+    <div class="panel-body"><canvas id="cvSentence" role="img" aria-label="Bar chart of section-weighted sentence tone through the selected synthetic transcript" height="260"></canvas></div>
   </div>
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-th-large"></i> Sector Sentiment Heatmap</h3><span class="tag">cross-sector NLP signals</span></div>
+    <div class="panel-head"><h3><i class="fas fa-th-large"></i> Sector Read-Across</h3><span class="tag">stylised linkage betas</span></div>
     <div class="panel-body"><div class="sector-grid" id="sectorGrid"></div></div>
   </div>
 </div>
 
 <div class="grid">
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-chart-line"></i> Signal Decay Curve</h3><span class="tag">alpha half-life analysis</span></div>
-    <div class="panel-body"><canvas id="cvDecay" height="240"></canvas></div>
+    <div class="panel-head"><h3><i class="fas fa-chart-line"></i> IC Decay by Horizon</h3><span class="tag">IC(h) = IC(1)&middot;2^(&minus;(h&minus;1)/HL)</span></div>
+    <div class="panel-body"><canvas id="cvDecay" role="img" aria-label="Line chart of information coefficient against forward holding period for each signal and the composite" height="240"></canvas></div>
   </div>
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-braille"></i> Sentiment vs Forward Return</h3><span class="tag">cross-sectional</span></div>
-    <div class="panel-body"><canvas id="cvScatter" height="240"></canvas></div>
+    <div class="panel-head"><h3><i class="fas fa-braille"></i> Composite Score vs Forward Return</h3><span class="tag">synthetic cross-section, n=90</span></div>
+    <div class="panel-body"><canvas id="cvScatter" role="img" aria-label="Scatter plot of composite signal z-score against forward return across a synthetic cross-section" height="240"></canvas></div>
   </div>
 </div>
 
 <div class="grid">
   <div class="panel full">
-    <div class="panel-head"><h3><i class="fas fa-chart-area"></i> Cumulative Alpha Returns</h3><span class="tag">NLP strategy backtest</span></div>
+    <div class="panel-head"><h3><i class="fas fa-chart-area"></i> Growth of 1.00 &mdash; Overlay vs Benchmark</h3><span class="tag">60 months, net of costs, universe-level</span></div>
     <div class="panel-body">
-      <canvas id="cvReturns" height="220"></canvas>
+      <canvas id="cvReturns" role="img" aria-label="Line chart of cumulative growth for the composite overlay, NLP-only overlay, traditional factors and the benchmark" height="220"></canvas>
       <div class="legend">
         <div class="legend-item"><span class="legend-swatch" style="background:#06b6d4"></span> NLP Composite</div>
         <div class="legend-item"><span class="legend-swatch" style="background:#10b981"></span> NLP Only</div>
         <div class="legend-item"><span class="legend-swatch" style="background:#8b5cf6"></span> Traditional Factors</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#475569"></span> Benchmark</div>
+        <div class="legend-item" style="color:var(--faint)">Backtest is universe-level and does not depend on the selected transcript.</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#64748b"></span> Benchmark</div>
       </div>
     </div>
   </div>
@@ -391,25 +367,69 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="grid">
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-layer-group"></i> Signal Contribution</h3><span class="tag">alpha decomposition</span></div>
-    <div class="panel-body"><canvas id="cvContrib" height="240"></canvas></div>
+    <div class="panel-head"><h3><i class="fas fa-layer-group"></i> Signal Contribution</h3><span class="tag">weight, standalone IC, marginal IC</span></div>
+    <div class="panel-body"><canvas id="cvContrib" role="img" aria-label="Horizontal bar chart of each signal's normalised weight in the composite" height="240"></canvas></div>
   </div>
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-table"></i> Performance Summary</h3><span class="tag">strategy metrics</span></div>
+    <div class="panel-head"><h3><i class="fas fa-table"></i> Performance Summary</h3><span class="tag">gross, costs and net</span></div>
     <div class="panel-body">
+      <div class="tbl-wrap">
       <table class="perf-table">
-        <thead><tr><th>Metric</th><th>NLP Composite</th><th>NLP Only</th><th>Benchmark</th></tr></thead>
+        <thead><tr><th>Metric</th><th>Composite</th><th>NLP only</th><th>Trad. factors</th><th>Benchmark</th></tr></thead>
         <tbody id="perfBody"></tbody>
       </table>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="disclaimer">
-  <div class="disclaimer-box">
-    <strong>Disclaimer:</strong> This lab uses synthetically generated earnings transcripts and simulated NLP sentiment scores for educational purposes. All sentiment values, alpha signals, and performance metrics are modeled approximations. Real NLP alpha pipelines involve transformer-based models (FinBERT, GPT), named entity recognition, and extensive debiasing. Past simulated performance is not indicative of future results.
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A text-to-portfolio pipeline on <strong>synthetic earnings-call transcripts written for this demo, attributed to fictional issuers</strong>. A hand-built finance lexicon in the Loughran&ndash;McDonald style scores each token in &minus;3&hellip;+3, applying a three-token negation window and amplifier/diminisher multipliers. Sentence tone is <code>tanh(&Sigma;w/(3&radic;n))</code>; document tone is a section-weighted mean (CEO prepared 0.8, CFO prepared 1.0, analyst Q&amp;A 1.4) squashed to &minus;1&hellip;+1. That tone is z-scored and combined with analyst-revision, options-flow and supply-chain z-scores into a unit-variance composite, whose information coefficient drives a 60-month long/short overlay backtest sized to a constant tracking error and charged realistic transaction costs.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Signal IC at a one-day horizon and half-life: NLP 0.052 / 28 d, analyst revisions 0.058 / 55 d, options flow 0.049 / 18 d, supply chain 0.031 / 70 d. At the default 21-day horizon these are 0.032, 0.045, 0.023 and 0.025.</li>
+          <li>Assumed signal correlations 0.10&ndash;0.35 (NLP&ndash;analyst 0.35 is the highest). At equal weights the composite IC is about 0.048 against 0.045 for the best single signal.</li>
+          <li>Overlay sized to <strong>4.5% tracking error</strong>; transfer coefficient 0.45; <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per rebalance.</li>
+          <li>Two-way annual turnover <code>2&kappa;&middot;252/h</code> with &kappa; of 0.65 / 0.35 / 0.85 / 0.30 by signal (0.25 for the traditional-factor sleeve); cost per unit turnover <code>8 bp + 6 bp&middot;&radic;(f/12)</code>, i.e. about 14 bp at monthly rebalancing.</li>
+          <li>Benchmark 7.0% arithmetic return, 15.5% volatility; cross-sectional tone distribution mean +0.10, s.d. 0.28; cross-sectional return dispersion <code>0.35&middot;&radic;(h/252)</code>.</li>
+          <li>Defaults: equal 25% weights, 21-day horizon, all four signals on, seed 20260421.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li><code>IC<sub>i</sub>(h) = IC<sub>i</sub>(1)&middot;2^(&minus;(h&minus;1)/HL<sub>i</sub>)</code>; composite <code>IC<sub>c</sub> = &Sigma;w<sub>i</sub>IC<sub>i</sub> / &radic;(w&rsquo;Cw)</code>, weights renormalised to &Sigma;w = 1.</li>
+          <li>Fundamental law with transfer coefficient: <code>IR<sub>gross</sub> = TC&middot;IC(h)&middot;&radic;(N<sub>eff</sub>&middot;252/h)</code>; gross alpha = IR&middot;TE; <code>net = gross &minus; turnover&middot;cost rate</code>; <code>IR<sub>net</sub> = net / TE</code>.</li>
+          <li>Max drawdown on the cumulative total-return path; hit rate = share of months with positive active return; sample IC on the scatter is constructed exactly by orthogonalising the noise against the score.</li>
+          <li>Loughran &amp; McDonald (2011), <em>When Is a Liability Not a Liability? Textual Analysis, Dictionaries, and 10-Ks</em>; Grinold &amp; Kahn (2000), <em>Active Portfolio Management</em>, chs. 6 and 15; Clarke, de Silva &amp; Thorley (2002), <em>Portfolio Constraints and the Fundamental Law</em>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li>The transcripts are invented and short. A bag-of-words lexicon has no syntax, no coreference and no numeric reasoning; a fine-tuned encoder would beat it on real filings.</li>
+          <li>The lexicon is hand-built (~200 terms) and inspired by Loughran&ndash;McDonald rather than being it; the published dictionary is far larger and is not redistributed here.</li>
+          <li>Signal ICs, correlations, transfer coefficient and breadth are assumed, not estimated. Nothing is fitted to data, so there is no out-of-sample claim to make.</li>
+          <li>The backtest is a single overlay path with Gaussian active returns and no factor model, no borrow cost, no capacity limit, no crowding and no decay of the signals themselves over calendar time.</li>
+          <li>Backtest results are deliberately independent of the selected transcript: one call cannot re-estimate a universe-level IC.</li>
+          <li>Sector read-across uses hand-set linkage betas and is illustrative only.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Educational demonstration built on synthetic (or stylised historical) data generated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
   </div>
-</div>
+</footer>
 
 <script>
 (function(){
@@ -420,98 +440,191 @@ var ttEl=document.getElementById('tooltip');
 function showTT(ex,ey,html){ttEl.innerHTML=html;ttEl.classList.add('show');var tw=ttEl.offsetWidth,th=ttEl.offsetHeight,x=ex+14,y=ey-10;if(x+tw>window.innerWidth-10)x=ex-tw-14;if(y+th>window.innerHeight-10)y=ey-th-10;if(y<10)y=10;ttEl.style.left=x+'px';ttEl.style.top=y+'px'}
 function hideTT(){ttEl.classList.remove('show')}
 
-// ===== PRNG =====
+// ===== PRNG & DISTRIBUTIONS =====
+var BASE_SEED=20260421;
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-function gaussian(rng){var u,v,s;do{u=2*rng()-1;v=2*rng()-1;s=u*u+v*v}while(s>=1||s===0);return u*Math.sqrt(-2*Math.log(s)/s)}
+function gaussian(rng){var u,v,s2;do{u=2*rng()-1;v=2*rng()-1;s2=u*u+v*v}while(s2>=1||s2===0);return u*Math.sqrt(-2*Math.log(s2)/s2)}
+// Acklam rational approximation to the inverse standard normal CDF
+function normInv(p){
+  var a=[-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239e0];
+  var b=[-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1];
+  var c=[-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838e0,-2.549732539343734e0,4.374664141464968e0,2.938163982698783e0];
+  var d=[7.784695709041462e-3,3.224671290700398e-1,2.445134137142996e0,3.754408661907416e0];
+  var pl=0.02425,q,r;
+  if(p<pl){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)}
+  if(p>1-pl){q=Math.sqrt(-2*Math.log(1-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)}
+  q=p-0.5;r=q*q;
+  return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+// stratified standard normals, order shuffled by the seeded PRNG: exact sample moments, real-looking path
+function stratNormals(n,rng){var z=[],i,j,t;for(i=0;i<n;i++)z.push(normInv((i+0.5)/n));for(i=n-1;i>0;i--){j=Math.floor(rng()*(i+1));t=z[i];z[i]=z[j];z[j]=t}return z}
+function standardize(z){var m=mean(z),sd=std(z),o=[],i;if(sd===0)sd=1;for(i=0;i<z.length;i++)o.push((z[i]-m)/sd);return o}
 
-// ===== TRANSCRIPTS =====
+// ===== FINANCE SENTIMENT LEXICON (Loughran-McDonald style, hand-built) =====
+var LEX={
+ 'strong':2,'stronger':2,'strongest':3,'strength':2,'record':3,'records':2,'exceeded':3,'exceeding':3,'exceed':2,
+ 'beat':2,'outstanding':3,'exceptional':3,'excellent':3,'tremendous':2,'impressive':2,'robust':2,'resilient':2,
+ 'solid':2,'favorable':2,'favourable':2,'accelerate':2,'accelerating':2,'accelerated':2,'improve':1,'improved':2,
+ 'improving':2,'improvement':2,'gain':1,'gains':1,'growth':2,'growing':2,'grew':2,'expanded':2,'expansion':2,
+ 'surge':2,'surged':3,'momentum':2,'profitable':2,'profitability':1,'efficiency':1,'efficient':1,'confident':2,
+ 'confidence':2,'optimistic':2,'encouraging':2,'opportunity':1,'opportunities':1,'upside':2,'ahead':1,
+ 'outperformed':3,'demand':1,'durable':1,'positive':2,'progress':1,'advance':1,'advancing':1,'narrowed':1,
+ 'stabilize':1,'stabilise':1,'traction':1,'leverage':1,'best':2,'higher':1,'increase':1,'increased':1,
+ 'insatiable':2,'staggering':2,'thrilled':3,'well':1,'benefit':1,'benefits':1,'delivered':1,'deliver':1,
+ 'diminished':1,'broadens':1,'ambitious':1,'comfortable':1,'achieved':2,'success':2,'successful':2,'upgrade':2,
+ 'upgrades':2,'premium':1,'sustainable':1,'attractive':2,'healthy':2,'disciplined':1,
+ 'decline':-2,'declined':-2,'declining':-2,'declines':-2,'fell':-2,'fall':-2,'falling':-2,'weak':-2,'weaker':-2,
+ 'weakness':-2,'soft':-2,'softening':-2,'softness':-2,'headwind':-2,'headwinds':-2,'disruption':-2,
+ 'disruptions':-2,'shortfall':-2,'deteriorated':-3,'deteriorating':-3,'compressed':-2,'compression':-2,
+ 'pressure':-1,'pressures':-1,'challenging':-2,'challenges':-2,'difficult':-2,'uncertain':-2,'uncertainty':-2,
+ 'litigation':-2,'delay':-2,'delayed':-2,'delays':-2,'impairment':-3,'writedown':-3,'missed':-2,'miss':-2,
+ 'loss':-2,'losses':-2,'restructuring':-2,'layoffs':-2,'reduction':-1,'reductions':-1,'elevated':-1,
+ 'cautious':-1,'cautiously':-1,'concern':-2,'concerns':-2,'contraction':-2,'shortage':-2,'shortages':-2,
+ 'eroding':-2,'erosion':-2,'adverse':-2,'volatile':-1,'volatility':-1,'risk':-1,'risks':-1,'slowed':-2,
+ 'slowdown':-2,'below':-1,'lower':-1,'negative':-2,'intensifying':-1,'aggressive':-1,'competitive':-1,
+ 'competition':-1,'monitoring':-1,'downgrade':-2,'writeoff':-3,'penalty':-2,'penalties':-2,'recall':-2,
+ 'underperformed':-3,'disappointing':-3,'disappointed':-2,'stalled':-2,'inventory':-1,'destocking':-2
+};
+// Loughran-McDonald "uncertainty" / weak-modal words: no tone, but counted and reported
+var UNCERTAIN={'may':1,'might':1,'could':1,'possibly':1,'perhaps':1,'approximately':1,'roughly':1,'uncertain':1,
+ 'uncertainty':1,'risk':1,'risks':1,'believe':1,'believes':1,'appears':1,'seems':1,'potential':1,'potentially':1,
+ 'assume':1,'anticipate':1,'expect':1,'expects':1,'expected':1,'likely':1,'probably':1,'depends':1};
+// negators: flip polarity of a scored token within the next three positions
+var NEGATORS={'not':1,'no':1,'never':1,'none':1,'cannot':1,"can't":1,"isn't":1,"aren't":1,"doesn't":1,"didn't":1,
+ "wasn't":1,'without':1,'fail':1,'fails':1,'failed':1,'hardly':1,'despite':1,'neither':1,'nor':1,'nothing':1,'absent':1};
+// amplifiers (>1) and diminishers (<1), applied to the next scored token within two positions
+var AMP={'very':1.5,'significantly':1.5,'substantially':1.5,'materially':1.4,'sharply':1.5,'dramatically':1.6,
+ 'extremely':1.6,'overwhelmingly':1.6,'exceptionally':1.5,'strongly':1.4,'meaningfully':1.3,'considerably':1.4,
+ 'notably':1.3,'slightly':0.6,'modestly':0.6,'somewhat':0.6,'marginally':0.5,'partially':0.7,'broadly':1.1};
+
+function normWord(w){return w.toLowerCase().replace(/^[^a-z0-9'-]+/,'').replace(/[^a-z0-9'-]+$/,'')}
+function scoreLine(text){
+  var raws=text.split(/\s+/),keys=[],out=[],sum=0,unc=0,hits=0,i,j,k,base,amp,neg,sc;
+  for(i=0;i<raws.length;i++)keys.push(normWord(raws[i]));
+  for(i=0;i<keys.length;i++){
+    k=keys[i];base=LEX[k]!==undefined?LEX[k]:0;amp=1;neg=false;
+    if(UNCERTAIN[k])unc++;
+    if(base!==0){
+      for(j=Math.max(0,i-3);j<i;j++)if(NEGATORS[keys[j]])neg=true;
+      for(j=Math.max(0,i-2);j<i;j++)if(AMP[keys[j]]!==undefined)amp=AMP[keys[j]];
+      sc=base*amp*(neg?-1:1);
+      if(sc>3)sc=3;if(sc<-3)sc=-3;
+      sum+=sc;hits++;
+      out.push({raw:raws[i],key:k,base:base,amp:amp,neg:neg,score:sc,unc:!!UNCERTAIN[k]});
+    }else out.push({raw:raws[i],key:k,base:0,amp:1,neg:false,score:0,unc:!!UNCERTAIN[k]});
+  }
+  return{tokens:out,sum:sum,n:raws.length,unc:unc,hits:hits};
+}
+
+// ===== SYNTHETIC TRANSCRIPTS (fictional issuers, written for this demo) =====
+// z values for the non-text signals are fixed synthetic inputs, not derived from the text.
 var TRANSCRIPTS=[
-{id:'aapl',ticker:'AAPL',name:'Apple Inc.',quarter:'Q4 2024',sentiment:.72,color:'#06b6d4',
+{id:'nvex',ticker:'NVEX',name:'Northvale Semiconductor (fictional)',quarter:'Q3 FY2026',sector:'Technology',
+ color:'#10b981',seedOffset:11,z:{analyst:1.40,options:0.90,supply:1.10},
  sections:[
-  {speaker:'CEO — Tim Cook',lines:[
-    {text:'We are thrilled to report our strongest quarter ever with record-breaking revenue across every product category.',scores:[0,0,3,0,0,0,3,0,0,0,3,0,0,0,0,0]},
-    {text:'iPhone demand has been exceptional, particularly in emerging markets where we see tremendous long-term growth potential.',scores:[0,0,0,0,3,0,0,1,0,0,0,0,2,1,2,1]},
-    {text:'Our services ecosystem continues to accelerate with subscription revenue growing at an impressive forty percent year over year.',scores:[0,0,0,0,0,2,0,0,0,2,0,0,2,0,0,0,0,0]}
+  {speaker:'CEO \u2014 J. Marlowe (prepared remarks)',weight:0.8,lines:[
+   'Data centre revenue surged to an all-time record driven by insatiable demand for our accelerators from hyperscale and enterprise customers worldwide.',
+   'We are at the beginning of a platform shift that will reshape every industry and Northvale is exceptionally well positioned at the centre of it.',
+   'Blackline demand is staggering and we are working around the clock to ramp production and meet our customers requirements.'
   ]},
-  {speaker:'CFO — Luca Maestri',lines:[
-    {text:'Gross margins expanded by one hundred and fifty basis points driven by favorable product mix and operational efficiency gains.',scores:[0,0,2,0,0,0,0,0,0,0,1,0,2,0,0,0,0,2,1]},
-    {text:'We returned over twenty-five billion dollars to shareholders through dividends and share repurchases this quarter.',scores:[0,2,0,0,0,0,0,0,0,1,0,0,1,0,0]},
-    {text:'However we are closely monitoring potential supply chain disruptions that could present headwinds in the near term.',scores:[0,0,0,0,-1,0,0,0,-2,0,-1,0,-2,0,0,0,0]}
+  {speaker:'CFO \u2014 P. Okafor (prepared remarks)',weight:1.0,lines:[
+   'Revenue of thirty five billion represents a one hundred and ninety four percent increase year over year with gross margins holding strong at seventy five percent.',
+   'Our supply chain execution has been outstanding with yields improving ahead of schedule on our next generation products.',
+   'Demand shows no sign of softening and our backlog extends well into the next fiscal year.'
   ]},
-  {speaker:'Analyst Q&A',lines:[
-    {text:'The AI integration into our product lineup has exceeded our most optimistic internal projections and customer feedback has been overwhelmingly positive.',scores:[0,1,0,0,0,0,0,0,3,0,0,2,0,0,0,0,0,0,0,2,3]},
-    {text:'We believe we are just scratching the surface of what generative AI can deliver for our ecosystem.',scores:[0,1,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0]}
+  {speaker:'Analyst Q&A',weight:1.4,lines:[
+   'The networking and inference segments are growing even faster than training creating multiple durable growth vectors for the company.',
+   'Customer concentration risk has diminished as enterprise and sovereign adoption broadens our revenue base significantly.'
   ]}
-]},
-{id:'meta',ticker:'META',name:'Meta Platforms',quarter:'Q3 2024',sentiment:.48,color:'#3b82f6',
+ ]},
+{id:'helx',ticker:'HELX',name:'Helix Consumer Devices (fictional)',quarter:'Q4 FY2026',sector:'Consumer',
+ color:'#06b6d4',seedOffset:23,z:{analyst:0.60,options:-0.30,supply:0.40},
  sections:[
-  {speaker:'CEO — Mark Zuckerberg',lines:[
-    {text:'Our AI investments are beginning to show meaningful returns with Reels engagement up significantly and advertising efficiency improving across the platform.',scores:[0,1,0,0,0,0,0,2,0,0,0,0,1,2,0,0,1,2,0,0,0]},
-    {text:'The metaverse division continues to require substantial capital investment though we remain confident in the long-term opportunity.',scores:[0,0,0,0,0,-1,-1,0,0,0,0,0,1,0,0,0,1]},
-    {text:'Reality Labs losses narrowed this quarter which is an encouraging sign of progress toward our efficiency targets.',scores:[0,0,-1,1,0,0,0,0,0,2,0,0,1,0,0,1,0]}
+  {speaker:'CEO \u2014 T. Bergstrom (prepared remarks)',weight:0.8,lines:[
+   'We are thrilled to report our strongest quarter ever with record revenue across every product category.',
+   'Handset demand has been exceptional particularly in emerging markets where we see tremendous long term growth potential.',
+   'Our services ecosystem continues to accelerate with subscription revenue growing at an impressive forty percent year over year.'
   ]},
-  {speaker:'CFO — Susan Li',lines:[
-    {text:'Total revenue grew eighteen percent year over year exceeding the high end of our guidance range by a comfortable margin.',scores:[0,0,2,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,1,1]},
-    {text:'Operating expenses remain elevated due to our continued infrastructure buildout but we expect leverage to improve in subsequent quarters.',scores:[0,0,0,-2,0,0,0,0,0,-1,0,0,0,0,0,1,0,0,0]},
-    {text:'Headcount reductions from our year of efficiency have driven meaningful operating margin improvement.',scores:[0,-1,0,0,0,0,1,0,1,2,0,0,2]}
+  {speaker:'CFO \u2014 L. Marchetti (prepared remarks)',weight:1.0,lines:[
+   'Gross margins expanded by one hundred and fifty basis points driven by favorable product mix and operational efficiency gains.',
+   'We returned over twenty five billion dollars to shareholders through dividends and share repurchases this quarter.',
+   'However we are closely monitoring potential supply chain disruptions that could present headwinds in the near term.'
   ]},
-  {speaker:'Analyst Q&A',lines:[
-    {text:'Competitive pressure from TikTok remains a concern but our short-form video monetization gap is closing rapidly.',scores:[-1,-1,0,0,0,0,-2,0,0,0,0,0,-1,0,1,1]},
-    {text:'We are cautiously optimistic about the regulatory environment and believe our compliance investments position us well.',scores:[0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,1]}
+  {speaker:'Analyst Q&A',weight:1.4,lines:[
+   'The assistant integration into our product lineup has exceeded our most optimistic internal projections and customer feedback has been overwhelmingly positive.',
+   'We believe we are only beginning to see what on device models can deliver for our ecosystem.'
   ]}
-]},
-{id:'tsla',ticker:'TSLA',name:'Tesla Inc.',quarter:'Q4 2024',sentiment:-.15,color:'#ef4444',
+ ]},
+{id:'arcs',ticker:'ARCS',name:'Arcadia Social Networks (fictional)',quarter:'Q3 FY2026',sector:'Comm. Svcs',
+ color:'#3b82f6',seedOffset:37,z:{analyst:0.20,options:0.70,supply:-0.10},
  sections:[
-  {speaker:'CEO — Elon Musk',lines:[
-    {text:'Vehicle deliveries fell short of our ambitious targets this quarter as we navigated challenging macroeconomic conditions and intensifying competition.',scores:[0,0,-2,-1,0,0,0,0,0,0,0,0,0,-2,0,0,0,-1,-1]},
-    {text:'However our energy storage business achieved record deployments and our autonomous driving technology continues to advance rapidly.',scores:[0,0,0,0,0,2,3,0,0,0,1,0,0,0,0,2,1]},
-    {text:'Price reductions were necessary to maintain volume but they have significantly compressed our automotive margins.',scores:[0,-1,0,-1,0,0,0,0,0,0,0,-2,0,0,-1]}
+  {speaker:'CEO \u2014 M. Ferreira (prepared remarks)',weight:0.8,lines:[
+   'Our model investments are beginning to show meaningful returns with shortform video engagement up significantly and advertising efficiency improving across the platform.',
+   'The immersive division continues to require heavy capital investment though we remain confident in the long term opportunity.',
+   'Immersive Labs losses narrowed this quarter which is an encouraging sign of progress toward our efficiency targets.'
   ]},
-  {speaker:'CFO — Vaibhav Taneja',lines:[
-    {text:'Automotive gross margin declined to eighteen percent from twenty-five percent a year ago reflecting our strategic pricing decisions.',scores:[0,0,0,-2,0,0,0,0,0,0,0,0,0,0,0,0,-1,0]},
-    {text:'Free cash flow remains positive but significantly below prior year levels due to elevated capital expenditure on new factory ramps.',scores:[0,0,0,0,1,0,0,-1,0,0,0,0,0,-1,0,-1,0,0,0,0]},
-    {text:'We expect margins to stabilize in the coming quarters as our cost reduction initiatives gain traction.',scores:[0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1]}
+  {speaker:'CFO \u2014 S. Adeyemi (prepared remarks)',weight:1.0,lines:[
+   'Total revenue grew eighteen percent year over year exceeding the high end of our guidance range by a comfortable margin.',
+   'Operating expenses remain elevated due to our continued infrastructure buildout but we expect leverage to improve in subsequent quarters.',
+   'Headcount reductions from our year of efficiency have driven meaningful operating margin improvement.'
   ]},
-  {speaker:'Analyst Q&A',lines:[
-    {text:'The competitive landscape in China has deteriorated with aggressive pricing from BYD and other domestic manufacturers eroding our market share.',scores:[0,-1,0,0,0,0,-2,0,-2,0,0,0,0,0,0,0,-2,0,0,0]},
-    {text:'Full self-driving remains our most significant long-term value driver but the timeline to regulatory approval remains uncertain.',scores:[0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,-1]}
+  {speaker:'Analyst Q&A',weight:1.4,lines:[
+   'Competitive pressure from shortform rivals remains a concern but our monetization gap is closing rapidly.',
+   'We are cautiously optimistic about the regulatory environment and believe our compliance investments position us well.'
   ]}
-]},
-{id:'nvda',ticker:'NVDA',name:'NVIDIA Corp.',quarter:'Q3 2025',sentiment:.88,color:'#10b981',
+ ]},
+{id:'volt',ticker:'VOLT',name:'Voltaris Mobility (fictional)',quarter:'Q4 FY2026',sector:'Consumer',
+ color:'#ef4444',seedOffset:53,z:{analyst:-0.90,options:-1.30,supply:-0.60},
  sections:[
-  {speaker:'CEO — Jensen Huang',lines:[
-    {text:'Data center revenue surged to an all-time record driven by insatiable demand for our AI accelerators from hyperscalers and enterprises worldwide.',scores:[0,0,0,3,0,0,2,3,1,0,2,0,0,0,0,0,0,0,0,0,0]},
-    {text:'We are at the beginning of a fundamental platform shift that will reshape every industry and NVIDIA is at the center of this transformation.',scores:[0,0,0,0,0,0,0,1,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,1]},
-    {text:'Blackwell demand is staggering and we are working around the clock to ramp production to meet our customers extraordinary requirements.',scores:[0,0,0,3,0,0,0,0,0,0,0,0,1,0,0,0,0,0,2,0]}
+  {speaker:'CEO \u2014 R. Calderon (prepared remarks)',weight:0.8,lines:[
+   'Vehicle deliveries fell well short of our ambitious targets this quarter as we navigated challenging macroeconomic conditions and intensifying competition.',
+   'However our energy storage business achieved record deployments and our autonomy stack continues to advance rapidly.',
+   'Price reductions were necessary to maintain volume but they have significantly compressed our automotive margins.'
   ]},
-  {speaker:'CFO — Colette Kress',lines:[
-    {text:'Revenue of thirty-five billion represents a one hundred and ninety-four percent increase year over year with gross margins holding strong at seventy-five percent.',scores:[0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1,2,0,0,0]},
-    {text:'Our supply chain execution has been outstanding with yields improving ahead of schedule on our next-generation products.',scores:[0,0,0,0,0,0,3,0,0,2,1,0,0,0,0,1,0]},
-    {text:'We see no signs of demand softening and our backlog extends well into the next fiscal year.',scores:[0,0,0,0,0,0,-1,0,0,0,1,1,0,0,0,0,0]}
+  {speaker:'CFO \u2014 D. Whitfield (prepared remarks)',weight:1.0,lines:[
+   'Automotive gross margin declined to eighteen percent from twenty five percent a year ago reflecting our strategic pricing decisions.',
+   'Free cash flow remains positive but significantly below prior year levels due to elevated capital expenditure on new factory ramps.',
+   'We expect margins to stabilize in the coming quarters as our cost reduction initiatives gain traction.'
   ]},
-  {speaker:'Analyst Q&A',lines:[
-    {text:'The networking and inference segments are growing even faster than training creating multiple durable growth vectors for the company.',scores:[0,0,0,0,0,0,2,0,2,0,0,1,0,1,2,0,0,0,0]},
-    {text:'Customer concentration risk has diminished as enterprise and sovereign AI adoption broadens our revenue base significantly.',scores:[0,0,-1,0,1,0,0,0,0,0,1,1,0,0,0,1]}
+  {speaker:'Analyst Q&A',weight:1.4,lines:[
+   'The competitive landscape in our largest export market has deteriorated with aggressive pricing from domestic manufacturers eroding our share.',
+   'Full autonomy remains our most important long term value driver but the timeline to regulatory approval remains uncertain.'
   ]}
-]}
+ ]}
 ];
 
+// ===== SIGNALS =====
+// ic1 = information coefficient at a one-day forward horizon; hl = IC half-life in trading days;
+// kappa = one-way portfolio turnover per rebalance; tc = transfer coefficient.
 var ALT_SIGNALS=[
-  {id:'nlp',name:'NLP Sentiment',color:'#06b6d4',baseAlpha:.008,decay:.7,ic:.035},
-  {id:'analyst',name:'Analyst Revisions',color:'#10b981',baseAlpha:.006,decay:.8,ic:.042},
-  {id:'options',name:'Options Flow',color:'#f59e0b',baseAlpha:.005,decay:.5,ic:.028},
-  {id:'supply',name:'Supply Chain',color:'#8b5cf6',baseAlpha:.004,decay:.85,ic:.022}
+ {id:'nlp',name:'NLP Sentiment',color:'#06b6d4',ic1:.052,hl:28,kappa:.65},
+ {id:'analyst',name:'Analyst Revisions',color:'#10b981',ic1:.058,hl:55,kappa:.35},
+ {id:'options',name:'Options Flow',color:'#f59e0b',ic1:.049,hl:18,kappa:.85},
+ {id:'supply',name:'Supply Chain',color:'#8b5cf6',ic1:.031,hl:70,kappa:.30}
+];
+var SIG_CORR={
+ nlp:{nlp:1,analyst:.35,options:.20,supply:.15},
+ analyst:{nlp:.35,analyst:1,options:.25,supply:.30},
+ options:{nlp:.20,analyst:.25,options:1,supply:.10},
+ supply:{nlp:.15,analyst:.30,options:.10,supply:1}
+};
+function icAt(sig,h){return sig.ic1*Math.pow(2,-(h-1)/sig.hl)}
+
+// stylised supply-chain / demand linkage betas; the issuer's own sector is set to 1.0
+var SECTORS=[
+ {name:'Technology',beta:.55},{name:'Comm. Svcs',beta:.40},{name:'Consumer',beta:.45},
+ {name:'Industrials',beta:.35},{name:'Materials',beta:.25},{name:'Healthcare',beta:.15},
+ {name:'Financials',beta:.20},{name:'Energy',beta:.10},{name:'Utilities',beta:.05},
+ {name:'Real Estate',beta:.10},{name:'Staples',beta:.12}
 ];
 
-var SECTORS=[
-  {name:'Technology',base:.65},{name:'Healthcare',base:.30},{name:'Financials',base:.15},
-  {name:'Consumer',base:.40},{name:'Energy',base:-.20},{name:'Industrials',base:.10},
-  {name:'Materials',base:-.05},{name:'Utilities',base:.05},{name:'Real Estate',base:-.15},
-  {name:'Comm. Svcs',base:.35},{name:'Staples',base:.12}
-];
+// ===== MODEL CONSTANTS =====
+var MODEL={nEff:120,te:.045,tc:.45,costFixed:.0008,costImpact:.0006,nMonths:60,
+  bmRet:.07,bmVol:.155,xsMean:.10,xsSd:.28,tradIc1:.030,tradHl:120,tradKappa:.25,xsDisp:.35};
 
 // ===== STATE =====
-var state={transcript:'aapl',signals:['nlp','analyst','options','supply'],holdDays:21,results:null};
+var state={transcript:'nvex',signals:['nlp','analyst','options','supply'],
+  weights:{nlp:25,analyst:25,options:25,supply:25},holdDays:21,results:null};
 var chartMeta={};
 
 // ===== UTILITY =====
@@ -520,161 +633,190 @@ function std(a){if(a.length<2)return 0;var m=mean(a),s=0;for(var i=0;i<a.length;
 function maxDrawdown(eq){var p=eq[0],d=0;for(var i=1;i<eq.length;i++){if(eq[i]>p)p=eq[i];var dd=(p-eq[i])/p;if(dd>d)d=dd}return d}
 function cumProd(r){var e=[1];for(var i=0;i<r.length;i++)e.push(e[e.length-1]*(1+r[i]));return e}
 
+// ===== SIGNAL COMBINATION =====
+function activeWeights(){
+  var out=[],sum=0,i,sig,w;
+  for(i=0;i<ALT_SIGNALS.length;i++){
+    sig=ALT_SIGNALS[i];
+    if(state.signals.indexOf(sig.id)<0)continue;
+    w=state.weights[sig.id];if(!(w>0))w=0;
+    out.push({sig:sig,raw:w});sum+=w;
+  }
+  for(i=0;i<out.length;i++)out[i].w=sum>0?out[i].raw/sum:(out.length?1/out.length:0);
+  return out;
+}
+function portVar(aw){var v=0,i,j;for(i=0;i<aw.length;i++)for(j=0;j<aw.length;j++)v+=aw[i].w*aw[j].w*SIG_CORR[aw[i].sig.id][aw[j].sig.id];return v}
+// Grinold-Kahn combination: IC of a weighted composite of correlated signals
+function compositeIC(aw,h,sd){var num=0,i;for(i=0;i<aw.length;i++)num+=aw[i].w*icAt(aw[i].sig,h);return sd>0?num/sd:0}
+
+// ===== BACKTEST SLEEVE =====
+// TE-targeted long/short overlay. Fundamental law with a transfer coefficient for gross skill,
+// two-way turnover x a square-root-impact cost rate for the drag. Net is always below gross.
+function sleeve(icH,kappa,holdDays,rng){
+  var f=252/holdDays;
+  var irGross=MODEL.tc*icH*Math.sqrt(MODEL.nEff*f);
+  var turn=2*kappa*f;
+  var costRate=MODEL.costFixed+MODEL.costImpact*Math.sqrt(f/12);
+  var cost=turn*costRate;
+  var gross=irGross*MODEL.te,net=gross-cost;
+  var mu=net/12,sg=MODEL.te/Math.sqrt(12);
+  var z=standardize(stratNormals(MODEL.nMonths,rng)),act=[],hits=0,i;
+  for(i=0;i<MODEL.nMonths;i++){act.push(mu+sg*z[i]);if(act[i]>0)hits++}
+  return{ic:icH,irGross:irGross,irNet:net/MODEL.te,turn:turn,costRate:costRate,cost:cost,
+    gross:gross,net:net,act:act,hit:hits/MODEL.nMonths,te:MODEL.te};
+}
+
 // ===== GENERATE =====
 function generate(){
-  var tr=null;for(var i=0;i<TRANSCRIPTS.length;i++)if(TRANSCRIPTS[i].id===state.transcript)tr=TRANSCRIPTS[i];
-  var rng=mulberry32(42+state.holdDays+state.signals.length*7+(tr?tr.id.charCodeAt(0):0));
-  var nSig=state.signals.length;
+  var i,j,d,h=state.holdDays;
+  var tr=null;for(i=0;i<TRANSCRIPTS.length;i++)if(TRANSCRIPTS[i].id===state.transcript)tr=TRANSCRIPTS[i];
+  var rngT=mulberry32(BASE_SEED+(tr?tr.seedOffset:0));
 
-  // Sentence scores from transcript
-  var sentScores=[];
+  // --- text scoring: sentence tone, section-weighted document tone ---
+  var sentScores=[],docNum=0,docDen=0,uncCount=0,toneWords=0,totalWords=0;
   if(tr){
-    for(var s=0;s<tr.sections.length;s++){
-      for(var l=0;l<tr.sections[s].lines.length;l++){
-        var line=tr.sections[s].lines[l];
-        var sum=0,cnt=0;
-        for(var w=0;w<line.scores.length;w++){if(line.scores[w]!==0){sum+=line.scores[w];cnt++}}
-        sentScores.push({score:cnt>0?sum/cnt/3:0,section:s,line:l,speaker:tr.sections[s].speaker,text:line.text});
+    for(i=0;i<tr.sections.length;i++){
+      var sec=tr.sections[i];
+      for(j=0;j<sec.lines.length;j++){
+        var sc=scoreLine(sec.lines[j]);
+        var raw=sc.sum/(3*Math.sqrt(Math.max(sc.n,1)));
+        docNum+=sec.weight*raw;docDen+=sec.weight;
+        uncCount+=sc.unc;toneWords+=sc.hits;totalWords+=sc.n;
+        sentScores.push({score:Math.tanh(raw),raw:raw,sum:sc.sum,n:sc.n,hits:sc.hits,
+          speaker:sec.speaker,weight:sec.weight,text:sec.lines[j],tokens:sc.tokens,section:i});
       }
     }
   }
+  var docSentiment=docDen>0?Math.tanh(1.5*docNum/docDen):0;
 
-  var docSentiment=tr?tr.sentiment:0;
-  var signalStrength=0;
-  var activeSignals=[];
-  for(var i=0;i<ALT_SIGNALS.length;i++){
-    if(state.signals.indexOf(ALT_SIGNALS[i].id)>=0){
-      activeSignals.push(ALT_SIGNALS[i]);
-      signalStrength+=ALT_SIGNALS[i].baseAlpha;
-    }
-  }
-  signalStrength=Math.min(signalStrength,1);
+  // --- signal z-scores for the selected issuer ---
+  var zNLP=(docSentiment-MODEL.xsMean)/MODEL.xsSd;
+  var zByID={nlp:zNLP,analyst:tr?tr.z.analyst:0,options:tr?tr.z.options:0,supply:tr?tr.z.supply:0};
 
-  // Signal decay curve
-  var decayDays=[];var decayCurves={};
-  for(var d=1;d<=63;d++)decayDays.push(d);
-  for(var i=0;i<activeSignals.length;i++){
+  var aw=activeWeights();
+  var sd=Math.sqrt(portVar(aw));
+  var compZ=0,compKappa=0,zNum=0;
+  for(i=0;i<aw.length;i++){zNum+=aw[i].w*zByID[aw[i].sig.id];compKappa+=aw[i].w*aw[i].sig.kappa}
+  compZ=sd>0?zNum/sd:0;
+  var compIC=compositeIC(aw,h,sd);
+  var bestSingleIC=0;for(i=0;i<aw.length;i++)bestSingleIC=Math.max(bestSingleIC,icAt(aw[i].sig,h));
+
+  // --- IC decay curves, days 1..63 ---
+  var decayDays=[],decayCurves={},compDecay=[];
+  for(d=1;d<=63;d++)decayDays.push(d);
+  for(i=0;i<aw.length;i++){
     var curve=[];
-    for(var d=0;d<decayDays.length;d++){
-      var t=decayDays[d];
-      var v=activeSignals[i].ic*Math.pow(activeSignals[i].decay,t/21)+gaussian(rng)*.003;
-      curve.push(Math.max(v,0));
-    }
-    decayCurves[activeSignals[i].id]=curve;
+    for(d=0;d<decayDays.length;d++)curve.push(icAt(aw[i].sig,decayDays[d]));
+    decayCurves[aw[i].sig.id]=curve;
   }
-  // Composite decay
-  var compDecay=[];
-  for(var d=0;d<decayDays.length;d++){
-    var sum=0;
-    for(var i=0;i<activeSignals.length;i++)sum+=decayCurves[activeSignals[i].id][d]/nSig;
-    compDecay.push(sum);
+  for(d=0;d<decayDays.length;d++){
+    var acc=0;for(i=0;i<aw.length;i++)acc+=aw[i].w*decayCurves[aw[i].sig.id][d];
+    compDecay.push(sd>0?acc/sd:0);
   }
-
-  // Half-life calculation
-  var halfLife=21;
-  if(compDecay.length>1){
-    var peak=compDecay[0];
-    for(var d=0;d<compDecay.length;d++){
-      if(compDecay[d]<=peak/2){halfLife=decayDays[d];break}
+  // half-life of the composite curve, linearly interpolated
+  var halfLife=decayDays[decayDays.length-1],target=compDecay[0]/2;
+  for(d=1;d<compDecay.length;d++){
+    if(compDecay[d]<=target){
+      var span=compDecay[d-1]-compDecay[d];
+      halfLife=decayDays[d-1]+(span>0?(compDecay[d-1]-target)/span:0);
+      break;
     }
   }
 
-  // Sector sentiments
+  // --- sector read-across from the composite z ---
   var sectorSent=[];
-  for(var i=0;i<SECTORS.length;i++){
-    var base=SECTORS[i].base*docSentiment+gaussian(rng)*.15;
-    sectorSent.push({name:SECTORS[i].name,score:Math.max(-1,Math.min(1,base))});
+  for(i=0;i<SECTORS.length;i++){
+    var beta=(tr&&SECTORS[i].name===tr.sector)?1:SECTORS[i].beta;
+    var v=Math.tanh(beta*compZ*0.35+gaussian(rngT)*0.07);
+    sectorSent.push({name:SECTORS[i].name,beta:beta,score:Math.max(-1,Math.min(1,v)),own:beta===1});
   }
 
-  // Scatter data: sentiment vs forward returns (simulated cross-section)
-  var scatterPts=[];
-  for(var i=0;i<80;i++){
-    var sent=gaussian(rng)*.4+docSentiment*.3;
-    var fwdRet=sent*.03+gaussian(rng)*.04;
-    scatterPts.push({x:sent,y:fwdRet});
+  // --- synthetic cross-section whose SAMPLE correlation equals the composite IC exactly ---
+  var rngX=mulberry32(BASE_SEED+7),nPts=90,sigR=MODEL.xsDisp*Math.sqrt(h/252);
+  var zx=standardize(stratNormals(nPts,rngX)),ze=standardize(stratNormals(nPts,rngX)),cxe=0;
+  for(i=0;i<nPts;i++)cxe+=zx[i]*ze[i];
+  cxe/=(nPts-1);
+  var perp=[];for(i=0;i<nPts;i++)perp.push(ze[i]-cxe*zx[i]);
+  perp=standardize(perp);
+  var kIC=Math.max(-1,Math.min(1,compIC)),kRes=Math.sqrt(Math.max(0,1-kIC*kIC)),scatterPts=[];
+  for(i=0;i<nPts;i++)scatterPts.push({x:zx[i],y:sigR*(kIC*zx[i]+kRes*perp[i])});
+  var focus={x:compZ,y:sigR*kIC*compZ,name:tr?tr.ticker:'',focus:true};
+
+  // --- universe-level backtest (independent of which single transcript is on screen) ---
+  var comp=sleeve(compIC,compKappa,h,mulberry32(BASE_SEED+1));
+  var nlpSig=ALT_SIGNALS[0];
+  var nlpOnly=sleeve(icAt(nlpSig,h),nlpSig.kappa,h,mulberry32(BASE_SEED+2));
+  var tradIC=MODEL.tradIc1*Math.pow(2,-(h-1)/MODEL.tradHl);
+  var trad=sleeve(tradIC,MODEL.tradKappa,h,mulberry32(BASE_SEED+3));
+  var bmZ=standardize(stratNormals(MODEL.nMonths,mulberry32(BASE_SEED+4)));
+  var bmMu=MODEL.bmRet/12,bmSg=MODEL.bmVol/Math.sqrt(12);
+  var bmRet=[],compRet=[],nlpRet=[],tradRet=[];
+  for(i=0;i<MODEL.nMonths;i++){
+    bmRet.push(bmMu+bmSg*bmZ[i]);
+    compRet.push(bmRet[i]+comp.act[i]);
+    nlpRet.push(bmRet[i]+nlpOnly.act[i]);
+    tradRet.push(bmRet[i]+trad.act[i]);
   }
 
-  // Backtest returns (60 months)
-  var nM=60;
-  var holdMult=state.holdDays>=42?1.05:state.holdDays>=21?1.0:state.holdDays>=10?.88:.72;
-  var nlpRet=[],compRet=[],tradRet=[],bmRet=[];
-  var nlpAlpha=0;
-  for(var i=0;i<activeSignals.length;i++){
-    if(activeSignals[i].id==='nlp')nlpAlpha=activeSignals[i].baseAlpha*holdMult*docSentiment;
-  }
-  var compAlpha=signalStrength*holdMult*.15*(1+docSentiment*.3);
-  var tradAlpha=.005*holdMult;
-
-  for(var m=0;m<nM;m++){
-    var b=.006+gaussian(rng)*.04;
-    bmRet.push(b);
-    nlpRet.push(b+(nlpAlpha>0?nlpAlpha:ALT_SIGNALS[0].baseAlpha*holdMult*.5)*.4+gaussian(rng)*.015);
-    compRet.push(b+compAlpha*.4+gaussian(rng)*.012);
-    tradRet.push(b+tradAlpha*.4+gaussian(rng)*.018);
-  }
-
-  var nlpEq=cumProd(nlpRet),compEq=cumProd(compRet),tradEq=cumProd(tradRet),bmEq=cumProd(bmRet);
-
-  // Signal contribution bars
+  // --- per-signal contribution to the composite IC ---
   var contributions=[];
-  for(var i=0;i<activeSignals.length;i++){
-    var w=activeSignals[i].baseAlpha/signalStrength;
-    contributions.push({name:activeSignals[i].name,color:activeSignals[i].color,weight:w,ic:activeSignals[i].ic+gaussian(rng)*.005,alpha:activeSignals[i].baseAlpha*holdMult*(1+docSentiment*.3)});
+  for(i=0;i<aw.length;i++){
+    var icI=icAt(aw[i].sig,h);
+    contributions.push({name:aw[i].sig.name,color:aw[i].sig.color,id:aw[i].sig.id,
+      weight:aw[i].w,ic:icI,dIC:sd>0?aw[i].w*icI/sd:0,kappa:aw[i].sig.kappa});
   }
 
-  // IC at holding period
-  var compIC=0;
-  for(var i=0;i<activeSignals.length;i++){
-    compIC+=activeSignals[i].ic*Math.pow(activeSignals[i].decay,state.holdDays/21)/nSig;
-  }
-
-  var sharpeComp=std(compRet)>0?mean(compRet)/std(compRet)*Math.sqrt(12):0;
-  var annAlpha=(mean(compRet)-mean(bmRet))*12;
-
-  return{tr:tr,sentScores:sentScores,docSentiment:docSentiment,signalStrength:signalStrength,
+  return{tr:tr,sentScores:sentScores,docSentiment:docSentiment,zNLP:zNLP,zByID:zByID,
+    aw:aw,compZ:compZ,compIC:compIC,bestSingleIC:bestSingleIC,compKappa:compKappa,
+    uncCount:uncCount,toneWords:toneWords,totalWords:totalWords,
     decayDays:decayDays,decayCurves:decayCurves,compDecay:compDecay,halfLife:halfLife,
-    sectorSent:sectorSent,scatterPts:scatterPts,
-    nlpEq:nlpEq,compEq:compEq,tradEq:tradEq,bmEq:bmEq,
-    nlpRet:nlpRet,compRet:compRet,tradRet:tradRet,bmRet:bmRet,
-    contributions:contributions,compIC:compIC,sharpeComp:sharpeComp,annAlpha:annAlpha,
-    activeSignals:activeSignals,nM:nM};
+    sectorSent:sectorSent,scatterPts:scatterPts,focus:focus,sigR:sigR,
+    comp:comp,nlpOnly:nlpOnly,trad:trad,tradIC:tradIC,
+    compEq:cumProd(compRet),nlpEq:cumProd(nlpRet),tradEq:cumProd(tradRet),bmEq:cumProd(bmRet),
+    compRet:compRet,nlpRet:nlpRet,tradRet:tradRet,bmRet:bmRet,
+    contributions:contributions,nM:MODEL.nMonths};
 }
 
 // ===== CANVAS =====
 function setupCanvas(cv,h){var d=window.devicePixelRatio||1,r=cv.getBoundingClientRect();cv.width=r.width*d;cv.height=h*d;cv.style.height=h+'px';var c=cv.getContext('2d');c.scale(d,d);c.clearRect(0,0,r.width,h);return{ctx:c,w:r.width,h:h}}
 function hex2rgba(h,a){return'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')'}
 
-// ===== RENDER TRANSCRIPT =====
+// ===== RENDER TRANSCRIPT (heatmap = the scores the lexicon actually computes) =====
 function renderTranscript(r){
-  if(!r.tr){document.getElementById('transcriptBox').innerHTML='<em>No transcript selected</em>';return}
-  var html='';
-  for(var s=0;s<r.tr.sections.length;s++){
-    var sec=r.tr.sections[s];
-    html+='<span class="speaker">'+sec.speaker+'</span>';
-    for(var l=0;l<sec.lines.length;l++){
-      var line=sec.lines[l];
-      var words=line.text.split(' ');
-      for(var w=0;w<words.length;w++){
-        var sc=w<line.scores.length?line.scores[w]:0;
-        var cls='neu';
-        if(sc>=3)cls='pos-3';else if(sc>=2)cls='pos-2';else if(sc>=1)cls='pos-1';
-        else if(sc<=-3)cls='neg-3';else if(sc<=-2)cls='neg-2';else if(sc<=-1)cls='neg-1';
-        html+='<span class="tw '+cls+'" data-score="'+sc+'">'+words[w]+'</span> ';
-      }
-      html+=' ';
+  var box=document.getElementById('transcriptBox');
+  if(!r.tr){box.innerHTML='<em>No transcript selected</em>';return}
+  var html='',lastSection=-1,i,k,t,cls,sc;
+  for(i=0;i<r.sentScores.length;i++){
+    var sent=r.sentScores[i];
+    if(sent.section!==lastSection){html+='<span class="speaker">'+sent.speaker+' &middot; weight '+sent.weight.toFixed(1)+'</span>';lastSection=sent.section}
+    for(k=0;k<sent.tokens.length;k++){
+      t=sent.tokens[k];sc=t.score;cls='neu';
+      if(sc>=2.5)cls='pos-3';else if(sc>=1.5)cls='pos-2';else if(sc>0)cls='pos-1';
+      else if(sc<=-2.5)cls='neg-3';else if(sc<=-1.5)cls='neg-2';else if(sc<0)cls='neg-1';
+      html+='<span class="tw '+cls+'" data-s="'+i+'" data-k="'+k+'">'+t.raw+'</span> ';
     }
+    html+=' ';
   }
-  document.getElementById('transcriptBox').innerHTML=html;
-  document.getElementById('transcriptTag').textContent=r.tr.ticker+' '+r.tr.quarter+' Earnings Call';
+  box.innerHTML=html;
+  document.getElementById('transcriptTag').textContent=r.tr.ticker+' \u2014 '+r.tr.name+' \u2014 '+r.tr.quarter+' (synthetic)';
+  document.getElementById('lexStats').textContent=r.toneWords+' of '+r.totalWords+' tokens matched the lexicon \u00b7 '+r.uncCount+' uncertainty terms \u00b7 doc tone '+(r.docSentiment>=0?'+':'')+r.docSentiment.toFixed(3);
 
-  // Word hover tooltips
-  document.querySelectorAll('.tw').forEach(function(el){
+  box.querySelectorAll('.tw').forEach(function(el){
     el.addEventListener('mouseenter',function(e){
-      var sc=parseFloat(this.dataset.score);
-      if(sc===0)return;
-      var label=sc>0?'Positive':'Negative';
-      var color=sc>0?'#10b981':'#ef4444';
-      showTT(e.clientX,e.clientY,'<div class="tt-title">NLP Attention</div><div class="tt-row"><span class="tt-lbl">Word</span><span class="tt-val" style="color:#f1f5f9">"'+this.textContent+'"</span></div><div class="tt-row"><span class="tt-lbl">Sentiment</span><span class="tt-val" style="color:'+color+'">'+label+' ('+sc+')</span></div><div class="tt-row"><span class="tt-lbl">Attention</span><span class="tt-val" style="color:var(--cyan)">'+(Math.abs(sc)/3*100).toFixed(0)+'%</span></div>');
+      var tok=r.sentScores[+this.dataset.s].tokens[+this.dataset.k];
+      if(!tok||(tok.score===0&&!tok.unc)){hideTT();return}
+      var col=tok.score>0?'#10b981':tok.score<0?'#ef4444':'#94a3b8';
+      var h='<div class="tt-title">Lexicon lookup</div>'+
+        '<div class="tt-row"><span class="tt-lbl">Token</span><span class="tt-val" style="color:#f1f5f9">"'+tok.key+'"</span></div>';
+      if(tok.base!==0){
+        h+='<div class="tt-row"><span class="tt-lbl">Base polarity</span><span class="tt-val">'+(tok.base>0?'+':'')+tok.base+'</span></div>'+
+           '<div class="tt-row"><span class="tt-lbl">Negated (3-token window)</span><span class="tt-val" style="color:'+(tok.neg?'#f59e0b':'#94a3b8')+'">'+(tok.neg?'yes':'no')+'</span></div>'+
+           '<div class="tt-row"><span class="tt-lbl">Multiplier</span><span class="tt-val">&times;'+tok.amp.toFixed(2)+'</span></div>'+
+           '<div class="tt-divider"></div>'+
+           '<div class="tt-row"><span class="tt-lbl">Score</span><span class="tt-val" style="color:'+col+'">'+(tok.score>0?'+':'')+tok.score.toFixed(2)+'</span></div>';
+      }else h+='<div class="tt-row"><span class="tt-lbl">Tone</span><span class="tt-val" style="color:#94a3b8">not in lexicon</span></div>';
+      if(tok.unc)h+='<div class="tt-note" style="color:#94a3b8;font-size:10px;margin-top:4px">Loughran-McDonald uncertainty term (no tone contribution)</div>';
+      showTT(e.clientX,e.clientY,h);
     });
     el.addEventListener('mouseleave',hideTT);
   });
@@ -700,7 +842,7 @@ function renderSentenceBars(r){
   ctx.beginPath();ctx.moveTo(pad.l,midY);ctx.lineTo(W-pad.r,midY);ctx.stroke();ctx.setLineDash([]);
 
   // Grid
-  ctx.font='9px Courier New, monospace';ctx.fillStyle='#475569';ctx.textAlign='right';ctx.textBaseline='middle';
+  ctx.font='9px Courier New, monospace';ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.textBaseline='middle';
   for(var g=-2;g<=2;g++){
     var yv=g/2*maxAbs;var yp=midY-yv/maxAbs*(chartH/2);
     if(g!==0){ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(pad.l,yp);ctx.lineTo(W-pad.r,yp);ctx.stroke()}
@@ -717,26 +859,27 @@ function renderSentenceBars(r){
     var grad=ctx.createLinearGradient(0,yTop,0,yTop+barH);
     grad.addColorStop(0,hex2rgba(color,.8));grad.addColorStop(1,hex2rgba(color,.25));
     ctx.fillStyle=grad;ctx.beginPath();ctx.roundRect(x,yTop,barW,barH,3);ctx.fill();
-    hitboxes.push({x:x,y:Math.min(yTop,midY),w:barW,h:Math.max(barH,10),score:v,speaker:scores[i].speaker,text:scores[i].text.substring(0,60)+'...',color:color});
+    hitboxes.push({x:x,y:Math.min(yTop,midY),w:barW,h:Math.max(barH,10),score:v,speaker:scores[i].speaker,weight:scores[i].weight,hits:scores[i].hits,n:scores[i].n,text:scores[i].text.substring(0,72)+'\u2026',color:color});
   }
   // X label
-  ctx.fillStyle='#475569';ctx.font='10px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.fillText('Sentences (sequential)',pad.l+chartW/2,H-pad.b+10);
+  ctx.fillStyle='#64748b';ctx.font='10px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('Sentences in document order \u2014 CEO, CFO, then Q&A',pad.l+chartW/2,H-pad.b+10);
+  ctx.save();ctx.translate(10,pad.t+chartH/2);ctx.rotate(-Math.PI/2);ctx.fillText('Tone (\u22121\u20261)',0,0);ctx.restore();
   chartMeta.cvSentence={type:'vbar_sent',hitboxes:hitboxes,midY:midY};
 }
 
-// ===== RENDER SECTOR HEATMAP =====
+// ===== RENDER SECTOR READ-ACROSS =====
 function renderSectors(r){
   var grid=document.getElementById('sectorGrid');
-  var html='';
-  for(var i=0;i<r.sectorSent.length;i++){
-    var s=r.sectorSent[i];
-    var absV=Math.abs(s.score);
-    var color=s.score>=0?'rgba(16,185,129,'+(absV*.6+.08)+')':'rgba(239,68,68,'+(absV*.6+.08)+')';
-    var textColor=s.score>=0?'#10b981':'#ef4444';
-    html+='<div class="sector-cell" style="background:'+color+'" title="'+s.name+': '+(s.score>=0?'+':'')+s.score.toFixed(2)+'">';
-    html+='<div class="sname">'+s.name+'</div>';
-    html+='<div class="sscore" style="color:'+textColor+'">'+(s.score>=0?'+':'')+s.score.toFixed(2)+'</div>';
+  var html='',i;
+  for(i=0;i<r.sectorSent.length;i++){
+    var sec=r.sectorSent[i],absV=Math.abs(sec.score);
+    var bg=sec.score>=0?'rgba(16,185,129,'+(absV*.6+.08)+')':'rgba(239,68,68,'+(absV*.6+.08)+')';
+    var tc=sec.score>=0?'#10b981':'#ef4444';
+    var title=sec.name+': '+(sec.score>=0?'+':'')+sec.score.toFixed(2)+'  |  linkage beta '+sec.beta.toFixed(2)+(sec.own?" (issuer's own sector)":'')+'  |  tanh(beta x composite z x 0.35 + noise)';
+    html+='<div class="sector-cell" style="background:'+bg+(sec.own?';border-color:rgba(6,182,212,.55)':'')+'" title="'+title+'">';
+    html+='<div class="sname">'+sec.name+(sec.own?' \u2605':'')+'</div>';
+    html+='<div class="sscore" style="color:'+tc+'">'+(sec.score>=0?'+':'')+sec.score.toFixed(2)+'</div>';
     html+='</div>';
   }
   grid.innerHTML=html;
@@ -755,7 +898,7 @@ function drawLine(canvasId,datasets,xLabels,opts){
   for(var d=0;d<datasets.length;d++)for(var i=0;i<datasets[d].data.length;i++){var v=datasets[d].data[i];if(v!==null){if(v<minV)minV=v;if(v>maxV)maxV=v}}
   if(opts.minY!==undefined)minV=opts.minY;
   var range=maxV-minV;if(range===0)range=1;minV-=range*.05;maxV+=range*.05;range=maxV-minV;
-  ctx.strokeStyle='rgba(30,41,59,.6)';ctx.lineWidth=.5;ctx.font='10px Courier New, monospace';ctx.fillStyle='#475569';ctx.textAlign='right';ctx.textBaseline='middle';
+  ctx.strokeStyle='rgba(30,41,59,.6)';ctx.lineWidth=.5;ctx.font='10px Courier New, monospace';ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.textBaseline='middle';
   for(var g=0;g<=5;g++){var yv=minV+range*g/5,yp=H-pad.b-((yv-minV)/range)*cH;ctx.beginPath();ctx.moveTo(pad.l,yp);ctx.lineTo(W-pad.r,yp);ctx.stroke();ctx.fillText(opts.pct?(yv*100).toFixed(1)+'%':yv.toFixed(opts.decimals||2),pad.l-6,yp)}
   if(xLabels){ctx.textAlign='center';ctx.textBaseline='top';var step=Math.max(1,Math.floor(xLabels.length/8));for(var i=0;i<xLabels.length;i+=step){var x=pad.l+i/(xLabels.length-1)*cW;ctx.fillText(xLabels[i],x,H-pad.b+6)}}
   if(opts.drawdown&&datasets.length>0){var eq=datasets[0].data;var pk=eq[0];ctx.fillStyle='rgba(239,68,68,.06)';for(var i=1;i<eq.length;i++){if(eq[i]>pk)pk=eq[i];if(eq[i]<pk*.99){ctx.fillRect(pad.l+(i-1)/(eq.length-1)*cW,pad.t,(1/(eq.length-1))*cW*1.2,cH)}}}
@@ -767,6 +910,15 @@ function drawLine(canvasId,datasets,xLabels,opts){
     ctx.stroke();ctx.setLineDash([]);
   }
   if(minV<0&&maxV>0){var y0=H-pad.b-((-minV)/range)*cH;ctx.strokeStyle='rgba(148,163,184,.25)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,y0);ctx.lineTo(W-pad.r,y0);ctx.stroke();ctx.setLineDash([])}
+  if(opts.markX!==undefined&&opts.markX!==null&&datasets.length){
+    var mkx=pad.l+opts.markX/(datasets[0].data.length-1)*cW;
+    ctx.strokeStyle='rgba(6,182,212,.6)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(mkx,pad.t);ctx.lineTo(mkx,H-pad.b);ctx.stroke();ctx.setLineDash([]);
+    if(opts.markLabel){ctx.fillStyle='#06b6d4';ctx.font='9px JetBrains Mono, monospace';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(opts.markLabel,Math.min(mkx+4,W-pad.r-56),pad.t+2)}
+  }
+  ctx.fillStyle='#64748b';ctx.font='10px Inter, sans-serif';
+  if(opts.xTitle){ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(opts.xTitle,pad.l+cW/2,H-pad.b+19)}
+  if(opts.yTitle){ctx.save();ctx.translate(11,pad.t+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(opts.yTitle,0,0);ctx.restore()}
   chartMeta[canvasId]={type:'line',datasets:datasets,xLabels:xLabels,opts:opts,pad:pad,W:W,H:H,cW:cW,cH:cH,minV:minV,maxV:maxV,range:range};
 }
 
@@ -774,109 +926,128 @@ function drawLine(canvasId,datasets,xLabels,opts){
 function drawScatter(canvasId,pts,r){
   var cv=document.getElementById(canvasId);
   var c=setupCanvas(cv,240);
-  var ctx=c.ctx,W=c.w,H=c.h;
-  var pad={t:20,r:20,b:35,l:55};
+  var ctx=c.ctx,W=c.w,H=c.h,i;
+  var pad={t:20,r:20,b:40,l:58};
   var cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
-  var minX=-1,maxX=1,minY=-.12,maxY=.12;
-  for(var i=0;i<pts.length;i++){minX=Math.min(minX,pts[i].x);maxX=Math.max(maxX,pts[i].x);minY=Math.min(minY,pts[i].y);maxY=Math.max(maxY,pts[i].y)}
+  var minX=-3,maxX=3,lim=r.sigR*3.2,minY=-lim,maxY=lim;
+  var all=pts.concat([r.focus]);
+  for(i=0;i<all.length;i++){minX=Math.min(minX,all[i].x);maxX=Math.max(maxX,all[i].x);minY=Math.min(minY,all[i].y);maxY=Math.max(maxY,all[i].y)}
   var rX=maxX-minX,rY=maxY-minY;
-  ctx.strokeStyle='rgba(30,41,59,.6)';ctx.lineWidth=.5;ctx.font='9px Courier New, monospace';ctx.fillStyle='#475569';
+  ctx.strokeStyle='rgba(30,41,59,.6)';ctx.lineWidth=.5;ctx.font='9px JetBrains Mono, monospace';ctx.fillStyle='#64748b';
   ctx.textAlign='right';ctx.textBaseline='middle';
   for(var g=0;g<=4;g++){var yv=minY+rY*g/4,yp=H-pad.b-((yv-minY)/rY)*cH;ctx.beginPath();ctx.moveTo(pad.l,yp);ctx.lineTo(W-pad.r,yp);ctx.stroke();ctx.fillText((yv*100).toFixed(1)+'%',pad.l-4,yp)}
   ctx.textAlign='center';ctx.textBaseline='top';
-  for(var g=0;g<=4;g++){var xv=minX+rX*g/4,xp=pad.l+((xv-minX)/rX)*cW;ctx.beginPath();ctx.moveTo(xp,pad.t);ctx.lineTo(xp,H-pad.b);ctx.stroke();ctx.fillText(xv.toFixed(1),xp,H-pad.b+6)}
-  // Zero lines
+  for(g=0;g<=4;g++){var xv=minX+rX*g/4,xp=pad.l+((xv-minX)/rX)*cW;ctx.beginPath();ctx.moveTo(xp,pad.t);ctx.lineTo(xp,H-pad.b);ctx.stroke();ctx.fillText(xv.toFixed(1),xp,H-pad.b+6)}
   ctx.strokeStyle='rgba(148,163,184,.2)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
   var x0=pad.l+((-minX)/rX)*cW,y0=H-pad.b-((-minY)/rY)*cH;
   ctx.beginPath();ctx.moveTo(x0,pad.t);ctx.lineTo(x0,H-pad.b);ctx.stroke();
   ctx.beginPath();ctx.moveTo(pad.l,y0);ctx.lineTo(W-pad.r,y0);ctx.stroke();ctx.setLineDash([]);
-  // Regression line
-  var sx=0,sy=0,sxy=0,sxx=0;
-  for(var i=0;i<pts.length;i++){sx+=pts[i].x;sy+=pts[i].y;sxy+=pts[i].x*pts[i].y;sxx+=pts[i].x*pts[i].x}
-  var n=pts.length,slope=(n*sxy-sx*sy)/(n*sxx-sx*sx),inter=(sy-slope*sx)/n;
-  ctx.strokeStyle='rgba(6,182,212,.5)';ctx.lineWidth=1.5;ctx.beginPath();
-  ctx.moveTo(pad.l+((minX-minX)/rX)*cW,H-pad.b-(((slope*minX+inter)-minY)/rY)*cH);
-  ctx.lineTo(pad.l+((maxX-minX)/rX)*cW,H-pad.b-(((slope*maxX+inter)-minY)/rY)*cH);
+  // OLS fit of the plotted points (slope = IC x sigma_r by construction)
+  var sx=0,sy=0,sxy=0,sxx=0,n=pts.length;
+  for(i=0;i<n;i++){sx+=pts[i].x;sy+=pts[i].y;sxy+=pts[i].x*pts[i].y;sxx+=pts[i].x*pts[i].x}
+  var slope=(n*sxy-sx*sy)/(n*sxx-sx*sx),inter=(sy-slope*sx)/n;
+  ctx.strokeStyle='rgba(6,182,212,.55)';ctx.lineWidth=1.5;ctx.beginPath();
+  ctx.moveTo(pad.l,H-pad.b-(((slope*minX+inter)-minY)/rY)*cH);
+  ctx.lineTo(pad.l+cW,H-pad.b-(((slope*maxX+inter)-minY)/rY)*cH);
   ctx.stroke();
-  // Points
   var hitboxes=[];
-  for(var i=0;i<pts.length;i++){
+  for(i=0;i<n;i++){
     var px=pad.l+((pts[i].x-minX)/rX)*cW,py=H-pad.b-((pts[i].y-minY)/rY)*cH;
-    var col=pts[i].y>=0?'rgba(16,185,129,.5)':'rgba(239,68,68,.5)';
-    ctx.fillStyle=col;ctx.beginPath();ctx.arc(px,py,3.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=pts[i].y>=0?'rgba(16,185,129,.5)':'rgba(239,68,68,.5)';
+    ctx.beginPath();ctx.arc(px,py,3.5,0,Math.PI*2);ctx.fill();
     hitboxes.push({x:px,y:py,sent:pts[i].x,ret:pts[i].y});
   }
-  // Axis labels
-  ctx.fillStyle='#475569';ctx.font='10px Inter, sans-serif';ctx.textAlign='center';
-  ctx.fillText('NLP Sentiment Score',pad.l+cW/2,H-pad.b+22);
-  ctx.save();ctx.translate(12,pad.t+cH/2);ctx.rotate(-Math.PI/2);ctx.fillText('Fwd Return',0,0);ctx.restore();
-  // IC annotation
-  ctx.fillStyle='#06b6d4';ctx.font='bold 11px Courier New, monospace';ctx.textAlign='right';
-  ctx.fillText('IC = '+r.compIC.toFixed(3),W-pad.r-4,pad.t+14);
+  // selected issuer
+  var fx=pad.l+((r.focus.x-minX)/rX)*cW,fy=H-pad.b-((r.focus.y-minY)/rY)*cH;
+  ctx.fillStyle='#06b6d4';ctx.beginPath();ctx.arc(fx,fy,4.5,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#00f7ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(fx,fy,8.5,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#00f7ff';ctx.font='bold 10px JetBrains Mono, monospace';ctx.textAlign='left';ctx.textBaseline='bottom';
+  ctx.fillText(r.focus.name,Math.min(fx+11,W-pad.r-34),fy-2);
+  hitboxes.push({x:fx,y:fy,sent:r.focus.x,ret:r.focus.y,name:r.focus.name});
+  ctx.fillStyle='#64748b';ctx.font='10px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('Composite signal score (z)',pad.l+cW/2,H-pad.b+21);
+  ctx.save();ctx.translate(11,pad.t+cH/2);ctx.rotate(-Math.PI/2);ctx.fillText('Forward return over '+state.holdDays+'d',0,0);ctx.restore();
+  ctx.fillStyle='#06b6d4';ctx.font='bold 11px JetBrains Mono, monospace';ctx.textAlign='right';ctx.textBaseline='top';
+  ctx.fillText('sample IC = '+r.compIC.toFixed(3),W-pad.r-4,pad.t+2);
   chartMeta[canvasId]={type:'scatter',hitboxes:hitboxes};
 }
 
 // ===== CONTRIBUTION BARS =====
-function drawContrib(canvasId,contribs){
+function drawContrib(canvasId,contribs,note){
   var cv=document.getElementById(canvasId);
   var c=setupCanvas(cv,240);
-  var ctx=c.ctx,W=c.w,H=c.h;
-  var pad={t:20,r:30,b:20,l:110};
+  var ctx=c.ctx,W=c.w,H=c.h,i;
+  var pad={t:34,r:30,b:20,l:112};
   var n=contribs.length;if(n===0)return;
-  var maxV=0;for(var i=0;i<n;i++)maxV=Math.max(maxV,contribs[i].weight);
+  if(note){ctx.fillStyle='#94a3b8';ctx.font='10.5px Inter, sans-serif';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(note,4,6)}
+  var maxV=0;for(i=0;i<n;i++)maxV=Math.max(maxV,contribs[i].weight);
   maxV*=1.15;if(maxV<=0)maxV=1;
-  var barH=Math.min(32,((H-pad.t-pad.b)/n)*.65);
+  var barH=Math.min(30,((H-pad.t-pad.b)/n)*.62);
   var gap=((H-pad.t-pad.b)-barH*n)/(n+1);
   var hitboxes=[];
-  for(var i=0;i<n;i++){
+  for(i=0;i<n;i++){
     var item=contribs[i];
     var y=pad.t+gap*(i+1)+barH*i;
     var bw=(item.weight/maxV)*(W-pad.l-pad.r);
     ctx.fillStyle='#94a3b8';ctx.font='11px Inter, sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
     ctx.fillText(item.name,pad.l-10,y+barH/2);
     ctx.fillStyle='rgba(30,41,59,.5)';ctx.beginPath();ctx.roundRect(pad.l,y,W-pad.l-pad.r,barH,4);ctx.fill();
-    var grad=ctx.createLinearGradient(pad.l,0,pad.l+bw,0);
+    var grad=ctx.createLinearGradient(pad.l,0,pad.l+Math.max(bw,4),0);
     grad.addColorStop(0,hex2rgba(item.color,.85));grad.addColorStop(1,hex2rgba(item.color,.4));
     ctx.fillStyle=grad;ctx.beginPath();ctx.roundRect(pad.l,y,Math.max(bw,4),barH,4);ctx.fill();
-    ctx.fillStyle=item.color;ctx.textAlign='left';ctx.font='bold 11px Courier New, monospace';
-    ctx.fillText((item.weight*100).toFixed(1)+'%',pad.l+bw+8,y+barH/2-6);
-    ctx.fillStyle='#94a3b8';ctx.font='10px Courier New, monospace';
-    ctx.fillText('IC:'+item.ic.toFixed(3)+'  \u03B1:'+(item.alpha*100).toFixed(1)+'%',pad.l+bw+8,y+barH/2+8);
-    hitboxes.push({x:pad.l,y:y,w:W-pad.l-pad.r,h:barH,name:item.name,color:item.color,weight:item.weight,ic:item.ic,alpha:item.alpha});
+    ctx.fillStyle=item.color;ctx.textAlign='left';ctx.font='bold 11px JetBrains Mono, monospace';
+    ctx.fillText((item.weight*100).toFixed(0)+'%',pad.l+bw+8,y+barH/2-6);
+    ctx.fillStyle='#94a3b8';ctx.font='10px JetBrains Mono, monospace';
+    ctx.fillText('IC '+item.ic.toFixed(3)+'  \u0394IC '+item.dIC.toFixed(3),pad.l+bw+8,y+barH/2+8);
+    hitboxes.push({x:pad.l,y:y,w:W-pad.l-pad.r,h:barH,name:item.name,color:item.color,
+      weight:item.weight,ic:item.ic,dIC:item.dIC,kappa:item.kappa});
   }
   chartMeta[canvasId]={type:'hbar',hitboxes:hitboxes};
 }
 
-// ===== RENDER KPIs =====
+// ===== RENDER KPIs (every tile is read straight off the same objects the charts use) =====
 function renderKPIs(r){
   function sk(id,v,c){var e=document.getElementById(id);e.textContent=v;e.className='val '+(c||'neutral')}
-  sk('kSent',(r.docSentiment>=0?'+':'')+r.docSentiment.toFixed(2),r.docSentiment>.3?'pos':r.docSentiment<-.1?'neg':'neutral');
-  sk('kSignal',(r.signalStrength*100).toFixed(0)+'%',r.signalStrength>.08?'pos':'neutral');
-  sk('kSharpe',r.sharpeComp.toFixed(2),r.sharpeComp>=1?'pos':r.sharpeComp>=.4?'neutral':'neg');
-  sk('kIC',r.compIC.toFixed(3),'neutral');
-  sk('kAlpha',(r.annAlpha*100).toFixed(1)+'%',r.annAlpha>0?'pos':'neg');
-  sk('kHalfLife',r.halfLife+'d','neutral');
+  var dd=maxDrawdown(r.compEq);
+  sk('kSent',(r.docSentiment>=0?'+':'')+r.docSentiment.toFixed(2),r.docSentiment>.15?'pos':r.docSentiment<-.05?'neg':'neutral');
+  sk('kSignal',(r.compZ>=0?'+':'')+r.compZ.toFixed(2)+'\u03c3',r.compZ>.5?'pos':r.compZ<-.5?'neg':'neutral');
+  sk('kIC',r.compIC.toFixed(3),r.compIC>=.02?'neutral':'warn');
+  sk('kAlpha',(r.comp.net*100).toFixed(2)+'%',r.comp.net>0?'pos':'neg');
+  sk('kSharpe',r.comp.irNet.toFixed(2),r.comp.irNet>=.3?'pos':r.comp.irNet>0?'neutral':'neg');
+  sk('kHit',(r.comp.hit*100).toFixed(1)+'%',r.comp.hit>=.52?'pos':r.comp.hit>=.5?'neutral':'neg');
+  sk('kMaxDD','-'+(dd*100).toFixed(1)+'%','neg');
+  sk('kHalfLife',r.halfLife.toFixed(0)+'d','neutral');
 }
 
 // ===== RENDER PERF TABLE =====
 function renderPerfTable(r){
   var body=document.getElementById('perfBody');
-  var annC=(mean(r.compRet))*12,annN=(mean(r.nlpRet))*12,annB=mean(r.bmRet)*12;
-  var vC=std(r.compRet)*Math.sqrt(12),vN=std(r.nlpRet)*Math.sqrt(12),vB=std(r.bmRet)*Math.sqrt(12);
-  var sC=vC>0?(annC-annB)/vC:0,sN=vN>0?(annN-annB)/vN:0;
+  function pc(x){return(x*100).toFixed(2)+'%'}
+  function act(ret,bm){var a=[],i;for(i=0;i<ret.length;i++)a.push(ret[i]-bm[i]);return a}
+  var aC=act(r.compRet,r.bmRet),aN=act(r.nlpRet,r.bmRet),aT=act(r.tradRet,r.bmRet);
+  function teOf(a){return std(a)*Math.sqrt(12)}
   var rows=[
-    ['Ann. Return',(annC*100).toFixed(2)+'%',(annN*100).toFixed(2)+'%',(annB*100).toFixed(2)+'%'],
-    ['Ann. Alpha',((annC-annB)*100).toFixed(2)+'%',((annN-annB)*100).toFixed(2)+'%','0.00%'],
-    ['Volatility',(vC*100).toFixed(2)+'%',(vN*100).toFixed(2)+'%',(vB*100).toFixed(2)+'%'],
-    ['Sharpe (alpha)',sC.toFixed(2),sN.toFixed(2),'--'],
-    ['Max Drawdown',(maxDrawdown(r.compEq)*100).toFixed(1)+'%',(maxDrawdown(r.nlpEq)*100).toFixed(1)+'%',(maxDrawdown(r.bmEq)*100).toFixed(1)+'%'],
-    ['Signal IC',r.compIC.toFixed(4),ALT_SIGNALS[0].ic.toFixed(4),'--'],
-    ['Half-Life',r.halfLife+'d',Math.round(r.halfLife*1.2)+'d','--']
+    ['Ann. return (total)',pc(mean(r.compRet)*12),pc(mean(r.nlpRet)*12),pc(mean(r.tradRet)*12),pc(mean(r.bmRet)*12),0],
+    ['Gross alpha (ann.)',pc(r.comp.gross),pc(r.nlpOnly.gross),pc(r.trad.gross),'\u2014',1],
+    ['Transaction costs (ann.)','-'+pc(r.comp.cost),'-'+pc(r.nlpOnly.cost),'-'+pc(r.trad.cost),'\u2014',2],
+    ['Net alpha (ann.)',pc(r.comp.net),pc(r.nlpOnly.net),pc(r.trad.net),'\u2014',1],
+    ['Tracking error',pc(teOf(aC)),pc(teOf(aN)),pc(teOf(aT)),'\u2014',0],
+    ['Information ratio (net)',r.comp.irNet.toFixed(2),r.nlpOnly.irNet.toFixed(2),r.trad.irNet.toFixed(2),'\u2014',1],
+    ['Volatility (total)',pc(std(r.compRet)*Math.sqrt(12)),pc(std(r.nlpRet)*Math.sqrt(12)),pc(std(r.tradRet)*Math.sqrt(12)),pc(std(r.bmRet)*Math.sqrt(12)),0],
+    ['Max drawdown','-'+(maxDrawdown(r.compEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.nlpEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.tradEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.bmEq)*100).toFixed(1)+'%',2],
+    ['Hit rate (monthly active)',(r.comp.hit*100).toFixed(1)+'%',(r.nlpOnly.hit*100).toFixed(1)+'%',(r.trad.hit*100).toFixed(1)+'%','\u2014',0],
+    ['Two-way turnover (ann.)',r.comp.turn.toFixed(1)+'x',r.nlpOnly.turn.toFixed(1)+'x',r.trad.turn.toFixed(1)+'x','\u2014',0],
+    ['Signal IC @ '+state.holdDays+'d',r.compIC.toFixed(4),icAt(ALT_SIGNALS[0],state.holdDays).toFixed(4),r.tradIC.toFixed(4),'\u2014',0]
   ];
-  var html='';
-  for(var i=0;i<rows.length;i++){
+  var html='',i,j,cls;
+  for(i=0;i<rows.length;i++){
     html+='<tr><td>'+rows[i][0]+'</td>';
-    for(var j=1;j<=3;j++){var cls=j<=2&&i<=1&&parseFloat(rows[i][j])>parseFloat(rows[i][3]||'0')?'tpos':'';html+='<td class="'+cls+'">'+rows[i][j]+'</td>'}
+    for(j=1;j<=4;j++){
+      cls='';
+      if(rows[i][5]===1)cls=parseFloat(rows[i][j])>0?'tpos':(parseFloat(rows[i][j])<0?'tneg':'');
+      else if(rows[i][5]===2&&j<=3)cls='tneg';
+      html+='<td class="'+cls+'">'+rows[i][j]+'</td>';
+    }
     html+='</tr>';
   }
   body.innerHTML=html;
@@ -897,15 +1068,15 @@ function attachHover(canvasId){
       for(var d=0;d<ds.length;d++){var v=ds[d].data[idx];if(v===null)continue;var fmt=meta.opts.pct?(v*100).toFixed(1)+'%':v.toFixed(meta.opts.decimals||2);html+='<div class="tt-row"><span class="tt-lbl"><span class="tt-swatch" style="background:'+ds[d].color+'"></span>'+names[d]+'</span><span class="tt-val" style="color:'+ds[d].color+'">'+fmt+'</span></div>'}
       showTT(e.clientX,e.clientY,html);
     }else if(meta.type==='hbar'){
-      for(var i=0;i<meta.hitboxes.length;i++){var h=meta.hitboxes[i];if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h){showTT(e.clientX,e.clientY,'<div class="tt-title"><span class="tt-swatch" style="background:'+h.color+'"></span>'+h.name+'</div><div class="tt-row"><span class="tt-lbl">Weight</span><span class="tt-val" style="color:'+h.color+'">'+(h.weight*100).toFixed(1)+'%</span></div><div class="tt-row"><span class="tt-lbl">IC</span><span class="tt-val" style="color:#06b6d4">'+h.ic.toFixed(4)+'</span></div><div class="tt-row"><span class="tt-lbl">Alpha</span><span class="tt-val" style="color:#10b981">'+(h.alpha*100).toFixed(2)+'%</span></div>');return}}
+      for(var i=0;i<meta.hitboxes.length;i++){var h=meta.hitboxes[i];if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h){showTT(e.clientX,e.clientY,'<div class="tt-title"><span class="tt-swatch" style="background:'+h.color+'"></span>'+h.name+'</div><div class="tt-row"><span class="tt-lbl">Normalised weight</span><span class="tt-val" style="color:'+h.color+'">'+(h.weight*100).toFixed(1)+'%</span></div><div class="tt-row"><span class="tt-lbl">Standalone IC</span><span class="tt-val" style="color:#06b6d4">'+h.ic.toFixed(4)+'</span></div><div class="tt-row"><span class="tt-lbl">Contribution to composite IC</span><span class="tt-val" style="color:#10b981">'+h.dIC.toFixed(4)+'</span></div><div class="tt-row"><span class="tt-lbl">Turnover \u03ba</span><span class="tt-val">'+h.kappa.toFixed(2)+'</span></div>');return}}
       hideTT();
     }else if(meta.type==='vbar_sent'){
-      for(var i=0;i<meta.hitboxes.length;i++){var h=meta.hitboxes[i];if(mx>=h.x&&mx<=h.x+h.w&&my>=Math.min(h.y,meta.midY)-5&&my<=Math.max(h.y+h.h,meta.midY)+5){showTT(e.clientX,e.clientY,'<div class="tt-title">Sentence '+(i+1)+'</div><div class="tt-row"><span class="tt-lbl">Score</span><span class="tt-val" style="color:'+h.color+'">'+h.score.toFixed(3)+'</span></div><div class="tt-row"><span class="tt-lbl">Speaker</span><span class="tt-val" style="color:#94a3b8;font-weight:500;font-size:10px">'+h.speaker+'</span></div><div class="tt-divider"></div><div style="font-size:10px;color:#94a3b8;max-width:220px">'+h.text+'</div>');return}}
+      for(var i=0;i<meta.hitboxes.length;i++){var h=meta.hitboxes[i];if(mx>=h.x&&mx<=h.x+h.w&&my>=Math.min(h.y,meta.midY)-5&&my<=Math.max(h.y+h.h,meta.midY)+5){showTT(e.clientX,e.clientY,'<div class="tt-title">Sentence '+(i+1)+'</div><div class="tt-row"><span class="tt-lbl">Tone</span><span class="tt-val" style="color:'+h.color+'">'+h.score.toFixed(3)+'</span></div><div class="tt-row"><span class="tt-lbl">Scored / total tokens</span><span class="tt-val">'+h.hits+' / '+h.n+'</span></div><div class="tt-row"><span class="tt-lbl">Section weight</span><span class="tt-val">'+h.weight.toFixed(1)+'</span></div><div class="tt-row"><span class="tt-lbl">Speaker</span><span class="tt-val" style="color:#94a3b8;font-weight:500;font-size:10px">'+h.speaker+'</span></div><div class="tt-divider"></div><div style="font-size:10px;color:#94a3b8;max-width:220px">'+h.text+'</div>');return}}
       hideTT();
     }else if(meta.type==='scatter'){
       var closest=null,minDist=20;
       for(var i=0;i<meta.hitboxes.length;i++){var h=meta.hitboxes[i];var dist=Math.sqrt((mx-h.x)*(mx-h.x)+(my-h.y)*(my-h.y));if(dist<minDist){minDist=dist;closest=h}}
-      if(closest){showTT(e.clientX,e.clientY,'<div class="tt-title">Cross-Sectional Observation</div><div class="tt-row"><span class="tt-lbl">Sentiment</span><span class="tt-val" style="color:#06b6d4">'+closest.sent.toFixed(3)+'</span></div><div class="tt-row"><span class="tt-lbl">Fwd Return</span><span class="tt-val" style="color:'+(closest.ret>=0?'#10b981':'#ef4444')+'">'+(closest.ret*100).toFixed(2)+'%</span></div>')}else hideTT();
+      if(closest){showTT(e.clientX,e.clientY,'<div class="tt-title">'+(closest.name?closest.name+' (selected issuer)':'Synthetic cross-section name')+'</div><div class="tt-row"><span class="tt-lbl">Composite z</span><span class="tt-val" style="color:#06b6d4">'+closest.sent.toFixed(3)+'</span></div><div class="tt-row"><span class="tt-lbl">Fwd Return</span><span class="tt-val" style="color:'+(closest.ret>=0?'#10b981':'#ef4444')+'">'+(closest.ret*100).toFixed(2)+'%</span></div>')}else hideTT();
     }
   });
   cv.addEventListener('mouseleave',hideTT);
@@ -918,52 +1089,110 @@ function runAnalysis(){
   renderTranscript(r);
   renderSentenceBars(r);
   renderSectors(r);
+  renderWeights(r);
 
-  var decayLabels=[];for(var i=0;i<r.decayDays.length;i++)decayLabels.push(r.decayDays[i]%7===0?r.decayDays[i]+'d':'');
+  var decayLabels=[],i;
+  for(i=0;i<r.decayDays.length;i++)decayLabels.push(r.decayDays[i]%7===0?r.decayDays[i]+'d':'');
   var decayDS=[];
-  for(var i=0;i<r.activeSignals.length;i++){var sig=r.activeSignals[i];decayDS.push({data:r.decayCurves[sig.id],color:sig.color,width:2,name:sig.name})}
-  decayDS.push({data:r.compDecay,color:'#f1f5f9',width:2.5,name:'Composite',dash:null});
-  drawLine('cvDecay',decayDS,decayLabels,{height:240,decimals:4,minY:0,seriesNames:decayDS.map(function(d){return d.name})});
+  for(i=0;i<r.aw.length;i++){var sig=r.aw[i].sig;decayDS.push({data:r.decayCurves[sig.id],color:sig.color,width:1.6,name:sig.name})}
+  decayDS.push({data:r.compDecay,color:'#f1f5f9',width:2.5,name:'Composite'});
+  drawLine('cvDecay',decayDS,decayLabels,{height:240,decimals:3,minY:0,
+    xTitle:'Forward holding period (trading days)',yTitle:'Information coefficient',
+    markX:state.holdDays-1,markLabel:'h='+state.holdDays+'d',
+    seriesNames:decayDS.map(function(d){return d.name})});
 
   drawScatter('cvScatter',r.scatterPts,r);
 
-  var retLabels=[];for(var i=0;i<r.compEq.length;i++)retLabels.push(i%12===0?'Y'+(i/12):'');
+  var retLabels=[];for(i=0;i<r.compEq.length;i++)retLabels.push(i%12===0?'Y'+(i/12):'');
   drawLine('cvReturns',[
-    {data:r.compEq,color:'#06b6d4',width:2.5,name:'NLP Composite'},
-    {data:r.nlpEq,color:'#10b981',width:1.5,name:'NLP Only'},
-    {data:r.tradEq,color:'#8b5cf6',width:1.5,name:'Traditional Factors',dash:[4,4]},
-    {data:r.bmEq,color:'#475569',width:1.5,name:'Benchmark',dash:[6,4]}
-  ],retLabels,{height:220,decimals:2,drawdown:true,seriesNames:['NLP Composite','NLP Only','Traditional Factors','Benchmark']});
+    {data:r.compEq,color:'#06b6d4',width:2.5,name:'Composite overlay'},
+    {data:r.nlpEq,color:'#10b981',width:1.5,name:'NLP only'},
+    {data:r.tradEq,color:'#8b5cf6',width:1.5,name:'Traditional factors',dash:[4,4]},
+    {data:r.bmEq,color:'#64748b',width:1.5,name:'Benchmark',dash:[6,4]}
+  ],retLabels,{height:220,decimals:2,drawdown:true,
+    xTitle:'Backtest month (60 months)',yTitle:'Growth of 1.00',
+    seriesNames:['Composite overlay','NLP only','Traditional factors','Benchmark']});
 
-  drawContrib('cvContrib',r.contributions);
+  drawContrib('cvContrib',r.contributions,
+    'Composite IC '+r.compIC.toFixed(4)+' vs best single signal '+r.bestSingleIC.toFixed(4)+
+    '  (correlated signals, so the gain is modest)');
   renderPerfTable(r);
-  updateStatus();
+  updateStatus(r);
 }
 
-function updateStatus(){
-  var tr=null;for(var i=0;i<TRANSCRIPTS.length;i++)if(TRANSCRIPTS[i].id===state.transcript)tr=TRANSCRIPTS[i];
-  document.getElementById('statusRight').textContent='Transcript: '+(tr?tr.ticker+' '+tr.quarter:'--')+' \u2022 Signals: '+state.signals.length+'/4 \u2022 Holding: '+state.holdDays+'d';
+function renderWeights(r){
+  var i,byID={};
+  for(i=0;i<r.aw.length;i++)byID[r.aw[i].sig.id]=r.aw[i].w;
+  for(i=0;i<ALT_SIGNALS.length;i++){
+    var id=ALT_SIGNALS[i].id,on=state.signals.indexOf(id)>=0;
+    var lbl=document.querySelector('[data-wv="'+id+'"]');
+    var row=document.querySelector('[data-row="'+id+'"]');
+    var rng=document.querySelector('.w-range[data-id="'+id+'"]');
+    if(lbl)lbl.textContent=on?((byID[id]||0)*100).toFixed(0)+'%':'off';
+    if(row)row.classList.toggle('off',!on);
+    if(rng)rng.disabled=!on;
+  }
+  var sum=document.getElementById('wSum');
+  if(sum)sum.textContent='Raw sliders renormalised so active weights sum to 100% \u00b7 composite turnover \u03ba = '+r.compKappa.toFixed(2);
+}
+
+function updateStatus(r){
+  document.getElementById('statusLeft').innerHTML=
+    'seed <b>'+BASE_SEED+'</b> \u00b7 lexicon <b>'+(Object.keys(LEX).length)+'</b> terms + '+(Object.keys(NEGATORS).length)+
+    ' negators \u00b7 transcript <b>'+(r.tr?r.tr.ticker:'--')+'</b> ('+(r.tr?r.tr.quarter:'--')+
+    ') \u00b7 signals <b>'+state.signals.length+'/4</b> \u00b7 h=<b>'+state.holdDays+'d</b> \u00b7 IC<sub>c</sub>=<b>'+r.compIC.toFixed(3)+'</b>';
 }
 
 // ===== CONTROLS =====
 function initControls(){
+  var i;
   var tBox=document.getElementById('transcriptBtns');
-  var tHTML='';for(var i=0;i<TRANSCRIPTS.length;i++){var t=TRANSCRIPTS[i];tHTML+='<div class="tr-btn'+(t.id===state.transcript?' active':'')+'" data-id="'+t.id+'"><span class="ticker" style="color:'+t.color+'">'+t.ticker+'</span> '+t.quarter+'</div>'}
+  var tHTML='';
+  for(i=0;i<TRANSCRIPTS.length;i++){var t=TRANSCRIPTS[i];
+    tHTML+='<button type="button" class="tr-btn'+(t.id===state.transcript?' active':'')+'" data-id="'+t.id+
+      '" title="'+t.name+' \u2014 synthetic"><span class="ticker" style="color:'+t.color+'">'+t.ticker+'</span> '+t.quarter+'</button>'}
   tBox.innerHTML=tHTML;
-  tBox.querySelectorAll('.tr-btn').forEach(function(btn){btn.addEventListener('click',function(){state.transcript=this.dataset.id;tBox.querySelectorAll('.tr-btn').forEach(function(b){b.classList.remove('active')});this.classList.add('active');runAnalysis()})});
+  tBox.querySelectorAll('.tr-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      state.transcript=this.dataset.id;
+      tBox.querySelectorAll('.tr-btn').forEach(function(b){b.classList.remove('active')});
+      this.classList.add('active');runAnalysis();
+    });
+  });
 
   var sBox=document.getElementById('signalChips');
-  var sHTML='';for(var i=0;i<ALT_SIGNALS.length;i++){var s=ALT_SIGNALS[i];sHTML+='<div class="sig-chip active" data-id="'+s.id+'"><span class="dot" style="background:'+s.color+'"></span>'+s.name+'</div>'}
-  sBox.innerHTML=sHTML;
-  sBox.querySelectorAll('.sig-chip').forEach(function(chip){chip.addEventListener('click',function(){var id=this.dataset.id,idx=state.signals.indexOf(id);if(idx>=0){if(state.signals.length<=1)return;state.signals.splice(idx,1);this.classList.remove('active')}else{state.signals.push(id);this.classList.add('active')}runAnalysis()})});
+  var sHTML='';
+  for(i=0;i<ALT_SIGNALS.length;i++){var sg=ALT_SIGNALS[i],on=state.signals.indexOf(sg.id)>=0;
+    sHTML+='<div class="sig-row'+(on?'':' off')+'" data-row="'+sg.id+'">'+
+      '<button type="button" class="sig-chip'+(on?' active':'')+'" data-id="'+sg.id+'" aria-pressed="'+on+
+        '"><span class="dot" style="background:'+sg.color+'"></span>'+sg.name+'</button>'+
+      '<input type="range" class="w-range d-range" data-id="'+sg.id+'" min="0" max="100" step="5" value="'+
+        state.weights[sg.id]+'" aria-label="'+sg.name+' raw weight">'+
+      '<span class="w-val" data-wv="'+sg.id+'">--</span></div>'}
+  sBox.innerHTML=sHTML+'<div class="wsum" id="wSum"></div>';
+  sBox.querySelectorAll('.sig-chip').forEach(function(chip){
+    chip.addEventListener('click',function(){
+      var id=this.dataset.id,idx=state.signals.indexOf(id);
+      if(idx>=0){if(state.signals.length<=1)return;state.signals.splice(idx,1);this.classList.remove('active')}
+      else{state.signals.push(id);this.classList.add('active')}
+      this.setAttribute('aria-pressed',state.signals.indexOf(id)>=0);
+      runAnalysis();
+    });
+  });
+  sBox.querySelectorAll('.w-range').forEach(function(rg){
+    rg.addEventListener('input',function(){state.weights[this.dataset.id]=parseInt(this.value,10);runAnalysis()});
+  });
 
   var hSlider=document.getElementById('holdSlider'),hVal=document.getElementById('holdVal');
-  hSlider.addEventListener('input',function(){state.holdDays=parseInt(this.value);hVal.textContent=this.value;runAnalysis()});
+  hSlider.classList.add('d-range');
+  hSlider.addEventListener('input',function(){state.holdDays=parseInt(this.value,10);hVal.textContent=this.value;runAnalysis()});
 
   document.getElementById('resetBtn').addEventListener('click',function(){
-    state={transcript:'aapl',signals:['nlp','analyst','options','supply'],holdDays:21,results:null};
-    tBox.querySelectorAll('.tr-btn').forEach(function(b){b.classList.remove('active')});tBox.querySelector('[data-id="aapl"]').classList.add('active');
-    sBox.querySelectorAll('.sig-chip').forEach(function(c){c.classList.add('active')});
+    state.transcript='nvex';state.signals=['nlp','analyst','options','supply'];
+    state.weights={nlp:25,analyst:25,options:25,supply:25};state.holdDays=21;
+    tBox.querySelectorAll('.tr-btn').forEach(function(b){b.classList.toggle('active',b.dataset.id==='nvex')});
+    sBox.querySelectorAll('.sig-chip').forEach(function(c){c.classList.add('active');c.setAttribute('aria-pressed','true')});
+    sBox.querySelectorAll('.w-range').forEach(function(rg){rg.value=25});
     hSlider.value=21;hVal.textContent='21';
     runAnalysis();
   });
@@ -972,9 +1201,10 @@ function initControls(){
   gh.addEventListener('click',function(){gc.classList.toggle('hide');gb.textContent=gc.classList.contains('hide')?'Show \u25BE':'Hide \u25B4'});
 
   var helpOverlay=document.getElementById('helpOverlay');
-  document.getElementById('helpBtn').addEventListener('click',function(){helpOverlay.classList.add('open')});
-  document.getElementById('helpClose').addEventListener('click',function(){helpOverlay.classList.remove('open')});
-  helpOverlay.addEventListener('click',function(e){if(e.target===helpOverlay)helpOverlay.classList.remove('open')});
+  document.getElementById('helpBtn').addEventListener('click',function(){helpOverlay.classList.add('show')});
+  document.getElementById('helpClose').addEventListener('click',function(){helpOverlay.classList.remove('show')});
+  helpOverlay.addEventListener('click',function(e){if(e.target===helpOverlay)helpOverlay.classList.remove('show')});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')helpOverlay.classList.remove('show')});
 }
 
 var resizeTimer;window.addEventListener('resize',function(){clearTimeout(resizeTimer);resizeTimer=setTimeout(function(){if(state.results)runAnalysis()},200)});

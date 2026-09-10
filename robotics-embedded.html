@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Robotics & Embedded Systems | Cristian Arenas</title>
+    <meta name="description" content="Robotics and embedded-systems work by Cristian Arenas: ROS 2 navigation, FreeRTOS scheduling, SLAM, STM32 bare-metal I/O and TinyML quantization, each as an interactive in-browser simulator.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -125,7 +130,7 @@
                 <span class="terminal-prompt">cristian@portfolio:~$</span>
             </div>
 
-            <button class="mobile-menu-toggle" id="mobileMenuBtn">
+            <button class="mobile-menu-toggle" id="mobileMenuBtn" aria-label="Toggle menu">
                 <i class="fas fa-bars"></i>
             </button>
 
@@ -134,8 +139,9 @@
                 <li><a href="index.html#about">About</a></li>
                 <li><a href="index.html#skills">Skills</a></li>
                 <li><a href="index.html#projects">Projects</a></li>
+                <li><a href="index.html#research">Research</a></li>
                 <li><a href="index.html#demos">Demos</a></li>
-                <li><a href="robotics-embedded.html" style="color: var(--primary-cyan);">Robotics</a></li>
+                <li><a href="robotics-embedded.html" class="active">Robotics</a></li>
             </ul>
         </div>
     </nav>
@@ -154,7 +160,7 @@
                 End-to-end projects across the full embedded stack: <strong>RTOS kernel scheduling</strong>,
                 <strong>autonomous navigation with ROS 2</strong>, <strong>SLAM and sensor fusion</strong>,
                 <strong>edge ML deployment on MCUs</strong>, and <strong>bare-metal register-level I/O</strong>.
-                Each project is a working interactive simulator you can run in-browser — no setup required.
+                Each project is a working interactive simulator you can run in the browser, no setup required.
             </p>
         </div>
     </section>
@@ -197,10 +203,12 @@
                         <span class="project-type">Real-Time Operating Systems</span>
                     </div>
                     <p class="project-description">
-                        Implements the FreeRTOS preemptive scheduler with priority-based task dispatching,
-                        tick-driven context switching, and ready/blocked/suspended state transitions.
-                        Visualizes kernel internals including task control blocks, stack allocation,
-                        mutex contention, and priority inversion scenarios in real time.
+                        Implements the FreeRTOS fixed-priority preemptive scheduler with round-robin time
+                        slicing, a configurable tick rate, and running, ready, blocked and suspended state
+                        transitions. Presets walk through unbounded priority inversion, the mutex priority
+                        inheritance that fixes it, and an overloaded task set that misses deadlines, with
+                        CPU utilization shown against the rate-monotonic bound and a Gantt view that matches
+                        the kernel log line for line.
                     </p>
                     <div class="project-tags">
                         <span class="tag">FreeRTOS</span>
@@ -220,15 +228,17 @@
                         <span class="project-type">Perception & Mapping</span>
                     </div>
                     <p class="project-description">
-                        Simultaneous Localization and Mapping engine with simulated LiDAR raycasting,
-                        occupancy grid construction, and loop closure detection. Implements particle
-                        filter-based pose estimation and scan matching while building probabilistic
-                        maps of unknown environments in real time.
+                        Simultaneous localization and mapping driven by a simulated 360-beam LiDAR at
+                        10 Hz with realistic range and bearing noise. Builds a log-odds occupancy grid at
+                        5 cm resolution from a 300-particle Monte Carlo localization estimate, so you can
+                        drive the robot and watch the filter hold its track while raw odometry drifts away.
+                        Live position error and map coverage are charted. No loop closure or pose-graph
+                        back end, and the page is explicit about what that costs.
                     </p>
                     <div class="project-tags">
                         <span class="tag">SLAM</span>
                         <span class="tag">LiDAR Simulation</span>
-                        <span class="tag">Particle Filters</span>
+                        <span class="tag">Monte Carlo Localization</span>
                         <span class="tag">Occupancy Grids</span>
                     </div>
                     <div class="project-link">
@@ -399,10 +409,13 @@
                     <p class="footer-subtext"><a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
                 </div>
                 <div class="footer-links">
-                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank">
+                    <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener" aria-label="LinkedIn">
                         <i class="fab fa-linkedin"></i>
                     </a>
-                    <a href="mailto:cristianiguelsa@gmail.com" aria-label="Email">
+                    <a href="https://github.com/CrisSArenas" target="_blank" rel="noopener" aria-label="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="mailto:cristianmiguelsa@gmail.com" aria-label="Email">
                         <i class="fas fa-envelope"></i>
                     </a>
                 </div>
@@ -411,7 +424,7 @@
     </footer>
 
     <!-- Scroll to Top Button -->
-    <button id="scrollTop" class="scroll-top">
+    <button id="scrollTop" class="scroll-top" aria-label="Scroll to top">
         <i class="fas fa-arrow-up"></i>
     </button>
 

@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TERMINAL HEIST</title>
+<title>Terminal Heist | Cristian Arenas</title>
+<meta name="description" content="Retro CRT puzzle game built on an emulated POSIX shell: a virtual filesystem with real Unix permission bits, a bash-style command parser and four levels solved with ls, cd, cat, grep, find, chmod, chown, ps and kill.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 * {
     margin: 0;
@@ -11,85 +18,40 @@
     box-sizing: border-box;
 }
 
-:root {
-    --terminal-bg: #0a0e1a;
-    --terminal-text: #00ff41;
-    --terminal-dim: #00aa2a;
-    --terminal-bright: #00ffaa;
-    --panel-bg: rgba(15, 20, 35, 0.95);
-    --border: #00ff4155;
-    --error: #ff3366;
-    --warning: #ffaa33;
-    --success: #00ff41;
-    --agent: #00aaff;
+/* Retro CRT palette for the GAME AREA ONLY. Every colour is derived from a
+   demo-shell token; the nav, status strip, help modal and footer stay standard. */
+.game-container, .overlay {
+    --terminal-bg: var(--bg);
+    --terminal-text: var(--green-bright);
+    --terminal-dim: var(--green);
+    --terminal-bright: var(--cyan-bright);
+    --panel-bg: var(--surface);
+    --border: rgba(0, 255, 65, 0.3);
+    --border: color-mix(in srgb, var(--green-bright) 30%, transparent);
+    --error: var(--red);
+    --warning: var(--amber);
+    --success: var(--green-bright);
+    --agent: var(--blue);
+    font-family: var(--mono);
 }
 
 body {
-    font-family: 'Courier New', 'Consolas', monospace;
-    background: linear-gradient(135deg, #050810 0%, #0a0e1a 100%);
-    color: var(--terminal-text);
-    overflow: hidden;
-    height: 100vh;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
 }
+
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
 .game-container {
     display: grid;
-    grid-template-rows: auto 1fr auto;
-    height: 100vh;
+    grid-template-rows: 1fr;
+    height: calc(100vh - 96px);
+    min-height: 460px;
     max-width: 1600px;
     margin: 0 auto;
-}
-
-.top-bar {
-    background: var(--panel-bg);
-    border-bottom: 1px solid var(--border);
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    backdrop-filter: blur(10px);
-}
-
-.back-link {
-    color: var(--terminal-dim);
-    text-decoration: none;
-    font-size: 13px;
-    font-family: 'Courier New', monospace;
-    padding: 4px 10px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    margin-right: 16px;
-    white-space: nowrap;
-}
-
-.back-link:hover {
     color: var(--terminal-text);
-    border-color: var(--border);
-}
-
-.top-bar-left {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-}
-
-.game-title {
-    font-size: 20px;
-    font-weight: bold;
-    color: var(--terminal-bright);
-    text-shadow: 0 0 10px var(--terminal-bright);
-}
-
-.top-bar-stats {
-    display: flex;
-    gap: 20px;
-    font-size: 14px;
-}
-
-.stat {
-    display: flex;
-    align-items: center;
-    gap: 5px;
 }
 
 .stat-label {
@@ -98,28 +60,6 @@ body {
 
 .stat-value {
     color: var(--terminal-bright);
-}
-
-.top-bar-right {
-    display: flex;
-    gap: 10px;
-}
-
-.icon-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--terminal-text);
-    padding: 8px 15px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.icon-btn:hover {
-    background: rgba(0, 255, 65, 0.1);
-    border-color: var(--terminal-bright);
-    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
 }
 
 .main-content {
@@ -160,9 +100,12 @@ body {
     border-radius: 4px;
 }
 
-.output-line {
-    margin-bottom: 4px;
-    animation: fadeIn 0.2s ease-in;
+.terminal-output > div {
+    margin-bottom: 2px;
+    min-height: 1.15em;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    animation: fadeIn 0.15s ease-in;
 }
 
 @keyframes fadeIn {
@@ -172,10 +115,6 @@ body {
 
 .prompt-line {
     color: var(--terminal-bright);
-}
-
-.command-line {
-    color: var(--terminal-text);
 }
 
 .error-line {
@@ -237,18 +176,15 @@ body {
     outline: none;
 }
 
-.input-caret {
-    display: inline-block;
-    width: 8px;
-    height: 16px;
-    background: var(--terminal-bright);
-    animation: blink 1s step-end infinite;
+.d-help-section code {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--cyan-bright);
+    background: var(--accent-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
 }
-
-@keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
-}
+.d-help-section dl { margin-top: 6px; }
 
 .side-panel {
     background: var(--panel-bg);
@@ -435,15 +371,6 @@ body {
     border: 1px solid var(--terminal-text);
 }
 
-.tutorial-step {
-    display: none;
-    min-height: 100px;
-}
-
-.tutorial-step.active {
-    display: block;
-}
-
 .button-group {
     margin-top: 30px;
     display: flex;
@@ -451,62 +378,29 @@ body {
     justify-content: center;
 }
 
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    margin-top: 20px;
-    color: var(--terminal-dim);
-    font-size: 12px;
-}
-
-.checkbox-container input {
-    margin-right: 10px;
-}
-
 .hidden {
     display: none;
 }
 
-.scanlines {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+/* CRT artefacts are clipped to the terminal pane so the nav and footer stay clean */
+.scanlines, .vignette {
+    position: absolute;
+    inset: 0;
     pointer-events: none;
-    background: linear-gradient(
-        transparent 50%,
-        rgba(0, 0, 0, 0.05) 50%
-    );
+}
+.scanlines {
+    background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.05) 50%);
     background-size: 100% 4px;
-    z-index: 999;
+    z-index: 4;
     opacity: 0.3;
 }
-
 .vignette {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.8);
-    z-index: 998;
+    box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.75);
+    z-index: 3;
 }
-
-.title-screen {
-    text-align: center;
-}
-
-.title-screen h1 {
-    font-size: 48px;
-    margin-bottom: 20px;
-    animation: titleGlow 2s ease-in-out infinite;
-}
-
-@keyframes titleGlow {
-    0%, 100% { text-shadow: 0 0 20px var(--terminal-bright); }
-    50% { text-shadow: 0 0 40px var(--terminal-bright); }
+@media (prefers-reduced-motion: reduce) {
+    .terminal-output > div { animation: none; }
+    .agent-suggestion.visible { animation: none; }
 }
 
 .level-complete {
@@ -547,41 +441,37 @@ body {
 </head>
 <body>
 
-<div class="scanlines"></div>
-<div class="vignette"></div>
+<nav class="demo-nav">
+  <a class="demo-brand" href="../index.html">cristian@portfolio:~$ <span class="crumb">/ demos / terminal-heist</span></a>
+  <h1 class="demo-title"><i class="fas fa-terminal"></i> Terminal Heist</h1>
+  <div class="demo-links">
+    <a href="../index.html#projects">Projects</a>
+    <a href="../index.html#research">Research</a>
+    <a href="../index.html#demos">Demos</a>
+    <a href="../robotics-embedded.html" class="active">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <span class="d-pill">LEVEL&nbsp;<b id="levelNum">1</b></span>
+    <span class="d-pill cyan">SCORE&nbsp;<b id="scoreNum">0</b></span>
+    <span class="d-pill">TIME&nbsp;<b id="timeNum">0:00</b></span>
+    <button type="button" class="d-btn sm" id="soundBtn">SOUND: OFF</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+<div class="demo-status">
+  <span id="statusBar">booting emulated shell&hellip;</span>
+  <span><b>Fictional sandbox</b> &middot; emulated POSIX shell in the browser &middot; no real hosts, no network access</span>
+</div>
 
 <div class="game-container">
-    <div class="top-bar">
-        <div class="top-bar-left">
-            <a class="back-link" href="../robotics-embedded.html">&#9664; Back to Portfolio</a>
-            <div class="game-title">TERMINAL HEIST</div>
-            <div class="top-bar-stats">
-                <div class="stat">
-                    <span class="stat-label">LEVEL:</span>
-                    <span class="stat-value" id="levelNum">1</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">SCORE:</span>
-                    <span class="stat-value" id="scoreNum">0</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">TIME:</span>
-                    <span class="stat-value" id="timeNum">0:00</span>
-                </div>
-            </div>
-        </div>
-        <div class="top-bar-right">
-            <button class="icon-btn" id="helpBtn">HELP</button>
-            <button class="icon-btn" id="soundBtn">SOUND: OFF</button>
-        </div>
-    </div>
-
     <div class="main-content">
         <div class="terminal-section">
-            <div class="terminal-output" id="terminalOutput"></div>
+            <div class="scanlines"></div>
+            <div class="vignette"></div>
+            <div class="terminal-output" id="terminalOutput" role="log" aria-live="polite" aria-label="Terminal output"></div>
             <div class="input-section">
                 <span class="input-prompt" id="inputPrompt">heist@vault:~$</span>
-                <input type="text" class="input-field" id="inputField" autocomplete="off" spellcheck="false">
+                <input type="text" class="input-field" id="inputField" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Shell command input">
             </div>
         </div>
 
@@ -602,10 +492,10 @@ body {
             <div class="panel-section">
                 <div class="panel-title">AGENT</div>
                 <div class="agent-buttons">
-                    <button class="agent-btn" id="hintBtn">HINT</button>
-                    <button class="agent-btn" id="explainBtn">EXPLAIN</button>
-                    <button class="agent-btn" id="suggestBtn">SUGGEST</button>
-                    <button class="agent-btn" id="whyBtn">WHY?</button>
+                    <button type="button" class="agent-btn" id="hintBtn">HINT</button>
+                    <button type="button" class="agent-btn" id="explainBtn">EXPLAIN</button>
+                    <button type="button" class="agent-btn" id="suggestBtn">SUGGEST</button>
+                    <button type="button" class="agent-btn" id="whyBtn">WHY?</button>
                 </div>
                 <div class="agent-suggestion" id="agentSuggestion"></div>
             </div>
@@ -613,55 +503,67 @@ body {
     </div>
 </div>
 
-<div id="titleOverlay" class="overlay">
-    <div class="modal title-screen">
-        <h1>TERMINAL HEIST</h1>
-        <div class="tagline">A retro terminal puzzle thriller.</div>
-        <div class="disclaimer">
-            This is a fictional puzzle sandbox. No real systems involved.
-        </div>
-        <div class="disclaimer" style="margin-top:8px;color:var(--terminal-dim);font-size:12px;">
-            Tip: Click the <strong style="color:var(--terminal-text);">HELP</strong> button in the top bar anytime for a full guide.
-        </div>
-        <div class="button-group">
-            <button id="startGameBtn">START HEIST</button>
-            <button id="tutorialBtn" class="secondary">TUTORIAL</button>
-        </div>
+<!-- HELP MODAL -->
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; Terminal Heist</h2>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
-</div>
-
-<div id="tutorialOverlay" class="overlay hidden">
-    <div class="modal">
-        <h1>TUTORIAL</h1>
-        <div class="tagline">Learn the basics</div>
-        
-        <div class="tutorial-step active" id="tutStep1">
-            <p>Type commands to investigate. Start with: <strong>help</strong></p>
-        </div>
-        <div class="tutorial-step" id="tutStep2">
-            <p>Your objective is shown on the right. Follow clues in files and logs.</p>
-        </div>
-        <div class="tutorial-step" id="tutStep3">
-            <p>Use search to find keywords. Try: <strong>grep key logs/</strong></p>
-        </div>
-        <div class="tutorial-step" id="tutStep4">
-            <p>Stuck? Use the Agent: Hint or Explain.</p>
-        </div>
-        <div class="tutorial-step" id="tutStep5">
-            <p>Complete the objective to advance. Good luck!</p>
-        </div>
-        
-        <div class="button-group">
-            <button id="tutBackBtn" class="secondary">BACK</button>
-            <button id="tutNextBtn">NEXT</button>
-            <button id="tutStartBtn" class="hidden">START</button>
-        </div>
-        
-        <div class="checkbox-container">
-            <input type="checkbox" id="skipTutorial">
-            <label for="skipTutorial">Don't show again</label>
-        </div>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; What this is</h3>
+        <p>A fictional puzzle sandbox running an <strong>emulated POSIX shell</strong> in the browser. Nothing here touches a real machine: the filesystem, the process table and the &ldquo;network&rdquo; are all JavaScript objects. Each of the four levels is a small forensic task solved with ordinary Unix commands. Type in the prompt at the bottom of the terminal and press <strong>Enter</strong>.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>2 &middot; Filesystem &amp; navigation</h3>
+        <dl>
+          <dt>pwd</dt><dd>Print the absolute working directory.</dd>
+          <dt>ls [-l -a -h -1 -F -R] [path&hellip;]</dt><dd><code>-l</code> gives the real long format: mode string, link count, owner, group, size, date, name. <code>-a</code> also shows <code>.</code> and <code>..</code>.</dd>
+          <dt>cd [path]</dt><dd>Handles <code>..</code>, <code>.</code>, <code>~</code>, <code>-</code> (previous directory), absolute and relative paths. No argument returns home.</dd>
+          <dt>cat / head / tail</dt><dd><code>cat FILE&hellip;</code>, <code>head [-n N] FILE</code>, <code>tail [-n N] FILE</code>. Default 10 lines.</dd>
+          <dt>find [path] [-name PAT] [-type f|d] [-perm MODE] [-maxdepth N]</dt><dd>Pre-order walk; unreadable directories are reported, not skipped silently.</dd>
+          <dt>grep [-i -n -r -l -v -c] PATTERN FILE&hellip;</dt><dd>Basic regular expressions, falling back to a literal match if the pattern will not compile. Globs such as <code>logs/*</code> are expanded by the shell.</dd>
+          <dt>echo [-n] ARGS</dt><dd>Expands <code>$USER</code>, <code>$HOME</code>, <code>$PWD</code>, <code>$SHELL</code>, <code>$HOSTNAME</code>, <code>$PATH</code>.</dd>
+        </dl>
+      </div>
+      <div class="d-help-section">
+        <h3>3 &middot; Permissions &amp; processes</h3>
+        <p>Every node carries a 12-bit mode, an owner and a group, and the checks are enforced exactly as on Unix: <strong>read</strong> to open a file or list a directory, <strong>write</strong> to modify it, <strong>execute</strong> on a directory to traverse into it. A directory with <code>r</code> but no <code>x</code> can be listed but not entered &mdash; that distinction is the point of level 3. <code>root</code> bypasses the read and write checks, as it does on a real system.</p>
+        <dl>
+          <dt>chmod MODE FILE&hellip;</dt><dd>Octal (<code>chmod 644 f</code>, <code>chmod 0700 d</code>) and symbolic (<code>chmod u+r f</code>, <code>chmod a-w,g+X d</code>).</dd>
+          <dt>chown [USER][:GROUP] FILE&hellip;</dt><dd>Root only; anyone else gets <code>Operation not permitted</code>.</dd>
+          <dt>ps [aux|-e|-ef]</dt><dd>Bare <code>ps</code> shows your processes on this terminal; <code>ps aux</code> shows the whole table.</dd>
+          <dt>kill [-9|-15|-SIG] PID&hellip;</dt><dd>You may only signal your own processes unless you are root.</dd>
+          <dt>whoami / id / history / man CMD</dt><dd>Identity, the numbered command history, and a manual page for every command above.</dd>
+        </dl>
+      </div>
+      <div class="d-help-section">
+        <h3>4 &middot; Mission tools (not POSIX)</h3>
+        <dl>
+          <dt>objective</dt><dd>Reprint the mission and its checklist.</dd>
+          <dt>decode TOKEN</dt><dd>Caesar shift of &minus;2, the cipher documented in level 3.</dd>
+          <dt>analyze FILE</dt><dd>Size, line count and pattern hits for a file you can read.</dd>
+          <dt>submit ANSWER</dt><dd>Hand in the answer for levels 1&ndash;3.</dd>
+          <dt>map / trace / handshake / unlock</dt><dd>Level 4 only: the fictional vault node protocol.</dd>
+          <dt>hint / inventory</dt><dd>Next hint (costs 50 points of the level bonus) and the items you have collected.</dd>
+        </dl>
+      </div>
+      <div class="d-help-section">
+        <h3>5 &middot; Keyboard</h3>
+        <dl>
+          <dt>&uarr; / &darr;</dt><dd>Walk backwards and forwards through the command history.</dd>
+          <dt>Ctrl+L</dt><dd>Clear the screen (same as <code>clear</code>).</dd>
+          <dt>Ctrl+C</dt><dd>Abandon the line being typed and print <code>^C</code>. With text selected it still copies.</dd>
+          <dt>Esc</dt><dd>Close this guide.</dd>
+        </dl>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; Scoring</h3>
+        <p>Each checklist item is worth 100 points as you complete it. Finishing a level adds <code>1000 + max(0, 500 &minus; 10&times;commands) + max(0, 300 &minus; 50&times;hints) + max(0, 200 &minus; seconds)</code>, which sets the rank (S &ge; 1500, A &ge; 1200, B &ge; 900). The running score carries across levels; <strong>Retry</strong> rewinds it to the value it had when the level started, so a retried level can never be farmed for points.</p>
+      </div>
     </div>
+  </div>
 </div>
 
 <div id="levelCompleteOverlay" class="overlay hidden">
@@ -687,8 +589,8 @@ body {
             </div>
         </div>
         <div class="button-group">
-            <button id="nextLevelBtn">NEXT LEVEL</button>
-            <button id="retryLevelBtn" class="secondary">RETRY</button>
+            <button type="button" id="nextLevelBtn">NEXT LEVEL</button>
+            <button type="button" id="retryLevelBtn" class="secondary">RETRY</button>
         </div>
     </div>
 </div>
@@ -699,158 +601,298 @@ body {
         <div class="tagline">You've cracked all vaults!</div>
         <p>Final Score: <span id="finalScore" class="glow">0</span></p>
         <div class="button-group">
-            <button id="playAgainBtn">PLAY AGAIN</button>
+            <button type="button" id="playAgainBtn">PLAY AGAIN</button>
         </div>
     </div>
 </div>
 
 <script>
 const CONFIG = {
-    soundEnabled: false,
-    tutorialSeen: false,
-    maxHints: 5
+    soundEnabled: false
 };
 
 const GAME_STATE = {
     currentLevel: 0,
     score: 0,
+    scoreAtLevelStart: 0,
     commandCount: 0,
     hintsUsed: 0,
-    startTime: 0,
-    currentTime: 0,
     inventory: [],
     completedSteps: [],
     commandHistory: [],
-    historyIndex: -1,
-    currentPath: '~',
+    historyIndex: 0,
     levelStartTime: 0,
     hintCount: 0,
-    filesFound: []
+    tokensSeen: [],
+    decodedWords: [],
+    handshakeDone: false,
+    timerInterval: null,
+    /* emulated session */
+    fs: null,
+    procs: [],
+    user: 'heist',
+    group: 'staff',
+    home: '/home/heist',
+    cwd: '/home/heist',
+    oldcwd: '/home/heist'
 };
+
+/* =====================================================================
+   VIRTUAL FILESYSTEM PRIMITIVES
+   file      {t:'f', c:content, mode, owner, group, mtime}
+   directory {t:'d', ch:{name:node}, mode, owner, group, mtime}
+   Modes are stored as 12-bit numbers exactly as on disk.
+   ===================================================================== */
+function F(content, o) {
+    o = o || {};
+    return { t: 'f', c: content, mode: o.mode !== undefined ? o.mode : 0o644,
+             owner: o.owner || 'heist', group: o.group || 'staff', mtime: o.mtime || 'Mar 14 09:12' };
+}
+function D(children, o) {
+    o = o || {};
+    return { t: 'd', ch: children || {}, mode: o.mode !== undefined ? o.mode : 0o755,
+             owner: o.owner || 'heist', group: o.group || 'staff', mtime: o.mtime || 'Mar 14 09:12' };
+}
+
+const KNOWN_USERS = { root: 0, daemon: 1, nobody: 65534, vaultsvc: 997, heist: 1000 };
+const KNOWN_GROUPS = { root: 0, daemon: 1, adm: 4, shadow: 42, nogroup: 65534, vault: 997, staff: 50, heist: 1000 };
+
+const ETC_PASSWD =
+    'root:x:0:0:root:/root:/bin/bash\n' +
+    'daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n' +
+    'nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n' +
+    'vaultsvc:x:997:997:Vault service:/var/lib/vault:/usr/sbin/nologin\n' +
+    'heist:x:1000:1000:Contract auditor:/home/heist:/bin/bash\n';
+
+const BASE_PROCS = [
+    { pid: 1,    user: 'root',     tty: '?', stat: 'Ss', cpu: 0.0, mem: 0.3, time: '0:04', cmd: '/sbin/init', immune: true },
+    { pid: 214,  user: 'root',     tty: '?', stat: 'Ss', cpu: 0.0, mem: 0.4, time: '0:01', cmd: '/lib/systemd/systemd-journald' },
+    { pid: 388,  user: 'root',     tty: '?', stat: 'Ss', cpu: 0.0, mem: 0.6, time: '0:00', cmd: '/usr/sbin/sshd -D' },
+    { pid: 402,  user: 'daemon',   tty: '?', stat: 'Ss', cpu: 0.0, mem: 0.2, time: '0:00', cmd: '/usr/sbin/atd -f' },
+    { pid: 617,  user: 'vaultsvc', tty: '?', stat: 'Sl', cpu: 0.3, mem: 1.8, time: '1:12', cmd: '/usr/lib/vault/vaultd --config /etc/vault.conf' }
+];
+const SHELL_PID = 1042;
+
+function buildFilesystem(lv) {
+    const u = lv.user, g = lv.group;
+    const R = function (mode) { return { owner: 'root', group: 'root', mode: mode, mtime: 'Jan 09  2026' }; };
+    const homeNode = D(JSON.parse(JSON.stringify(lv.filesystem)),
+                       { owner: u, group: g, mode: u === 'root' ? 0o700 : 0o750, mtime: 'Mar 14 09:12' });
+    const rootHome = u === 'root' ? homeNode : D({}, { owner: 'root', group: 'root', mode: 0o700, mtime: 'Feb 27 22:05' });
+    const heistHome = u === 'heist' ? homeNode : D({
+        '.bash_history': F('ls -la\nexit\n', { owner: 'heist', group: 'staff', mode: 0o600, mtime: 'Mar 10 19:44' })
+    }, { owner: 'heist', group: 'staff', mode: 0o750, mtime: 'Mar 10 19:44' });
+
+    return D({
+        bin: D({
+            bash:  F('\x7fELF 64-bit LSB executable\n', R(0o755)),
+            cat:   F('\x7fELF 64-bit LSB executable\n', R(0o755)),
+            chmod: F('\x7fELF 64-bit LSB executable\n', R(0o755)),
+            grep:  F('\x7fELF 64-bit LSB executable\n', R(0o755)),
+            ls:    F('\x7fELF 64-bit LSB executable\n', R(0o755)),
+            ps:    F('\x7fELF 64-bit LSB executable\n', R(0o755))
+        }, R(0o755)),
+        etc: D({
+            hostname: F('vault\n', R(0o644)),
+            passwd:   F(ETC_PASSWD, R(0o644)),
+            shadow:   F('root:!:20130:0:99999:7:::\nheist:!:20130:0:99999:7:::\n',
+                        { owner: 'root', group: 'shadow', mode: 0o600, mtime: 'Jan 09  2026' }),
+            'vault.conf': F('[vaultd]\ndoor = 7\ninterlock = on\nkeyfile = /var/lib/vault/door7.key\n', R(0o640))
+        }, R(0o755)),
+        home: D({ heist: heistHome }, R(0o755)),
+        root: rootHome,
+        tmp:  D({}, { owner: 'root', group: 'root', mode: 0o1777, mtime: 'Mar 14 09:31' }),
+        var: D({
+            log: D({
+                syslog:     F('Mar 14 09:02 vault systemd[1]: Started Vault door controller.\n',
+                              { owner: 'root', group: 'adm', mode: 0o640, mtime: 'Mar 14 09:02' }),
+                'auth.log': F('Mar 14 08:58 vault sshd[388]: Accepted publickey for heist from 10.4.2.19 port 51122\n',
+                              { owner: 'root', group: 'adm', mode: 0o640, mtime: 'Mar 14 08:58' })
+            }, R(0o755))
+        }, R(0o755))
+    }, R(0o755));
+}
 
 const LEVELS = [
     {
         id: 1,
         name: 'BOOTSTRAP',
-        objective: 'Find the access code hidden in internal notes.',
+        user: 'heist',
+        group: 'staff',
+        objective: 'Find the door-controller access code hidden in the internal notes.',
         checklist: [
-            'Explore the filesystem',
-            'Read available notes',
+            'List the home directory',
+            'Read the internal notes',
             'Find the access code',
             'Submit the code'
         ],
         filesystem: {
-            '~': {
-                'readme.txt': 'Welcome to the terminal. Use "help" to see available commands. Your mission: find the access code.',
-                'notes': {
-                    'memo1.txt': 'Internal memo: The code is stored in one of the project files. Check the dev folder.',
-                    'memo2.txt': 'Remember: all access codes follow the pattern CODE-####.'
-                },
-                'dev': {
-                    'project.txt': 'Project Alpha - Status: Active. Access Code: CODE-7429',
-                    'backup.txt': 'Backup of old system. Ignore this file.'
-                }
-            }
+            'readme.txt': F('ACME Vault maintenance shell\n' +
+                            '----------------------------\n' +
+                            'Run "help" for the command list and "man ls" for a manual page.\n' +
+                            'Mission: recover the access code for the door controller.\n',
+                            { mtime: 'Mar 12 08:41' }),
+            'notes': D({
+                'memo1.txt': F('Internal memo\n' +
+                               '-------------\n' +
+                               'The controller access code lives with the project files in dev/.\n' +
+                               'Do not email it and do not write it on the whiteboard again.\n',
+                               { mtime: 'Mar 13 17:02' }),
+                'memo2.txt': F('Reminder: every access code follows the pattern CODE-####.\n',
+                               { mtime: 'Mar 13 17:05' })
+            }, { mtime: 'Mar 13 17:05' }),
+            'dev': D({
+                'project.txt': F('Project Alpha\nStatus: Active\nOwner: r.mbeki\nAccess Code: CODE-7429\n',
+                                 { mtime: 'Mar 14 09:12' }),
+                'backup.txt': F('Disk image of the 2024 door controller. Superseded, do not deploy.\n',
+                                { mtime: 'Nov 04  2025' })
+            }, { mtime: 'Mar 14 09:12' })
         },
+        procs: [],
         solution: 'CODE-7429',
         hints: [
-            'Try using "ls" to see what files are available.',
-            'Use "cat" to read file contents. Try "cat readme.txt"',
-            'Look for files in the "notes" and "dev" folders.',
-            'The code follows the pattern CODE-####. Use "grep CODE" to search.',
-            'Once you find the code, use "submit CODE-7429"'
+            'Start with "ls -la" to see everything in the home directory, including the mode bits.',
+            'Read a file with "cat readme.txt". Directories need "cd notes" or "ls notes".',
+            'The memos in notes/ say where the code is kept.',
+            'Search instead of browsing: "grep -rn CODE ." walks the tree and prints line numbers.',
+            'Hand it in with "submit CODE-7429".'
         ]
     },
     {
         id: 2,
         name: 'LOG DIVE',
-        objective: 'Identify which subsystem is failing and retrieve the recovery key.',
+        user: 'heist',
+        group: 'staff',
+        objective: 'Identify the failing subsystem in the device logs and recover its recovery key.',
         checklist: [
-            'Check system logs',
-            'Identify failing device',
-            'Locate recovery key',
+            'Open the log directory',
+            'Identify the failing device',
+            'Recover the recovery key',
             'Submit device ID and key'
         ],
         filesystem: {
-            '~': {
-                'mission.txt': 'Multiple devices reporting errors. Check logs to find which device is critical. Then find its recovery key.',
-                'logs': {
-                    'device_A.log': '[12:00] Device A: Status OK\n[12:15] Device A: All systems nominal',
-                    'device_B.log': '[12:00] Device B: CRITICAL ERROR\n[12:15] Device B: System failure detected\n[12:30] Device B: Recovery needed - Key: REC-8844',
-                    'device_C.log': '[12:00] Device C: Status OK\n[12:15] Device C: Minor warning cleared'
-                },
-                'docs': {
-                    'protocol.txt': 'Recovery Protocol: When a device shows CRITICAL ERROR, submit its ID and recovery key.'
-                }
-            }
+            'mission.txt': F('Three field devices are reporting. One of them is in a critical state.\n' +
+                             'Find which one, recover its key, then follow docs/protocol.txt.\n',
+                             { mtime: 'Mar 14 07:30' }),
+            'logs': D({
+                'device_A.log': F('[12:00:04] device_A: status OK\n[12:15:04] device_A: all systems nominal\n[12:30:04] device_A: status OK\n',
+                                  { mtime: 'Mar 14 12:30' }),
+                'device_B.log': F('[12:00:11] device_B: CRITICAL ERROR interlock fault 0x2F\n' +
+                                  '[12:15:11] device_B: system failure detected, watchdog reset\n' +
+                                  '[12:30:11] device_B: recovery needed - key: REC-8844\n',
+                                  { mtime: 'Mar 14 12:30' }),
+                'device_C.log': F('[12:00:41] device_C: status OK\n[12:15:41] device_C: minor warning cleared\n',
+                                  { mtime: 'Mar 14 12:15' }),
+                'device_D.log': F('[12:00:02] device_D: sealed telemetry\n',
+                                  { owner: 'root', group: 'root', mode: 0o600, mtime: 'Mar 14 12:00' })
+            }, { mtime: 'Mar 14 12:30' }),
+            'docs': D({
+                'protocol.txt': F('Recovery protocol\n' +
+                                  '-----------------\n' +
+                                  'When a device logs CRITICAL ERROR, submit its id and recovery key as\n' +
+                                  '    submit <device>:<key>\n' +
+                                  'Keys are printed in the same log, in the form REC-####.\n',
+                                  { mtime: 'Jan 22 10:00' })
+            }, { mtime: 'Jan 22 10:00' })
         },
+        procs: [
+            { pid: 771, user: 'heist', tty: '?', stat: 'S', cpu: 0.1, mem: 0.4, time: '0:03', cmd: 'devmon --watch /home/heist/logs' }
+        ],
         solution: 'device_B:REC-8844',
         hints: [
-            'Check the logs folder. Use "ls logs" to see all log files.',
-            'Use "cat logs/device_B.log" to read individual logs.',
-            'Look for "CRITICAL ERROR" in the logs. Try "grep CRITICAL logs/*"',
-            'Device B is failing. Now find its recovery key in the same log.',
-            'Submit using format: "submit device_B:REC-8844"'
+            'The logs are in logs/. "ls -l logs" shows one of them is root-owned and unreadable - it is not the one you need.',
+            'Search the whole tree at once: "grep -rn CRITICAL logs".',
+            'device_B is the failing unit. Read its log with "cat logs/device_B.log" or "tail -n 1 logs/device_B.log".',
+            'docs/protocol.txt gives the submission format.',
+            'Hand it in with "submit device_B:REC-8844".'
         ]
     },
     {
         id: 3,
         name: 'ENCODED VAULT',
-        objective: 'Decode 3 tokens to reconstruct a passphrase.',
+        user: 'heist',
+        group: 'staff',
+        objective: 'Decode three tokens into a passphrase. Two of them are locked behind their permission bits.',
         checklist: [
-            'Find 3 encoded tokens',
-            'Decode each token',
-            'Reconstruct passphrase',
-            'Submit passphrase'
+            'Read all three encoded tokens',
+            'Decode a token',
+            'Decode the remaining tokens',
+            'Submit the passphrase'
         ],
         filesystem: {
-            '~': {
-                'instructions.txt': 'Three tokens are hidden across the system. Each is encoded with a simple shift cipher. Decode them and combine.',
-                'vault': {
-                    'token1.enc': 'ENCODED: FQQTOCP',
-                    'token2.enc': 'ENCODED: EQPVTQN'
-                },
-                'archives': {
-                    'token3.enc': 'ENCODED: CEEGUU'
-                },
-                'cipher_key.txt': 'Cipher: Each letter shifted by +2 (A->C, B->D, etc.)'
-            }
+            'instructions.txt': F('Three tokens are scattered across this account. Each is enciphered with\n' +
+                                  'the shift in cipher_key.txt. Decode all three and submit the words in\n' +
+                                  'the order token1, token2, token3.\n' +
+                                  'Housekeeping wiped the permission bits on some of them: fix the modes\n' +
+                                  'with chmod before you can read them.\n',
+                                  { mtime: 'Mar 14 06:15' }),
+            'cipher_key.txt': F('Cipher: every letter was shifted +2 (A->C, B->D, ...). Decode by -2.\n' +
+                                'The "decode" tool applies the -2 shift for you.\n',
+                                { mtime: 'Mar 14 06:15' }),
+            'vault': D({
+                'token1.enc': F('ENCODED: FQQTOCP\n', { mtime: 'Mar 14 06:20' }),
+                'token2.enc': F('ENCODED: EQPVTQN\n', { mode: 0o200, mtime: 'Mar 14 06:20' })
+            }, { mtime: 'Mar 14 06:20' }),
+            'archives': D({
+                'token3.enc': F('ENCODED: CEEGUU\n', { mtime: 'Mar 14 06:21' }),
+                'index.txt': F('token3.enc - third word of the passphrase\n', { mtime: 'Mar 14 06:21' })
+            }, { mode: 0o644, mtime: 'Mar 14 06:21' })
         },
+        procs: [],
         solution: 'DOORMAN CONTROL ACCESS',
         decodedTokens: ['DOORMAN', 'CONTROL', 'ACCESS'],
         hints: [
-            'Find all .enc files. Use "ls vault" and "ls archives"',
-            'Read each token file with "cat vault/token1.enc"',
-            'Use "decode FQQTOCP" to decode the first token.',
-            'Decode all three tokens and note the words.',
-            'Combine the decoded words and submit: "submit DOORMAN CONTROL ACCESS"'
+            'Find them first: "find . -name \'*.enc\'". The archives directory reports Permission denied.',
+            'Look at the modes: "ls -l vault" and "ls -ld archives". token2.enc is --w------- and archives is drw-r--r--.',
+            'A directory needs its execute bit to be entered or traversed: "chmod +x archives", then "cat archives/token3.enc".',
+            'A file needs its read bit: "chmod u+r vault/token2.enc" (or "chmod 644 vault/token2.enc"), then read it.',
+            'Decode each ciphertext, e.g. "decode FQQTOCP", then "submit DOORMAN CONTROL ACCESS".'
         ]
     },
     {
         id: 4,
         name: 'THE HANDSHAKE',
-        objective: 'Perform a fictional handshake sequence with a vault node.',
+        user: 'root',
+        group: 'root',
+        objective: 'Root shell on the vault host: complete the node handshake, stop the interlock daemon and release door 7.',
         checklist: [
-            'View network map',
-            'Trace vault node',
-            'Generate handshake sequence',
-            'Unlock vault'
+            'View the network map',
+            'Trace the vault node',
+            'Complete the handshake',
+            'Disarm the interlock and unlock'
         ],
         filesystem: {
-            '~': {
-                'network.txt': 'Network topology includes multiple nodes. Find VAULT-NODE-7 and establish connection.',
-                'protocols': {
-                    'handshake.txt': 'Handshake Protocol: trace <node> to get connection ID, then handshake <connection-id>'
-                }
-            }
+            'network.txt': F('Segment 10.4.2.0/24 terminates on VAULT-NODE-7 behind ROUTER-3.\n' +
+                             'Run "map" for the topology. protocols/handshake.txt has the sequence.\n',
+                             { owner: 'root', group: 'root', mtime: 'Mar 14 08:02' }),
+            'protocols': D({
+                'handshake.txt': F('Door 7 release sequence\n' +
+                                   '-----------------------\n' +
+                                   '1. map                      show the topology\n' +
+                                   '2. trace VAULT-NODE-7       obtain the connection id\n' +
+                                   '3. handshake <connection>   authenticate against the node\n' +
+                                   '4. the interlock daemon vault-lockd must not be running:\n' +
+                                   '   find its pid with "ps aux" and stop it with kill\n' +
+                                   '5. the actuator script bin/unlock.sh is only executed when it is\n' +
+                                   '   owned by root:root and its mode is exactly 700\n' +
+                                   '6. unlock                   release the door\n',
+                                   { owner: 'root', group: 'root', mtime: 'Mar 14 08:02' })
+            }, { owner: 'root', group: 'root', mtime: 'Mar 14 08:02' }),
+            'bin': D({
+                'unlock.sh': F('#!/bin/sh\n# door 7 actuator - invoked by the unlock tool\n/usr/lib/vault/actuate --door 7 --release\n',
+                               { owner: 'heist', group: 'staff', mode: 0o644, mtime: 'Mar 13 21:47' })
+            }, { owner: 'root', group: 'root', mtime: 'Mar 13 21:47' })
         },
+        procs: [
+            { pid: 1337, user: 'root', tty: '?', stat: 'Ss', cpu: 0.1, mem: 0.9, time: '0:00', cmd: '/usr/sbin/vault-lockd --door 7 --interlock on' }
+        ],
         solution: 'VAULT-OPENED',
         hints: [
-            'Use "map" command to see the network topology.',
-            'Find VAULT-NODE-7 on the map.',
-            'Use "trace VAULT-NODE-7" to get connection details.',
-            'Use "handshake" with the connection ID you received.',
-            'Final step: "unlock" to open the vault.'
+            'Start with "map", then "trace VAULT-NODE-7" to get the connection id.',
+            'Pass that id to the handshake: "handshake CONN-9732".',
+            'Read protocols/handshake.txt - two conditions still block the release.',
+            'The interlock daemon is in the process table: "ps aux | look for vault-lockd", then "kill 1337".',
+            'Fix the actuator: "chown root:root bin/unlock.sh" and "chmod 700 bin/unlock.sh", then "unlock".'
         ]
     }
 ];
@@ -860,31 +902,22 @@ let inputField = document.getElementById('inputField');
 let currentLevel = null;
 
 function loadProgress() {
-    const saved = localStorage.getItem('terminalHeistProgress');
-    if (saved) {
-        const data = JSON.parse(saved);
-        CONFIG.tutorialSeen = data.tutorialSeen || false;
-        CONFIG.soundEnabled = data.soundEnabled || false;
-    }
+    try {
+        const saved = localStorage.getItem('terminalHeistProgress');
+        if (saved) CONFIG.soundEnabled = !!JSON.parse(saved).soundEnabled;
+    } catch (e) { /* private mode or corrupt entry: fall back to defaults */ }
 }
 
 function saveProgress() {
-    localStorage.setItem('terminalHeistProgress', JSON.stringify({
-        tutorialSeen: CONFIG.tutorialSeen,
-        soundEnabled: CONFIG.soundEnabled
-    }));
+    try {
+        localStorage.setItem('terminalHeistProgress', JSON.stringify({ soundEnabled: CONFIG.soundEnabled }));
+    } catch (e) { /* storage unavailable */ }
 }
 
 function initGame() {
     loadProgress();
-    
-    if (CONFIG.tutorialSeen) {
-        document.getElementById('titleOverlay').classList.remove('hidden');
-    } else {
-        document.getElementById('titleOverlay').classList.remove('hidden');
-    }
-    
     updateSoundButton();
+    startLevel(0);
 }
 
 function startLevel(levelIndex) {
@@ -896,28 +929,61 @@ function startLevel(levelIndex) {
     GAME_STATE.levelStartTime = Date.now();
     GAME_STATE.inventory = [];
     GAME_STATE.completedSteps = [];
-    GAME_STATE.currentPath = '~';
-    GAME_STATE.filesFound = [];
     GAME_STATE.commandHistory = [];
-    GAME_STATE.historyIndex = -1;
-    
+    GAME_STATE.historyIndex = 0;
+    GAME_STATE.tokensSeen = [];
+    GAME_STATE.decodedWords = [];
+    GAME_STATE.handshakeDone = false;
+    GAME_STATE.scoreAtLevelStart = GAME_STATE.score;
+
+    /* fresh session: filesystem, identity, process table */
+    GAME_STATE.user = currentLevel.user;
+    GAME_STATE.group = currentLevel.group;
+    GAME_STATE.home = currentLevel.user === 'root' ? '/root' : '/home/' + currentLevel.user;
+    GAME_STATE.cwd = GAME_STATE.home;
+    GAME_STATE.oldcwd = GAME_STATE.home;
+    GAME_STATE.fs = buildFilesystem(currentLevel);
+    GAME_STATE.procs = BASE_PROCS.concat(currentLevel.procs || []).map(function (p) { return Object.assign({}, p); });
+    /* interactive bash ignores INT, QUIT and TERM, so the session shell is immune */
+    GAME_STATE.procs.push({ pid: SHELL_PID, user: currentLevel.user, tty: 'pts/0', stat: 'Ss',
+                            cpu: 0.0, mem: 0.1, time: '0:00', cmd: '-bash', immune: true });
+    GAME_STATE.procs.sort(function (a, b) { return a.pid - b.pid; });
+
     document.getElementById('levelNum').textContent = currentLevel.id;
-    
+    document.getElementById('agentSuggestion').classList.remove('visible');
+
     clearTerminal();
     updateMissionPanel();
-    
+    updatePrompt();
+
     printLine('='.repeat(60), 'separator');
-    printLine(`LEVEL ${currentLevel.id}: ${currentLevel.name}`, 'header-line glow');
+    printLine('LEVEL ' + currentLevel.id + ': ' + currentLevel.name, 'header-line glow');
     printLine('='.repeat(60), 'separator');
     printLine('');
+    printLine('Last login: Sat Mar 14 09:41:02 2026 from 10.4.2.19', 'dim-line');
     printLine(currentLevel.objective, 'success-line');
     printLine('');
-    printLine('Type "help" for available commands.', 'dim-line');
-    printLine('Type "objective" to review mission.', 'dim-line');
+    printLine('"help" lists the commands, "man <cmd>" opens a manual page,', 'dim-line');
+    printLine('"objective" reprints the mission, "hint" asks the agent.', 'dim-line');
     printLine('');
-    
+
     inputField.focus();
     startTimer();
+}
+
+function updatePrompt() {
+    document.getElementById('inputPrompt').textContent =
+        GAME_STATE.user + '@vault:' + shortPath(GAME_STATE.cwd) + (GAME_STATE.user === 'root' ? '#' : '$');
+    updateStatusBar();
+}
+
+function updateStatusBar() {
+    const el = document.getElementById('statusBar');
+    if (!el || !currentLevel) return;
+    el.textContent = 'level ' + currentLevel.id + '/' + LEVELS.length + ' ' + currentLevel.name +
+        ' \u00b7 user ' + GAME_STATE.user + '(' + GAME_STATE.group + ') \u00b7 cwd ' + GAME_STATE.cwd +
+        ' \u00b7 objectives ' + GAME_STATE.completedSteps.length + '/' + currentLevel.checklist.length +
+        ' \u00b7 commands ' + GAME_STATE.commandCount;
 }
 
 function clearTerminal() {
@@ -953,6 +1019,7 @@ function updateMissionPanel() {
     });
     
     updateInventory();
+    updateStatusBar();
 }
 
 function updateInventory() {
@@ -1000,7 +1067,7 @@ function startTimer() {
     if (GAME_STATE.timerInterval) clearInterval(GAME_STATE.timerInterval);
     
     GAME_STATE.timerInterval = setInterval(() => {
-        const elapsed = Date.now() - GAME_STATE.levelStartTime;
+        const elapsed = Math.max(0, Date.now() - GAME_STATE.levelStartTime);
         const mins = Math.floor(elapsed / 60000);
         const secs = Math.floor((elapsed % 60000) / 1000);
         document.getElementById('timeNum').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -1013,597 +1080,1040 @@ function stopTimer() {
     }
 }
 
-function processCommand(input) {
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    
-    GAME_STATE.commandHistory.push(trimmed);
-    GAME_STATE.historyIndex = GAME_STATE.commandHistory.length;
-    GAME_STATE.commandCount++;
-    
-    printPrompt(trimmed);
-    
-    const parts = trimmed.split(/\s+/);
-    const cmd = parts[0].toLowerCase();
-    const args = parts.slice(1);
-    
-    executeCommand(cmd, args);
+function tokenize(line) {
+    const out = [];
+    let cur = '', quote = null, started = false;
+    for (let i = 0; i < line.length; i++) {
+        const c = line.charAt(i);
+        if (quote) {
+            if (c === quote) quote = null; else cur += c;
+            continue;
+        }
+        if (c === '"' || c === "'") { quote = c; started = true; continue; }
+        if (c === ' ' || c === '\t') { if (cur || started) { out.push(cur); cur = ''; started = false; } continue; }
+        cur += c;
+    }
+    if (quote) return null;
+    if (cur || started) out.push(cur);
+    return out;
 }
 
+function shellEnv() {
+    return {
+        USER: GAME_STATE.user, LOGNAME: GAME_STATE.user, HOME: GAME_STATE.home,
+        PWD: GAME_STATE.cwd, OLDPWD: GAME_STATE.oldcwd, SHELL: '/bin/bash', HOSTNAME: 'vault',
+        PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', TERM: 'xterm-256color'
+    };
+}
+
+function expandVars(tok) {
+    const env = shellEnv();
+    return tok.replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, function (m, name) {
+        return env.hasOwnProperty(name) ? env[name] : '';
+    });
+}
+
+function processCommand(input) {
+    const line = input.replace(/\s+$/, '');
+    if (!line.trim()) { printPrompt(''); return; }
+
+    printPrompt(line);
+    GAME_STATE.commandHistory.push(line);
+    GAME_STATE.historyIndex = GAME_STATE.commandHistory.length;
+    GAME_STATE.commandCount++;
+
+    const tokens = tokenize(line);
+    if (tokens === null) {
+        printLine('bash: unexpected EOF while looking for matching quote', 'error-line');
+        return;
+    }
+    const expanded = tokens.map(expandVars);
+    executeCommand(expanded[0], expanded.slice(1));
+    updateStatusBar();
+}
+
+/* =====================================================================
+   PATH RESOLUTION AND PERMISSION MODEL
+   ===================================================================== */
+function normalizePath(p) {
+    const out = [];
+    p.split('/').forEach(function (seg) {
+        if (seg === '' || seg === '.') return;
+        if (seg === '..') { out.pop(); return; }
+        out.push(seg);
+    });
+    return '/' + out.join('/');
+}
+
+function resolvePath(p) {
+    if (p === undefined || p === null || p === '') return GAME_STATE.cwd;
+    let path;
+    if (p === '~') path = GAME_STATE.home;
+    else if (p.slice(0, 2) === '~/') path = GAME_STATE.home + '/' + p.slice(2);
+    else if (p.charAt(0) === '/') path = p;
+    else path = GAME_STATE.cwd + '/' + p;
+    return normalizePath(path);
+}
+
+function shortPath(p) {
+    if (p === GAME_STATE.home) return '~';
+    if (p.indexOf(GAME_STATE.home + '/') === 0) return '~' + p.slice(GAME_STATE.home.length);
+    return p;
+}
+
+/* stat(2) access rules: owner triad, else group triad, else other triad.
+   root bypasses read/write and needs at least one execute bit to execute. */
+function can(node, bit) {
+    if (!node) return false;
+    const m = node.mode;
+    if (GAME_STATE.user === 'root') {
+        if (bit !== 'x') return true;
+        return node.t === 'd' || (m & 0o111) !== 0;
+    }
+    let b;
+    if (node.owner === GAME_STATE.user) b = (m >> 6) & 7;
+    else if (node.group === GAME_STATE.group) b = (m >> 3) & 7;
+    else b = m & 7;
+    if (bit === 'r') return (b & 4) !== 0;
+    if (bit === 'w') return (b & 2) !== 0;
+    return (b & 1) !== 0;
+}
+
+/* walks the path one component at a time, requiring +x on every directory */
+function lookup(path) {
+    const parts = path.split('/').filter(Boolean);
+    let node = GAME_STATE.fs, parent = null, name = '/';
+    for (let i = 0; i < parts.length; i++) {
+        if (node.t !== 'd') return { err: 'ENOTDIR' };
+        if (!can(node, 'x')) return { err: 'EACCES' };
+        const next = node.ch[parts[i]];
+        if (!next) return { err: 'ENOENT', parent: node, name: parts[i] };
+        parent = node; node = next; name = parts[i];
+    }
+    return { node: node, parent: parent, name: name };
+}
+
+function getDirectory(path) {
+    const r = lookup(resolvePath(path));
+    return (r.node && r.node.t === 'd') ? r.node : null;
+}
+
+function getFile(path) {
+    const r = lookup(resolvePath(path));
+    return (r.node && r.node.t === 'f' && can(r.node, 'r')) ? r.node.c : null;
+}
+
+function errText(e) {
+    return e === 'ENOENT' ? 'No such file or directory'
+         : e === 'EACCES' ? 'Permission denied'
+         : e === 'ENOTDIR' ? 'Not a directory'
+         : e === 'EISDIR' ? 'Is a directory'
+         : 'Invalid argument';
+}
+function fail(cmd, arg, e) { printLine(cmd + ': ' + arg + ': ' + errText(e), 'error-line'); }
+function usageOnly(msg) { printLine(msg, 'error-line'); }
+function usageErr(cmd, msg) {
+    printLine(cmd + ': ' + msg, 'error-line');
+    printLine("Try 'man " + cmd + "' for more information.", 'dim-line');
+}
+
+/* =====================================================================
+   FORMATTING HELPERS
+   ===================================================================== */
+function nodeSize(n) { return n.t === 'd' ? 4096 : n.c.length; }
+function linkCount(n) {
+    if (n.t !== 'd') return 1;
+    let sub = 2;
+    for (const k in n.ch) if (n.ch[k].t === 'd') sub++;
+    return sub;
+}
+function modeString(n) {
+    const m = n.mode;
+    const trip = function (b) { return ((b & 4) ? 'r' : '-') + ((b & 2) ? 'w' : '-') + ((b & 1) ? 'x' : '-'); };
+    let str = (n.t === 'd' ? 'd' : '-') + trip((m >> 6) & 7) + trip((m >> 3) & 7) + trip(m & 7);
+    if (m & 0o1000) str = str.slice(0, 9) + (str.charAt(9) === 'x' ? 't' : 'T');
+    return str;
+}
+function humanSize(b) {
+    if (b < 1024) return String(b);
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + 'K';
+    return (b / 1048576).toFixed(1) + 'M';
+}
+function typeSuffix(n) { return n.t === 'd' ? '/' : ((n.mode & 0o111) ? '*' : ''); }
+function nodeClass(n) {
+    if (n.t === 'd') return 'warning-line';
+    if (n.mode & 0o111) return 'success-line';
+    return 'output-line';
+}
+
+function parseFlags(args, allowed, cmdName) {
+    const flags = { _: [] };
+    let endOpts = false;
+    for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        if (!endOpts && a === '--') { endOpts = true; continue; }
+        if (!endOpts && a.length > 1 && a.charAt(0) === '-') {
+            for (const ch of a.slice(1)) {
+                if (allowed.indexOf(ch) < 0) {
+                    printLine(cmdName + ": invalid option -- '" + ch + "'", 'error-line');
+                    printLine("Try 'man " + cmdName + "' for more information.", 'dim-line');
+                    return null;
+                }
+                flags[ch] = true;
+            }
+        } else flags._.push(a);
+    }
+    return flags;
+}
+
+/* shell-side glob expansion for * and ? (no ** and no brace expansion) */
+function expandArgs(args) {
+    const out = [];
+    args.forEach(function (a) {
+        if (!/[*?]/.test(a)) { out.push(a); return; }
+        const idx = a.lastIndexOf('/');
+        const dirPart = idx >= 0 ? a.slice(0, idx) : '';
+        const pat = idx >= 0 ? a.slice(idx + 1) : a;
+        const dirPath = resolvePath(idx === 0 ? '/' : (dirPart === '' ? '.' : dirPart));
+        const r = lookup(dirPath);
+        if (r.err || r.node.t !== 'd' || !can(r.node, 'r')) { out.push(a); return; }
+        const re = new RegExp('^' + pat.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                                       .replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]') + '$');
+        const hits = Object.keys(r.node.ch).filter(function (n) { return n.charAt(0) !== '.' && re.test(n); }).sort();
+        if (!hits.length) { out.push(a); return; }
+        const prefix = idx >= 0 ? a.slice(0, idx + 1) : '';
+        hits.forEach(function (h) { out.push(prefix + h); });
+    });
+    return out;
+}
+
+/* =====================================================================
+   COMMAND TABLE
+   ===================================================================== */
 function executeCommand(cmd, args) {
     const commands = {
-        'help': cmdHelp,
-        'clear': cmdClear,
-        'cls': cmdClear,
-        'ls': cmdLs,
-        'dir': cmdLs,
-        'cd': cmdCd,
-        'pwd': cmdPwd,
-        'cat': cmdCat,
-        'open': cmdCat,
-        'grep': cmdGrep,
-        'search': cmdGrep,
-        'decode': cmdDecode,
-        'analyze': cmdAnalyze,
-        'inventory': cmdInventory,
-        'inv': cmdInventory,
-        'objective': cmdObjective,
-        'mission': cmdObjective,
-        'hint': cmdHint,
-        'explain': cmdExplain,
-        'submit': cmdSubmit,
-        'map': cmdMap,
-        'trace': cmdTrace,
-        'handshake': cmdHandshake,
-        'unlock': cmdUnlock
+        'help': cmdHelp, 'man': cmdMan, 'clear': cmdClear,
+        'ls': cmdLs, 'dir': cmdLs, 'cd': cmdCd, 'pwd': cmdPwd,
+        'cat': cmdCat, 'head': cmdHead, 'tail': cmdTail,
+        'grep': cmdGrep, 'find': cmdFind, 'echo': cmdEcho,
+        'chmod': cmdChmod, 'chown': cmdChown,
+        'ps': cmdPs, 'kill': cmdKill,
+        'whoami': cmdWhoami, 'id': cmdId, 'history': cmdHistory, 'exit': cmdExit,
+        'decode': cmdDecode, 'analyze': cmdAnalyze,
+        'inventory': cmdInventory, 'objective': cmdObjective, 'mission': cmdObjective,
+        'hint': cmdHint, 'explain': cmdExplain, 'submit': cmdSubmit,
+        'map': cmdMap, 'trace': cmdTrace, 'handshake': cmdHandshake, 'unlock': cmdUnlock
     };
-    
-    if (commands[cmd]) {
-        commands[cmd](args);
-    } else {
-        printLine(`Command not found: ${cmd}`, 'error-line');
-        printLine('Type "help" for available commands.', 'dim-line');
-    }
-    
-    printLine('');
+    if (commands[cmd]) commands[cmd](args);
+    else printLine('bash: ' + cmd + ': command not found', 'error-line');
 }
 
 function cmdHelp(args) {
-    if (args.length > 0) {
-        const helpTexts = {
-            'ls': 'ls [path] - List files in directory',
-            'cd': 'cd <path> - Change directory',
-            'cat': 'cat <file> - Display file contents',
-            'grep': 'grep <keyword> <path> - Search for text',
-            'decode': 'decode <token> - Decode encrypted token',
-            'submit': 'submit <answer> - Submit solution',
-            'map': 'map - Show network topology',
-            'trace': 'trace <node> - Trace network node'
-        };
-        
-        const topic = args[0].toLowerCase();
-        if (helpTexts[topic]) {
-            printLine(helpTexts[topic], 'success-line');
-        } else {
-            printLine(`No help available for: ${topic}`, 'error-line');
-        }
-        return;
-    }
-    
-    printLine('AVAILABLE COMMANDS:', 'header-line');
+    if (args.length) { cmdMan(args); return; }
+    printLine('EMULATED SHELL - built-in commands', 'header-line');
     printLine('');
-    printLine('  help [cmd]     - Show help (optionally for specific command)', 'dim-line');
-    printLine('  clear          - Clear terminal', 'dim-line');
-    printLine('  ls [path]      - List files', 'dim-line');
-    printLine('  cd <path>      - Change directory', 'dim-line');
-    printLine('  pwd            - Print working directory', 'dim-line');
-    printLine('  cat <file>     - Read file', 'dim-line');
-    printLine('  grep <text>    - Search for text', 'dim-line');
-    printLine('  decode <token> - Decode encrypted data', 'dim-line');
-    printLine('  analyze <file> - Analyze file structure', 'dim-line');
-    printLine('  inventory      - Show collected items', 'dim-line');
-    printLine('  objective      - Review mission', 'dim-line');
-    printLine('  submit <ans>   - Submit answer', 'dim-line');
-    
-    if (currentLevel && currentLevel.id >= 4) {
-        printLine('  map            - Show network map', 'dim-line');
-        printLine('  trace <node>   - Trace network node', 'dim-line');
-        printLine('  handshake <id> - Initiate handshake', 'dim-line');
-        printLine('  unlock         - Unlock vault', 'dim-line');
+    printLine('  filesystem   ls [-laAh1FR]   cd [dir]   pwd   cat FILE   head/tail [-n N] FILE', 'dim-line');
+    printLine('               find [path] [-name PAT] [-type f|d] [-perm MODE] [-maxdepth N]', 'dim-line');
+    printLine('               grep [-inrlvc] PATTERN FILE...     echo [-n] TEXT', 'dim-line');
+    printLine('  permissions  chmod MODE FILE...   (octal 644 or symbolic u+r, a-w, g+X)', 'dim-line');
+    printLine('               chown [USER][:GROUP] FILE...   (root only)', 'dim-line');
+    printLine('  processes    ps [aux|-e|-ef]      kill [-9|-15|-SIG] PID...', 'dim-line');
+    printLine('  session      whoami   id   history   clear   man CMD   exit', 'dim-line');
+    printLine('');
+    printLine('MISSION TOOLS (not POSIX)', 'header-line');
+    printLine('  objective    reprint the mission and checklist', 'dim-line');
+    printLine('  inventory    items recovered so far', 'dim-line');
+    printLine('  hint         next agent hint (costs 50 points of the level bonus)', 'dim-line');
+    printLine('  explain      what the agent thinks you should do next', 'dim-line');
+    printLine('  decode TOKEN Caesar shift of -2', 'dim-line');
+    printLine('  analyze FILE size, line count and pattern hits', 'dim-line');
+    printLine('  submit ANS   hand in the answer (levels 1-3)', 'dim-line');
+    if (currentLevel && currentLevel.id === 4) {
+        printLine('  map / trace NODE / handshake CONN / unlock    door 7 release sequence', 'dim-line');
     }
-    
-    completeStep(0);
+    printLine('');
+    printLine('Keys: Up/Down history, Ctrl+L clear, Ctrl+C abandon line.', 'dim-line');
 }
 
-function cmdClear() {
-    clearTerminal();
+const MAN_PAGES = {
+    ls: ['LS(1)', '', 'NAME', '    ls - list directory contents', '', 'SYNOPSIS',
+         '    ls [-l] [-a] [-A] [-h] [-1] [-F] [-R] [FILE...]', '', 'DESCRIPTION',
+         '    -l  long format: mode, links, owner, group, size, date, name',
+         '    -a  do not hide entries starting with . (includes . and ..)',
+         '    -A  as -a but without . and ..',
+         '    -h  human readable sizes with -l',
+         '    -1  one entry per line',
+         '    -F  append / to directories and * to executables',
+         '    -R  list subdirectories recursively',
+         '    Listing a directory needs its read bit; naming a file inside it',
+         '    needs the execute bit on the directory.'],
+    cd: ['CD(1)', '', 'NAME', '    cd - change the working directory', '', 'SYNOPSIS',
+         '    cd [DIR]', '', 'DESCRIPTION',
+         '    With no argument, change to $HOME. "-" returns to $OLDPWD and prints it.',
+         '    Accepts ~, absolute and relative paths, . and .. components.',
+         '    Requires the execute (search) bit on the target directory.'],
+    pwd: ['PWD(1)', '', 'NAME', '    pwd - print name of working directory'],
+    cat: ['CAT(1)', '', 'NAME', '    cat - concatenate files and print on the standard output', '', 'SYNOPSIS',
+          '    cat FILE...', '', 'DESCRIPTION',
+          '    Requires the read bit on each file. Directories are rejected with',
+          '    "Is a directory", as in coreutils.'],
+    head: ['HEAD(1)', '', 'NAME', '    head - output the first part of a file', '', 'SYNOPSIS',
+           '    head [-n COUNT] FILE...', '', 'DESCRIPTION', '    Prints the first COUNT lines (default 10).'],
+    tail: ['TAIL(1)', '', 'NAME', '    tail - output the last part of a file', '', 'SYNOPSIS',
+           '    tail [-n COUNT] FILE...', '', 'DESCRIPTION', '    Prints the last COUNT lines (default 10).'],
+    grep: ['GREP(1)', '', 'NAME', '    grep - print lines matching a pattern', '', 'SYNOPSIS',
+           '    grep [-i] [-n] [-r] [-l] [-v] [-c] PATTERN FILE...', '', 'DESCRIPTION',
+           '    -i  ignore case            -n  prefix the line number',
+           '    -r  search directories     -l  print matching file names only',
+           '    -v  invert the match       -c  print a count per file',
+           '    PATTERN is a regular expression; if it will not compile it is',
+           '    treated as a literal string. File names are prefixed when more',
+           '    than one file is searched.'],
+    find: ['FIND(1)', '', 'NAME', '    find - search for files in a directory hierarchy', '', 'SYNOPSIS',
+           '    find [PATH...] [-name PATTERN] [-type f|d] [-perm MODE] [-maxdepth N]', '', 'DESCRIPTION',
+           '    Pre-order walk from PATH (default .). Directories that cannot be',
+           '    read or searched are reported as "Permission denied" and skipped.'],
+    echo: ['ECHO(1)', '', 'NAME', '    echo - display a line of text', '', 'SYNOPSIS',
+           '    echo [-n] [STRING...]', '', 'DESCRIPTION',
+           '    -n suppresses nothing visible here (output is line based).',
+           '    $VAR is expanded by the shell: USER, HOME, PWD, OLDPWD, SHELL,',
+           '    HOSTNAME, PATH, TERM, LOGNAME.'],
+    chmod: ['CHMOD(1)', '', 'NAME', '    chmod - change file mode bits', '', 'SYNOPSIS',
+            '    chmod MODE FILE...', '', 'DESCRIPTION',
+            '    MODE is octal (644, 0700) or symbolic: [ugoa]*[-+=][rwxX]*,',
+            '    comma separated, applied left to right. X sets the execute bit',
+            '    only for directories or files that already have one.',
+            '    Only the owner of a file, or root, may change its mode.'],
+    chown: ['CHOWN(1)', '', 'NAME', '    chown - change file owner and group', '', 'SYNOPSIS',
+            '    chown [OWNER][:[GROUP]] FILE...', '', 'DESCRIPTION',
+            '    Only root may change ownership; everyone else gets EPERM.'],
+    ps: ['PS(1)', '', 'NAME', '    ps - report a snapshot of the current processes', '', 'SYNOPSIS',
+         '    ps [aux] [-e] [-ef]', '', 'DESCRIPTION',
+         '    With no options only your own processes attached to this terminal',
+         '    are shown. "aux" shows every process in BSD format, "-ef" in',
+         '    standard format.'],
+    kill: ['KILL(1)', '', 'NAME', '    kill - send a signal to a process', '', 'SYNOPSIS',
+           '    kill [-9|-15|-KILL|-TERM] PID...', '', 'DESCRIPTION',
+           '    The default signal is TERM (15). You may only signal processes you',
+           '    own unless you are root. PID 1 ignores every signal.'],
+    history: ['HISTORY(1)', '', 'NAME', '    history - display the command history list',
+              '', 'DESCRIPTION', '    History is per level and is cleared when a level starts.'],
+    whoami: ['WHOAMI(1)', '', 'NAME', '    whoami - print the effective user name'],
+    id: ['ID(1)', '', 'NAME', '    id - print user and group identity'],
+    man: ['MAN(1)', '', 'NAME', '    man - an interface to the on-line reference manuals'],
+    help: ['HELP(1)', '', 'NAME', '    help - list the shell built-ins and the mission tools']
+};
+
+function cmdMan(args) {
+    if (!args.length) { printLine('What manual page do you want?', 'error-line'); return; }
+    const page = MAN_PAGES[args[0].toLowerCase()];
+    if (!page) { printLine('No manual entry for ' + args[0], 'error-line'); return; }
+    page.forEach(function (l, i) { printLine(l, i === 0 ? 'header-line' : (/^[A-Z ]+$/.test(l) && l ? 'header-line' : 'dim-line')); });
+}
+
+function cmdClear() { clearTerminal(); }
+function cmdPwd() { printLine(GAME_STATE.cwd, 'output-line'); }
+function cmdWhoami() { printLine(GAME_STATE.user, 'output-line'); }
+function cmdId() {
+    const u = GAME_STATE.user, g = GAME_STATE.group;
+    printLine('uid=' + KNOWN_USERS[u] + '(' + u + ') gid=' + KNOWN_GROUPS[g] + '(' + g + ') groups=' +
+              KNOWN_GROUPS[g] + '(' + g + ')', 'output-line');
+}
+function cmdExit() {
+    printLine('logout', 'dim-line');
+    printLine('The sandbox keeps the session alive - use "objective" to carry on.', 'dim-line');
+}
+function cmdHistory() {
+    GAME_STATE.commandHistory.forEach(function (h, i) {
+        printLine(String(i + 1).padStart(5) + '  ' + h, 'output-line');
+    });
+}
+function cmdEcho(args) {
+    let a = args.slice();
+    if (a[0] === '-n') a = a.slice(1);
+    printLine(a.join(' '), 'output-line');
+}
+
+/* ---------------------------------------------------------------- ls */
+function lsPrint(entries, f, showTotal) {
+    if (!entries.length) { if (f.l && showTotal) printLine('total 0', 'dim-line'); return; }
+    if (!f.l) {
+        if (f['1']) entries.forEach(function (e) { printLine(e.name + (f.F ? typeSuffix(e.node) : ''), nodeClass(e.node)); });
+        else printLine(entries.map(function (e) { return e.name + (f.F ? typeSuffix(e.node) : ''); }).join('  '), 'output-line');
+        return;
+    }
+    let total = 0, wl = 1, wo = 1, wg = 1, ws = 1;
+    const rows = entries.map(function (e) {
+        const size = nodeSize(e.node);
+        total += 4 * Math.ceil(size / 4096);
+        const r = {
+            m: modeString(e.node), l: String(linkCount(e.node)), o: e.node.owner, g: e.node.group,
+            s: f.h ? humanSize(size) : String(size), d: e.node.mtime,
+            n: e.name + (f.F ? typeSuffix(e.node) : ''), cls: nodeClass(e.node)
+        };
+        wl = Math.max(wl, r.l.length); wo = Math.max(wo, r.o.length);
+        wg = Math.max(wg, r.g.length); ws = Math.max(ws, r.s.length);
+        return r;
+    });
+    if (showTotal) printLine('total ' + total, 'dim-line');
+    rows.forEach(function (r) {
+        printLine(r.m + ' ' + r.l.padStart(wl) + ' ' + r.o.padEnd(wo) + ' ' + r.g.padEnd(wg) + ' ' +
+                  r.s.padStart(ws) + ' ' + r.d + ' ' + r.n, r.cls);
+    });
 }
 
 function cmdLs(args) {
-    const path = args.length > 0 ? args[0] : GAME_STATE.currentPath;
-    const resolved = resolvePath(path);
-    const dir = getDirectory(resolved);
-    
-    if (!dir) {
-        printLine(`Directory not found: ${path}`, 'error-line');
-        return;
-    }
-    
-    if (typeof dir === 'string') {
-        printLine(`Not a directory: ${path}`, 'error-line');
-        return;
-    }
-    
-    printLine(`Contents of ${resolved}:`, 'header-line');
-    printLine('');
-    
-    for (const name in dir) {
-        const isDir = typeof dir[name] === 'object' && !name.includes('.');
-        printLine(`  ${isDir ? '[DIR]' : '[FILE]'} ${name}`, isDir ? 'warning-line' : 'success-line');
-        
-        if (!GAME_STATE.filesFound.includes(resolved + '/' + name)) {
-            GAME_STATE.filesFound.push(resolved + '/' + name);
+    const f = parseFlags(args, 'laAh1FRd', 'ls');
+    if (!f) return;
+    let targets = expandArgs(f._);
+    if (!targets.length) targets = ['.'];
+
+    const files = [], dirs = [];
+    targets.forEach(function (t) {
+        const r = lookup(resolvePath(t));
+        if (r.err) { printLine("ls: cannot access '" + t + "': " + errText(r.err), 'error-line'); return; }
+        if (r.node.t === 'd' && !f.d) dirs.push({ arg: t, path: resolvePath(t), node: r.node });
+        else files.push({ name: t, node: r.node });
+    });
+
+    if (files.length) lsPrint(files.sort(function (a, b) { return a.name < b.name ? -1 : 1; }), f, false);
+
+    let printed = files.length ? 1 : 0;
+    for (let i = 0; i < dirs.length; i++) {
+        const d = dirs[i];
+        if (dirs.length + (files.length ? 1 : 0) > 1) {
+            if (printed) printLine('');
+            printLine(d.arg + ':', 'dim-line');
         }
-    }
-    
-    if (GAME_STATE.currentLevel === 0 && GAME_STATE.filesFound.length >= 3) {
-        completeStep(0);
+        printed++;
+        if (!can(d.node, 'r')) {
+            printLine("ls: cannot open directory '" + d.arg + "': Permission denied", 'error-line');
+            continue;
+        }
+        const names = Object.keys(d.node.ch).sort();
+        const list = names.filter(function (n) { return f.a || f.A || n.charAt(0) !== '.'; })
+                          .map(function (n) { return { name: n, node: d.node.ch[n] }; });
+        if (f.a) {
+            const up = lookup(normalizePath(d.path + '/..'));
+            list.unshift({ name: '.', node: d.node }, { name: '..', node: up.node || d.node });
+        }
+        lsPrint(list, f, true);
+        if (f.R) {
+            names.forEach(function (n) {
+                if (d.node.ch[n].t === 'd' && n.charAt(0) !== '.') {
+                    dirs.push({ arg: d.arg.replace(/\/$/, '') + '/' + n, path: d.path + '/' + n, node: d.node.ch[n] });
+                }
+            });
+        }
+        noteListed(d.path);
     }
 }
 
+/* ---------------------------------------------------------------- cd */
 function cmdCd(args) {
-    if (args.length === 0) {
-        GAME_STATE.currentPath = '~';
-        printLine('Changed to home directory', 'success-line');
-        return;
-    }
-    
-    const path = args[0];
-    const resolved = resolvePath(path);
-    const dir = getDirectory(resolved);
-    
-    if (!dir || typeof dir === 'string') {
-        printLine(`Not a directory: ${path}`, 'error-line');
-        return;
-    }
-    
-    GAME_STATE.currentPath = resolved;
-    printLine(`Changed directory to ${resolved}`, 'success-line');
+    const a = expandArgs(args);
+    if (a.length > 1) { printLine('bash: cd: too many arguments', 'error-line'); return; }
+    const raw = a.length ? a[0] : '~';
+    const target = raw === '-' ? GAME_STATE.oldcwd : raw;
+    const p = resolvePath(target);
+    const r = lookup(p);
+    if (r.err) { printLine('bash: cd: ' + raw + ': ' + errText(r.err), 'error-line'); return; }
+    if (r.node.t !== 'd') { printLine('bash: cd: ' + raw + ': Not a directory', 'error-line'); return; }
+    if (!can(r.node, 'x')) { printLine('bash: cd: ' + raw + ': Permission denied', 'error-line'); return; }
+    GAME_STATE.oldcwd = GAME_STATE.cwd;
+    GAME_STATE.cwd = p;
+    if (raw === '-') printLine(p, 'output-line');
+    updatePrompt();
 }
 
-function cmdPwd() {
-    printLine(GAME_STATE.currentPath, 'success-line');
+/* ---------------------------------------------------------------- cat / head / tail */
+function readFileFor(cmd, t) {
+    const r = lookup(resolvePath(t));
+    if (r.err) { fail(cmd, t, r.err); return null; }
+    if (r.node.t === 'd') { fail(cmd, t, 'EISDIR'); return null; }
+    if (!can(r.node, 'r')) { fail(cmd, t, 'EACCES'); return null; }
+    return r.node;
 }
+function splitLines(c) { return c.replace(/\n$/, '').split('\n'); }
 
 function cmdCat(args) {
-    if (args.length === 0) {
-        printLine('Usage: cat <file>', 'error-line');
-        return;
+    const a = expandArgs(args);
+    if (!a.length) { usageErr('cat', 'missing operand'); return; }
+    a.forEach(function (t) {
+        const node = readFileFor('cat', t);
+        if (!node) return;
+        splitLines(node.c).forEach(function (l) { printLine(l, 'output-line'); });
+        noteRead(resolvePath(t), node.c);
+    });
+}
+
+function headTailCount(args, cmd) {
+    let count = 10;
+    const rest = [];
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '-n') {
+            const v = args[++i];
+            if (v === undefined || !/^\d+$/.test(v)) { usageErr(cmd, "invalid number of lines: '" + v + "'"); return null; }
+            count = parseInt(v, 10);
+        } else if (/^-\d+$/.test(args[i])) count = parseInt(args[i].slice(1), 10);
+        else rest.push(args[i]);
     }
-    
-    const path = args[0];
-    const content = getFile(path);
-    
-    if (content === null) {
-        printLine(`File not found: ${path}`, 'error-line');
-        return;
-    }
-    
-    printLine(`--- ${path} ---`, 'header-line');
-    printLine(content, 'output-line');
-    printLine(`--- END ---`, 'dim-line');
-    
-    if (!GAME_STATE.filesFound.includes(path)) {
-        GAME_STATE.filesFound.push(path);
-    }
-    
-    if (GAME_STATE.currentLevel === 0 && content.includes('CODE-')) {
-        completeStep(2);
-    }
-    
-    if (GAME_STATE.currentLevel === 1 && path.includes('device_B')) {
-        completeStep(1);
-    }
+    return { n: count, files: expandArgs(rest) };
+}
+
+function cmdHead(args) {
+    const o = headTailCount(args, 'head'); if (!o) return;
+    if (!o.files.length) { usageErr('head', 'missing operand'); return; }
+    o.files.forEach(function (t, i) {
+        const node = readFileFor('head', t); if (!node) return;
+        if (o.files.length > 1) { if (i) printLine(''); printLine('==> ' + t + ' <==', 'dim-line'); }
+        splitLines(node.c).slice(0, o.n).forEach(function (l) { printLine(l, 'output-line'); });
+        noteRead(resolvePath(t), splitLines(node.c).slice(0, o.n).join('\n'));
+    });
+}
+
+function cmdTail(args) {
+    const o = headTailCount(args, 'tail'); if (!o) return;
+    if (!o.files.length) { usageErr('tail', 'missing operand'); return; }
+    o.files.forEach(function (t, i) {
+        const node = readFileFor('tail', t); if (!node) return;
+        if (o.files.length > 1) { if (i) printLine(''); printLine('==> ' + t + ' <==', 'dim-line'); }
+        const lines = splitLines(node.c).slice(-o.n);
+        lines.forEach(function (l) { printLine(l, 'output-line'); });
+        noteRead(resolvePath(t), lines.join('\n'));
+    });
+}
+
+/* ---------------------------------------------------------------- grep */
+function makeMatcher(pattern, ci) {
+    let re;
+    try { re = new RegExp(pattern, ci ? 'i' : ''); }
+    catch (e) { re = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ci ? 'i' : ''); }
+    return re;
 }
 
 function cmdGrep(args) {
-    if (args.length < 2) {
-        printLine('Usage: grep <keyword> <path>', 'error-line');
-        return;
+    const f = parseFlags(args, 'inrlvcRs', 'grep');
+    if (!f) return;
+    if (f.R) f.r = true;
+    if (f._.length < 2) { usageErr('grep', 'usage: grep [-inrlvc] PATTERN FILE...'); return; }
+    const pattern = f._[0];
+    const targets = expandArgs(f._.slice(1));
+    const re = makeMatcher(pattern, !!f.i);
+
+    /* collect the files to scan, expanding directories only with -r */
+    const list = [];
+    targets.forEach(function (t) {
+        const p = resolvePath(t);
+        const r = lookup(p);
+        if (r.err) { fail('grep', t, r.err); return; }
+        if (r.node.t === 'd') {
+            if (!f.r) { fail('grep', t, 'EISDIR'); return; }
+            walkForGrep(r.node, t.replace(/\/$/, ''), p, list);
+            return;
+        }
+        list.push({ disp: t, path: p, node: r.node });
+    });
+
+    const prefix = list.length > 1 || f.r;
+    list.forEach(function (e) {
+        if (!can(e.node, 'r')) { if (!f.s) fail('grep', e.disp, 'EACCES'); return; }
+        const lines = splitLines(e.node.c);
+        const hits = [];
+        lines.forEach(function (l, i) {
+            const m = re.test(l);
+            if (f.v ? !m : m) hits.push({ n: i + 1, l: l });
+        });
+        if (f.c) { printLine((prefix ? e.disp + ':' : '') + hits.length, 'output-line'); return; }
+        if (f.l) { if (hits.length) printLine(e.disp, 'success-line'); return; }
+        hits.forEach(function (h) {
+            printLine((prefix ? e.disp + ':' : '') + (f.n ? h.n + ':' : '') + h.l, 'success-line');
+        });
+        if (hits.length) noteRead(e.path, hits.map(function (h) { return h.l; }).join('\n'));
+    });
+}
+
+function walkForGrep(dir, disp, path, out) {
+    if (!can(dir, 'r') || !can(dir, 'x')) { fail('grep', disp, 'EACCES'); return; }
+    Object.keys(dir.ch).sort().forEach(function (n) {
+        const child = dir.ch[n];
+        if (child.t === 'd') walkForGrep(child, disp + '/' + n, path + '/' + n, out);
+        else out.push({ disp: disp + '/' + n, path: path + '/' + n, node: child });
+    });
+}
+
+/* ---------------------------------------------------------------- find */
+function cmdFind(args) {
+    const paths = [];
+    const test = {};
+    let i = 0;
+    for (; i < args.length; i++) { if (args[i].charAt(0) === '-') break; paths.push(args[i]); }
+    for (; i < args.length; i++) {
+        const o = args[i];
+        if (o === '-name' || o === '-type' || o === '-perm' || o === '-maxdepth') {
+            const v = args[++i];
+            if (v === undefined) { printLine("find: missing argument to '" + o + "'", 'error-line'); return; }
+            test[o.slice(1)] = v;
+        } else { printLine("find: unknown predicate '" + o + "'", 'error-line'); return; }
     }
-    
-    const keyword = args[0];
-    const path = args[1];
-    
-    let found = false;
-    
-    if (path.endsWith('/*') || path.endsWith('/')) {
-        const dirPath = path.replace('/*', '').replace('/', '');
-        const resolved = resolvePath(dirPath);
-        const dir = getDirectory(resolved);
-        
-        if (!dir || typeof dir === 'string') {
-            printLine(`Not a directory: ${dirPath}`, 'error-line');
+    if (!paths.length) paths.push('.');
+    if (test.type && test.type !== 'f' && test.type !== 'd') {
+        printLine("find: unknown argument to -type: " + test.type, 'error-line'); return;
+    }
+    const nameRe = test.name ? new RegExp('^' + test.name.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                                    .replace(/\*/g, '.*').replace(/\?/g, '.') + '$') : null;
+    const permMode = test.perm !== undefined ? parseInt(test.perm.replace(/^-/, ''), 8) : null;
+    const maxDepth = test.maxdepth !== undefined ? parseInt(test.maxdepth, 10) : Infinity;
+
+    paths.forEach(function (start) {
+        const p = resolvePath(start);
+        const r = lookup(p);
+        if (r.err) { printLine("find: '" + start + "': " + errText(r.err), 'error-line'); return; }
+        (function walk(node, disp, depth) {
+            const okType = !test.type || (test.type === 'd' ? node.t === 'd' : node.t === 'f');
+            const base = disp.split('/').pop() || disp;
+            const okName = !nameRe || nameRe.test(base);
+            const okPerm = permMode === null || (node.mode & 0o7777) === permMode;
+            if (okType && okName && okPerm) printLine(disp, node.t === 'd' ? 'warning-line' : 'output-line');
+            if (node.t !== 'd' || depth >= maxDepth) return;
+            if (!can(node, 'r') || !can(node, 'x')) {
+                printLine("find: '" + disp + "': Permission denied", 'error-line');
+                return;
+            }
+            Object.keys(node.ch).sort().forEach(function (n) {
+                walk(node.ch[n], (disp === '/' ? '' : disp) + '/' + n, depth + 1);
+            });
+        })(r.node, start.replace(/\/$/, '') || '/', 0);
+    });
+}
+
+/* ---------------------------------------------------------------- chmod / chown */
+function parseMode(spec, cur, isDir) {
+    if (/^[0-7]{1,4}$/.test(spec)) return parseInt(spec, 8) & 0o7777;
+    let mode = cur;
+    const clauses = spec.split(',');
+    for (const cl of clauses) {
+        const m = cl.match(/^([ugoa]*)([+\-=])([rwxX]*)$/);
+        if (!m) return null;
+        const who = m[1] || 'a', op = m[2];
+        let bits = 0;
+        for (const c of m[3]) {
+            if (c === 'r') bits |= 4;
+            else if (c === 'w') bits |= 2;
+            else if (c === 'x') bits |= 1;
+            else if (c === 'X') { if (isDir || (mode & 0o111)) bits |= 1; }
+        }
+        let mask = 0;
+        if (who.indexOf('a') >= 0) mask = 0o777;
+        else {
+            if (who.indexOf('u') >= 0) mask |= 0o700;
+            if (who.indexOf('g') >= 0) mask |= 0o070;
+            if (who.indexOf('o') >= 0) mask |= 0o007;
+        }
+        const val = (((bits << 6) | (bits << 3) | bits) & mask);
+        if (op === '+') mode |= val;
+        else if (op === '-') mode &= ~val;
+        else mode = (mode & ~mask) | val;
+    }
+    return mode;
+}
+
+function cmdChmod(args) {
+    if (args.length < 2) { usageErr('chmod', 'missing operand'); return; }
+    const spec = args[0];
+    const targets = expandArgs(args.slice(1));
+    targets.forEach(function (t) {
+        const r = lookup(resolvePath(t));
+        if (r.err) { printLine("chmod: cannot access '" + t + "': " + errText(r.err), 'error-line'); return; }
+        if (GAME_STATE.user !== 'root' && r.node.owner !== GAME_STATE.user) {
+            printLine("chmod: changing permissions of '" + t + "': Operation not permitted", 'error-line');
             return;
         }
-        
-        printLine(`Searching for "${keyword}" in ${dirPath}:`, 'header-line');
-        printLine('');
-        
-        for (const name in dir) {
-            if (typeof dir[name] === 'string' && dir[name].toLowerCase().includes(keyword.toLowerCase())) {
-                printLine(`  ${name}: ${dir[name].substring(0, 80)}...`, 'success-line');
-                found = true;
-            }
+        const before = ('0000' + (r.node.mode & 0o7777).toString(8)).slice(-4) + ' (' + modeString(r.node).slice(1) + ')';
+        const m = parseMode(spec, r.node.mode, r.node.t === 'd');
+        if (m === null) { printLine("chmod: invalid mode: '" + spec + "'", 'error-line'); return; }
+        const unchanged = m === (r.node.mode & 0o7777);
+        r.node.mode = m;
+        const after = ('0000' + m.toString(8)).slice(-4) + ' (' + modeString(r.node).slice(1) + ')';
+        printLine(unchanged ? "mode of '" + t + "' retained as " + after
+                            : "mode of '" + t + "' changed from " + before + ' to ' + after, 'dim-line');
+    });
+}
+
+function cmdChown(args) {
+    if (args.length < 2) { usageErr('chown', 'missing operand'); return; }
+    const spec = args[0];
+    const parts = spec.split(':');
+    const newOwner = parts[0] || null;
+    const newGroup = parts.length > 1 ? (parts[1] || newOwner) : null;
+    if (newOwner && !KNOWN_USERS.hasOwnProperty(newOwner)) {
+        printLine("chown: invalid user: '" + spec + "'", 'error-line'); return;
+    }
+    if (newGroup && !KNOWN_GROUPS.hasOwnProperty(newGroup)) {
+        printLine("chown: invalid group: '" + spec + "'", 'error-line'); return;
+    }
+    expandArgs(args.slice(1)).forEach(function (t) {
+        const r = lookup(resolvePath(t));
+        if (r.err) { printLine("chown: cannot access '" + t + "': " + errText(r.err), 'error-line'); return; }
+        if (GAME_STATE.user !== 'root') {
+            printLine("chown: changing ownership of '" + t + "': Operation not permitted", 'error-line');
+            return;
         }
+        const before = r.node.owner + ':' + r.node.group;
+        if (newOwner) r.node.owner = newOwner;
+        if (newGroup) r.node.group = newGroup;
+        const after = r.node.owner + ':' + r.node.group;
+        printLine(before === after ? "ownership of '" + t + "' retained as " + after
+                                   : "changed ownership of '" + t + "' from " + before + ' to ' + after, 'dim-line');
+    });
+}
+
+/* ---------------------------------------------------------------- ps / kill */
+function cmdPs(args) {
+    const mode = args.join(' ');
+    const all = /a|e/.test(mode.replace(/-/g, ''));
+    const bsd = mode.indexOf('u') >= 0 || mode === 'aux' || mode === 'ax';
+    const rows = GAME_STATE.procs.filter(function (p) {
+        return all || (p.user === GAME_STATE.user && p.tty === 'pts/0');
+    });
+    rows.push({ pid: SHELL_PID + 1, user: GAME_STATE.user, tty: 'pts/0', stat: 'R+',
+                cpu: 0.0, mem: 0.1, time: '0:00', cmd: ('ps ' + mode).trim() });
+    rows.sort(function (a, b) { return a.pid - b.pid; });
+    if (bsd) {
+        printLine('USER       PID %CPU %MEM TTY      STAT   TIME COMMAND', 'header-line');
+        rows.forEach(function (p) {
+            printLine(p.user.padEnd(9) + String(p.pid).padStart(5) + ' ' + p.cpu.toFixed(1).padStart(4) + ' ' +
+                      p.mem.toFixed(1).padStart(4) + ' ' + p.tty.padEnd(8) + ' ' + p.stat.padEnd(4) + ' ' +
+                      p.time.padStart(6) + ' ' + p.cmd, 'output-line');
+        });
+    } else if (all) {
+        printLine('UID          PID  PPID  C STIME TTY          TIME CMD', 'header-line');
+        rows.forEach(function (p) {
+            printLine(p.user.padEnd(9) + String(p.pid).padStart(6) + String(p.pid === 1 ? 0 : 1).padStart(6) +
+                      '  0 09:41 ' + p.tty.padEnd(9) + p.time.padStart(9) + ' ' + p.cmd, 'output-line');
+        });
     } else {
-        const content = getFile(path);
-        if (content === null) {
-            printLine(`File not found: ${path}`, 'error-line');
-            return;
-        }
-        
-        const lines = content.split('\n');
-        printLine(`Searching for "${keyword}" in ${path}:`, 'header-line');
-        printLine('');
-        
-        lines.forEach((line, i) => {
-            if (line.toLowerCase().includes(keyword.toLowerCase())) {
-                printLine(`  Line ${i + 1}: ${line}`, 'success-line');
-                found = true;
-            }
+        printLine('  PID TTY          TIME CMD', 'header-line');
+        rows.forEach(function (p) {
+            printLine(String(p.pid).padStart(5) + ' ' + p.tty.padEnd(9) + p.time.padStart(9) + ' ' +
+                      p.cmd.split(' ')[0].split('/').pop(), 'output-line');
         });
     }
-    
-    if (!found) {
-        printLine('No matches found.', 'dim-line');
+}
+
+function cmdKill(args) {
+    let sig = 'TERM';
+    const pids = [];
+    args.forEach(function (a) {
+        if (a.charAt(0) === '-') sig = a.slice(1).toUpperCase().replace(/^SIG/, '');
+        else pids.push(a);
+    });
+    if (!pids.length) { usageErr('kill', 'usage: kill [-9|-15|-SIG] pid...'); return; }
+    if (!(/^\d+$/.test(sig) ? (+sig >= 1 && +sig <= 31)
+                            : /^(HUP|INT|QUIT|KILL|TERM|USR1|USR2|STOP|CONT)$/.test(sig))) {
+        printLine('bash: kill: ' + sig + ': invalid signal specification', 'error-line'); return;
     }
-    
-    if (GAME_STATE.currentLevel === 0 && keyword.toLowerCase().includes('code')) {
-        completeStep(1);
-    }
-    
-    if (GAME_STATE.currentLevel === 1 && keyword.toLowerCase().includes('critical')) {
-        completeStep(0);
+    pids.forEach(function (raw) {
+        if (!/^\d+$/.test(raw)) { printLine('bash: kill: ' + raw + ': arguments must be process ids', 'error-line'); return; }
+        const pid = parseInt(raw, 10);
+        const p = GAME_STATE.procs.filter(function (x) { return x.pid === pid; })[0];
+        if (!p) { printLine('bash: kill: (' + pid + ') - No such process', 'error-line'); return; }
+        if (GAME_STATE.user !== 'root' && p.user !== GAME_STATE.user) {
+            printLine('bash: kill: (' + pid + ') - Operation not permitted', 'error-line'); return;
+        }
+        if (p.immune) {
+            /* init and the interactive shell ignore the signal; kill(2) still succeeds */
+            if (sig === '9' || sig === 'KILL') printLine('kill: (' + pid + ') - the sandbox keeps this process alive', 'dim-line');
+            return;
+        }
+        GAME_STATE.procs = GAME_STATE.procs.filter(function (x) { return x.pid !== pid; });
+        printLine('[' + (sig === '9' || sig === 'KILL' ? 'killed' : 'terminated') + '] ' + pid + ' ' + p.cmd, 'dim-line');
+        if (p.cmd.indexOf('vault-lockd') >= 0) {
+            printLine('Interlock released: door 7 is no longer held by vault-lockd.', 'success-line');
+        }
+    });
+}
+
+/* =====================================================================
+   MISSION TOOLS
+   ===================================================================== */
+function noteListed(path) {
+    if (!currentLevel) return;
+    if (currentLevel.id === 1 && path === GAME_STATE.home) completeStep(0);
+    if (currentLevel.id === 2 && /\/logs$/.test(path)) completeStep(0);
+}
+
+function noteRead(path, content) {
+    if (!currentLevel) return;
+    const id = currentLevel.id;
+    if (id === 1) {
+        if (/\/notes\//.test(path)) completeStep(1);
+        if (content.indexOf('CODE-7429') >= 0) { completeStep(2); addToInventory('Access code CODE-7429'); }
+    } else if (id === 2) {
+        if (/\/logs\//.test(path)) completeStep(0);
+        if (/CRITICAL/i.test(content)) { completeStep(1); addToInventory('Failing unit device_B'); }
+        const m = content.match(/REC-\d{4}/);
+        if (m) { completeStep(2); addToInventory('Recovery key ' + m[0]); }
+    } else if (id === 3) {
+        const m = content.match(/ENCODED:\s*([A-Z]+)/);
+        if (m && GAME_STATE.tokensSeen.indexOf(m[1]) < 0) {
+            GAME_STATE.tokensSeen.push(m[1]);
+            if (GAME_STATE.tokensSeen.length >= 3) completeStep(0);
+        }
     }
 }
 
 function cmdDecode(args) {
-    if (args.length === 0) {
-        printLine('Usage: decode <token>', 'error-line');
-        return;
-    }
-    
+    if (!args.length) { usageOnly('usage: decode <token>'); return; }
     const token = args[0].toUpperCase();
     let decoded = '';
-    
-    for (let char of token) {
-        if (char >= 'A' && char <= 'Z') {
-            let code = char.charCodeAt(0) - 2;
+    for (const ch of token) {
+        if (ch >= 'A' && ch <= 'Z') {
+            let code = ch.charCodeAt(0) - 2;
             if (code < 65) code += 26;
             decoded += String.fromCharCode(code);
-        } else {
-            decoded += char;
-        }
+        } else decoded += ch;
     }
-    
-    printLine(`Decoding: ${token}`, 'header-line');
-    printLine(`Result: ${decoded}`, 'success-line glow');
-    
-    addToInventory(`Decoded: ${decoded}`);
-    
-    if (GAME_STATE.currentLevel === 3) {
-        if (!GAME_STATE.decodedCount) GAME_STATE.decodedCount = 0;
-        GAME_STATE.decodedCount++;
-        
-        if (GAME_STATE.decodedCount === 1) completeStep(1);
-        if (GAME_STATE.decodedCount === 3) completeStep(2);
+    printLine('decode: Caesar shift -2', 'header-line');
+    printLine(token + '  ->  ' + decoded, 'success-line glow');
+    addToInventory('Decoded ' + decoded);
+    if (currentLevel.id === 3 && currentLevel.decodedTokens.indexOf(decoded) >= 0) {
+        if (GAME_STATE.decodedWords.indexOf(decoded) < 0) GAME_STATE.decodedWords.push(decoded);
+        completeStep(1);
+        if (GAME_STATE.decodedWords.length === 3) completeStep(2);
     }
 }
 
 function cmdAnalyze(args) {
-    if (args.length === 0) {
-        printLine('Usage: analyze <file>', 'error-line');
-        return;
-    }
-    
-    const path = args[0];
-    const content = getFile(path);
-    
-    if (content === null) {
-        printLine(`File not found: ${path}`, 'error-line');
-        return;
-    }
-    
-    printLine(`Analyzing ${path}...`, 'header-line');
-    printLine('');
-    printLine(`Size: ${content.length} bytes`, 'dim-line');
-    printLine(`Lines: ${content.split('\n').length}`, 'dim-line');
-    
-    const keywords = content.match(/CODE-\d+|REC-\d+|ENCODED|CRITICAL|ERROR/g);
-    if (keywords) {
-        printLine(`Keywords found: ${keywords.join(', ')}`, 'success-line');
-    }
+    if (!args.length) { usageOnly('usage: analyze <file>'); return; }
+    const node = readFileFor('analyze', args[0]);   /* same permission checks as cat */
+    if (!node) return;
+    printLine('analyze ' + args[0], 'header-line');
+    printLine('  mode      ' + modeString(node) + '  ' + node.owner + ':' + node.group, 'dim-line');
+    printLine('  size      ' + node.c.length + ' bytes', 'dim-line');
+    printLine('  lines     ' + splitLines(node.c).length, 'dim-line');
+    const keywords = node.c.match(/CODE-\d+|REC-\d+|CONN-\d+|ENCODED|CRITICAL|ERROR/g);
+    printLine('  patterns  ' + (keywords ? keywords.join(', ') : 'none'), keywords ? 'success-line' : 'dim-line');
+    noteRead(resolvePath(args[0]), node.c);
 }
 
 function cmdInventory() {
-    if (GAME_STATE.inventory.length === 0) {
-        printLine('Inventory is empty.', 'dim-line');
-        return;
-    }
-    
-    printLine('INVENTORY:', 'header-line');
-    printLine('');
-    GAME_STATE.inventory.forEach(item => {
-        printLine(`  > ${item}`, 'warning-line');
-    });
+    if (!GAME_STATE.inventory.length) { printLine('Inventory is empty.', 'dim-line'); return; }
+    printLine('INVENTORY', 'header-line');
+    GAME_STATE.inventory.forEach(function (item) { printLine('  - ' + item, 'warning-line'); });
 }
 
 function cmdObjective() {
-    printLine('CURRENT MISSION:', 'header-line');
-    printLine('');
+    printLine('MISSION ' + currentLevel.id + ' - ' + currentLevel.name, 'header-line');
     printLine(currentLevel.objective, 'success-line');
     printLine('');
-    printLine('CHECKLIST:', 'header-line');
-    currentLevel.checklist.forEach((item, i) => {
-        const done = GAME_STATE.completedSteps.includes(i);
-        printLine(`  ${done ? '[✓]' : '[ ]'} ${item}`, done ? 'dim-line' : 'output-line');
+    currentLevel.checklist.forEach(function (item, i) {
+        const done = GAME_STATE.completedSteps.indexOf(i) >= 0;
+        printLine('  [' + (done ? 'x' : ' ') + '] ' + item, done ? 'dim-line' : 'output-line');
     });
 }
 
 function cmdHint() {
     if (GAME_STATE.hintCount >= currentLevel.hints.length) {
-        printLine('No more hints available.', 'warning-line');
+        printLine('[agent] No more hints for this level.', 'warning-line');
         return;
     }
-    
-    const hint = currentLevel.hints[GAME_STATE.hintCount];
-    printLine(`[AGENT HINT] ${hint}`, 'agent-line');
-    
+    printLine('[agent hint ' + (GAME_STATE.hintCount + 1) + '/' + currentLevel.hints.length + '] ' +
+              currentLevel.hints[GAME_STATE.hintCount], 'agent-line');
     GAME_STATE.hintCount++;
     GAME_STATE.hintsUsed++;
     playSound('hint');
 }
 
+function nextOpenStep() {
+    for (let i = 0; i < currentLevel.checklist.length; i++) {
+        if (GAME_STATE.completedSteps.indexOf(i) < 0) return i;
+    }
+    return -1;
+}
+
 function cmdExplain() {
-    const explains = [
-        'Your last command helped you explore the system.',
-        'That revealed important information.',
-        'You\'re making progress toward the objective.',
-        'Keep following the clues.'
-    ];
-    
-    const explain = explains[Math.floor(Math.random() * explains.length)];
-    printLine(`[AGENT] ${explain}`, 'agent-line');
+    const i = nextOpenStep();
+    if (i < 0) { printLine('[agent] Every objective is done - submit or unlock to finish.', 'agent-line'); return; }
+    printLine('[agent] Objective ' + (i + 1) + '/' + currentLevel.checklist.length + ': ' +
+              currentLevel.checklist[i], 'agent-line');
+    printLine('[agent] You are ' + GAME_STATE.user + ' in ' + GAME_STATE.cwd +
+              '. "ls -la" shows the mode bits, "man <cmd>" explains a command.', 'agent-line');
 }
 
 function cmdSubmit(args) {
-    if (args.length === 0) {
-        printLine('Usage: submit <answer>', 'error-line');
-        return;
-    }
-    
+    if (!args.length) { usageOnly('usage: submit <answer>'); return; }
     const answer = args.join(' ').toUpperCase();
-    
     if (currentLevel.id === 1) {
         if (answer === currentLevel.solution) {
-            printLine('ACCESS CODE ACCEPTED!', 'success-line glow');
+            printLine('ACCESS CODE ACCEPTED', 'success-line glow');
             completeStep(3);
-            setTimeout(() => completeLevel(), 1000);
-        } else {
-            printLine('Invalid code. Try again.', 'error-line');
-        }
+            setTimeout(completeLevel, 900);
+        } else printLine('submit: rejected - the code does not match the pattern CODE-####.', 'error-line');
     } else if (currentLevel.id === 2) {
-        if (answer.includes('DEVICE_B') && answer.includes('REC-8844')) {
-            printLine('RECOVERY PROTOCOL INITIATED!', 'success-line glow');
+        if (answer.indexOf('DEVICE_B') >= 0 && answer.indexOf('REC-8844') >= 0) {
+            printLine('RECOVERY PROTOCOL INITIATED', 'success-line glow');
             completeStep(3);
-            setTimeout(() => completeLevel(), 1000);
-        } else {
-            printLine('Invalid submission. Check device ID and recovery key.', 'error-line');
-        }
+            setTimeout(completeLevel, 900);
+        } else printLine('submit: rejected - expected <device>:<key>, e.g. device_X:REC-0000.', 'error-line');
     } else if (currentLevel.id === 3) {
-        const correctWords = ['DOORMAN', 'CONTROL', 'ACCESS'];
-        const hasAll = correctWords.every(word => answer.includes(word));
-        
-        if (hasAll) {
-            printLine('PASSPHRASE ACCEPTED! VAULT UNLOCKING...', 'success-line glow');
+        const ok = currentLevel.decodedTokens.every(function (w) { return answer.indexOf(w) >= 0; });
+        if (ok) {
+            printLine('PASSPHRASE ACCEPTED - VAULT UNLOCKING', 'success-line glow');
             completeStep(3);
-            setTimeout(() => completeLevel(), 1000);
-        } else {
-            printLine('Incorrect passphrase. Decode all tokens first.', 'error-line');
-        }
+            setTimeout(completeLevel, 900);
+        } else printLine('submit: rejected - three decoded words are required.', 'error-line');
+    } else {
+        printLine('submit: nothing to submit on this level - release the door with "unlock".', 'error-line');
     }
 }
 
+/* ---------------------------------------------------------------- level 4 network */
 function cmdMap() {
-    if (currentLevel.id !== 4) {
-        printLine('Map command not available in this level.', 'error-line');
-        return;
-    }
-    
-    printLine('NETWORK TOPOLOGY:', 'header-line');
+    if (currentLevel.id !== 4) { printLine('bash: map: command not found', 'error-line'); return; }
+    printLine('NETWORK TOPOLOGY 10.4.2.0/24', 'header-line');
     printLine('');
-    printLine('    [GATEWAY]', 'dim-line');
-    printLine('       |', 'dim-line');
-    printLine('    [ROUTER-3]', 'dim-line');
-    printLine('      / \\', 'dim-line');
-    printLine('     /   \\', 'dim-line');
-    printLine('[NODE-5] [VAULT-NODE-7]', 'success-line');
+    printLine('        [GATEWAY 10.4.2.1]', 'dim-line');
+    printLine('               |', 'dim-line');
+    printLine('        [ROUTER-3 10.4.2.3]', 'dim-line');
+    printLine('             /      \\', 'dim-line');
+    printLine('    [NODE-5]      [VAULT-NODE-7]', 'success-line');
+    printLine('   10.4.2.5         10.4.2.7', 'dim-line');
     printLine('');
-    
     completeStep(0);
 }
 
 function cmdTrace(args) {
-    if (currentLevel.id !== 4) {
-        printLine('Trace command not available.', 'error-line');
-        return;
-    }
-    
-    if (args.length === 0) {
-        printLine('Usage: trace <node>', 'error-line');
-        return;
-    }
-    
+    if (currentLevel.id !== 4) { printLine('bash: trace: command not found', 'error-line'); return; }
+    if (!args.length) { usageOnly('usage: trace <node>'); return; }
     const node = args[0].toUpperCase();
-    
-    if (node === 'VAULT-NODE-7') {
-        printLine('Tracing VAULT-NODE-7...', 'header-line');
-        printLine('Connection established.', 'success-line');
-        printLine('Connection ID: CONN-9732', 'success-line glow');
-        addToInventory('Connection: CONN-9732');
-        completeStep(1);
-    } else {
-        printLine(`Node ${node} is not a vault node.`, 'warning-line');
+    if (node !== 'VAULT-NODE-7') {
+        printLine('trace: ' + node + ': not a vault node (try the node named on the map)', 'warning-line');
+        return;
     }
+    printLine('trace VAULT-NODE-7 (10.4.2.7)', 'header-line');
+    printLine('  1  10.4.2.1   0.31 ms', 'dim-line');
+    printLine('  2  10.4.2.3   0.88 ms', 'dim-line');
+    printLine('  3  10.4.2.7   1.24 ms', 'dim-line');
+    printLine('connection id: CONN-9732', 'success-line glow');
+    addToInventory('Connection CONN-9732');
+    completeStep(1);
 }
 
 function cmdHandshake(args) {
-    if (currentLevel.id !== 4) {
-        printLine('Handshake command not available.', 'error-line');
+    if (currentLevel.id !== 4) { printLine('bash: handshake: command not found', 'error-line'); return; }
+    if (!args.length) { usageOnly('usage: handshake <connection-id>'); return; }
+    if (GAME_STATE.completedSteps.indexOf(1) < 0) {
+        printLine('handshake: no traced connection - run "trace VAULT-NODE-7" first.', 'error-line');
         return;
     }
-    
-    if (!GAME_STATE.inventory.some(i => i.includes('CONN-9732'))) {
-        printLine('No active connection. Trace a node first.', 'error-line');
+    if (args[0].toUpperCase() !== 'CONN-9732') {
+        printLine('handshake: ' + args[0] + ': unknown connection id.', 'error-line');
         return;
     }
-    
-    printLine('Initiating handshake protocol...', 'header-line');
-    printLine('Handshake sequence: OK', 'success-line');
-    printLine('Authentication: VERIFIED', 'success-line');
-    printLine('Vault is ready to unlock.', 'success-line glow');
-    
+    printLine('handshake CONN-9732', 'header-line');
+    printLine('  -> HELLO door=7 nonce=0x5A31', 'dim-line');
+    printLine('  <- CHALLENGE 0x9C4E', 'dim-line');
+    printLine('  -> RESPONSE  0x9C4E^0x5A31', 'dim-line');
+    printLine('  <- AUTHENTICATED', 'success-line');
+    GAME_STATE.handshakeDone = true;
     completeStep(2);
+    printLine('Node authenticated. The interlock daemon still holds the door.', 'warning-line');
 }
 
 function cmdUnlock() {
-    if (currentLevel.id !== 4) {
-        printLine('Unlock command not available.', 'error-line');
+    if (currentLevel.id !== 4) { printLine('bash: unlock: command not found', 'error-line'); return; }
+    if (!GAME_STATE.handshakeDone) {
+        printLine('unlock: node not authenticated - complete the handshake first.', 'error-line');
         return;
     }
-    
-    if (!GAME_STATE.completedSteps.includes(2)) {
-        printLine('Complete handshake first.', 'error-line');
+    if (GAME_STATE.procs.some(function (p) { return p.cmd.indexOf('vault-lockd') >= 0; })) {
+        printLine('unlock: interlock active - vault-lockd is still running (see "ps aux").', 'error-line');
         return;
     }
-    
-    printLine('UNLOCKING VAULT...', 'header-line glow');
-    printLine('', 'output-line');
-    printLine('█████████████████████████', 'success-line');
-    printLine('█ VAULT OPENED          █', 'success-line glow');
-    printLine('█████████████████████████', 'success-line');
-    printLine('', 'output-line');
-    
+    const r = lookup(resolvePath('~/bin/unlock.sh'));
+    if (r.err) { printLine('unlock: /root/bin/unlock.sh: ' + errText(r.err), 'error-line'); return; }
+    if (r.node.owner !== 'root' || r.node.group !== 'root') {
+        printLine('unlock: refusing to run bin/unlock.sh: owned by ' + r.node.owner + ':' + r.node.group +
+                  ', expected root:root.', 'error-line');
+        return;
+    }
+    if ((r.node.mode & 0o7777) !== 0o700) {
+        printLine('unlock: refusing to run bin/unlock.sh: mode is ' +
+                  ('0000' + (r.node.mode & 0o7777).toString(8)).slice(-4) + ', expected 0700.', 'error-line');
+        return;
+    }
+    printLine('exec /root/bin/unlock.sh', 'header-line glow');
+    printLine('');
+    printLine('#########################', 'success-line');
+    printLine('#   DOOR 7 RELEASED     #', 'success-line glow');
+    printLine('#########################', 'success-line');
+    printLine('');
     completeStep(3);
-    setTimeout(() => completeLevel(), 1500);
-}
-
-function resolvePath(path) {
-    if (path === '~' || path === '') return '~';
-    if (path.startsWith('~')) return path;
-    if (path.startsWith('/')) return '~' + path;
-    
-    if (GAME_STATE.currentPath === '~') {
-        return '~/' + path;
-    }
-    return GAME_STATE.currentPath + '/' + path;
-}
-
-function getDirectory(path) {
-    const parts = path.replace('~', '').split('/').filter(p => p);
-    let current = currentLevel.filesystem['~'];
-    
-    for (const part of parts) {
-        if (!current[part] || typeof current[part] === 'string') return null;
-        current = current[part];
-    }
-    
-    return current;
-}
-
-function getFile(path) {
-    const resolved = resolvePath(path);
-    const parts = resolved.replace('~', '').split('/').filter(p => p);
-    let current = currentLevel.filesystem['~'];
-    
-    for (let i = 0; i < parts.length - 1; i++) {
-        if (!current[parts[i]]) return null;
-        current = current[parts[i]];
-    }
-    
-    const fileName = parts[parts.length - 1];
-    return current[fileName] || null;
+    setTimeout(completeLevel, 1200);
 }
 
 function completeLevel() {
     stopTimer();
-    
-    const elapsed = Date.now() - GAME_STATE.levelStartTime;
-    const mins = Math.floor(elapsed / 60000);
-    const secs = Math.floor((elapsed % 60000) / 1000);
-    
+
+    const elapsed = Math.max(0, Date.now() - GAME_STATE.levelStartTime);
+    const secs = Math.floor(elapsed / 1000);
+    const mins = Math.floor(secs / 60);
+
     let levelScore = 1000;
     levelScore += Math.max(0, 500 - GAME_STATE.commandCount * 10);
     levelScore += Math.max(0, 300 - GAME_STATE.hintsUsed * 50);
-    levelScore += Math.max(0, 200 - Math.floor(elapsed / 1000));
-    
+    levelScore += Math.max(0, 200 - secs);
+
     GAME_STATE.score += levelScore;
-    
+
     let rank = 'C';
     if (levelScore >= 1500) rank = 'S';
     else if (levelScore >= 1200) rank = 'A';
     else if (levelScore >= 900) rank = 'B';
-    
+
     document.getElementById('rankDisplay').textContent = rank;
-    document.getElementById('completionTime').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    document.getElementById('completionTime').textContent = mins + ':' + String(secs % 60).padStart(2, '0');
     document.getElementById('commandCount').textContent = GAME_STATE.commandCount;
     document.getElementById('hintsUsed').textContent = GAME_STATE.hintsUsed;
     document.getElementById('levelScore').textContent = levelScore;
-    
     updateScore();
-    
-    if (GAME_STATE.currentLevel >= LEVELS.length - 1) {
+
+    const last = GAME_STATE.currentLevel >= LEVELS.length - 1;
+    document.getElementById('nextLevelBtn').classList.toggle('hidden', last);
+    document.getElementById('levelCompleteOverlay').classList.remove('hidden');
+    playSound('complete');
+
+    if (last) {
         document.getElementById('finalScore').textContent = GAME_STATE.score;
         setTimeout(() => {
             document.getElementById('levelCompleteOverlay').classList.add('hidden');
             document.getElementById('gameCompleteOverlay').classList.remove('hidden');
-        }, 2000);
+        }, 2200);
     }
-    
-    document.getElementById('levelCompleteOverlay').classList.remove('hidden');
-    playSound('complete');
 }
 
+let audioCtx = null;
 function playSound(type) {
     if (!CONFIG.soundEnabled) return;
-    
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    if (type === 'success') {
-        oscillator.frequency.value = 800;
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
-    } else if (type === 'hint') {
-        oscillator.frequency.value = 600;
-        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.15);
-    } else if (type === 'complete') {
-        oscillator.frequency.value = 1200;
-        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
-    }
+    try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const spec = type === 'success' ? { f: 800, g: 0.10, d: 0.10 }
+                   : type === 'hint'    ? { f: 600, g: 0.05, d: 0.15 }
+                   : type === 'complete'? { f: 1200, g: 0.15, d: 0.30 } : null;
+        if (!spec) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = spec.f;
+        gain.gain.setValueAtTime(spec.g, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + spec.d);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + spec.d);
+    } catch (e) { /* audio blocked by the browser */ }
 }
 
 function updateSoundButton() {
@@ -1615,7 +2125,23 @@ inputField.addEventListener('keydown', (e) => {
         const input = inputField.value;
         inputField.value = '';
         processCommand(input);
-    } else if (e.key === 'ArrowUp') {
+        return;
+    }
+    if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        clearTerminal();
+        return;
+    }
+    if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+        const sel = window.getSelection();
+        if (sel && String(sel).length) return;   /* let the copy through */
+        e.preventDefault();
+        printPrompt(inputField.value + '^C');
+        inputField.value = '';
+        GAME_STATE.historyIndex = GAME_STATE.commandHistory.length;
+        return;
+    }
+    if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (GAME_STATE.historyIndex > 0) {
             GAME_STATE.historyIndex--;
@@ -1633,72 +2159,20 @@ inputField.addEventListener('keydown', (e) => {
     }
 });
 
-document.getElementById('startGameBtn').addEventListener('click', () => {
-    document.getElementById('titleOverlay').classList.add('hidden');
-    if (!CONFIG.tutorialSeen) {
-        document.getElementById('tutorialOverlay').classList.remove('hidden');
-    } else {
-        startLevel(0);
-    }
+document.querySelector('.terminal-section').addEventListener('click', () => {
+    const sel = window.getSelection();
+    if (!sel || !String(sel).length) inputField.focus();
 });
 
-document.getElementById('tutorialBtn').addEventListener('click', () => {
-    document.getElementById('titleOverlay').classList.add('hidden');
-    document.getElementById('tutorialOverlay').classList.remove('hidden');
-});
-
-let tutStep = 1;
-
-document.getElementById('tutNextBtn').addEventListener('click', () => {
-    document.getElementById(`tutStep${tutStep}`).classList.remove('active');
-    tutStep++;
-    document.getElementById(`tutStep${tutStep}`).classList.add('active');
-    
-    if (tutStep === 5) {
-        document.getElementById('tutNextBtn').classList.add('hidden');
-        document.getElementById('tutStartBtn').classList.remove('hidden');
-    }
-    
-    if (tutStep > 1) {
-        document.getElementById('tutBackBtn').classList.remove('hidden');
-    }
-});
-
-document.getElementById('tutBackBtn').addEventListener('click', () => {
-    document.getElementById(`tutStep${tutStep}`).classList.remove('active');
-    tutStep--;
-    document.getElementById(`tutStep${tutStep}`).classList.add('active');
-    
-    if (tutStep < 5) {
-        document.getElementById('tutNextBtn').classList.remove('hidden');
-        document.getElementById('tutStartBtn').classList.add('hidden');
-    }
-    
-    if (tutStep === 1) {
-        document.getElementById('tutBackBtn').classList.add('hidden');
-    }
-});
-
-document.getElementById('tutStartBtn').addEventListener('click', () => {
-    if (document.getElementById('skipTutorial').checked) {
-        CONFIG.tutorialSeen = true;
-        saveProgress();
-    }
-    document.getElementById('tutorialOverlay').classList.add('hidden');
-    startLevel(0);
-});
-
-document.getElementById('helpBtn').addEventListener('click', () => {
-    tutStep = 1;
-    document.getElementById('tutStep1').classList.add('active');
-    document.getElementById('tutStep2').classList.remove('active');
-    document.getElementById('tutStep3').classList.remove('active');
-    document.getElementById('tutStep4').classList.remove('active');
-    document.getElementById('tutStep5').classList.remove('active');
-    document.getElementById('tutNextBtn').classList.remove('hidden');
-    document.getElementById('tutStartBtn').classList.add('hidden');
-    document.getElementById('tutBackBtn').classList.add('hidden');
-    document.getElementById('tutorialOverlay').classList.remove('hidden');
+/* ---------------------------------------------------------------- help modal */
+const helpOverlay = document.getElementById('helpOverlay');
+function openHelp() { helpOverlay.classList.add('show'); document.getElementById('helpClose').focus(); }
+function closeHelp() { helpOverlay.classList.remove('show'); inputField.focus(); }
+document.getElementById('helpBtn').addEventListener('click', openHelp);
+document.getElementById('helpClose').addEventListener('click', closeHelp);
+helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) closeHelp(); });
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && helpOverlay.classList.contains('show')) closeHelp();
 });
 
 document.getElementById('soundBtn').addEventListener('click', () => {
@@ -1708,51 +2182,46 @@ document.getElementById('soundBtn').addEventListener('click', () => {
 });
 
 document.getElementById('hintBtn').addEventListener('click', () => {
-    cmdHint([]);
+    cmdHint();
+    printLine('');
 });
 
 document.getElementById('explainBtn').addEventListener('click', () => {
-    cmdExplain([]);
+    cmdExplain();
+    printLine('');
 });
 
 document.getElementById('suggestBtn').addEventListener('click', () => {
-    if (GAME_STATE.hintCount < currentLevel.hints.length) {
-        const suggestion = currentLevel.hints[GAME_STATE.hintCount];
-        const suggestionEl = document.getElementById('agentSuggestion');
-        suggestionEl.textContent = `💡 ${suggestion}`;
-        suggestionEl.classList.add('visible');
-        
-        setTimeout(() => {
-            suggestionEl.classList.remove('visible');
-        }, 8000);
-    }
+    const el = document.getElementById('agentSuggestion');
+    const i = nextOpenStep();
+    el.textContent = i < 0
+        ? 'All objectives complete - finish the level.'
+        : 'Next: ' + currentLevel.checklist[i] + '  |  ' + currentLevel.hints[Math.min(GAME_STATE.hintCount, currentLevel.hints.length - 1)];
+    el.classList.add('visible');
+    cmdHint();
+    printLine('');
 });
 
 document.getElementById('whyBtn').addEventListener('click', () => {
-    const why = [
-        'Based on the mission objective, you need to gather information from the filesystem.',
-        'The clues you need are hidden in various files. Explore systematically.',
-        'Each step in the checklist guides you toward the solution.',
-        'Use the commands you\'ve learned to search, read, and analyze.'
-    ];
-    
-    printLine(`[AGENT] ${why[Math.floor(Math.random() * why.length)]}`, 'agent-line');
+    cmdExplain();
     printLine('');
 });
 
 document.getElementById('nextLevelBtn').addEventListener('click', () => {
     document.getElementById('levelCompleteOverlay').classList.add('hidden');
-    startLevel(GAME_STATE.currentLevel + 1);
+    startLevel(Math.min(GAME_STATE.currentLevel + 1, LEVELS.length - 1));
 });
 
 document.getElementById('retryLevelBtn').addEventListener('click', () => {
     document.getElementById('levelCompleteOverlay').classList.add('hidden');
+    /* rewind the score to the value it had when this level started */
+    GAME_STATE.score = GAME_STATE.scoreAtLevelStart;
+    updateScore();
     startLevel(GAME_STATE.currentLevel);
 });
 
 document.getElementById('playAgainBtn').addEventListener('click', () => {
     GAME_STATE.score = 0;
-    GAME_STATE.currentLevel = 0;
     updateScore();
     document.getElementById('gameCompleteOverlay').classList.add('hidden');
     startLevel(0);
@@ -1760,6 +2229,57 @@ document.getElementById('playAgainBtn').addEventListener('click', () => {
 
 initGame();
 </script>
+
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A single-process POSIX shell emulator. The <strong>virtual filesystem</strong> is a tree of typed nodes &mdash; <code>{t:'f'|'d', mode, owner, group, mtime, content|children}</code> &mdash; rooted at <code>/</code> with <code>/bin</code>, <code>/etc</code>, <code>/home</code>, <code>/root</code>, <code>/tmp</code> and <code>/var/log</code> mounted under it and the level's puzzle data grafted into the user's home directory. The <strong>command parser</strong> tokenises the input line (quote-aware), expands <code>~</code>, <code>$VAR</code> and <code>*</code>/<code>?</code> globs, splits the leading option cluster into flags, and dispatches to a handler table. The <strong>permission model</strong> resolves each path component in turn, requiring the execute bit on every directory it traverses and the relevant r/w/x bit on the target, with the owner / group / other triad selected exactly as <code>stat(2)</code> does. The <strong>architecture is event driven</strong>: a single <code>keydown</code> listener on the input owns the line editor (history, Ctrl+L, Ctrl+C), handlers mutate one <code>GAME_STATE</code> object, and every state change re-renders the mission panel, the status strip and the nav pills instead of the DOM being poked from inside command code.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Single user session, no <code>fork</code>, no pipes, no redirection, no job control, no environment inheritance: one command per line.</li>
+          <li>Modes are 12-bit; the sticky bit is rendered on <code>/tmp</code> (<code>1777</code>) but only the nine permission bits are enforced. No ACLs, no capabilities, no setuid.</li>
+          <li>Group membership is a single supplementary group per level (<code>staff</code>), not a list.</li>
+          <li><code>root</code> bypasses read and write checks and needs one execute bit to execute, matching Linux behaviour.</li>
+          <li>The process table is static per level apart from <code>kill</code>; PID 1 ignores every signal. <code>%CPU</code> and <code>%MEM</code> are fixed decorative constants.</li>
+          <li>File timestamps are fixed strings, so <code>ls -l</code> dates are stable rather than live.</li>
+          <li>Levels: 1 <em>ls/cat/grep</em>, 2 <em>grep -r over logs</em>, 3 <em>chmod on a write-only file and a non-traversable directory</em>, 4 <em>ps/kill/chown/chmod as root</em>. Every win condition is reachable with the commands the guide documents.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li>Access check: <code>bits = owner==user ? mode&gt;&gt;6 : group==usergroup ? mode&gt;&gt;3 : mode</code>, then <code>bits &amp; 4|2|1</code> for r|w|x &mdash; POSIX.1-2017 <em>File Access Permissions</em>; Linux <code>path_resolution(7)</code>, <code>inode(7)</code>.</li>
+          <li>Symbolic mode grammar <code>[ugoa]*[-+=][rwxX]*</code> applied left to right over comma-separated clauses, <code>X</code> setting execute only for directories or files that already have an execute bit &mdash; GNU coreutils <code>chmod(1)</code>.</li>
+          <li><code>ls -l</code> block total is <code>&Sigma; 4&times;&lceil;size/4096&rceil;</code> KiB, matching a 4 KiB block filesystem; link count is <code>2 + subdirectories</code> for a directory and 1 for a regular file.</li>
+          <li>Diagnostics follow bash and coreutils wording: <code>bash: foo: command not found</code>, <code>cat: x: No such file or directory</code>, <code>ls: cannot open directory 'x': Permission denied</code>, <code>bash: kill: (7) - Operation not permitted</code>.</li>
+          <li>Caesar shift of &minus;2 over A&ndash;Z with wraparound for the level-3 tokens.</li>
+          <li>Kernighan &amp; Pike (1984), <em>The UNIX Programming Environment</em>; Stevens &amp; Rago (2013), <em>Advanced Programming in the UNIX Environment</em>, ch. 4.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li>Not a shell: no pipelines, redirection, subshells, globbing beyond <code>*</code> and <code>?</code>, quoting subtleties, exit statuses or signals other than what <code>kill</code> pretends to send.</li>
+          <li>Commands are re-implementations, not the real utilities &mdash; only the flags listed in the guide exist, and <code>grep</code> uses JavaScript regular expressions rather than POSIX BRE.</li>
+          <li>No inodes, hard links, symlinks, mounts, timestamps that update, or disk quotas; <code>ls -l</code> sizes are string lengths.</li>
+          <li>The network in level 4 is a scripted three-step dialogue, not a protocol; nothing is transmitted anywhere.</li>
+          <li>Progress is not persisted &mdash; only the sound preference is stored in <code>localStorage</code>. Reloading restarts at level 1.</li>
+          <li>The side panel is hidden below 1024 px, so on a phone the mission checklist lives behind the <code>objective</code> command.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Browser simulation for education. This is a fictional puzzle sandbox: the hosts, files, processes and &ldquo;vault&rdquo; are invented, the emulated commands are approximations of the real utilities, and nothing here connects to or describes a real system.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
+  </div>
+</footer>
 
 </body>
 </html>

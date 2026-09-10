@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regime-Aware Transformer with CARD | Research | Cristian Arenas</title>
+<meta name="description" content="Interactive summary of Regime-Aware Transformer Architectures with Cross-Attention Regime Discovery for Multi-Asset Portfolio Construction. Every figure is drawn from the paper's own result tables.">
+<meta property="og:title" content="Regime-Aware Transformer with CARD">
+<meta property="og:description" content="Interactive research summary: cross-attention regime discovery for multi-asset portfolio construction.">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e27;--darker:#05080f;--card:#0f1629;--card2:#111827;--border:#1e293b;--border2:#334155;
+  --text:#e4e4e7;--muted:#a1a1aa;--faint:#83838d;
+  --cyan:#00f7ff;--cyan-d:#0891b2;--green:#00ff41;--amber:#d97706;--purple:#7c3aed;--red:#ef4444;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;--mono:'JetBrains Mono','Courier New',monospace;
+}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--cyan);text-decoration:none}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.wrap{max-width:1220px;margin:0 auto;padding:0 2rem}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:3px}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:600;background:rgba(10,14,39,.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav .wrap{display:flex;align-items:center;gap:1rem;height:60px}
+.brand{font-family:var(--mono);font-size:.85rem;color:var(--cyan);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.brand::before{content:'> ';color:var(--green)}
+.brand .c{color:var(--faint)}
+.nav ul{display:flex;gap:1.4rem;list-style:none;margin-left:auto}
+.nav ul a{color:var(--muted);font-size:.9rem;transition:color .2s}
+.nav ul a:hover,.nav ul a.on{color:var(--cyan)}
+.nav-burger{display:none;margin-left:auto;background:none;border:none;color:var(--cyan);font-size:1.4rem;cursor:pointer}
+
+/* HERO */
+.hero{padding:3.5rem 0 2.5rem;background:linear-gradient(135deg,var(--darker),var(--bg));border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(0,247,255,.028) 1px,transparent 1px),linear-gradient(rgba(0,247,255,.028) 1px,transparent 1px);background-size:52px 52px}
+.hero .wrap{position:relative}
+.back{display:inline-flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.9rem;margin-bottom:1.6rem;transition:.2s}
+.back:hover{color:var(--cyan)}
+.back:hover i{transform:translateX(-4px)}
+.back i{transition:transform .2s}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--green)}
+.hero h1{font-size:clamp(1.7rem,3.4vw,2.7rem);margin:.7rem 0 1rem;letter-spacing:-.02em;max-width:22ch}
+.byline{color:var(--muted);font-size:1rem}
+.byline b{color:var(--text);font-weight:600}
+.pills{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.3rem 0 1.6rem}
+.pill{font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;padding:.3rem .75rem;border-radius:999px;border:1px solid var(--border2);color:var(--muted)}
+.pill.a{color:var(--cyan);border-color:rgba(0,247,255,.35);background:rgba(0,247,255,.06)}
+.acts{display:flex;flex-wrap:wrap;gap:.7rem}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.25rem;border-radius:6px;font-size:.92rem;font-weight:600;border:1px solid transparent;cursor:pointer;transition:.2s;font-family:inherit}
+.btn:active{transform:scale(.97)}
+.btn.p{background:var(--cyan);color:#04121a}
+.btn.p:hover{background:var(--green);box-shadow:0 0 24px rgba(0,255,65,.35)}
+.btn.s{border-color:var(--cyan);color:var(--cyan);background:transparent}
+.btn.s:hover{background:var(--cyan);color:#04121a}
+.btn.g{border-color:var(--border2);color:var(--muted);background:transparent}
+.btn.g:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* LAYOUT */
+.main{display:grid;grid-template-columns:210px 1fr;gap:3rem;padding:3rem 0 4rem;align-items:start}
+.main>article{min-width:0}
+.toc{position:sticky;top:80px}
+.toc h4{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:.9rem}
+.toc a{display:block;color:var(--muted);font-size:.86rem;padding:.34rem 0 .34rem .8rem;border-left:2px solid var(--border);transition:.2s}
+.toc a:hover{color:var(--text);border-color:var(--border2)}
+.toc a.on{color:var(--cyan);border-color:var(--cyan)}
+section{margin-bottom:3.6rem;scroll-margin-top:90px}
+section>h2{font-size:1.6rem;margin-bottom:.5rem;display:flex;align-items:baseline;gap:.7rem}
+section>h2 .n{font-family:var(--mono);font-size:.9rem;color:var(--cyan)}
+.lede{color:var(--muted);font-size:1.02rem;max-width:70ch;margin-bottom:1.5rem}
+p{color:var(--muted);margin-bottom:1rem;max-width:72ch}
+p strong,li strong{color:var(--text)}
+ul.body,ol.body{color:var(--muted);margin:0 0 1.2rem 1.3rem;max-width:72ch}
+ul.body li,ol.body li{margin-bottom:.5rem}
+h3.sub{font-size:1.1rem;color:var(--text);margin:1.8rem 0 .7rem}
+
+/* ABSTRACT */
+.abs{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:8px;padding:1.4rem 1.6rem}
+.abs p{font-size:.96rem;margin-bottom:0}
+
+/* FIGURE CARD */
+.fig{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.3rem 1rem;margin:1.4rem 0}
+.fig-h{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.9rem}
+.fig-t{font-size:.95rem;font-weight:600;color:var(--text)}
+.fig-s{font-size:.78rem;color:var(--faint);margin-top:.15rem;max-width:60ch}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0}
+.seg button{background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:.72rem;padding:.4rem .7rem;cursor:pointer;transition:.2s;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--border)}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:rgba(0,247,255,.1);color:var(--cyan)}
+.fig svg{width:100%;height:auto;display:block;overflow:visible}
+.fig svg .hit{cursor:pointer}
+.fig svg .hit:focus{outline:none}
+.fig-legend{display:flex;gap:1.1rem;flex-wrap:wrap;font-size:.75rem;color:var(--muted);margin-top:.8rem}
+.fig-legend span{display:inline-flex;align-items:center;gap:.4rem}
+.fig-legend i{width:11px;height:11px;border-radius:2px;display:inline-block;flex-shrink:0}
+.fig-legend i.ring{background:transparent;border:1.5px dashed var(--muted)}
+.fig-n{font-size:.78rem;color:var(--faint);margin-top:.75rem;line-height:1.55;max-width:78ch}
+.fig-n b{color:var(--muted)}
+
+/* TOOLTIP */
+#tip{position:fixed;z-index:1200;pointer-events:none;background:rgba(5,8,15,.97);border:1px solid var(--border2);border-radius:6px;padding:.5rem .7rem;font-family:var(--mono);font-size:.73rem;color:var(--text);line-height:1.55;box-shadow:0 12px 32px rgba(0,0,0,.5);display:none;max-width:280px}
+#tip.on{display:block}
+#tip b{color:var(--cyan);font-weight:600}
+#tip .d{color:var(--faint)}
+
+/* KEY NUMBERS */
+.knums{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.3rem;margin:1.6rem 0}
+.knum{border-left:2px solid var(--cyan);padding-left:1rem}
+.knum .v{font-family:var(--mono);font-size:1.5rem;color:var(--cyan);font-weight:600;line-height:1.1}
+.knum .l{font-size:.82rem;color:var(--muted);margin-top:.35rem;line-height:1.5}
+
+/* ARCH DIAGRAM */
+.arch{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.3rem;margin:1.4rem 0;overflow-x:auto}
+.arch svg{min-width:620px;width:100%;height:auto;display:block}
+.arch .box{cursor:pointer}
+.arch .box rect{transition:.2s}
+.arch .box:hover rect,.arch .box.on rect{stroke:var(--cyan);fill:rgba(0,247,255,.1)}
+.arch-detail{margin-top:1rem;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.15rem;min-height:96px}
+.arch-detail h4{font-size:.92rem;color:var(--cyan);margin-bottom:.4rem;font-family:var(--mono)}
+.arch-detail p{font-size:.87rem;margin-bottom:.4rem;color:var(--muted)}
+.arch-detail code{font-family:var(--mono);font-size:.8rem;color:var(--green);background:rgba(0,255,65,.07);padding:.1rem .35rem;border-radius:3px}
+
+/* TABLE */
+.tw{overflow-x:auto;margin:1.3rem 0;border:1px solid var(--border);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem;min-width:520px}
+th,td{text-align:right;padding:.6rem .8rem;border-bottom:1px solid var(--border);color:var(--muted);white-space:nowrap}
+th{color:var(--text);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;background:var(--card2)}
+td:first-child,th:first-child{text-align:left;color:var(--text)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(0,247,255,.03)}
+tr.hi td{background:rgba(0,247,255,.06)}
+tr.hi td:first-child{color:var(--cyan);font-weight:600}
+td.num,th.num{font-family:var(--mono)}
+
+/* CALLOUT */
+.call{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:8px;padding:1.15rem 1.35rem;margin:1.4rem 0}
+.call h4{font-size:.95rem;color:var(--green);margin-bottom:.5rem}
+.call p:last-child{margin-bottom:0}
+.call.warn{border-left-color:var(--amber)}
+.call.warn h4{color:var(--amber)}
+
+/* CARDS GRID */
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.3rem 0}
+.mini{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:1.05rem 1.15rem;transition:.25s}
+.mini:hover{border-color:var(--cyan);transform:translateY(-3px)}
+.mini .k{font-family:var(--mono);font-size:.68rem;color:var(--green);letter-spacing:.1em}
+.mini h4{font-size:.95rem;color:var(--text);margin:.35rem 0 .4rem}
+.mini p{font-size:.85rem;margin:0;color:var(--muted)}
+
+/* CITE */
+.cite{background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;position:relative}
+.cite pre{font-family:var(--mono);font-size:.76rem;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.7;margin:0}
+.copy{position:absolute;top:.75rem;right:.75rem;background:var(--card2);border:1px solid var(--border2);color:var(--muted);border-radius:5px;padding:.32rem .7rem;font-size:.72rem;font-family:var(--mono);cursor:pointer;transition:.2s}
+.copy:hover{color:var(--cyan);border-color:var(--cyan)}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);background:var(--darker);padding:2.5rem 0}
+.fbot{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.85rem;color:var(--faint)}
+.fbot a{color:var(--muted);margin-left:1.2rem}
+.fbot a:hover{color:var(--cyan)}
+
+@media(max-width:960px){
+  .main{grid-template-columns:1fr;gap:0}
+  .toc{display:none}
+  .nav ul{display:none;position:absolute;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(10,14,39,.98);border-bottom:1px solid var(--border);padding:.5rem 2rem 1rem}
+  .nav ul.open{display:flex}
+  .nav ul a{display:block;padding:.7rem 0}
+  .nav-burger{display:block}
+}
+@media(max-width:640px){
+  .brand .c{display:none}
+  .wrap{padding:0 1.1rem}
+  .hero{padding:2.2rem 0 1.8rem}
+  section>h2{font-size:1.3rem}
+  .fig{padding:1rem .85rem .8rem}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">cristian@portfolio:~$ <span class="c">/ research / rat-card</span></a>
+    <button class="nav-burger" id="burger" aria-label="Toggle menu" type="button"><i class="fas fa-bars"></i></button>
+    <ul id="navList">
+      <li><a href="index.html#projects">Projects</a></li>
+      <li><a href="research.html">Research</a></li>
+      <li><a href="index.html#demos">Demos</a></li>
+      <li><a href="robotics-embedded.html">Robotics</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <a href="research.html" class="back"><i class="fas fa-arrow-left"></i> All research</a>
+    <div class="eyebrow">Working paper &middot; SSRN &middot; 2026</div>
+    <h1>Regime-Aware Transformer Architectures with Cross-Attention Regime Discovery</h1>
+    <p class="byline"><b>Cristian Miguel Sanchez Arenas</b> &middot; Independent Researcher</p>
+    <div class="pills">
+      <span class="pill a">SSRN 6517438</span>
+      <span class="pill">26 pages</span>
+      <span class="pill">9 baselines + oracle</span>
+      <span class="pill">3 DGPs &times; 3 seeds</span>
+      <span class="pill">10,000-rep bootstrap</span>
+      <span class="pill">Reproducible pipeline</span>
+    </div>
+    <div class="acts">
+      <a class="btn p" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6517438" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Read on SSRN</a>
+      <a class="btn s" href="assets/research/Arenas-2026-Regime-Aware-Transformer-CARD.pdf" download><i class="fas fa-file-arrow-down"></i> Download PDF</a>
+      <a class="btn g" href="#cite"><i class="fas fa-quote-right"></i> Cite</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap main">
+  <aside class="toc">
+    <h4>Contents</h4>
+    <nav id="tocNav">
+      <a href="#abstract">Abstract</a>
+      <a href="#problem">The problem</a>
+      <a href="#card">How CARD works</a>
+      <a href="#setup">Experimental setup</a>
+      <a href="#results">Main results</a>
+      <a href="#paradox">The regime paradox</a>
+      <a href="#ablation">Ablations</a>
+      <a href="#costs">Costs &amp; turnover</a>
+      <a href="#conditional">By regime</a>
+      <a href="#compute">Compute</a>
+      <a href="#takeaways">What it means</a>
+      <a href="#limits">Limitations</a>
+      <a href="#next">What is next</a>
+      <a href="#cite">Cite</a>
+    </nav>
+  </aside>
+
+  <article>
+
+    <section id="abstract">
+      <h2><span class="n">01</span> Abstract</h2>
+      <div class="abs">
+        <p>
+          We investigate end-to-end regime-aware portfolio optimization through a novel Cross-Attention Regime
+          Discovery (CARD) mechanism that enables transformer architectures to jointly learn regime structure and
+          allocation policies. Unlike traditional two-stage pipelines that classify market regimes and optimize
+          allocations independently, CARD uses learnable regime query vectors that attend to temporal feature
+          representations via cross-attention, producing interpretable soft regime assignments and regime-specific
+          portfolio weights. We evaluate CARD within our proposed Regime-Aware Transformer (RAT) architecture across
+          three synthetic data generating processes with varying regime persistence and signal-to-noise ratio, each
+          tested over multiple random seeds with transaction cost analysis. Our controlled evaluation on known
+          Markov-switching processes reveals that all neural methods substantially outperform traditional baselines
+          across settings, but no single neural architecture dominates. On the base DGP, RAT-CARD achieves a Sharpe
+          ratio of 0.82 &plusmn; 0.40 versus 0.29 &plusmn; 0.40 for equal weight and 0.44 &plusmn; 0.43 for GMM-MVO.
+          However, a simpler LSTM baseline (1.13 &plusmn; 0.45) and RAT with a VAE-based regime module
+          (0.99 &plusmn; 0.43) perform comparably or better, with no pairwise differences reaching statistical
+          significance. CARD's attention-based regime discovery provides qualitatively different, interpretable regime
+          representations, though explicit GMM models recover true regime labels more accurately. These findings
+          demonstrate that architectural sophistication does not guarantee performance gains, and highlight the gap
+          between regime identification and portfolio-relevant regime awareness.
+        </p>
+      </div>
+      <div class="knums">
+        <div class="knum"><div class="v">0.82</div><div class="l">RAT-CARD Sharpe on the base process, against 0.29 for equal weight</div></div>
+        <div class="knum"><div class="v">0</div><div class="l">pairwise comparisons reaching significance at the 5% level</div></div>
+        <div class="knum"><div class="v">0.03 vs 0.59</div><div class="l">regime ARI for CARD against GMM, yet CARD allocates better</div></div>
+        <div class="knum"><div class="v">24,127</div><div class="l">parameters, about 1.0 ms per forward pass</div></div>
+      </div>
+      <p style="font-size:.86rem;color:var(--faint)">
+        This page is an interactive summary. Every figure is drawn from the result tables in the paper, with no
+        smoothing, extrapolation, or added data. Where the paper reports a standard deviation across seeds, the
+        figure shows it.
+      </p>
+    </section>
+
+    <section id="problem">
+      <h2><span class="n">02</span> The problem with two-stage regime allocation</h2>
+      <p class="lede">
+        Markets behave differently across macroeconomic environments. The standard response is a two-stage pipeline:
+        classify the regime, then optimize the allocation conditional on that label. That interface is where the
+        information dies.
+      </p>
+      <div class="grid3">
+        <div class="mini"><span class="k">FAILURE 01</span><h4>Error propagation</h4><p>A regime misclassification passes straight into the allocation with no mechanism to compensate.</p></div>
+        <div class="mini"><span class="k">FAILURE 02</span><h4>Information bottleneck</h4><p>A discrete label discards regime uncertainty, transition dynamics, and within-regime heterogeneity.</p></div>
+        <div class="mini"><span class="k">FAILURE 03</span><h4>Fixed within-regime assumptions</h4><p>The optimizer treats parameters as stationary inside a regime and ignores gradual shifts.</p></div>
+        <div class="mini"><span class="k">FAILURE 04</span><h4>Objective misalignment</h4><p>The regime model maximizes classification likelihood. The portfolio needs risk-adjusted return. Those objectives are not guaranteed to align.</p></div>
+      </div>
+      <p>
+        CARD removes the interface. Regime structure and allocation policy are learned jointly, end to end, against a
+        single portfolio objective. The regime representation is free to be whatever helps the allocation, rather than
+        whatever best reproduces a label.
+      </p>
+    </section>
+
+    <section id="card">
+      <h2><span class="n">03</span> How CARD works</h2>
+      <p class="lede">Click any block to see what it does and the exact configuration used in the experiments.</p>
+      <div class="arch">
+        <svg id="archSvg" viewBox="0 0 900 250" role="img" aria-label="Architecture diagram of the Regime-Aware Transformer with Cross-Attention Regime Discovery"></svg>
+      </div>
+      <div class="arch-detail" id="archDetail" aria-live="polite"></div>
+
+      <h3 class="sub">The mechanism in one paragraph</h3>
+      <p>
+        The temporal encoder turns a 12-month lookback window into a sequence of hidden states. CARD holds
+        <strong>K = 3 learnable regime query vectors</strong>, initialized orthogonally so they start out looking for
+        different things. Each query attends over that sequence by scaled dot-product cross-attention, producing a
+        regime-specific context vector and a soft assignment probability. Each regime owns its own allocation head,
+        and the final portfolio is the probability-weighted blend of those heads, projected back onto the feasible
+        set. Because the attention weights are per-timestep, you can read off which points in the lookback window
+        drove each regime's activation.
+      </p>
+      <div class="tw">
+        <table>
+          <caption class="sr-only">Model configuration</caption>
+          <thead><tr><th>Component</th><th>Configuration</th></tr></thead>
+          <tbody>
+            <tr><td>Input window</td><td style="text-align:left">12 months &times; 22 features (10 asset returns, 8 macro, 4 stress), expanding-window z-scores</td></tr>
+            <tr><td>Temporal encoder</td><td style="text-align:left">Transformer, d<sub>model</sub> = 32, 2 layers, 4 heads, learned positional encodings</td></tr>
+            <tr><td>CARD module</td><td style="text-align:left">K = 3 regime queries, 2 attention heads, orthogonal init, layer norm + residual</td></tr>
+            <tr><td>Allocation heads</td><td style="text-align:left">One per regime: linear &rarr; softmax &rarr; clamp to [0.02, 0.25] &rarr; renormalize, N = 10 assets</td></tr>
+            <tr><td>Objective</td><td style="text-align:left">Negative batch Sharpe + &lambda;<sub>ent</sub> &middot; regime entropy + &lambda;<sub>conc</sub> &middot; Herfindahl concentration</td></tr>
+            <tr><td>Optimizer</td><td style="text-align:left">AdamW, lr 5&times;10<sup>-4</sup>, weight decay 10<sup>-4</sup>, grad clip 1.0, plateau LR halving, early stop at patience 35</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="call">
+        <h4>Why separate heads per regime</h4>
+        <p>
+          In the limit where the regime probabilities become one-hot, the model collapses to K independent
+          single-regime optimizers, each specialized to its own market conditions. Soft assignments let it
+          interpolate smoothly between them instead of jumping at a classification boundary. The comparison
+          architecture, CREM, instead uses one allocation head modulated by a continuous VAE embedding, which gives
+          less structural support for specialization.
+        </p>
+      </div>
+    </section>
+
+    <section id="setup">
+      <h2><span class="n">04</span> Experimental setup</h2>
+      <p class="lede">
+        This is a controlled methodological study on synthetic data. Ground truth regimes are known, which permits
+        evaluation that real market data does not allow. Results are not evidence of real-world performance, and the
+        paper says so explicitly.
+      </p>
+      <div class="grid3">
+        <div class="mini"><span class="k">DGP-A</span><h4>Base</h4><p>Three-regime Markov switching, moderate separation. Persistence 0.92 growth, 0.82 contraction, 0.65 crisis.</p></div>
+        <div class="mini"><span class="k">DGP-B</span><h4>High persistence</h4><p>Regimes change less often: 0.97, 0.92, 0.85. Tests whether longer regimes make discovery easier or harder.</p></div>
+        <div class="mini"><span class="k">DGP-C</span><h4>Low signal-to-noise</h4><p>Same transitions as the base, but 50% mean separation, 130% volatility, and 150% feature noise.</p></div>
+      </div>
+      <ul class="body">
+        <li><strong>Universe:</strong> 10 assets spanning US large and small cap, international developed, emerging market equity, investment grade and high yield credit, Treasuries, commodities, REITs, and gold, with correlations amplified during crisis.</li>
+        <li><strong>Splits:</strong> 720 monthly observations. Train 0&ndash;479, validate 480&ndash;599, test 600&ndash;719. Every number on this page is out-of-sample test performance.</li>
+        <li><strong>Seeds:</strong> three ({42, 123, 7}), reported as mean &plusmn; standard deviation across seeds.</li>
+        <li><strong>Significance:</strong> circular block bootstrap on Sharpe differences, block size 6 months, 10,000 replications.</li>
+        <li><strong>Baselines:</strong> equal weight, minimum variance with Ledoit-Wolf shrinkage, risk parity, hierarchical risk parity, GMM-MVO two-stage, RAT-CREM, LSTM, MLP, plus an infeasible Oracle that is handed the true regime labels.</li>
+      </ul>
+    </section>
+
+    <section id="results">
+      <h2><span class="n">05</span> Main results</h2>
+      <p class="lede">
+        Every neural allocator beats every traditional baseline, and it does so mostly by taking less risk rather than
+        earning more return. But the paper's own model is not the winner.
+      </p>
+
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Sharpe ratio by method</div>
+            <div class="fig-s">Out-of-sample test set, mean over 3 seeds, whiskers are &plusmn;1 standard deviation across seeds.</div>
+          </div>
+          <div class="seg" id="segDgp" role="tablist" aria-label="Data generating process">
+            <button type="button" class="on" data-dgp="A" role="tab" aria-selected="true">DGP-A base</button>
+            <button type="button" data-dgp="B" role="tab" aria-selected="false">B persistent</button>
+            <button type="button" data-dgp="C" role="tab" aria-selected="false">C low SNR</button>
+          </div>
+        </div>
+        <svg id="cSharpe" viewBox="0 0 720 340" role="img" aria-label="Bar chart of Sharpe ratio by portfolio method"></svg>
+        <div class="fig-legend">
+          <span><i style="background:#0891b2"></i> RAT-CARD (this paper)</span>
+          <span><i style="background:#d97706"></i> Other neural</span>
+          <span><i style="background:#7c3aed"></i> Traditional baselines</span>
+        </div>
+        <div class="fig-n"><b>Read this as:</b> the ordering is stable across all three processes, but the error bars overlap almost completely. On the low signal-to-noise process, equal weight and hierarchical risk parity turn negative while every neural method stays positive.</div>
+      </div>
+
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Where the Sharpe comes from</div>
+            <div class="fig-s">Annualized return against annualized volatility, DGP-A test set. Diagonal lines are constant Sharpe.</div>
+          </div>
+        </div>
+        <svg id="cScatter" viewBox="0 0 720 400" role="img" aria-label="Scatter plot of annualized return against annualized volatility for each method"></svg>
+        <div class="fig-n"><b>The mechanism:</b> the neural methods cluster in the low-volatility corner at 4.0 to 4.7 percent annualized volatility, while equal weight sits at 7.0 percent and GMM-MVO at 9.7 percent. The Oracle earns the highest return, 6.4 percent, but at 8.5 percent volatility, which is why its Sharpe of 0.82 is no better than RAT-CARD's despite perfect regime knowledge.</div>
+      </div>
+
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Full metric comparison, DGP-A</div>
+            <div class="fig-s">Switch metric. Bars show the mean, whiskers &plusmn;1 standard deviation across the three seeds.</div>
+          </div>
+          <div class="seg" id="segMetric" role="tablist" aria-label="Metric">
+            <button type="button" class="on" data-m="sharpe" role="tab" aria-selected="true">Sharpe</button>
+            <button type="button" data-m="sortino" role="tab" aria-selected="false">Sortino</button>
+            <button type="button" data-m="calmar" role="tab" aria-selected="false">Calmar</button>
+            <button type="button" data-m="mdd" role="tab" aria-selected="false">Max DD</button>
+          </div>
+        </div>
+        <svg id="cMetric" viewBox="0 0 720 360" role="img" aria-label="Bar chart of the selected performance metric by method"></svg>
+        <div class="fig-n"><b>Note the Oracle:</b> it is an infeasible upper reference that is given the true, unobservable regime labels. It is drawn with a dashed outline because it is a ceiling on what perfect regime knowledge buys inside a mean-variance framework, not a competitor.</div>
+      </div>
+
+      <h3 class="sub">Statistical significance</h3>
+      <p>
+        The honest headline of the paper. Circular block bootstrap on Sharpe differences, RAT-CARD against each
+        alternative, DGP-A, seed 42, 10,000 replications.
+      </p>
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Bootstrap confidence intervals on Sharpe differences</div>
+            <div class="fig-s">Positive means RAT-CARD is ahead. An interval crossing the zero line is not distinguishable from no difference.</div>
+          </div>
+        </div>
+        <svg id="cForest" viewBox="0 0 720 420" role="img" aria-label="Forest plot of bootstrap confidence intervals for Sharpe ratio differences"></svg>
+        <div class="fig-n"><b>Only one interval excludes zero:</b> RAT-CARD against hierarchical risk parity, a difference of 0.42 with an interval of 0.01 to 0.82. Every neural-versus-neural comparison is wide and straddles zero. With a 120-month test window, this study does not have the statistical power to separate these architectures, and the paper states that rather than working around it.</div>
+      </div>
+    </section>
+
+    <section id="paradox">
+      <h2><span class="n">06</span> The regime detection paradox</h2>
+      <p class="lede">
+        The method that identifies regimes best allocates worst. This is the most interesting result in the paper and
+        the one with the clearest practical implication.
+      </p>
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Regime identification accuracy against portfolio performance</div>
+            <div class="fig-s">Adjusted Rand Index against true regime labels, on the horizontal axis, versus test Sharpe ratio on the vertical, DGP-A.</div>
+          </div>
+        </div>
+        <svg id="cParadox" viewBox="0 0 720 380" role="img" aria-label="Scatter plot of regime detection accuracy against Sharpe ratio showing an inverse relationship"></svg>
+        <div class="fig-n"><b>The pattern:</b> the Gaussian mixture model recovers the generating regimes far better, with an Adjusted Rand Index of 0.59 against CARD's 0.03, and still produces the worse portfolio, 0.44 against 0.82. Normalized mutual information tells the same story: 0.45 for the mixture model against 0.04 for CARD.</div>
+      </div>
+      <div class="call">
+        <h4>Why this happens</h4>
+        <p>
+          Regime detection accuracy is scored against the discrete labels that generated the data, but the allocation
+          that maximizes risk-adjusted return need not correspond to those categories. The two-stage pipeline also
+          adds a second error source in the optimization step, through estimation error in the conditional moments and
+          sensitivity to risk aversion. And a neural allocator can absorb regime-relevant information implicitly
+          without ever recovering the generative structure.
+        </p>
+        <p>
+          The practical reading: optimizing directly for the portfolio objective beats optimizing for regime
+          classification, even when the classifier is genuinely better at classifying. A regime model that scores well
+          on labels is not automatically a regime model that helps a portfolio.
+        </p>
+      </div>
+    </section>
+
+    <section id="ablation">
+      <h2><span class="n">07</span> Ablations: does the architecture earn its complexity</h2>
+      <p class="lede">Mostly, no. This is reported plainly rather than buried.</p>
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Ablation study, DGP-A</div>
+            <div class="fig-s">Mean Sharpe over 3 seeds with &plusmn;1 standard deviation. The full model is highlighted.</div>
+          </div>
+        </div>
+        <svg id="cAbl" viewBox="0 0 720 260" role="img" aria-label="Bar chart of Sharpe ratio for architecture ablations"></svg>
+        <div class="fig-n"><b>Removing the regime module entirely</b> gives 0.93 against the full model's 0.82. A single transformer layer gives 0.92. Dropping the position constraints gives the best mean Sharpe, 1.06, but at higher turnover. None of these differences are statistically distinguishable, which is itself the finding.</div>
+      </div>
+      <ul class="body">
+        <li><strong>Input features already carry the regime.</strong> Macro and stress indicators are in the input, so a plain transformer or LSTM can use them without an explicit regime bottleneck. The extra machinery is redundant here.</li>
+        <li><strong>The regime queries face a dual objective.</strong> They must discover meaningful structure and produce useful allocation inputs at the same time, which is hard to optimize, especially with an entropy term pulling toward crisp assignments.</li>
+        <li><strong>The test set has almost no crisis.</strong> 85 growth months, 30 contraction, 5 crisis. A crisis-specific allocation head cannot be meaningfully trained or evaluated on five observations.</li>
+        <li><strong>Blending dilutes specialization.</strong> When regime probabilities stay diffuse rather than crisp, the weighted blend smooths away exactly the specialization the architecture is built to provide.</li>
+      </ul>
+    </section>
+
+    <section id="costs">
+      <h2><span class="n">08</span> Transaction costs and turnover</h2>
+      <p class="lede">
+        Where the constrained architecture actually earns its keep. Costs are applied as proportional charges per unit
+        of turnover.
+      </p>
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Sharpe after transaction costs</div>
+            <div class="fig-s">DGP-A, mean over 3 seeds, at 0, 10, and 25 basis points per unit of turnover.</div>
+          </div>
+        </div>
+        <svg id="cCosts" viewBox="0 0 720 340" role="img" aria-label="Slope chart of Sharpe ratio at three transaction cost levels"></svg>
+        <div class="fig-n"><b>Equal weight is flat</b> because it never trades. GMM-MVO decays fastest, losing 0.066 of Sharpe by 25 basis points, because regime label switches force abrupt rebalances. RAT-CARD loses 0.066 as well but from a much higher base, and the neural methods generally hold up.</div>
+      </div>
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Mean absolute turnover per rebalance</div>
+            <div class="fig-s">DGP-A, mean over 3 seeds, as a fraction of portfolio value.</div>
+          </div>
+        </div>
+        <svg id="cTurn" viewBox="0 0 720 240" role="img" aria-label="Bar chart of mean absolute portfolio turnover per rebalance"></svg>
+        <div class="fig-n"><b>The two-stage pipeline trades twice as much as RAT-CARD</b> and forty times as much as risk parity. Soft regime assignments produce smooth weight trajectories; hard regime labels produce jumps. In a live portfolio with real costs and market impact, that difference compounds well beyond what a 25 basis point charge captures.</div>
+      </div>
+    </section>
+
+    <section id="conditional">
+      <h2><span class="n">09</span> Performance inside each regime</h2>
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Sharpe ratio conditional on the true regime</div>
+            <div class="fig-s">DGP-A test set, seed 42. Test composition: 85 growth months, 30 contraction, 5 crisis.</div>
+          </div>
+        </div>
+        <svg id="cCond" viewBox="0 0 720 320" role="img" aria-label="Grouped bar chart of Sharpe ratio by true market regime"></svg>
+        <div class="fig-n"><b>Everything works in growth.</b> The separation appears in contraction, where equal weight collapses to -1.34 while the neural methods hold between -0.27 and -0.46. The two-stage pipeline posts the best contraction number, -0.01, which suggests explicit regime detection does help in downturns even though its full-sample Sharpe is lower. Crisis has five observations, so those bars are noise and should not be read as a result.</div>
+      </div>
+    </section>
+
+    <section id="compute">
+      <h2><span class="n">10</span> Computational cost</h2>
+      <div class="fig">
+        <div class="fig-h">
+          <div>
+            <div class="fig-t">Parameters against inference latency</div>
+            <div class="fig-s">Bubble area is proportional to parameter count. Latency is a single forward pass.</div>
+          </div>
+        </div>
+        <svg id="cCompute" viewBox="0 0 720 300" role="img" aria-label="Scatter plot of model parameters against forward pass latency"></svg>
+        <div class="fig-n"><b>All of these are small.</b> RAT-CARD is 24,127 parameters and about 1.0 ms per forward pass. The MLP has the most parameters, 42,826, and the fastest inference, 0.10 ms, because it has no sequential structure. Nothing here is compute-bound; the constraint is data, not throughput.</div>
+      </div>
+    </section>
+
+    <section id="takeaways">
+      <h2><span class="n">11</span> What this means</h2>
+      <div class="grid3">
+        <div class="mini"><span class="k">FINDING 01</span><h4>End-to-end beats two-stage</h4><p>Optimizing directly for the portfolio objective outperforms optimizing for regime classification and then allocating, even when the classifier is better at classifying.</p></div>
+        <div class="mini"><span class="k">FINDING 02</span><h4>Architecture is not the lever</h4><p>An LSTM with 16k parameters matches or beats a cross-attention transformer here. Complexity has to be justified by a setting that needs it.</p></div>
+        <div class="mini"><span class="k">FINDING 03</span><h4>Constraints buy stability</h4><p>The unconstrained variant scores higher on raw Sharpe and trades more. Position bounds act as implicit regularizers, and their advantage grows once costs are real.</p></div>
+        <div class="mini"><span class="k">FINDING 04</span><h4>Report the null result</h4><p>Three seeds and 120 test months cannot separate these architectures. Saying so is more useful than picking the seed that wins.</p></div>
+      </div>
+      <p>
+        The negative result is the contribution. A large amount of published work in this area compares a new
+        architecture against weak baselines on one data split and declares victory. Running the same protocol across
+        three processes, three seeds, ten alternatives, and a bootstrap test shows that the honest answer is: the
+        neural class wins, the specific architecture does not matter much here, and the regime module cannot be shown
+        to earn its complexity in this setting.
+      </p>
+    </section>
+
+    <section id="limits">
+      <h2><span class="n">12</span> Limitations, stated plainly</h2>
+      <div class="call warn">
+        <h4>These are the paper's own limitations, not a summary of them</h4>
+        <ol class="body" style="margin-bottom:0">
+          <li><strong>Synthetic data only.</strong> A Markov-switching process is a simplification. Real regimes may not be discrete, transitions may not be Markov, and feature-regime relationships are likely more complex.</li>
+          <li><strong>Limited DGP variation.</strong> Three parameterizations of one generating structure. Different regime counts, non-stationary transitions, or non-Gaussian returns could change the conclusions.</li>
+          <li><strong>No real-market validation.</strong> Nothing here should be read as evidence of real-world portfolio performance.</li>
+          <li><strong>Modest sample size.</strong> 120 test months gives limited statistical power, which is exactly what the wide bootstrap intervals show.</li>
+          <li><strong>No transaction costs in training.</strong> Costs are evaluated but never enter the loss function, so the constrained model's stability advantage is never explicitly rewarded during training.</li>
+          <li><strong>Simple constraint mechanism.</strong> Clamp-and-renormalize is an approximation. Exact differentiable convex constraint layers might give different results at higher computational cost.</li>
+          <li><strong>Three seeds.</strong> Enough to show cross-seed variability, not enough to characterize the true performance distribution.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="next">
+      <h2><span class="n">13</span> What is next</h2>
+      <p class="lede">The questions this study could not answer on synthetic data are the ones worth doing next.</p>
+      <div class="grid3">
+        <div class="mini"><span class="k">01</span><h4>Real-market validation</h4><p>The full protocol on liquid ETF universes with rolling out-of-sample windows and externally dated regimes.</p></div>
+        <div class="mini"><span class="k">02</span><h4>Turnover-aware training</h4><p>Put the cost penalty inside the loss so the constrained model earns its stability advantage explicitly.</p></div>
+        <div class="mini"><span class="k">03</span><h4>Non-Markov regimes</h4><p>Time-varying transition matrices and duration dependence, where soft assignments should adapt and hard classifiers should break.</p></div>
+        <div class="mini"><span class="k">04</span><h4>Truly latent regimes</h4><p>Settings where regime information is not already sitting in observable features. This is the case CARD is actually built for.</p></div>
+        <div class="mini"><span class="k">05</span><h4>Larger universes</h4><p>Fifty or more assets, where regime-specific allocation heads have room to specialize and diversification compounds.</p></div>
+        <div class="mini"><span class="k">06</span><h4>Exact constraint layers</h4><p>Differentiable convex optimization layers in place of clamp-and-renormalize, to separate the architecture from its projection.</p></div>
+      </div>
+    </section>
+
+    <section id="cite">
+      <h2><span class="n">14</span> Cite this work</h2>
+      <div class="cite">
+        <button class="copy" id="copyCite" type="button"><i class="fas fa-copy"></i> Copy BibTeX</button>
+        <pre id="citeText">@techreport{sanchezarenas2026card,
+  title  = {Regime-Aware Transformer Architectures with Cross-Attention Regime
+            Discovery for Multi-Asset Portfolio Construction},
+  author = {Sanchez Arenas, Cristian Miguel},
+  year   = {2026},
+  type   = {SSRN Working Paper},
+  number = {6517438},
+  url    = {https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6517438}
+}</pre>
+      </div>
+      <div class="acts" style="margin-top:1.4rem">
+        <a class="btn p" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6517438" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Read on SSRN</a>
+        <a class="btn s" href="assets/research/Arenas-2026-Regime-Aware-Transformer-CARD.pdf" download><i class="fas fa-file-arrow-down"></i> Download PDF</a>
+        <a class="btn g" href="mailto:cristianmiguelsa@gmail.com?subject=Regime-Aware%20Transformer%20paper"><i class="fas fa-envelope"></i> Discuss the paper</a>
+      </div>
+    </section>
+
+  </article>
+</div>
+
+<footer>
+  <div class="wrap fbot">
+    <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+    <span>
+      <a href="index.html">Home</a>
+      <a href="research.html">Research</a>
+      <a href="index.html#demos">Demos</a>
+      <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a>
+    </span>
+  </div>
+</footer>
+
+<div id="tip" role="tooltip"></div>
+
+<script>
+(function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  var C = { card: '#0891b2', neural: '#d97706', trad: '#7c3aed', oracle: '#a1a1aa',
+            grid: '#1e293b', axis: '#334155', text: '#e4e4e7', muted: '#a1a1aa', faint: '#83838d' };
+
+  function el(tag, attrs, txt) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) if (attrs[k] !== null && attrs[k] !== undefined) e.setAttribute(k, attrs[k]);
+    if (txt !== null && txt !== undefined) e.textContent = txt;
+    return e;
+  }
+  function clear(svg) { while (svg.firstChild) svg.removeChild(svg.firstChild); }
+  function fmt(v, d) { return (v >= 0 ? '' : '') + v.toFixed(d === undefined ? 3 : d); }
+
+  /* ---------- tooltip ---------- */
+  var tip = document.getElementById('tip');
+  function tipShow(e, html) { tip.innerHTML = html; tip.classList.add('on'); tipMove(e); }
+  function tipMove(e) {
+    var pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+    var x = e.clientX + pad, y = e.clientY + pad;
+    if (x + w > window.innerWidth - 8) x = e.clientX - w - pad;
+    if (y + h > window.innerHeight - 8) y = e.clientY - h - pad;
+    tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+  }
+  function tipHide() { tip.classList.remove('on'); }
+  function bindTip(node, html) {
+    node.addEventListener('mouseenter', function (e) { tipShow(e, html); });
+    node.addEventListener('mousemove', tipMove);
+    node.addEventListener('mouseleave', tipHide);
+    node.addEventListener('focus', function () {
+      var r = node.getBoundingClientRect();
+      tipShow({ clientX: r.left + r.width / 2, clientY: r.top }, html);
+    });
+    node.addEventListener('blur', tipHide);
+  }
+
+  /* ---------- paper data (Tables 1-9) ---------- */
+  var GRP = { 'RAT-CARD': 'card', 'RAT-CREM': 'neural', 'LSTM': 'neural', 'MLP': 'neural', 'Oracle': 'oracle',
+              'Equal Weight': 'trad', 'Min Variance': 'trad', 'Risk Parity': 'trad', 'HRP': 'trad', 'GMM-MVO': 'trad' };
+
+  // Table 1: DGP-A full metrics [mean, std]
+  var T1 = {
+    'RAT-CARD':     { ret: [0.038, 0.019], vol: [0.046, 0.004], sharpe: [0.822, 0.397], mdd: [-0.092, 0.016], calmar: [0.464, 0.264], sortino: [1.241, 0.599] },
+    'RAT-CREM':     { ret: [0.042, 0.019], vol: [0.042, 0.003], sharpe: [0.992, 0.430], mdd: [-0.080, 0.030], calmar: [0.662, 0.380], sortino: [1.749, 0.779] },
+    'LSTM':         { ret: [0.045, 0.018], vol: [0.040, 0.001], sharpe: [1.125, 0.449], mdd: [-0.062, 0.029], calmar: [1.015, 0.635], sortino: [2.284, 1.014] },
+    'MLP':          { ret: [0.041, 0.022], vol: [0.047, 0.004], sharpe: [0.874, 0.463], mdd: [-0.073, 0.013], calmar: [0.636, 0.440], sortino: [1.450, 0.821] },
+    'Oracle':       { ret: [0.064, 0.034], vol: [0.085, 0.014], sharpe: [0.824, 0.468], mdd: [-0.147, 0.077], calmar: [0.688, 0.512], sortino: [1.511, 0.969] },
+    'Equal Weight': { ret: [0.018, 0.025], vol: [0.070, 0.011], sharpe: [0.294, 0.400], mdd: [-0.210, 0.084], calmar: [0.112, 0.143], sortino: [0.389, 0.512] },
+    'Min Variance': { ret: [0.036, 0.013], vol: [0.044, 0.003], sharpe: [0.818, 0.275], mdd: [-0.076, 0.007], calmar: [0.486, 0.178], sortino: [1.232, 0.395] },
+    'Risk Parity':  { ret: [0.030, 0.016], vol: [0.047, 0.005], sharpe: [0.641, 0.335], mdd: [-0.116, 0.038], calmar: [0.283, 0.161], sortino: [0.943, 0.480] },
+    'HRP':          { ret: [0.028, 0.011], vol: [0.052, 0.007], sharpe: [0.538, 0.225], mdd: [-0.129, 0.049], calmar: [0.243, 0.113], sortino: [0.785, 0.333] },
+    'GMM-MVO':      { ret: [0.039, 0.036], vol: [0.097, 0.010], sharpe: [0.444, 0.426], mdd: [-0.229, 0.064], calmar: [0.241, 0.252], sortino: [0.585, 0.580] }
+  };
+  var ORDER1 = ['RAT-CARD', 'RAT-CREM', 'LSTM', 'MLP', 'Equal Weight', 'Min Variance', 'Risk Parity', 'HRP', 'GMM-MVO', 'Oracle'];
+
+  // Table 2: Sharpe across DGPs
+  var ORDER2 = ['RAT-CARD', 'RAT-CREM', 'LSTM', 'MLP', 'Equal Weight', 'Min Variance', 'Risk Parity', 'HRP', 'GMM-MVO'];
+  var T2 = {
+    A: { 'RAT-CARD': [0.822, 0.397], 'RAT-CREM': [0.992, 0.430], 'LSTM': [1.125, 0.449], 'MLP': [0.874, 0.463], 'Equal Weight': [0.294, 0.400], 'Min Variance': [0.818, 0.275], 'Risk Parity': [0.641, 0.335], 'HRP': [0.538, 0.225], 'GMM-MVO': [0.444, 0.426] },
+    B: { 'RAT-CARD': [0.692, 0.316], 'RAT-CREM': [0.779, 0.326], 'LSTM': [0.746, 0.325], 'MLP': [0.747, 0.263], 'Equal Weight': [0.162, 0.201], 'Min Variance': [0.500, 0.277], 'Risk Parity': [0.414, 0.235], 'HRP': [0.260, 0.219], 'GMM-MVO': [0.489, 0.403] },
+    C: { 'RAT-CARD': [0.450, 0.542], 'RAT-CREM': [0.667, 0.453], 'LSTM': [0.808, 0.349], 'MLP': [0.293, 0.486], 'Equal Weight': [-0.306, 0.350], 'Min Variance': [0.345, 0.385], 'Risk Parity': [0.029, 0.392], 'HRP': [-0.111, 0.353], 'GMM-MVO': [0.579, 0.366] }
+  };
+  var DGPNAME = { A: 'DGP-A (base)', B: 'DGP-B (high persistence)', C: 'DGP-C (low signal-to-noise)' };
+
+  // Table 3: bootstrap [delta, lo, hi, p]
+  var T3 = [
+    ['vs RAT-CREM', -0.131, -0.332, 0.083, 0.962], ['vs LSTM', -0.187, -0.394, 0.055, 0.923],
+    ['vs MLP', -0.211, -0.478, 0.077, 0.973], ['vs No-Regime', -0.102, -0.277, 0.081, 0.917],
+    ['vs 1-Layer', 0.015, -0.069, 0.121, 0.942], ['vs Unconstrained', -0.097, -0.342, 0.152, 0.966],
+    ['vs Equal Weight', 0.418, -0.126, 0.927, 0.963], ['vs Min Variance', 0.100, -0.345, 0.475, 0.992],
+    ['vs Risk Parity', 0.159, -0.303, 0.581, 0.969], ['vs HRP', 0.418, 0.006, 0.819, 0.988],
+    ['vs GMM-MVO', 0.284, -0.177, 0.773, 0.997], ['vs Oracle', 0.020, -0.546, 0.700, 0.952]
+  ];
+
+  // Table 4: ablations [sharpe mean, std]
+  var T4 = [['RAT-CARD (full)', 0.822, 0.397, 1], ['No-Regime', 0.929, 0.566, 0], ['1-Layer', 0.917, 0.425, 0],
+            ['Unconstrained', 1.056, 0.383, 0], ['RAT-CREM', 0.992, 0.430, 0]];
+
+  // Table 5 + Sharpe: regime detection paradox
+  var T5 = [
+    { n: 'CARD', ari: 0.031, ariSd: 0.033, nmi: 0.041, sharpe: 0.822, g: 'card' },
+    { n: 'CREM', ari: 0.107, ariSd: 0.080, nmi: 0.105, sharpe: 0.992, g: 'neural' },
+    { n: 'GMM',  ari: 0.594, ariSd: 0.132, nmi: 0.452, sharpe: 0.444, g: 'trad' }
+  ];
+
+  // Table 6: regime-conditional Sharpe (seed 42)
+  var T6 = [
+    { n: 'RAT-CARD', v: [2.278, -0.460, 0.199] }, { n: 'RAT-CREM', v: [2.266, -0.273, 0.733] },
+    { n: 'LSTM', v: [2.373, -0.271, 0.533] }, { n: 'Equal Weight', v: [2.442, -1.336, -0.348] },
+    { n: 'GMM-MVO', v: [1.458, -0.012, -0.286] }
+  ];
+  var REGIMES = [{ n: 'Growth', obs: 85, c: '#0891b2' }, { n: 'Contraction', obs: 30, c: '#d97706' }, { n: 'Crisis', obs: 5, c: '#7c3aed' }];
+
+  // Table 7: transaction costs
+  var T7 = [['RAT-CARD', [0.822, 0.795, 0.756]], ['RAT-CREM', [0.992, 0.953, 0.894]], ['LSTM', [1.125, 1.109, 1.084]],
+            ['Equal Weight', [0.294, 0.294, 0.294]], ['Min Variance', [0.818, 0.812, 0.802]],
+            ['Risk Parity', [0.641, 0.639, 0.637]], ['GMM-MVO', [0.444, 0.418, 0.378]]];
+  var BPS = [0, 10, 25];
+
+  // Table 8: turnover
+  var T8 = [['RAT-CARD', 0.102, 0.034], ['RAT-CREM', 0.143, 0.101], ['LSTM', 0.053, 0.006], ['Equal Weight', 0.000, 0.000],
+            ['Min Variance', 0.024, 0.012], ['Risk Parity', 0.005, 0.001], ['GMM-MVO', 0.212, 0.086]];
+
+  // Table 9: compute
+  var T9 = [['RAT-CARD', 24127, 1.04, 'card'], ['RAT-CREM', 22906, 0.68, 'neural'], ['LSTM', 15946, 0.39, 'neural'], ['MLP', 42826, 0.10, 'neural']];
+
+  /* ---------- chart 1: Sharpe by method x DGP ---------- */
+  var svgSharpe = document.getElementById('cSharpe');
+  function drawSharpe(dgp) {
+    clear(svgSharpe);
+    var W = 720, H = 340, L = 128, R = 34, T = 14, B = 40;
+    var d = T2[dgp];
+    var lo = -0.9, hi = 1.7;
+    var x = function (v) { return L + (v - lo) / (hi - lo) * (W - L - R); };
+    var rowH = (H - T - B) / ORDER2.length;
+    [-0.5, 0, 0.5, 1.0, 1.5].forEach(function (v) {
+      svgSharpe.appendChild(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, stroke: v === 0 ? C.axis : C.grid, 'stroke-width': v === 0 ? 1.3 : 1 }));
+      svgSharpe.appendChild(el('text', { x: x(v), y: H - B + 17, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, v.toFixed(1)));
+    });
+    svgSharpe.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 6, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 }, 'Sharpe ratio (annualized, out-of-sample)'));
+    ORDER2.forEach(function (m, i) {
+      var mean = d[m][0], sd = d[m][1], g = GRP[m];
+      var cy = T + rowH * i + rowH / 2, bh = Math.min(19, rowH * 0.6);
+      var x0 = x(Math.min(0, mean)), x1 = x(Math.max(0, mean));
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img',
+        'aria-label': m + ', Sharpe ' + fmt(mean, 2) + ' plus or minus ' + fmt(sd, 2) + ', ' + DGPNAME[dgp] });
+      grp.appendChild(el('rect', { x: 0, y: cy - rowH / 2, width: W, height: rowH, fill: 'transparent' }));
+      grp.appendChild(el('rect', { x: x0, y: cy - bh / 2, width: Math.max(1.5, x1 - x0), height: bh, rx: 3,
+        fill: C[g], stroke: g === 'card' ? C.text : 'none', 'stroke-width': 1.2 }));
+      var e0 = x(mean - sd), e1 = x(mean + sd);
+      grp.appendChild(el('line', { x1: e0, x2: e1, y1: cy, y2: cy, stroke: C.text, 'stroke-width': 1, opacity: 0.5 }));
+      grp.appendChild(el('line', { x1: e0, x2: e0, y1: cy - 4.5, y2: cy + 4.5, stroke: C.text, 'stroke-width': 1, opacity: 0.5 }));
+      grp.appendChild(el('line', { x1: e1, x2: e1, y1: cy - 4.5, y2: cy + 4.5, stroke: C.text, 'stroke-width': 1, opacity: 0.5 }));
+      grp.appendChild(el('text', { x: L - 11, y: cy + 4, 'text-anchor': 'end', fill: C.text, 'font-size': 11.5,
+        'font-weight': g === 'card' ? 700 : 400 }, m));
+      grp.appendChild(el('text', { x: (mean >= 0 ? x1 + 7 : x0 - 7), y: cy + 4, 'text-anchor': mean >= 0 ? 'start' : 'end',
+        fill: g === 'card' ? C.text : C.faint, 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, fmt(mean, 2)));
+      bindTip(grp, '<b>' + m + '</b><br>' + DGPNAME[dgp] + '<br>Sharpe ' + fmt(mean) + ' &plusmn; ' + fmt(sd) + '<br><span class="d">mean over 3 seeds</span>');
+      svgSharpe.appendChild(grp);
+    });
+    svgSharpe.appendChild(el('line', { x1: 6, x2: W - R, y1: T + rowH * 4, y2: T + rowH * 4, stroke: C.axis, 'stroke-dasharray': '3 4' }));
+  }
+
+  /* ---------- chart 2: risk-return scatter ---------- */
+  (function drawScatter() {
+    var svg = document.getElementById('cScatter');
+    var W = 720, H = 400, L = 62, R = 130, T = 18, B = 46;
+    var xlo = 0.03, xhi = 0.105, ylo = 0.010, yhi = 0.070;
+    var x = function (v) { return L + (v - xlo) / (xhi - xlo) * (W - L - R); };
+    var y = function (v) { return H - B - (v - ylo) / (yhi - ylo) * (H - T - B); };
+    [0.5, 1.0, 1.5].forEach(function (s) {
+      var pts = [], v;
+      for (v = xlo; v <= xhi + 1e-9; v += 0.0025) { var r = s * v; if (r >= ylo && r <= yhi) pts.push(x(v) + ',' + y(r)); }
+      if (pts.length > 1) {
+        svg.appendChild(el('polyline', { points: pts.join(' '), fill: 'none', stroke: C.grid, 'stroke-width': 1, 'stroke-dasharray': '4 5' }));
+        var last = pts[pts.length - 1].split(',');
+        svg.appendChild(el('text', { x: +last[0] + 5, y: +last[1] - 3, fill: C.faint, 'font-size': 9.5, 'font-family': 'JetBrains Mono, monospace' }, 'SR ' + s.toFixed(1)));
+      }
+    });
+    [0.04, 0.06, 0.08, 0.10].forEach(function (v) {
+      svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, stroke: C.grid, 'stroke-width': 1 }));
+      svg.appendChild(el('text', { x: x(v), y: H - B + 17, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, (v * 100).toFixed(0) + '%'));
+    });
+    [0.02, 0.04, 0.06].forEach(function (v) {
+      svg.appendChild(el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: C.grid, 'stroke-width': 1 }));
+      svg.appendChild(el('text', { x: L - 8, y: y(v) + 4, 'text-anchor': 'end', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, (v * 100).toFixed(0) + '%'));
+    });
+    svg.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 8, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 }, 'Annualized volatility'));
+    svg.appendChild(el('text', { x: 14, y: T + (H - T - B) / 2, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, transform: 'rotate(-90 14 ' + (T + (H - T - B) / 2) + ')' }, 'Annualized return'));
+    ORDER1.forEach(function (m) {
+      var r = T1[m], g = GRP[m];
+      var cx = x(r.vol[0]), cy = y(r.ret[0]);
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img', 'aria-label': m + ', return ' + (r.ret[0] * 100).toFixed(1) + ' percent, volatility ' + (r.vol[0] * 100).toFixed(1) + ' percent, Sharpe ' + fmt(r.sharpe[0], 2) });
+      grp.appendChild(el('circle', { cx: cx, cy: cy, r: 14, fill: 'transparent' }));
+      if (g === 'oracle') {
+        grp.appendChild(el('circle', { cx: cx, cy: cy, r: 6.5, fill: 'none', stroke: C.oracle, 'stroke-width': 1.6, 'stroke-dasharray': '3 2.5' }));
+      } else {
+        grp.appendChild(el('circle', { cx: cx, cy: cy, r: g === 'card' ? 7 : 5.5, fill: C[g], stroke: g === 'card' ? C.text : 'none', 'stroke-width': 1.3 }));
+      }
+      var anchor = 'start', dx = 11;
+      if (m === 'Min Variance' || m === 'RAT-CREM') { anchor = 'end'; dx = -11; }
+      grp.appendChild(el('text', { x: cx + dx, y: cy + 3.5, 'text-anchor': anchor, fill: g === 'card' ? C.text : C.muted, 'font-size': 10, 'font-weight': g === 'card' ? 700 : 400 }, m));
+      bindTip(grp, '<b>' + m + '</b><br>Return ' + (r.ret[0] * 100).toFixed(1) + '%<br>Volatility ' + (r.vol[0] * 100).toFixed(1) + '%<br>Sharpe ' + fmt(r.sharpe[0]) + '<br>Max DD ' + (r.mdd[0] * 100).toFixed(1) + '%');
+      svg.appendChild(grp);
+    });
+  })();
+
+  /* ---------- chart 3: metric switcher ---------- */
+  var svgMetric = document.getElementById('cMetric');
+  var METRIC = {
+    sharpe:  { key: 'sharpe',  label: 'Sharpe ratio',  lo: 0,     hi: 2.5,  d: 2, pct: false, better: 'higher' },
+    sortino: { key: 'sortino', label: 'Sortino ratio', lo: 0,     hi: 3.4,  d: 2, pct: false, better: 'higher' },
+    calmar:  { key: 'calmar',  label: 'Calmar ratio',  lo: 0,     hi: 1.7,  d: 2, pct: false, better: 'higher' },
+    mdd:     { key: 'mdd',     label: 'Maximum drawdown', lo: -0.32, hi: 0, d: 1, pct: true,  better: 'closer to zero' }
+  };
+  function drawMetric(mk) {
+    clear(svgMetric);
+    var cfg = METRIC[mk], W = 720, H = 360, L = 128, R = 34, T = 14, B = 44;
+    var lo = cfg.lo, hi = cfg.hi;
+    var x = function (v) { return L + (v - lo) / (hi - lo) * (W - L - R); };
+    var rowH = (H - T - B) / ORDER1.length;
+    var ticks = [], step = (hi - lo) / 5, i;
+    for (i = 0; i <= 5; i++) ticks.push(lo + step * i);
+    ticks.forEach(function (v) {
+      svgMetric.appendChild(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, stroke: Math.abs(v) < 1e-9 ? C.axis : C.grid, 'stroke-width': Math.abs(v) < 1e-9 ? 1.3 : 1 }));
+      svgMetric.appendChild(el('text', { x: x(v), y: H - B + 17, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' },
+        cfg.pct ? (v * 100).toFixed(0) + '%' : v.toFixed(1)));
+    });
+    svgMetric.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 8, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 },
+      cfg.label + ' — ' + cfg.better + ' is better'));
+    ORDER1.forEach(function (m, idx) {
+      var pair = T1[m][cfg.key], mean = pair[0], sd = pair[1], g = GRP[m];
+      var cy = T + rowH * idx + rowH / 2, bh = Math.min(18, rowH * 0.58);
+      var x0 = x(Math.min(0, mean)), x1 = x(Math.max(0, mean));
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img', 'aria-label': m + ', ' + cfg.label + ' ' + fmt(mean, cfg.d) });
+      grp.appendChild(el('rect', { x: 0, y: cy - rowH / 2, width: W, height: rowH, fill: 'transparent' }));
+      var bar = el('rect', { x: x0, y: cy - bh / 2, width: Math.max(1.5, x1 - x0), height: bh, rx: 3 });
+      if (g === 'oracle') { bar.setAttribute('fill', 'none'); bar.setAttribute('stroke', C.oracle); bar.setAttribute('stroke-width', 1.5); bar.setAttribute('stroke-dasharray', '4 3'); }
+      else { bar.setAttribute('fill', C[g]); if (g === 'card') { bar.setAttribute('stroke', C.text); bar.setAttribute('stroke-width', 1.2); } }
+      grp.appendChild(bar);
+      var e0 = x(mean - sd), e1 = x(mean + sd);
+      e0 = Math.max(L, Math.min(W - R, e0)); e1 = Math.max(L, Math.min(W - R, e1));
+      grp.appendChild(el('line', { x1: e0, x2: e1, y1: cy, y2: cy, stroke: C.text, 'stroke-width': 1, opacity: 0.45 }));
+      grp.appendChild(el('text', { x: L - 11, y: cy + 4, 'text-anchor': 'end', fill: g === 'oracle' ? C.faint : C.text, 'font-size': 11.5, 'font-weight': g === 'card' ? 700 : 400 },
+        m + (g === 'oracle' ? ' *' : '')));
+      bindTip(grp, '<b>' + m + '</b><br>' + cfg.label + ' ' + (cfg.pct ? (mean * 100).toFixed(1) + '%' : fmt(mean)) +
+        ' &plusmn; ' + (cfg.pct ? (sd * 100).toFixed(1) + '%' : fmt(sd)) + (g === 'oracle' ? '<br><span class="d">infeasible upper reference</span>' : ''));
+      svgMetric.appendChild(grp);
+    });
+  }
+
+  /* ---------- chart 4: forest plot ---------- */
+  (function drawForest() {
+    var svg = document.getElementById('cForest');
+    var W = 720, H = 420, L = 150, R = 56, T = 16, B = 44;
+    var lo = -0.65, hi = 1.0;
+    var x = function (v) { return L + (v - lo) / (hi - lo) * (W - L - R); };
+    var rowH = (H - T - B) / T3.length;
+    [-0.5, 0, 0.5, 1.0].forEach(function (v) {
+      svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, stroke: v === 0 ? C.axis : C.grid, 'stroke-width': v === 0 ? 1.4 : 1 }));
+      svg.appendChild(el('text', { x: x(v), y: H - B + 17, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, v.toFixed(1)));
+    });
+    svg.appendChild(el('text', { x: x(0), y: T - 3, 'text-anchor': 'middle', fill: C.faint, 'font-size': 9.5, 'font-family': 'JetBrains Mono, monospace' }, 'no difference'));
+    svg.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 8, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 }, 'Δ Sharpe (RAT-CARD minus comparison)'));
+    T3.forEach(function (row, i) {
+      var name = row[0], d = row[1], clo = row[2], chi = row[3];
+      var sig = clo > 0 || chi < 0;
+      var cy = T + rowH * i + rowH / 2;
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img',
+        'aria-label': name + ', delta Sharpe ' + fmt(d, 2) + ', interval ' + fmt(clo, 2) + ' to ' + fmt(chi, 2) + (sig ? ', excludes zero' : ', includes zero') });
+      grp.appendChild(el('rect', { x: 0, y: cy - rowH / 2, width: W, height: rowH, fill: 'transparent' }));
+      var col = sig ? C.card : C.oracle;
+      grp.appendChild(el('line', { x1: x(clo), x2: x(chi), y1: cy, y2: cy, stroke: col, 'stroke-width': sig ? 2.2 : 1.6, opacity: sig ? 1 : 0.6 }));
+      grp.appendChild(el('line', { x1: x(clo), x2: x(clo), y1: cy - 4, y2: cy + 4, stroke: col, 'stroke-width': 1.4, opacity: sig ? 1 : 0.6 }));
+      grp.appendChild(el('line', { x1: x(chi), x2: x(chi), y1: cy - 4, y2: cy + 4, stroke: col, 'stroke-width': 1.4, opacity: sig ? 1 : 0.6 }));
+      grp.appendChild(el('circle', { cx: x(d), cy: cy, r: sig ? 5 : 4, fill: col, stroke: sig ? C.text : 'none', 'stroke-width': 1 }));
+      grp.appendChild(el('text', { x: L - 11, y: cy + 4, 'text-anchor': 'end', fill: sig ? C.text : C.muted, 'font-size': 11, 'font-weight': sig ? 600 : 400 }, name));
+      grp.appendChild(el('text', { x: W - R + 8, y: cy + 4, fill: sig ? C.card : C.faint, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, fmt(d, 2)));
+      bindTip(grp, '<b>RAT-CARD ' + name + '</b><br>Δ Sharpe ' + fmt(d) + '<br>95% CI [' + fmt(clo) + ', ' + fmt(chi) + ']<br><span class="d">' +
+        (sig ? 'excludes zero' : 'includes zero: not distinguishable') + '</span>');
+      svg.appendChild(grp);
+    });
+  })();
+
+  /* ---------- chart 5: ablation ---------- */
+  (function drawAbl() {
+    var svg = document.getElementById('cAbl');
+    var W = 720, H = 260, L = 140, R = 40, T = 12, B = 40;
+    var lo = 0, hi = 1.65;
+    var x = function (v) { return L + (v - lo) / (hi - lo) * (W - L - R); };
+    var rowH = (H - T - B) / T4.length;
+    [0, 0.5, 1.0, 1.5].forEach(function (v) {
+      svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, stroke: v === 0 ? C.axis : C.grid, 'stroke-width': v === 0 ? 1.3 : 1 }));
+      svg.appendChild(el('text', { x: x(v), y: H - B + 17, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, v.toFixed(1)));
+    });
+    svg.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 7, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 }, 'Sharpe ratio'));
+    T4.forEach(function (r, i) {
+      var name = r[0], mean = r[1], sd = r[2], isFull = r[3];
+      var cy = T + rowH * i + rowH / 2, bh = Math.min(20, rowH * 0.55);
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img', 'aria-label': name + ', Sharpe ' + fmt(mean, 2) + ' plus or minus ' + fmt(sd, 2) });
+      grp.appendChild(el('rect', { x: 0, y: cy - rowH / 2, width: W, height: rowH, fill: 'transparent' }));
+      grp.appendChild(el('rect', { x: x(0), y: cy - bh / 2, width: Math.max(1.5, x(mean) - x(0)), height: bh, rx: 3,
+        fill: isFull ? C.card : C.neural, stroke: isFull ? C.text : 'none', 'stroke-width': 1.2 }));
+      var e0 = x(Math.max(lo, mean - sd)), e1 = x(Math.min(hi, mean + sd));
+      grp.appendChild(el('line', { x1: e0, x2: e1, y1: cy, y2: cy, stroke: C.text, 'stroke-width': 1, opacity: 0.45 }));
+      grp.appendChild(el('line', { x1: e0, x2: e0, y1: cy - 4, y2: cy + 4, stroke: C.text, 'stroke-width': 1, opacity: 0.45 }));
+      grp.appendChild(el('line', { x1: e1, x2: e1, y1: cy - 4, y2: cy + 4, stroke: C.text, 'stroke-width': 1, opacity: 0.45 }));
+      grp.appendChild(el('text', { x: L - 11, y: cy + 4, 'text-anchor': 'end', fill: C.text, 'font-size': 11.5, 'font-weight': isFull ? 700 : 400 }, name));
+      grp.appendChild(el('text', { x: x(mean) + 7, y: cy + 4, fill: C.faint, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, fmt(mean, 2)));
+      bindTip(grp, '<b>' + name + '</b><br>Sharpe ' + fmt(mean) + ' &plusmn; ' + fmt(sd));
+      svg.appendChild(grp);
+    });
+  })();
+
+  /* ---------- chart 6: paradox ---------- */
+  (function drawParadox() {
+    var svg = document.getElementById('cParadox');
+    var W = 720, H = 380, L = 70, R = 120, T = 22, B = 48;
+    var xlo = -0.02, xhi = 0.68, ylo = 0.3, yhi = 1.1;
+    var x = function (v) { return L + (v - xlo) / (xhi - xlo) * (W - L - R); };
+    var y = function (v) { return H - B - (v - ylo) / (yhi - ylo) * (H - T - B); };
+    [0, 0.2, 0.4, 0.6].forEach(function (v) {
+      svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, stroke: C.grid }));
+      svg.appendChild(el('text', { x: x(v), y: H - B + 17, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, v.toFixed(1)));
+    });
+    [0.4, 0.6, 0.8, 1.0].forEach(function (v) {
+      svg.appendChild(el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: C.grid }));
+      svg.appendChild(el('text', { x: L - 9, y: y(v) + 4, 'text-anchor': 'end', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, v.toFixed(1)));
+    });
+    svg.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 9, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 }, 'Adjusted Rand Index against true regime labels → better identification'));
+    svg.appendChild(el('text', { x: 16, y: T + (H - T - B) / 2, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, transform: 'rotate(-90 16 ' + (T + (H - T - B) / 2) + ')' }, 'Sharpe ratio'));
+    // trend arrow showing inverse relation
+    svg.appendChild(el('line', { x1: x(0.06), x2: x(0.55), y1: y(0.95), y2: y(0.52), stroke: C.red, 'stroke-width': 1.4, 'stroke-dasharray': '5 4', opacity: 0.55, 'marker-end': 'none' }));
+    svg.appendChild(el('text', { x: x(0.33), y: y(0.80), fill: C.red, 'font-size': 10, opacity: 0.85, 'text-anchor': 'middle' }, 'better regime labels, worse portfolio'));
+    T5.forEach(function (p) {
+      var cx = x(p.ari), cy = y(p.sharpe);
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img', 'aria-label': p.n + ', Adjusted Rand Index ' + fmt(p.ari, 2) + ', Sharpe ' + fmt(p.sharpe, 2) });
+      grp.appendChild(el('circle', { cx: cx, cy: cy, r: 18, fill: 'transparent' }));
+      grp.appendChild(el('line', { x1: x(Math.max(xlo, p.ari - p.ariSd)), x2: x(Math.min(xhi, p.ari + p.ariSd)), y1: cy, y2: cy, stroke: C[p.g], 'stroke-width': 1.4, opacity: 0.55 }));
+      grp.appendChild(el('circle', { cx: cx, cy: cy, r: 8, fill: C[p.g], stroke: C.text, 'stroke-width': p.g === 'card' ? 1.5 : 0 }));
+      grp.appendChild(el('text', { x: cx, y: cy - 15, 'text-anchor': 'middle', fill: C.text, 'font-size': 11.5, 'font-weight': 600 }, p.n));
+      grp.appendChild(el('text', { x: cx, y: cy + 25, 'text-anchor': 'middle', fill: C.faint, 'font-size': 9.5, 'font-family': 'JetBrains Mono, monospace' }, 'NMI ' + fmt(p.nmi, 2)));
+      bindTip(grp, '<b>' + p.n + '</b><br>ARI ' + fmt(p.ari) + ' &plusmn; ' + fmt(p.ariSd) + '<br>NMI ' + fmt(p.nmi) + '<br>Sharpe ' + fmt(p.sharpe));
+      svg.appendChild(grp);
+    });
+  })();
+
+  /* ---------- chart 7: transaction cost slope ---------- */
+  (function drawCosts() {
+    var svg = document.getElementById('cCosts');
+    var W = 720, H = 340, L = 58, R = 132, T = 18, B = 46;
+    var ylo = 0.25, yhi = 1.2;
+    var x = function (i) { return L + i / (BPS.length - 1) * (W - L - R); };
+    var y = function (v) { return H - B - (v - ylo) / (yhi - ylo) * (H - T - B); };
+    [0.4, 0.6, 0.8, 1.0, 1.2].forEach(function (v) {
+      svg.appendChild(el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: C.grid }));
+      svg.appendChild(el('text', { x: L - 9, y: y(v) + 4, 'text-anchor': 'end', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, v.toFixed(1)));
+    });
+    BPS.forEach(function (b, i) {
+      svg.appendChild(el('line', { x1: x(i), x2: x(i), y1: T, y2: H - B, stroke: C.grid }));
+      svg.appendChild(el('text', { x: x(i), y: H - B + 18, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, b + ' bps'));
+    });
+    svg.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 8, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 }, 'Proportional transaction cost per unit of turnover'));
+    svg.appendChild(el('text', { x: 14, y: T + (H - T - B) / 2, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, transform: 'rotate(-90 14 ' + (T + (H - T - B) / 2) + ')' }, 'Sharpe ratio'));
+    T7.forEach(function (row) {
+      var name = row[0], vals = row[1], g = GRP[name];
+      var pts = vals.map(function (v, i) { return x(i) + ',' + y(v); }).join(' ');
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img',
+        'aria-label': name + ', Sharpe from ' + fmt(vals[0], 2) + ' at zero basis points to ' + fmt(vals[2], 2) + ' at twenty five' });
+      grp.appendChild(el('polyline', { points: pts, fill: 'none', stroke: C[g], 'stroke-width': g === 'card' ? 2.6 : 1.8, opacity: g === 'card' ? 1 : 0.75, 'stroke-linejoin': 'round' }));
+      vals.forEach(function (v, i) { grp.appendChild(el('circle', { cx: x(i), cy: y(v), r: g === 'card' ? 4.5 : 3.2, fill: C[g], stroke: g === 'card' ? C.text : 'none', 'stroke-width': 1 })); });
+      grp.appendChild(el('text', { x: W - R + 9, y: y(vals[2]) + 3.5, fill: g === 'card' ? C.text : C.muted, 'font-size': 10.5, 'font-weight': g === 'card' ? 700 : 400 }, name));
+      grp.appendChild(el('text', { x: W - R + 9, y: y(vals[2]) + 15, fill: C.faint, 'font-size': 9, 'font-family': 'JetBrains Mono, monospace' },
+        (vals[2] - vals[0] === 0 ? 'flat' : fmt(vals[2] - vals[0], 3))));
+      bindTip(grp, '<b>' + name + '</b><br>0 bps: ' + fmt(vals[0]) + '<br>10 bps: ' + fmt(vals[1]) + '<br>25 bps: ' + fmt(vals[2]) +
+        '<br><span class="d">cost of trading: ' + fmt(vals[2] - vals[0]) + '</span>');
+      svg.appendChild(grp);
+    });
+  })();
+
+  /* ---------- chart 8: turnover ---------- */
+  (function drawTurn() {
+    var svg = document.getElementById('cTurn');
+    var W = 720, H = 240, L = 128, R = 46, T = 12, B = 38;
+    var hi = 0.32;
+    var x = function (v) { return L + v / hi * (W - L - R); };
+    var rowH = (H - T - B) / T8.length;
+    [0, 0.1, 0.2, 0.3].forEach(function (v) {
+      svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, stroke: v === 0 ? C.axis : C.grid, 'stroke-width': v === 0 ? 1.3 : 1 }));
+      svg.appendChild(el('text', { x: x(v), y: H - B + 16, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, (v * 100).toFixed(0) + '%'));
+    });
+    svg.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 6, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 }, 'Mean absolute turnover per rebalance'));
+    T8.forEach(function (r, i) {
+      var name = r[0], mean = r[1], sd = r[2], g = GRP[name];
+      var cy = T + rowH * i + rowH / 2, bh = Math.min(15, rowH * 0.55);
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img', 'aria-label': name + ', turnover ' + (mean * 100).toFixed(1) + ' percent' });
+      grp.appendChild(el('rect', { x: 0, y: cy - rowH / 2, width: W, height: rowH, fill: 'transparent' }));
+      grp.appendChild(el('rect', { x: x(0), y: cy - bh / 2, width: Math.max(1, x(mean) - x(0)), height: bh, rx: 2.5,
+        fill: C[g], stroke: g === 'card' ? C.text : 'none', 'stroke-width': 1.1 }));
+      if (sd > 0) grp.appendChild(el('line', { x1: x(Math.max(0, mean - sd)), x2: x(Math.min(hi, mean + sd)), y1: cy, y2: cy, stroke: C.text, 'stroke-width': 1, opacity: 0.45 }));
+      grp.appendChild(el('text', { x: L - 10, y: cy + 4, 'text-anchor': 'end', fill: C.text, 'font-size': 11, 'font-weight': g === 'card' ? 700 : 400 }, name));
+      grp.appendChild(el('text', { x: x(mean) + (sd > 0 ? x(mean + sd) - x(mean) : 0) + 8, y: cy + 4, fill: C.faint, 'font-size': 9.5, 'font-family': 'JetBrains Mono, monospace' }, (mean * 100).toFixed(1) + '%'));
+      bindTip(grp, '<b>' + name + '</b><br>Turnover ' + (mean * 100).toFixed(1) + '% &plusmn; ' + (sd * 100).toFixed(1) + '%<br><span class="d">per monthly rebalance</span>');
+      svg.appendChild(grp);
+    });
+  })();
+
+  /* ---------- chart 9: regime-conditional grouped bars ---------- */
+  (function drawCond() {
+    var svg = document.getElementById('cCond');
+    var W = 720, H = 320, L = 62, R = 24, T = 18, B = 74;
+    var ylo = -1.5, yhi = 2.6;
+    var y = function (v) { return H - B - (v - ylo) / (yhi - ylo) * (H - T - B); };
+    var bandW = (W - L - R) / T6.length;
+    var barW = Math.min(17, (bandW - 16) / 3);
+    [-1, 0, 1, 2].forEach(function (v) {
+      svg.appendChild(el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: v === 0 ? C.axis : C.grid, 'stroke-width': v === 0 ? 1.3 : 1 }));
+      svg.appendChild(el('text', { x: L - 9, y: y(v) + 4, 'text-anchor': 'end', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, v.toFixed(0)));
+    });
+    svg.appendChild(el('text', { x: 14, y: T + (H - T - B) / 2, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, transform: 'rotate(-90 14 ' + (T + (H - T - B) / 2) + ')' }, 'Sharpe ratio'));
+    T6.forEach(function (row, i) {
+      var cx = L + bandW * i + bandW / 2;
+      row.v.forEach(function (v, j) {
+        var bx = cx + (j - 1) * (barW + 3) - barW / 2;
+        var y0 = y(0), y1 = y(v);
+        var grp = el('g', { class: 'hit', tabindex: 0, role: 'img', 'aria-label': row.n + ' in ' + REGIMES[j].n + ', Sharpe ' + fmt(v, 2) });
+        grp.appendChild(el('rect', { x: bx, y: Math.min(y0, y1), width: barW, height: Math.max(1.5, Math.abs(y1 - y0)), rx: 2,
+          fill: REGIMES[j].c, opacity: REGIMES[j].n === 'Crisis' ? 0.5 : 1,
+          stroke: REGIMES[j].n === 'Crisis' ? REGIMES[j].c : 'none', 'stroke-width': 1, 'stroke-dasharray': REGIMES[j].n === 'Crisis' ? '3 2' : null }));
+        bindTip(grp, '<b>' + row.n + '</b><br>' + REGIMES[j].n + ' regime<br>Sharpe ' + fmt(v) +
+          '<br><span class="d">' + REGIMES[j].obs + ' months in test set' + (REGIMES[j].obs < 10 ? ' — unreliable' : '') + '</span>');
+        svg.appendChild(grp);
+      });
+      svg.appendChild(el('text', { x: cx, y: H - B + 18, 'text-anchor': 'middle', fill: C.text, 'font-size': 10.5 }, row.n));
+    });
+    var lx = L, ly = H - 22;
+    REGIMES.forEach(function (r) {
+      var g = el('g', {});
+      g.appendChild(el('rect', { x: lx, y: ly - 8, width: 10, height: 10, rx: 2, fill: r.c, opacity: r.n === 'Crisis' ? 0.5 : 1 }));
+      g.appendChild(el('text', { x: lx + 15, y: ly + 1, fill: C.muted, 'font-size': 10 }, r.n + ' (' + r.obs + ' mo)'));
+      svg.appendChild(g);
+      lx += 14 + (r.n.length * 6.1) + 46;
+    });
+  })();
+
+  /* ---------- chart 10: compute ---------- */
+  (function drawCompute() {
+    var svg = document.getElementById('cCompute');
+    var W = 720, H = 300, L = 66, R = 120, T = 22, B = 48;
+    var xlo = 0, xhi = 1.25, ylo = 10000, yhi = 46000;
+    var x = function (v) { return L + (v - xlo) / (xhi - xlo) * (W - L - R); };
+    var y = function (v) { return H - B - (v - ylo) / (yhi - ylo) * (H - T - B); };
+    [0, 0.25, 0.5, 0.75, 1.0, 1.25].forEach(function (v) {
+      svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, stroke: C.grid }));
+      svg.appendChild(el('text', { x: x(v), y: H - B + 17, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, v.toFixed(2)));
+    });
+    [15000, 25000, 35000, 45000].forEach(function (v) {
+      svg.appendChild(el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: C.grid }));
+      svg.appendChild(el('text', { x: L - 9, y: y(v) + 4, 'text-anchor': 'end', fill: C.muted, 'font-size': 10, 'font-family': 'JetBrains Mono, monospace' }, (v / 1000) + 'k'));
+    });
+    svg.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 8, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 }, 'Forward pass latency (milliseconds)'));
+    svg.appendChild(el('text', { x: 16, y: T + (H - T - B) / 2, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5, transform: 'rotate(-90 16 ' + (T + (H - T - B) / 2) + ')' }, 'Parameters'));
+    T9.forEach(function (r) {
+      var name = r[0], params = r[1], ms = r[2], g = r[3];
+      var cx = x(ms), cy = y(params), rad = 6 + Math.sqrt(params / 42826) * 7;
+      var grp = el('g', { class: 'hit', tabindex: 0, role: 'img', 'aria-label': name + ', ' + params.toLocaleString() + ' parameters, ' + ms + ' milliseconds' });
+      grp.appendChild(el('circle', { cx: cx, cy: cy, r: rad + 8, fill: 'transparent' }));
+      grp.appendChild(el('circle', { cx: cx, cy: cy, r: rad, fill: C[g], opacity: 0.75, stroke: g === 'card' ? C.text : 'none', 'stroke-width': 1.4 }));
+      grp.appendChild(el('text', { x: cx + rad + 8, y: cy + 3.5, fill: g === 'card' ? C.text : C.muted, 'font-size': 10.5, 'font-weight': g === 'card' ? 700 : 400 }, name));
+      bindTip(grp, '<b>' + name + '</b><br>' + params.toLocaleString() + ' parameters<br>' + ms.toFixed(2) + ' ms per forward pass');
+      svg.appendChild(grp);
+    });
+  })();
+
+  /* ---------- architecture diagram ---------- */
+  var ARCH = [
+    { id: 'in', x: 12, w: 128, label: 'Input window', sub: '12 × 22', title: 'Input representation',
+      body: 'At each month the model sees a 12-month lookback window. Each row concatenates 10 standardized asset returns, 8 macroeconomic indicators and 4 stress indicators, giving 22 features per step. Standardization uses expanding-window z-scores with a minimum of 24 months of history, so no future information leaks in.',
+      code: 'L = 12, D = 22' },
+    { id: 'enc', x: 156, w: 134, label: 'Transformer encoder', sub: '2 layers, 4 heads', title: 'Temporal encoder',
+      body: 'The input is projected to 32 dimensions, augmented with learned positional encodings, and processed by a 2-layer transformer encoder with 4 attention heads. The output is a sequence of hidden states, one per month in the window.',
+      code: 'H ∈ R^(12 × 32)' },
+    { id: 'card', x: 306, w: 150, label: 'CARD', sub: '3 regime queries', title: 'Cross-Attention Regime Discovery',
+      body: 'Three learnable regime query vectors, initialized orthogonally to encourage diversity, attend over the encoder output by scaled dot-product cross-attention with 2 heads. Each query produces a regime context vector and, through a learned scoring network and softmax, a soft regime probability. Layer normalization and a residual connection stabilize training. The per-timestep attention weights are what make the regimes interpretable.',
+      code: 'C_k = CrossAttn(q_k, H, H);  π = softmax(g(C))' },
+    { id: 'heads', x: 472, w: 150, label: 'Allocation heads', sub: 'one per regime', title: 'Constrained allocation heads',
+      body: 'Each regime owns an allocation head that maps its context vector to portfolio weights: a linear layer produces 10 logits, softmax normalizes them, weights are clamped to the position bounds, then renormalized. This is a simple differentiable bounded allocation, not an exact constrained optimizer, and the paper is explicit about that trade-off.',
+      code: 'w_min = 0.02, w_max = 0.25, N = 10' },
+    { id: 'blend', x: 638, w: 128, label: 'Regime blend', sub: 'Σ πₖ · fₖ', title: 'Regime-blended allocation',
+      body: 'The final portfolio is the regime-probability-weighted sum of the regime-specific portfolios, projected back onto the feasible set. As the probabilities approach one-hot, the model reduces to a set of independent single-regime optimizers; when they stay diffuse, the blend smooths between them, which the paper identifies as one reason specialization gets diluted.',
+      code: 'w = Project(Σₖ πₖ fₖ(Cₖ))' },
+    { id: 'loss', x: 782, w: 106, label: 'Objective', sub: 'batch Sharpe', title: 'Training objective',
+      body: 'A single end-to-end loss: negative differentiable batch Sharpe ratio, plus an entropy term on the regime assignments that encourages crisp regime discovery, plus a Herfindahl concentration penalty on the weights. There is no separate regime classification loss anywhere, which is the whole point of the design.',
+      code: 'L = −SR + λ_ent H(π) + λ_conc HHI(w)' }
+  ];
+  (function drawArch() {
+    var svg = document.getElementById('archSvg');
+    var detail = document.getElementById('archDetail');
+    var BY = 74, BH = 66;
+    ARCH.forEach(function (b, i) {
+      var g = el('g', { class: 'box', id: 'arch-' + b.id, tabindex: 0, role: 'button', 'aria-label': b.title });
+      g.appendChild(el('rect', { x: b.x, y: BY, width: b.w, height: BH, rx: 8, fill: b.id === 'card' ? 'rgba(0,247,255,.08)' : '#111827',
+        stroke: b.id === 'card' ? '#00f7ff' : '#334155', 'stroke-width': b.id === 'card' ? 1.6 : 1 }));
+      g.appendChild(el('text', { x: b.x + b.w / 2, y: BY + 27, 'text-anchor': 'middle', fill: b.id === 'card' ? '#00f7ff' : '#e4e4e7', 'font-size': 12.5, 'font-weight': 600, 'font-family': 'Inter, sans-serif' }, b.label));
+      g.appendChild(el('text', { x: b.x + b.w / 2, y: BY + 45, 'text-anchor': 'middle', fill: '#83838d', 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, b.sub));
+      g.appendChild(el('text', { x: b.x + b.w / 2, y: BY + BH + 18, 'text-anchor': 'middle', fill: '#83838d', 'font-size': 9.5, 'font-family': 'JetBrains Mono, monospace' }, '0' + (i + 1)));
+      g.addEventListener('click', function () { select(b.id); });
+      g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(b.id); } });
+      svg.appendChild(g);
+      if (i < ARCH.length - 1) {
+        var x1 = b.x + b.w, x2 = ARCH[i + 1].x, my = BY + BH / 2;
+        svg.appendChild(el('line', { x1: x1 + 2, x2: x2 - 7, y1: my, y2: my, stroke: '#334155', 'stroke-width': 1.3 }));
+        svg.appendChild(el('polygon', { points: (x2 - 7) + ',' + (my - 4) + ' ' + (x2 - 1) + ',' + my + ' ' + (x2 - 7) + ',' + (my + 4), fill: '#334155' }));
+      }
+    });
+    // feedback arrow from loss back to encoder
+    svg.appendChild(el('path', { d: 'M 835 ' + (BY + BH + 6) + ' L 835 200 L 223 200 L 223 ' + (BY + BH + 6),
+      fill: 'none', stroke: '#00ff41', 'stroke-width': 1.2, 'stroke-dasharray': '5 4', opacity: 0.6 }));
+    svg.appendChild(el('polygon', { points: '219,' + (BY + BH + 6) + ' 227,' + (BY + BH + 6) + ' 223,' + (BY + BH - 2), fill: '#00ff41', opacity: 0.6 }));
+    svg.appendChild(el('text', { x: 529, y: 215, 'text-anchor': 'middle', fill: '#00ff41', 'font-size': 10, opacity: 0.75, 'font-family': 'JetBrains Mono, monospace' }, 'gradients: one objective, no separate regime label loss'));
+    svg.appendChild(el('text', { x: 12, y: 26, fill: '#83838d', 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, 'RAT-CARD forward pass — click a block'));
+
+    function select(id) {
+      var b = null, i;
+      for (i = 0; i < ARCH.length; i++) if (ARCH[i].id === id) b = ARCH[i];
+      if (!b) return;
+      ARCH.forEach(function (o) {
+        var n = document.getElementById('arch-' + o.id);
+        if (n) n.classList.toggle('on', o.id === id);
+      });
+      detail.innerHTML = '<h4>' + b.title + '</h4><p>' + b.body + '</p><p><code>' + b.code + '</code></p>';
+    }
+    select('card');
+  })();
+
+  /* ---------- segmented controls ---------- */
+  function wireSeg(containerId, attr, cb) {
+    var box = document.getElementById(containerId);
+    if (!box) return;
+    var btns = box.querySelectorAll('button');
+    Array.prototype.forEach.call(btns, function (b) {
+      b.addEventListener('click', function () {
+        Array.prototype.forEach.call(btns, function (o) {
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        cb(b.getAttribute(attr));
+      });
+    });
+  }
+  drawSharpe('A');
+  drawMetric('sharpe');
+  wireSeg('segDgp', 'data-dgp', drawSharpe);
+  wireSeg('segMetric', 'data-m', drawMetric);
+
+  /* ---------- citation copy ---------- */
+  var copyBtn = document.getElementById('copyCite');
+  if (copyBtn) copyBtn.addEventListener('click', function () {
+    var txt = document.getElementById('citeText').textContent;
+    var done = function () {
+      copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied';
+      setTimeout(function () { copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy BibTeX'; }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, function () {});
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = txt; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  });
+
+  /* ---------- TOC scroll spy ---------- */
+  (function spy() {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#tocNav a'));
+    if (!links.length || !('IntersectionObserver' in window)) return;
+    var map = {};
+    links.forEach(function (a) {
+      var sec = document.querySelector(a.getAttribute('href'));
+      if (sec) map[sec.id] = a;
+    });
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          links.forEach(function (a) { a.classList.remove('on'); });
+          if (map[en.target.id]) map[en.target.id].classList.add('on');
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px' });
+    Object.keys(map).forEach(function (id) { obs.observe(document.getElementById(id)); });
+  })();
+
+  /* ---------- mobile menu ---------- */
+  var burger = document.getElementById('burger');
+  if (burger) burger.addEventListener('click', function () {
+    var list = document.getElementById('navList');
+    list.classList.toggle('open');
+    burger.querySelector('i').className = list.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+  });
+})();
+</script>
+</body>
+</html>

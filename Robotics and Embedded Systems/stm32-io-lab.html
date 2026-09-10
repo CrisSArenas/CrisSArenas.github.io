@@ -4,44 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STM32 Memory-Mapped I/O Lab | Cristian Arenas</title>
+<meta name="description" content="Interactive STM32F407 memory-mapped I/O lab: toggle real RCC, GPIO, TIM2, USART2, SPI1, ADC1 and NVIC/SysTick register bits and watch the hex/binary value, the equivalent CMSIS C line, the pin states and the simulated waveform update live.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0b1120;--card:#111827;--card2:#1a2332;
-  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
-  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
-  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
-}
-body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+body{font-size:14px;line-height:1.6}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
-.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;cursor:pointer}
-.nav .back:hover{color:var(--cyan)}
-.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.nav h1 i{color:var(--cyan);font-size:14px}
-.nav .nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.btn{padding:6px 18px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;font-family:'Inter','Segoe UI',sans-serif;display:inline-flex;align-items:center;gap:5px}
-.btn-preset{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
-.btn-preset:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
-.btn-preset.active{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.12)}
-.btn-reset{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
-.btn-reset:hover{color:var(--red);border-color:var(--red)}
-.help-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.help-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
-.live-pill{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:600;color:var(--green);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);letter-spacing:.3px}
-.live-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(16,185,129,.8);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-.status-bar{padding:8px 24px;background:var(--card);border-bottom:1px solid var(--border);font-size:11px;color:var(--dim);display:flex;justify-content:space-between;font-family:var(--mono);letter-spacing:.02em;flex-wrap:wrap;gap:6px}
+.d-btn.btn-preset.active{border-color:var(--cyan);color:var(--cyan-bright);background:var(--accent-bg)}
+.demo-status .clk-off{color:var(--amber)}
 
 .guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
 .guide-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.guide-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;cursor:pointer;user-select:none}
+.guide-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;user-select:none}
 .guide-header h2{font-size:13px;font-weight:600;color:var(--dim);display:flex;align-items:center;gap:8px}
 .guide-header h2 i{color:var(--cyan)}
 .guide-toggle{background:var(--card2);border:1px solid var(--border);color:var(--dim);padding:4px 14px;border-radius:6px;font-size:11px;cursor:pointer;transition:.2s;font-family:var(--mono)}
@@ -68,7 +52,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
 /* Peripheral tabs */
 .periph-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.periph-tab{padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--dim);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--mono);user-select:none;display:flex;align-items:center;gap:6px}
+.periph-tab{padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--dim);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--mono);user-select:none;display:flex;align-items:center;gap:6px;line-height:1.2;text-align:left}
 .periph-tab:hover{border-color:var(--cyan);color:var(--text)}
 .periph-tab.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1)}
 .periph-tab .pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
@@ -83,6 +67,9 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .reg-label .raddr{font-size:9px;color:var(--dim);font-family:var(--mono);margin-left:6px}
 .reg-label .rhex{font-size:12px;color:var(--orange);font-family:var(--mono);font-weight:600}
 .reg-desc-text{font-size:10px;color:var(--dim);margin-bottom:6px;line-height:1.4;font-style:italic}
+.reg-cline{margin-top:7px;overflow-x:auto;padding-bottom:2px}
+.reg-cline .rbin{display:block;font-family:var(--mono);font-size:9px;color:var(--faint);white-space:nowrap;letter-spacing:.4px}
+.reg-cline .rc{display:block;font-family:var(--mono);font-size:10px;color:var(--green);white-space:nowrap;margin-top:2px}
 .bit-row-wrap{overflow-x:auto;padding-bottom:4px}
 .bit-num-row{display:flex;gap:1px;min-width:fit-content}
 .bit-num{width:20px;height:12px;text-align:center;font-size:7px;color:var(--dim);font-family:var(--mono);flex-shrink:0}
@@ -125,7 +112,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .pin-legend-sw{width:10px;height:10px;border-radius:2px}
 
 /* Tooltip */
-.tt{position:fixed;pointer-events:none;background:rgba(10,14,39,.94);border:1px solid rgba(6,182,212,.35);border-radius:8px;padding:9px 13px;font-size:12px;color:#f1f5f9;z-index:200;opacity:0;transition:opacity .12s;backdrop-filter:blur(12px);max-width:280px;box-shadow:0 8px 30px rgba(0,0,0,.6);line-height:1.5}
+.tt{position:fixed;pointer-events:none;background:rgba(10,14,39,.94);border:1px solid rgba(6,182,212,.35);border-radius:8px;padding:9px 13px;font-size:12px;color:#f1f5f9;z-index:820;opacity:0;transition:opacity .12s;backdrop-filter:blur(12px);max-width:280px;box-shadow:0 8px 30px rgba(0,0,0,.6);line-height:1.5}
 .tt.show{opacity:1}
 .tt-title{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-weight:600}
 .tt-row{display:flex;justify-content:space-between;gap:14px;align-items:center}
@@ -134,78 +121,107 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .tt-val{font-family:var(--mono);font-weight:700;font-size:12px}
 .tt-divider{height:1px;background:var(--border);margin:5px 0}
 
-/* Help */
-.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.help-overlay.open{display:flex}
-.help-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:0}
-.help-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
-.help-modal-head h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.help-modal-head h2 i{color:var(--cyan)}
-.help-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.help-close:hover{color:var(--red);border-color:var(--red)}
-.help-body{padding:20px 22px}
-.help-section{margin-bottom:20px}
-.help-section:last-child{margin-bottom:0}
-.help-section h3{font-size:12px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.help-section p{font-size:12.5px;color:var(--dim);line-height:1.7;margin-bottom:6px}
-.help-section p strong{color:var(--text)}
-.help-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin-top:6px}
-.help-dl dt{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
-.help-dl dd{color:var(--dim);line-height:1.6}
-
-.disclaimer{max-width:1440px;margin:16px auto 30px;padding:0 16px}
-.disclaimer-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:11px;color:var(--dim);line-height:1.6}
-.disclaimer-box strong{color:var(--text)}
+.d-help-section code{font-family:var(--mono);font-size:.76rem;color:var(--cyan-bright);background:var(--accent-bg);padding:1px 5px;border-radius:4px}
+.d-help-section table{border-collapse:collapse;width:100%;margin-top:8px;font-family:var(--mono);font-size:.72rem}
+.d-help-section th,.d-help-section td{border:1px solid var(--border);padding:4px 8px;text-align:left;color:var(--muted)}
+.d-help-section th{color:var(--text);font-weight:600}
 </style>
 </head>
 <body>
 
 <div class="tt" id="tooltip"></div>
 
-<nav class="nav">
-  <a class="back" href="../robotics-embedded.html"><i class="fas fa-chevron-left"></i> Back to Portfolio</a>
-  <h1><i class="fas fa-microchip"></i> STM32 Memory-Mapped I/O Lab</h1>
-  <div class="nav-actions">
-    <div class="live-pill"><span class="pulse"></span> INTERACTIVE</div>
-    <button class="btn btn-preset" id="prLed" onclick="loadPreset('led')"><i class="fas fa-lightbulb"></i> LED Blink</button>
-    <button class="btn btn-preset" id="prPwm" onclick="loadPreset('pwm')"><i class="fas fa-wave-square"></i> PWM 1kHz</button>
-    <button class="btn btn-preset" id="prUart" onclick="loadPreset('uart')"><i class="fas fa-exchange-alt"></i> UART 115200</button>
-    <button class="btn btn-preset" id="prAdc" onclick="loadPreset('adc')"><i class="fas fa-chart-line"></i> ADC Single</button>
-    <button class="btn btn-reset" onclick="resetAll()"><i class="fas fa-redo"></i> Reset</button>
-    <button class="help-btn" onclick="toggleHelp()" title="Help"><i class="fas fa-question"></i></button>
+<nav class="demo-nav">
+  <a class="demo-brand" href="../index.html">cristian@portfolio:~$ <span class="crumb">/ demos / stm32-io</span></a>
+  <h1 class="demo-title"><i class="fas fa-memory"></i> STM32 Memory-Mapped I/O Lab</h1>
+  <div class="demo-links">
+    <a href="../index.html#projects">Projects</a>
+    <a href="../index.html#research">Research</a>
+    <a href="../index.html#demos">Demos</a>
+    <a href="../robotics-embedded.html" class="active">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <span class="d-pill live"><span class="pulse"></span> LIVE</span>
+    <button type="button" class="d-btn sm btn-preset" id="prLed" onclick="loadPreset('led')"><i class="fas fa-lightbulb"></i> LED</button>
+    <button type="button" class="d-btn sm btn-preset" id="prPwm" onclick="loadPreset('pwm')"><i class="fas fa-wave-square"></i> PWM 1 kHz</button>
+    <button type="button" class="d-btn sm btn-preset" id="prUart" onclick="loadPreset('uart')"><i class="fas fa-exchange-alt"></i> UART 115200</button>
+    <button type="button" class="d-btn sm btn-preset" id="prSpi" onclick="loadPreset('spi')"><i class="fas fa-right-left"></i> SPI 2.6 MHz</button>
+    <button type="button" class="d-btn sm btn-preset" id="prAdc" onclick="loadPreset('adc')"><i class="fas fa-chart-line"></i> ADC</button>
+    <button type="button" class="d-btn sm btn-preset" id="prTick" onclick="loadPreset('tick')"><i class="fas fa-stopwatch"></i> SysTick 1 kHz</button>
+    <button type="button" class="d-btn sm" id="resetBtn" onclick="resetAll()"><i class="fas fa-rotate-left"></i> Reset</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" onclick="toggleHelp()" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
   </div>
 </nav>
-
-<div class="status-bar">
-  <span id="statusL">MEMORY-MAPPED I/O LAB &mdash; Click register bits to configure peripherals</span>
-  <span id="statusR">Peripheral: GPIOA &bull; Base: 0x40020000 &bull; Bus: AHB1</span>
+<div class="demo-status">
+  <span id="statusL">initialising&hellip;</span>
+  <span id="statusR"><b>STM32F407</b> Cortex-M4F 168 MHz &middot; AHB 168 / APB1 42 (TIM 84) / APB2 84 MHz &middot; 1 cycle = 5.95 ns &middot; <b>Browser simulation</b>, deterministic, idealised timings</span>
 </div>
 
 <!-- Help Modal -->
-<div class="help-overlay" id="helpOverlay">
-  <div class="help-modal">
-    <div class="help-modal-head">
-      <h2><i class="fas fa-book-open"></i> STM32 I/O Lab Guide</h2>
-      <button class="help-close" onclick="toggleHelp()"><i class="fas fa-times"></i></button>
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; STM32 Memory-Mapped I/O Lab</h2>
+      <button type="button" class="d-help-close" id="helpClose" onclick="toggleHelp()" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
-    <div class="help-body">
-      <div class="help-section"><h3>What This Tool Does</h3><p>This interactive lab simulates <strong>STM32F446RE memory-mapped I/O registers</strong>. Manipulate peripheral registers at the bit level and observe real-time hardware behavior: waveforms, pin states, and equivalent C code.</p></div>
-      <div class="help-section"><h3>Peripherals</h3>
-        <dl class="help-dl">
-          <dt>GPIOA</dt><dd>General Purpose I/O Port A. Configure 16 pins as input, output, alternate function, or analog. Set output levels via ODR.</dd>
-          <dt>TIM2</dt><dd>32-bit general-purpose timer. PWM generation with prescaler (PSC), auto-reload (ARR), capture/compare (CCR1).</dd>
-          <dt>USART1</dt><dd>Universal serial receiver/transmitter. Configure baud rate (BRR), enable TX/RX, set word length and parity.</dd>
-          <dt>ADC1</dt><dd>12-bit analog-to-digital converter. Configure resolution, conversion mode, sampling time.</dd>
-        </dl>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; What this is</h3>
+        <p>A bit-level model of the <strong>STM32F407</strong> (Cortex-M4F, 168 MHz, 1 MB flash, 192 KB SRAM). There is no CPU here: you write the peripheral registers directly, exactly as bare-metal firmware does, and the lab shows the resulting 32-bit value in hex and binary, the equivalent CMSIS C statement, the pin states and an idealised waveform. All addresses and bit positions follow <strong>RM0090</strong>.</p>
       </div>
-      <div class="help-section"><h3>How to Use</h3>
-        <dl class="help-dl">
-          <dt>Select Peripheral</dt><dd>Click a tab to load its registers into the editor.</dd>
-          <dt>Toggle Bits</dt><dd>Click any bit cell to toggle 0/1. All views update instantly.</dd>
-          <dt>Hover for Info</dt><dd>Hover over any bit for field name, description, and current value.</dd>
-          <dt>Use Presets</dt><dd>Click preset buttons for common configurations.</dd>
-        </dl>
+      <div class="d-help-section">
+        <h3>2 &middot; Memory map used here</h3>
+        <table>
+          <tr><th>Block</th><th>Base</th><th>Bus</th></tr>
+          <tr><td>TIM2</td><td>0x40000000</td><td>APB1 (42 MHz, timer clock 84 MHz)</td></tr>
+          <tr><td>USART2</td><td>0x40004400</td><td>APB1 (PCLK1 = 42 MHz)</td></tr>
+          <tr><td>ADC1</td><td>0x40012000</td><td>APB2 (84 MHz, ADCCLK = PCLK2/4 = 21 MHz)</td></tr>
+          <tr><td>SPI1</td><td>0x40013000</td><td>APB2 (PCLK2 = 84 MHz)</td></tr>
+          <tr><td>SYSCFG / EXTI</td><td>0x40013800 / 0x40013C00</td><td>APB2</td></tr>
+          <tr><td>USART1</td><td>0x40011000</td><td>APB2</td></tr>
+          <tr><td>GPIOA / B / C / D</td><td>0x40020000 / 0400 / 0800 / 0C00</td><td>AHB1</td></tr>
+          <tr><td>RCC</td><td>0x40023800</td><td>AHB1</td></tr>
+          <tr><td>SysTick / NVIC / SCB</td><td>0xE000E010 / 0xE000E100 / 0xE000ED00</td><td>Cortex-M4 PPB</td></tr>
+        </table>
+        <p>APB1 = 0x40000000, APB2 = 0x40010000, AHB1 = 0x40020000. Every peripheral is <strong>clock-gated</strong>: until the matching bit in <code>RCC-&gt;AHB1ENR</code> (+0x30), <code>APB1ENR</code> (+0x40) or <code>APB2ENR</code> (+0x44) is set, its registers read back 0 and writes are lost. That is the single most common bare-metal bug, so the lab warns you when the clock for the selected peripheral is off.</p>
       </div>
+      <div class="d-help-section">
+        <h3>3 &middot; GPIO recipe</h3>
+        <p>Offsets from the port base: <code>MODER +0x00</code> (2 bits/pin: 00 input, 01 output, 10 alternate function, 11 analog), <code>OTYPER +0x04</code>, <code>OSPEEDR +0x08</code>, <code>PUPDR +0x0C</code>, <code>IDR +0x10</code>, <code>ODR +0x14</code>, <code>BSRR +0x18</code>, <code>AFRL +0x20</code>, <code>AFRH +0x24</code>.</p>
+        <p>To make PA5 (the Nucleo user LED) a push-pull output you clear then set its two mode bits:</p>
+        <p><code>RCC-&gt;AHB1ENR |= (1U &lt;&lt; 0);</code> &nbsp; <code>GPIOA-&gt;MODER &amp;= ~(3U &lt;&lt; (5*2));</code> &nbsp; <code>GPIOA-&gt;MODER |= (1U &lt;&lt; (5*2));</code></p>
+        <p><strong>BSRR</strong> is the atomic way to drive a pin: writing 1 to a bit in the <strong>low half word</strong> (BS0..BS15) sets the matching ODR bit, writing 1 to the <strong>high half word</strong> (BR0..BR15) clears it. It is write-only and always reads 0, so no read-modify-write race with an interrupt handler. <strong>AFRL/AFRH</strong> use 4 bits per pin to pick the alternate function: AF1 = TIM2, AF5 = SPI1, AF7 = USART1/USART2.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>4 &middot; USART2 baud arithmetic</h3>
+        <p>With 16&times; oversampling (OVER8 = 0), <strong>USARTDIV = f<sub>PCLK</sub> / (16 &times; baud)</strong>. USART2 hangs off APB1, so PCLK1 = 42 MHz. For 115200 baud:</p>
+        <p><code>USARTDIV = 42 000 000 / (16 &times; 115 200) = 22.786</code></p>
+        <p>The mantissa is the integer part, <strong>22 = 0x16</strong>, and the fraction field counts sixteenths: <code>round(0.786 &times; 16) = 13 = 0xD</code>. So <code>BRR = (22 &lt;&lt; 4) | 13 = 0x16D</code>, and the realised baud rate is 42e6 / (16 &times; 22.8125) = 115 068 baud, a &minus;0.11% error &mdash; well inside the &plusmn;2% a UART receiver tolerates. Registers: <code>SR +0x00</code> (TXE bit 7, RXNE bit 5), <code>DR +0x04</code>, <code>BRR +0x08</code>, <code>CR1 +0x0C</code> (UE 13, TE 3, RE 2).</p>
+      </div>
+      <div class="d-help-section">
+        <h3>5 &middot; SPI1</h3>
+        <p><code>CR1 +0x00</code>: CPHA 0, CPOL 1, MSTR 2, BR[2:0] 3&ndash;5, SPE 6, LSBFIRST 7, SSI 8, SSM 9, DFF 11. <code>SR +0x08</code>: RXNE 0, TXE 1, BSY 7. The serial clock is <strong>f<sub>SCK</sub> = PCLK2 / 2<sup>(BR+1)</sup></strong>, so from 84 MHz the divider runs from /2 (42 MHz) to /256 (328 kHz). CPOL sets the idle level of SCK; CPHA picks whether data is sampled on the first or the second edge of each cycle.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; NVIC, the vector table and interrupt entry</h3>
+        <p>Interrupt <em>n</em> is enabled by setting bit <code>n mod 32</code> of <code>ISER[n / 32]</code>, where ISER0 lives at <strong>0xE000E100</strong> (ISER1 at 0xE000E104) and the mirrored clear-enable array ICER0 at <strong>0xE000E180</strong>. On this part EXTI0 is IRQ 6 (bit 6 of ISER0), TIM2 is IRQ 28 (bit 28 of ISER0) and USART2 is IRQ 38, which is bit 38 mod 32 = <strong>6 of ISER1</strong>. A pin interrupt also needs SYSCFG (0x40013800) to route the port to the EXTI line and EXTI (0x40013C00) to unmask it and pick the edge.</p>
+        <p><strong>Priority</strong> lives in the byte array at <strong>0xE000E400</strong> (IPR), one byte per IRQ. The STM32F4 implements only the top <strong>4 bits</strong> of that byte, so there are 16 levels and 0 is the most urgent. <code>SCB-&gt;AIRCR.PRIGROUP</code> splits those 4 bits into pre-emption and sub-priority; the CMSIS default on ST parts is group 4 &mdash; all 4 bits pre-emption, no sub-priority &mdash; so any higher-priority IRQ pre-empts a running handler and equal priorities never pre-empt each other.</p>
+        <p><strong>Entry flow.</strong> The vector table starts at the address in <code>SCB-&gt;VTOR</code> (0xE000ED08, 512-byte aligned): offset <strong>0x00 holds the initial main stack pointer</strong>, offset <strong>0x04 the reset handler</strong>, then the 14 system exceptions, with IRQ <em>n</em> at 0x40 + 4<em>n</em>. When an enabled interrupt fires, hardware pushes eight words (xPSR, PC, LR, R12, R3&ndash;R0) onto the current stack, loads LR with an EXC_RETURN pattern, fetches the handler address from the vector table and switches to handler mode on the MSP. That is about 12 cycles &asymp; 71 ns at 168 MHz; tail-chaining a second pending interrupt costs roughly 6. With the FPU active, lazy stacking reserves but does not fill another 18 words.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>7 &middot; SysTick and timing</h3>
+        <p><code>CTRL 0xE000E010</code> (ENABLE 0, TICKINT 1, CLKSOURCE 2, COUNTFLAG 16), <code>LOAD 0xE000E014</code>, <code>VAL 0xE000E018</code>. The 24-bit counter decrements to zero and reloads, so the tick period is <strong>(RELOAD + 1) / f<sub>SysTick</sub></strong> where f is the core clock (CLKSOURCE = 1, 168 MHz) or core/8 (CLKSOURCE = 0, 21 MHz). A 1 kHz RTOS tick from 168 MHz therefore needs RELOAD = 168 000 &minus; 1 = 167 999. One core cycle is 1/168 MHz &asymp; <strong>5.95 ns</strong>; every cycle figure in this lab uses that number.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>8 &middot; Using the lab</h3>
+        <dl>
+          <dt>Peripheral tabs</dt><dd>Load that block's registers into the editor. Tabs are buttons &mdash; Tab and Enter work.</dd>
+          <dt>Bit cells</dt><dd>Click (or focus and press Enter/Space) to toggle. Reserved bits are inert. Hover for the field name, bit range, current value and meaning.</dd>
+          <dt>Under each register</dt><dd>The value in hex, the same value in binary, and the C statement that would produce it.</dd>
+          <dt>BSRR</dt><dd>Clicking a BSRR bit performs the write: the low half sets an ODR bit, the high half clears it, and BSRR itself falls straight back to 0 &mdash; the real hardware behaviour.</dd>
+          <dt>Presets</dt><dd>Six worked configurations, each of which also sets the RCC clock-enable and alternate-function bits it needs.</dd>
+        </dl>
+      </div>      </div>
     </div>
   </div>
 </div>
@@ -213,16 +229,16 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <!-- Quick Guide -->
 <div class="guide">
   <div class="guide-box">
-    <div class="guide-header" onclick="toggleGuide()">
+    <div class="guide-header">
       <h2><i class="fas fa-lightbulb"></i> Quick Guide</h2>
-      <button class="guide-toggle" id="guideBtn">Hide</button>
+      <button type="button" class="guide-toggle" id="guideBtn" onclick="toggleGuide()" aria-expanded="true" aria-controls="guideGrid">Hide</button>
     </div>
     <div class="guide-grid" id="guideGrid">
-      <div class="guide-card"><span class="step">STEP 1</span><h3>Select Peripheral</h3><p>Choose <strong>GPIO, Timer, UART, or ADC</strong> to load its memory-mapped registers.</p></div>
-      <div class="guide-card"><span class="step">STEP 2</span><h3>Toggle Bits</h3><p><strong>Click any bit</strong> to flip it. Hex value, waveform, and code update instantly.</p></div>
-      <div class="guide-card"><span class="step">STEP 3</span><h3>View Waveforms</h3><p>Oscilloscope shows <strong>real-time output</strong>: GPIO levels, PWM, UART frames, ADC sampling.</p></div>
-      <div class="guide-card"><span class="step">STEP 4</span><h3>Try Presets</h3><p>Load <strong>common configs</strong>: LED Blink, PWM 1kHz, UART 115200, ADC Single.</p></div>
-      <div class="guide-card"><span class="step">STEP 5</span><h3>Read C Code</h3><p>The code panel shows <strong>equivalent CMSIS code</strong> that matches your configuration.</p></div>
+      <div class="guide-card"><span class="step">STEP 1</span><h3>Enable the clock</h3><p>Open <strong>RCC</strong> and set the peripheral's bit in <strong>AHB1ENR / APB1ENR / APB2ENR</strong>. Nothing responds until you do.</p></div>
+      <div class="guide-card"><span class="step">STEP 2</span><h3>Select a peripheral</h3><p>Choose <strong>GPIOA, TIM2, USART2, SPI1, ADC1 or NVIC/SysTick</strong> to load its registers.</p></div>
+      <div class="guide-card"><span class="step">STEP 3</span><h3>Toggle bits</h3><p><strong>Click any bit</strong> to flip it. Hex, binary, the C line, the pin map and the waveform update instantly.</p></div>
+      <div class="guide-card"><span class="step">STEP 4</span><h3>Read the waveform</h3><p>Idealised scope: GPIO levels, PWM period and duty, a UART frame, SPI SCK/MOSI, ADC sampling, the SysTick ramp.</p></div>
+      <div class="guide-card"><span class="step">STEP 5</span><h3>Try the presets</h3><p><strong>LED, PWM 1 kHz, UART 115200, SPI 2.6 MHz, ADC, SysTick 1 kHz</strong> &mdash; each one is a complete, correct register sequence.</p></div>
     </div>
   </div>
 </div>
@@ -230,7 +246,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <div class="grid">
   <!-- Peripheral Selector -->
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-microchip"></i> Peripheral Selector</h3><span class="tag">STM32F446RE</span></div>
+    <div class="panel-head"><h3><i class="fas fa-microchip"></i> Peripheral Selector</h3><span class="tag">STM32F407 &middot; Cortex-M4F 168 MHz</span></div>
     <div class="panel-body">
       <div class="periph-tabs" id="periphTabs"></div>
       <div class="periph-info" id="periphInfo"></div>
@@ -248,16 +264,16 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="panel-head"><h3><i class="fas fa-wave-square"></i> Waveform Viewer</h3><span class="tag" id="wfTag">Oscilloscope</span></div>
     <div class="panel-body">
       <div class="wf-info" id="wfInfo"></div>
-      <canvas id="wfCanvas" height="220" style="cursor:crosshair"></canvas>
+      <canvas id="wfCanvas" height="220" style="cursor:crosshair" role="img" aria-label="Oscilloscope view of the selected peripheral output; the same information is written in the chips above the canvas"></canvas>
       <div class="wf-legend" id="wfLegend"></div>
     </div>
   </div>
 
   <!-- Pin Diagram -->
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-border-all"></i> Pin Diagram</h3><span class="tag">48-pin LQFP</span></div>
+    <div class="panel-head"><h3><i class="fas fa-border-all"></i> Pin Diagram</h3><span class="tag">Illustrative footprint &middot; port A simulated</span></div>
     <div class="panel-body">
-      <canvas id="pinCanvas" height="380"></canvas>
+      <canvas id="pinCanvas" height="380" role="img" aria-label="Package pin map showing the configured mode of each port A pin"></canvas>
       <div class="pin-legend">
         <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--green)"></span> Output HIGH</div>
         <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--red)"></span> Output LOW</div>
@@ -270,18 +286,16 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
   <!-- C Code Preview -->
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-code"></i> C Code Preview</h3><span class="tag">CMSIS Register Access</span></div>
+    <div class="panel-head"><h3><i class="fas fa-code"></i> C Code Preview</h3><span class="tag">CMSIS-style register access</span></div>
     <div class="panel-body"><div class="code-block" id="codeBlock"></div></div>
   </div>
 </div>
 
-<div class="disclaimer">
-  <div class="disclaimer-box">
-    <strong>Educational Tool:</strong> This lab simulates STM32F446RE memory-mapped registers for learning purposes. Register addresses, bit fields, and behaviors match the STM32F446RE reference manual (RM0390). Waveforms and pin states are simulated. Always consult the official reference manual for production firmware.
-  </div>
-</div>
-
 <script>
+window.onerror=function(msg,url,line){
+  var s=document.getElementById('statusL');
+  if(s)s.innerHTML='<span class="clk-off">JS ERROR: '+msg+' (line '+line+')</span>';
+};
 /* ============================================================
    STM32 MEMORY-MAPPED I/O LAB - CORE ENGINE
    ============================================================ */
@@ -290,9 +304,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 var ttEl=document.getElementById('tooltip');
 function showTT(e,html){ttEl.innerHTML=html;ttEl.classList.add('show');var r=ttEl.getBoundingClientRect();var x=e.clientX+14,y=e.clientY-10;if(x+r.width>window.innerWidth-10)x=e.clientX-r.width-14;if(y+r.height>window.innerHeight-10)y=window.innerHeight-r.height-10;if(y<5)y=5;ttEl.style.left=x+'px';ttEl.style.top=y+'px'}
 function hideTT(){ttEl.classList.remove('show')}
-function toggleHelp(){document.getElementById('helpOverlay').classList.toggle('open')}
+function toggleHelp(){document.getElementById('helpOverlay').classList.toggle('show')}
 document.getElementById('helpOverlay').addEventListener('click',function(e){if(e.target===this)toggleHelp()});
-function toggleGuide(){var g=document.getElementById('guideGrid'),b=document.getElementById('guideBtn');g.classList.toggle('hide');b.textContent=g.classList.contains('hide')?'Show':'Hide'}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){var o=document.getElementById('helpOverlay');if(o.classList.contains('show'))o.classList.remove('show')}});
+function toggleGuide(){var g=document.getElementById('guideGrid'),b=document.getElementById('guideBtn');g.classList.toggle('hide');var h=g.classList.contains('hide');b.textContent=h?'Show':'Hide';b.setAttribute('aria-expanded',h?'false':'true')}
 
 /* ============================================================
    FIELD COLORS
@@ -302,6 +317,8 @@ var FC=['#06b6d4','#10b981','#f59e0b','#8b5cf6','#3b82f6','#ef4444','#f97316','#
 /* ============================================================
    PERIPHERAL DEFINITIONS
    ============================================================ */
+var AFNAME={1:'TIM1/TIM2',2:'TIM3/4/5',3:'TIM8/9/10/11',4:'I2C1/2/3',5:'SPI1/SPI2',6:'SPI3',7:'USART1/2/3',8:'UART4/5/USART6',9:'CAN1/2, TIM12/13/14',10:'OTG_FS/HS',11:'ETH',12:'FSMC/SDIO',13:'DCMI',15:'EVENTOUT'};
+
 function mkGPIOFields(regPrefix,descFn,bitsPerPin){
   var f=[];
   for(var i=15;i>=0;i--){
@@ -313,163 +330,309 @@ function mkGPIOFields(regPrefix,descFn,bitsPerPin){
 }
 function range(hi,lo){var a=[];for(var i=hi;i>=lo;i--)a.push(i);return a}
 function rsvBits(bits){return {name:'Reserved',bits:bits,desc:'Reserved bits',reserved:true}}
+function enrFields(map,busName){
+  var f=[],used={};
+  for(var k in map)used[k]=1;
+  for(var b=31;b>=0;b--){
+    if(used[b])f.push({name:map[b],bits:[b],desc:'RCC '+busName+' clock enable for '+map[b].replace(/EN$/,'')+' (bit '+b+'). 0 = gated off, registers read 0.'});
+  }
+  var rsv=[];for(var b=31;b>=0;b--)if(!used[b])rsv.push(b);
+  if(rsv.length)f.push(rsvBits(rsv));
+  return f;
+}
+var IRQ0=['WWDG','PVD','TAMP_STAMP','RTC_WKUP','FLASH','RCC','EXTI0','EXTI1','EXTI2','EXTI3','EXTI4','DMA1_S0','DMA1_S1','DMA1_S2','DMA1_S3','DMA1_S4','DMA1_S5','DMA1_S6','ADC','CAN1_TX','CAN1_RX0','CAN1_RX1','CAN1_SCE','EXTI9_5','TIM1_BRK_TIM9','TIM1_UP_TIM10','TIM1_TRG_TIM11','TIM1_CC','TIM2','TIM3','TIM4','I2C1_EV'];
+var IRQ1=['I2C1_ER','I2C2_EV','I2C2_ER','SPI1','SPI2','USART1','USART2','USART3','EXTI15_10','RTC_Alarm','OTG_FS_WKUP','TIM8_BRK_TIM12','TIM8_UP_TIM13','TIM8_TRG_TIM14','TIM8_CC','DMA1_S7','FSMC','SDIO','TIM5','SPI3','UART4','UART5','TIM6_DAC','TIM7','DMA2_S0','DMA2_S1','DMA2_S2','DMA2_S3','DMA2_S4','ETH','ETH_WKUP','CAN2_TX'];
+function iserFields(names,base){
+  var f=[];
+  for(var i=31;i>=0;i--)f.push({name:names[i],bits:[i],desc:'IRQ '+(base+i)+' ('+names[i]+'_IRQn): set bit '+i+' to enable. '+(base+i)+' mod 32 = '+i+', '+(base+i)+' / 32 = '+(base/32)});
+  return f;
+}
 
 var PERIPHS={
-  gpio:{name:'GPIOA',icon:'fa-plug',color:'#10b981',base:0x40020000,bus:'AHB1',
-    desc:'General Purpose I/O Port A. 16 pins (PA0-PA15). Configure mode, output type, speed, pull-up/down, and output data.',
+  rcc:{name:'RCC',icon:'fa-bolt',color:'#f97316',base:0x40023800,bus:'AHB1',
+    desc:'Reset and clock control. HSE 8 MHz through the PLL (M 8, N 336, P 2) gives SYSCLK 168 MHz; AHB /1 = 168 MHz, APB1 /4 = 42 MHz (timer clock 84 MHz), APB2 /2 = 84 MHz (timer clock 168 MHz). Every peripheral is clock-gated - until its xxxENR bit is set the registers read back 0 and writes are lost.',
     regs:[
-      {name:'MODER',off:0x00,rst:0xA8000000,desc:'Mode register. 2 bits/pin: 00=Input, 01=Output, 10=AF, 11=Analog',
-       fields:mkGPIOFields('MODER',function(i){return 'PA'+i+' mode: 00=Input, 01=Output, 10=AF, 11=Analog'},2)},
-      {name:'OTYPER',off:0x04,rst:0,desc:'Output type. Bit per pin: 0=Push-pull, 1=Open-drain (bits 15:0)',
-       fields:mkGPIOFields('OT',function(i){return 'PA'+i+' type: 0=Push-pull, 1=Open-drain'},1)},
-      {name:'ODR',off:0x14,rst:0,desc:'Output data register. 1=HIGH, 0=LOW for each pin (bits 15:0)',
-       fields:mkGPIOFields('ODR',function(i){return 'PA'+i+' output: 1=HIGH, 0=LOW'},1)},
-      {name:'PUPDR',off:0x0C,rst:0x64000000,desc:'Pull-up/pull-down. 2 bits/pin: 00=None, 01=Pull-up, 10=Pull-down',
-       fields:mkGPIOFields('PUPDR',function(i){return 'PA'+i+' pull: 00=None, 01=Pull-up, 10=Pull-down'},2)}
+      {name:'AHB1ENR',off:0x30,rst:0x00100000,desc:'AHB1 peripheral clock enable (+0x30). Bit 0 = GPIOAEN, 1 = GPIOBEN, 2 = GPIOCEN, 3 = GPIODEN. Reset 0x00100000 (CCM data RAM).',
+       fields:enrFields({0:'GPIOAEN',1:'GPIOBEN',2:'GPIOCEN',3:'GPIODEN',4:'GPIOEEN',5:'GPIOFEN',6:'GPIOGEN',7:'GPIOHEN',8:'GPIOIEN',12:'CRCEN',18:'BKPSRAMEN',20:'CCMDATARAMEN',21:'DMA1EN',22:'DMA2EN'},'AHB1')},
+      {name:'APB1ENR',off:0x40,rst:0,desc:'APB1 peripheral clock enable (+0x40). Bit 0 = TIM2EN, bit 17 = USART2EN.',
+       fields:enrFields({0:'TIM2EN',1:'TIM3EN',2:'TIM4EN',3:'TIM5EN',4:'TIM6EN',5:'TIM7EN',6:'TIM12EN',7:'TIM13EN',8:'TIM14EN',11:'WWDGEN',14:'SPI2EN',15:'SPI3EN',17:'USART2EN',18:'USART3EN',19:'UART4EN',20:'UART5EN',21:'I2C1EN',22:'I2C2EN',23:'I2C3EN',25:'CAN1EN',26:'CAN2EN',28:'PWREN',29:'DACEN'},'APB1')},
+      {name:'APB2ENR',off:0x44,rst:0,desc:'APB2 peripheral clock enable (+0x44). Bit 4 = USART1EN, bit 8 = ADC1EN, bit 12 = SPI1EN, bit 14 = SYSCFGEN (needed before any EXTI pin interrupt).',
+       fields:enrFields({0:'TIM1EN',1:'TIM8EN',4:'USART1EN',5:'USART6EN',8:'ADC1EN',9:'ADC2EN',10:'ADC3EN',11:'SDIOEN',12:'SPI1EN',14:'SYSCFGEN',16:'TIM9EN',17:'TIM10EN',18:'TIM11EN'},'APB2')}
     ]},
-  tim2:{name:'TIM2',icon:'fa-clock',color:'#f59e0b',base:0x40000000,bus:'APB1',
-    desc:'General-purpose 32-bit timer. PWM generation, input capture, output compare. APB1 clock up to 90 MHz.',
+  gpio:{name:'GPIOA',icon:'fa-plug',color:'#10b981',base:0x40020000,bus:'AHB1',clk:['AHB1ENR',0],
+    desc:'General-purpose I/O port A on AHB1 (GPIOB 0x40020400, GPIOC 0x40020800, GPIOD 0x40020C00). 16 pins, PA0-PA15.',
     regs:[
-      {name:'CR1',off:0x00,rst:0,desc:'Control register 1. Enable counter, direction, alignment.',
+      {name:'MODER',off:0x00,rst:0xA8000000,desc:'Mode register (+0x00), 2 bits per pin: 00 = Input, 01 = Output, 10 = Alternate function, 11 = Analog. Reset 0xA8000000 leaves PA13/14/15 on SWD/JTAG.',
+       fields:mkGPIOFields('MODER',function(i){return 'PA'+i+' mode: 00=Input, 01=Output, 10=Alternate function, 11=Analog'},2)},
+      {name:'OTYPER',off:0x04,rst:0,desc:'Output type (+0x04), 1 bit per pin: 0 = push-pull, 1 = open-drain (bits 15:0).',
+       fields:mkGPIOFields('OT',function(i){return 'PA'+i+' output type: 0=Push-pull, 1=Open-drain'},1)},
+      {name:'OSPEEDR',off:0x08,rst:0,desc:'Output speed (+0x08), 2 bits per pin: 00 = low, 01 = medium, 10 = fast, 11 = high. Faster slew costs EMI and ground bounce.',
+       fields:mkGPIOFields('OSPEED',function(i){return 'PA'+i+' speed: 00=Low, 01=Medium, 10=Fast, 11=High'},2)},
+      {name:'PUPDR',off:0x0C,rst:0x64000000,desc:'Pull-up/pull-down (+0x0C), 2 bits per pin: 00 = none, 01 = pull-up, 10 = pull-down. Reset 0x64000000 for the SWD/JTAG pins.',
+       fields:mkGPIOFields('PUPDR',function(i){return 'PA'+i+' pull: 00=None, 01=Pull-up, 10=Pull-down'},2)},
+      {name:'ODR',off:0x14,rst:0,desc:'Output data register (+0x14): 1 = HIGH, 0 = LOW per pin (bits 15:0). IDR (+0x10) is the read-only input side. A read-modify-write of ODR is not atomic - use BSRR instead.',
+       fields:mkGPIOFields('ODR',function(i){return 'PA'+i+' output level: 1=HIGH (3.3 V), 0=LOW (0 V)'},1)},
+      {name:'BSRR',off:0x18,rst:0,desc:'Bit set/reset register (+0x18), write-only and always reads 0. Writing 1 to BS[x] in the LOW half word sets ODR[x]; writing 1 to BR[x] in the HIGH half word clears it. Atomic, so no read-modify-write race against an interrupt. Clicking a bit here performs the write and BSRR drops straight back to 0.',
+       fields:(function(){var f=[];for(var i=15;i>=0;i--)f.push({name:'BR'+i,bits:[i+16],desc:'BR'+i+' (bit '+(i+16)+', high half word): write 1 to CLEAR ODR'+i+' - drives PA'+i+' LOW'});for(var i=15;i>=0;i--)f.push({name:'BS'+i,bits:[i],desc:'BS'+i+' (bit '+i+', low half word): write 1 to SET ODR'+i+' - drives PA'+i+' HIGH'});return f})()},
+      {name:'AFRL',off:0x20,rst:0,desc:'Alternate function low (+0x20), 4 bits per pin for PA0-PA7; AFRH (+0x24) covers PA8-PA15. AF1 = TIM2, AF5 = SPI1, AF7 = USART1/USART2. MODER must be 10 for the AF to take effect.',
+       fields:(function(){var f=[];for(var i=7;i>=0;i--){var bs=[];for(var b=3;b>=0;b--)bs.push(i*4+b);f.push({name:'AFRL'+i,bits:bs,desc:'PA'+i+' alternate function 0-15 (1=TIM2, 5=SPI1, 7=USART2)'})}return f})()}
+    ]},
+  tim2:{name:'TIM2',icon:'fa-clock',color:'#f59e0b',base:0x40000000,bus:'APB1',clk:['APB1ENR',0],
+    desc:'General-purpose 32-bit timer on APB1 (base 0x40000000). APB1 runs at 42 MHz, but because the APB1 prescaler is greater than 1 the timer clock is doubled to 84 MHz. TIM2_CH1 is PA0, PA5 or PA15 on AF1.',
+    regs:[
+      {name:'CR1',off:0x00,rst:0,desc:'Control register 1 (+0x00). Counter enable, direction, alignment, auto-reload preload.',
        fields:[
-         {name:'CKD',bits:[9,8],desc:'Clock division: 00=1x, 01=2x, 10=4x'},
-         {name:'ARPE',bits:[7],desc:'Auto-reload preload: 0=Not buffered, 1=Buffered'},
-         {name:'CMS',bits:[6,5],desc:'Center-aligned mode: 00=Edge, 01/10/11=Center'},
-         {name:'DIR',bits:[4],desc:'Direction: 0=Up, 1=Down'},
-         {name:'OPM',bits:[3],desc:'One-pulse mode'},
+         {name:'CKD',bits:[9,8],desc:'Clock division for the digital filters: 00=1x, 01=2x, 10=4x'},
+         {name:'ARPE',bits:[7],desc:'Auto-reload preload: 1 = ARR is buffered until the next update event'},
+         {name:'CMS',bits:[6,5],desc:'Center-aligned mode: 00=Edge-aligned, 01/10/11=Center-aligned'},
+         {name:'DIR',bits:[4],desc:'Direction: 0=Up-counting, 1=Down-counting'},
+         {name:'OPM',bits:[3],desc:'One-pulse mode: counter stops at the next update event'},
          {name:'URS',bits:[2],desc:'Update request source'},
          {name:'UDIS',bits:[1],desc:'Update disable'},
-         {name:'CEN',bits:[0],desc:'Counter enable: 1=Start counting'},
+         {name:'CEN',bits:[0],desc:'Counter enable: 1 = start counting'},
          rsvBits(range(31,10))
        ]},
-      {name:'CCMR1',off:0x18,rst:0,desc:'Capture/compare mode 1. CH1/CH2 as output compare or PWM.',
+      {name:'CCMR1',off:0x18,rst:0,desc:'Capture/compare mode 1 (+0x18). Configures CH1/CH2 as output compare or PWM.',
        fields:[
-         {name:'OC2M',bits:[14,13,12],desc:'Output compare 2 mode'},
+         {name:'OC2CE',bits:[15],desc:'OC2 clear enable'},
+         {name:'OC2M',bits:[14,13,12],desc:'Output compare 2 mode: 110=PWM mode 1, 111=PWM mode 2'},
          {name:'OC2PE',bits:[11],desc:'OC2 preload enable'},
-         {name:'CC2S',bits:[9,8],desc:'CC2 selection'},
-         {name:'OC1M',bits:[6,5,4],desc:'OC1 mode: 110=PWM mode 1, 111=PWM mode 2'},
-         {name:'OC1PE',bits:[3],desc:'OC1 preload enable: 1=Buffered'},
+         {name:'OC2FE',bits:[10],desc:'OC2 fast enable'},
+         {name:'CC2S',bits:[9,8],desc:'CC2 selection: 00=Output'},
+         {name:'OC1CE',bits:[7],desc:'OC1 clear enable (ETRF input)'},
+         {name:'OC1M',bits:[6,5,4],desc:'OC1 mode: 110=PWM mode 1 (active while CNT < CCR1), 111=PWM mode 2'},
+         {name:'OC1PE',bits:[3],desc:'OC1 preload enable: 1 = CCR1 is buffered (required for glitch-free PWM)'},
          {name:'OC1FE',bits:[2],desc:'OC1 fast enable'},
-         {name:'CC1S',bits:[1,0],desc:'CC1 selection: 00=Output'},
-         rsvBits([31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,10,7])
-       ]},
-      {name:'CCER',off:0x20,rst:0,desc:'Capture/compare enable. Enable channel outputs and set polarity.',
-       fields:[
-         {name:'CC4P',bits:[13],desc:'CC4 polarity'},
-         {name:'CC4E',bits:[12],desc:'CC4 enable'},
-         {name:'CC3P',bits:[9],desc:'CC3 polarity'},
-         {name:'CC3E',bits:[8],desc:'CC3 enable'},
-         {name:'CC2P',bits:[5],desc:'CC2 polarity'},
-         {name:'CC2E',bits:[4],desc:'CC2 enable'},
-         {name:'CC1P',bits:[1],desc:'CC1 polarity: 0=Active high'},
-         {name:'CC1E',bits:[0],desc:'CC1 output enable: 1=On'},
-         rsvBits([31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,11,10,7,6,3,2])
-       ]},
-      {name:'PSC',off:0x28,rst:0,desc:'Prescaler (16-bit). Timer freq = 90MHz / (PSC+1).',
-       fields:[{name:'PSC',bits:range(15,0),desc:'Prescaler value 0-65535'},rsvBits(range(31,16))]},
-      {name:'ARR',off:0x2C,rst:0xFFFFFFFF,desc:'Auto-reload register. Counter resets at ARR. Sets PWM period.',
-       fields:[{name:'ARR',bits:range(31,0),desc:'Auto-reload value. Period=(ARR+1)*(PSC+1)/90MHz'}]},
-      {name:'CCR1',off:0x34,rst:0,desc:'Capture/compare 1. In PWM mode sets duty cycle = CCR1/(ARR+1).',
-       fields:[{name:'CCR1',bits:range(31,0),desc:'Compare value. Duty=CCR1/(ARR+1)'}]}
-    ]},
-  usart1:{name:'USART1',icon:'fa-exchange-alt',color:'#3b82f6',base:0x40011000,bus:'APB2',
-    desc:'Universal sync/async receiver/transmitter. Full-duplex serial. APB2 clock = 90 MHz.',
-    regs:[
-      {name:'CR1',off:0x00,rst:0,desc:'Control register 1. Enable USART, TX, RX, word length, parity.',
-       fields:[
-         {name:'OVER8',bits:[15],desc:'Oversampling: 0=16x, 1=8x'},
-         {name:'UE',bits:[13],desc:'USART enable: 1=Enabled'},
-         {name:'M',bits:[12],desc:'Word length: 0=8 bits, 1=9 bits'},
-         {name:'WAKE',bits:[11],desc:'Wakeup method'},
-         {name:'PCE',bits:[10],desc:'Parity enable: 1=Enabled'},
-         {name:'PS',bits:[9],desc:'Parity: 0=Even, 1=Odd'},
-         {name:'PEIE',bits:[8],desc:'PE interrupt enable'},
-         {name:'TXEIE',bits:[7],desc:'TXE interrupt enable'},
-         {name:'TCIE',bits:[6],desc:'TC interrupt enable'},
-         {name:'RXNEIE',bits:[5],desc:'RXNE interrupt enable'},
-         {name:'IDLEIE',bits:[4],desc:'IDLE interrupt enable'},
-         {name:'TE',bits:[3],desc:'Transmitter enable: 1=On'},
-         {name:'RE',bits:[2],desc:'Receiver enable: 1=On'},
-         {name:'RWU',bits:[1],desc:'Receiver wakeup'},
-         {name:'SBK',bits:[0],desc:'Send break'},
-         rsvBits([31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,14])
-       ]},
-      {name:'CR2',off:0x04,rst:0,desc:'Control register 2. Stop bits, clock settings.',
-       fields:[
-         {name:'STOP',bits:[13,12],desc:'Stop bits: 00=1, 01=0.5, 10=2, 11=1.5'},
-         {name:'CLKEN',bits:[11],desc:'Clock enable (sync mode)'},
-         {name:'CPOL',bits:[10],desc:'Clock polarity'},
-         {name:'CPHA',bits:[9],desc:'Clock phase'},
-         {name:'LBCL',bits:[8],desc:'Last bit clock pulse'},
-         {name:'LBDIE',bits:[6],desc:'LIN break detection IE'},
-         {name:'LBDL',bits:[5],desc:'LIN break detection length'},
-         {name:'ADD',bits:[3,2,1,0],desc:'USART node address'},
-         rsvBits([31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,7,4])
-       ]},
-      {name:'BRR',off:0x08,rst:0,desc:'Baud rate register. Mantissa [15:4], Fraction [3:0]. Baud=90MHz/(16*USARTDIV).',
-       fields:[
-         {name:'DIV_Mantissa',bits:range(15,4),desc:'Mantissa of USARTDIV'},
-         {name:'DIV_Fraction',bits:[3,2,1,0],desc:'Fraction of USARTDIV (4-bit, /16)'},
+         {name:'CC1S',bits:[1,0],desc:'CC1 selection: 00=Output, 01/10=Input'},
          rsvBits(range(31,16))
        ]},
-      {name:'DR',off:0x04,rst:0,desc:'Data register. TX/RX data (bits 8:0).',
+      {name:'CCER',off:0x20,rst:0,desc:'Capture/compare enable (+0x20). Enables the channel outputs and sets their polarity.',
        fields:[
-         {name:'DR',bits:range(8,0),desc:'Data value (8 or 9 bits)'},
-         rsvBits(range(31,9))
+         {name:'CC4NP',bits:[15],desc:'CC4 complementary polarity'},
+         {name:'CC4P',bits:[13],desc:'CC4 polarity'},
+         {name:'CC4E',bits:[12],desc:'CC4 output enable'},
+         {name:'CC3NP',bits:[11],desc:'CC3 complementary polarity'},
+         {name:'CC3P',bits:[9],desc:'CC3 polarity'},
+         {name:'CC3E',bits:[8],desc:'CC3 output enable'},
+         {name:'CC2NP',bits:[7],desc:'CC2 complementary polarity'},
+         {name:'CC2P',bits:[5],desc:'CC2 polarity'},
+         {name:'CC2E',bits:[4],desc:'CC2 output enable'},
+         {name:'CC1NP',bits:[3],desc:'CC1 complementary polarity'},
+         {name:'CC1P',bits:[1],desc:'CC1 polarity: 0=Active high'},
+         {name:'CC1E',bits:[0],desc:'CC1 output enable: 1 = drive the CH1 pin'},
+         rsvBits(range(31,16).concat([14,10,6,2]))
+       ]},
+      {name:'PSC',off:0x28,rst:0,desc:'Prescaler (+0x28), 16-bit. Counter clock = 84 MHz / (PSC + 1).',
+       fields:[{name:'PSC',bits:range(15,0),desc:'Prescaler value 0-65535; f_CNT = 84 MHz / (PSC+1)'},rsvBits(range(31,16))]},
+      {name:'ARR',off:0x2C,rst:0xFFFFFFFF,desc:'Auto-reload register (+0x2C). TIM2 and TIM5 are the only 32-bit timers on this part. PWM period = (ARR+1) x (PSC+1) / 84 MHz.',
+       fields:[{name:'ARR',bits:range(31,0),desc:'Auto-reload value; f_PWM = 84 MHz / ((PSC+1)(ARR+1))'}]},
+      {name:'CCR1',off:0x34,rst:0,desc:'Capture/compare 1 (+0x34). In PWM mode 1 the output is active while CNT < CCR1, so duty = CCR1 / (ARR+1).',
+       fields:[{name:'CCR1',bits:range(31,0),desc:'Compare value; duty = CCR1/(ARR+1)'}]}
+    ]},
+  usart2:{name:'USART2',icon:'fa-exchange-alt',color:'#3b82f6',base:0x40004400,bus:'APB1',clk:['APB1ENR',17],
+    desc:'USART2 on APB1, base 0x40004400, so its PCLK1 is 42 MHz (USART1 sits on APB2 at 0x40011000 with an 84 MHz clock). Default pins PA2 = TX and PA3 = RX on AF7; on a Nucleo board these reach the ST-LINK virtual COM port.',
+    regs:[
+      {name:'SR',off:0x00,rst:0x00C0,desc:'Status register (+0x00). Poll TXE (bit 7) before writing DR and RXNE (bit 5) before reading it. Reset value 0x00C0: TXE and TC are already set.',
+       fields:[
+         {name:'CTS',bits:[9],desc:'CTS flag'},
+         {name:'LBD',bits:[8],desc:'LIN break detection flag'},
+         {name:'TXE',bits:[7],desc:'Transmit data register empty - wait for this before writing DR'},
+         {name:'TC',bits:[6],desc:'Transmission complete - the last stop bit has left the shift register'},
+         {name:'RXNE',bits:[5],desc:'Read data register not empty - a frame is waiting in DR'},
+         {name:'IDLE',bits:[4],desc:'Idle line detected'},
+         {name:'ORE',bits:[3],desc:'Overrun error - a frame arrived before the previous one was read'},
+         {name:'NF',bits:[2],desc:'Noise detected flag'},
+         {name:'FE',bits:[1],desc:'Framing error - the stop bit was not seen'},
+         {name:'PE',bits:[0],desc:'Parity error'},
+         rsvBits(range(31,10))
+       ]},
+      {name:'DR',off:0x04,rst:0,desc:'Data register (+0x04), bits 8:0. Writing loads the transmit shift register, reading returns the received frame and clears RXNE.',
+       fields:[{name:'DR',bits:range(8,0),desc:'Data value (8 or 9 bits, LSB first on the wire)'},rsvBits(range(31,9))]},
+      {name:'BRR',off:0x08,rst:0,desc:'Baud rate register (+0x08). USARTDIV = f_PCLK / (16 x baud) with OVER8=0. Mantissa in bits 15:4, fraction in sixteenths in bits 3:0. 42 MHz at 115200 baud gives 22.786 -> mantissa 22, fraction round(0.786x16)=13, so BRR = 0x16D.',
+       fields:[
+         {name:'DIV_Mantissa',bits:range(15,4),desc:'Integer part of USARTDIV'},
+         {name:'DIV_Fraction',bits:[3,2,1,0],desc:'Fractional part of USARTDIV in sixteenths (eighths when OVER8=1)'},
+         rsvBits(range(31,16))
+       ]},
+      {name:'CR1',off:0x0C,rst:0,desc:'Control register 1 (+0x0C). UE (bit 13) enables the peripheral, TE (3) the transmitter, RE (2) the receiver. Set the baud rate before UE.',
+       fields:[
+         {name:'OVER8',bits:[15],desc:'Oversampling: 0=16x (default), 1=8x (double the max baud, less noise margin)'},
+         {name:'UE',bits:[13],desc:'USART enable: 1 = the peripheral is running'},
+         {name:'M',bits:[12],desc:'Word length: 0=8 data bits, 1=9 data bits'},
+         {name:'WAKE',bits:[11],desc:'Wakeup method in mute mode'},
+         {name:'PCE',bits:[10],desc:'Parity control enable (the parity bit replaces the MSB of the word)'},
+         {name:'PS',bits:[9],desc:'Parity selection: 0=Even, 1=Odd'},
+         {name:'PEIE',bits:[8],desc:'Parity error interrupt enable'},
+         {name:'TXEIE',bits:[7],desc:'TXE interrupt enable'},
+         {name:'TCIE',bits:[6],desc:'Transmission complete interrupt enable'},
+         {name:'RXNEIE',bits:[5],desc:'RXNE interrupt enable'},
+         {name:'IDLEIE',bits:[4],desc:'IDLE interrupt enable'},
+         {name:'TE',bits:[3],desc:'Transmitter enable: 1 = the TX pin is driven'},
+         {name:'RE',bits:[2],desc:'Receiver enable'},
+         {name:'RWU',bits:[1],desc:'Receiver wakeup / mute mode'},
+         {name:'SBK',bits:[0],desc:'Send break character'},
+         rsvBits(range(31,16).concat([14]))
+       ]},
+      {name:'CR2',off:0x10,rst:0,desc:'Control register 2 (+0x10). Stop bits, synchronous clock settings and the node address.',
+       fields:[
+         {name:'LINEN',bits:[14],desc:'LIN mode enable'},
+         {name:'STOP',bits:[13,12],desc:'Stop bits: 00=1, 01=0.5, 10=2, 11=1.5'},
+         {name:'CLKEN',bits:[11],desc:'Clock enable (synchronous mode)'},
+         {name:'CPOL',bits:[10],desc:'Clock polarity in synchronous mode'},
+         {name:'CPHA',bits:[9],desc:'Clock phase in synchronous mode'},
+         {name:'LBCL',bits:[8],desc:'Last bit clock pulse'},
+         {name:'LBDIE',bits:[6],desc:'LIN break detection interrupt enable'},
+         {name:'LBDL',bits:[5],desc:'LIN break detection length'},
+         {name:'ADD',bits:[3,2,1,0],desc:'USART node address for multiprocessor mode'},
+         rsvBits(range(31,15).concat([7,4]))
        ]}
     ]},
-  adc1:{name:'ADC1',icon:'fa-chart-line',color:'#8b5cf6',base:0x40012000,bus:'APB2',
-    desc:'12-bit ADC. Up to 16 external channels. Configurable resolution (6/8/10/12-bit). Single and continuous modes.',
+  spi1:{name:'SPI1',icon:'fa-right-left',color:'#ec4899',base:0x40013000,bus:'APB2',clk:['APB2ENR',12],
+    desc:'SPI1 on APB2, base 0x40013000, PCLK2 = 84 MHz. Default pins PA5 = SCK, PA6 = MISO, PA7 = MOSI on AF5. f_SCK = PCLK2 / 2^(BR+1), so /2 = 42 MHz down to /256 = 328 kHz.',
     regs:[
-      {name:'CR1',off:0x04,rst:0,desc:'Control 1. Resolution, scan mode, interrupt enables.',
+      {name:'CR1',off:0x00,rst:0,desc:'Control register 1 (+0x00). CPHA bit 0, CPOL bit 1, MSTR bit 2, BR[2:0] bits 5:3, SPE bit 6, LSBFIRST bit 7, DFF bit 11. Configure everything else before setting SPE.',
+       fields:[
+         {name:'BIDIMODE',bits:[15],desc:'Bidirectional (3-wire) data mode'},
+         {name:'BIDIOE',bits:[14],desc:'Output enable in bidirectional mode'},
+         {name:'CRCEN',bits:[13],desc:'Hardware CRC calculation enable'},
+         {name:'CRCNEXT',bits:[12],desc:'Transmit the CRC after the next frame'},
+         {name:'DFF',bits:[11],desc:'Data frame format: 0=8-bit, 1=16-bit'},
+         {name:'RXONLY',bits:[10],desc:'Receive-only mode'},
+         {name:'SSM',bits:[9],desc:'Software slave management: NSS comes from SSI instead of the pin'},
+         {name:'SSI',bits:[8],desc:'Internal slave select - must be 1 in master mode when SSM=1, or a mode fault is raised'},
+         {name:'LSBFIRST',bits:[7],desc:'Frame format: 0=MSB first (usual), 1=LSB first'},
+         {name:'SPE',bits:[6],desc:'SPI enable'},
+         {name:'BR',bits:[5,4,3],desc:'Baud rate control: f_SCK = PCLK2 / 2^(BR+1); 000=/2 ... 111=/256'},
+         {name:'MSTR',bits:[2],desc:'Master selection: 1 = master, this device drives SCK'},
+         {name:'CPOL',bits:[1],desc:'Clock polarity: 0 = SCK idles low, 1 = SCK idles high'},
+         {name:'CPHA',bits:[0],desc:'Clock phase: 0 = sample on the first clock edge, 1 = sample on the second'},
+         rsvBits(range(31,16))
+       ]},
+      {name:'CR2',off:0x04,rst:0,desc:'Control register 2 (+0x04). Interrupt and DMA enables plus the hardware NSS output.',
+       fields:[
+         {name:'TXEIE',bits:[7],desc:'TXE interrupt enable'},
+         {name:'RXNEIE',bits:[6],desc:'RXNE interrupt enable'},
+         {name:'ERRIE',bits:[5],desc:'Error interrupt enable (OVR, MODF, CRCERR)'},
+         {name:'FRF',bits:[4],desc:'Frame format: 0=Motorola, 1=TI'},
+         {name:'SSOE',bits:[2],desc:'SS output enable - the NSS pin is driven low while the master is enabled'},
+         {name:'TXDMAEN',bits:[1],desc:'Tx buffer DMA enable'},
+         {name:'RXDMAEN',bits:[0],desc:'Rx buffer DMA enable'},
+         rsvBits(range(31,8).concat([3]))
+       ]},
+      {name:'SR',off:0x08,rst:0x0002,desc:'Status register (+0x08). RXNE bit 0, TXE bit 1, BSY bit 7. Wait for BSY = 0 before dropping NSS or disabling the peripheral. Reset value 0x0002 (TXE set).',
+       fields:[
+         {name:'FRE',bits:[8],desc:'TI mode frame format error'},
+         {name:'BSY',bits:[7],desc:'Busy - a transfer is in progress or the Tx buffer is not empty'},
+         {name:'OVR',bits:[6],desc:'Overrun flag'},
+         {name:'MODF',bits:[5],desc:'Mode fault - NSS went low while in master mode'},
+         {name:'CRCERR',bits:[4],desc:'CRC error flag'},
+         {name:'UDR',bits:[3],desc:'Underrun flag (slave mode)'},
+         {name:'CHSIDE',bits:[2],desc:'Channel side (I2S mode only)'},
+         {name:'TXE',bits:[1],desc:'Transmit buffer empty - safe to write DR'},
+         {name:'RXNE',bits:[0],desc:'Receive buffer not empty - a frame is waiting in DR'},
+         rsvBits(range(31,9))
+       ]},
+      {name:'DR',off:0x0C,rst:0,desc:'Data register (+0x0C). Writing loads the Tx buffer, reading empties the Rx buffer; 8 or 16 bits wide depending on DFF.',
+       fields:[{name:'DR',bits:range(15,0),desc:'Frame shifted out on MOSI (and the last frame shifted in on MISO)'},rsvBits(range(31,16))]}
+    ]},
+  adc1:{name:'ADC1',icon:'fa-chart-line',color:'#8b5cf6',base:0x40012000,bus:'APB2',clk:['APB2ENR',8],
+    desc:'12-bit successive-approximation ADC at 0x40012000 on APB2. ADCCLK = PCLK2 / 4 = 21 MHz (the 36 MHz maximum is respected). Conversion takes SMP + 12 ADC cycles at 12-bit resolution.',
+    regs:[
+      {name:'CR1',off:0x04,rst:0,desc:'Control register 1 (+0x04). Resolution, scan mode, analog watchdog and interrupt enables.',
        fields:[
          {name:'OVRIE',bits:[26],desc:'Overrun interrupt enable'},
-         {name:'RES',bits:[25,24],desc:'Resolution: 00=12-bit, 01=10, 10=8, 11=6'},
-         {name:'AWDEN',bits:[23],desc:'Watchdog enable on regular ch'},
-         {name:'JAWDEN',bits:[22],desc:'Watchdog enable on injected ch'},
-         {name:'DISCNUM',bits:[15,14,13],desc:'Discontinuous mode channel count'},
-         {name:'JDISCEN',bits:[12],desc:'Injected discontinuous'},
-         {name:'DISCEN',bits:[11],desc:'Regular discontinuous'},
-         {name:'JAUTO',bits:[10],desc:'Auto injected conversion'},
-         {name:'AWDSGL',bits:[9],desc:'Watchdog single channel'},
-         {name:'SCAN',bits:[8],desc:'Scan mode: 1=Enabled'},
-         {name:'JEOCIE',bits:[7],desc:'Injected EOC IE'},
-         {name:'AWDIE',bits:[6],desc:'Watchdog IE'},
-         {name:'EOCIE',bits:[5],desc:'EOC interrupt enable'},
-         {name:'AWDCH',bits:[4,3,2,1,0],desc:'Watchdog channel select'},
+         {name:'RES',bits:[25,24],desc:'Resolution: 00=12-bit (15 ADC cycles), 01=10-bit (13), 10=8-bit (11), 11=6-bit (9)'},
+         {name:'AWDEN',bits:[23],desc:'Analog watchdog enable on regular channels'},
+         {name:'JAWDEN',bits:[22],desc:'Analog watchdog enable on injected channels'},
+         {name:'DISCNUM',bits:[15,14,13],desc:'Number of channels converted per discontinuous trigger'},
+         {name:'JDISCEN',bits:[12],desc:'Discontinuous mode on injected channels'},
+         {name:'DISCEN',bits:[11],desc:'Discontinuous mode on regular channels'},
+         {name:'JAUTO',bits:[10],desc:'Automatic injected conversion after the regular group'},
+         {name:'AWDSGL',bits:[9],desc:'Watchdog on a single channel instead of all'},
+         {name:'AWDIE',bits:[6],desc:'Analog watchdog interrupt enable'},
+         {name:'SCAN',bits:[8],desc:'Scan mode: convert the whole sequence, not just SQ1'},
+         {name:'JEOCIE',bits:[7],desc:'Injected end-of-conversion interrupt enable'},
+         {name:'EOCIE',bits:[5],desc:'End-of-conversion interrupt enable'},
+         {name:'AWDCH',bits:[4,3,2,1,0],desc:'Analog watchdog channel select'},
          rsvBits([31,30,29,28,27,21,20,19,18,17,16])
        ]},
-      {name:'CR2',off:0x08,rst:0,desc:'Control 2. Enable ADC, start conversion, DMA, continuous mode.',
+      {name:'CR2',off:0x08,rst:0,desc:'Control register 2 (+0x08). ADON powers the converter, SWSTART launches a regular conversion, CONT selects continuous mode.',
        fields:[
-         {name:'SWSTART',bits:[30],desc:'Start regular conversion: write 1'},
-         {name:'EXTEN',bits:[29,28],desc:'External trigger: 00=Off, 01=Rising'},
-         {name:'EXTSEL',bits:[27,26,25,24],desc:'Trigger source select'},
-         {name:'JSWSTART',bits:[22],desc:'Start injected conversion'},
-         {name:'JEXTEN',bits:[21,20],desc:'Injected trigger enable'},
-         {name:'ALIGN',bits:[11],desc:'Alignment: 0=Right, 1=Left'},
-         {name:'EOCS',bits:[10],desc:'End of conversion selection'},
+         {name:'SWSTART',bits:[30],desc:'Start conversion of the regular group: write 1 (self-clearing on hardware)'},
+         {name:'EXTEN',bits:[29,28],desc:'External trigger edge: 00=software only, 01=rising, 10=falling, 11=both'},
+         {name:'EXTSEL',bits:[27,26,25,24],desc:'External trigger source for the regular group'},
+         {name:'JSWSTART',bits:[22],desc:'Start conversion of the injected group'},
+         {name:'JEXTEN',bits:[21,20],desc:'Injected external trigger edge'},
+         {name:'JEXTSEL',bits:[19,18,17,16],desc:'Injected external trigger source'},
+         {name:'ALIGN',bits:[11],desc:'Data alignment: 0=right (usual), 1=left'},
+         {name:'EOCS',bits:[10],desc:'End-of-conversion selection: 0=at the end of the sequence, 1=after each channel'},
          {name:'DDS',bits:[9],desc:'DMA disable selection'},
-         {name:'DMA',bits:[8],desc:'DMA mode: 1=Enabled'},
-         {name:'CONT',bits:[1],desc:'Continuous mode: 1=Continuous'},
-         {name:'ADON',bits:[0],desc:'ADC ON: 1=Enable'},
-         rsvBits([31,23,19,18,17,16,15,14,13,12,7,6,5,4,3,2])
+         {name:'DMA',bits:[8],desc:'DMA mode enable'},
+         {name:'CONT',bits:[1],desc:'Continuous conversion: 1 = restart automatically'},
+         {name:'ADON',bits:[0],desc:'A/D converter ON: 1 = powered up (allow t_STAB before the first conversion)'},
+         rsvBits([31,23,15,14,13,12,7,6,5,4,3,2])
        ]},
-      {name:'SMPR2',off:0x10,rst:0,desc:'Sample time register 2. 3 bits per channel (CH0-CH9).',
-       fields:(function(){var f=[];for(var i=9;i>=0;i--)f.push({name:'SMP'+i,bits:[i*3+2,i*3+1,i*3],desc:'CH'+i+' sample time: 000=3cy...111=480cy'});f.push(rsvBits([31,30]));return f})()},
-      {name:'SQR3',off:0x34,rst:0,desc:'Regular sequence register 3. First 6 conversions (SQ1-SQ6).',
+      {name:'SMPR2',off:0x10,rst:0,desc:'Sample time register 2 (+0x10), 3 bits per channel for CH0-CH9. Longer sampling is needed for high-impedance sources: 000=3, 001=15, 010=28, 011=56, 100=84, 101=112, 110=144, 111=480 ADC cycles.',
+       fields:(function(){var f=[];var CY=[3,15,28,56,84,112,144,480];for(var i=9;i>=0;i--)f.push({name:'SMP'+i,bits:[i*3+2,i*3+1,i*3],desc:'CH'+i+' sampling time in ADC cycles: '+CY.join('/')+' for codes 000..111'});f.push(rsvBits([31,30]));return f})()},
+      {name:'SQR3',off:0x34,rst:0,desc:'Regular sequence register 3 (+0x34). Holds the first six conversions, SQ1 in bits 4:0 through SQ6 in bits 29:25.',
        fields:[
-         {name:'SQ6',bits:[29,28,27,26,25],desc:'Sequence 6 channel (0-18)'},
-         {name:'SQ5',bits:[24,23,22,21,20],desc:'Sequence 5 channel'},
-         {name:'SQ4',bits:[19,18,17,16,15],desc:'Sequence 4 channel'},
-         {name:'SQ3',bits:[14,13,12,11,10],desc:'Sequence 3 channel'},
-         {name:'SQ2',bits:[9,8,7,6,5],desc:'Sequence 2 channel'},
-         {name:'SQ1',bits:[4,3,2,1,0],desc:'Sequence 1 channel (0-18)'},
+         {name:'SQ6',bits:[29,28,27,26,25],desc:'6th conversion channel (0-18)'},
+         {name:'SQ5',bits:[24,23,22,21,20],desc:'5th conversion channel'},
+         {name:'SQ4',bits:[19,18,17,16,15],desc:'4th conversion channel'},
+         {name:'SQ3',bits:[14,13,12,11,10],desc:'3rd conversion channel'},
+         {name:'SQ2',bits:[9,8,7,6,5],desc:'2nd conversion channel'},
+         {name:'SQ1',bits:[4,3,2,1,0],desc:'1st conversion channel (0-18); channel n is PA-n for 0-7'},
          rsvBits([31,30])
        ]},
-      {name:'DR',off:0x4C,rst:0,desc:'Data register. 12-bit conversion result (bits 15:0).',
-       fields:[{name:'DATA',bits:range(15,0),desc:'Conversion data (right-aligned)'},rsvBits(range(31,16))]}
+      {name:'DR',off:0x4C,rst:0,desc:'Regular data register (+0x4C). Read-only on hardware and written by the converter; it is editable here only so the sampling view has a value to display.',
+       fields:[{name:'DATA',bits:range(15,0),desc:'Conversion result, right-aligned (0-4095 at 12-bit)'},rsvBits(range(31,16))]}
+    ]},
+  core:{name:'NVIC/SysTick',icon:'fa-bolt-lightning',color:'#a855f7',base:0xE000E000,bus:'Cortex-M4 PPB',
+    desc:'Cortex-M4 private peripheral bus: SysTick at 0xE000E010, NVIC set-enable at 0xE000E100 (clear-enable 0xE000E180, priority 0xE000E400) and SCB VTOR at 0xE000ED08. Interrupt n is enabled by setting bit (n mod 32) of ISER[n / 32].',
+    regs:[
+      {name:'SYST_CSR',off:0x010,rst:0,desc:'SysTick control and status, 0xE000E010. ENABLE bit 0, TICKINT bit 1 raises the SysTick exception on underflow, CLKSOURCE bit 2 picks AHB (168 MHz) or AHB/8 (21 MHz). COUNTFLAG bit 16 sets when the counter reaches 0 and clears when read.',
+       fields:[
+         {name:'COUNTFLAG',bits:[16],desc:'Set when the counter reached 0 since this bit was last read'},
+         {name:'CLKSOURCE',bits:[2],desc:'Clock source: 0 = AHB/8 = 21 MHz, 1 = AHB = 168 MHz'},
+         {name:'TICKINT',bits:[1],desc:'1 = raise the SysTick exception when the counter underflows'},
+         {name:'ENABLE',bits:[0],desc:'1 = the counter is running'},
+         rsvBits(range(31,17).concat(range(15,3)))
+       ]},
+      {name:'SYST_RVR',off:0x014,rst:0,desc:'SysTick reload value, 0xE000E014, 24 bits. Tick period = (RELOAD + 1) / f. For a 1 kHz RTOS tick from 168 MHz, RELOAD = 168000 - 1 = 167999 (0x00028FFF).',
+       fields:[{name:'RELOAD',bits:range(23,0),desc:'Value loaded into the counter on underflow; period = (RELOAD+1)/f_SysTick'},rsvBits(range(31,24))]},
+      {name:'SYST_CVR',off:0x018,rst:0,desc:'SysTick current value, 0xE000E018. Reads the live down-counter; any write clears it and clears COUNTFLAG.',
+       fields:[{name:'CURRENT',bits:range(23,0),desc:'Current counter value (counts down to 0, then reloads)'},rsvBits(range(31,24))]},
+      {name:'NVIC_ISER0',off:0x100,rst:0,desc:'NVIC interrupt set-enable 0, 0xE000E100, covering IRQ 0-31. Writing 1 enables an interrupt; writing 0 does nothing, so use ICER0 at 0xE000E180 to disable. EXTI0 is IRQ 6 and TIM2 is IRQ 28. Priority lives in the byte array at 0xE000E400, of which only the top 4 bits are implemented (16 levels, 0 = most urgent).',
+       fields:iserFields(IRQ0,0)},
+      {name:'NVIC_ISER1',off:0x104,rst:0,desc:'NVIC interrupt set-enable 1, 0xE000E104, covering IRQ 32-63. USART2 is IRQ 38: 38 / 32 = 1 selects ISER1 and 38 mod 32 = 6 selects bit 6. SPI1 is IRQ 35, so bit 3.',
+       fields:iserFields(IRQ1,32)},
+      {name:'SCB_VTOR',off:0xD08,rst:0,desc:'Vector table offset register, 0xE000ED08, 512-byte aligned. Offset 0x00 of the table holds the initial main stack pointer and offset 0x04 the reset handler; the 14 system exceptions follow and IRQ n sits at 0x40 + 4n. On exception entry the core stacks xPSR, PC, LR, R12 and R3-R0, loads LR with an EXC_RETURN pattern and fetches the handler from this table - about 12 cycles, roughly 71 ns at 168 MHz.',
+       fields:[{name:'TBLOFF',bits:range(29,9),desc:'Vector table base address, bits 29:9 (512-byte aligned)'},rsvBits(range(31,30).concat(range(8,0)))]}
     ]}
 };
+
+function clkOn(pk){var p=PERIPHS[pk];if(!p||!p.clk)return true;return ((regVals.rcc[p.clk[0]]>>>p.clk[1])&1)===1}
+function popcnt(v){var c=0;v=v>>>0;while(v){c+=v&1;v=v>>>1}return c}
+function cLine(p,reg,v){
+  var w=p.name.replace('/','_')+'->'+reg.name;
+  if(reg.name==='BSRR'){
+    if(!v)return w+' = 0;  /* write-only: low half sets ODR, high half clears it */';
+    var t=[];for(var b=0;b<32;b++)if((v>>>b)&1)t.push('(1U << '+b+')');
+    return w+' = '+t.join(' | ')+';';
+  }
+  if(v===0)return w+' = 0x00000000U;';
+  if(popcnt(v)>8)return w+' = '+hex32(v)+'U;';
+  var per=0;
+  if(reg.name==='MODER'||reg.name==='PUPDR'||reg.name==='OSPEEDR')per=2;
+  if(reg.name==='AFRL'||reg.name==='AFRH')per=4;
+  var terms=[];
+  for(var b=0;b<32;b++){
+    if(!((v>>>b)&1))continue;
+    if(per){var pin=Math.floor(b/per),o=b%per;terms.push('(1U << ('+pin+'*'+per+(o?' + '+o:'')+'))')}
+    else terms.push('(1U << '+b+')');
+  }
+  return w+' |= '+terms.join(' | ')+';';
+}
 
 /* ============================================================
    STATE
@@ -484,7 +647,16 @@ function initRegs(){
 initRegs();
 
 function gBit(pk,rn,b){return(regVals[pk][rn]>>>b)&1}
-function tBit(pk,rn,b){regVals[pk][rn]=(regVals[pk][rn]^(1<<b))>>>0}
+function tBit(pk,rn,b){
+  if(rn==='BSRR'){                       // write-only: low half sets ODR, high half clears it
+    var pin=b&15;
+    if(b<16)regVals[pk].ODR=(regVals[pk].ODR|(1<<pin))>>>0;
+    else regVals[pk].ODR=(regVals[pk].ODR&~(1<<pin))>>>0;
+    regVals[pk].BSRR=0;
+    return;
+  }
+  regVals[pk][rn]=(regVals[pk][rn]^(1<<b))>>>0;
+}
 function getFieldVal(pk,rn,bits){var v=0;for(var i=0;i<bits.length;i++)v=(v<<1)|gBit(pk,rn,bits[i]);return v}
 function hex32(v){return '0x'+(v>>>0).toString(16).toUpperCase().padStart(8,'0')}
 
@@ -495,15 +667,17 @@ function buildTabs(){
   var c=document.getElementById('periphTabs');c.innerHTML='';
   for(var pk in PERIPHS){
     var p=PERIPHS[pk];
-    var t=document.createElement('div');t.className='periph-tab'+(pk===curPeriph?' active':'');
+    var t=document.createElement('button');t.type='button';t.className='periph-tab'+(pk===curPeriph?' active':'');
+    t.setAttribute('aria-pressed',pk===curPeriph?'true':'false');
     t.innerHTML='<span class="pdot" style="background:'+p.color+'"></span><i class="fas '+p.icon+'" style="font-size:10px"></i> '+p.name;
     t.dataset.pk=pk;t.onclick=function(){curPeriph=this.dataset.pk;refreshAll()};
     c.appendChild(t);
   }
-  var p=PERIPHS[curPeriph];
-  document.getElementById('periphInfo').innerHTML='<strong>'+p.name+'</strong> &mdash; '+p.desc+'<br><span style="color:var(--cyan);font-family:var(--mono);font-size:10px">Base: '+hex32(p.base)+' &bull; Bus: '+p.bus+'</span>';
-  document.getElementById('statusR').textContent='Peripheral: '+p.name+' \u2022 Base: '+hex32(p.base)+' \u2022 Bus: '+p.bus;
-  document.getElementById('regTag').textContent=p.name+' Registers';
+  var p=PERIPHS[curPeriph],on=clkOn(curPeriph);
+  var clkTxt=p.clk?('<br><span style="font-family:var(--mono);font-size:10px;color:'+(on?'var(--green)':'var(--amber)')+'">Clock gate: RCC-&gt;'+p.clk[0]+' bit '+p.clk[1]+' = '+(on?'1 &mdash; enabled':'0 &mdash; gated OFF, on hardware every register below would read 0')+'</span>'):'';
+  document.getElementById('periphInfo').innerHTML='<strong>'+p.name+'</strong> &mdash; '+p.desc+'<br><span style="color:var(--cyan);font-family:var(--mono);font-size:10px">Base: '+hex32(p.base)+' &bull; Bus: '+p.bus+' &bull; '+p.regs.length+' registers</span>'+clkTxt;
+  document.getElementById('statusL').innerHTML='sel <b>'+p.name+'</b> \u2022 base '+hex32(p.base)+' \u2022 '+p.bus+(p.clk?(' \u2022 clock '+(on?'<span class="ok">ON</span>':'<span class="clk-off">GATED OFF (RCC-&gt;'+p.clk[0]+' bit '+p.clk[1]+')</span>')):'');
+  document.getElementById('regTag').textContent=p.name+' registers';
 }
 
 /* ============================================================
@@ -553,7 +727,11 @@ function buildRegEditor(){
       cell.dataset.b=b;cell.dataset.r=reg.name;cell.dataset.p=curPeriph;
       if(fm&&!isRsv){var col=FC[fm.ci%FC.length];cell.style.borderBottomColor=col;cell.style.borderBottomWidth='2px'}
       if(!isRsv){
+        cell.tabIndex=0;cell.setAttribute('role','button');
+        cell.setAttribute('aria-label',reg.name+' bit '+b+(fm?' ('+fm.f.name+')':'')+' = '+v);
         cell.onclick=function(){tBit(this.dataset.p,this.dataset.r,parseInt(this.dataset.b));refreshAll()};
+        cell.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();this.click()}};
+        cell.onfocus=function(){this.scrollIntoView({block:'nearest',inline:'nearest'})};
       }
       (function(cell,fm,reg){
         cell.onmouseenter=function(e){
@@ -594,6 +772,13 @@ function buildRegEditor(){
       tag.textContent=f.name;leg.appendChild(tag);fi2++;
     }
     sec.appendChild(leg);
+
+    // hex value in binary + the equivalent C statement
+    var rv=regVals[curPeriph][reg.name]>>>0;
+    var cl=document.createElement('div');cl.className='reg-cline';
+    cl.innerHTML='<span class="rbin">0b'+rv.toString(2).padStart(32,'0').replace(/(.{4})(?=.)/g,'$1 ')+'</span>'+
+      '<span class="rc">'+cLine(p,reg,rv).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>';
+    sec.appendChild(cl);
     el.appendChild(sec);
   }
 }
@@ -615,7 +800,7 @@ function pinState(name){
   var out=(regVals.gpio.ODR>>>num)&1;
   if(mode===0)return{color:'#94a3b8',lbl:'IN'};
   if(mode===1)return out?{color:'#10b981',lbl:'HI'}:{color:'#ef4444',lbl:'LO'};
-  if(mode===2)return{color:'#3b82f6',lbl:'AF'};
+  if(mode===2){return{color:'#3b82f6',lbl:num<8?('AF'+((regVals.gpio.AFRL>>>(num*4))&0xF)):'AF'}}
   return{color:'#8b5cf6',lbl:'AN'};
 }
 
@@ -623,7 +808,8 @@ function drawPins(){
   var cv=document.getElementById('pinCanvas');
   var dpr=window.devicePixelRatio||1;
   var rect=cv.getBoundingClientRect();
-  cv.width=rect.width*dpr;cv.height=rect.height*dpr;
+  var bsw=Math.round(rect.width*dpr),bsh=Math.round(rect.height*dpr);
+  if(cv.width!==bsw||cv.height!==bsh){cv.width=bsw;cv.height=bsh}
   var ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
   var W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);
 
@@ -638,10 +824,10 @@ function drawPins(){
   ctx.fillStyle='rgba(6,182,212,0.4)';ctx.beginPath();ctx.arc(cx+14,cy+ch-14,5,0,Math.PI*2);ctx.fill();
   // Labels
   ctx.fillStyle='#94a3b8';ctx.font='600 11px Inter,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('STM32F446RE',cx+cw/2,cy+ch/2-12);
-  ctx.font='10px Courier New,monospace';ctx.fillStyle='#64748b';
-  ctx.fillText('LQFP-48',cx+cw/2,cy+ch/2+4);
-  ctx.fillText('ARM Cortex-M4',cx+cw/2,cy+ch/2+18);
+  ctx.fillText('STM32F407',cx+cw/2,cy+ch/2-12);
+  ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.fillStyle='#7788a0';
+  ctx.fillText('Cortex-M4F 168 MHz',cx+cw/2,cy+ch/2+4);
+  ctx.fillText('port A simulated',cx+cw/2,cy+ch/2+18);
 
   var pLen=16,pW=5,nSide=12;
   var sides=[
@@ -660,21 +846,21 @@ function drawPins(){
       if(sd.s==='bottom'){
         px=cx+sp*(i+1);py=cy+ch;
         ctx.fillRect(px-pW/2,py,pW,pLen);
-        ctx.font='600 7px Courier New,monospace';ctx.textAlign='center';
+        ctx.font='600 7px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
         ctx.save();ctx.translate(px,py+pLen+4);ctx.rotate(Math.PI/2.5);ctx.fillText(p.n,0,0);ctx.restore();
       }else if(sd.s==='right'){
         px=cx+cw;py=cy+ch-sp*(i+1);
         ctx.fillRect(px,py-pW/2,pLen,pW);
-        ctx.font='600 7px Courier New,monospace';ctx.textAlign='left';ctx.fillText(p.n,px+pLen+4,py+3);
+        ctx.font='600 7px JetBrains Mono,Courier New,monospace';ctx.textAlign='left';ctx.fillText(p.n,px+pLen+4,py+3);
       }else if(sd.s==='top'){
         px=cx+cw-sp*(i+1);py=cy;
         ctx.fillRect(px-pW/2,py-pLen,pW,pLen);
-        ctx.font='600 7px Courier New,monospace';ctx.textAlign='center';
+        ctx.font='600 7px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
         ctx.save();ctx.translate(px,py-pLen-4);ctx.rotate(-Math.PI/2.5);ctx.fillText(p.n,0,0);ctx.restore();
       }else{
         px=cx;py=cy+sp*(i+1);
         ctx.fillRect(px-pLen,py-pW/2,pLen,pW);
-        ctx.font='600 7px Courier New,monospace';ctx.textAlign='right';ctx.fillText(p.n,px-pLen-4,py+3);
+        ctx.font='600 7px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillText(p.n,px-pLen-4,py+3);
       }
     }
   }
@@ -700,19 +886,39 @@ function wfConfig(){
     var cr1=regVals.tim2.CR1,psc=regVals.tim2.PSC&0xFFFF,arr=regVals.tim2.ARR,ccr1=regVals.tim2.CCR1;
     var ccmr1=regVals.tim2.CCMR1,ccer=regVals.tim2.CCER;
     var cen=cr1&1,oc1m=(ccmr1>>>4)&7,cc1e=ccer&1;
-    var fTim=90e6/(psc+1),freq=arr>0?fTim/(arr+1):0,duty=arr>0?Math.min(ccr1/(arr+1),1):0;
+    var fTim=84e6/(psc+1),freq=arr>0?fTim/(arr+1):0,duty=arr>0?Math.min(ccr1/(arr+1),1):0;
     var isPWM=(oc1m===6||oc1m===7)&&cc1e&&cen;
     return{type:'tim',cen:cen,psc:psc,arr:arr,ccr1:ccr1,freq:freq,duty:duty,isPWM:isPWM};
   }
-  if(pk==='usart1'){
-    var cr1=regVals.usart1.CR1,brr=regVals.usart1.BRR;
+  if(pk==='usart2'){
+    var cr1=regVals.usart2.CR1,brr=regVals.usart2.BRR;
     var ue=(cr1>>>13)&1,te=(cr1>>>3)&1,m=(cr1>>>12)&1,pce=(cr1>>>10)&1,ps=(cr1>>>9)&1;
     var over8=(cr1>>>15)&1;
-    var mant=(brr>>>4)&0xFFF,frac=brr&0xF;
+    var mant=(brr>>>4)&0xFFF,frac=over8?(brr&0x7):(brr&0xF);
     var div2=over8?8:16,uDiv=mant+frac/div2;
-    var baud=uDiv>0?Math.round(90e6/(div2*uDiv)):0;
-    var dr=regVals.usart1.DR&0x1FF;
-    return{type:'uart',ue:ue,te:te,m:m,pce:pce,ps:ps,baud:baud,dr:dr};
+    var baud=uDiv>0?Math.round(42e6/(div2*uDiv)):0;   // USART2 is on APB1: PCLK1 = 42 MHz
+    var dr=regVals.usart2.DR&0x1FF;
+    return{type:'uart',ue:ue,te:te,m:m,pce:pce,ps:ps,baud:baud,dr:dr,over8:over8,uDiv:uDiv,mant:mant,frac:frac};
+  }
+  if(pk==='spi1'){
+    var c1=regVals.spi1.CR1,br=(c1>>>3)&7;
+    return{type:'spi',spe:(c1>>>6)&1,mstr:(c1>>>2)&1,br:br,cpol:(c1>>>1)&1,cpha:c1&1,
+      dff:(c1>>>11)&1,lsbfirst:(c1>>>7)&1,dr:regVals.spi1.DR&0xFFFF,fsck:84e6/Math.pow(2,br+1)};
+  }
+  if(pk==='rcc'){
+    var on=[],maps=[['AHB1ENR',{0:'GPIOA',1:'GPIOB',2:'GPIOC',3:'GPIOD',21:'DMA1',22:'DMA2'}],
+                    ['APB1ENR',{0:'TIM2',1:'TIM3',2:'TIM4',3:'TIM5',17:'USART2',21:'I2C1',28:'PWR'}],
+                    ['APB2ENR',{0:'TIM1',4:'USART1',8:'ADC1',12:'SPI1',14:'SYSCFG'}]];
+    for(var mi=0;mi<maps.length;mi++){var rv=regVals.rcc[maps[mi][0]],mp=maps[mi][1];
+      for(var k in mp)if((rv>>>parseInt(k,10))&1)on.push(mp[k]);}
+    return{type:'rcc',on:on};
+  }
+  if(pk==='core'){
+    var csr=regVals.core.SYST_CSR,n0=regVals.core.NVIC_ISER0,n1=regVals.core.NVIC_ISER1,cnt=0,names=[];
+    for(var b=0;b<32;b++){if((n0>>>b)&1){cnt++;if(names.length<5)names.push(IRQ0[b]+' (IRQ '+b+')')}}
+    for(var b=0;b<32;b++){if((n1>>>b)&1){cnt++;if(names.length<5)names.push(IRQ1[b]+' (IRQ '+(32+b)+')')}}
+    return{type:'core',en:csr&1,tickint:(csr>>>1)&1,clksrc:(csr>>>2)&1,
+      reload:regVals.core.SYST_RVR&0xFFFFFF,nirq:cnt,names:names};
   }
   if(pk==='adc1'){
     var cr2=regVals.adc1.CR2,cr1=regVals.adc1.CR1;
@@ -727,7 +933,8 @@ function drawWaveform(){
   var cv=document.getElementById('wfCanvas');
   var dpr=window.devicePixelRatio||1;
   var rect=cv.getBoundingClientRect();
-  cv.width=rect.width*dpr;cv.height=rect.height*dpr;
+  var bsw=Math.round(rect.width*dpr),bsh=Math.round(rect.height*dpr);
+  if(cv.width!==bsw||cv.height!==bsh){cv.width=bsw;cv.height=bsh}
   var ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
   var W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);
   var cfg=wfConfig();
@@ -755,13 +962,13 @@ function drawWaveform(){
     for(var ci=0;ci<cfg.chs.length;ci++){
       var c=cfg.chs[ci];
       var hiY=mt+ci*(chH+gap)+chH*0.15,loY=mt+ci*(chH+gap)+chH*0.85;
-      ctx.fillStyle=c.color;ctx.font='10px Courier New,monospace';ctx.textAlign='right';ctx.fillText(c.name,ml-8,(hiY+loY)/2);
-      ctx.fillStyle='#475569';ctx.font='8px Courier New,monospace';
+      ctx.fillStyle=c.color;ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillText(c.name,ml-8,(hiY+loY)/2);
+      ctx.fillStyle='#7788a0';ctx.font='8px JetBrains Mono,Courier New,monospace';
       ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3);
       var y=c.val?hiY:loY;
       ctx.strokeStyle=c.color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+gW,y);ctx.stroke();
       ctx.fillStyle=c.color+'15';ctx.fillRect(ml,Math.min(y,loY),gW,Math.abs(loY-y)||1);
-      ctx.fillStyle=c.color;ctx.font='600 10px Courier New,monospace';ctx.textAlign='left';
+      ctx.fillStyle=c.color;ctx.font='600 10px JetBrains Mono,Courier New,monospace';ctx.textAlign='left';
       ctx.fillText(c.val?'HIGH (3.3V)':'LOW (0V)',ml+gW-80,(hiY+loY)/2+3);
     }
     legEl.innerHTML=cfg.chs.map(function(c){return '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+c.color+'"></span>'+c.name+'</div>'}).join('');
@@ -778,7 +985,7 @@ function drawWaveform(){
 
     if(cfg.isPWM&&cfg.freq>0){
       var hiY=mt+gH*0.15,loY=mt+gH*0.85;
-      ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.font='10px Courier New,monospace';
+      ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3);ctx.fillText('CH1',ml-8,(hiY+loY)/2+3);
       var cycles=4,cycW=gW/cycles,dutyW=cycW*cfg.duty;
       var phase=(wfFrame%120)/120;
@@ -793,11 +1000,11 @@ function drawWaveform(){
       for(var c=-1;c<cycles+1;c++){var cx2=ml+c*cycW-phase*cycW;ctx.fillRect(cx2,hiY,dutyW,loY-hiY)}
       ctx.restore();
       // Period labels
-      ctx.fillStyle='#64748b';ctx.font='9px Courier New,monospace';ctx.textAlign='center';
+      ctx.fillStyle='#7788a0';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       var pStr=cfg.freq>0?(1/cfg.freq>=1e-3?((1/cfg.freq)*1e3).toFixed(2)+' ms':((1/cfg.freq)*1e6).toFixed(1)+' us'):'--';
       ctx.fillText('T = '+pStr,ml+gW/2,mt+gH+18);
     }else{
-      ctx.fillStyle='#475569';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.cen?'Timer running (configure OC1M=110, CC1E=1 for PWM)':'Timer disabled (CEN=0)',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#f59e0b"></span>TIM2 CH1</div>';
@@ -806,14 +1013,16 @@ function drawWaveform(){
   else if(cfg.type==='uart'){
     var bStr=cfg.baud>0?cfg.baud.toLocaleString():'0';
     var cfgStr=(cfg.m?'9':'8')+(cfg.pce?(cfg.ps?'O':'E'):'N')+'1';
-    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">UART TX</span>'+
+    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">USART2 TX &middot; PCLK1 42 MHz</span>'+
       '<span class="wf-lbl">Baud:</span><span class="wf-val">'+bStr+'</span>'+
       '<span class="wf-lbl">Config:</span><span class="wf-val">'+cfgStr+'</span>'+
+      '<span class="wf-lbl">USARTDIV:</span><span class="wf-val">'+cfg.mant+' + '+cfg.frac+'/'+(cfg.over8?8:16)+' = '+cfg.uDiv.toFixed(4)+'</span>'+
+      '<span class="wf-lbl">Bit time:</span><span class="wf-val">'+(cfg.baud>0?(1e6/cfg.baud).toFixed(2)+' us':'--')+'</span>'+
       '<span class="wf-lbl">DR:</span><span class="wf-val">0x'+(cfg.dr&0xFF).toString(16).toUpperCase().padStart(2,'0')+'</span>';
 
     if(cfg.ue&&cfg.te&&cfg.baud>0){
       var hiY=mt+gH*0.2,loY=mt+gH*0.8;
-      ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.font='10px Courier New,monospace';
+      ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText('MARK',ml-8,hiY+3);ctx.fillText('SPACE',ml-8,loY+3);
       var dBits=cfg.m?9:8,total=1+dBits+(cfg.pce?1:0)+1;
       var bW=gW/(total+4),data=cfg.dr&((1<<dBits)-1);
@@ -822,7 +1031,7 @@ function drawWaveform(){
       ctx.moveTo(ml,hiY);ctx.lineTo(x,hiY);
       // Start
       ctx.lineTo(x,loY);x+=bW;ctx.lineTo(x,loY);
-      ctx.fillStyle='#475569';ctx.font='8px Courier New,monospace';ctx.textAlign='center';
+      ctx.fillStyle='#7788a0';ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       ctx.fillText('S',x-bW/2,loY+12);
       // Data LSB first
       for(var i=0;i<dBits;i++){
@@ -842,8 +1051,10 @@ function drawWaveform(){
       ctx.lineTo(x,hiY);x+=bW;ctx.lineTo(x,hiY);
       ctx.fillStyle='#10b981';ctx.fillText('STOP',x-bW/2,hiY-6);
       ctx.lineTo(ml+gW,hiY);ctx.stroke();
+      ctx.fillStyle='#7788a0';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillText('LSB first \u2022 1 bit = '+(1e6/cfg.baud).toFixed(2)+' us \u2022 frame = '+total+' bits = '+(total*1e6/cfg.baud).toFixed(1)+' us',ml+gW/2,mt+gH+18);
     }else{
-      ctx.fillStyle='#475569';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.ue?'Set TE=1 and BRR for TX waveform':'USART disabled (UE=0)',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#3b82f6"></span>USART1 TX</div>';
@@ -855,7 +1066,7 @@ function drawWaveform(){
       '<span class="wf-lbl">Conv:</span><span class="wf-val">'+(cfg.cont?'Continuous':'Single')+'</span>'+
       '<span class="wf-lbl">DR:</span><span class="wf-val">'+cfg.dr+'/'+maxV+'</span>';
     if(cfg.adon){
-      ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.font='10px Courier New,monospace';
+      ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText(maxV.toString(),ml-8,mt+6);ctx.fillText('0',ml-8,mt+gH);
       ctx.fillText((maxV/2|0).toString(),ml-8,mt+gH/2+3);
       // Analog signal
@@ -878,21 +1089,130 @@ function drawWaveform(){
         ctx.strokeStyle='rgba(139,92,246,0.4)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
         ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,mt+gH);ctx.stroke();ctx.setLineDash([]);
         ctx.fillStyle='#8b5cf6';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
-        if(ns<=8){var dv=Math.round(sig*maxV);ctx.font='8px Courier New,monospace';ctx.textAlign='center';ctx.fillText(dv.toString(),x,y-8)}
+        if(ns<=8){var dv=Math.round(sig*maxV);ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';ctx.fillText(dv.toString(),x,y-8)}
       }
     }else{
-      ctx.fillStyle='#475569';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText('ADC disabled (ADON=0)',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#8b5cf6"></span>ADC1</div><div class="wf-legend-item"><span class="wf-legend-sw" style="background:rgba(139,92,246,0.3)"></span>Analog In</div>';
     document.getElementById('wfTag').textContent=cfg.adon?cfg.resBits+'-bit '+(cfg.cont?'Continuous':'Single'):'ADC1';
+  }
+  else if(cfg.type==='spi'){
+    var fsk=cfg.fsck,nb=cfg.dff?16:8;
+    var fsStr=fsk>=1e6?(fsk/1e6).toFixed(3)+' MHz':(fsk/1e3).toFixed(1)+' kHz';
+    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">'+(cfg.mstr?'Master':'Slave')+' &middot; CPOL='+cfg.cpol+' CPHA='+cfg.cpha+'</span>'+
+      '<span class="wf-lbl">f_SCK:</span><span class="wf-val">'+fsStr+'</span>'+
+      '<span class="wf-lbl">Divider:</span><span class="wf-val">PCLK2/'+(1<<(cfg.br+1))+'</span>'+
+      '<span class="wf-lbl">Frame:</span><span class="wf-val">'+nb+' bit &middot; '+(nb/fsk*1e6).toFixed(2)+' us</span>'+
+      '<span class="wf-lbl">DR:</span><span class="wf-val">0x'+cfg.dr.toString(16).toUpperCase().padStart(cfg.dff?4:2,'0')+'</span>';
+    if(cfg.spe&&cfg.mstr){
+      var rh=gH/3, rowY=function(r,hi){return mt+r*rh+(hi?rh*0.28:rh*0.72)};
+      var x0=ml+gW*0.09, xE=ml+gW*0.95, bw=(xE-x0)/nb;
+      ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillStyle='#94a3b8';
+      ctx.fillText('NSS',ml-8,mt+rh*0.5);ctx.fillText('SCK',ml-8,mt+rh*1.5);ctx.fillText('MOSI',ml-8,mt+rh*2.5);
+      ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;ctx.beginPath();
+      ctx.moveTo(ml,rowY(0,1));ctx.lineTo(x0-bw*0.45,rowY(0,1));ctx.lineTo(x0-bw*0.45,rowY(0,0));
+      ctx.lineTo(xE+bw*0.35,rowY(0,0));ctx.lineTo(xE+bw*0.35,rowY(0,1));ctx.lineTo(ml+gW,rowY(0,1));ctx.stroke();
+      var idleY=cfg.cpol?rowY(1,1):rowY(1,0), actY=cfg.cpol?rowY(1,0):rowY(1,1);
+      ctx.strokeStyle='#06b6d4';ctx.beginPath();ctx.moveTo(ml,idleY);ctx.lineTo(x0,idleY);
+      for(var i=0;i<nb;i++){var a=x0+i*bw;
+        ctx.lineTo(a,idleY);ctx.lineTo(a,actY);ctx.lineTo(a+bw/2,actY);ctx.lineTo(a+bw/2,idleY);ctx.lineTo(a+bw,idleY)}
+      ctx.lineTo(ml+gW,idleY);ctx.stroke();
+      ctx.strokeStyle='#ec4899';ctx.beginPath();
+      var prevY=rowY(2,0);ctx.moveTo(ml,prevY);ctx.lineTo(x0-bw*0.45,prevY);
+      for(var i=0;i<nb;i++){
+        var bit=cfg.lsbfirst?((cfg.dr>>>i)&1):((cfg.dr>>>(nb-1-i))&1);
+        var y=bit?rowY(2,1):rowY(2,0), xa=x0+i*bw-bw*0.45;
+        ctx.lineTo(xa,prevY);ctx.lineTo(xa,y);ctx.lineTo(x0+(i+1)*bw-bw*0.45,y);prevY=y;
+        ctx.fillStyle=bit?'#ec4899':'#7788a0';ctx.font='600 9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+        ctx.fillText(String(bit),x0+i*bw+bw*0.05,rowY(2,1)-7);
+      }
+      ctx.lineTo(ml+gW,prevY);ctx.stroke();
+      ctx.strokeStyle='rgba(16,185,129,0.5)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      for(var i=0;i<nb;i++){var sx=x0+i*bw+(cfg.cpha?bw/2:0);ctx.beginPath();ctx.moveTo(sx,mt+rh*1.05);ctx.lineTo(sx,mt+rh*2.95);ctx.stroke()}
+      ctx.setLineDash([]);
+      ctx.fillStyle='#7788a0';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillText('green dashes = sampling edge (CPHA='+cfg.cpha+') \u2022 SCK period '+(1e9/fsk).toFixed(1)+' ns = '+Math.round(168e6/fsk)+' core cycles \u2022 '+(cfg.lsbfirst?'LSB':'MSB')+' first',ml+gW/2,mt+gH+18);
+    }else{
+      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillText(cfg.spe?'Set MSTR=1 (CR1 bit 2) for a master transfer':'SPI disabled \u2014 set MSTR, BR, then SPE (CR1 bit 6)',ml+gW/2,mt+gH/2);
+    }
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#94a3b8"></span>NSS</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#06b6d4"></span>SCK</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#ec4899"></span>MOSI</div>';
+    document.getElementById('wfTag').textContent=cfg.spe&&cfg.mstr?('SPI master '+fsStr+' mode '+(cfg.cpol*2+cfg.cpha)):'SPI1';
+  }
+  else if(cfg.type==='rcc'){
+    infoEl.innerHTML='<span class="wf-lbl">Source:</span><span class="wf-chip">HSE 8 MHz &rarr; PLL (M 8, N 336, P 2)</span>'+
+      '<span class="wf-lbl">SYSCLK:</span><span class="wf-val">168 MHz</span>'+
+      '<span class="wf-lbl">Cycle:</span><span class="wf-val">5.95 ns</span>'+
+      '<span class="wf-lbl">Enabled:</span><span class="wf-val">'+cfg.on.length+'</span>';
+    var boxes=[['HSE','8 MHz','#7788a0'],['PLL','/8 x336 /2','#8b5cf6'],['SYSCLK','168 MHz','#06b6d4'],
+               ['AHB /1','168 MHz','#10b981'],['APB1 /4','42 (TIM 84)','#f59e0b'],['APB2 /2','84 (TIM 168)','#3b82f6']];
+    var bw2=gW/boxes.length, by=mt+gH*0.14, bh2=gH*0.30;
+    for(var i=0;i<boxes.length;i++){
+      var bx=ml+i*bw2+7, iw=bw2-14;
+      ctx.strokeStyle=boxes[i][2];ctx.lineWidth=1.5;ctx.fillStyle='rgba(26,35,50,0.85)';
+      ctx.beginPath();ctx.roundRect(bx,by,iw,bh2,6);ctx.fill();ctx.stroke();
+      ctx.fillStyle=boxes[i][2];ctx.font='600 10px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillText(boxes[i][0],bx+iw/2,by+bh2*0.4);
+      ctx.fillStyle='#94a3b8';ctx.font='9px JetBrains Mono,Courier New,monospace';
+      ctx.fillText(boxes[i][1],bx+iw/2,by+bh2*0.76);
+      if(i<boxes.length-1){ctx.strokeStyle='#334155';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx+iw,by+bh2/2);ctx.lineTo(bx+bw2,by+bh2/2);ctx.stroke()}
+    }
+    ctx.textAlign='left';ctx.fillStyle='#94a3b8';ctx.font='10px JetBrains Mono,Courier New,monospace';
+    ctx.fillText('Peripheral clocks currently enabled:',ml+8,by+bh2+28);
+    var txt=cfg.on.length?cfg.on.join('   '):'none \u2014 every peripheral below is gated off and would read back 0';
+    ctx.fillStyle=cfg.on.length?'#10b981':'#f59e0b';
+    ctx.font='11px JetBrains Mono,Courier New,monospace';
+    ctx.fillText(txt.length>92?txt.slice(0,89)+'\u2026':txt,ml+8,by+bh2+48);
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#06b6d4"></span>Fixed 168 MHz clock tree (PLL settings are not editable here)</div>';
+    document.getElementById('wfTag').textContent='Clock tree \u2022 '+cfg.on.length+' enabled';
+  }
+  else if(cfg.type==='core'){
+    var fS=cfg.clksrc?168e6:21e6, per=(cfg.reload+1)/fS;
+    var pStr=per>=1e-3?(per*1e3).toFixed(3)+' ms':(per*1e6).toFixed(2)+' us';
+    var rStr=1/per>=1000?(1/per/1000).toFixed(3)+' kHz':(1/per).toFixed(2)+' Hz';
+    infoEl.innerHTML='<span class="wf-lbl">SysTick:</span><span class="wf-chip">'+(cfg.en?'RUNNING':'STOPPED (ENABLE=0)')+'</span>'+
+      '<span class="wf-lbl">Source:</span><span class="wf-val">'+(cfg.clksrc?'AHB 168 MHz':'AHB/8 21 MHz')+'</span>'+
+      '<span class="wf-lbl">RELOAD:</span><span class="wf-val">'+cfg.reload+'</span>'+
+      '<span class="wf-lbl">Period:</span><span class="wf-val">'+(cfg.reload>0?pStr+' ('+rStr+')':'--')+'</span>'+
+      '<span class="wf-lbl">NVIC:</span><span class="wf-val">'+cfg.nirq+' IRQ enabled'+(cfg.names.length?' &mdash; '+cfg.names.join(', '):'')+'</span>';
+    if(cfg.en&&cfg.reload>0){
+      var cyc=3, cw=gW/cyc, top=mt+gH*0.14, bot=mt+gH*0.78;
+      ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillText(String(cfg.reload),ml-8,top+3);ctx.fillText('0',ml-8,bot+3);ctx.fillText('VAL',ml-8,(top+bot)/2);
+      ctx.strokeStyle='#a855f7';ctx.lineWidth=2;ctx.beginPath();
+      for(var i=0;i<cyc;i++){var a=ml+i*cw;ctx.moveTo(a,top);ctx.lineTo(a+cw,bot)}
+      ctx.stroke();
+      ctx.strokeStyle='rgba(168,85,247,0.35)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      for(var i=1;i<=cyc;i++){var a=ml+i*cw;ctx.beginPath();ctx.moveTo(a,mt);ctx.lineTo(a,mt+gH);ctx.stroke()}
+      ctx.setLineDash([]);
+      ctx.textAlign='center';ctx.font='600 9px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle=cfg.tickint?'#10b981':'#7788a0';
+      for(var i=1;i<=cyc;i++)ctx.fillText(cfg.tickint?'SysTick_Handler':'COUNTFLAG only',ml+i*cw-40,mt+gH-8);
+      ctx.fillStyle='#7788a0';ctx.font='9px JetBrains Mono,Courier New,monospace';
+      ctx.fillText('underflow every '+pStr+' = '+(cfg.reload+1)+' ticks \u00d7 '+(1e9/fS).toFixed(2)+' ns \u2022 exception entry costs ~12 cycles \u2248 71 ns',ml+gW/2,mt+gH+18);
+    }else{
+      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillText(cfg.reload>0?'SysTick stopped \u2014 set SYST_CSR ENABLE (bit 0)':'Load SYST_RVR with a non-zero RELOAD first',ml+gW/2,mt+gH/2);
+    }
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#a855f7"></span>SYST_CVR counts down to 0</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#10b981"></span>Exception on underflow when TICKINT=1</div>';
+    document.getElementById('wfTag').textContent=cfg.en&&cfg.reload>0?'SysTick '+pStr:'SysTick / NVIC';
+  }
+
+  if(PERIPHS[curPeriph].clk&&!clkOn(curPeriph)){
+    infoEl.innerHTML='<span class="wf-chip" style="color:var(--amber);border-color:rgba(245,158,11,.5)"><i class="fas fa-triangle-exclamation"></i> RCC clock gated OFF &mdash; on hardware these registers read 0</span>'+infoEl.innerHTML;
   }
 
   // Scope border
   ctx.strokeStyle='rgba(6,182,212,0.2)';ctx.lineWidth=1;ctx.strokeRect(ml,mt,gW,gH);
 }
 
-function animWF(){wfFrame++;drawWaveform();wfAnim=requestAnimationFrame(animWF)}
+var reduceMotion=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)').matches:false;
+function animWF(){if(reduceMotion){drawWaveform();return}wfFrame++;drawWaveform();wfAnim=requestAnimationFrame(animWF)}
 
 /* ============================================================
    C CODE PREVIEW
@@ -901,28 +1221,48 @@ function S(cls,txt){return '<span class="'+cls+'">'+txt+'</span>'}
 
 function genCode(){
   var pk=curPeriph,lines=[];
-  lines.push(S('cmt','// STM32F446RE Register Configuration'));
-  lines.push(S('cmt','// Generated from Memory-Mapped I/O Lab'));
+  lines.push(S('cmt','// STM32F407 (Cortex-M4F, 168 MHz) - bare-metal register configuration'));
+  lines.push(S('cmt','// Generated from the Memory-Mapped I/O Lab; addresses per RM0090'));
   lines.push('');
   lines.push(S('tp','#include')+' '+S('str','"stm32f4xx.h"'));
   lines.push('');
 
   if(pk==='gpio'){
-    lines.push(S('tp','void')+' '+S('fn','GPIO_Config')+'('+S('tp','void')+') {');
-    lines.push('  '+S('cmt','// Enable GPIOA clock'));
-    lines.push('  '+S('reg','RCC->AHB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_AHB1ENR_GPIOAEN')+';');
+    var moder=regVals.gpio.MODER,odr=regVals.gpio.ODR,otyper=regVals.gpio.OTYPER;
+    var pupdr=regVals.gpio.PUPDR,ospeedr=regVals.gpio.OSPEEDR,afrl=regVals.gpio.AFRL;
+    var mNames=['input','output','alternate function','analog'];
+    lines.push(S('tp','void')+' '+S('fn','GPIOA_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// 1. Ungate the port clock: RCC (0x40023800) AHB1ENR (+0x30) bit 0'));
+    lines.push('  '+S('reg','RCC->AHB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_AHB1ENR_GPIOAEN')+';'+S('cmt','      // (1U &lt;&lt; 0)'));
     lines.push('');
-    var moder=regVals.gpio.MODER,odr=regVals.gpio.ODR,otyper=regVals.gpio.OTYPER,pupdr=regVals.gpio.PUPDR;
-    lines.push('  '+S('cmt','// Pin modes'));
-    lines.push('  '+S('reg','GPIOA->MODER')+' '+S('op','=')+' '+S('hex',hex32(moder))+';');
-    var mNames=['Input','Output','AF','Analog'];
-    for(var i=0;i<16;i++){var m=(moder>>>(i*2))&3;if(m>0||i<8)lines.push('  '+S('cmt','// PA'+i+': '+mNames[m]))}
+    lines.push('  '+S('cmt','// 2. Pin mode: MODER (+0x00) is 2 bits per pin'));
+    var touched=0;
+    for(var i=0;i<16;i++){
+      var m=(moder>>>(i*2))&3, rm=(0xA8000000>>>(i*2))&3;
+      if(m===rm)continue;
+      touched++;
+      lines.push('  '+S('reg','GPIOA->MODER')+' '+S('op','&amp;= ~')+'('+S('num','3U')+' '+S('op','&lt;&lt;')+' ('+S('num',i)+S('op','*')+S('num','2')+'));'+S('cmt','   // clear PA'+i));
+      if(m)lines.push('  '+S('reg','GPIOA->MODER')+' '+S('op','|=')+'  ('+S('num',m+'U')+' '+S('op','&lt;&lt;')+' ('+S('num',i)+S('op','*')+S('num','2')+'));'+S('cmt','   // PA'+i+' = '+mNames[m]));
+    }
+    if(!touched)lines.push('  '+S('cmt','// (MODER is still 0xA8000000 - only PA13/14/15 on SWD/JTAG)'));
     lines.push('');
-    if(otyper!==0){lines.push('  '+S('cmt','// Output type'));lines.push('  '+S('reg','GPIOA->OTYPER')+' '+S('op','=')+' '+S('hex',hex32(otyper))+';');lines.push('')}
-    if(pupdr!==0x64000000){lines.push('  '+S('cmt','// Pull-up/pull-down'));lines.push('  '+S('reg','GPIOA->PUPDR')+' '+S('op','=')+' '+S('hex',hex32(pupdr))+';');lines.push('')}
-    lines.push('  '+S('cmt','// Output data'));
-    lines.push('  '+S('reg','GPIOA->ODR')+' '+S('op','=')+' '+S('hex',hex32(odr))+';');
-    for(var i=0;i<16;i++){var m=(moder>>>(i*2))&3;if(m===1){var v=(odr>>>i)&1;lines.push('  '+S('cmt','// PA'+i+' = '+(v?'HIGH':'LOW')))}}
+    if(otyper)lines.push('  '+S('reg','GPIOA->OTYPER')+'  '+S('op','=')+' '+S('hex',hex32(otyper))+';'+S('cmt','   // +0x04, 1 = open-drain'));
+    if(ospeedr)lines.push('  '+S('reg','GPIOA->OSPEEDR')+' '+S('op','=')+' '+S('hex',hex32(ospeedr))+';'+S('cmt','   // +0x08, 00 low .. 11 high'));
+    if(pupdr!==0x64000000)lines.push('  '+S('reg','GPIOA->PUPDR')+'   '+S('op','=')+' '+S('hex',hex32(pupdr))+';'+S('cmt','   // +0x0C, 01 pull-up, 10 pull-down'));
+    if(afrl){
+      lines.push('');
+      lines.push('  '+S('cmt','// 3. Alternate function: AFRL (+0x20) is 4 bits per pin (PA0-PA7)'));
+      for(var i=0;i<8;i++){var af=(afrl>>>(i*4))&0xF;if(!af)continue;
+        lines.push('  '+S('reg','GPIOA->AFRL')+' '+S('op','|=')+' ('+S('num',af+'U')+' '+S('op','&lt;&lt;')+' ('+S('num',i)+S('op','*')+S('num','4')+'));'+S('cmt','  // PA'+i+' -> AF'+af+' '+(AFNAME[af]||'')));
+      }
+    }
+    lines.push('');
+    lines.push('  '+S('cmt','// 4. Drive the outputs. BSRR (+0x18) is atomic: low half sets, high half clears.'));
+    var setL=[],clrL=[];
+    for(var i=0;i<16;i++){var m=(moder>>>(i*2))&3;if(m!==1)continue;if((odr>>>i)&1)setL.push(i);else clrL.push(i)}
+    if(setL.length)lines.push('  '+S('reg','GPIOA->BSRR')+' '+S('op','=')+' '+setL.map(function(i){return '('+S('num','1U')+' '+S('op','&lt;&lt;')+' '+S('num',i)+')'}).join(' '+S('op','|')+' ')+';'+S('cmt','   // PA'+setL.join('/PA')+' HIGH'));
+    if(clrL.length)lines.push('  '+S('reg','GPIOA->BSRR')+' '+S('op','=')+' '+clrL.map(function(i){return '('+S('num','1U')+' '+S('op','&lt;&lt;')+' '+S('num',i+16)+')'}).join(' '+S('op','|')+' ')+';'+S('cmt','   // PA'+clrL.join('/PA')+' LOW'));
+    if(!setL.length&&!clrL.length)lines.push('  '+S('cmt','// (no pin is configured as an output yet)'));
     lines.push('}');
   }
   else if(pk==='tim2'){
@@ -930,13 +1270,14 @@ function genCode(){
     var cr1=regVals.tim2.CR1,ccmr1=regVals.tim2.CCMR1,ccer=regVals.tim2.CCER;
     var oc1m=(ccmr1>>>4)&7;
     lines.push(S('tp','void')+' '+S('fn','TIM2_Config')+'('+S('tp','void')+') {');
-    lines.push('  '+S('cmt','// Enable TIM2 clock'));
+    lines.push('  '+S('cmt','// Ungate TIM2: RCC->APB1ENR (+0x40) bit 0'));
     lines.push('  '+S('reg','RCC->APB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB1ENR_TIM2EN')+';');
     lines.push('');
-    lines.push('  '+S('cmt','// PSC: f_timer = 90MHz/('+psc+'+1) = '+(90e6/(psc+1)/1e3).toFixed(2)+' kHz'));
+    lines.push('  '+S('cmt','// APB1 is 42 MHz, but the APB1 prescaler is > 1 so the timer clock is 84 MHz'));
+    lines.push('  '+S('cmt','// f_CNT = 84 MHz / ('+psc+'+1) = '+(84e6/(psc+1)/1e3).toFixed(2)+' kHz'));
     lines.push('  '+S('reg','TIM2->PSC')+' '+S('op','=')+' '+S('num',psc.toString())+';');
     lines.push('');
-    lines.push('  '+S('cmt','// ARR: counter period'));
+    lines.push('  '+S('cmt','// ARR (+0x2C): f_PWM = f_CNT / (ARR+1) = '+(arr>0?(84e6/(psc+1)/(arr+1)).toFixed(2):'0')+' Hz'));
     lines.push('  '+S('reg','TIM2->ARR')+' '+S('op','=')+' '+S('num',arr.toString())+';');
     lines.push('');
     if(oc1m===6||oc1m===7){
@@ -952,43 +1293,155 @@ function genCode(){
     if(cr1&1){lines.push('  '+S('cmt','// Start counter'));lines.push('  '+S('reg','TIM2->CR1')+' '+S('op','|=')+' '+S('hex','TIM_CR1_CEN')+';')}
     lines.push('}');
   }
-  else if(pk==='usart1'){
-    var cr1=regVals.usart1.CR1,brr=regVals.usart1.BRR;
+  else if(pk==='usart2'){
+    var cr1=regVals.usart2.CR1,brr=regVals.usart2.BRR;
     var ue=(cr1>>>13)&1,te=(cr1>>>3)&1,re=(cr1>>>2)&1,m=(cr1>>>12)&1,pce=(cr1>>>10)&1,ps=(cr1>>>9)&1;
-    var mant=(brr>>>4)&0xFFF,frac=brr&0xF;
     var over8=(cr1>>>15)&1,div2=over8?8:16;
+    var mant=(brr>>>4)&0xFFF,frac=over8?(brr&7):(brr&0xF);
     var uDiv=mant+frac/div2;
-    var baud=uDiv>0?Math.round(90e6/(div2*uDiv)):0;
-    lines.push(S('tp','void')+' '+S('fn','USART1_Config')+'('+S('tp','void')+') {');
-    lines.push('  '+S('cmt','// Enable USART1 clock'));
-    lines.push('  '+S('reg','RCC->APB2ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB2ENR_USART1EN')+';');
+    var baud=uDiv>0?Math.round(42e6/(div2*uDiv)):0;
+    lines.push(S('tp','void')+' '+S('fn','USART2_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// USART2 sits on APB1 (base 0x40004400), so PCLK1 = 42 MHz'));
+    lines.push('  '+S('reg','RCC->APB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB1ENR_USART2EN')+';'+S('cmt','  // (1U &lt;&lt; 17)'));
+    lines.push('  '+S('reg','RCC->AHB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_AHB1ENR_GPIOAEN')+';');
     lines.push('');
-    lines.push('  '+S('cmt','// Baud: '+baud+' (USARTDIV='+uDiv.toFixed(4)+')'));
-    lines.push('  '+S('reg','USART1->BRR')+' '+S('op','=')+' '+S('hex','0x'+(brr&0xFFFF).toString(16).toUpperCase().padStart(4,'0'))+';');
+    lines.push('  '+S('cmt','// PA2 = USART2_TX and PA3 = USART2_RX, both alternate function 7'));
+    lines.push('  '+S('reg','GPIOA->MODER')+' '+S('op','|=')+' ('+S('num','2U')+' '+S('op','&lt;&lt;')+' ('+S('num','2')+S('op','*')+S('num','2')+'));');
+    lines.push('  '+S('reg','GPIOA->AFRL')+'  '+S('op','|=')+' ('+S('num','7U')+' '+S('op','&lt;&lt;')+' ('+S('num','2')+S('op','*')+S('num','4')+'));');
+    lines.push('');
+    lines.push('  '+S('cmt','// BRR (+0x08): USARTDIV = 42e6 / ('+div2+' x baud)'));
+    if(baud>0){
+      lines.push('  '+S('cmt','//   USARTDIV = '+uDiv.toFixed(4)+'  ->  mantissa '+mant+' (0x'+mant.toString(16).toUpperCase()+'), fraction '+frac+'/'+div2));
+      lines.push('  '+S('cmt','//   BRR = ('+mant+' &lt;&lt; 4) | '+frac+' = 0x'+((brr&0xFFFF)>>>0).toString(16).toUpperCase()+'  ->  '+baud.toLocaleString()+' baud'));
+    }else{
+      lines.push('  '+S('cmt','//   BRR is 0 - no baud rate configured yet'));
+    }
+    lines.push('  '+S('reg','USART2->BRR')+' '+S('op','=')+' '+S('hex','0x'+(brr&0xFFFF).toString(16).toUpperCase().padStart(4,'0'))+';');
     lines.push('');
     var cfgStr=(m?'9':'8')+(pce?(ps?'O':'E'):'N')+'1';
-    lines.push('  '+S('cmt','// Config: '+cfgStr));
+    lines.push('  '+S('cmt','// Frame format '+cfgStr+'; CR1 is at +0x0C, enable UE last'));
     var flags=[];
-    if(ue)flags.push('USART_CR1_UE');if(te)flags.push('USART_CR1_TE');if(re)flags.push('USART_CR1_RE');
-    if(m)flags.push('USART_CR1_M');if(pce)flags.push('USART_CR1_PCE');
-    if(flags.length)lines.push('  '+S('reg','USART1->CR1')+' '+S('op','|=')+' '+S('hex',flags.join(' | '))+';');
-    else lines.push('  '+S('reg','USART1->CR1')+' '+S('op','=')+' '+S('hex',hex32(cr1))+';');
+    if(over8)flags.push('USART_CR1_OVER8');
+    if(m)flags.push('USART_CR1_M');
+    if(pce)flags.push('USART_CR1_PCE');
+    if(ps)flags.push('USART_CR1_PS');
+    if(te)flags.push('USART_CR1_TE');
+    if(re)flags.push('USART_CR1_RE');
+    if(ue)flags.push('USART_CR1_UE');
+    if(flags.length)lines.push('  '+S('reg','USART2->CR1')+' '+S('op','|=')+' '+S('hex',flags.join(' | '))+';');
+    else lines.push('  '+S('reg','USART2->CR1')+' '+S('op','=')+' '+S('hex',hex32(cr1))+';'+S('cmt','   // nothing enabled yet'));
     lines.push('}');
     lines.push('');
-    lines.push(S('tp','void')+' '+S('fn','USART1_Send')+'('+S('tp','char')+' c) {');
-    lines.push('  '+S('kw','while')+' (!('+S('reg','USART1->SR')+' '+S('op','&')+' '+S('hex','USART_SR_TXE')+'));');
-    lines.push('  '+S('reg','USART1->DR')+' '+S('op','=')+' c;');
+    lines.push(S('tp','void')+' '+S('fn','USART2_Send')+'('+S('tp','char')+' c) {');
+    lines.push('  '+S('kw','while')+' (!('+S('reg','USART2->SR')+' '+S('op','&amp;')+' '+S('hex','USART_SR_TXE')+'));'+S('cmt','  // SR +0x00, TXE bit 7'));
+    lines.push('  '+S('reg','USART2->DR')+' '+S('op','=')+' c;'+S('cmt','                          // DR +0x04'));
     lines.push('}');
+  }
+  else if(pk==='spi1'){
+    var c1=regVals.spi1.CR1,br=(c1>>>3)&7;
+    var fsk=84e6/Math.pow(2,br+1);
+    lines.push(S('tp','void')+' '+S('fn','SPI1_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// SPI1 sits on APB2 (base 0x40013000), PCLK2 = 84 MHz'));
+    lines.push('  '+S('reg','RCC->APB2ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB2ENR_SPI1EN')+';'+S('cmt','   // (1U &lt;&lt; 12)'));
+    lines.push('  '+S('reg','RCC->AHB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_AHB1ENR_GPIOAEN')+';');
+    lines.push('');
+    lines.push('  '+S('cmt','// PA5 = SCK, PA6 = MISO, PA7 = MOSI, all on AF5'));
+    lines.push('  '+S('kw','for')+' ('+S('tp','int')+' p '+S('op','=')+' '+S('num','5')+'; p '+S('op','&lt;=')+' '+S('num','7')+'; p'+S('op','++')+') {');
+    lines.push('    '+S('reg','GPIOA->MODER')+' '+S('op','&amp;= ~')+'('+S('num','3U')+' '+S('op','&lt;&lt;')+' (p'+S('op','*')+S('num','2')+'));');
+    lines.push('    '+S('reg','GPIOA->MODER')+' '+S('op','|=')+'  ('+S('num','2U')+' '+S('op','&lt;&lt;')+' (p'+S('op','*')+S('num','2')+'));');
+    lines.push('    '+S('reg','GPIOA->AFRL')+'  '+S('op','|=')+'  ('+S('num','5U')+' '+S('op','&lt;&lt;')+' (p'+S('op','*')+S('num','4')+'));');
+    lines.push('  }');
+    lines.push('');
+    lines.push('  '+S('cmt','// f_SCK = PCLK2 / 2^(BR+1) = 84 MHz / '+(1<<(br+1))+' = '+(fsk>=1e6?(fsk/1e6).toFixed(3)+' MHz':(fsk/1e3).toFixed(1)+' kHz')));
+    lines.push('  '+S('cmt','// SPI mode '+(((c1>>>1)&1)*2+(c1&1))+': CPOL='+((c1>>>1)&1)+', CPHA='+(c1&1)+', '+(((c1>>>7)&1)?'LSB':'MSB')+' first, '+(((c1>>>11)&1)?16:8)+'-bit frames'));
+    lines.push('  '+S('reg','SPI1->CR1')+' '+S('op','=')+' '+S('hex',hex32(c1))+';'+S('cmt','   // +0x00'));
+    if(regVals.spi1.CR2)lines.push('  '+S('reg','SPI1->CR2')+' '+S('op','=')+' '+S('hex',hex32(regVals.spi1.CR2))+';'+S('cmt','   // +0x04'));
+    lines.push('}');
+    lines.push('');
+    lines.push(S('tp','uint8_t')+' '+S('fn','SPI1_Transfer')+'('+S('tp','uint8_t')+' tx) {');
+    lines.push('  '+S('kw','while')+' (!('+S('reg','SPI1->SR')+' '+S('op','&amp;')+' '+S('hex','SPI_SR_TXE')+'));'+S('cmt','   // SR +0x08, TXE bit 1'));
+    lines.push('  '+S('op','*(')+S('tp','volatile uint8_t')+S('op','*)&amp;')+S('reg','SPI1->DR')+' '+S('op','=')+' tx;');
+    lines.push('  '+S('kw','while')+' (!('+S('reg','SPI1->SR')+' '+S('op','&amp;')+' '+S('hex','SPI_SR_RXNE')+'));'+S('cmt','  // RXNE bit 0'));
+    lines.push('  '+S('kw','while')+' ('+S('reg','SPI1->SR')+' '+S('op','&amp;')+' '+S('hex','SPI_SR_BSY')+');'+S('cmt','       // BSY bit 7 before releasing NSS'));
+    lines.push('  '+S('kw','return')+' ('+S('tp','uint8_t')+')'+S('reg','SPI1->DR')+';');
+    lines.push('}');
+  }
+  else if(pk==='rcc'){
+    lines.push(S('tp','void')+' '+S('fn','RCC_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// Clock tree assumed throughout this lab (normally set up by SystemInit):'));
+    lines.push('  '+S('cmt','//   HSE 8 MHz -> PLL M=8, N=336, P=2 -> SYSCLK 168 MHz'));
+    lines.push('  '+S('cmt','//   AHB /1 = 168 MHz, APB1 /4 = 42 MHz (TIM 84), APB2 /2 = 84 MHz (TIM 168)'));
+    lines.push('  '+S('cmt','//   5 flash wait states, prefetch and the I/D caches enabled'));
+    lines.push('');
+    lines.push('  '+S('cmt','// Peripheral clock gates - RCC base 0x40023800'));
+    lines.push('  '+S('reg','RCC->AHB1ENR')+' '+S('op','=')+' '+S('hex',hex32(regVals.rcc.AHB1ENR))+';'+S('cmt','   // +0x30'));
+    lines.push('  '+S('reg','RCC->APB1ENR')+' '+S('op','=')+' '+S('hex',hex32(regVals.rcc.APB1ENR))+';'+S('cmt','   // +0x40'));
+    lines.push('  '+S('reg','RCC->APB2ENR')+' '+S('op','=')+' '+S('hex',hex32(regVals.rcc.APB2ENR))+';'+S('cmt','   // +0x44'));
+    lines.push('');
+    var enabled=[];
+    var mp=[['AHB1ENR',{0:'GPIOAEN',1:'GPIOBEN',2:'GPIOCEN',3:'GPIODEN',21:'DMA1EN',22:'DMA2EN'}],
+            ['APB1ENR',{0:'TIM2EN',1:'TIM3EN',2:'TIM4EN',3:'TIM5EN',17:'USART2EN',21:'I2C1EN',28:'PWREN'}],
+            ['APB2ENR',{0:'TIM1EN',4:'USART1EN',8:'ADC1EN',12:'SPI1EN',14:'SYSCFGEN'}]];
+    for(var mi=0;mi<mp.length;mi++){var rv=regVals.rcc[mp[mi][0]],mm=mp[mi][1];
+      for(var k in mm)if((rv>>>parseInt(k,10))&1)enabled.push(mp[mi][0]+' bit '+k+' = '+mm[k])}
+    lines.push('  '+S('cmt','// Currently enabled:'));
+    if(enabled.length){for(var i=0;i<enabled.length;i++)lines.push('  '+S('cmt','//   '+enabled[i]))}
+    else lines.push('  '+S('cmt','//   nothing - every peripheral is gated off and reads back 0'));
+    lines.push('');
+    lines.push('  '+S('cmt','// A dummy read-back guarantees the gate has taken effect before the next write'));
+    lines.push('  ('+S('tp','void')+')'+S('reg','RCC->AHB1ENR')+';');
+    lines.push('}');
+  }
+  else if(pk==='core'){
+    var csr=regVals.core.SYST_CSR,rvr=regVals.core.SYST_RVR&0xFFFFFF;
+    var fS=((csr>>>2)&1)?168e6:21e6;
+    lines.push(S('tp','void')+' '+S('fn','Core_Config')+'('+S('tp','void')+') {');
+    lines.push('  '+S('cmt','// Vector table: word 0 = initial MSP, word 1 = Reset_Handler, IRQ n at 0x40 + 4n'));
+    lines.push('  '+S('reg','SCB->VTOR')+' '+S('op','=')+' '+S('hex',hex32(regVals.core.SCB_VTOR))+';'+S('cmt','   // 0xE000ED08, 512-byte aligned'));
+    lines.push('');
+    lines.push('  '+S('cmt','// Priority grouping: the STM32F4 implements only the top 4 bits of each IPR'));
+    lines.push('  '+S('cmt','// byte (0xE000E400 + n) - 16 levels, 0 the most urgent. Group 4 gives all four'));
+    lines.push('  '+S('cmt','// bits to pre-emption and none to sub-priority.'));
+    lines.push('  '+S('fn','NVIC_SetPriorityGrouping')+'('+S('num','3')+');'+S('cmt','                // CMSIS 3 == group 4'));
+    lines.push('');
+    if(rvr>0){
+      lines.push('  '+S('cmt','// SysTick period = (RELOAD+1) / '+(fS/1e6)+' MHz = '+(((rvr+1)/fS)*1e3).toFixed(4)+' ms'));
+      lines.push('  '+S('reg','SysTick->LOAD')+' '+S('op','=')+' '+S('num',rvr.toString())+';'+S('cmt','   // 0xE000E014'));
+      lines.push('  '+S('reg','SysTick->VAL')+'  '+S('op','=')+' '+S('num','0')+';'+S('cmt','        // 0xE000E018, also clears COUNTFLAG'));
+      lines.push('  '+S('reg','SysTick->CTRL')+' '+S('op','=')+' '+S('hex',hex32(csr))+';'+S('cmt','   // 0xE000E010: ENABLE | TICKINT | CLKSOURCE'));
+      lines.push('');
+    }
+    var any=false;
+    for(var b=0;b<32;b++)if((regVals.core.NVIC_ISER0>>>b)&1){
+      if(!any){lines.push('  '+S('cmt','// NVIC: IRQ n -> bit (n mod 32) of ISER[n / 32], ISER0 at 0xE000E100'));any=true}
+      lines.push('  '+S('reg','NVIC->ISER[0]')+' '+S('op','|=')+' ('+S('num','1U')+' '+S('op','&lt;&lt;')+' ('+S('num',b)+' '+S('op','%')+' '+S('num','32')+'));'+S('cmt','  // '+IRQ0[b]+'_IRQn = '+b));
+    }
+    for(var b=0;b<32;b++)if((regVals.core.NVIC_ISER1>>>b)&1){
+      if(!any){lines.push('  '+S('cmt','// NVIC: IRQ n -> bit (n mod 32) of ISER[n / 32], ISER1 at 0xE000E104'));any=true}
+      lines.push('  '+S('reg','NVIC->ISER[1]')+' '+S('op','|=')+' ('+S('num','1U')+' '+S('op','&lt;&lt;')+' ('+S('num',32+b)+' '+S('op','%')+' '+S('num','32')+'));'+S('cmt','  // '+IRQ1[b]+'_IRQn = '+(32+b)));
+    }
+    if(!any)lines.push('  '+S('cmt','// no peripheral interrupt is enabled in the NVIC yet'));
+    lines.push('}');
+    if(((csr>>>1)&1)&&rvr>0){
+      lines.push('');
+      lines.push(S('tp','void')+' '+S('fn','SysTick_Handler')+'('+S('tp','void')+') {');
+      lines.push('  '+S('cmt','// Entry stacks 8 words (xPSR, PC, LR, R12, R3-R0): ~12 cycles = 71 ns @ 168 MHz'));
+      lines.push('  ticks'+S('op','++')+';');
+      lines.push('}');
+    }
   }
   else if(pk==='adc1'){
     var cr1=regVals.adc1.CR1,cr2=regVals.adc1.CR2;
     var res=(cr1>>>24)&3,resBits=[12,10,8,6][res];
     var cont=(cr2>>>1)&1;
     lines.push(S('tp','void')+' '+S('fn','ADC1_Config')+'('+S('tp','void')+') {');
-    lines.push('  '+S('cmt','// Enable ADC1 clock'));
-    lines.push('  '+S('reg','RCC->APB2ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB2ENR_ADC1EN')+';');
+    var smp0=regVals.adc1.SMPR2&7,SMPCY=[3,15,28,56,84,112,144,480];
+    var resCy=[15,13,11,9][res],tconv=(SMPCY[smp0]+resCy);
+    lines.push('  '+S('cmt','// ADC1 is on APB2 (base 0x40012000); ADCCLK = PCLK2/4 = 21 MHz (36 MHz max)'));
+    lines.push('  '+S('reg','RCC->APB2ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB2ENR_ADC1EN')+';'+S('cmt','   // (1U &lt;&lt; 8)'));
     lines.push('');
-    lines.push('  '+S('cmt','// Resolution: '+resBits+'-bit'));
+    lines.push('  '+S('cmt','// Resolution '+resBits+'-bit ('+resCy+' ADC cycles) + SMP'+' '+SMPCY[smp0]+' cycles'));
+    lines.push('  '+S('cmt','// t_conv = '+tconv+' ADC cycles / 21 MHz = '+(tconv/21).toFixed(2)+' us'));
     lines.push('  '+S('reg','ADC1->CR1')+' '+S('op','=')+' '+S('hex',hex32(cr1))+';');
     lines.push('');
     lines.push('  '+S('cmt','// '+(cont?'Continuous':'Single')+' conversion'));
@@ -1011,33 +1464,78 @@ function genCode(){
 /* ============================================================
    PRESETS
    ============================================================ */
+function setBits(pk,rn,mask,val){regVals[pk][rn]=((regVals[pk][rn]&~mask)|val)>>>0}
+function setMode(pin,mode){setBits('gpio','MODER',3<<(pin*2),mode<<(pin*2))}
+function setAF(pin,af){setBits('gpio','AFRL',0xF<<(pin*4),af<<(pin*4))}
+
 function loadPreset(name){
   initRegs();
   document.querySelectorAll('.btn-preset').forEach(function(b){b.classList.remove('active')});
   if(name==='led'){
+    // Nucleo user LED LD2 on PA5: push-pull output, medium speed, driven HIGH via BSRR
     curPeriph='gpio';
-    var m=regVals.gpio.MODER;m&=~(3<<10);m|=(1<<10);regVals.gpio.MODER=m>>>0;
-    regVals.gpio.ODR=(1<<5)>>>0;
+    regVals.rcc.AHB1ENR|=(1<<0);                 // GPIOAEN
+    setMode(5,1);                                 // MODER5 = 01 output
+    setBits('gpio','OSPEEDR',3<<10,1<<10);        // medium speed
+    regVals.gpio.ODR=(1<<5)>>>0;                  // BSRR write already applied
     document.getElementById('prLed').classList.add('active');
   }else if(name==='pwm'){
+    // 1 kHz / 50% PWM on TIM2_CH1 = PA5 (AF1). 84 MHz / (83+1) = 1 MHz, / 1000 = 1 kHz.
     curPeriph='tim2';
-    var m=regVals.gpio.MODER;m&=~3;m|=2;regVals.gpio.MODER=m>>>0;
-    regVals.tim2.PSC=89;regVals.tim2.ARR=999;regVals.tim2.CCR1=500;
-    regVals.tim2.CCMR1=(6<<4)|(1<<3);regVals.tim2.CCER=1;regVals.tim2.CR1=1;
+    regVals.rcc.AHB1ENR|=(1<<0);                  // GPIOAEN
+    regVals.rcc.APB1ENR|=(1<<0);                  // TIM2EN
+    setMode(5,2);setAF(5,1);                      // PA5 -> AF1 = TIM2_CH1
+    setBits('gpio','OSPEEDR',3<<10,2<<10);        // fast slew for a clean edge
+    regVals.tim2.PSC=83;regVals.tim2.ARR=999;regVals.tim2.CCR1=500;
+    regVals.tim2.CCMR1=((6<<4)|(1<<3))>>>0;       // OC1M = 110 (PWM mode 1), OC1PE
+    regVals.tim2.CCER=1;                          // CC1E
+    regVals.tim2.CR1=((1<<7)|1)>>>0;              // ARPE + CEN
     document.getElementById('prPwm').classList.add('active');
   }else if(name==='uart'){
-    curPeriph='usart1';
-    var m=regVals.gpio.MODER;m&=~(3<<18);m|=(2<<18);regVals.gpio.MODER=m>>>0;
-    regVals.usart1.BRR=0x030D;
-    regVals.usart1.CR1=(1<<13)|(1<<3)|(1<<2);
-    regVals.usart1.DR=0x55;
+    // USART2 115200 8N1 on PA2/PA3 (AF7). PCLK1 42 MHz -> USARTDIV 22.786 -> BRR 0x16D.
+    curPeriph='usart2';
+    regVals.rcc.AHB1ENR|=(1<<0);                  // GPIOAEN
+    regVals.rcc.APB1ENR|=(1<<17);                 // USART2EN
+    setMode(2,2);setAF(2,7);                      // PA2 = TX
+    setMode(3,2);setAF(3,7);                      // PA3 = RX
+    regVals.usart2.BRR=0x16D;                     // (22 << 4) | 13
+    regVals.usart2.CR1=((1<<13)|(1<<3)|(1<<2))>>>0;   // UE | TE | RE
+    regVals.usart2.DR=0x55;                       // 'U' = 0b01010101, a nice alternating frame
+    regVals.usart2.SR=0x00C0;                     // TXE | TC
     document.getElementById('prUart').classList.add('active');
+  }else if(name==='spi'){
+    // SPI1 master, mode 0, PCLK2/32 = 2.625 MHz, PA5/6/7 on AF5, software NSS.
+    curPeriph='spi1';
+    regVals.rcc.AHB1ENR|=(1<<0);                  // GPIOAEN
+    regVals.rcc.APB2ENR|=(1<<12);                 // SPI1EN
+    setMode(5,2);setAF(5,5);setMode(6,2);setAF(6,5);setMode(7,2);setAF(7,5);
+    setBits('gpio','OSPEEDR',(3<<10)|(3<<12)|(3<<14),(2<<10)|(2<<12)|(2<<14));
+    regVals.spi1.CR1=((1<<9)|(1<<8)|(1<<6)|(4<<3)|(1<<2))>>>0;  // SSM|SSI|SPE|BR=100|MSTR
+    regVals.spi1.DR=0xA5;
+    regVals.spi1.SR=0x0002;                       // TXE
+    document.getElementById('prSpi').classList.add('active');
   }else if(name==='adc'){
+    // ADC1 single conversion of channel 0 on PA0 (analog), 84-cycle sampling.
     curPeriph='adc1';
-    var m=regVals.gpio.MODER;m&=~3;m|=3;regVals.gpio.MODER=m>>>0;
-    regVals.adc1.CR1=0;regVals.adc1.CR2=1;
-    regVals.adc1.SQR3=0;regVals.adc1.SMPR2=7;regVals.adc1.DR=2048;
+    regVals.rcc.AHB1ENR|=(1<<0);                  // GPIOAEN
+    regVals.rcc.APB2ENR|=(1<<8);                  // ADC1EN
+    setMode(0,3);                                 // PA0 analog
+    regVals.adc1.CR1=0;                           // RES = 00 -> 12-bit
+    regVals.adc1.CR2=1;                           // ADON, single (CONT = 0)
+    regVals.adc1.SQR3=0;                          // SQ1 = channel 0
+    regVals.adc1.SMPR2=4;                         // SMP0 = 100 -> 84 ADC cycles
+    regVals.adc1.DR=2048;                         // mid-scale, ~1.65 V at VREF+ 3.3 V
     document.getElementById('prAdc').classList.add('active');
+  }else if(name==='tick'){
+    // 1 kHz RTOS tick from the 168 MHz core clock; TIM2 and USART2 IRQs armed.
+    curPeriph='core';
+    regVals.core.SYST_RVR=167999;                 // 168e6 / 1000 - 1
+    regVals.core.SYST_CSR=((1<<2)|(1<<1)|1)>>>0;  // CLKSOURCE = AHB, TICKINT, ENABLE
+    regVals.core.NVIC_ISER0=((1<<28)|(1<<6))>>>0; // TIM2 = IRQ 28, EXTI0 = IRQ 6
+    regVals.core.NVIC_ISER1=(1<<6)>>>0;           // USART2 = IRQ 38 -> ISER1 bit 6
+    regVals.rcc.APB1ENR|=(1<<0)|(1<<17);
+    regVals.rcc.APB2ENR|=(1<<14);                 // SYSCFGEN, needed to route EXTI0
+    document.getElementById('prTick').classList.add('active');
   }
   refreshAll();
 }
@@ -1062,34 +1560,63 @@ function refreshAll(){
 /* ============================================================
    INIT
    ============================================================ */
-window.addEventListener('resize',function(){drawPins();drawWaveform()});
+var rzT=null;
+window.addEventListener('resize',function(){if(rzT)clearTimeout(rzT);rzT=setTimeout(function(){drawPins();drawWaveform()},120)});
 refreshAll();
 animWF();
 </script>
 
-<!-- Welcome Popup -->
-<style>
-.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease}
-.welcome-overlay.show{opacity:1}
-.welcome-box{background:var(--card,#111827);border:1px solid var(--border,#1e293b);border-radius:14px;max-width:420px;width:90%;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.welcome-box h3{font-size:16px;font-weight:700;color:var(--text,#e2e8f0);margin:0 0 12px}
-.welcome-box p{font-size:13.5px;color:var(--muted,#94a3b8);line-height:1.6;margin:0 0 20px}
-.welcome-box .help-icon-hint{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent,#06b6d4);color:#0b1120;font-weight:700;font-size:13px;vertical-align:middle;margin:0 2px}
-.welcome-box button{background:var(--accent,#06b6d4);color:#0b1120;border:none;padding:9px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s}
-.welcome-box button:hover{opacity:.85}
-</style>
-<div class="welcome-overlay" id="welcomePopup">
-  <div class="welcome-box">
-    <h3>Welcome to the STM32 Memory-Mapped I/O Lab</h3>
-    <p>To get the most out of this demo, click the <span class="help-icon-hint">?</span> button in the top-right corner for a full guide, tutorial, and explanation of every feature.</p>
-    <button onclick="document.getElementById('welcomePopup').classList.remove('show');setTimeout(function(){document.getElementById('welcomePopup').style.display='none'},300)">Got it</button>
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A bit-accurate model of seven STM32F407 register blocks &mdash; RCC, GPIOA, TIM2, USART2, SPI1, ADC1 and the Cortex-M4 SysTick/NVIC core registers. Every register is stored as a 32-bit word; toggling a bit recomputes the field values, the hex and binary view, the equivalent CMSIS C statement, the port A pin map and an idealised waveform for that peripheral. Addresses, offsets, bit positions, reset values and alternate-function numbers are taken from RM0090 and the Cortex-M4 generic user guide; nothing is executed, so there is no CPU, no bus timing and no analogue behaviour.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>STM32F407, Cortex-M4F at <b>168 MHz</b> from HSE 8 MHz through the PLL (M 8, N 336, P 2). AHB 168 MHz, APB1 42 MHz, APB2 84 MHz. One core cycle = <b>5.95 ns</b>.</li>
+          <li>APB prescalers are &gt; 1, so the APB timer clocks are doubled: <b>TIM2&ndash;TIM7 run at 84 MHz</b>, TIM1/8/9/10/11 at 168 MHz.</li>
+          <li>USART2 is on APB1, so its <b>PCLK is 42 MHz</b>; SPI1 and ADC1 are on APB2 at 84 MHz, and ADCCLK is PCLK2/4 = 21 MHz (within the 36 MHz maximum).</li>
+          <li>Reset values are the real ones: <code>GPIOA-&gt;MODER = 0xA8000000</code> and <code>PUPDR = 0x64000000</code> (PA13&ndash;PA15 are the SWD/JTAG pins), <code>TIM2-&gt;ARR = 0xFFFFFFFF</code>, <code>USART2-&gt;SR = 0x00C0</code>, <code>SPI1-&gt;SR = 0x0002</code>, <code>RCC-&gt;AHB1ENR = 0x00100000</code>.</li>
+          <li>Clock gating is enforced as a warning, not a lockout: the lab flags a peripheral whose RCC enable bit is clear instead of silently discarding writes, so you can still explore the register layout.</li>
+          <li>Waveforms are drawn from the register values only. They are geometrically exact (period, duty, bit order, clock phase) but carry no propagation delay, rise time, jitter, noise or bus contention.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li>GPIO: <code>MODER</code> 2 bits/pin, <code>AFRL/AFRH</code> 4 bits/pin, so pin <em>p</em> uses <code>(1U &lt;&lt; (p*2))</code> and <code>(af &lt;&lt; ((p%8)*4))</code>. <code>BSRR</code> low half sets, high half resets, atomically.</li>
+          <li>Timer: <code>f_CNT = 84 MHz / (PSC+1)</code>, <code>f_PWM = f_CNT / (ARR+1)</code>, duty = <code>CCR1 / (ARR+1)</code>. The 1 kHz preset is PSC 83, ARR 999, CCR1 500.</li>
+          <li>USART: <code>USARTDIV = f_PCLK / (16 &times; baud)</code>; BRR = mantissa in [15:4] and <code>round(frac &times; 16)</code> in [3:0]. 42 MHz at 115200 gives 22.786 &rarr; 22 and 13 &rarr; <code>BRR = 0x16D</code>.</li>
+          <li>SPI: <code>f_SCK = PCLK2 / 2^(BR+1)</code>; frame time = bits / f_SCK.</li>
+          <li>ADC: t<sub>conv</sub> = (SMP + 12) ADC cycles at 12-bit resolution, i.e. 96 cycles &asymp; 4.6 &micro;s at 21 MHz with SMP = 84.</li>
+          <li>NVIC: IRQ <em>n</em> &rarr; bit <code>n mod 32</code> of <code>ISER[n / 32]</code>; priority byte at <code>0xE000E400 + n</code>, only the top 4 bits implemented.</li>
+          <li>SysTick: period = <code>(RELOAD+1) / f</code>, f = 168 MHz or 168/8 = 21 MHz.</li>
+          <li>ST RM0090 rev 21, <em>STM32F405/407/415/417 reference manual</em>; ST PM0214, <em>STM32 Cortex-M4 programming manual</em>; Yiu (2013), <em>The Definitive Guide to ARM Cortex-M3 and Cortex-M4 Processors</em>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li>No instruction execution, no bus matrix, no wait states, no DMA and no flash ART accelerator; nothing here predicts real firmware throughput.</li>
+          <li>Only a subset of each block's registers is exposed, and a few rarely used bits inside them are shown as reserved.</li>
+          <li>The package drawing is an illustrative LQFP-48 footprint used to visualise port A; the STM32F407 actually ships in LQFP-100/144/176 and its pin assignment differs.</li>
+          <li>ADC1-&gt;DR is writable here so the sampling view has something to show; on hardware it is read-only and driven by the converter. The analogue input is a fixed two-tone waveform, not a model of any sensor.</li>
+          <li>Status flags (TXE, RXNE, BSY, EOC, COUNTFLAG) are free-running bits you set by hand; no peripheral state machine sets or clears them for you.</li>
+          <li>Interrupt latency, tail-chaining and lazy FPU stacking are quoted from the ARM documentation, not simulated.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated. Always check RM0090 and the datasheet before writing production firmware.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
   </div>
-</div>
-<script>
-(function(){
-  var wp = document.getElementById('welcomePopup');
-  if(wp) setTimeout(function(){ wp.classList.add('show'); }, 400);
-})();
-</script>
+</footer>
+
 </body>
 </html>

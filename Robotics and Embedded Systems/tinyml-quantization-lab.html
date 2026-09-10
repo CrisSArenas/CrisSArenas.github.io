@@ -4,49 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TinyML Model Quantization Lab | Cristian Arenas</title>
+<meta name="description" content="Interactive TinyML quantisation lab: symmetric per-channel INT8/INT4 weight quantisation, per-layer SQNR, tensor-arena and flash budgeting and a CMSIS-NN MAC-throughput latency model for Cortex-M class targets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="../assets/css/demo-shell.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0b1120;--card:#111827;--card2:#1a2332;
-  --cyan:#06b6d4;--green:#10b981;--text:#f1f5f9;--dim:#94a3b8;
-  --border:#1e293b;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
-  --purple:#8b5cf6;--orange:#f97316;--mono:'Courier New',monospace;
-}
-body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+body{font-size:14px;line-height:1.6}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-/* NAV */
-.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
-.nav .back{color:var(--dim);font-size:13px;display:flex;align-items:center;gap:6px;transition:.2s;cursor:pointer;text-decoration:none}
-.nav .back:hover{color:var(--cyan)}
-.nav h1{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.nav h1 i{color:var(--cyan);font-size:14px}
-.nav .nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
-.help-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.help-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
-
-/* HELP MODAL */
-.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.help-overlay.open{display:flex}
-.help-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.help-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
-.help-modal-head h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.help-modal-head h2 i{color:var(--cyan)}
-.help-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.help-close:hover{color:var(--red);border-color:var(--red)}
-.help-body{padding:20px 22px}
-.help-section{margin-bottom:20px}
-.help-section:last-child{margin-bottom:0}
-.help-section h3{font-size:12px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.help-section p{font-size:12.5px;color:var(--dim);line-height:1.7;margin-bottom:6px}
-.help-section p strong{color:var(--text)}
-.help-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin-top:6px}
-.help-dl dt{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
-.help-dl dd{color:var(--dim);line-height:1.6}
+/* help modal — shell owns the frame, these are page extras */
+.d-help-section code{font-family:var(--mono);font-size:.74rem;color:var(--cyan-bright);background:var(--accent-bg);padding:1px 5px;border-radius:4px}
+.d-help-section table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
+.d-help-section th,.d-help-section td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--muted)}
+.d-help-section th{color:var(--text);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.d-help-section td:first-child{color:var(--text);font-family:var(--mono);font-size:.74rem}
 
 /* GUIDE */
 .guide{max-width:1440px;margin:16px auto 0;padding:0 16px}
@@ -78,6 +57,15 @@ a{color:var(--cyan);text-decoration:none}
 .kpi-cell .val.neg{color:var(--red)}
 .kpi-cell .val.warn{color:var(--yellow)}
 @media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .kpi-cell .val{font-size:.95rem}
+  .ctrl-body{gap:14px}
+  .ctrl-group,.model-select,.slider-row{max-width:100%;min-width:0}
+  .model-select{width:100%;white-space:normal}
+  .slider-row input[type=range]{width:100%}
+  .guide,.kpi-strip,.controls,.grid{padding:0 12px}
+}
 
 /* CONTROLS */
 .controls{max-width:1440px;margin:16px auto 0;padding:0 16px}
@@ -118,7 +106,7 @@ a{color:var(--cyan);text-decoration:none}
 canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
 /* WEIGHT STATS */
-.weight-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.weight-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin-top:12px}
 .ws-item{background:var(--card2);border-radius:6px;padding:8px 10px;text-align:center}
 .ws-item .ws-lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 .ws-item .ws-val{font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);margin-top:2px}
@@ -146,9 +134,24 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .flash-seg.app{background:var(--blue)}
 .flash-seg.model{background:var(--cyan)}
 .flash-seg.free{background:rgba(255,255,255,.03)}
+.flash-seg.arena{background:var(--purple)}
 .flash-seg.overflow{background:var(--red);animation:flash-warn 1s infinite}
 @keyframes flash-warn{0%,100%{opacity:1}50%{opacity:.5}}
 
+.full{grid-column:1/-1}
+.fit-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:10.5px;color:var(--dim);font-family:var(--mono);flex-wrap:wrap}
+.fit-badge{padding:2px 9px;border-radius:999px;font-size:9.5px;font-weight:700;letter-spacing:.06em;border:1px solid var(--border-strong)}
+.fit-badge.pass{color:var(--green);border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.08)}
+.fit-badge.fail{color:var(--red);border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}
+.fit-note{font-size:10.5px;color:var(--faint);line-height:1.55;margin-bottom:12px}
+.fit-note b{color:var(--muted);font-weight:600}
+.infer-note{font-size:10.5px;color:var(--faint);line-height:1.55;margin:4px 0 2px}
+.lat-note{font-size:10.5px;color:var(--faint);line-height:1.55;margin-top:10px;border-top:1px solid var(--border);padding-top:9px}
+.lat-note b{color:var(--muted);font-weight:600}
+.lat-note code{font-family:var(--mono);color:var(--cyan)}
+.slider-row{display:flex;align-items:center;gap:8px;min-width:210px}
+.slider-row input[type=range]{width:120px;accent-color:var(--cyan)}
+.slider-row .sv{font-family:var(--mono);font-size:11px;color:var(--cyan);min-width:52px;text-align:right}
 .flash-progress{height:4px;background:var(--bg);border-radius:4px;overflow:hidden;margin:10px 0}
 .flash-progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:4px;transition:width .05s linear}
 
@@ -156,7 +159,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .inference-result.show{display:block}
 .inference-result h4{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;font-weight:700}
 .pred-bar{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:11px}
-.pred-bar .pred-label{width:50px;color:var(--dim);font-family:var(--mono);text-align:right;flex-shrink:0}
+.pred-bar .pred-label{width:74px;color:var(--dim);font-family:var(--mono);font-size:10px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pred-bar .pred-track{flex:1;height:14px;background:var(--bg);border-radius:3px;overflow:hidden;position:relative}
 .pred-bar .pred-fill{height:100%;border-radius:3px;transition:width .4s ease}
 .pred-bar .pred-pct{width:40px;font-family:var(--mono);font-weight:600;color:var(--dim);font-size:10px}
@@ -165,9 +168,6 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .inference-time{margin-top:10px;font-size:11px;color:var(--dim);font-family:var(--mono);display:flex;justify-content:space-between}
 .inference-time span{color:var(--cyan);font-weight:700}
 
-/* INPUT GRID (legacy) */
-.input-grid{display:grid;grid-template-columns:repeat(28,1fr);gap:0;margin-bottom:10px;border-radius:4px;overflow:hidden;border:1px solid var(--border)}
-.input-pixel{aspect-ratio:1;background:#000}
 
 /* DRAWABLE CANVAS */
 .draw-canvas-wrap{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
@@ -182,14 +182,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .arch-arrow.fwd-active i{color:var(--green)!important;animation:arrow-pulse .3s ease}
 @keyframes arrow-pulse{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.5);opacity:1}100%{transform:scale(1);opacity:1}}
 
-/* TOOLTIP */
-.tt{position:fixed;pointer-events:none;background:rgba(10,14,39,.94);border:1px solid rgba(6,182,212,.35);border-radius:8px;padding:9px 13px;font-size:12px;color:#f1f5f9;z-index:200;opacity:0;transition:opacity .12s;backdrop-filter:blur(12px);max-width:280px;box-shadow:0 8px 30px rgba(0,0,0,.6);line-height:1.5}
-.tt.show{opacity:1}
-
-/* DISCLAIMER */
-.disclaimer{max-width:1440px;margin:16px auto 30px;padding:0 16px}
-.disclaimer-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:11px;color:var(--dim);line-height:1.6}
-.disclaimer-box strong{color:var(--text)}
+/* TOOLTIP (shell .d-tooltip frame) */
+#tooltip .tt-h{color:var(--cyan);font-weight:600;margin-bottom:3px}
+#tooltip .tt-r{display:flex;gap:10px;justify-content:space-between}
+#tooltip .tt-r span:first-child{color:var(--muted)}
 
 /* LEGEND */
 .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:11px;color:var(--dim)}
@@ -199,63 +195,82 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 </head>
 <body>
 
-<div class="tt" id="tooltip"></div>
+<div class="d-tooltip" id="tooltip" role="tooltip"></div>
 
-<nav class="nav">
-  <a class="back" href="../robotics-embedded.html"><i class="fas fa-chevron-left"></i> Back to Portfolio</a>
-  <h1><i class="fas fa-brain"></i> TinyML Model Quantization Lab</h1>
-  <div class="nav-actions">
-    <button class="help-btn" onclick="toggleHelp()" title="Help &amp; Guide"><i class="fas fa-question"></i></button>
+<nav class="demo-nav">
+  <a class="demo-brand" href="../index.html">cristian@portfolio:~$ <span class="crumb">/ demos / tinyml</span></a>
+  <h1 class="demo-title"><i class="fas fa-compress"></i> TinyML Model Quantization Lab</h1>
+  <div class="demo-links">
+    <a href="../index.html#projects">Projects</a>
+    <a href="../index.html#research">Research</a>
+    <a href="../index.html#demos">Demos</a>
+    <a href="../robotics-embedded.html" class="active">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <span class="d-pill cyan" id="quantPill">FP32</span>
+    <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
   </div>
 </nav>
+<div class="demo-status">
+  <span id="statusBar">initialising&hellip;</span>
+  <span><b>Synthetic weights</b> &middot; deterministic seed &middot; CMSIS-NN MAC-throughput model &middot; not hardware-validated</span>
+</div>
 
 <!-- HELP MODAL -->
-<div class="help-overlay" id="helpOverlay">
-  <div class="help-modal">
-    <div class="help-modal-head">
-      <h2><i class="fas fa-book-open"></i> Understanding This Lab</h2>
-      <button class="help-close" onclick="toggleHelp()"><i class="fas fa-times"></i></button>
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; TinyML Model Quantization Lab</h2>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
-    <div class="help-body">
-      <div class="help-section">
-        <h3>What This Tool Does</h3>
-        <p>This lab demonstrates <strong>neural network quantization</strong> for TinyML deployment. It shows how reducing weight precision from 32-bit floating point (FP32) to 8-bit integer (INT8) or 4-bit integer (INT4) dramatically reduces model size and inference time, enabling deployment on resource-constrained microcontrollers.</p>
+    <div class="d-help-body">
+      <div class="d-help-section">
+        <h3>1 &middot; What this lab does</h3>
+        <p>It takes four representative TinyML models, quantises their weights the way TensorFlow Lite Micro does, and then budgets the result against a real microcontroller: <strong>flash</strong> for the weights, <strong>SRAM</strong> for the tensor arena, and <strong>cycles</strong> for the inference. Weights are drawn from a seeded generator with layer-appropriate statistics &mdash; they are not trained weights &mdash; but every number derived from them (scales, quantisation error, SQNR, model size, arena size, latency) is computed live from the same arithmetic a real toolchain uses.</p>
       </div>
-      <div class="help-section">
-        <h3>Weight Distribution Heatmap</h3>
-        <p>Each cell in the heatmap represents a neural network weight. <strong style="color:#3b82f6">Blue</strong> indicates negative values, <strong>white</strong> is near-zero, and <strong style="color:#ef4444">red</strong> indicates positive values. With FP32, you see smooth gradients with many unique values. INT8 quantization snaps weights to 256 discrete levels. INT4 uses only 16 levels, producing a visibly blocky pattern.</p>
+      <div class="d-help-section">
+        <h3>2 &middot; The quantisation arithmetic</h3>
+        <p><strong>Weights &mdash; symmetric, per output channel.</strong> For each output channel <code>c</code>: <code>s_c = max|w_c| / 127</code> (INT8) or <code>/ 7</code> (INT4), zero-point is exactly <strong>0</strong>. Quantise with <code>q = clamp(round(w / s_c), -127, +127)</code>, dequantise with <code>w&#770; = q &middot; s_c</code>, so dequantisation is the exact inverse of the rounding step. A symmetric zero-point is what lets CMSIS-NN skip the cross-term in the accumulator.</p>
+        <p><strong>Activations &mdash; asymmetric, per tensor.</strong> From a calibration pass: <code>s = (max &minus; min) / 255</code>, <code>z = round(&minus;min / s)</code>. Post-ReLU tensors have <code>min = 0</code>, so <code>z = 0</code>; tensors that can go negative (the input MFCC/image, the logits) get a non-zero zero-point. The lab shows the uint8 convention; int8 kernels use the same scale with the zero-point shifted by &minus;128.</p>
+        <p><strong>Clip percentile.</strong> The slider replaces <code>max|w_c|</code> with the <em>p</em>-th percentile of <code>|w_c|</code>: outliers then saturate at &plusmn;127 while every other weight gets a finer step. Drag it and watch SQNR fall &mdash; for <em>weights</em> that trade almost always loses, which is exactly why TensorFlow Lite calibrates weights with plain max-abs (p = 100%) and reserves percentile and KL calibration for <em>activation</em> ranges, where one outlier frame really can wreck the scale. The reported accuracy drop is clamped to the INT8/INT4 bands, so below roughly 99.4% it stops moving even though the SQNR keeps dropping.</p>
       </div>
-      <div class="help-section">
-        <h3>Quantization Metrics</h3>
-        <dl class="help-dl">
-          <dt>Scale Factor</dt>
-          <dd>Multiplier that maps floating-point range to integer range. Computed as (max - min) / (2^bits - 1).</dd>
-          <dt>Zero-Point</dt>
-          <dd>Integer value that corresponds to floating-point zero. Ensures zero is exactly representable.</dd>
-          <dt>Accuracy</dt>
-          <dd>Classification accuracy on a test set. Drops slightly with quantization due to precision loss.</dd>
-          <dt>Model Size</dt>
-          <dd>Total model size in KB. Reduces proportionally with bit-width reduction.</dd>
-          <dt>Inference Time</dt>
-          <dd>Time to run one forward pass on a Cortex-M7 MCU. INT8/INT4 ops are much faster than FP32.</dd>
-          <dt>Flash Usage</dt>
-          <dd>Percentage of MCU flash memory occupied by the model plus application code and bootloader.</dd>
+      <div class="d-help-section">
+        <h3>3 &middot; Size, arena and latency</h3>
+        <dl>
+          <dt>Model size</dt>
+          <dd><code>params &times; bytes-per-weight + 8 &times; output-channels + 8 &times; tensors</code>. FP32 is 4 B/weight, INT8 1 B, INT4 0.5 B (two nibbles per byte). The overhead is the int32 multiplier and shift stored per channel plus the scale/zero-point per tensor, which is why the size ratio is a little under 4&times; and 8&times;.</dd>
+          <dt>Tensor arena</dt>
+          <dd><code>max over operators of (input tensor + output tensor) + scratch</code>, where scratch is 2 KB of interpreter bookkeeping plus 8% for the CMSIS-NN im2col buffer. Buffers are reused, so the peak activation pair &mdash; not the sum of all activations &mdash; sets the requirement. Under FP32 the arena is 4&times; larger, which is usually what actually blocks deployment.</dd>
+          <dt>Latency</dt>
+          <dd>An explicit MAC-throughput model: <code>cycles = MACs / (r &middot; e)</code> with <code>r</code> = 0.32 MAC/cycle for FP32 (FPU present but load/store bound), 1.55 for INT8 (SMLAD dual-MAC), 0.50 for INT4 (no native kernel &mdash; nibbles are unpacked to int8 first). <code>e</code> is a kernel-efficiency factor: 1.0 for regular and 1&times;1 convolutions, 0.35 for depthwise (one MAC per weight load), 0.80 for fully connected (memory bound). 10&nbsp;&micro;s per operator is added for setup and requantisation.</dd>
         </dl>
       </div>
-      <div class="help-section">
-        <h3>MCU Flash Deployment</h3>
-        <p>The flash memory visualization shows how a <strong>512KB STM32H7</strong> flash is partitioned. The bootloader (16KB) and application code (48KB) are fixed. The model segment varies with quantization level. If the model exceeds available flash, the bar turns red indicating the model will not fit.</p>
+      <div class="d-help-section">
+        <h3>4 &middot; Accuracy degradation</h3>
+        <p>Not a lookup table: the drop is derived from the quantisation noise actually present in the sampled weights. For each layer the relative noise power <code>&Sigma;(w &minus; w&#770;)&sup2; / &Sigma;w&sup2;</code> is weighted by parameter count and by a sensitivity factor &mdash; <strong>2.5&times; for the first convolution</strong> (few parameters, wide dynamic range, every later layer inherits its error), <strong>2.0&times; for the final classifier</strong> (its errors land directly on the logits), 1.5&times; for depthwise layers (per-channel ranges vary by orders of magnitude), 1.0&times; elsewhere. The aggregate maps to a percentage-point drop and is clamped to the empirically observed bands: <strong>0.3&ndash;1.5 pp for INT8</strong>, <strong>3&ndash;10 pp for INT4</strong>.</p>
       </div>
-      <div class="help-section">
-        <h3>Model Architectures</h3>
-        <dl class="help-dl">
-          <dt>MobileNet-v2 (Tiny)</dt>
-          <dd>Lightweight architecture optimized for mobile and edge devices. Uses depthwise separable convolutions. Good accuracy-to-size ratio.</dd>
-          <dt>Custom CNN (3-layer)</dt>
-          <dd>Simple 3-layer convolutional network. Smallest model, highest base accuracy on simple tasks like MNIST digit classification.</dd>
-          <dt>ResNet-8</dt>
-          <dd>Compact residual network with skip connections. Balances depth and size, robust to quantization thanks to residual paths.</dd>
-        </dl>
+      <div class="d-help-section">
+        <h3>5 &middot; The models</h3>
+        <table>
+          <thead><tr><th>Model</th><th>Params</th><th>MACs</th><th>FP32 baseline</th></tr></thead>
+          <tbody>
+            <tr><td>DS-CNN KWS</td><td>27.4 k</td><td>3.24 M</td><td>94.4% top-1, Speech Commands 12-class</td></tr>
+            <tr><td>MobileNetV1 0.25</td><td>210.7 k</td><td>7.16 M</td><td>84.9% top-1, Visual Wake Words 96&times;96</td></tr>
+            <tr><td>Anomaly autoencoder</td><td>31.6 k</td><td>31.2 k</td><td>0.889 AUC, MIMII-style machine sound</td></tr>
+            <tr><td>MNIST digit CNN</td><td>25.0 k</td><td>249 k</td><td>99.1% top-1 &mdash; the interactive one</td></tr>
+          </tbody>
+        </table>
+        <p>Shapes, parameter counts and MAC counts are computed from the real layer geometry, so they add up. Only the MNIST CNN accepts drawn input; the other three consume audio features or camera frames that cannot be drawn, so their inference panel reports a seeded example instead.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>6 &middot; Reading the panels</h3>
+        <ul>
+          <li><strong>Heatmap</strong> &mdash; one row per sampled output channel, one column per sampled weight in that channel. Because quantisation is per channel, each row has its own scale; hover any cell for the FP32 value, its dequantised value and the error.</li>
+          <li><strong>Histogram</strong> &mdash; the FP32 distribution (outline) against the quantised one (filled). INT8 leaves 254 usable levels and the shape survives; INT4 leaves 14 and the distribution collapses into visible spikes.</li>
+          <li><strong>Trade-off chart</strong> &mdash; accuracy bars against size and latency for all three precisions of the current model on the current target.</li>
+          <li><strong>Target panel</strong> &mdash; flash and SRAM budgets with a pass/fail margin. Change the target to see the same model fit or fail.</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -266,28 +281,28 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="guide-box">
     <div class="guide-header" id="guideToggle">
       <h2><i class="fas fa-compass"></i> How This Lab Works</h2>
-      <button class="guide-toggle" id="guideBtn">Hide &#x25B4;</button>
+      <button type="button" class="guide-toggle" id="guideBtn" aria-expanded="true" aria-controls="guideContent">Hide &#x25B4;</button>
     </div>
     <div class="guide-grid" id="guideContent">
       <div class="guide-card">
         <span class="step">STEP 1</span>
-        <h3>Pick a Model &amp; Precision</h3>
-        <p>Select a <strong>model architecture</strong> (MobileNet, ResNet, or Custom CNN) and a <strong>quantization level</strong> (FP32, INT8, or INT4). Watch the weight heatmap change in real time.</p>
+        <h3>Pick a model and a target</h3>
+        <p>Choose one of four real TinyML workloads and an MCU. Parameter counts, MAC counts and activation shapes come from the actual layer geometry, so the budgets add up.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 2</span>
-        <h3>Flash to MCU</h3>
-        <p>Click <strong>Flash to MCU</strong> to deploy the model into simulated STM32 flash memory. The progress bar shows each stage of the flash process.</p>
+        <h3>Quantise</h3>
+        <p>Switch between <strong>FP32</strong>, <strong>INT8</strong> and <strong>INT4</strong>. Weights use symmetric per-channel scales; the heatmap, histogram, MSE and SQNR all recompute from the same arithmetic.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 3</span>
-        <h3>Draw or Load a Digit</h3>
-        <p>After flashing, <strong>draw a digit</strong> (0-9) on the black canvas with your mouse or finger, or click <strong>Random Sample</strong> to load one automatically.</p>
+        <h3>Check the fit</h3>
+        <p>Flash holds the weights, SRAM holds the tensor arena. The margin bars show pass or fail &mdash; try MobileNet in FP32 on the STM32L4 to see what actually blocks deployment.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 4</span>
-        <h3>Run Inference</h3>
-        <p>Click <strong>Run</strong> and watch the <strong>forward pass animate</strong> through each layer. The network classifies your digit and shows confidence scores per class.</p>
+        <h3>Flash and run</h3>
+        <p>Flash the model, then run inference. The MNIST CNN classifies a digit you draw; the other three report a seeded example. Latency comes from the stated MAC-throughput model.</p>
       </div>
     </div>
   </div>
@@ -298,27 +313,27 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="kpi-row">
     <div class="kpi-cell" title="Selected model architecture">
       <div class="lbl">Model</div>
-      <div class="val neutral" id="kpiModel">Custom CNN</div>
+      <div class="val neutral" id="kpiModel">&mdash;</div>
     </div>
-    <div class="kpi-cell" title="Current quantization precision">
+    <div class="kpi-cell" title="Weight precision: FP32, symmetric per-channel INT8, or symmetric per-channel INT4">
       <div class="lbl">Precision</div>
       <div class="val neutral" id="kpiPrecision">FP32</div>
     </div>
-    <div class="kpi-cell" title="Model size in KB">
-      <div class="lbl">Size</div>
-      <div class="val pos" id="kpiSize">480 KB</div>
+    <div class="kpi-cell" title="Weights + per-channel scale/shift overhead, in KB">
+      <div class="lbl">Model Size</div>
+      <div class="val pos" id="kpiSize">&mdash;</div>
     </div>
-    <div class="kpi-cell" title="Classification accuracy">
+    <div class="kpi-cell" title="Baseline accuracy minus the drop implied by the measured quantisation noise">
       <div class="lbl">Accuracy</div>
-      <div class="val pos" id="kpiAccuracy">95.1%</div>
+      <div class="val pos" id="kpiAccuracy">&mdash;</div>
     </div>
-    <div class="kpi-cell" title="Inference time on Cortex-M7">
-      <div class="lbl">Inference</div>
-      <div class="val neutral" id="kpiInference">850 ms</div>
+    <div class="kpi-cell" title="Latency from the stated MAC-throughput model on the selected target">
+      <div class="lbl">Latency</div>
+      <div class="val neutral" id="kpiInference">&mdash;</div>
     </div>
-    <div class="kpi-cell" title="Flash memory utilization">
-      <div class="lbl">Flash Usage</div>
-      <div class="val" id="kpiFlash">106%</div>
+    <div class="kpi-cell" title="Flash used / SRAM used on the selected target">
+      <div class="lbl">Flash / SRAM</div>
+      <div class="val" id="kpiFlash">&mdash;</div>
     </div>
   </div>
 </div>
@@ -329,27 +344,39 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="ctrl-head"><i class="fas fa-sliders-h"></i> Quantization Controls</div>
     <div class="ctrl-body">
       <div class="ctrl-group">
-        <h4>Model Architecture</h4>
-        <select class="model-select" id="modelSelect" onchange="changeModel(this.value)">
-          <option value="custom">Custom CNN (3-layer)</option>
-          <option value="mobilenet">MobileNet-v2 (Tiny)</option>
-          <option value="resnet">ResNet-8</option>
+        <h4>Model</h4>
+        <select class="model-select" id="modelSelect" aria-label="Model architecture" onchange="changeModel(this.value)">
+          <option value="kws">DS-CNN &mdash; keyword spotting (27.4k)</option>
+          <option value="person">MobileNetV1 0.25 &mdash; person detect (211k)</option>
+          <option value="ae">Autoencoder &mdash; anomaly detect (31.6k)</option>
+          <option value="mnist">MNIST digit CNN &mdash; interactive (25.0k)</option>
         </select>
       </div>
       <div class="ctrl-group">
-        <h4>Quantization Level</h4>
+        <h4>Deployment Target</h4>
+        <select class="model-select" id="targetSelect" aria-label="Deployment target"></select>
+      </div>
+      <div class="ctrl-group">
+        <h4>Weight Precision</h4>
         <div class="quant-btns">
-          <button class="q-btn active" data-q="fp32" onclick="setQuantization('fp32')">FP32</button>
-          <button class="q-btn" data-q="int8" onclick="setQuantization('int8')">INT8</button>
-          <button class="q-btn" data-q="int4" onclick="setQuantization('int4')">INT4</button>
+          <button type="button" class="q-btn active" data-q="fp32" onclick="setQuantization('fp32')">FP32</button>
+          <button type="button" class="q-btn" data-q="int8" onclick="setQuantization('int8')">INT8</button>
+          <button type="button" class="q-btn" data-q="int4" onclick="setQuantization('int4')">INT4</button>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <h4>Weight calibration &mdash; clip percentile</h4>
+        <div class="slider-row">
+          <input type="range" id="clipRange" min="99" max="100" step="0.05" value="100" aria-label="Weight clipping percentile">
+          <span class="sv" id="clipVal">100.0%</span>
         </div>
       </div>
       <div class="ctrl-group">
         <h4>Actions</h4>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="action-btn primary" id="quantizeBtn" onclick="animateQuantize()"><i class="fas fa-compress-alt"></i> Quantize</button>
-          <button class="action-btn secondary" id="flashBtn" onclick="flashToMCU()"><i class="fas fa-microchip"></i> Flash to MCU</button>
-          <button class="action-btn run" id="inferBtn" onclick="runInference()" disabled><i class="fas fa-play"></i> Run Inference</button>
+          <button type="button" class="action-btn primary" id="quantizeBtn" onclick="animateQuantize()"><i class="fas fa-compress-alt"></i> Next Precision</button>
+          <button type="button" class="action-btn secondary" id="flashBtn" onclick="flashToMCU()"><i class="fas fa-microchip"></i> Flash to MCU</button>
+          <button type="button" class="action-btn run" id="inferBtn" onclick="runInference()" disabled><i class="fas fa-play"></i> Run Inference</button>
         </div>
       </div>
     </div>
@@ -361,18 +388,24 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <!-- Panel 1: Weight Heatmap -->
   <div class="panel">
     <div class="panel-head">
-      <h3><i class="fas fa-th"></i> Weight Distribution Heatmap</h3>
-      <select id="layerSelect" onchange="selectLayerByDropdown(this.value)"></select>
+      <h3><i class="fas fa-th"></i> Weight Heatmap &mdash; sampled per channel</h3>
+      <select id="layerSelect" aria-label="Layer to inspect" onchange="selectLayerByDropdown(this.value)"></select>
     </div>
     <div class="panel-body">
-      <canvas id="heatmapCanvas" height="340"></canvas>
+      <canvas id="heatmapCanvas" height="340" aria-label="Heatmap of sampled layer weights, one row per output channel"></canvas>
       <div class="weight-stats" id="weightStats">
-        <div class="ws-item"><div class="ws-lbl">Min</div><div class="ws-val" id="wsMin">--</div></div>
-        <div class="ws-item"><div class="ws-lbl">Max</div><div class="ws-val" id="wsMax">--</div></div>
-        <div class="ws-item"><div class="ws-lbl">Mean</div><div class="ws-val" id="wsMean">--</div></div>
-        <div class="ws-item"><div class="ws-lbl">Std Dev</div><div class="ws-val" id="wsStd">--</div></div>
-        <div class="ws-item"><div class="ws-lbl">Scale</div><div class="ws-val" id="wsScale">N/A</div></div>
-        <div class="ws-item"><div class="ws-lbl">Zero-Point</div><div class="ws-val" id="wsZero">N/A</div></div>
+        <div class="ws-item" title="Smallest weight in the sampled tile"><div class="ws-lbl">W min</div><div class="ws-val" id="wsMin">--</div></div>
+        <div class="ws-item" title="Largest weight in the sampled tile"><div class="ws-lbl">W max</div><div class="ws-val" id="wsMax">--</div></div>
+        <div class="ws-item" title="Mean of the sampled weights"><div class="ws-lbl">W mean</div><div class="ws-val" id="wsMean">--</div></div>
+        <div class="ws-item" title="Standard deviation of the sampled weights"><div class="ws-lbl">W std</div><div class="ws-val" id="wsStd">--</div></div>
+        <div class="ws-item" title="Median per-output-channel weight scale: max|w_c| / 127 (INT8) or / 7 (INT4)"><div class="ws-lbl">W scale (med)</div><div class="ws-val" id="wsScale">N/A</div></div>
+        <div class="ws-item" title="Symmetric weight quantisation always has zero-point 0"><div class="ws-lbl">W zero-pt</div><div class="ws-val" id="wsZero">N/A</div></div>
+        <div class="ws-item" title="Mean squared error between the FP32 weight and its dequantised value"><div class="ws-lbl">Quant MSE</div><div class="ws-val" id="wsMse">N/A</div></div>
+        <div class="ws-item" title="Signal-to-quantisation-noise ratio for this layer"><div class="ws-lbl">SQNR</div><div class="ws-val" id="wsSqnr">N/A</div></div>
+        <div class="ws-item" title="Calibrated range of this layer's output activation tensor"><div class="ws-lbl">Act range</div><div class="ws-val" id="wsAct">--</div></div>
+        <div class="ws-item" title="Asymmetric per-tensor activation scale: (max - min) / 255"><div class="ws-lbl">Act scale</div><div class="ws-val" id="wsActScale">N/A</div></div>
+        <div class="ws-item" title="Activation zero-point: round(-min / scale); zero for post-ReLU tensors"><div class="ws-lbl">Act zero-pt</div><div class="ws-val" id="wsActZp">N/A</div></div>
+        <div class="ws-item" title="Multiply-accumulate operations in this layer"><div class="ws-lbl">Layer MACs</div><div class="ws-val" id="wsMacs">--</div></div>
       </div>
     </div>
   </div>
@@ -389,80 +422,110 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <!-- Panel 3: Accuracy vs Size -->
   <div class="panel">
     <div class="panel-head">
-      <h3><i class="fas fa-chart-bar"></i> Accuracy vs Size Tradeoff</h3>
-      <span class="tag">Dual-axis comparison</span>
+      <h3><i class="fas fa-chart-bar"></i> Accuracy vs Size vs Latency</h3>
+      <span class="tag" id="tradeoffTag">&mdash;</span>
     </div>
     <div class="panel-body">
-      <canvas id="tradeoffCanvas" height="300"></canvas>
+      <canvas id="tradeoffCanvas" height="300" aria-label="Bar and line chart of accuracy, model size and latency across FP32, INT8 and INT4"></canvas>
       <div class="legend">
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan)"></span> Accuracy %</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--green)"></span> Size (KB)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--orange);height:8px;width:8px;border-radius:50%"></span> Inference (ms)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan)"></span> Accuracy / AUC (%)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--green)"></span> Model size (KB)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--orange);height:8px;width:8px;border-radius:50%"></span> Latency (ms)</div>
       </div>
+      <div class="lat-note" id="latNote">&mdash;</div>
     </div>
   </div>
 
-  <!-- Panel 4: MCU Flash -->
+  <!-- Panel 4: Target deployment & memory fit -->
   <div class="panel">
     <div class="panel-head">
-      <h3><i class="fas fa-microchip"></i> MCU Flash Deployment</h3>
-      <span class="tag">STM32H7 &mdash; 512 KB Flash</span>
+      <h3><i class="fas fa-microchip"></i> Target Deployment &amp; Memory Fit</h3>
+      <span class="tag" id="targetTag">&mdash;</span>
     </div>
     <div class="panel-body">
+      <div class="fit-note" id="targetNote">&mdash;</div>
+
       <div class="flash-bar-wrap">
         <div class="flash-bar-label">
-          <span class="fl-name">Flash Memory Map</span>
+          <span class="fl-name">Flash &mdash; bootloader + app + model</span>
           <span class="fl-pct" id="flashPct">--</span>
         </div>
         <div class="flash-bar" id="flashBar">
-          <div class="flash-seg boot" style="width:3.1%">Boot</div>
-          <div class="flash-seg app" style="width:9.4%">App</div>
-          <div class="flash-seg model" id="flashModel" style="width:50%">Model</div>
-          <div class="flash-seg free" id="flashFree" style="width:37.5%"></div>
+          <div class="flash-seg boot" id="flashBoot" style="width:2%">Boot</div>
+          <div class="flash-seg app" id="flashApp" style="width:10%">App</div>
+          <div class="flash-seg model" id="flashModel" style="width:22%">Model</div>
+          <div class="flash-seg free" id="flashFree" style="width:66%"></div>
         </div>
+        <div class="fit-row"><span id="flashDetail">--</span><span class="fit-badge" id="flashBadge">--</span></div>
       </div>
+
       <div class="flash-bar-wrap">
         <div class="flash-bar-label">
-          <span class="fl-name">Flash Progress</span>
+          <span class="fl-name">SRAM &mdash; tensor arena + static + I/O buffer</span>
+          <span class="fl-pct" id="sramPct">--</span>
+        </div>
+        <div class="flash-bar" id="sramBar">
+          <div class="flash-seg arena" id="sramArena" style="width:30%">Arena</div>
+          <div class="flash-seg app" id="sramStatic" style="width:20%">Static</div>
+          <div class="flash-seg free" id="sramFree" style="width:50%"></div>
+        </div>
+        <div class="fit-row"><span id="sramDetail">--</span><span class="fit-badge" id="sramBadge">--</span></div>
+      </div>
+
+      <div class="flash-bar-wrap">
+        <div class="flash-bar-label">
+          <span class="fl-name">Flash programming</span>
           <span id="flashStatus" style="color:var(--dim);font-size:11px">Ready</span>
         </div>
         <div class="flash-progress">
           <div class="flash-progress-bar" id="flashProgressBar"></div>
         </div>
       </div>
+
       <div class="legend" style="margin-top:0;margin-bottom:12px">
-        <div class="legend-item"><span class="legend-swatch" style="background:#475569;height:8px;width:16px;border-radius:2px"></span> Bootloader (16KB)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--blue);height:8px;width:16px;border-radius:2px"></span> App Code (48KB)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan);height:8px;width:16px;border-radius:2px"></span> Model</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#475569;height:8px;width:16px;border-radius:2px"></span> Bootloader</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--blue);height:8px;width:16px;border-radius:2px"></span> App + TFLite Micro + CMSIS-NN</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan);height:8px;width:16px;border-radius:2px"></span> Model weights</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--purple);height:8px;width:16px;border-radius:2px"></span> Tensor arena</div>
         <div class="legend-item"><span class="legend-swatch" style="background:rgba(255,255,255,.08);height:8px;width:16px;border-radius:2px"></span> Free</div>
       </div>
 
       <!-- Inference result -->
       <div class="inference-result" id="inferenceResult">
-        <h4><i class="fas fa-pencil-alt" style="margin-right:6px"></i> Draw a Digit or Load a Sample</h4>
-        <div class="draw-canvas-wrap">
-          <canvas id="drawCanvas" width="280" height="280"></canvas>
+        <h4><i class="fas fa-bolt" style="margin-right:6px"></i> <span id="inferHeadTxt">On-device inference</span></h4>
+        <div class="draw-canvas-wrap" id="drawWrap">
+          <canvas id="drawCanvas" width="280" height="280" aria-label="Drawing surface: sketch a digit for the MNIST model"></canvas>
           <div class="draw-toolbar">
-            <button class="draw-btn" onclick="clearDrawCanvas()"><i class="fas fa-eraser"></i> Clear</button>
-            <button class="draw-btn" onclick="loadRandomSample()"><i class="fas fa-random"></i> Random Sample</button>
-            <button class="action-btn run" id="inferBtnCanvas" onclick="runInference()" style="padding:5px 14px;font-size:10px"><i class="fas fa-play"></i> Run</button>
+            <button type="button" class="draw-btn" onclick="clearDrawCanvas()"><i class="fas fa-eraser"></i> Clear</button>
+            <button type="button" class="draw-btn" onclick="loadRandomSample()"><i class="fas fa-random"></i> Random Sample</button>
+            <button type="button" class="action-btn run" id="inferBtnCanvas" onclick="runInference()" style="padding:5px 14px;font-size:10px"><i class="fas fa-play"></i> Run</button>
             <span class="draw-label">Draw with mouse or touch</span>
           </div>
         </div>
-        <h4 style="margin-top:12px"><i class="fas fa-poll" style="margin-right:6px"></i> Prediction Confidence</h4>
+        <div class="infer-note" id="inferNote"></div>
+        <h4 style="margin-top:12px"><i class="fas fa-poll" style="margin-right:6px"></i> Output confidence</h4>
         <div id="predBars"></div>
         <div class="inference-time">
-          <span>Inference on Cortex-M7</span>
+          <span id="inferTargetTxt">Latency estimate</span>
           <span id="inferTime">--</span>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<div class="disclaimer">
-  <div class="disclaimer-box">
-    <strong>Educational Demo.</strong> All model architectures, weight distributions, accuracy metrics, and inference benchmarks are simulated for educational purposes. Real quantization involves calibration datasets, per-channel scaling, and hardware-specific optimizations. Actual deployment performance varies by MCU, compiler optimizations, and operator support.
+  <!-- Panel 5: Weight histogram -->
+  <div class="panel full">
+    <div class="panel-head">
+      <h3><i class="fas fa-chart-area"></i> Weight Histogram &mdash; before vs after quantisation</h3>
+      <span class="tag" id="histTag">&mdash;</span>
+    </div>
+    <div class="panel-body">
+      <canvas id="histCanvas" height="230" aria-label="Histogram of sampled layer weights before and after quantisation"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:transparent;border:1.5px solid var(--muted);height:9px;width:16px;border-radius:2px"></span> FP32 (before)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan);height:9px;width:16px;border-radius:2px"></span> Dequantised (after)</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -471,65 +534,143 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
    TinyML Model Quantization Lab - Interactive Demo
    ================================================================ */
 
-// ─── DATA ─────────────────────────────────────────────────────────
+// --- DATA: layer geometry, parameter counts and MAC counts are computed from the
+// --- real shapes of each architecture, so the totals in the panels add up.
+const SEED = 1337;
+
 const MODELS = {
-  mobilenet: {
-    name: 'MobileNet-v2 (Tiny)',
-    short: 'MobileNet',
-    layers: [
-      { name:'Conv1',    type:'conv',  dims:'28x28x1 -> 28x28x16',  color:'#3b82f6', params:160,    gridW:16, gridH:10 },
-      { name:'DWConv2',  type:'conv',  dims:'28x28x16 -> 14x14x32', color:'#6366f1', params:4736,   gridW:20, gridH:16 },
-      { name:'DWConv3',  type:'conv',  dims:'14x14x32 -> 7x7x64',   color:'#8b5cf6', params:18560,  gridW:24, gridH:20 },
-      { name:'Dense1',   type:'dense', dims:'3136 -> 128',           color:'#f97316', params:401536, gridW:28, gridH:22 },
-      { name:'Dense2',   type:'dense', dims:'128 -> 10',             color:'#10b981', params:1290,   gridW:12, gridH:8  }
-    ],
-    fp32: { accuracy:92.3, size:426, inference:850 },
-    int8: { accuracy:91.8, size:108, inference:120 },
-    int4: { accuracy:89.1, size:55,  inference:65  }
+  kws: {
+    name:'DS-CNN keyword spotting (DS-CNN-S)', short:'DS-CNN KWS',
+    task:'12-class keyword spotting (Speech Commands v2)',
+    inputName:'49 x 10 log-MFCC (1 s @ 16 kHz, 40 ms / 20 ms)',
+    inAct:490, inMin:-4.60, inMax:3.10, ioBufKB:31.25,
+    baseAcc:94.4, accLabel:'Top-1', qSens:1.0, interactive:false,
+    classes:['_silence_','_unknown_','yes','no','up','down','left','right','on','off','stop','go'],
+    layers:[
+      {name:'Conv1 10x4 /s2', type:'conv',   dims:'49x10x1 -> 25x5x64', color:'#3b82f6', params:2624, macs:320000, dwMacs:0,     inAct:490,  outAct:8000, outCh:64, gridW:20, gridH:16},
+      {name:'DWConv2 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#6366f1', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv2 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#8b5cf6', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'DWConv3 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#6366f1', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv3 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#8b5cf6', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'DWConv4 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#6366f1', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv4 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#8b5cf6', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'DWConv5 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#6366f1', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv5 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#8b5cf6', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'DWConv6 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#6366f1', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv6 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#8b5cf6', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'GAP + Dense',    type:'dense',  dims:'25x5x64 -> 64 -> 12', color:'#10b981', params:780, macs:768,    dwMacs:0,     inAct:8000, outAct:12,   outCh:12, gridW:16, gridH:12}
+    ]
   },
-  custom: {
-    name: 'Custom CNN (3-layer)',
-    short: 'Custom CNN',
-    layers: [
-      { name:'Conv1',  type:'conv',  dims:'28x28x1 -> 26x26x8',  color:'#3b82f6', params:80,    gridW:14, gridH:8  },
-      { name:'Conv2',  type:'conv',  dims:'13x13x8 -> 11x11x16', color:'#6366f1', params:1168,  gridW:18, gridH:14 },
-      { name:'Conv3',  type:'conv',  dims:'5x5x16 -> 3x3x32',    color:'#8b5cf6', params:4640,  gridW:22, gridH:18 },
-      { name:'Dense1', type:'dense', dims:'288 -> 64',            color:'#f97316', params:18496, gridW:26, gridH:20 },
-      { name:'Dense2', type:'dense', dims:'64 -> 10',             color:'#10b981', params:650,   gridW:12, gridH:8  }
-    ],
-    fp32: { accuracy:95.1, size:98, inference:340 },
-    int8: { accuracy:94.7, size:25, inference:48  },
-    int4: { accuracy:91.2, size:13, inference:26  }
+  person: {
+    name:'MobileNetV1 0.25 (person detection)', short:'MobileNet 0.25',
+    task:'binary person detection (Visual Wake Words)',
+    inputName:'96 x 96 x 1 grayscale frame',
+    inAct:9216, inMin:-1.00, inMax:1.00, ioBufKB:9.0,
+    baseAcc:84.9, accLabel:'Top-1', qSens:1.4, interactive:false,
+    classes:['no person','person'],
+    layers:[
+      {name:'Conv1 3x3 /s2',      type:'conv',    dims:'96x96x1 -> 48x48x8',   color:'#3b82f6', params:80,    macs:165888,  dwMacs:0,      inAct:9216,  outAct:18432, outCh:8,    gridW:9,  gridH:8},
+      {name:'DS1 dw+pw 8->16',    type:'dsblock', dims:'48x48x8 -> 48x48x16',  color:'#6366f1', params:224,   macs:460800,  dwMacs:165888, inAct:18432, outAct:36864, outCh:24,   gridW:12, gridH:16},
+      {name:'DS2 dw+pw 16->32/s2',type:'dsblock', dims:'48x48x16 -> 24x24x32', color:'#6366f1', params:704,   macs:377856,  dwMacs:82944,  inAct:36864, outAct:18432, outCh:48,   gridW:16, gridH:16},
+      {name:'DS3 dw+pw 32->32',   type:'dsblock', dims:'24x24x32 -> 24x24x32', color:'#8b5cf6', params:1376,  macs:755712,  dwMacs:165888, inAct:18432, outAct:18432, outCh:64,   gridW:20, gridH:16},
+      {name:'DS4 dw+pw 32->64/s2',type:'dsblock', dims:'24x24x32 -> 12x12x64', color:'#8b5cf6', params:2432,  macs:336384,  dwMacs:41472,  inAct:18432, outAct:9216,  outCh:96,   gridW:22, gridH:18},
+      {name:'DS5 dw+pw 64->64',   type:'dsblock', dims:'12x12x64 -> 12x12x64', color:'#a855f7', params:4800,  macs:672768,  dwMacs:82944,  inAct:9216,  outAct:9216,  outCh:128,  gridW:24, gridH:18},
+      {name:'DS6 dw+pw 64->128/s2',type:'dsblock',dims:'12x12x64 -> 6x6x128',  color:'#a855f7', params:8960,  macs:315648,  dwMacs:20736,  inAct:9216,  outAct:4608,  outCh:192,  gridW:26, gridH:20},
+      {name:'DS7-11 128->128 (x5)',type:'dsblock',dims:'6x6x128 -> 6x6x128',   color:'#f97316', params:88960, macs:3156480, dwMacs:207360, inAct:4608,  outAct:4608,  outCh:1280, gridW:28, gridH:22},
+      {name:'DS12 dw+pw 128->256/s2',type:'dsblock',dims:'6x6x128 -> 3x3x256', color:'#f97316', params:34304, macs:305280,  dwMacs:10368,  inAct:4608,  outAct:2304,  outCh:384,  gridW:26, gridH:20},
+      {name:'DS13 dw+pw 256->256',type:'dsblock', dims:'3x3x256 -> 3x3x256',   color:'#fb923c', params:68352, macs:610560,  dwMacs:20736,  inAct:2304,  outAct:2304,  outCh:512,  gridW:28, gridH:22},
+      {name:'GAP + Dense',        type:'dense',   dims:'3x3x256 -> 256 -> 2',  color:'#10b981', params:514,   macs:512,     dwMacs:0,      inAct:2304,  outAct:2,     outCh:2,    gridW:16, gridH:10}
+    ]
   },
-  resnet: {
-    name: 'ResNet-8',
-    short: 'ResNet-8',
-    layers: [
-      { name:'Conv1',     type:'conv',  dims:'28x28x1 -> 28x28x16',  color:'#3b82f6', params:160,    gridW:16, gridH:10 },
-      { name:'ResBlock1', type:'conv',  dims:'28x28x16 -> 14x14x32', color:'#6366f1', params:9344,   gridW:22, gridH:16 },
-      { name:'ResBlock2', type:'conv',  dims:'14x14x32 -> 7x7x64',   color:'#8b5cf6', params:36992,  gridW:26, gridH:20 },
-      { name:'Dense1',    type:'dense', dims:'3136 -> 64',            color:'#f97316', params:200768, gridW:28, gridH:22 },
-      { name:'Dense2',    type:'dense', dims:'64 -> 10',              color:'#10b981', params:650,    gridW:12, gridH:8  }
-    ],
-    fp32: { accuracy:93.8, size:380, inference:720 },
-    int8: { accuracy:93.2, size:96,  inference:105 },
-    int4: { accuracy:90.5, size:48,  inference:58  }
+  ae: {
+    name:'Dense autoencoder (anomaly detection)', short:'Anomaly AE',
+    task:'unsupervised machine-sound anomaly detection (MIMII-style)',
+    inputName:'128-bin log-mel frame (10 ms hop)',
+    inAct:128, inMin:-3.20, inMax:2.40, ioBufKB:4.0,
+    baseAcc:88.9, accLabel:'AUC', qSens:0.8, interactive:false,
+    classes:['normal','anomaly'],
+    layers:[
+      {name:'Dense1 128->96',      type:'dense', dims:'128 -> 96', color:'#3b82f6', params:12384, macs:12288, dwMacs:0, inAct:128, outAct:96,  outCh:96,  gridW:28, gridH:20},
+      {name:'Dense2 96->32',       type:'dense', dims:'96 -> 32',  color:'#6366f1', params:3104,  macs:3072,  dwMacs:0, inAct:96,  outAct:32,  outCh:32,  gridW:24, gridH:16},
+      {name:'Bottleneck 32->8',    type:'dense', dims:'32 -> 8',   color:'#8b5cf6', params:264,   macs:256,   dwMacs:0, inAct:32,  outAct:8,   outCh:8,   gridW:16, gridH:8},
+      {name:'Dense4 8->32',        type:'dense', dims:'8 -> 32',   color:'#8b5cf6', params:288,   macs:256,   dwMacs:0, inAct:8,   outAct:32,  outCh:32,  gridW:8,  gridH:16},
+      {name:'Dense5 32->96',       type:'dense', dims:'32 -> 96',  color:'#6366f1', params:3168,  macs:3072,  dwMacs:0, inAct:32,  outAct:96,  outCh:96,  gridW:24, gridH:16},
+      {name:'Dense6 96->128 recon',type:'dense', dims:'96 -> 128', color:'#10b981', params:12416, macs:12288, dwMacs:0, inAct:96,  outAct:128, outCh:128, gridW:28, gridH:20}
+    ]
+  },
+  mnist: {
+    name:'MNIST digit CNN (interactive)', short:'MNIST CNN',
+    task:'10-class handwritten digit recognition',
+    inputName:'28 x 28 x 1 grayscale',
+    inAct:784, inMin:-0.42, inMax:2.82, ioBufKB:1.0,
+    baseAcc:99.1, accLabel:'Top-1', qSens:0.6, interactive:true,
+    classes:['0','1','2','3','4','5','6','7','8','9'],
+    layers:[
+      {name:'Conv1 3x3',     type:'conv',  dims:'28x28x1 -> 26x26x8',  color:'#3b82f6', params:80,    macs:48672,  dwMacs:0, inAct:784,  outAct:5408, outCh:8,  gridW:9,  gridH:8},
+      {name:'Conv2 3x3',     type:'conv',  dims:'13x13x8 -> 11x11x16', color:'#6366f1', params:1168,  macs:139392, dwMacs:0, inAct:1352, outAct:1936, outCh:16, gridW:18, gridH:16},
+      {name:'Conv3 3x3',     type:'conv',  dims:'5x5x16 -> 3x3x32',    color:'#8b5cf6', params:4640,  macs:41472,  dwMacs:0, inAct:400,  outAct:288,  outCh:32, gridW:24, gridH:16},
+      {name:'Dense1 288->64',type:'dense', dims:'288 -> 64',           color:'#f97316', params:18496, macs:18432,  dwMacs:0, inAct:288,  outAct:64,   outCh:64, gridW:28, gridH:20},
+      {name:'Dense2 64->10', type:'dense', dims:'64 -> 10',            color:'#10b981', params:650,   macs:640,    dwMacs:0, inAct:64,   outAct:10,   outCh:10, gridW:16, gridH:10}
+    ]
   }
 };
 
-const MCU_FLASH = 512;
-const BOOT_KB   = 16;
-const APP_KB    = 48;
+// --- Deployment targets. Flash/SRAM figures are the datasheet numbers; the app
+// --- figure covers firmware + TensorFlow Lite Micro interpreter + CMSIS-NN kernels.
+const TARGETS = {
+  f407: {name:'STM32F407VG', core:'Cortex-M4F', mhz:168, simd:1.0, flashKB:1024, sramKB:128, extraRamKB:64, extraRamName:'CCM',
+    bootKB:16, appKB:96, staticKB:24,
+    note:'1 MB flash, 192 KB SRAM total = 128 KB SRAM1/2 + 64 KB CCM. The tensor arena is budgeted against SRAM1/2 only: CCM is not reachable by DMA, so it holds stack and static data instead.'},
+  l432: {name:'STM32L432KC (L4)', core:'Cortex-M4F', mhz:80, simd:1.0, flashKB:256, sramKB:64, extraRamKB:0, extraRamName:'',
+    bootKB:16, appKB:88, staticKB:20,
+    note:'Low-power L4: 256 KB flash, 64 KB SRAM. Same M4F core and CMSIS-NN kernels at less than half the clock, so latency roughly doubles versus the F407.'},
+  nrf52840: {name:'nRF52840', core:'Cortex-M4F', mhz:64, simd:1.0, flashKB:1024, sramKB:256, extraRamKB:0, extraRamName:'',
+    bootKB:32, appKB:140, staticKB:28,
+    note:'BLE SoC: 1 MB flash, 256 KB SRAM. The SoftDevice stack claims a sizeable slice of both, folded into the bootloader/app/static figures here.'},
+  esp32s3: {name:'ESP32-S3', core:'Xtensa LX7', mhz:240, simd:1.15, flashKB:8192, sramKB:512, extraRamKB:0, extraRamName:'',
+    bootKB:64, appKB:320, staticKB:64,
+    note:'Not a Cortex-M: ESP-NN replaces CMSIS-NN and the LX7 SIMD unit is modelled at 1.15x the M4F MAC throughput. Flash is external QSPI, so weight fetches are cached rather than executed in place.'}
+};
 
-// ─── STATE ────────────────────────────────────────────────────────
-let currentModel   = 'custom';
+// --- Latency model, stated on the page. MACs per cycle by precision, then a
+// --- kernel-efficiency factor by operator type.
+const MACS_PER_CYCLE  = { fp32:0.32, int8:1.55, int4:0.50 };
+const TYPE_EFF        = { conv:1.00, pwconv:1.00, dsblock:1.00, dwconv:0.35, dense:0.80 };
+const DW_EFF          = 0.35;
+const OP_OVERHEAD_US  = 10;      // kernel setup + requantisation per operator
+const ARENA_FIXED_B   = 2048;    // TFLM interpreter bookkeeping
+const ARENA_SCRATCH_F = 0.08;    // CMSIS-NN im2col / buffer allowance
+
+// --- palette read from the shell stylesheet so canvases match the CSS
+var CSSV = getComputedStyle(document.documentElement);
+function cv(nm, fb){ var v = CSSV.getPropertyValue(nm); v = v ? v.trim() : ''; return v || fb; }
+const COL = {
+  bg:cv('--surface','#0f1629'), grid:cv('--border','#1e293b'), faint:cv('--faint','#7788a0'),
+  text:cv('--text','#f1f5f9'), muted:cv('--muted','#94a3b8'), cyan:cv('--cyan','#06b6d4'),
+  green:cv('--green','#10b981'), red:cv('--red','#ef4444'), blue:cv('--blue','#3b82f6'),
+  orange:cv('--orange','#f97316'), purple:cv('--purple','#8b5cf6')
+};
+
+// --- STATE
+let currentModel   = 'kws';
 let currentQuant   = 'fp32';
+let currentTarget  = 'f407';
+let clipPct        = 100;
 let selectedLayer  = 0;
 let weights        = {};
 let quantWeights   = {};
+let layerScales    = {};
+let layerErr       = {};
+let actQ           = {};
 let isFlashed      = false;
 let animFrame      = null;
 let flashInterval  = null;
+let runCounter     = 0;
+let METRICS_CACHE  = {};
+let heatGeom       = null;
+
+function fmtMs(v){ return v>=100 ? v.toFixed(0) : v>=10 ? v.toFixed(1) : v>=1 ? v.toFixed(2) : v.toFixed(3); }
+function qMax(){ return currentQuant==='int4' ? 7 : 127; }
 
 // ─── SEEDED RNG ───────────────────────────────────────────────────
 function mulberry32(a){
@@ -547,57 +688,192 @@ function normalRandom(rng){
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
 }
 
-// ─── GENERATE WEIGHTS ─────────────────────────────────────────────
+// --- GENERATE WEIGHTS -------------------------------------------------------
+// Sampled tiles, not trained weights: one row per output channel, one column per
+// weight within that channel, with layer-appropriate spread. The first layer gets
+// a few outliers, which is what makes it the most quantisation-sensitive one.
 function generateWeights(modelKey){
   const model = MODELS[modelKey];
-  const rng = mulberry32(42 + modelKey.charCodeAt(0));
-  weights = {};
+  const rng = mulberry32(SEED + modelKey.charCodeAt(0)*131);
+  weights = {}; actQ = {}; METRICS_CACHE = {};
   model.layers.forEach((layer,i)=>{
     const n = layer.gridW * layer.gridH;
     const w = new Float32Array(n);
-    const std = layer.type === 'conv' ? 0.3 : 0.15;
-    for(let j=0;j<n;j++) w[j] = normalRandom(rng)*std;
+    const base = layer.type==='dwconv' ? 0.26 : layer.type==='dense' ? 0.06 : 0.13;
+    for(let r=0;r<layer.gridH;r++){
+      // per-channel gain: real per-channel ranges differ, most for depthwise kernels
+      const gain = Math.exp(normalRandom(rng) * (layer.type==='dwconv' ? 0.55 : 0.25));
+      for(let c=0;c<layer.gridW;c++) w[r*layer.gridW+c] = normalRandom(rng)*base*gain;
+    }
+    if(i===0){ // activation-range outliers in the stem convolution
+      for(let k=0;k<3;k++){
+        const idx = Math.floor(rng()*n);
+        w[idx] = (rng()<0.5?-1:1) * base * (5.5 + rng()*2.5);
+      }
+    }
     weights[i] = w;
+    // calibrated activation range for this layer's OUTPUT tensor
+    const isLogit = (i === model.layers.length-1);
+    const amax = 1.8 + rng()*5.2;
+    actQ[i] = { min: isLogit ? -(1.2+rng()*3.0) : 0, max: isLogit ? (1.2+rng()*4.0) : amax };
   });
   applyQuantization();
 }
 
-// ─── QUANTIZATION ─────────────────────────────────────────────────
+// --- QUANTIZATION -----------------------------------------------------------
+// Weights: SYMMETRIC, PER OUTPUT CHANNEL.  s_c = P-th percentile of |w_c| / q_max,
+// zero-point 0, q = clamp(round(w/s_c), -q_max, +q_max), dequant = q * s_c.
+// Dequantisation is therefore the exact inverse of the rounding step.
+function quantizeSymPerChannel(w, gw, gh, bits, pct){
+  const qm = (bits === 8) ? 127 : 7;
+  const qw = new Float32Array(w.length);
+  const scales = new Float32Array(gh);
+  const buf = [];
+  for(let r=0;r<gh;r++){
+    buf.length = 0;
+    for(let c=0;c<gw;c++){ const idx=r*gw+c; if(idx<w.length) buf.push(Math.abs(w[idx])); }
+    if(!buf.length){ scales[r]=1e-8; continue; }
+    buf.sort((a,b)=>a-b);
+    // linear interpolation between order statistics: a row holds only 8-28 samples,
+    // so a nearest-rank percentile would quantise the slider itself
+    const pos = Math.max(0, Math.min(buf.length-1, (pct/100)*(buf.length-1)));
+    const k0 = Math.floor(pos), k1 = Math.min(buf.length-1, k0+1);
+    const amax = buf[k0] + (buf[k1]-buf[k0])*(pos-k0);
+    const sc = amax > 0 ? amax/qm : 1e-8;
+    scales[r] = sc;
+    for(let c=0;c<gw;c++){
+      const idx = r*gw+c; if(idx>=w.length) break;
+      const q = Math.max(-qm, Math.min(qm, Math.round(w[idx]/sc)));
+      qw[idx] = q*sc;
+    }
+  }
+  return { qw:qw, scales:scales };
+}
+
+// Activations: ASYMMETRIC, PER TENSOR (uint8 convention).
+// s = (max - min) / 255,  z = round(-min / s).  int8 kernels shift z by -128.
+function quantizeAsymTensor(mn, mx, levels){
+  const span = Math.max(mx - mn, 1e-9);
+  const scale = span/(levels-1);
+  return { scale:scale, zp: Math.round(-mn/scale) };
+}
+
+function quantErr(w, qw){
+  let se=0, sp=0;
+  for(let j=0;j<w.length;j++){ const e=w[j]-qw[j]; se+=e*e; sp+=w[j]*w[j]; }
+  return { mse: se/Math.max(1,w.length), rel: sp>0 ? se/sp : 0,
+           sqnr: se>0 ? 10*Math.log10(sp/se) : Infinity };
+}
+
 function applyQuantization(){
   const model = MODELS[currentModel];
-  quantWeights = {};
-  model.layers.forEach((_,i)=>{
+  quantWeights = {}; layerScales = {}; layerErr = {};
+  model.layers.forEach((l,i)=>{
     const w = weights[i];
     if(!w) return;
-    const n = w.length;
-    const qw = new Float32Array(n);
     if(currentQuant === 'fp32'){
-      qw.set(w);
+      const qw = new Float32Array(w.length); qw.set(w);
+      quantWeights[i] = qw; layerScales[i] = null;
+      layerErr[i] = { mse:0, rel:0, sqnr:Infinity };
     } else {
-      const bits = currentQuant==='int8' ? 8 : 4;
-      const levels = Math.pow(2,bits);
-      let mn=Infinity, mx=-Infinity;
-      for(let j=0;j<n;j++){ if(w[j]<mn) mn=w[j]; if(w[j]>mx) mx=w[j]; }
-      const scale = (mx-mn)/(levels-1);
-      for(let j=0;j<n;j++){
-        const q = Math.round((w[j]-mn)/scale);
-        const clamped = Math.max(0,Math.min(levels-1,q));
-        qw[j] = mn + clamped*scale;
-      }
+      const res = quantizeSymPerChannel(w, l.gridW, l.gridH, currentQuant==='int8'?8:4, clipPct);
+      quantWeights[i] = res.qw; layerScales[i] = res.scales;
+      layerErr[i] = quantErr(w, res.qw);
     }
-    quantWeights[i] = qw;
   });
+}
+
+// --- ACCURACY DEGRADATION ----------------------------------------------------
+// Derived from the quantisation noise actually present in the sampled weights,
+// weighted by parameter count and by layer sensitivity (first conv and final
+// classifier dominate), then clamped to the empirically observed bands.
+function layerSensitivity(model, i, l){
+  if(i === 0) return 2.5;
+  if(i === model.layers.length-1) return 2.0;
+  if(l.type === 'dwconv' || l.type === 'dsblock') return 1.5;
+  return 1.0;
+}
+function accuracyDrop(quant){
+  if(quant === 'fp32') return 0;
+  const model = MODELS[currentModel];
+  const bits = quant==='int8' ? 8 : 4;
+  let num = 0, den = 0;
+  model.layers.forEach((l,i)=>{
+    const w = weights[i]; if(!w) return;
+    const res = quantizeSymPerChannel(w, l.gridW, l.gridH, bits, clipPct);
+    const e = quantErr(w, res.qw);
+    const wgt = layerSensitivity(model,i,l) * l.params;
+    num += wgt*e.rel; den += wgt;
+  });
+  const N = den > 0 ? num/den : 0;
+  let drop = 21.5 * Math.pow(N, 0.35) * model.qSens;
+  drop = (quant === 'int8') ? Math.min(1.5, Math.max(0.3, drop))
+                            : Math.min(10.0, Math.max(3.0, drop));
+  return drop;
+}
+
+// --- SIZE / ARENA / LATENCY --------------------------------------------------
+function modelMetrics(quant){
+  const key = currentModel+'|'+quant+'|'+currentTarget+'|'+clipPct.toFixed(1);
+  if(METRICS_CACHE[key]) return METRICS_CACHE[key];
+  const model = MODELS[currentModel], tgt = TARGETS[currentTarget];
+
+  let params=0, macs=0, chans=0, peakAct=0;
+  model.layers.forEach(l=>{
+    params += l.params; macs += l.macs; chans += l.outCh;
+    peakAct = Math.max(peakAct, l.inAct + l.outAct);
+  });
+
+  // weights + per-channel int32 multiplier/shift + per-tensor scale & zero-point
+  const bpw = quant==='fp32' ? 4 : quant==='int8' ? 1 : 0.5;
+  const overheadB = quant==='fp32' ? 0 : chans*8 + model.layers.length*8;
+  const sizeKB = (params*bpw + overheadB)/1024;
+
+  // tensor arena: peak activation pair, int8 when quantised, fp32 otherwise
+  const actB = peakAct * (quant==='fp32' ? 4 : 1);
+  const arenaKB = (actB*(1+ARENA_SCRATCH_F) + ARENA_FIXED_B)/1024;
+
+  // latency: explicit MAC-throughput model, stated on the page
+  const r = MACS_PER_CYCLE[quant] * tgt.simd;
+  let cycles = 0;
+  model.layers.forEach(l=>{
+    const dw = l.dwMacs, main = l.macs - dw;
+    cycles += main/(r*(TYPE_EFF[l.type]||1.0)) + dw/(r*DW_EFF);
+    cycles += OP_OVERHEAD_US*1e-6*tgt.mhz*1e6;
+  });
+  const latMs = cycles/(tgt.mhz*1e6)*1000;
+
+  const drop = accuracyDrop(quant);
+  const flashKB = tgt.bootKB + tgt.appKB + sizeKB;
+  const sramKB  = arenaKB + tgt.staticKB + model.ioBufKB;
+
+  const m = { params:params, macs:macs, chans:chans, sizeKB:sizeKB, arenaKB:arenaKB,
+              latMs:latMs, drop:drop, accuracy:model.baseAcc-drop,
+              flashKB:flashKB, sramKB:sramKB, peakActB:actB,
+              flashOk: flashKB <= tgt.flashKB, sramOk: sramKB <= tgt.sramKB };
+  METRICS_CACHE[key] = m;
+  return m;
 }
 
 // ─── CANVAS UTILS ─────────────────────────────────────────────────
 function setupCanvas(canvas){
   const dpr = window.devicePixelRatio || 1;
+  // Lock the CSS height once. Without this, assigning canvas.height feeds back into
+  // the layout height (the element has width:100% and no CSS height) and the canvas
+  // grows by a factor of dpr on every redraw on HiDPI screens.
+  if(!canvas.dataset.cssH){
+    const r0 = canvas.getBoundingClientRect();
+    canvas.dataset.cssH = String(r0.height || canvas.height || 300);
+  }
+  const cssH = parseFloat(canvas.dataset.cssH);
+  canvas.style.height = cssH + 'px';
   const rect = canvas.getBoundingClientRect();
-  canvas.width  = rect.width * dpr;
-  canvas.height = rect.height * dpr;
+  const cssW = Math.max(1, rect.width);
+  canvas.width  = Math.max(1, Math.round(cssW*dpr));
+  canvas.height = Math.max(1, Math.round(cssH*dpr));
   const ctx = canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  return { ctx, w:rect.width, h:rect.height };
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w:cssW, h:cssH };
 }
 
 // ─── HEATMAP ──────────────────────────────────────────────────────
@@ -728,38 +1004,125 @@ function drawHeatmap(timestamp){
   ctx.textAlign = 'right';
   ctx.fillText(mx.toFixed(2), barX+barW, barY+20);
 
-  // Title line
-  ctx.fillStyle = '#64748b';
-  ctx.font = '10px Inter, sans-serif';
+  // Axis labels + caption
+  ctx.fillStyle = COL.faint;
+  ctx.font = '9px Inter, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('rows = output channels (sampled)', 6, 12);
+  ctx.textAlign = 'right';
+  ctx.fillText('cols = weights within channel', w-6, 12);
   ctx.textAlign = 'center';
   const uniqueVals = new Set(Array.from(drawWeights).map(v=>v.toFixed(6))).size;
-  ctx.fillText(`${layer.name}  |  ${gw*gh} weights  |  ${currentQuant.toUpperCase()}  |  ${uniqueVals} unique values`, w/2, h-4);
+  const lv = currentQuant==='fp32' ? 'continuous' : (currentQuant==='int8'?'255':'15')+' levels';
+  ctx.fillText(layer.name+'  |  '+gw+' x '+gh+' sampled weights  |  '+currentQuant.toUpperCase()+
+               ' ('+lv+')  |  '+uniqueVals+' unique values', w/2, h-4);
 
-  // Stats
+  // geometry for the hover tooltip
+  heatGeom = { offX:offX, offY:offY, cell:cellSize, gw:gw, gh:gh };
+
+  // ---- panel statistics
   let sum=0, sumSq=0;
   for(let i=0;i<drawWeights.length;i++){ sum+=drawWeights[i]; sumSq+=drawWeights[i]*drawWeights[i]; }
   const mean = sum/drawWeights.length;
-  const std = Math.sqrt(sumSq/drawWeights.length - mean*mean);
+  const std = Math.sqrt(Math.max(0, sumSq/drawWeights.length - mean*mean));
 
-  document.getElementById('wsMin').textContent = mn.toFixed(3);
-  document.getElementById('wsMax').textContent = mx.toFixed(3);
+  document.getElementById('wsMin').textContent  = mn.toFixed(3);
+  document.getElementById('wsMax').textContent  = mx.toFixed(3);
   document.getElementById('wsMean').textContent = mean.toFixed(3);
-  document.getElementById('wsStd').textContent = std.toFixed(3);
+  document.getElementById('wsStd').textContent  = std.toFixed(3);
+  document.getElementById('wsMacs').textContent = layer.macs.toLocaleString();
 
-  if(currentQuant !== 'fp32'){
-    const bits = currentQuant==='int8' ? 8 : 4;
-    const levels = Math.pow(2,bits);
-    const origW = weights[selectedLayer];
-    let omn=Infinity, omx=-Infinity;
-    for(let j=0;j<origW.length;j++){ if(origW[j]<omn) omn=origW[j]; if(origW[j]>omx) omx=origW[j]; }
-    const scale = (omx-omn)/(levels-1);
-    const zp = Math.round(-omn/scale);
-    document.getElementById('wsScale').textContent = scale.toFixed(4);
-    document.getElementById('wsZero').textContent = zp.toString();
+  // activation quantisation for this layer's output tensor (asymmetric, per tensor)
+  const a = actQ[selectedLayer] || {min:0,max:1};
+  document.getElementById('wsAct').textContent = a.min.toFixed(2)+' .. '+a.max.toFixed(2);
+  if(currentQuant === 'fp32'){
+    document.getElementById('wsScale').textContent    = 'N/A';
+    document.getElementById('wsZero').textContent     = 'N/A';
+    document.getElementById('wsMse').textContent      = '0';
+    document.getElementById('wsSqnr').textContent     = 'lossless';
+    document.getElementById('wsActScale').textContent = 'N/A';
+    document.getElementById('wsActZp').textContent    = 'N/A';
   } else {
-    document.getElementById('wsScale').textContent = 'N/A';
-    document.getElementById('wsZero').textContent = 'N/A';
+    const sc = layerScales[selectedLayer];
+    let med = 0;
+    if(sc && sc.length){
+      const arr = Array.from(sc).sort((p,q)=>p-q);
+      med = arr[Math.floor(arr.length/2)];
+    }
+    const err = layerErr[selectedLayer] || {mse:0,sqnr:0};
+    const aq = quantizeAsymTensor(a.min, a.max, 256);
+    document.getElementById('wsScale').textContent    = med.toExponential(2);
+    document.getElementById('wsZero').textContent     = '0 (sym)';
+    document.getElementById('wsMse').textContent      = err.mse.toExponential(2);
+    document.getElementById('wsSqnr').textContent     = err.sqnr.toFixed(1)+' dB';
+    document.getElementById('wsActScale').textContent = aq.scale.toExponential(2);
+    document.getElementById('wsActZp').textContent    = String(aq.zp);
   }
+}
+
+// --- WEIGHT HISTOGRAM: FP32 distribution vs the dequantised one ---------------
+let histGeom = null;
+function drawHistogram(){
+  const canvas = document.getElementById('histCanvas');
+  if(!canvas) return;
+  const g = setupCanvas(canvas), ctx = g.ctx, w = g.w, h = g.h;
+  const orig = weights[selectedLayer], q = quantWeights[selectedLayer];
+  ctx.clearRect(0,0,w,h);
+  if(!orig || !q) return;
+  const model = MODELS[currentModel], layer = model.layers[selectedLayer];
+
+  let amax = 0;
+  for(let i=0;i<orig.length;i++) amax = Math.max(amax, Math.abs(orig[i]));
+  if(amax === 0) amax = 1;
+  const NB = 61, lo = -amax*1.04, hi = amax*1.04, bw = (hi-lo)/NB;
+  const hO = new Array(NB).fill(0), hQ = new Array(NB).fill(0);
+  function bin(v){ return Math.max(0, Math.min(NB-1, Math.floor((v-lo)/bw))); }
+  for(let i=0;i<orig.length;i++) hO[bin(orig[i])]++;
+  for(let i=0;i<q.length;i++)    hQ[bin(q[i])]++;
+  const peak = Math.max(1, Math.max.apply(null, hO.concat(hQ)));
+
+  const pad = { top:20, right:16, bottom:34, left:44 };
+  const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+
+  ctx.strokeStyle = COL.grid; ctx.lineWidth = 0.5;
+  ctx.fillStyle = COL.muted; ctx.font = '9px "JetBrains Mono", monospace'; ctx.textAlign = 'right';
+  for(let i=0;i<=4;i++){
+    const y = pad.top + ch*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(w-pad.right,y); ctx.stroke();
+    ctx.fillText(String(Math.round(peak*(1-i/4))), pad.left-6, y+3);
+  }
+  const bwPx = cw/NB;
+  for(let b=0;b<NB;b++){
+    const x = pad.left + b*bwPx;
+    const hq = hQ[b]/peak*ch;
+    if(hq > 0){ ctx.fillStyle = 'rgba(6,182,212,.55)'; ctx.fillRect(x+0.4, pad.top+ch-hq, bwPx-0.8, hq); }
+  }
+  ctx.strokeStyle = COL.muted; ctx.lineWidth = 1.2; ctx.beginPath();
+  for(let b=0;b<NB;b++){
+    const x = pad.left + b*bwPx, y = pad.top + ch - hO[b]/peak*ch;
+    if(b===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    ctx.lineTo(x+bwPx, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top+ch); ctx.lineTo(w-pad.right, pad.top+ch); ctx.stroke();
+  ctx.fillStyle = COL.muted; ctx.font = '9px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+  for(let i=0;i<=4;i++){
+    const x = pad.left + cw*i/4;
+    ctx.fillText((lo + (hi-lo)*i/4).toFixed(3), x, pad.top+ch+14);
+  }
+  ctx.fillStyle = COL.faint; ctx.font = '9px Inter, sans-serif';
+  ctx.fillText('weight value (dimensionless)', pad.left+cw/2, h-4);
+  ctx.save(); ctx.translate(11, pad.top+ch/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center'; ctx.fillText('count', 0, 0); ctx.restore();
+
+  document.getElementById('histTag').textContent =
+    layer.name + ' \u00b7 ' + orig.length + ' sampled weights \u00b7 ' +
+    (currentQuant==='fp32' ? 'FP32 (no quantisation)'
+      : currentQuant.toUpperCase()+' step = per-channel scale, ' + (currentQuant==='int8'?254:14) + ' usable levels');
+
+  histGeom = { pad:pad, cw:cw, ch:ch, NB:NB, lo:lo, bw:bw, hO:hO, hQ:hQ };
 }
 
 // ─── ARCHITECTURE ─────────────────────────────────────────────────
@@ -769,12 +1132,14 @@ function drawArchitecture(){
   document.getElementById('archModelName').textContent = model.name;
   body.innerHTML = '';
 
-  // Input layer
+  // Input layer — asymmetric per-tensor activation quantisation
+  const inQ = quantizeAsymTensor(model.inMin, model.inMax, 256);
   addArchBlock(body, {
-    name: 'Input',
-    sub: '28 x 28 x 1 (MNIST)',
+    name: 'Input tensor',
+    sub: model.inputName,
     color: '#475569',
-    right: '784 values',
+    right: model.inAct.toLocaleString() + ' values' + (currentQuant==='fp32' ? '' :
+      ' &middot; s=' + inQ.scale.toExponential(2) + ' z=' + inQ.zp),
     rightColor: 'var(--dim)',
     clickable: false
   });
@@ -786,8 +1151,8 @@ function drawArchitecture(){
     arrow.innerHTML = '<i class="fas fa-arrow-down" style="font-size:10px"></i>';
     body.appendChild(arrow);
 
-    const sizeRatio = currentQuant==='fp32' ? 1 : currentQuant==='int8' ? 0.25 : 0.125;
-    const layerKB = (layer.params*4*sizeRatio/1024).toFixed(1);
+    const bpw = currentQuant==='fp32' ? 4 : currentQuant==='int8' ? 1 : 0.5;
+    const layerKB = ((layer.params*bpw + (currentQuant==='fp32'?0:layer.outCh*8+8))/1024).toFixed(1);
     const sizeColor = currentQuant==='fp32' ? 'var(--text)' : currentQuant==='int8' ? 'var(--cyan)' : 'var(--green)';
 
     const div = document.createElement('div');
@@ -800,7 +1165,7 @@ function drawArchitecture(){
         <div class="layer-dim">${layer.dims}</div>
       </div>
       <div style="text-align:right">
-        <div class="layer-params">${layer.params.toLocaleString()} params</div>
+        <div class="layer-params">${layer.params.toLocaleString()} params &middot; ${(layer.macs/1000).toFixed(layer.macs<10000?1:0)}k MAC</div>
         <div class="layer-size" style="color:${sizeColor}">${layerKB} KB</div>
       </div>
     `;
@@ -814,23 +1179,23 @@ function drawArchitecture(){
   body.appendChild(arrow2);
 
   // Output
+  const outName = currentModel==='ae' ? 'Output (reconstruction)' : 'Output (Softmax)';
   addArchBlock(body, {
-    name: 'Output (Softmax)',
-    sub: '10 classes',
+    name: outName,
+    sub: currentModel==='ae' ? '128-bin reconstruction, error vs input' : model.classes.length + ' classes',
     color: '#10b981',
-    right: 'Predictions',
+    right: currentModel==='ae' ? 'MSE score' : 'Predictions',
     rightColor: 'var(--green)',
     clickable: false
   });
 
-  // Total params
-  const totalParams = model.layers.reduce((s,l)=>s+l.params, 0);
-  const totalKB = MODELS[currentModel][currentQuant].size;
+  // Totals
+  const m = modelMetrics(currentQuant);
   const totalDiv = document.createElement('div');
-  totalDiv.style.cssText = 'margin-top:10px;padding:8px 12px;background:var(--card2);border-radius:6px;display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono)';
+  totalDiv.style.cssText = 'margin-top:10px;padding:8px 12px;background:var(--card2);border-radius:6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11px;font-family:var(--mono)';
   totalDiv.innerHTML = `
-    <span style="color:var(--dim)">Total: ${totalParams.toLocaleString()} params</span>
-    <span style="color:var(--cyan);font-weight:700">${totalKB} KB (${currentQuant.toUpperCase()})</span>
+    <span style="color:var(--dim)">Total: ${m.params.toLocaleString()} params &middot; ${(m.macs/1e6).toFixed(2)}M MAC/inference</span>
+    <span style="color:var(--cyan);font-weight:700">${m.sizeKB.toFixed(1)} KB (${currentQuant.toUpperCase()})</span>
   `;
   body.appendChild(totalDiv);
 
@@ -878,9 +1243,10 @@ function drawTradeoffChart(){
   const model = MODELS[currentModel];
   const levels = ['fp32','int8','int4'];
   const labels = ['FP32','INT8','INT4'];
-  const accData  = levels.map(l=>model[l].accuracy);
-  const sizeData = levels.map(l=>model[l].size);
-  const infData  = levels.map(l=>model[l].inference);
+  const mets     = levels.map(l=>modelMetrics(l));
+  const accData  = mets.map(m=>m.accuracy);
+  const sizeData = mets.map(m=>m.sizeKB);
+  const infData  = mets.map(m=>m.latMs);
 
   const pad = { top:30, right:58, bottom:38, left:52 };
   const chartW = w - pad.left - pad.right;
@@ -900,8 +1266,8 @@ function drawTradeoffChart(){
   }
 
   // Accuracy axis (left)
-  const accMin = Math.floor(Math.min(...accData)-2);
-  const accMax = Math.ceil(Math.max(...accData)+1);
+  const accMin = Math.floor(Math.min.apply(null,accData)-2);
+  const accMax = Math.ceil(Math.max.apply(null,accData)+1);
   ctx.fillStyle = '#94a3b8';
   ctx.font = '9px Courier New, monospace';
   ctx.textAlign = 'right';
@@ -916,18 +1282,18 @@ function drawTradeoffChart(){
   ctx.fillStyle = '#06b6d4';
   ctx.font = '10px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Accuracy (%)', 0, 0);
+  ctx.fillText(MODELS[currentModel].accLabel + ' (%)', 0, 0);
   ctx.restore();
 
   // Size axis (right)
-  const sizeMax = Math.ceil(Math.max(...sizeData)*1.15);
+  const sizeMax = Math.max(1, Math.max.apply(null,sizeData)*1.15);
   ctx.textAlign = 'left';
   ctx.fillStyle = '#94a3b8';
   ctx.font = '9px Courier New, monospace';
   for(let i=0;i<=5;i++){
     const val = sizeMax*(1-i/5);
     const y = pad.top + (chartH/5)*i;
-    ctx.fillText(Math.round(val)+'KB', w-pad.right+6, y+3);
+    ctx.fillText(val.toFixed(val<10?1:0)+'KB', w-pad.right+6, y+3);
   }
   ctx.save();
   ctx.translate(w-6, pad.top+chartH/2);
@@ -997,16 +1363,16 @@ function drawTradeoffChart(){
     ctx.arc(x, y, isActive?5:3.5, 0, Math.PI*2);
     ctx.fillStyle = '#10b981';
     ctx.fill();
-    if(isActive){ ctx.strokeStyle='#0b1120'; ctx.lineWidth=2; ctx.stroke(); }
+    if(isActive){ ctx.strokeStyle=COL.bg; ctx.lineWidth=2; ctx.stroke(); }
 
     ctx.fillStyle = isActive ? '#10b981' : '#64748b';
     ctx.font = (isActive?'bold ':'') + '9px Courier New, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(sizeData[i]+'KB', x, y-10);
+    ctx.fillText(sizeData[i].toFixed(1)+'KB', x, y-10);
   });
 
   // Inference dots (orange)
-  const infMax = Math.max(...infData)*1.2;
+  const infMax = Math.max(1e-6, Math.max.apply(null,infData)*1.2);
   levels.forEach((level,i)=>{
     const x = pad.left + barGroupW*i + barGroupW/2;
     const infNorm = infData[i]/infMax;
@@ -1022,52 +1388,96 @@ function drawTradeoffChart(){
     ctx.fillStyle = isActive ? '#f97316' : '#64748b';
     ctx.font = (isActive?'bold ':'') + '9px Courier New, monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(infData[i]+'ms', x+10, y+4);
+    ctx.fillText(fmtMs(infData[i])+'ms', x+10, y+4);
   });
+
+  tradeGeom = { padLeft:pad.left, padTop:pad.top, chartW:chartW, chartH:chartH,
+                groupW:barGroupW, labels:labels, acc:accData, size:sizeData, inf:infData };
 }
+let tradeGeom = null;
 
-// ─── FLASH VISUALIZATION ─────────────────────────────────────────
+// --- TARGET MEMORY BUDGET ----------------------------------------------------
+function setSeg(id, pct, label){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.width = Math.max(0, pct)+'%';
+  el.textContent = pct > 9 ? label : '';
+}
 function updateFlashBar(){
-  const model = MODELS[currentModel];
-  const stats = model[currentQuant];
-  const modelKB = stats.size;
-  const usedKB = BOOT_KB + APP_KB + modelKB;
-  const pct = usedKB / MCU_FLASH * 100;
-  const overflow = usedKB > MCU_FLASH;
+  const model = MODELS[currentModel], tgt = TARGETS[currentTarget];
+  const m = modelMetrics(currentQuant);
 
-  const bootPct  = BOOT_KB / MCU_FLASH * 100;
-  const appPct   = APP_KB / MCU_FLASH * 100;
-  const modelPct = overflow ? (100 - bootPct - appPct) : (modelKB / MCU_FLASH * 100);
-  const freePct  = overflow ? 0 : (100 - bootPct - appPct - modelPct);
+  document.getElementById('targetTag').textContent = tgt.name + ' \u2014 ' + tgt.core + ' @ ' + tgt.mhz + ' MHz';
+  document.getElementById('targetNote').innerHTML =
+    '<b>' + tgt.name + '</b> &middot; ' + tgt.core + ' @ ' + tgt.mhz + ' MHz &middot; ' +
+    tgt.flashKB + ' KB flash &middot; ' + tgt.sramKB + ' KB SRAM' +
+    (tgt.extraRamKB ? ' + ' + tgt.extraRamKB + ' KB ' + tgt.extraRamName : '') + '. ' + tgt.note;
 
+  // ---- flash
+  const F = tgt.flashKB;
+  const bootPct = tgt.bootKB/F*100, appPct = tgt.appKB/F*100;
+  const flashOver = !m.flashOk;
+  const modelPct = flashOver ? Math.max(0, 100-bootPct-appPct) : m.sizeKB/F*100;
+  const freePct  = Math.max(0, 100-bootPct-appPct-modelPct);
+  setSeg('flashBoot', bootPct, 'Boot');
+  setSeg('flashApp',  appPct,  'App+TFLM');
   const modelSeg = document.getElementById('flashModel');
   modelSeg.style.width = modelPct+'%';
-  modelSeg.className = 'flash-seg model' + (overflow ? ' overflow' : '');
-  modelSeg.textContent = modelPct > 5 ? modelKB+'KB' : '';
+  modelSeg.className = 'flash-seg model' + (flashOver ? ' overflow' : '');
+  modelSeg.textContent = modelPct > 9 ? m.sizeKB.toFixed(0)+'KB' : '';
+  setSeg('flashFree', freePct, Math.round(F-m.flashKB)+'KB free');
 
-  const freeSeg = document.getElementById('flashFree');
-  freeSeg.style.width = freePct+'%';
-  freeSeg.textContent = freePct > 10 ? Math.round(MCU_FLASH-usedKB)+'KB' : '';
+  const fPct = m.flashKB/F*100;
+  const fp = document.getElementById('flashPct');
+  fp.textContent = fPct.toFixed(1)+'%';
+  fp.style.color = flashOver ? 'var(--red)' : fPct>85 ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('flashDetail').textContent =
+    tgt.bootKB+' boot + '+tgt.appKB+' app + '+m.sizeKB.toFixed(1)+' model = '+m.flashKB.toFixed(1)+' / '+F+' KB';
+  const fb = document.getElementById('flashBadge');
+  fb.textContent = flashOver ? 'OVER BY '+(m.flashKB-F).toFixed(1)+' KB' : 'FITS \u00b7 '+(F-m.flashKB).toFixed(1)+' KB SPARE';
+  fb.className = 'fit-badge ' + (flashOver ? 'fail' : 'pass');
 
-  const pctEl = document.getElementById('flashPct');
-  pctEl.textContent = pct.toFixed(1)+'%';
-  pctEl.style.color = overflow ? 'var(--red)' : pct>80 ? 'var(--yellow)' : 'var(--green)';
+  // ---- SRAM (tensor arena + static + I/O buffer)
+  const S = tgt.sramKB;
+  const sramOver = !m.sramOk;
+  const arenaPct  = Math.min(100, m.arenaKB/S*100);
+  const staticPct = Math.min(Math.max(0,100-arenaPct), (tgt.staticKB+model.ioBufKB)/S*100);
+  const sFree     = Math.max(0, 100-arenaPct-staticPct);
+  const arenaSeg = document.getElementById('sramArena');
+  arenaSeg.style.width = arenaPct+'%';
+  arenaSeg.className = 'flash-seg arena' + (sramOver ? ' overflow' : '');
+  arenaSeg.textContent = arenaPct > 9 ? 'Arena '+m.arenaKB.toFixed(0)+'KB' : '';
+  setSeg('sramStatic', staticPct, 'Static+I/O');
+  setSeg('sramFree',   sFree, Math.round(S-m.sramKB)+'KB free');
 
-  // KPI flash
+  const sPct = m.sramKB/S*100;
+  const sp = document.getElementById('sramPct');
+  sp.textContent = sPct.toFixed(1)+'%';
+  sp.style.color = sramOver ? 'var(--red)' : sPct>85 ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('sramDetail').textContent =
+    'arena '+m.arenaKB.toFixed(1)+' (peak pair '+(m.peakActB/1024).toFixed(1)+' KB) + static '+tgt.staticKB+
+    ' + I/O '+model.ioBufKB.toFixed(1)+' = '+m.sramKB.toFixed(1)+' / '+S+' KB';
+  const sb = document.getElementById('sramBadge');
+  sb.textContent = sramOver ? 'OVER BY '+(m.sramKB-S).toFixed(1)+' KB' : 'FITS \u00b7 '+(S-m.sramKB).toFixed(1)+' KB MARGIN';
+  sb.className = 'fit-badge ' + (sramOver ? 'fail' : 'pass');
+
+  // ---- KPI
   const kpiFlash = document.getElementById('kpiFlash');
-  kpiFlash.textContent = pct.toFixed(0)+'%';
-  kpiFlash.className = overflow ? 'val neg' : pct>80 ? 'val warn' : 'val pos';
+  kpiFlash.textContent = fPct.toFixed(0)+'% / '+sPct.toFixed(0)+'%';
+  kpiFlash.className = (flashOver||sramOver) ? 'val neg' : (fPct>85||sPct>85) ? 'val warn' : 'val pos';
 }
 
 // ─── FLASH ANIMATION ──────────────────────────────────────────────
 function flashToMCU(){
-  const model = MODELS[currentModel];
-  const stats = model[currentQuant];
-  const usedKB = BOOT_KB + APP_KB + stats.size;
+  const tgt = TARGETS[currentTarget];
+  const m = modelMetrics(currentQuant);
+  const st = document.getElementById('flashStatus');
 
-  if(usedKB > MCU_FLASH){
-    document.getElementById('flashStatus').textContent = 'ERROR: Model exceeds 512KB flash!';
-    document.getElementById('flashStatus').style.color = 'var(--red)';
+  if(!m.flashOk || !m.sramOk){
+    st.textContent = !m.flashOk
+      ? 'LINK ERROR: .rodata overflows FLASH by '+(m.flashKB-tgt.flashKB).toFixed(1)+' KB'
+      : 'RUNTIME ERROR: AllocateTensors() failed \u2014 arena needs '+(m.sramKB-tgt.sramKB).toFixed(1)+' KB more SRAM';
+    st.style.color = 'var(--red)';
     return;
   }
 
@@ -1082,14 +1492,13 @@ function flashToMCU(){
 
   const steps = [
     { pct:10,  text:'Erasing flash sectors...' },
-    { pct:25,  text:'Writing bootloader...' },
-    { pct:40,  text:'Writing application code...' },
-    { pct:55,  text:'Transferring model layer 1...' },
-    { pct:70,  text:'Transferring model layer 2...' },
-    { pct:82,  text:'Transferring model layer 3...' },
-    { pct:90,  text:'Verifying CRC32...' },
-    { pct:97,  text:'Configuring interrupts...' },
-    { pct:100, text:'Flash complete! MCU ready.' }
+    { pct:22,  text:'Writing bootloader ('+tgt.bootKB+' KB)...' },
+    { pct:36,  text:'Writing app + TFLite Micro + CMSIS-NN ('+tgt.appKB+' KB)...' },
+    { pct:58,  text:'Writing model .tflite flatbuffer ('+m.sizeKB.toFixed(1)+' KB)...' },
+    { pct:74,  text:'Writing per-channel scales and zero-points...' },
+    { pct:86,  text:'Verifying CRC32...' },
+    { pct:94,  text:'AllocateTensors(): arena '+m.arenaKB.toFixed(1)+' KB of '+tgt.sramKB+' KB SRAM...' },
+    { pct:100, text:'Ready \u2014 '+tgt.name+' @ '+tgt.mhz+' MHz' }
   ];
 
   let stepIdx = 0;
@@ -1362,6 +1771,7 @@ const DIGIT_BITMAPS = {
   ]
 };
 const DIGIT_KEYS = Object.keys(DIGIT_BITMAPS).map(Number);
+let sampleCounter = 0;
 
 // Confusion pairs: which digits are commonly confused with each other
 const CONFUSION = {0:[6],1:[7],3:[5,8],4:[9],5:[3,6],7:[1,2],8:[3,6],9:[4,7]};
@@ -1448,9 +1858,10 @@ function loadRandomSample(){
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#000';
   ctx.fillRect(0,0,280,280);
-  const digit = DIGIT_KEYS[Math.floor(Math.random()*DIGIT_KEYS.length)];
+  sampleCounter++;
+  const rng = mulberry32(SEED + sampleCounter*7919);
+  const digit = DIGIT_KEYS[Math.floor(rng()*DIGIT_KEYS.length)%DIGIT_KEYS.length];
   const bitmap = DIGIT_BITMAPS[digit];
-  const rng = mulberry32(Date.now() & 0xFFFF);
   const cellW = 280/28, cellH = 280/28;
   for(let r=0;r<28;r++){
     for(let c=0;c<28;c++){
@@ -1560,7 +1971,7 @@ function animateForwardPass(callback){
   highlightStep();
 }
 
-// ─── INFERENCE ────────────────────────────────────────────────────
+// --- INFERENCE ---------------------------------------------------------------
 let inferRunning = false;
 
 function runInference(){
@@ -1568,107 +1979,142 @@ function runInference(){
   inferRunning = true;
 
   const model = MODELS[currentModel];
-  const stats = model[currentQuant];
-  const result = document.getElementById('inferenceResult');
-  result.classList.add('show');
+  const m = modelMetrics(currentQuant);
+  document.getElementById('inferenceResult').classList.add('show');
 
-  // Disable buttons during animation
   document.getElementById('inferBtn').disabled = true;
   var icb = document.getElementById('inferBtnCanvas');
   if(icb) icb.disabled = true;
 
-  // Get canvas data and match digit
-  const pixelData = getDrawCanvasData();
-  const totalBrightness = pixelData.reduce((s,v)=>s+v, 0);
-  // If canvas is mostly blank, load a random sample first
-  if(totalBrightness < 5){
-    loadRandomSample();
+  runCounter++;
+  const rng = mulberry32(SEED + runCounter*7919 + currentQuant.charCodeAt(3)*13 + currentModel.charCodeAt(0)*57);
+
+  let trueClass;
+  if(model.interactive){
+    const pixelData = getDrawCanvasData();
+    let brightness = 0;
+    for(let i=0;i<pixelData.length;i++) brightness += pixelData[i];
+    if(brightness < 5) loadRandomSample();
+    trueClass = matchDigitTemplate(brightness < 5 ? getDrawCanvasData() : pixelData);
+  } else {
+    trueClass = Math.floor(rng()*model.classes.length) % model.classes.length;
   }
-  const finalData = totalBrightness < 5 ? getDrawCanvasData() : pixelData;
-  const trueClass = matchDigitTemplate(finalData);
 
-  // Run forward pass animation, then show predictions
-  animateForwardPass(()=>{
-    const rng = mulberry32(Date.now() & 0xFFFF);
-    const preds = [];
-    let total = 0;
+  animateForwardPass(function(){
+    const K = model.classes.length;
+    const confusable = model.interactive
+      ? (CONFUSION[trueClass] || [])
+      : model.classes.map(function(_,i){ return i; }).filter(function(i){ return i!==trueClass; });
 
+    // decision-flip probability is tied to the modelled accuracy loss, not hard-coded
+    const flipP = Math.min(0.35, m.drop/100*12);
     let predictedClass = trueClass;
-    const confusable = CONFUSION[trueClass] || [];
-    if(currentQuant==='int4' && rng()<0.18 && confusable.length>0){
-      predictedClass = confusable[Math.floor(rng()*confusable.length)%confusable.length];
-    } else if(currentQuant==='int8' && rng()<0.04 && confusable.length>0){
-      predictedClass = confusable[Math.floor(rng()*confusable.length)%confusable.length];
+    if(confusable.length && rng() < flipP){
+      predictedClass = confusable[Math.floor(rng()*confusable.length) % confusable.length];
     }
 
-    for(let i=0;i<10;i++){
+    const preds = []; let total = 0;
+    for(let i=0;i<K;i++){
       let v;
-      if(i===predictedClass){
-        v = 0.55 + rng()*0.35;
-      } else if(confusable.includes(i)){
-        v = 0.03 + rng()*0.08;
-      } else {
-        v = rng()*0.025;
-      }
-      if(currentQuant==='int4') v *= (0.80 + rng()*0.20);
-      else if(currentQuant==='int8') v *= (0.93 + rng()*0.07);
-      preds.push(v);
-      total += v;
+      if(i === predictedClass)            v = 0.55 + rng()*0.35;
+      else if(confusable.indexOf(i) >= 0) v = 0.03 + rng()*0.08;
+      else                                v = rng()*0.025;
+      if(currentQuant === 'int4')      v *= (0.80 + rng()*0.20);
+      else if(currentQuant === 'int8') v *= (0.93 + rng()*0.07);
+      preds.push(v); total += v;
     }
-    for(let i=0;i<10;i++) preds[i] /= total;
+    for(let i=0;i<K;i++) preds[i] /= total;
 
     let topIdx = 0;
-    for(let i=1;i<10;i++) if(preds[i]>preds[topIdx]) topIdx=i;
+    for(let i=1;i<K;i++) if(preds[i] > preds[topIdx]) topIdx = i;
 
     const barsDiv = document.getElementById('predBars');
     barsDiv.innerHTML = '';
-    for(let i=0;i<10;i++){
+    for(let i=0;i<K;i++){
       const bar = document.createElement('div');
-      const isWrongTop = (i===topIdx && topIdx!==trueClass);
-      bar.className = 'pred-bar' + (i===topIdx ? ' top' : '');
+      const isWrongTop = (i === topIdx && topIdx !== trueClass);
+      bar.className = 'pred-bar' + (i === topIdx ? ' top' : '');
       const pct = preds[i]*100;
-      const color = isWrongTop ? 'var(--red)' : i===topIdx ? 'var(--green)' : 'rgba(6,182,212,.35)';
-      bar.innerHTML = `
-        <span class="pred-label">${i}</span>
-        <div class="pred-track"><div class="pred-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div></div>
-        <span class="pred-pct">${pct.toFixed(1)}%</span>
-      `;
+      const color = isWrongTop ? 'var(--red)' : i === topIdx ? 'var(--green)' : 'rgba(6,182,212,.35)';
+      bar.innerHTML = '<span class="pred-label" title="'+model.classes[i]+'">'+model.classes[i]+'</span>'+
+        '<div class="pred-track"><div class="pred-fill" style="width:'+pct.toFixed(1)+'%;background:'+color+'"></div></div>'+
+        '<span class="pred-pct">'+pct.toFixed(1)+'%</span>';
       barsDiv.appendChild(bar);
     }
 
-    const jitter = Math.round((rng()-0.5)*stats.inference*0.15);
-    document.getElementById('inferTime').textContent = (stats.inference + jitter) + ' ms';
+    const jitter = 1 + (rng()-0.5)*0.06;   // +/-3% cycle-count variation
+    document.getElementById('inferTime').textContent = fmtMs(m.latMs*jitter) + ' ms';
+    document.getElementById('inferNote').textContent = model.interactive
+      ? 'Reference label from a nearest-template match over the eight stroke templates. The confidence vector is seeded and its flip probability tracks the modelled '+m.drop.toFixed(2)+' pp loss at '+currentQuant.toUpperCase()+'.'
+      : model.task.charAt(0).toUpperCase()+model.task.slice(1)+'. This input is audio features or a camera frame, so it cannot be drawn: a seeded example is scored instead, with a flip probability tracking the modelled '+m.drop.toFixed(2)+' pp loss at '+currentQuant.toUpperCase()+'.';
 
-    // Re-enable buttons
     document.getElementById('inferBtn').disabled = false;
     if(icb) icb.disabled = false;
     inferRunning = false;
   });
 }
 
-// ─── UPDATE ALL ───────────────────────────────────────────────────
+// --- UPDATE ALL --------------------------------------------------------------
 function updateAll(){
-  const model = MODELS[currentModel];
-  const stats = model[currentQuant];
+  const model = MODELS[currentModel], tgt = TARGETS[currentTarget];
+  const m = modelMetrics(currentQuant);
 
   document.getElementById('kpiModel').textContent     = model.short;
-  document.getElementById('kpiPrecision').textContent  = currentQuant.toUpperCase();
-  document.getElementById('kpiSize').textContent       = stats.size + ' KB';
-  document.getElementById('kpiInference').textContent  = stats.inference + ' ms';
-  document.getElementById('kpiAccuracy').textContent   = stats.accuracy + '%';
+  document.getElementById('kpiPrecision').textContent = currentQuant.toUpperCase();
+  document.getElementById('kpiSize').textContent      = m.sizeKB.toFixed(1) + ' KB';
+  document.getElementById('kpiInference').textContent = fmtMs(m.latMs) + ' ms';
+  document.getElementById('kpiAccuracy').textContent  = m.accuracy.toFixed(1) + '%';
 
-  const accEl = document.getElementById('kpiAccuracy');
-  accEl.className = stats.accuracy>=93 ? 'val pos' : stats.accuracy>=90 ? 'val warn' : 'val neg';
+  document.getElementById('kpiAccuracy').className  = m.drop === 0 ? 'val pos' : m.drop <= 1.5 ? 'val neutral' : 'val warn';
+  document.getElementById('kpiSize').className      = currentQuant === 'fp32' ? 'val neutral' : 'val pos';
+  document.getElementById('kpiInference').className = currentQuant === 'fp32' ? 'val warn' : currentQuant === 'int8' ? 'val pos' : 'val neutral';
 
-  const sizeEl = document.getElementById('kpiSize');
-  sizeEl.className = stats.size<=150 ? 'val pos' : stats.size<=500 ? 'val neutral' : 'val warn';
+  const pill = document.getElementById('quantPill');
+  pill.textContent = currentQuant.toUpperCase();
+  pill.className = 'd-pill ' + (currentQuant === 'fp32' ? 'amber' : currentQuant === 'int8' ? 'cyan' : 'purple');
 
-  const infEl = document.getElementById('kpiInference');
-  infEl.className = stats.inference<=120 ? 'val pos' : stats.inference<=200 ? 'val neutral' : 'val warn';
+  document.getElementById('tradeoffTag').textContent = model.short + ' \u00b7 ' + tgt.name + ' @ ' + tgt.mhz + ' MHz';
+
+  const f32 = modelMetrics('fp32'), i8 = modelMetrics('int8'), i4 = modelMetrics('int4');
+  document.getElementById('latNote').innerHTML =
+    '<b>Latency model (stated, not measured):</b> cycles = MACs / (r &middot; e) + 10 &micro;s per operator. ' +
+    'r = <code>' + MACS_PER_CYCLE.fp32.toFixed(2) + '</code> MAC/cycle FP32 (FPU present but load/store bound), ' +
+    '<code>' + MACS_PER_CYCLE.int8.toFixed(2) + '</code> INT8 (SMLAD dual-MAC), ' +
+    '<code>' + MACS_PER_CYCLE.int4.toFixed(2) + '</code> INT4 &mdash; there is no native CMSIS-NN INT4 kernel, so nibbles are unpacked to int8 first and INT4 is <b>slower per MAC</b> than INT8. ' +
+    'Kernel efficiency e: 1.00 conv and 1&times;1, 0.35 depthwise (one MAC per weight load), 0.80 fully connected. ' +
+    'On this model and target INT8 is <b>' + (f32.latMs/i8.latMs).toFixed(1) + '&times;</b> faster than FP32; INT4 only <b>' +
+    (f32.latMs/i4.latMs).toFixed(1) + '&times;</b>, while costing ' + i4.drop.toFixed(1) + ' pp of accuracy against ' + i8.drop.toFixed(1) + ' pp.';
 
   drawArchitecture();
   drawTradeoffChart();
   updateFlashBar();
+  drawHistogram();
+  updateInferPanel();
+  updateStatus();
+}
+
+function updateInferPanel(){
+  const model = MODELS[currentModel];
+  const wrap = document.getElementById('drawWrap');
+  if(wrap) wrap.style.display = model.interactive ? 'flex' : 'none';
+  document.getElementById('inferHeadTxt').textContent = model.interactive
+    ? 'Draw a digit, or load a sample'
+    : 'On-device inference \u2014 ' + model.inputName;
+  document.getElementById('inferTargetTxt').textContent =
+    'Latency on ' + TARGETS[currentTarget].name + ' (' + currentQuant.toUpperCase() + ')';
+}
+
+function updateStatus(){
+  const model = MODELS[currentModel], tgt = TARGETS[currentTarget];
+  const m = modelMetrics(currentQuant);
+  const mode = currentQuant === 'fp32'
+    ? 'FP32 baseline'
+    : currentQuant.toUpperCase() + ' symmetric per-channel, clip ' + clipPct.toFixed(1) + '%';
+  document.getElementById('statusBar').innerHTML =
+    'seed <b>' + SEED + '</b> \u00b7 <b>' + model.short + '</b> \u00b7 ' + m.params.toLocaleString() +
+    ' params \u00b7 ' + (m.macs/1e6).toFixed(2) + 'M MAC \u00b7 <b>' + mode + '</b> \u00b7 ' +
+    tgt.name + ' @ ' + tgt.mhz + ' MHz \u00b7 arena <b>' + m.arenaKB.toFixed(1) + ' KB</b> \u00b7 ' +
+    (m.flashOk && m.sramOk ? '<span class="ok">FITS TARGET</span>' : '<span class="warn">DOES NOT FIT</span>');
 }
 
 function startHeatmapTransition(){
@@ -1687,99 +2133,251 @@ function startHeatmapTransition(){
   }
 }
 
-// ─── CONTROLS ─────────────────────────────────────────────────────
-function setQuantization(q){
-  currentQuant = q;
-  document.querySelectorAll('.q-btn').forEach(b=> b.classList.toggle('active', b.dataset.q===q));
+// --- CONTROLS ----------------------------------------------------------------
+function resetFlashState(){
   isFlashed = false;
   document.getElementById('inferBtn').disabled = true;
+  const icb = document.getElementById('inferBtnCanvas');
+  if(icb) icb.disabled = true;
   document.getElementById('flashProgressBar').style.width = '0%';
-  document.getElementById('flashStatus').textContent = 'Ready';
-  document.getElementById('flashStatus').style.color = 'var(--dim)';
+  const st = document.getElementById('flashStatus');
+  st.textContent = 'Ready';
+  st.style.color = 'var(--dim)';
   document.getElementById('inferenceResult').classList.remove('show');
-  if(flashInterval){ clearInterval(flashInterval); flashInterval=null; }
+  if(flashInterval){ clearInterval(flashInterval); flashInterval = null; }
+}
+
+function setQuantization(q){
+  currentQuant = q;
+  document.querySelectorAll('.q-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.q === q); });
+  resetFlashState();
   startHeatmapTransition();
   updateAll();
 }
 
-function changeModel(m){
-  currentModel = m;
+function changeModel(mk){
+  currentModel = mk;
   selectedLayer = 0;
-  generateWeights(m);
-  isFlashed = false;
-  document.getElementById('inferBtn').disabled = true;
-  document.getElementById('flashProgressBar').style.width = '0%';
-  document.getElementById('flashStatus').textContent = 'Ready';
-  document.getElementById('flashStatus').style.color = 'var(--dim)';
-  document.getElementById('inferenceResult').classList.remove('show');
-  if(flashInterval){ clearInterval(flashInterval); flashInterval=null; }
+  generateWeights(mk);
+  resetFlashState();
   updateAll();
   requestAnimationFrame(drawHeatmap);
 }
 
+function changeTarget(t){
+  currentTarget = t;
+  METRICS_CACHE = {};
+  resetFlashState();
+  updateAll();
+}
+
+function setClip(p){
+  clipPct = p;
+  METRICS_CACHE = {};
+  document.getElementById('clipVal').textContent = p.toFixed(1) + '%';
+  startHeatmapTransition();
+  updateAll();
+}
+
 function animateQuantize(){
   const levels = ['fp32','int8','int4'];
-  const curIdx = levels.indexOf(currentQuant);
-  const nextIdx = (curIdx+1) % levels.length;
-  setQuantization(levels[nextIdx]);
+  setQuantization(levels[(levels.indexOf(currentQuant)+1) % levels.length]);
 }
 
 function toggleHelp(){
-  document.getElementById('helpOverlay').classList.toggle('open');
+  document.getElementById('helpOverlay').classList.toggle('show');
 }
 
 // Guide toggle
-document.getElementById('guideToggle').addEventListener('click', ()=>{
+document.getElementById('guideToggle').addEventListener('click', function(){
   const content = document.getElementById('guideContent');
   const btn = document.getElementById('guideBtn');
   content.classList.toggle('hide');
   btn.innerHTML = content.classList.contains('hide') ? 'Show &#x25BE;' : 'Hide &#x25B4;';
 });
 
-// Close help on overlay click
-document.getElementById('helpOverlay').addEventListener('click', (e)=>{
-  if(e.target === document.getElementById('helpOverlay')) toggleHelp();
+document.getElementById('helpBtn').addEventListener('click', toggleHelp);
+document.getElementById('helpClose').addEventListener('click', toggleHelp);
+document.getElementById('helpOverlay').addEventListener('click', function(e){
+  if(e.target === this) toggleHelp();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') document.getElementById('helpOverlay').classList.remove('show');
 });
 
-// ─── RESIZE ───────────────────────────────────────────────────────
+document.getElementById('resetBtn').addEventListener('click', function(){
+  currentModel = 'kws'; currentQuant = 'fp32'; currentTarget = 'f407';
+  clipPct = 100; selectedLayer = 0; METRICS_CACHE = {};
+  document.getElementById('modelSelect').value = currentModel;
+  document.getElementById('targetSelect').value = currentTarget;
+  document.getElementById('clipRange').value = 100;
+  document.getElementById('clipVal').textContent = '100.0%';
+  document.querySelectorAll('.q-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.q === 'fp32'); });
+  generateWeights(currentModel);
+  resetFlashState();
+  updateAll();
+  requestAnimationFrame(drawHeatmap);
+});
+
+document.getElementById('clipRange').addEventListener('input', function(){ setClip(parseFloat(this.value)); });
+
+// --- HOVER TOOLTIPS ----------------------------------------------------------
+const TIP = document.getElementById('tooltip');
+function showTip(evt, html){
+  TIP.innerHTML = html;
+  TIP.classList.add('show');
+  const r = TIP.getBoundingClientRect();
+  let x = evt.clientX + 14, y = evt.clientY + 14;
+  if(x + r.width  > window.innerWidth  - 8) x = evt.clientX - r.width  - 14;
+  if(y + r.height > window.innerHeight - 8) y = evt.clientY - r.height - 14;
+  TIP.style.left = Math.max(4,x) + 'px';
+  TIP.style.top  = Math.max(4,y) + 'px';
+}
+function hideTip(){ TIP.classList.remove('show'); }
+
+(function(){
+  const hm = document.getElementById('heatmapCanvas');
+  hm.addEventListener('mousemove', function(e){
+    if(!heatGeom || !weights[selectedLayer]){ hideTip(); return; }
+    const rect = hm.getBoundingClientRect();
+    const c = Math.floor((e.clientX-rect.left-heatGeom.offX)/heatGeom.cell);
+    const r = Math.floor((e.clientY-rect.top -heatGeom.offY)/heatGeom.cell);
+    if(c<0 || r<0 || c>=heatGeom.gw || r>=heatGeom.gh){ hideTip(); return; }
+    const idx = r*heatGeom.gw + c;
+    const w0 = weights[selectedLayer][idx];
+    const wq = quantWeights[selectedLayer][idx];
+    if(w0 === undefined){ hideTip(); return; }
+    let html = '<div class="tt-h">output channel ' + r + ', weight ' + c + '</div>' +
+               '<div class="tt-r"><span>FP32</span><span>' + w0.toFixed(5) + '</span></div>';
+    const sc = layerScales[selectedLayer];
+    if(currentQuant !== 'fp32' && sc){
+      const qm = qMax();
+      const q = Math.max(-qm, Math.min(qm, Math.round(w0/sc[r])));
+      html += '<div class="tt-r"><span>scale s_' + r + '</span><span>' + sc[r].toExponential(3) + '</span></div>' +
+              '<div class="tt-r"><span>int' + (currentQuant==='int8'?8:4) + ' code</span><span>' + q + ' / ' + qm + '</span></div>' +
+              '<div class="tt-r"><span>dequantised</span><span>' + wq.toFixed(5) + '</span></div>' +
+              '<div class="tt-r"><span>error</span><span>' + (w0-wq).toExponential(2) + '</span></div>';
+    }
+    showTip(e, html);
+  });
+  hm.addEventListener('mouseleave', hideTip);
+
+  const tc = document.getElementById('tradeoffCanvas');
+  tc.addEventListener('mousemove', function(e){
+    if(!tradeGeom){ hideTip(); return; }
+    const rect = tc.getBoundingClientRect();
+    const x = e.clientX-rect.left, y = e.clientY-rect.top;
+    if(y < tradeGeom.padTop-10 || y > tradeGeom.padTop+tradeGeom.chartH+10){ hideTip(); return; }
+    const i = Math.floor((x-tradeGeom.padLeft)/tradeGeom.groupW);
+    if(i < 0 || i > 2){ hideTip(); return; }
+    showTip(e, '<div class="tt-h">' + tradeGeom.labels[i] + ' \u00b7 ' + TARGETS[currentTarget].name + '</div>' +
+      '<div class="tt-r"><span>' + MODELS[currentModel].accLabel + '</span><span>' + tradeGeom.acc[i].toFixed(2) + ' %</span></div>' +
+      '<div class="tt-r"><span>model size</span><span>' + tradeGeom.size[i].toFixed(1) + ' KB</span></div>' +
+      '<div class="tt-r"><span>latency</span><span>' + fmtMs(tradeGeom.inf[i]) + ' ms</span></div>');
+  });
+  tc.addEventListener('mouseleave', hideTip);
+
+  const hc = document.getElementById('histCanvas');
+  hc.addEventListener('mousemove', function(e){
+    if(!histGeom){ hideTip(); return; }
+    const rect = hc.getBoundingClientRect();
+    const b = Math.floor((e.clientX-rect.left-histGeom.pad.left)/(histGeom.cw/histGeom.NB));
+    if(b < 0 || b >= histGeom.NB){ hideTip(); return; }
+    const a0 = histGeom.lo + b*histGeom.bw;
+    showTip(e, '<div class="tt-h">bin ' + a0.toFixed(4) + ' .. ' + (a0+histGeom.bw).toFixed(4) + '</div>' +
+      '<div class="tt-r"><span>FP32 count</span><span>' + histGeom.hO[b] + '</span></div>' +
+      '<div class="tt-r"><span>after quant.</span><span>' + histGeom.hQ[b] + '</span></div>');
+  });
+  hc.addEventListener('mouseleave', hideTip);
+})();
+
+// --- RESIZE ------------------------------------------------------------------
 let resizeTimer;
-window.addEventListener('resize', ()=>{
+window.addEventListener('resize', function(){
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(()=>{
+  resizeTimer = setTimeout(function(){
     requestAnimationFrame(drawHeatmap);
     drawTradeoffChart();
-  }, 100);
+    drawHistogram();
+  }, 120);
 });
 
-// ─── INIT ─────────────────────────────────────────────────────────
+// --- INIT --------------------------------------------------------------------
+window.onerror = function(msg, url, line){
+  const s = document.getElementById('statusBar');
+  if(s) s.innerHTML = '<span class="warn">JS ERROR: ' + msg + ' (line ' + line + ')</span>';
+  return false;
+};
+
+document.getElementById('modelSelect').value = currentModel;
+(function(){
+  const ts = document.getElementById('targetSelect');
+  Object.keys(TARGETS).forEach(function(k){
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = TARGETS[k].name + ' \u2014 ' + TARGETS[k].mhz + ' MHz';
+    ts.appendChild(o);
+  });
+  ts.value = currentTarget;
+  ts.addEventListener('change', function(){ changeTarget(ts.value); });
+})();
+
 generateWeights(currentModel);
 updateAll();
 requestAnimationFrame(drawHeatmap);
 </script>
 
-<!-- Welcome Popup -->
-<style>
-.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease}
-.welcome-overlay.show{opacity:1}
-.welcome-box{background:var(--card,#111827);border:1px solid var(--border,#1e293b);border-radius:14px;max-width:420px;width:90%;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.welcome-box h3{font-size:16px;font-weight:700;color:var(--text,#e2e8f0);margin:0 0 12px}
-.welcome-box p{font-size:13.5px;color:var(--muted,#94a3b8);line-height:1.6;margin:0 0 20px}
-.welcome-box .help-icon-hint{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent,#06b6d4);color:#0b1120;font-weight:700;font-size:13px;vertical-align:middle;margin:0 2px}
-.welcome-box button{background:var(--accent,#06b6d4);color:#0b1120;border:none;padding:9px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s}
-.welcome-box button:hover{opacity:.85}
-</style>
-<div class="welcome-overlay" id="welcomePopup">
-  <div class="welcome-box">
-    <h3>Welcome to the TinyML Model Quantization Lab</h3>
-    <p>To get the most out of this demo, click the <span class="help-icon-hint">?</span> button in the top-right corner for a full guide, tutorial, and explanation of every feature.</p>
-    <button onclick="document.getElementById('welcomePopup').classList.remove('show');setTimeout(function(){document.getElementById('welcomePopup').style.display='none'},300)">Got it</button>
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>Post-training quantisation of four representative TinyML models and the deployment budget that follows from it. Weight tiles are sampled from a seeded generator with layer-appropriate statistics (depthwise kernels wider than pointwise, the first convolution carrying outliers), then quantised with <b>symmetric per-output-channel</b> INT8/INT4 scales and dequantised exactly. From those tiles the lab computes per-layer quantisation MSE and SQNR, an accuracy drop weighted by layer sensitivity, model size including per-channel scale overhead, the peak tensor arena, and an inference-latency estimate from an explicit MAC-throughput model for the selected microcontroller. Flash and SRAM budgets are shown as pass/fail margin bars.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Weights: symmetric per channel, <code>s_c = P&middot;max|w_c| / 127</code> (INT8) or <code>/ 7</code> (INT4), zero-point 0, clamped to &plusmn;127 / &plusmn;7. <code>P</code> is the clip percentile (default 100%).</li>
+          <li>Activations: asymmetric per tensor, <code>s = (max &minus; min)/255</code>, <code>z = round(&minus;min/s)</code>. Post-ReLU tensors give <code>z = 0</code>; input and logit tensors do not.</li>
+          <li>Size overhead: 8 bytes per output channel (int32 multiplier + shift) and 8 bytes per tensor (activation scale + zero-point), so the reduction is slightly under 4&times; / 8&times;.</li>
+          <li>Arena = <code>max(input + output tensor)</code> over operators + 2 KB interpreter bookkeeping + 8% CMSIS-NN scratch. Activations are int8 when quantised, float32 under FP32.</li>
+          <li>Latency at 0.32 MAC/cycle FP32, 1.55 INT8, 0.50 INT4, scaled by kernel efficiency (conv/pointwise 1.0, depthwise 0.35, fully connected 0.80) and 10 &micro;s setup per operator. INT4 has no native CMSIS-NN kernel; nibbles are unpacked to int8 first, so it is slower than INT8 per MAC.</li>
+          <li>Default target STM32F407VG: Cortex-M4F at 168 MHz, 1 MB flash, 128 KB SRAM1/2 plus 64 KB CCM (CCM excluded from the arena budget because it is not DMA-accessible). Bootloader 16 KB, app + TFLite Micro + CMSIS-NN 96 KB, static RAM 24 KB.</li>
+          <li>Baselines: DS-CNN-S 94.4% (Speech Commands, 12 classes), MobileNetV1 0.25 96&times;96 84.9% (Visual Wake Words), autoencoder 0.889 AUC (MIMII-style), MNIST CNN 99.1%.</li>
+          <li>Everything is driven by a single seed (1337); every control re-runs the whole pipeline, so results are reproducible.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas &amp; references</h3>
+        <ul>
+          <li>Quantise <code>q = clamp(round(w / s_c), &minus;q_max, q_max)</code>; dequantise <code>w&#770; = q &middot; s_c</code> &mdash; the exact inverse of the rounding step.</li>
+          <li><code>MSE = mean((w &minus; w&#770;)&sup2;)</code>; <code>SQNR = 10&middot;log10(&Sigma;w&sup2; / &Sigma;(w &minus; w&#770;)&sup2;)</code> dB.</li>
+          <li>Accuracy drop <code>= 21.5 &middot; N^0.35 &middot; k</code> with <code>N</code> the parameter- and sensitivity-weighted relative noise power (first conv 2.5&times;, final dense 2.0&times;, depthwise 1.5&times;) and <code>k</code> a per-model robustness factor; clamped to 0.3&ndash;1.5 pp (INT8) and 3&ndash;10 pp (INT4).</li>
+          <li><code>bytes = params &middot; bpw + 8&middot;channels + 8&middot;tensors</code>; <code>cycles = &Sigma; MACs / (r &middot; e) + 10&micro;s&middot;f</code>.</li>
+          <li>Jacob et al. (2018), <em>Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference</em>; Krishnamoorthi (2018), <em>Quantizing deep convolutional networks for efficient inference</em>; Zhang et al. (2017), <em>Hello Edge: Keyword Spotting on Microcontrollers</em>; Lai, Suda &amp; Chandra (2018), <em>CMSIS-NN</em>; Banbury et al. (2021), <em>MLPerf Tiny Benchmark</em>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations</h3>
+        <ul>
+          <li>Weights are generated, not trained. Real weight distributions are not Gaussian and per-channel ranges differ far more than here, so real SQNR spreads are wider.</li>
+          <li>The accuracy model is a calibrated mapping from noise power to percentage points, not an evaluation on a test set. It reproduces the right bands and the right ordering, nothing finer.</li>
+          <li>The latency model counts MACs only: no cache or flash-wait-state stalls, no ping-pong buffer copies, no operator fusion. Measured TFLite Micro figures typically run 1.5&ndash;3&times; slower than this estimate.</li>
+          <li>Only a tile of each layer is sampled for the heatmap and histogram, so tile statistics are not full-layer statistics.</li>
+          <li>Quantisation-aware training, mixed precision, weight clustering, pruning and sparse kernels are out of scope; so is int16 activation mode.</li>
+          <li>The clip-percentile slider is applied to weights to show why max-abs is the right default there. Real percentile and KL calibration operate on activation ranges, which this lab treats as fixed per layer.</li>
+          <li>The MNIST classifier is a nearest-template matcher over eight stroke templates plus a seeded confusion model, not a real forward pass through the listed layers.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
   </div>
-</div>
-<script>
-(function(){
-  var wp = document.getElementById('welcomePopup');
-  if(wp) setTimeout(function(){ wp.classList.add('show'); }, 400);
-})();
-</script>
+</footer>
+
 </body>
 </html>
