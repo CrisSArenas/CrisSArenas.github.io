@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NLP Earnings Sentiment Alpha Lab | Cristian Arenas</title>
-<meta name="description" content="Interactive NLP alpha lab: a Loughran-McDonald-style finance lexicon with negation and section weighting scores synthetic earnings-call transcripts, then fuses the sentiment z-score with analyst-revision, options-flow and supply-chain signals into a user-weighted composite backtested net of transaction costs.">
+<meta name="description" content="Interactive NLP alpha lab: a Loughran-McDonald-style finance lexicon with negation and section weighting scores synthetic earnings-call transcripts, then fuses the sentiment z-score with analyst-revision, options-flow and supply-chain signals into a user-weighted composite, backtested point-in-time from the open after the call with an event-driven breadth ceiling and square-root market-impact costs that give the strategy a real capacity limit.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -174,7 +174,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
   <span id="statusRight"><b>Synthetic transcripts</b> &middot; fictional issuers &middot; deterministic seed &middot; net of costs &middot; not investment advice</span>
 </div>
 
-<p class="demo-sub">Turn earnings-call language into a tradable signal. A finance lexicon scores tone on synthetic transcripts from fictional issuers, with the arithmetic shown behind every highlighted word, then blends that sentiment with analyst revisions, options flow and supply-chain data into a <b>composite alpha</b> whose weights you control.</p>
+<p class="demo-sub">Turn earnings-call language into a tradable signal &mdash; and find out how little of it survives. A finance lexicon scores tone on synthetic transcripts from fictional issuers, with the arithmetic shown behind every highlighted word, then blends that sentiment with analyst revisions, options flow and supply-chain data into a <b>composite alpha</b> whose weights you control. The signal is tradable no earlier than <b>the open after the call</b>, an earnings call is worth <b>four independent bets a year</b>, and costs carry square-root market impact, so the net alpha has a genuine <b>capacity limit</b>. Standalone earnings sentiment does not clear its costs here; that is the finding, not a bug.</p>
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
@@ -202,28 +202,43 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         <code>IC<sub>c</sub>(h) = &Sigma; w<sub>i</sub> IC<sub>i</sub>(h) / &radic;(w&rsquo;Cw)</code>. Weights are yours to set and are renormalised to sum to 1; C is the assumed signal correlation matrix (0.10&ndash;0.35). Because the signals are correlated the composite beats the best single signal only modestly &mdash; about 0.048 against 0.045 at the default settings.</p>
       </div>
       <div class="d-help-section">
-        <h3>4 &middot; Signal decay and the holding period</h3>
-        <p>Each signal&rsquo;s IC decays exponentially in the forward holding period h:
-        <code>IC<sub>i</sub>(h) = IC<sub>i</sub>(1) &middot; 2<sup>&minus;(h&minus;1)/HL<sub>i</sub></sup></code>.</p>
+        <h3>4 &middot; Point-in-time integrity &mdash; the timestamps that decide whether any of this is real</h3>
+        <p>Almost every published earnings-text result that fails to replicate fails here, so the convention is written down explicitly:</p>
+        <ul>
+          <li><strong>t = 0, after the close.</strong> Most US large-cap calls run between 16:30 and 18:00 ET, after the print. A minority are pre-open. Nothing in the transcript exists before that moment.</li>
+          <li><strong>The transcript, not the audio.</strong> A machine-readable transcript lands minutes to hours after the call. Scoring the <em>final, corrected</em> transcript is a subtle look-ahead: corrections are made later. A live study must use the as-released text.</li>
+          <li><strong>First tradable point: the open of t + 1.</strong> That is what <strong>entry lag = 1</strong> means, and it is the minimum this lab will let you set. The overnight gap between the close of t and the open of t + 1 is where most of the total event response lands, and it is <em>outside the window on purpose</em>. Scoring the signal against a return that contains the announcement move would be look-ahead, and it is the single most common way these backtests are inflated.</li>
+          <li><strong>The forward-return window starts at entry, not at the call.</strong> The scatter&rsquo;s y-axis and every IC on this page are measured over h trading days beginning at the t + 1 open. Push the entry-lag slider out to see what a slower pipeline costs: with a 28-day half-life, each extra day is worth roughly 2.5% of the signal.</li>
+          <li><strong>Two things this lab cannot demonstrate on synthetic data</strong>, but which any real version must have: a point-in-time universe (the index constituents as of t, not today&rsquo;s, or survivorship inflates everything), and point-in-time consensus and options data, since analyst estimates and implied-vol surfaces are routinely restated.</li>
+        </ul>
+      </div>
+      <div class="d-help-section">
+        <h3>5 &middot; Signal decay, breadth and the holding period</h3>
+        <p>Each signal&rsquo;s IC decays exponentially in the forward holding period h and in the entry lag L:
+        <code>IC<sub>i</sub>(h, L) = IC<sub>i</sub>(1) &middot; 2<sup>&minus;(h&minus;1)/HL<sub>i</sub></sup> &middot; 2<sup>&minus;(L&minus;1)/HL<sub>i</sub></sup></code>. IC<sub>i</sub>(1) is defined against the one-day return <em>from the first tradable point</em>, so L = 1 carries no penalty.</p>
         <table>
-          <thead><tr><th>Signal</th><th>IC at h=1</th><th>Half-life</th><th>IC at h=21</th><th>Turnover &kappa;</th></tr></thead>
+          <thead><tr><th>Signal</th><th>IC at h=1</th><th>Half-life</th><th>IC at h=21</th><th>Turnover &kappa;</th><th>Refreshes / yr</th></tr></thead>
           <tbody>
-            <tr><td>NLP sentiment</td><td>0.052</td><td>28 d</td><td>0.032</td><td>0.65</td></tr>
-            <tr><td>Analyst revisions</td><td>0.058</td><td>55 d</td><td>0.045</td><td>0.35</td></tr>
-            <tr><td>Options flow</td><td>0.049</td><td>18 d</td><td>0.023</td><td>0.85</td></tr>
-            <tr><td>Supply chain</td><td>0.031</td><td>70 d</td><td>0.025</td><td>0.30</td></tr>
+            <tr><td>NLP sentiment</td><td>0.052</td><td>28 d</td><td>0.032</td><td>0.65</td><td>4 (one call per quarter)</td></tr>
+            <tr><td>Analyst revisions</td><td>0.058</td><td>55 d</td><td>0.045</td><td>0.35</td><td>24</td></tr>
+            <tr><td>Options flow</td><td>0.049</td><td>18 d</td><td>0.023</td><td>0.85</td><td>252</td></tr>
+            <tr><td>Supply chain</td><td>0.031</td><td>70 d</td><td>0.025</td><td>0.30</td><td>12</td></tr>
           </tbody>
         </table>
+        <p>The last column is the part most sentiment demos leave out. <strong>An earnings call arrives four times a year.</strong> Rebalancing monthly does not manufacture new information in between, so breadth is capped at <code>N<sub>eff</sub> &middot; min(252/h, refresh)</code>. Worse, if you hold for less time than the gap between refreshes the book is only invested part of the time, and holding tracking error constant means sizing up by <code>lev = (252/h) / refresh</code> &mdash; which multiplies the clip and the turnover without buying a single extra bet. At h = 21 days the NLP sleeve needs 3&times; sizing, which triples its turnover, lifts its clip to 2.4% of median daily volume and pushes its all-in cost above 4% a year against a gross alpha of 1.4%. That single constraint is why the NLP-only line on the growth chart does not pay for itself at any horizon, while the composite does.</p>
         <p>The dashed cyan line on the decay chart marks the holding period you selected. Half-life is read off the composite curve by linear interpolation, which is why it moves when you change the weights.</p>
       </div>
       <div class="d-help-section">
-        <h3>5 &middot; The backtest</h3>
+        <h3>6 &middot; The backtest</h3>
         <p>The overlay is sized to a constant <strong>4.5% tracking error</strong>. Gross skill uses the fundamental law with a transfer coefficient:
-        <code>IR<sub>gross</sub> = TC &middot; IC(h) &middot; &radic;(N<sub>eff</sub> &middot; 252/h)</code> with <strong>TC = 0.45</strong> and <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per rebalance &mdash; far below the nominal universe size, because cross-sectional bets share common factor exposure. Costs are real: two-way annual turnover is <code>2&kappa;&middot;252/h</code> and the cost per unit of turnover is <code>8 bp + 6 bp&middot;&radic;(f/12)</code>, a square-root market-impact term that penalises fast trading. <strong>Net alpha = gross alpha &minus; cost</strong>, and net is always below gross. Trading faster raises IC but raises costs faster still, so net alpha peaks around a two-to-three-week horizon and turns negative below about a week.</p>
-        <p>Monthly active returns are drawn as shuffled normal quantiles standardised to exactly the modelled mean and volatility, so the realised annual alpha, tracking error, information ratio and hit rate in the table match the model rather than drifting with sampling noise, while the path &mdash; and therefore the max drawdown &mdash; stays a genuine random walk from the seed.</p>
+        <code>IR<sub>gross</sub> = TC &middot; IC(h,L) &middot; &radic;(N<sub>eff</sub> &middot; min(252/h, refresh))</code> with <strong>TC = 0.45</strong> and <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per refresh &mdash; far below the 500-name universe, because cross-sectional bets share common factor exposure.</p>
+        <p>Costs carry a real <strong>capacity</strong> constraint rather than a flat rate. Two-way annual turnover is <code>2&kappa;&middot;252/h</code>, and the cost per unit of turnover is <code>5 bp + Y&middot;&sigma;<sub>daily</sub>&middot;&radic;(clip / ADV)</code> &mdash; half-spread and commission plus the standard square-root market-impact law, with Y = 0.8, &sigma;<sub>daily</sub> = 1.8% and a clip of <code>&kappa; &middot; AUM &middot; lev / 500 names</code> against a median ADV of US$80m. Execution is assumed to happen in one session, because an event signal cannot be worked slowly without losing it. <strong>Double the capital and the impact rises by &radic;2</strong>, which is what makes the AUM slider bite: at the default settings the composite is worth about 1.5%/y net at US$500m, breaks even near US$2bn, and is a cost centre above that. The optimal holding period moves out as capital grows &mdash; roughly a week at US$200m, three weeks at US$1bn &mdash; because impact pushes you towards trading less.</p>
+        <p><strong>Net alpha = gross alpha &minus; cost</strong>, and net is always below gross.</p>
+        <p>One honesty note on breadth. <code>BR = N<sub>eff</sub> &middot; f</code> treats consecutive rebalances as independent, which they are not: a signal with half-life HL still has autocorrelation <code>&rho; = 2<sup>&minus;interval/HL</sup></code> at the next rebalance, and Grinold&rsquo;s correction scales breadth by <code>(1&minus;&rho;)/(1+&rho;)</code>. The table reports both breadths and the net alpha the stricter convention would give, but the headline figures use the unadjusted one. At the default settings the adjustment cuts composite breadth from 1440 to about 290 bets a year and turns the headline net alpha negative. Note what it does <em>not</em> do to the NLP sleeve: run at its natural quarterly cadence, its breadth falls only from 480 to about 310, while the composite&rsquo;s falls by four fifths. Rebalancing a slow signal quickly was never buying independent bets in the first place; the adjustment simply stops pretending it was.</p>
+        <p>Monthly active returns are drawn as shuffled normal quantiles standardised to exactly the modelled mean and volatility, so the realised annual alpha, tracking error, information ratio and hit rate in the table match the model rather than drifting with sampling noise, while the path &mdash; and therefore the max drawdown &mdash; stays a genuine random walk from the seed. The hit rate is therefore a <em>consequence</em> of the modelled alpha and tracking error, not an input: at the default net alpha of about 1.5% on 4.5% TE it lands near 53%, which is what a real signal of this strength looks like. Any earnings-sentiment strategy advertising a 60% monthly hit rate is describing something other than this signal class.</p>
       </div>
       <div class="d-help-section">
-        <h3>6 &middot; Reading the panels</h3>
+        <h3>7 &middot; Reading the panels</h3>
         <dl>
           <dt>Heatmap</dt><dd>Green / red shading is the computed word score after negation and amplification, on a &plusmn;3 scale. Grey words are not in the lexicon and contribute nothing.</dd>
           <dt>Sentence tone</dt><dd>One bar per sentence, in document order, in &minus;1&hellip;+1. The tooltip shows the section weight applied to that sentence.</dd>
@@ -234,12 +249,14 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         </dl>
       </div>
       <div class="d-help-section">
-        <h3>7 &middot; Controls</h3>
+        <h3>8 &middot; Controls</h3>
         <dl>
           <dt>Transcript</dt><dd>Four synthetic calls from fictional issuers. Changes the heatmap, sentence tone, document tone, composite z, sector map and the highlighted scatter point. It does <em>not</em> change the backtest: IC is a universe-level statistic and cannot be re-estimated from one call.</dd>
           <dt>Signal toggles</dt><dd>Drop a signal from the composite. At least one must stay on.</dd>
           <dt>Weights</dt><dd>Raw sliders renormalised to sum to 1. They move the composite IC, the composite turnover (and therefore the cost drag), the half-life and every backtest number.</dd>
-          <dt>Holding period</dt><dd>Forward horizon in trading days, 5&ndash;63. Drives IC decay, breadth, turnover and cost.</dd>
+          <dt>Holding period</dt><dd>Forward horizon in trading days, 5&ndash;63, measured from the entry point. Drives IC decay, breadth, turnover, the constant-TE sizing multiple and cost.</dd>
+          <dt>Entry lag</dt><dd>Trading days between the call and the position going on, 1&ndash;10. <strong>1 = the open of the next session</strong>, the earliest execution that is not look-ahead; the slider does not go below it. Everything above 1 is the cost of a slow pipeline &mdash; batch overnight processing, a human in the loop, a compliance queue.</dd>
+          <dt>Capital in strategy</dt><dd>US$50m to US$5bn. Only the cost side moves: bigger clips, more impact, lower net alpha. This is the capacity dimension, and it is the reason a signal that looks good on paper is not a business.</dd>
         </dl>
       </div>
     </div>
@@ -272,7 +289,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
       <div class="guide-card">
         <span class="step">STEP 4</span>
         <h3>Analyze Alpha</h3>
-        <p>Watch gross alpha, <strong>transaction costs</strong> and net alpha trade off as you change the holding period. Net is always below gross.</p>
+        <p>Watch gross alpha, <strong>transaction costs</strong> and net alpha trade off against the holding period, the <strong>entry lag</strong> (T+1 is the earliest honest execution) and the <strong>capital deployed</strong>. Net is always below gross, and above roughly US$2bn there is no horizon that works.</p>
       </div>
     </div>
   </div>
@@ -282,12 +299,14 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
   <div class="kpi-row">
     <div class="kpi-cell" title="Document tone from the finance lexicon, tanh-squashed to the range -1 to +1"><div class="lbl">Doc tone</div><div class="val neutral" id="kSent">--</div></div>
     <div class="kpi-cell" title="Composite signal z-score for the selected issuer, unit variance by construction"><div class="lbl">Composite z</div><div class="val neutral" id="kSignal">--</div></div>
-    <div class="kpi-cell" title="Composite information coefficient at the selected holding period"><div class="lbl">Composite IC</div><div class="val neutral" id="kIC">--</div></div>
-    <div class="kpi-cell" title="Annualised alpha after transaction costs"><div class="lbl">Net alpha</div><div class="val neutral" id="kAlpha">--</div></div>
+    <div class="kpi-cell" title="Composite information coefficient at the selected holding period and entry lag, measured on the forward return starting at the open after the call"><div class="lbl">Composite IC</div><div class="val neutral" id="kIC">--</div></div>
+    <div class="kpi-cell" title="Annualised alpha after transaction costs, including square-root market impact at the current capital level"><div class="lbl">Net alpha</div><div class="val neutral" id="kAlpha">--</div></div>
     <div class="kpi-cell" title="Net alpha divided by the 4.5% tracking error"><div class="lbl">Info ratio</div><div class="val neutral" id="kSharpe">--</div></div>
-    <div class="kpi-cell" title="Share of the 60 backtest months with positive active return"><div class="lbl">Hit rate</div><div class="val neutral" id="kHit">--</div></div>
+    <div class="kpi-cell" title="Share of the 60 backtest months with positive active return. It is a consequence of the modelled net alpha and tracking error, not an input."><div class="lbl">Hit rate</div><div class="val neutral" id="kHit">--</div></div>
     <div class="kpi-cell" title="Worst peak-to-trough fall of the composite total-return path"><div class="lbl">Max DD</div><div class="val neutral" id="kMaxDD">--</div></div>
     <div class="kpi-cell" title="Forward horizon at which the composite IC has halved"><div class="lbl">IC half-life</div><div class="val neutral" id="kHalfLife">--</div></div>
+    <div class="kpi-cell" title="Annual transaction-cost drag: two-way turnover times the cost per unit of turnover, including square-root market impact at the current capital level"><div class="lbl">Cost drag</div><div class="val neutral" id="kCost">--</div></div>
+    <div class="kpi-cell" title="Single-name clip as a share of median daily volume. Above 2 or 3 percent the impact term starts to eat the signal; this is the capacity limit."><div class="lbl">Clip / ADV</div><div class="val neutral" id="kPart">--</div></div>
   </div>
 </div>
 
@@ -308,6 +327,20 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         <div class="slider-ctrl">
           <input type="range" id="holdSlider" min="5" max="63" step="1" value="21">
           <span class="sval" id="holdVal">21</span>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <h4 title="Trading days between the call and the position going on. 1 = the open of the next session, the earliest honest execution. Anything less would be look-ahead and is not offered.">Entry Lag (days after call)</h4>
+        <div class="slider-ctrl">
+          <input type="range" id="lagSlider" min="1" max="10" step="1" value="1">
+          <span class="sval" id="lagVal">1</span>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <h4 title="Capital in the overlay. Cost per unit of turnover rises with the square root of the clip size relative to median ADV, so alpha net of costs falls away as the programme grows.">Capital in Strategy (US$m)</h4>
+        <div class="slider-ctrl">
+          <input type="range" id="aumSlider" min="50" max="5000" step="50" value="500">
+          <span class="sval" id="aumVal">500</span>
         </div>
       </div>
     </div>
@@ -341,7 +374,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="grid">
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-chart-line"></i> IC Decay by Horizon</h3><span class="tag">IC(h) = IC(1)&middot;2^(&minus;(h&minus;1)/HL)</span></div>
+    <div class="panel-head"><h3><i class="fas fa-chart-line"></i> IC Decay by Horizon</h3><span class="tag">IC(h,L) = IC(1)&middot;2^(&minus;(h&minus;1)/HL)&middot;2^(&minus;(L&minus;1)/HL)</span></div>
     <div class="panel-body"><canvas id="cvDecay" role="img" aria-label="Line chart of information coefficient against forward holding period for each signal and the composite" height="240"></canvas></div>
   </div>
   <div class="panel">
@@ -352,7 +385,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="grid">
   <div class="panel full">
-    <div class="panel-head"><h3><i class="fas fa-chart-area"></i> Growth of 1.00 &mdash; Overlay vs Benchmark</h3><span class="tag">60 months, net of costs, universe-level</span></div>
+    <div class="panel-head"><h3><i class="fas fa-chart-area"></i> Growth of 1.00 &mdash; Overlay vs Benchmark</h3><span class="tag">60 months, net of costs and impact, universe-level</span></div>
     <div class="panel-body">
       <canvas id="cvReturns" role="img" aria-label="Line chart of cumulative growth for the composite overlay, NLP-only overlay, traditional factors and the benchmark" height="220"></canvas>
       <div class="legend">
@@ -390,26 +423,31 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A text-to-portfolio pipeline on <strong>synthetic earnings-call transcripts written for this demo, attributed to fictional issuers</strong>. A hand-built finance lexicon in the Loughran&ndash;McDonald style scores each token in &minus;3&hellip;+3, applying a three-token negation window and amplifier/diminisher multipliers. Sentence tone is <code>tanh(&Sigma;w/(3&radic;n))</code>; document tone is a section-weighted mean (CEO prepared 0.8, CFO prepared 1.0, analyst Q&amp;A 1.4) squashed to &minus;1&hellip;+1. That tone is z-scored and combined with analyst-revision, options-flow and supply-chain z-scores into a unit-variance composite, whose information coefficient drives a 60-month long/short overlay backtest sized to a constant tracking error and charged realistic transaction costs.</p>
+        <p>A text-to-portfolio pipeline on <strong>synthetic earnings-call transcripts written for this demo, attributed to fictional issuers</strong>. A hand-built finance lexicon in the Loughran&ndash;McDonald style scores each token in &minus;3&hellip;+3, applying a three-token negation window and amplifier/diminisher multipliers. Sentence tone is <code>tanh(&Sigma;w/(3&radic;n))</code>; document tone is a section-weighted mean (CEO prepared 0.8, CFO prepared 1.0, analyst Q&amp;A 1.4) squashed to &minus;1&hellip;+1. That tone is z-scored and combined with analyst-revision, options-flow and supply-chain z-scores into a unit-variance composite, whose information coefficient drives a 60-month long/short overlay backtest sized to a constant tracking error. The backtest is <strong>point-in-time by construction</strong> (the signal is tradable no earlier than the open after the call, and the forward-return window starts there, so the announcement gap is excluded), <strong>breadth-limited</strong> (an earnings call is worth four independent bets a year per name, not one per rebalance) and <strong>capacity-limited</strong> (square-root market impact on the actual clip size, so net alpha falls away as capital grows).</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
         <ul>
-          <li>Signal IC at a one-day horizon and half-life: NLP 0.052 / 28 d, analyst revisions 0.058 / 55 d, options flow 0.049 / 18 d, supply chain 0.031 / 70 d. At the default 21-day horizon these are 0.032, 0.045, 0.023 and 0.025.</li>
-          <li>Assumed signal correlations 0.10&ndash;0.35 (NLP&ndash;analyst 0.35 is the highest). At equal weights the composite IC is about 0.048 against 0.045 for the best single signal.</li>
-          <li>Overlay sized to <strong>4.5% tracking error</strong>; transfer coefficient 0.45; <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per rebalance.</li>
-          <li>Two-way annual turnover <code>2&kappa;&middot;252/h</code> with &kappa; of 0.65 / 0.35 / 0.85 / 0.30 by signal (0.25 for the traditional-factor sleeve); cost per unit turnover <code>8 bp + 6 bp&middot;&radic;(f/12)</code>, i.e. about 14 bp at monthly rebalancing.</li>
+          <li><strong>Timestamps.</strong> The call ends after the close of day t; the signal is tradable no earlier than the open of t + 1 (entry lag 1, the slider minimum); the forward-return window runs h trading days from that entry. The announcement-day gap is outside the window and is not scored. IC<sub>i</sub>(1) is therefore defined against the one-day return from the first tradable point, so an entry lag of 1 carries no decay penalty and each further day costs <code>2<sup>&minus;1/HL</sup></code>.</li>
+          <li>Signal IC at a one-day horizon and half-life: NLP 0.052 / 28 d, analyst revisions 0.058 / 55 d, options flow 0.049 / 18 d, supply chain 0.031 / 70 d. At the default 21-day horizon and T+1 entry these are 0.032, 0.045, 0.023 and 0.025. These sit in the range published cross-sectional text-tone studies report for a one-month forward return; they are assumed here, not estimated.</li>
+          <li>Assumed signal correlations 0.10&ndash;0.35 (NLP&ndash;analyst 0.35 is the highest). At equal weights the composite IC is about 0.048 against 0.045 for the best single signal &mdash; correlated signals diversify far less than an independence assumption would suggest, and the combination rule accounts for it.</li>
+          <li><strong>Refresh rates (the breadth ceiling):</strong> NLP 4/yr &mdash; one earnings call per name per quarter &mdash; analyst revisions 24, options flow 252, supply chain 12, traditional factors 12. Breadth is <code>N<sub>eff</sub> &middot; min(252/h, refresh)</code>; the composite&rsquo;s refresh is the weighted average of its components.</li>
+          <li>Overlay sized to <strong>4.5% tracking error</strong>; transfer coefficient 0.45; <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per refresh out of a 500-name universe.</li>
+          <li>Two-way annual turnover <code>2&kappa;&middot;252/h</code> with &kappa; of 0.65 / 0.35 / 0.85 / 0.30 by signal (0.25 for the traditional-factor sleeve). Holding for less time than the gap between refreshes requires sizing up by <code>lev = (252/h)/refresh</code> to keep tracking error constant, which multiplies both the clip and the turnover.</li>
+          <li><strong>Costs and capacity:</strong> cost per unit of turnover = 5 bp (half-spread plus commission on liquid names) + <code>0.8 &middot; 1.8% &middot; &radic;(clip / ADV)</code>, with clip = <code>&kappa; &middot; AUM &middot; lev / 500</code> executed in one session and a median ADV of US$80m. At the default US$500m the composite pays about 17 bp per unit of turnover; at US$3bn, about 34 bp.</li>
           <li>Benchmark 7.0% arithmetic return, 15.5% volatility; cross-sectional tone distribution mean +0.10, s.d. 0.28; cross-sectional return dispersion <code>0.35&middot;&radic;(h/252)</code>.</li>
-          <li>Defaults: equal 25% weights, 21-day horizon, all four signals on, seed 20260421.</li>
+          <li>Defaults: equal 25% weights, 21-day horizon, T+1 entry, US$500m, all four signals on, seed 20260421.</li>
         </ul>
       </div>
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li><code>IC<sub>i</sub>(h) = IC<sub>i</sub>(1)&middot;2^(&minus;(h&minus;1)/HL<sub>i</sub>)</code>; composite <code>IC<sub>c</sub> = &Sigma;w<sub>i</sub>IC<sub>i</sub> / &radic;(w&rsquo;Cw)</code>, weights renormalised to &Sigma;w = 1.</li>
-          <li>Fundamental law with transfer coefficient: <code>IR<sub>gross</sub> = TC&middot;IC(h)&middot;&radic;(N<sub>eff</sub>&middot;252/h)</code>; gross alpha = IR&middot;TE; <code>net = gross &minus; turnover&middot;cost rate</code>; <code>IR<sub>net</sub> = net / TE</code>.</li>
+          <li><code>IC<sub>i</sub>(h,L) = IC<sub>i</sub>(1)&middot;2^(&minus;(h&minus;1)/HL<sub>i</sub>)&middot;2^(&minus;(L&minus;1)/HL<sub>i</sub>)</code> for holding period h and entry lag L &ge; 1; composite <code>IC<sub>c</sub> = &Sigma;w<sub>i</sub>IC<sub>i</sub> / &radic;(w&rsquo;Cw)</code>, weights renormalised to &Sigma;w = 1.</li>
+          <li>Fundamental law with transfer coefficient: <code>IR<sub>gross</sub> = TC&middot;IC(h,L)&middot;&radic;(N<sub>eff</sub>&middot;f)</code> with <code>f = min(252/h, refresh)</code>; gross alpha = IR&middot;TE; <code>net = gross &minus; turnover&middot;cost rate</code>; <code>IR<sub>net</sub> = net / TE</code>.</li>
+          <li>Market impact: <code>cost rate = 5 bp + Y&middot;&sigma;<sub>daily</sub>&middot;&radic;(clip/ADV)</code>, <code>clip = &kappa;&middot;AUM&middot;lev/nNames</code>, <code>lev = (252/h)/f</code>. Square-root impact is the standard Almgren-style form; Y = 0.8 is mid-range for liquid US equities.</li>
+          <li>Overlapping-bet diagnostic (reported, not applied to the headline): <code>&rho; = 2^(&minus;(252/f)/HL)</code>, <code>BR<sub>adj</sub> = N<sub>eff</sub>&middot;f&middot;(1&minus;&rho;)/(1+&rho;)</code> after Grinold, with the resulting net alpha shown alongside.</li>
           <li>Max drawdown on the cumulative total-return path; hit rate = share of months with positive active return; sample IC on the scatter is constructed exactly by orthogonalising the noise against the score.</li>
-          <li>Loughran &amp; McDonald (2011), <em>When Is a Liability Not a Liability? Textual Analysis, Dictionaries, and 10-Ks</em>; Grinold &amp; Kahn (2000), <em>Active Portfolio Management</em>, chs. 6 and 15; Clarke, de Silva &amp; Thorley (2002), <em>Portfolio Constraints and the Fundamental Law</em>.</li>
+          <li>Loughran &amp; McDonald (2011), <em>When Is a Liability Not a Liability? Textual Analysis, Dictionaries, and 10-Ks</em>; Grinold &amp; Kahn (2000), <em>Active Portfolio Management</em>, chs. 6 and 15; Clarke, de Silva &amp; Thorley (2002), <em>Portfolio Constraints and the Fundamental Law</em>; Almgren, Thum, Hauptmann &amp; Li (2005), <em>Direct Estimation of Equity Market Impact</em>.</li>
         </ul>
       </div>
       <div>
@@ -417,8 +455,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         <ul>
           <li>The transcripts are invented and short. A bag-of-words lexicon has no syntax, no coreference and no numeric reasoning; a fine-tuned encoder would beat it on real filings.</li>
           <li>The lexicon is hand-built (~200 terms) and inspired by Loughran&ndash;McDonald rather than being it; the published dictionary is far larger and is not redistributed here.</li>
-          <li>Signal ICs, correlations, transfer coefficient and breadth are assumed, not estimated. Nothing is fitted to data, so there is no out-of-sample claim to make.</li>
-          <li>The backtest is a single overlay path with Gaussian active returns and no factor model, no borrow cost, no capacity limit, no crowding and no decay of the signals themselves over calendar time.</li>
+          <li>Signal ICs, correlations, transfer coefficient, refresh rates and breadth are assumed, not estimated. Nothing is fitted to data, so there is no out-of-sample claim to make and none is offered.</li>
+          <li><strong>Point-in-time integrity is enforced by convention, not by data.</strong> The synthetic transcripts have no real timestamps, so the T+1 entry rule is an assumption imposed on the model rather than something verified against a vendor feed. A real implementation must also use a point-in-time universe and point-in-time consensus and options data; survivorship and restatement are not simulated here and both flatter results badly.</li>
+          <li>The IC decays monotonically in h. Real post-earnings drift is hump-shaped: the IC against a cumulative window typically rises for the first days or weeks before falling, so this model understates short horizons and is only a reasonable shape beyond about two weeks.</li>
+          <li><strong>Capacity is modelled crudely.</strong> One median ADV for all 500 names, one impact coefficient, single-session execution, no borrow cost or short availability, no crowding, and no allowance for the fact that earnings calls cluster into four four-week windows a year &mdash; which concentrates the event trade and would make real impact worse than shown.</li>
+          <li>The headline uses <code>BR = N<sub>eff</sub>&middot;f</code>, which double-counts overlapping bets when the rebalance interval is short relative to the signal half-life. The overlap-adjusted breadth and the net alpha it implies are shown in the table; at the default settings that convention turns the composite&rsquo;s net alpha negative. Which convention is right is a genuine open question, and the honest reading is that the truth sits between the two rows.</li>
+          <li>The backtest is a single overlay path with Gaussian active returns, no factor risk model, no financing or borrow cost, no crowding, and no decay of the signals themselves over calendar time &mdash; a text signal that is public and cheap to compute should be expected to decay year on year.</li>
           <li>Backtest results are deliberately independent of the selected transcript: one call cannot re-estimate a universe-level IC.</li>
           <li>Sector read-across uses hand-set linkage betas and is illustrative only.</li>
         </ul>
@@ -595,13 +637,23 @@ var TRANSCRIPTS=[
 ];
 
 // ===== SIGNALS =====
-// ic1 = information coefficient at a one-day forward horizon; hl = IC half-life in trading days;
-// kappa = one-way portfolio turnover per rebalance; tc = transfer coefficient.
+// ic1     = IC against the one-day forward return measured FROM THE FIRST TRADABLE POINT, i.e. the
+//           open of the session after the call. The announcement gap itself is outside the window
+//           by construction; scoring the signal against it would be look-ahead.
+// hl      = IC half-life in trading days
+// kappa   = one-way portfolio turnover per rebalance
+// refresh = genuinely independent refreshes per name per year. This is the breadth ceiling and it
+//           is what separates an event signal from a continuous one: an earnings call arrives four
+//           times a year, so no amount of rebalancing manufactures new information in between.
 var ALT_SIGNALS=[
- {id:'nlp',name:'NLP Sentiment',color:'#06b6d4',ic1:.052,hl:28,kappa:.65},
- {id:'analyst',name:'Analyst Revisions',color:'#10b981',ic1:.058,hl:55,kappa:.35},
- {id:'options',name:'Options Flow',color:'#f59e0b',ic1:.049,hl:18,kappa:.85},
- {id:'supply',name:'Supply Chain',color:'#8b5cf6',ic1:.031,hl:70,kappa:.30}
+ {id:'nlp',name:'NLP Sentiment',color:'#06b6d4',ic1:.052,hl:28,kappa:.65,refresh:4,
+   note:'Event-driven: one call per name per quarter.'},
+ {id:'analyst',name:'Analyst Revisions',color:'#10b981',ic1:.058,hl:55,kappa:.35,refresh:24,
+   note:'Consensus moves meaningfully perhaps twice a month.'},
+ {id:'options',name:'Options Flow',color:'#f59e0b',ic1:.049,hl:18,kappa:.85,refresh:252,
+   note:'Refreshes every session.'},
+ {id:'supply',name:'Supply Chain',color:'#8b5cf6',ic1:.031,hl:70,kappa:.30,refresh:12,
+   note:'Monthly shipping, customs and vendor data.'}
 ];
 var SIG_CORR={
  nlp:{nlp:1,analyst:.35,options:.20,supply:.15},
@@ -609,7 +661,13 @@ var SIG_CORR={
  options:{nlp:.20,analyst:.25,options:1,supply:.10},
  supply:{nlp:.15,analyst:.30,options:.10,supply:1}
 };
-function icAt(sig,h){return sig.ic1*Math.pow(2,-(h-1)/sig.hl)}
+// IC at horizon h, entered `lag` trading days after the call. lag = 1 is the baseline (the open
+// after the call, the earliest honest execution) and carries no penalty; every extra day of delay
+// gives away part of a signal whose half-life is measured in weeks.
+function icAt(sig,h,lag){
+  if(lag===undefined)lag=state.entryLag;
+  return sig.ic1*Math.pow(2,-(h-1)/sig.hl)*Math.pow(2,-(Math.max(1,lag)-1)/sig.hl);
+}
 
 // stylised supply-chain / demand linkage betas; the issuer's own sector is set to 1.0
 var SECTORS=[
@@ -620,12 +678,16 @@ var SECTORS=[
 ];
 
 // ===== MODEL CONSTANTS =====
-var MODEL={nEff:120,te:.045,tc:.45,costFixed:.0008,costImpact:.0006,nMonths:60,
-  bmRet:.07,bmVol:.155,xsMean:.10,xsSd:.28,tradIc1:.030,tradHl:120,tradKappa:.25,xsDisp:.35};
+// nNames/advUsd/sigDaily/impactY drive the square-root market-impact model that gives the
+// strategy a capacity limit: impact = Y . sigma_daily . sqrt(clip / ADV), the Almgren-style
+// form used across the industry. costFixed is half-spread plus commission on liquid names.
+var MODEL={nEff:120,te:.045,tc:.45,costFixed:.0005,nMonths:60,
+  bmRet:.07,bmVol:.155,xsMean:.10,xsSd:.28,tradIc1:.030,tradHl:120,tradKappa:.25,tradRefresh:12,xsDisp:.35,
+  nNames:500,advUsd:80,sigDaily:.018,impactY:0.8};
 
 // ===== STATE =====
 var state={transcript:'nvex',signals:['nlp','analyst','options','supply'],
-  weights:{nlp:25,analyst:25,options:25,supply:25},holdDays:21,results:null};
+  weights:{nlp:25,analyst:25,options:25,supply:25},holdDays:21,entryLag:1,aum:500,results:null};
 var chartMeta={};
 
 // ===== UTILITY =====
@@ -651,19 +713,44 @@ function portVar(aw){var v=0,i,j;for(i=0;i<aw.length;i++)for(j=0;j<aw.length;j++
 function compositeIC(aw,h,sd){var num=0,i;for(i=0;i<aw.length;i++)num+=aw[i].w*icAt(aw[i].sig,h);return sd>0?num/sd:0}
 
 // ===== BACKTEST SLEEVE =====
-// TE-targeted long/short overlay. Fundamental law with a transfer coefficient for gross skill,
-// two-way turnover x a square-root-impact cost rate for the drag. Net is always below gross.
-function sleeve(icH,kappa,holdDays,rng){
-  var f=252/holdDays;
+// TE-targeted long/short overlay, with the two things that decide whether an event signal is
+// actually investable:
+//   1. Breadth ceiling. The fundamental law rewards independent bets, not rebalances. A signal
+//      that refreshes four times a year cannot supply twelve monthly bets, so BREADTH is capped
+//      at nEff . min(252/h, refresh). Turnover is NOT capped: if you hold for less time than the
+//      gap between refreshes, the book is only invested part of the time and has to be sized up
+//      by lev = (252/h)/refresh to hold tracking error constant. That leverage multiplies both
+//      the clip and the turnover, which is why running a quarterly event signal on a two-week
+//      horizon costs a fortune and buys no extra bets.
+//   2. Capacity. Cost per unit of turnover is half-spread plus a square-root market-impact term
+//      on the actual clip: impact = Y . sigma_daily . sqrt(clip/ADV), the clip being
+//      kappa . AUM . lev / nNames traded in a single session (an event signal cannot be worked
+//      slowly without losing the signal). Double the AUM and the impact rises by sqrt(2).
+function sleeve(icH,kappa,refresh,hl,holdDays,aum,rng){
+  var fNom=252/holdDays,f=Math.min(fNom,refresh),lev=f>0?fNom/f:1;
   var irGross=MODEL.tc*icH*Math.sqrt(MODEL.nEff*f);
-  var turn=2*kappa*f;
-  var costRate=MODEL.costFixed+MODEL.costImpact*Math.sqrt(f/12);
+  /* Overlapping-bet diagnostic. BR = nEff x f treats consecutive rebalances as independent, which
+     they are not: a signal with half-life hl still has autocorrelation rho = 2^(-interval/hl) at
+     the next rebalance. Grinold's adjustment scales breadth by (1-rho)/(1+rho). It is reported
+     rather than applied, and the methodology footer says which convention the headline uses. */
+  var interval=f>0?252/f:252,rho=Math.pow(2,-interval/Math.max(hl,1));
+  var olFac=(1-rho)/(1+rho);
+  var brNom=MODEL.nEff*f,brAdj=brNom*olFac;
+  var irGrossAdj=MODEL.tc*icH*Math.sqrt(Math.max(brAdj,0));
+  var turn=2*kappa*fNom;
+  var clip=kappa*aum*lev/MODEL.nNames;
+  var part=MODEL.advUsd>0?clip/MODEL.advUsd:0;
+  var impact=MODEL.impactY*MODEL.sigDaily*Math.sqrt(Math.max(part,0));
+  var costRate=MODEL.costFixed+impact;
   var cost=turn*costRate;
   var gross=irGross*MODEL.te,net=gross-cost;
   var mu=net/12,sg=MODEL.te/Math.sqrt(12);
   var z=standardize(stratNormals(MODEL.nMonths,rng)),act=[],hits=0,i;
   for(i=0;i<MODEL.nMonths;i++){act.push(mu+sg*z[i]);if(act[i]>0)hits++}
   return{ic:icH,irGross:irGross,irNet:net/MODEL.te,turn:turn,costRate:costRate,cost:cost,
+    fNom:fNom,f:f,lev:lev,clip:clip,part:part,impact:impact,refresh:refresh,
+    rho:rho,brNom:brNom,brAdj:brAdj,irGrossAdj:irGrossAdj,grossAdj:irGrossAdj*MODEL.te,
+    netAdj:irGrossAdj*MODEL.te-cost,
     gross:gross,net:net,act:act,hit:hits/MODEL.nMonths,te:MODEL.te};
 }
 
@@ -696,8 +783,9 @@ function generate(){
 
   var aw=activeWeights();
   var sd=Math.sqrt(portVar(aw));
-  var compZ=0,compKappa=0,zNum=0;
-  for(i=0;i<aw.length;i++){zNum+=aw[i].w*zByID[aw[i].sig.id];compKappa+=aw[i].w*aw[i].sig.kappa}
+  var compZ=0,compKappa=0,zNum=0,compRefresh=0;
+  for(i=0;i<aw.length;i++){zNum+=aw[i].w*zByID[aw[i].sig.id];compKappa+=aw[i].w*aw[i].sig.kappa;
+    compRefresh+=aw[i].w*aw[i].sig.refresh}
   compZ=sd>0?zNum/sd:0;
   var compIC=compositeIC(aw,h,sd);
   var bestSingleIC=0;for(i=0;i<aw.length;i++)bestSingleIC=Math.max(bestSingleIC,icAt(aw[i].sig,h));
@@ -744,11 +832,12 @@ function generate(){
   var focus={x:compZ,y:sigR*kIC*compZ,name:tr?tr.ticker:'',focus:true};
 
   // --- universe-level backtest (independent of which single transcript is on screen) ---
-  var comp=sleeve(compIC,compKappa,h,mulberry32(BASE_SEED+1));
+  var comp=sleeve(compIC,compKappa,compRefresh,halfLife,h,state.aum,mulberry32(BASE_SEED+1));
   var nlpSig=ALT_SIGNALS[0];
-  var nlpOnly=sleeve(icAt(nlpSig,h),nlpSig.kappa,h,mulberry32(BASE_SEED+2));
+  var nlpOnly=sleeve(icAt(nlpSig,h),nlpSig.kappa,nlpSig.refresh,nlpSig.hl,h,state.aum,mulberry32(BASE_SEED+2));
+  /* the traditional-factor sleeve is not event-driven, so no entry lag applies to it */
   var tradIC=MODEL.tradIc1*Math.pow(2,-(h-1)/MODEL.tradHl);
-  var trad=sleeve(tradIC,MODEL.tradKappa,h,mulberry32(BASE_SEED+3));
+  var trad=sleeve(tradIC,MODEL.tradKappa,MODEL.tradRefresh,MODEL.tradHl,h,state.aum,mulberry32(BASE_SEED+3));
   var bmZ=standardize(stratNormals(MODEL.nMonths,mulberry32(BASE_SEED+4)));
   var bmMu=MODEL.bmRet/12,bmSg=MODEL.bmVol/Math.sqrt(12);
   var bmRet=[],compRet=[],nlpRet=[],tradRet=[];
@@ -768,7 +857,7 @@ function generate(){
   }
 
   return{tr:tr,sentScores:sentScores,docSentiment:docSentiment,zNLP:zNLP,zByID:zByID,
-    aw:aw,compZ:compZ,compIC:compIC,bestSingleIC:bestSingleIC,compKappa:compKappa,
+    aw:aw,compZ:compZ,compIC:compIC,bestSingleIC:bestSingleIC,compKappa:compKappa,compRefresh:compRefresh,
     uncCount:uncCount,toneWords:toneWords,totalWords:totalWords,
     decayDays:decayDays,decayCurves:decayCurves,compDecay:compDecay,halfLife:halfLife,
     sectorSent:sectorSent,scatterPts:scatterPts,focus:focus,sigR:sigR,
@@ -967,7 +1056,7 @@ function drawScatter(canvasId,pts,r){
   hitboxes.push({x:fx,y:fy,sent:r.focus.x,ret:r.focus.y,name:r.focus.name});
   ctx.fillStyle='#64748b';ctx.font='10px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
   ctx.fillText('Composite signal score (z)',pad.l+cW/2,H-pad.b+21);
-  ctx.save();ctx.translate(11,pad.t+cH/2);ctx.rotate(-Math.PI/2);ctx.fillText('Forward return over '+state.holdDays+'d',0,0);ctx.restore();
+  ctx.save();ctx.translate(11,pad.t+cH/2);ctx.rotate(-Math.PI/2);ctx.fillText('Fwd return, '+state.holdDays+'d from T+'+state.entryLag+' open',0,0);ctx.restore();
   ctx.fillStyle='#06b6d4';ctx.font='bold 11px JetBrains Mono, monospace';ctx.textAlign='right';ctx.textBaseline='top';
   ctx.fillText('sample IC = '+r.compIC.toFixed(3),W-pad.r-4,pad.t+2);
   chartMeta[canvasId]={type:'scatter',hitboxes:hitboxes};
@@ -1018,6 +1107,8 @@ function renderKPIs(r){
   sk('kHit',(r.comp.hit*100).toFixed(1)+'%',r.comp.hit>=.52?'pos':r.comp.hit>=.5?'neutral':'neg');
   sk('kMaxDD','-'+(dd*100).toFixed(1)+'%','neg');
   sk('kHalfLife',r.halfLife.toFixed(0)+'d','neutral');
+  sk('kCost','-'+(r.comp.cost*100).toFixed(2)+'%','neg');
+  sk('kPart',(r.comp.part*100).toFixed(2)+'%',r.comp.part<.02?'neutral':'neg');
 }
 
 // ===== RENDER PERF TABLE =====
@@ -1038,7 +1129,14 @@ function renderPerfTable(r){
     ['Max drawdown','-'+(maxDrawdown(r.compEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.nlpEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.tradEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.bmEq)*100).toFixed(1)+'%',2],
     ['Hit rate (monthly active)',(r.comp.hit*100).toFixed(1)+'%',(r.nlpOnly.hit*100).toFixed(1)+'%',(r.trad.hit*100).toFixed(1)+'%','\u2014',0],
     ['Two-way turnover (ann.)',r.comp.turn.toFixed(1)+'x',r.nlpOnly.turn.toFixed(1)+'x',r.trad.turn.toFixed(1)+'x','\u2014',0],
-    ['Signal IC @ '+state.holdDays+'d',r.compIC.toFixed(4),icAt(ALT_SIGNALS[0],state.holdDays).toFixed(4),r.tradIC.toFixed(4),'\u2014',0]
+    ['Info refreshes / yr (of rebalances)',r.comp.f.toFixed(1)+' of '+r.comp.fNom.toFixed(1),r.nlpOnly.f.toFixed(1)+' of '+r.nlpOnly.fNom.toFixed(1),r.trad.f.toFixed(1)+' of '+r.trad.fNom.toFixed(1),'\u2014',0],
+    ['Sizing multiple for constant TE',r.comp.lev.toFixed(2)+'x',r.nlpOnly.lev.toFixed(2)+'x',r.trad.lev.toFixed(2)+'x','\u2014',0],
+    ['Cost per unit turnover',(r.comp.costRate*1e4).toFixed(1)+' bp',(r.nlpOnly.costRate*1e4).toFixed(1)+' bp',(r.trad.costRate*1e4).toFixed(1)+' bp','\u2014',0],
+    ['Clip / median ADV',(r.comp.part*100).toFixed(2)+'%',(r.nlpOnly.part*100).toFixed(2)+'%',(r.trad.part*100).toFixed(2)+'%','\u2014',0],
+    ['Bets / yr (nominal breadth)',r.comp.brNom.toFixed(0),r.nlpOnly.brNom.toFixed(0),r.trad.brNom.toFixed(0),'\u2014',0],
+    ['Bets / yr (overlap-adjusted)',r.comp.brAdj.toFixed(0),r.nlpOnly.brAdj.toFixed(0),r.trad.brAdj.toFixed(0),'\u2014',0],
+    ['Net alpha on adj. breadth',pc(r.comp.netAdj),pc(r.nlpOnly.netAdj),pc(r.trad.netAdj),'\u2014',1],
+    ['Signal IC @ h='+state.holdDays+'d, lag '+state.entryLag+'d',r.compIC.toFixed(4),icAt(ALT_SIGNALS[0],state.holdDays).toFixed(4),r.tradIC.toFixed(4),'\u2014',0]
   ];
   var html='',i,j,cls;
   for(i=0;i<rows.length;i++){
@@ -1134,14 +1232,18 @@ function renderWeights(r){
     if(rng)rng.disabled=!on;
   }
   var sum=document.getElementById('wSum');
-  if(sum)sum.textContent='Raw sliders renormalised so active weights sum to 100% \u00b7 composite turnover \u03ba = '+r.compKappa.toFixed(2);
+  if(sum)sum.textContent='Raw sliders renormalised so active weights sum to 100% \u00b7 composite turnover \u03ba = '+r.compKappa.toFixed(2)+
+    ' \u00b7 breadth ceiling '+r.compRefresh.toFixed(0)+' refreshes/yr (NLP alone: 4)';
 }
 
 function updateStatus(r){
   document.getElementById('statusLeft').innerHTML=
     'seed <b>'+BASE_SEED+'</b> \u00b7 lexicon <b>'+(Object.keys(LEX).length)+'</b> terms + '+(Object.keys(NEGATORS).length)+
     ' negators \u00b7 transcript <b>'+(r.tr?r.tr.ticker:'--')+'</b> ('+(r.tr?r.tr.quarter:'--')+
-    ') \u00b7 signals <b>'+state.signals.length+'/4</b> \u00b7 h=<b>'+state.holdDays+'d</b> \u00b7 IC<sub>c</sub>=<b>'+r.compIC.toFixed(3)+'</b>';
+    ') \u00b7 signals <b>'+state.signals.length+'/4</b> \u00b7 entry <b>T+'+state.entryLag+
+    '</b> \u00b7 h=<b>'+state.holdDays+'d</b> \u00b7 IC<sub>c</sub>=<b>'+r.compIC.toFixed(3)+
+    '</b> \u00b7 rebal <b>'+r.comp.f.toFixed(0)+'/yr</b> \u00b7 AUM <b>$'+state.aum+'m</b> \u00b7 clip <b>'+
+    (r.comp.part*100).toFixed(2)+'%</b> ADV';
 }
 
 // ===== CONTROLS =====
@@ -1188,13 +1290,23 @@ function initControls(){
   hSlider.classList.add('d-range');
   hSlider.addEventListener('input',function(){state.holdDays=parseInt(this.value,10);hVal.textContent=this.value;runAnalysis()});
 
+  var lSlider=document.getElementById('lagSlider'),lVal=document.getElementById('lagVal');
+  lSlider.classList.add('d-range');
+  lSlider.addEventListener('input',function(){state.entryLag=parseInt(this.value,10);lVal.textContent=this.value;runAnalysis()});
+
+  var aSlider=document.getElementById('aumSlider'),aVal=document.getElementById('aumVal');
+  aSlider.classList.add('d-range');
+  aSlider.addEventListener('input',function(){state.aum=parseInt(this.value,10);aVal.textContent=this.value;runAnalysis()});
+
   document.getElementById('resetBtn').addEventListener('click',function(){
     state.transcript='nvex';state.signals=['nlp','analyst','options','supply'];
-    state.weights={nlp:25,analyst:25,options:25,supply:25};state.holdDays=21;
+    state.weights={nlp:25,analyst:25,options:25,supply:25};state.holdDays=21;state.entryLag=1;state.aum=500;
     tBox.querySelectorAll('.tr-btn').forEach(function(b){b.classList.toggle('active',b.dataset.id==='nvex')});
     sBox.querySelectorAll('.sig-chip').forEach(function(c){c.classList.add('active');c.setAttribute('aria-pressed','true')});
     sBox.querySelectorAll('.w-range').forEach(function(rg){rg.value=25});
     hSlider.value=21;hVal.textContent='21';
+    lSlider.value=1;lVal.textContent='1';
+    aSlider.value=500;aVal.textContent='500';
     runAnalysis();
   });
 
