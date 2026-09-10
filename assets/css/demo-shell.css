@@ -265,7 +265,48 @@ a { color: inherit; }
   outline: none;
 }
 .d-input:focus, .d-select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--accent-bg); }
-input[type=range].d-range { accent-color: var(--cyan); width: 100%; }
+/* Range inputs: give every slider a real hit target. Several demos rendered a
+   3-4px tall track, which is fiddly with a mouse and unusable on touch. */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  accent-color: var(--cyan);
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+  vertical-align: middle;
+}
+input[type=range]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
+input[type=range]::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 2px; background: var(--border-strong);
+}
+input[type=range]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--border-strong); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--cyan); border: 2px solid var(--bg);
+  margin-top: -5px;
+}
+input[type=range]::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--cyan); border: 2px solid var(--bg);
+}
+input[type=range].d-range { width: 100%; }
+
+/* Keep the nav title from being ellipsised: let the actions wrap to a second
+   row instead of squeezing the demo's name. */
+.demo-nav .demo-title { min-width: 210px; }
+
+/* Shared one-line explainer that sits under the status strip. */
+.demo-sub {
+  max-width: 1440px;
+  margin: 14px auto 0;
+  padding: 0 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+.demo-sub b { color: var(--text); font-weight: 600; }
 
 /* tooltip */
 .d-tooltip {

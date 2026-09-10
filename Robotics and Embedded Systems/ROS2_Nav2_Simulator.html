@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/demo-shell.css">
+    <link rel="stylesheet" href="../assets/css/demo-shell.css?v=2">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
     <style>
 
@@ -879,7 +879,11 @@
             .demo-sub, .hint-bar { margin-left: 12px; margin-right: 12px; padding-left: 0; }
             .hint-bar { padding-left: 10px; }
         }
-    </style>
+    
+/* dismiss controls need a real hit target */
+.hint-bar .close,#hintClose{min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;font-size:15px;line-height:1}
+.hint-bar .close:hover,#hintClose:hover{background:rgba(0,247,255,.12)}
+</style>
 </head>
 <body>
 
@@ -907,7 +911,7 @@
 
 <div class="hint-bar" id="hintBar">
   <i class="fas fa-lightbulb"></i>
-  <span>Press <kbd>G</kbd> then click the map to send a goal. <kbd>O</kbd> drops a dynamic obstacle in the robot's way to trigger replanning and recoveries. <kbd>H</kbd> opens the full guide.</span>
+  <span>Press <kbd>G</kbd> then click the map to send a goal. <kbd>O</kbd> drops a dynamic obstacle in the robot's way to trigger replanning and recoveries. The <b>Global Costmap</b> and <b>Particles</b> layers start hidden &mdash; switch them on under the map to see the inflation field and the localisation cloud. <kbd>H</kbd> opens the full guide.</span>
   <button type="button" class="close" id="hintClose" aria-label="Dismiss hint"><i class="fas fa-xmark"></i></button>
 </div>
 
@@ -1027,11 +1031,11 @@
                     <button type="button" class="mode-close" onclick="hideModeIndicator()" aria-label="Hide tool hint">&times;</button>
                 </div>
                 <div class="viewport-buttons">
-                    <button type="button" class="viewport-btn active" id="btnGlobalCostmap">Global Costmap</button>
+                    <button type="button" class="viewport-btn" id="btnGlobalCostmap">Global Costmap</button>
                     <button type="button" class="viewport-btn" id="btnLocalCostmap">Local Costmap</button>
                     <button type="button" class="viewport-btn" id="btnInflation">Obstacle Inflation</button>
                     <button type="button" class="viewport-btn active" id="btnPath">Path</button>
-                    <button type="button" class="viewport-btn active" id="btnParticles">Particles</button>
+                    <button type="button" class="viewport-btn" id="btnParticles">Particles</button>
                 </div>
             </div>
             <div class="canvas-wrapper">
@@ -1436,7 +1440,7 @@
         // State
         let mode = 'goal';
         let paused = false;
-        let showGlobal = true;
+        let showGlobal = false;
         let showLocal = false;
         let showInflation = false;
         let showPath = true;
@@ -1482,7 +1486,7 @@
         let recoveryIndex = 0;
         let spinAccum = 0;
         let backupStart = null;
-        let showParticles = true;
+        let showParticles = false;
         let planQuiet = false;
         let blockTimer = 0;
         const RECOVERIES = ['clear', 'spin', 'backup', 'wait'];

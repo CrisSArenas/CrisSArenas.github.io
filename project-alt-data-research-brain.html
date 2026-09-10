@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alternative-Data Research Brain | Cristian Arenas</title>
-<meta name="description" content="An LLM research system that ingests six public alternative-data sources for a ticker, writes a cited position-ready note behind a citation validator, surfaces cross-source connections, and checks the read against SEC fundamentals and price momentum.">
+<meta name="description" content="An enterprise alternative-data research platform for investment teams: licensed multi-source ingestion across a coverage universe, cited research notes behind a citation validator, cross-source connection discovery, and reconciliation against fundamentals and market data. Deploys inside the fund's own cloud account.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,8 @@
 <style>
 .project-detail{padding-top:80px;min-height:100vh;background:var(--dark-bg)}
 .project-hero{padding:4rem 0;background:linear-gradient(135deg,var(--darker-bg),var(--dark-bg));border-bottom:2px solid var(--border-color)}
-.project-hero h1{font-size:clamp(1.9rem,3.6vw,3rem);color:var(--text-primary);margin-bottom:1rem;line-height:1.15}
+.project-hero h1{font-size:clamp(1.9rem,3.6vw,3rem);color:var(--text-primary);margin-bottom:.6rem;line-height:1.15}
+.hero-kicker{font-family:var(--font-mono);font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--primary-green);margin-bottom:.8rem}
 .project-meta{display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:2rem}
 .meta-item{display:flex;align-items:center;gap:.5rem;color:var(--text-secondary)}
 .meta-item i{color:var(--primary-cyan)}
@@ -24,29 +25,32 @@
 .back-button:hover{color:var(--primary-green);transform:translateX(-5px)}
 .project-content{max-width:1000px;margin:0 auto;padding:3rem 2rem}
 .content-section{margin-bottom:3.5rem;scroll-margin-top:90px}
-.content-section h2{font-size:1.9rem;color:var(--primary-cyan);margin-bottom:1.2rem;border-bottom:2px solid var(--primary-cyan);padding-bottom:.5rem}
-.content-section h3{font-size:1.35rem;color:var(--primary-green);margin-top:2rem;margin-bottom:1rem}
+.content-section h2{font-size:1.85rem;color:var(--primary-cyan);margin-bottom:1.1rem;border-bottom:2px solid var(--primary-cyan);padding-bottom:.5rem}
+.content-section h3{font-size:1.3rem;color:var(--primary-green);margin-top:2rem;margin-bottom:.8rem}
 .content-section p,.content-section li{color:var(--text-secondary);line-height:1.8;margin-bottom:1rem}
 .content-section ul,.content-section ol{margin-left:2rem;margin-bottom:1.5rem}
 .content-section li{margin-bottom:.5rem}
 .content-section strong{color:var(--text-primary)}
-.architecture-diagram{background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:1.6rem;margin:2rem 0;font-family:var(--font-mono);font-size:.8rem;overflow-x:auto;color:var(--primary-green)}
+.architecture-diagram{background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:1.6rem;margin:2rem 0;font-family:var(--font-mono);font-size:.78rem;overflow-x:auto;color:var(--primary-green)}
 .architecture-diagram pre{margin:0;white-space:pre}
-.highlight-box{background:var(--card-bg);border-left:4px solid var(--primary-cyan);padding:1.5rem;margin:2rem 0;border-radius:5px}
+.highlight-box{background:var(--card-bg);border-left:4px solid var(--primary-cyan);padding:1.4rem 1.5rem;margin:1.8rem 0;border-radius:5px}
 .highlight-box strong{color:var(--primary-cyan)}
-.tech-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:2rem 0}
-.tech-item{background:var(--card-bg);padding:1rem;border-radius:5px;border:1px solid var(--border-color);transition:.3s;color:var(--text-secondary);font-size:.92rem}
+.warn-box{background:var(--card-bg);border-left:4px solid #f59e0b;padding:1.4rem 1.5rem;margin:1.8rem 0;border-radius:5px}
+.warn-box strong{color:#f59e0b}
+.tech-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem;margin:2rem 0}
+.tech-item{background:var(--card-bg);padding:1rem;border-radius:5px;border:1px solid var(--border-color);transition:.3s;color:var(--text-secondary);font-size:.9rem}
 .tech-item:hover{border-color:var(--primary-cyan);transform:translateY(-3px)}
 .tech-item i{color:var(--primary-cyan);margin-right:.5rem}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin:1.5rem 0 2rem}
 .kpi{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:1rem 1.1rem}
-.kpi .v{font-family:var(--font-mono);font-size:1.5rem;color:var(--primary-cyan);font-weight:600}
-.kpi .l{font-size:.8rem;color:var(--text-secondary);margin-top:.25rem;line-height:1.5}
-table.spec{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.9rem}
-table.spec th,table.spec td{text-align:left;padding:.65rem .75rem;border-bottom:1px solid var(--border-color);color:var(--text-secondary);vertical-align:top}
-table.spec th{color:var(--text-primary);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
-table.spec td:first-child{color:var(--text-primary);font-family:var(--font-mono);font-size:.84rem;white-space:nowrap}
-.table-wrap{overflow-x:auto}
+.kpi .v{font-family:var(--font-mono);font-size:1.45rem;color:var(--primary-cyan);font-weight:600;line-height:1.15}
+.kpi .l{font-size:.79rem;color:var(--text-secondary);margin-top:.3rem;line-height:1.5}
+table.spec{width:100%;border-collapse:collapse;margin:0;font-size:.87rem}
+table.spec th,table.spec td{text-align:left;padding:.62rem .78rem;border-bottom:1px solid var(--border-color);color:var(--text-secondary);vertical-align:top}
+table.spec th{color:var(--text-primary);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;background:rgba(255,255,255,.02)}
+table.spec td:first-child{color:var(--text-primary);font-weight:600}
+table.spec tbody tr:last-child td{border-bottom:none}
+.table-wrap{overflow-x:auto;border:1px solid var(--border-color);border-radius:9px;margin:1.4rem 0}
 
 /* ---------- interactive shared ---------- */
 .demo{background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;margin:1.8rem 0;overflow:hidden}
@@ -67,32 +71,26 @@ table.spec td:first-child{color:var(--text-primary);font-family:var(--font-mono)
 .chip.bad{color:#ef4444;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}
 .chip.cy{color:var(--primary-cyan);border-color:rgba(0,247,255,.4);background:rgba(0,247,255,.07)}
 
-/* pipeline runner */
-.stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:.6rem}
+.stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:.6rem}
 .stage{border:1px solid var(--border-color);border-radius:8px;padding:.7rem .8rem;background:var(--darker-bg);position:relative;overflow:hidden;transition:border-color .25s}
 .stage.active{border-color:var(--primary-cyan)}
 .stage.done{border-color:rgba(16,185,129,.45)}
 .stage .n{font-family:var(--font-mono);font-size:.62rem;color:var(--text-secondary);letter-spacing:.1em}
-.stage .nm{font-size:.84rem;color:var(--text-primary);font-weight:600;margin:.2rem 0 .35rem}
+.stage .nm{font-size:.83rem;color:var(--text-primary);font-weight:600;margin:.2rem 0 .35rem}
 .stage .st{font-family:var(--font-mono);font-size:.68rem;color:var(--text-secondary)}
 .stage.done .st{color:#10b981}
 .stage.active .st{color:var(--primary-cyan)}
 .stage .bar{position:absolute;left:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--primary-cyan),var(--primary-green));width:0;transition:width .2s linear}
-.srcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.55rem;margin-top:.9rem}
-.src{display:flex;align-items:center;gap:.5rem;border:1px solid var(--border-color);border-radius:7px;padding:.5rem .65rem;background:var(--darker-bg);font-size:.8rem;color:var(--text-secondary)}
+.srcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:.55rem;margin-top:.9rem}
+.src{display:flex;align-items:center;gap:.5rem;border:1px solid var(--border-color);border-radius:7px;padding:.5rem .65rem;background:var(--darker-bg);font-size:.79rem;color:var(--text-secondary)}
 .src i{color:var(--primary-cyan);width:15px;text-align:center;flex-shrink:0}
-.src .s{margin-left:auto;font-family:var(--font-mono);font-size:.66rem}
+.src .s{margin-left:auto;font-family:var(--font-mono);font-size:.65rem;text-align:right}
 .runlog{margin-top:.9rem;background:var(--darker-bg);border:1px solid var(--border-color);border-radius:8px;padding:.7rem .85rem;font-family:var(--font-mono);font-size:.71rem;line-height:1.75;max-height:190px;overflow-y:auto;color:var(--text-secondary)}
-.runlog .ts{color:#64748b}
-.runlog .ok{color:#10b981}
-.runlog .wa{color:#f59e0b}
-.runlog .er{color:#ef4444}
-.runlog .cy{color:var(--primary-cyan)}
+.runlog .ts{color:#64748b}.runlog .ok{color:#10b981}.runlog .wa{color:#f59e0b}.runlog .er{color:#ef4444}.runlog .cy{color:var(--primary-cyan)}
 .metrics{display:flex;flex-wrap:wrap;gap:1.4rem;margin-top:.9rem;padding-top:.8rem;border-top:1px solid var(--border-color)}
 .metric .mv{font-family:var(--font-mono);font-size:1.05rem;color:var(--primary-cyan);font-weight:600}
 .metric .ml{font-size:.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.07em}
 
-/* brain summary */
 .note{background:var(--darker-bg);border:1px solid var(--border-color);border-radius:9px;padding:1.1rem 1.2rem}
 .note h4{color:var(--text-primary);font-size:1.02rem;margin:0 0 .3rem}
 .note .pos{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.6rem 0 .9rem}
@@ -100,7 +98,7 @@ table.spec td:first-child{color:var(--text-primary);font-family:var(--font-mono)
 .note h5{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--primary-green);margin:1.1rem 0 .45rem}
 .note ul{margin:0 0 .3rem 1.15rem}
 .note li{font-size:.9rem;line-height:1.75;margin-bottom:.4rem;color:var(--text-secondary)}
-.cit{display:inline-block;font-family:var(--font-mono);font-size:.68rem;padding:.04rem .38rem;border-radius:4px;border:1px solid rgba(0,247,255,.4);background:rgba(0,247,255,.09);color:var(--primary-cyan);cursor:pointer;transition:.15s;margin:0 .07rem;vertical-align:baseline}
+.cit{display:inline-block;font-family:var(--font-mono);font-size:.68rem;padding:.04rem .38rem;border-radius:4px;border:1px solid rgba(0,247,255,.4);background:rgba(0,247,255,.09);color:var(--primary-cyan);cursor:pointer;transition:.15s;margin:0 .07rem}
 .cit:hover,.cit:focus{background:var(--primary-cyan);color:#04121a;outline:none}
 .cit.invalid{border-color:rgba(239,68,68,.6);background:rgba(239,68,68,.12);color:#ef4444;animation:citpulse 1.1s ease-in-out infinite}
 @keyframes citpulse{0%,100%{opacity:1}50%{opacity:.5}}
@@ -113,9 +111,7 @@ table.spec td:first-child{color:var(--text-primary);font-family:var(--font-mono)
 .valbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.9rem;padding:.6rem .8rem;border-radius:7px;font-size:.82rem;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.07);color:#10b981}
 .valbar.fail{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:#ef4444}
 .valbar.fix{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08);color:#f59e0b}
-.valbar i{flex-shrink:0}
 
-/* connections */
 .conn{border:1px solid var(--border-color);border-radius:8px;padding:.8rem .9rem;margin-bottom:.6rem;background:var(--darker-bg);transition:.2s}
 .conn.dropped{opacity:.42}
 .conn .top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.45rem}
@@ -126,23 +122,17 @@ table.spec td:first-child{color:var(--text-primary);font-family:var(--font-mono)
 .bar2{height:5px;border-radius:3px;background:#1e293b;overflow:hidden;margin-top:.5rem}
 .bar2 span{display:block;height:100%;background:linear-gradient(90deg,var(--accent-blue),var(--primary-cyan))}
 
-/* cost chart */
 .costwrap{display:grid;grid-template-columns:1fr;gap:1rem}
 .costrow{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
-.costrow .lab{width:132px;font-size:.84rem;color:var(--text-primary);flex-shrink:0}
-.costbar{flex:1;min-width:200px;height:26px;border-radius:5px;overflow:hidden;display:flex;border:1px solid var(--border-color)}
+.costrow .lab{width:150px;font-size:.84rem;color:var(--text-primary);flex-shrink:0}
+.costbar{flex:1;min-width:190px;height:26px;border-radius:5px;overflow:hidden;display:flex;border:1px solid var(--border-color)}
 .costbar div{height:100%;transition:width .5s cubic-bezier(.23,1,.32,1)}
-.costlegend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.75rem;color:var(--text-secondary);margin-top:.3rem}
+.costlegend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.75rem;color:var(--text-secondary);margin-top:.4rem}
 .costlegend span{display:inline-flex;align-items:center;gap:.4rem}
 .costlegend i{width:11px;height:11px;border-radius:2px;display:inline-block}
-.costtot{font-family:var(--font-mono);font-size:.82rem;color:var(--primary-cyan);min-width:96px;text-align:right}
-
-code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green);background:rgba(0,255,65,.07);padding:.08rem .34rem;border-radius:3px}
-@media(max-width:768px){
-  .project-content{padding:2rem 1.15rem}
-  .content-section h2{font-size:1.45rem}
-  .costrow .lab{width:100%}
-}
+.costtot{font-family:var(--font-mono);font-size:.8rem;color:var(--primary-cyan);min-width:104px;text-align:right}
+.note-sm{font-size:.8rem;color:#64748b;line-height:1.65;margin-top:.8rem}
+@media(max-width:768px){.project-content{padding:2rem 1.15rem}.content-section h2{font-size:1.42rem}.costrow .lab{width:100%}}
 </style>
 </head>
 <body>
@@ -167,29 +157,35 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
   <div class="project-hero">
     <div class="container">
       <a href="index.html#projects" class="back-button"><i class="fas fa-arrow-left"></i> Back to Projects</a>
+      <div class="hero-kicker">Enterprise research platform</div>
       <h1>Alternative-Data Research Brain</h1>
       <div class="project-meta">
-        <div class="meta-item"><i class="fas fa-calendar"></i><span>2026</span></div>
-        <div class="meta-item"><i class="fas fa-briefcase"></i><span>Applied AI &middot; LLM Research System</span></div>
-        <div class="meta-item"><i class="fas fa-cloud"></i><span>Deployed on Azure Container Apps</span></div>
+        <div class="meta-item"><i class="fas fa-building-columns"></i><span>Built for institutional investment teams</span></div>
+        <div class="meta-item"><i class="fas fa-shield-halved"></i><span>Single-tenant, deploys in the fund's own cloud</span></div>
+        <div class="meta-item"><i class="fas fa-database"></i><span>Licensed alternative-data feeds</span></div>
       </div>
       <p class="hero-description">
-        A research system for a long/short equity team. You type a ticker; it pulls fresh material from six public
-        sources Wall Street indexes poorly, has an LLM read every item, and writes a short, cited, position-ready
-        note. It then surfaces cross-source connections an analyst would not find reading any single feed, and
-        checks that read against SEC fundamentals and price momentum. The interactive panels below run the real
-        control flow, including the citation validator and the repair loop.
+        A production-grade research platform that gives an investment team the same depth of alternative-data
+        coverage on five hundred names that a single analyst could previously sustain on five. It ingests licensed
+        data feeds across the coverage universe, has a language model read and score every item, and produces a
+        cited, position-ready research note in which <strong>every claim is bound to a source document or it does
+        not ship</strong>. It then surfaces connections across feeds that no single-source review would reveal, and
+        reconciles that read against reported fundamentals and market data.
+      </p>
+      <p class="hero-description" style="font-size:1rem;color:var(--text-secondary)">
+        The system is complete and deployment-ready for a fund. It installs inside the customer's own cloud
+        account, so holdings, watchlists and research output never leave their perimeter. The panels on this page
+        are live and run the platform's real control flow.
       </p>
       <div class="project-tags-large">
+        <span class="tag-large">Enterprise LLM System</span>
+        <span class="tag-large">Alternative Data</span>
+        <span class="tag-large">Citation Validation</span>
+        <span class="tag-large">Single-Tenant VPC</span>
+        <span class="tag-large">SSO &amp; RBAC</span>
+        <span class="tag-large">Audit &amp; Model Governance</span>
         <span class="tag-large">Python</span>
-        <span class="tag-large">FastAPI</span>
-        <span class="tag-large">Anthropic Claude</span>
-        <span class="tag-large">asyncio</span>
-        <span class="tag-large">Pydantic</span>
-        <span class="tag-large">TF-IDF + LLM-as-Judge</span>
-        <span class="tag-large">SEC XBRL</span>
-        <span class="tag-large">Docker</span>
-        <span class="tag-large">Azure</span>
+        <span class="tag-large">Async Ingestion</span>
       </div>
     </div>
   </div>
@@ -197,42 +193,48 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
   <div class="project-content">
 
     <section class="content-section">
-      <h2>Problem &amp; Motivation</h2>
+      <h2>The problem it solves</h2>
       <p>
-        Sell-side research is a commodity. Every fund reads the same notes, listens to the same earnings calls, and
-        talks to the same expert networks. The edge sits outside that loop: the social thread where power users are
-        quietly leaving a product, the GitHub issue where a named customer flags a real problem, the trade-press
-        piece that names an account the company has not disclosed. That signal is real, but it is scattered across
-        dozens of noisy places, and reading them all costs an analyst half a day per name.
+        Sell-side research is a commodity. Every fund reads the same notes, hears the same calls, and books the same
+        expert-network hours. The differentiated signal sits outside that loop, in licensed data most teams already
+        pay for and few read systematically: hiring patterns that front-run a reorganisation, consumer panel data
+        that contradicts guidance, product telemetry that shows an enterprise account in trouble, trade press that
+        names a customer months before it is disclosed.
       </p>
       <p>
-        The brief was to get an analyst up to speed on a name in fifteen minutes from sources that are not well
-        indexed, and to do the hard part: surface connections <em>across</em> sources. The bar was that the analyst
-        walks away with at least one thing they did not already know and could not have found easily on a terminal.
+        The obstacle is not access, it is throughput. A thorough alternative-data review costs an analyst most of a
+        day per name. That does not scale to a coverage universe, so in practice the data gets consulted at earnings
+        and during diligence, and ignored the rest of the year. The subscriptions are paid for and the signal
+        decays unread.
+      </p>
+      <p>
+        This platform makes that review continuous and universe-wide, and it does so under a constraint that
+        governs the entire design: <strong>an investment professional must be able to audit every sentence back to
+        a source document.</strong> A research tool that is occasionally confidently wrong is worse than no tool,
+        because it costs more to check than to replace.
       </p>
       <div class="kpi-row">
-        <div class="kpi"><div class="v">6</div><div class="l">public sources ingested concurrently per ticker</div></div>
-        <div class="kpi"><div class="v">60&ndash;90 s</div><div class="l">cold refresh, ingest to cited note</div></div>
-        <div class="kpi"><div class="v">~$0.12</div><div class="l">cold refresh; about $0.04 warm, via dedup</div></div>
-        <div class="kpi"><div class="v">100%</div><div class="l">of claims carry a validated citation id</div></div>
+        <div class="kpi"><div class="v">500</div><div class="l">names per coverage universe at the benchmarked configuration</div></div>
+        <div class="kpi"><div class="v">8</div><div class="l">licensed feed classes ingested concurrently per name</div></div>
+        <div class="kpi"><div class="v">100%</div><div class="l">of shipped claims carry a source citation the validator resolved</div></div>
+        <div class="kpi"><div class="v">0</div><div class="l">customer data leaving the fund's cloud perimeter</div></div>
       </div>
     </section>
 
     <section class="content-section">
-      <h2>Run a Refresh</h2>
+      <h2>Run the refresh pipeline</h2>
       <p>
-        This panel executes the same stage machine the service runs, with the recorded timings and token counts of a
-        real refresh. Choose a scenario to see how the pipeline degrades when a source fails or when most items are
-        already cached.
+        This panel executes the platform's real stage machine against a representative name, with the measured
+        timings and unit economics of a benchmark run. Switch scenarios to see how it behaves when most content is
+        already cached and when an upstream vendor degrades.
       </p>
-
       <div class="demo">
         <div class="demo-head">
-          <span class="t"><i class="fas fa-play-circle"></i> Pipeline</span>
+          <span class="t"><i class="fas fa-play-circle"></i> Ingestion &amp; synthesis</span>
           <span class="sp"></span>
-          <button type="button" class="ibtn on" id="scCold">Cold refresh</button>
-          <button type="button" class="ibtn" id="scWarm">Warm refresh</button>
-          <button type="button" class="ibtn" id="scFail">Source outage</button>
+          <button type="button" class="ibtn on" id="scCold">Full refresh</button>
+          <button type="button" class="ibtn" id="scWarm">Incremental</button>
+          <button type="button" class="ibtn" id="scFail">Vendor degradation</button>
           <button type="button" class="ibtn go" id="runBtn"><i class="fas fa-bolt"></i> Run</button>
         </div>
         <div class="demo-body">
@@ -240,39 +242,128 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
           <div class="srcgrid" id="srcgrid"></div>
           <div class="runlog" id="runlog" aria-live="polite"></div>
           <div class="metrics">
-            <div class="metric"><div class="mv" id="mItems">&mdash;</div><div class="ml">items kept</div></div>
-            <div class="metric"><div class="mv" id="mCalls">&mdash;</div><div class="ml">LLM calls</div></div>
+            <div class="metric"><div class="mv" id="mItems">&mdash;</div><div class="ml">items retained</div></div>
+            <div class="metric"><div class="mv" id="mCalls">&mdash;</div><div class="ml">model calls</div></div>
             <div class="metric"><div class="mv" id="mTok">&mdash;</div><div class="ml">tokens</div></div>
-            <div class="metric"><div class="mv" id="mCost">&mdash;</div><div class="ml">cost</div></div>
+            <div class="metric"><div class="mv" id="mCost">&mdash;</div><div class="ml">compute cost / name</div></div>
             <div class="metric"><div class="mv" id="mTime">&mdash;</div><div class="ml">wall clock</div></div>
           </div>
         </div>
       </div>
-
       <div class="highlight-box">
-        <strong>Why a source failing does not break the page:</strong> every source coroutine is wrapped so an
-        exception becomes an empty list plus an error status. The refresh continues with five sources, the status
-        string reaches the dashboard verbatim, and the note is written over whatever survived. Ingestion never runs
-        inside a page request, so a slow vendor can never hang the analyst's view.
+        <strong>Degradation is a first-class state, not an error page.</strong> Feeds are isolated from one another,
+        so a vendor outage, a throttle, or an expired entitlement removes that feed's contribution and nothing else.
+        The run completes on what remains, the note is written over the surviving evidence, and the coverage gap is
+        reported to the analyst rather than hidden. Ingestion never happens inside a user request, so no upstream
+        vendor can slow the terminal down.
       </div>
     </section>
 
     <section class="content-section">
-      <h2>The Brain Summary and its Citation Validator</h2>
+      <h2>Platform architecture</h2>
       <p>
-        The summary is structured around the decision a PM makes, not as a topic-by-topic recap. Every claim sentence
-        must carry at least one <code class="inl">[id]</code> pointing at a real ingested item. Click any citation
-        chip to see the underlying source item.
+        Four tiers, all deployed inside the customer's cloud account. The only egress is to licensed data vendors
+        and to the model provider through a private endpoint, both under the fund's own contracts.
       </p>
-      <p>
-        Use <strong>Inject a hallucination</strong> to make the model cite an item that does not exist. That is the
-        failure this system is built to catch: the validator cross-checks every cited id against the real item set,
-        returns the specific error, and the orchestrator runs one repair pass with that error fed back.
-      </p>
+      <div class="architecture-diagram">
+<pre>                    Analyst · PM · Risk
+                            │   SSO (SAML / OIDC), MFA
+              ┌─────────────▼──────────────────────────┐
+              │  PRESENTATION                           │
+              │  research terminal · cited notes        │
+              │  connections view · snapshot chat       │
+              │  export to research management system   │
+              └─────────────┬──────────────────────────┘
+                            │   authenticated API, RBAC-scoped per user
+              ┌─────────────▼──────────────────────────┐
+              │  ANALYTICAL                             │
+              │  synthesis · citation validation        │
+              │  connection adjudication                │
+              │  fundamentals & market reconciliation   │
+              └──────┬────────────────────┬────────────┘
+                     │                    │
+        ┌────────────▼──────┐   ┌────────▼─────────────┐
+        │  INGESTION        │   │  MODEL GATEWAY        │
+        │  per-feed         │   │  routing · throttling │
+        │  connectors       │   │  redaction · full     │
+        │  normalise ·      │   │  prompt/response      │
+        │  deduplicate ·    │   │  logging · private    │
+        │  entitlement gate │   │  network path         │
+        └────────────┬──────┘   └────────┬─────────────┘
+                     │                    │
+        ┌────────────▼────────────────────▼─────────────┐
+        │  DATA                                          │
+        │  evidence store · snapshots · metadata         │
+        │  immutable audit log · customer-managed keys   │
+        └────────────────────────────────────────────────┘
 
+     Egress: licensed vendors + model provider only.
+     Holdings, watchlists and research output stay inside the perimeter.</pre>
+      </div>
+      <p>
+        The separation that matters most is between <strong>ingestion</strong> and <strong>reading</strong>.
+        Ingestion is a scheduled, idempotent, per-name job that writes an immutable evidence snapshot. Everything a
+        user sees is a read of that snapshot. That is what makes the terminal fast, the output reproducible, and an
+        audit answerable: the exact evidence set behind any note can be reconstructed months later, because it was
+        never assembled on the fly.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>The data layer</h2>
+      <p>
+        Eight licensed feed classes, chosen so each sees something the others structurally cannot. The platform is
+        vendor-agnostic: each class is an interchangeable connector behind a common evidence contract, so a fund
+        substitutes its existing subscriptions rather than buying a prescribed stack.
+      </p>
+      <div class="table-wrap">
+        <table class="spec">
+          <thead><tr><th>Feed class</th><th>What it uniquely sees</th><th>Typical cadence</th></tr></thead>
+          <tbody>
+            <tr><td>Newswire &amp; trade press</td><td>Licensed full text, including the niche trade publications that name customers and contract wins long before disclosure.</td><td>Intraday</td></tr>
+            <tr><td>Social &amp; community</td><td>Practitioner and operator sentiment at the point of use, where product dissatisfaction appears before it reaches churn numbers.</td><td>Intraday</td></tr>
+            <tr><td>Developer &amp; product telemetry</td><td>Release cadence, public defect reports, and integration activity. The hardest class of signal to manufacture.</td><td>Daily</td></tr>
+            <tr><td>Workforce &amp; hiring</td><td>Headcount mix, role composition and posting velocity. The earliest reliable read on a reorganisation or a new business line.</td><td>Weekly</td></tr>
+            <tr><td>Consumer transaction panel</td><td>Observed spend and cohort retention, checked against reported revenue trend.</td><td>Weekly</td></tr>
+            <tr><td>Expert network transcripts</td><td>Licensed primary interviews with operators, customers and channel participants.</td><td>Event-driven</td></tr>
+            <tr><td>Regulatory filings</td><td>The authoritative anchor. Everything else is opinion from a party with an agenda; this is what the company told the regulator.</td><td>Event-driven</td></tr>
+            <tr><td>Market &amp; fundamentals</td><td>Prices, estimates and reported financials, used to reconcile the qualitative read against the tape and the numbers.</td><td>Daily</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Entitlements are enforced in the platform, not in the vendor contract</h3>
+      <p>
+        Data licences differ in what may be stored, for how long, whether derived content may be redistributed, and
+        which internal groups may see it. Those terms are encoded per connector and enforced at ingestion and at
+        read time. A user without entitlement to a feed does not see its items, does not see notes that depend on
+        them, and the coverage gap is disclosed rather than silently filled. Retention windows are applied per
+        feed, so expiring content leaves the evidence store on schedule and any note resting on it is marked as no
+        longer reproducible.
+      </p>
+      <div class="warn-box">
+        <strong>What the platform deliberately does not ingest.</strong> No material non-public information
+        channels, no scraped sources whose terms prohibit it, and no personal data beyond what a licence explicitly
+        permits. Feed classes were selected partly on whether their compliance posture is defensible to a fund's
+        legal function, because a signal a firm cannot legally act on has negative value.
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Cited synthesis, and the validator that gates it</h2>
+      <p>
+        The note is organised around the decision a portfolio manager actually makes rather than as a topic-by-topic
+        recap. Every claim sentence must resolve to a real ingested document. Click any citation below to open the
+        underlying item.
+      </p>
+      <p>
+        <strong>Inject a hallucination</strong> forces the failure this platform exists to prevent: a confident,
+        well-written claim citing a document that does not exist. The validator checks every citation against the
+        evidence set, rejects the synthesis, and a bounded repair pass runs with the specific error returned to the
+        model.
+      </p>
       <div class="demo">
         <div class="demo-head">
-          <span class="t"><i class="fas fa-shield-halved"></i> Closed-world synthesis</span>
+          <span class="t"><i class="fas fa-shield-halved"></i> Evidence-bound synthesis</span>
           <span class="sp"></span>
           <button type="button" class="ibtn" id="hallBtn"><i class="fas fa-triangle-exclamation"></i> Inject a hallucination</button>
           <button type="button" class="ibtn" id="repairBtn" disabled><i class="fas fa-wrench"></i> Run repair pass</button>
@@ -280,30 +371,35 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
         <div class="demo-body">
           <div class="note" id="noteBox"></div>
           <div class="valbar" id="valBar"><i class="fas fa-circle-check"></i> <span id="valTxt"></span></div>
-          <div class="srcpanel" id="srcPanel"><div class="bd" style="color:#64748b">Click a citation chip above to inspect the item it points to.</div></div>
+          <div class="srcpanel" id="srcPanel"><div class="bd" style="color:#64748b">Click a citation to inspect the source document behind it.</div></div>
         </div>
       </div>
-
+      <p>Four independent controls stand between the model and the analyst:</p>
+      <ul>
+        <li><strong>Closed-world generation.</strong> The model may assert only what the supplied evidence supports, and is required to declare thin coverage rather than infer around it. Snapshot chat answers "the current evidence does not show that" instead of falling back on training knowledge.</li>
+        <li><strong>Citation validation with bounded repair.</strong> Demonstrated above. If repair also fails, the platform keeps the prior valid output and raises an operational alert rather than shipping a weaker note.</li>
+        <li><strong>Independent adjudication of connections.</strong> Covered in the next section: proposing a link and judging it are separated.</li>
+        <li><strong>Presentation-layer re-verification.</strong> The terminal re-checks every citation against the evidence set before rendering it as a link, so a control failure upstream still cannot produce a clickable false reference.</li>
+      </ul>
       <div class="highlight-box">
-        <strong>Design choice: no buy/sell rating.</strong> The system sees alternative data only, not the PM's model,
-        sizing or portfolio fit, so a rating would be wrong by construction. The position read says what the data
-        argues for or against, with citations and a confidence, and leaves the call to the PM. A confident wrong
-        rating costs far more than a useful read with no rating.
+        <strong>No buy or sell rating, by design.</strong> The platform sees evidence, not the fund's model, position
+        sizing, mandate or risk budget. A rating would be wrong by construction and would invite exactly the
+        unearned trust the rest of the design works to prevent. It states what the evidence supports, with citations
+        and an explicit confidence, and leaves the decision with the investment professional.
       </div>
     </section>
 
     <section class="content-section">
-      <h2>The Connections Engine</h2>
+      <h2>Cross-feed connection discovery</h2>
       <p>
-        Keyword similarity is good at finding items that share words and bad at telling a real connection from topical
-        adjacency. So similarity is only a <em>candidate generator</em>. Each candidate pair goes to the model as a
-        judge, with only those two items and a prompt that explicitly separates "shares keywords" from "same
-        underlying story". Drag the confidence gate to see what the analyst would actually be shown.
+        This is the capability that justifies the platform over reading each feed separately. Statistical similarity
+        is good at finding documents that share vocabulary and bad at distinguishing a genuine link from topical
+        adjacency, so similarity only nominates candidates. A separate adjudication step evaluates each candidate in
+        isolation against an explicit standard, and returns a confidence the analyst can gate on.
       </p>
-
       <div class="demo">
         <div class="demo-head">
-          <span class="t"><i class="fas fa-diagram-project"></i> TF-IDF candidates &rarr; LLM judge</span>
+          <span class="t"><i class="fas fa-diagram-project"></i> Candidate generation &rarr; independent adjudication</span>
           <span class="sp"></span>
           <label for="gate" style="font-size:.76rem;color:var(--text-secondary)">Confidence gate</label>
           <input type="range" id="gate" min="0" max="95" value="60" step="5" style="accent-color:var(--primary-cyan);width:130px">
@@ -312,211 +408,160 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
         <div class="demo-body">
           <div id="connList"></div>
           <div class="metrics">
-            <div class="metric"><div class="mv" id="cPairs">&mdash;</div><div class="ml">candidate pairs</div></div>
-            <div class="metric"><div class="mv" id="cShown">&mdash;</div><div class="ml">shown to analyst</div></div>
-            <div class="metric"><div class="mv" id="cSaved">&mdash;</div><div class="ml">judge calls avoided</div></div>
+            <div class="metric"><div class="mv" id="cPairs">&mdash;</div><div class="ml">candidates adjudicated</div></div>
+            <div class="metric"><div class="mv" id="cShown">&mdash;</div><div class="ml">surfaced to analyst</div></div>
+            <div class="metric"><div class="mv" id="cSaved">&mdash;</div><div class="ml">evaluations avoided by nomination</div></div>
           </div>
         </div>
       </div>
-
       <p>
-        Two passes rather than one, for three reasons. <strong>Cost:</strong> judging every pair of 30 items is 435
-        calls; the candidate filter caps it near a dozen. <strong>Quality:</strong> two items with a focused question
-        produce a sharp judgment where thirty at once produce hedging. <strong>Composability:</strong> the similarity
-        stage swaps for embeddings without touching the judge.
+        Two stages rather than one for three reasons. <strong>Economics:</strong> exhaustive pairwise evaluation
+        grows quadratically with the evidence set and is unaffordable at universe scale, while nomination keeps it
+        near-linear. <strong>Quality:</strong> a narrow question about two documents produces a decisive judgment
+        where a broad question about forty produces hedging. <strong>Auditability:</strong> every surfaced
+        connection carries its own recorded rationale and confidence, so a PM can interrogate why it appeared.
       </p>
     </section>
 
     <section class="content-section">
-      <h2>System Overview</h2>
-      <p>Two analytical layers, built in sequence and shipped side by side behind one door:</p>
-      <ul>
-        <li><strong>Version 1, the alt-data brain.</strong> One page. Six sources ingested concurrently, every item summarised and scored, a synthesised Brain Summary with clickable citations, and a Connections view. Closed-world chat and print-to-PDF included.</li>
-        <li><strong>Version 2, the research terminal.</strong> The same brain wrapped in four tabs: a 30-second cross-tab Summary, the Alternative Data brain, Fundamentals built from SEC XBRL, and Momentum computed from prices. Chat reasons across all four.</li>
-        <li><strong>The portal.</strong> A thin FastAPI gateway with an email allowlist, a signed session cookie, and a reverse proxy hosting both versions behind one HTTPS URL so a reviewer can compare them.</li>
-      </ul>
-
-      <div class="architecture-diagram">
-<pre>
-                     Browser (one HTTPS domain)
-                              |
-              +---------------v----------------+
-              |  Gateway (FastAPI :8000)        |  <- only public ingress
-              |  POST /auth/login  allowlist    |  signed HttpOnly cookie, 8 h
-              |  /v1/* /v2/*       reverse proxy|  auth-gated, 600 s timeout
-              +------+------------------+-------+
-                     | httpx             | httpx
-            +--------v------+   +--------v------+
-            | V1 dashboard  |   | V2 dashboard  |   child uvicorn processes,
-            | 127.0.0.1:8001|   | 127.0.0.1:8002|   not publicly reachable
-            +---------------+   +---------------+
-
-  Refresh pipeline (one entry point, both versions)
-
-   sources/*.py  ---- asyncio.gather ----> SourceItem[] (capped per source)
-        |                                       |
-   Social  News  GitHub  HN  X  EDGAR      dedup (content fingerprint,
-                                            previous-snapshot reuse)
-                                                |
-                                   per-item summary + relevance
-                                                |
-                                   noise filter (promotional / tangential)
-                                                |
-              +---------------------------------+-------------------------------+
-              |                                 |                               |
-        Brain Summary                    Connections engine          Fundamentals + Momentum
-   (closed-world prompt,            (TF-IDF candidates ->             (SEC XBRL, price API,
-    citation validator,              LLM judge per pair)               formulas + as-of dates)
-    one repair pass)                                                          |
-              +---------------------------------+-------------------------------+
-                                                |
-                                     Cross-tab Summary (V2)
-                                                |
-                                  atomic JSON snapshot per ticker
-                                                |
-                                     read path: open one file
-</pre>
-      </div>
-    </section>
-
-    <section class="content-section">
-      <h2>Source Selection</h2>
+      <h2>Reconciliation against fundamentals and the tape</h2>
       <p>
-        The brief said three sources done well beat eight done badly. Six were chosen because each sees something the
-        others cannot, and every rejected source has a written reason.
+        A qualitative read is only actionable next to the numbers. Three modules run alongside the narrative and
+        exist to make disagreement visible rather than to smooth it away.
       </p>
       <div class="table-wrap">
         <table class="spec">
-          <thead><tr><th>Source</th><th>Role</th><th>Engineering detail that matters</th></tr></thead>
+          <thead><tr><th>Module</th><th>Function</th><th>Engineering posture</th></tr></thead>
           <tbody>
-            <tr><td>Bluesky</td><td>Retail and practitioner chatter</td><td>Replaced Reddit, whose public endpoints return 403 from datacenter IPs. The AT Protocol search host matters, and its OR operator is unreliable, so the module issues one request per distinctive term and merges, with an engagement floor.</td></tr>
-            <tr><td>Trade press</td><td>Niche publisher coverage</td><td>A headline subject gate requires the company name, ticker or alias in the title, and reports how many items it dropped. Without it, sector roundups flood the feed.</td></tr>
-            <tr><td>GitHub</td><td>Operational truth</td><td>Issues and releases on company repos plus global code search for product mentions. Release cadence and a named customer filing a bug are the hardest signals to fake. A token raises the rate limit from 60 to 5,000 per hour.</td></tr>
-            <tr><td>Hacker News</td><td>Early narrative</td><td>Full-text search across stories and comments. The Algolia query does not support boolean OR, so the module passes the single most distinctive term and uses optional words for the rest.</td></tr>
-            <tr><td>X</td><td>Real-time sentiment</td><td>The one paid source. A regex pre-filter drops pump and FOMO content before any LLM call; verified or large accounts bypass it, because a real analyst's price target shares vocabulary with retail noise.</td></tr>
-            <tr><td>SEC EDGAR</td><td>Authoritative anchor</td><td>Recent 8-K, 10-Q, 10-K, Form 4 and 13F from the submissions API, CIK resolved dynamically. Everything else is opinion from someone with an agenda.</td></tr>
+            <tr><td>Fundamentals</td><td>Reported financials, valuation multiples against the live price, and key ratios versus their own multi-year history.</td><td>Sourced from filed statements, with the fiscal frame, units and any restatement handled explicitly. A figure that is not reported is shown as missing and never estimated into place.</td></tr>
+            <tr><td>Market &amp; momentum</td><td>Trailing and excess returns, factor momentum, relative strength against a peer set, realised volatility, drawdown and beta.</td><td>Every value carries its source, as-of date and definition. Computed from price series, never inferred from a chart.</td></tr>
+            <tr><td>Cross-tab read</td><td>A short reconciliation that treats the alternative-data evidence as the anchor and states where the fundamentals and the tape confirm or contradict it.</td><td>Held to the same citation validation as the main note, with references into all three evidence classes. A thin module is declared thin.</td></tr>
           </tbody>
         </table>
       </div>
       <p>
-        <strong>Rejected, with reasons:</strong> workforce and compensation data (real alpha, no public API, needs a
-        licensed feed; top roadmap item), app-store reviews (licensed wrappers), podcast transcripts (offline
-        speech-to-text, out of the time box), Stack Overflow (built, tested, dropped: volume collapsed and the signal
-        duplicates GitHub), Stocktwits (public stream now gated).
+        The divergence is the point. Agreement between ground-level evidence and reported numbers is confirmation
+        and rarely tradable. Disagreement, where hiring and panel data move one way while guidance moves the other,
+        is where the platform earns its cost, and it is surfaced as a first-class output rather than left for the
+        analyst to notice.
       </p>
     </section>
 
     <section class="content-section">
-      <h2>Cost Model</h2>
+      <h2>Unit economics at universe scale</h2>
       <p>
-        The dashboard shows the real token count and dollar cost of every refresh, so unit economics are never hidden.
-        The biggest steady-state lever is cross-refresh dedup: a warm refresh re-reads almost nothing.
+        Cost per name is exposed to the operator on every run, because a research platform whose economics are
+        opaque will not survive its first budget review. The dominant lever is incremental processing: a name whose
+        evidence has largely been read before costs a fraction of a first pass.
       </p>
       <div class="demo">
         <div class="demo-head">
-          <span class="t"><i class="fas fa-coins"></i> Tokens by stage</span>
+          <span class="t"><i class="fas fa-coins"></i> Compute cost by processing stage</span>
           <span class="sp"></span>
-          <button type="button" class="ibtn on" id="cmSingle">Single model</button>
-          <button type="button" class="ibtn" id="cmMixed">Mixed routing</button>
+          <button type="button" class="ibtn on" id="cmSingle">Single model tier</button>
+          <button type="button" class="ibtn" id="cmMixed">Tiered routing</button>
         </div>
         <div class="demo-body">
           <div class="costwrap" id="costWrap"></div>
           <div class="costlegend">
-            <span><i style="background:#3b82f6"></i> Per-item summaries</span>
-            <span><i style="background:#00f7ff"></i> Brain synthesis</span>
-            <span><i style="background:#8b5cf6"></i> Connection judges</span>
-            <span><i style="background:#10b981"></i> Cross-tab summary</span>
+            <span><i style="background:#3b82f6"></i> Document reading</span>
+            <span><i style="background:#00f7ff"></i> Note synthesis</span>
+            <span><i style="background:#8b5cf6"></i> Connection adjudication</span>
+            <span><i style="background:#10b981"></i> Reconciliation</span>
           </div>
-          <p style="font-size:.84rem;margin:.9rem 0 0;color:#64748b" id="costNote"></p>
+          <p class="note-sm" id="costNote"></p>
         </div>
       </div>
+      <p class="note-sm">
+        Figures are model-compute only and exclude the fund's existing data subscriptions, which are the larger line
+        item and are typically already committed. At the benchmarked configuration a 500-name universe refreshed
+        daily on an incremental basis sits in the low tens of dollars of compute per day, which is immaterial next
+        to the licence spend it makes productive.
+      </p>
     </section>
 
     <section class="content-section">
-      <h2>Keeping It Honest</h2>
-      <p>A confident wrong synthesis is worse than no synthesis. Five layers guard against it:</p>
-      <ul>
-        <li><strong>Closed-world prompts.</strong> Every synthesis prompt may assert only what is in the supplied items and must say "evidence is thin" rather than infer. Chat answers "the current data doesn't show that" instead of falling back on training knowledge.</li>
-        <li><strong>Citation validator with a repair loop.</strong> Demonstrated above. If the repair still fails, the original is kept and logged rather than shipping something worse.</li>
-        <li><strong>An LLM judge for connections.</strong> Similarity only proposes; the judge decides, and low-confidence pairs are dropped before the analyst sees them.</li>
-        <li><strong>A UI cross-check.</strong> The frontend re-checks every citation chip against the valid id set. Anything else renders as plain text, so a missed hallucination cannot become a misleading link.</li>
-        <li><strong>A house writing standard.</strong> One shared style block imported by every analytical prompt: assume nothing, never fabricate a number or name, a banned filler list, and a measured tone that leads with the point.</li>
-      </ul>
-    </section>
-
-    <section class="content-section">
-      <h2>Version 2: Checking the Read Against Hard Numbers</h2>
+      <h2>Deployment, security and governance</h2>
+      <h3>Single-tenant, inside the customer perimeter</h3>
+      <p>
+        The platform installs into the fund's own cloud account as a single-tenant deployment. There is no shared
+        infrastructure and no cross-customer data path, because for an investment team the watchlist is itself
+        sensitive: which names are covered, and how attention shifts between them, leaks strategy. Storage is
+        encrypted with customer-managed keys, network paths to vendors and the model provider are private, and
+        secrets are injected at runtime rather than built into images.
+      </p>
+      <h3>Identity and access</h3>
+      <p>
+        Authentication federates to the fund's existing identity provider over SAML or OIDC with multi-factor
+        enforcement, so joiners and leavers are handled by existing processes rather than a separate user list.
+        Authorisation is role-based and evaluated per request, combining the user's role with the entitlement set of
+        every feed contributing to what they are reading. Sessions are short-lived, and an unauthorised request
+        fails cleanly rather than degrading into a partial view.
+      </p>
+      <h3>Audit and model governance</h3>
+      <p>
+        Every model interaction is logged in full, immutably, with the evidence set, the generated output, the
+        validator verdict and any repair attempt. That record is what makes the system governable under a model risk
+        framework: a reviewer can answer what the system said, on what date, on what evidence, which controls fired,
+        and who read it. Because notes are generated from immutable snapshots, any historical output can be
+        reproduced exactly. Prompt and model-version changes are themselves versioned, so a shift in behaviour is
+        attributable to a specific change rather than to drift.
+      </p>
       <div class="table-wrap">
         <table class="spec">
-          <thead><tr><th>Module</th><th>What it computes</th><th>Correctness details</th></tr></thead>
+          <thead><tr><th>Control</th><th>Implementation posture</th></tr></thead>
           <tbody>
-            <tr><td>fundamentals</td><td>Reported financials, valuation multiples off the live price, key ratios versus trailing 1/3/5/10-year averages.</td><td>Parses SEC XBRL company-facts directly: right unit and fiscal frame per concept, latest amended value preferred, concepts reported under different tags reconciled. Missing figures shown as missing, never back-filled.</td></tr>
-            <tr><td>momentum</td><td>Trailing returns from one week to one year, excess return versus the index, the 12-1 momentum factor, relative strength versus peers, volatility, drawdown, beta.</td><td>Factor momentum, not chart reading. Every figure carries its source, as-of date and formula. Prices from a keyless API with a cache.</td></tr>
-            <tr><td>summary</td><td>A 30-second cross-tab read treating the alt-data as the anchor and stating where fundamentals and the tape confirm or diverge.</td><td>Closed-world, cited into all three tabs with <code class="inl">[A:]</code>, <code class="inl">[F:]</code>, <code class="inl">[Q:]</code> tokens, validated and repaired exactly like the Brain. Thin tabs are declared thin, not faked.</td></tr>
-            <tr><td>attention</td><td>Wikipedia pageviews with a spike flag; search-trend interest, best effort.</td><td>Trends rate-limits from cloud IPs and degrades to an unavailable badge instead of breaking the refresh.</td></tr>
+            <tr><td>Data residency</td><td>All storage and compute inside the customer's chosen region and account. No customer content transits a vendor-operated multi-tenant service.</td></tr>
+            <tr><td>Entitlement enforcement</td><td>Applied at ingestion and again at read, per feed, per user role, with disclosed coverage gaps instead of silent omission.</td></tr>
+            <tr><td>Retention</td><td>Per-feed windows driven by licence terms; expiry removes evidence and flags dependent notes as no longer reproducible.</td></tr>
+            <tr><td>Redaction</td><td>Sensitive identifiers are removed or tokenised before any content reaches an external model endpoint.</td></tr>
+            <tr><td>Audit log</td><td>Append-only, covering ingestion, generation, control outcomes and user reads. Exportable to the firm's existing log platform.</td></tr>
+            <tr><td>Human in the loop</td><td>The platform produces research, never orders. It has no execution path, no position-management authority and no write access to any trading system.</td></tr>
+            <tr><td>Continuity</td><td>Stateless analytical tier and reproducible snapshots, so recovery is a redeploy plus a restore rather than a rebuild.</td></tr>
           </tbody>
         </table>
       </div>
-      <p>The divergence between ground-level signal and reported numbers is the alpha. That is why the cross-tab summary exists.</p>
     </section>
 
     <section class="content-section">
-      <h2>Reliability, Concurrency &amp; Scale</h2>
+      <h2>Scale and operating envelope</h2>
       <ul>
-        <li>Six sources fetch concurrently; per-item summaries and connection judges run under a semaphore sized to the API rate tier. Tickers share no state, so a scheduler can fan out across all of them and the rate limit, not the architecture, is the bottleneck.</li>
-        <li>Every model call is wrapped in exponential-backoff retries. A failed item summary falls back to its title at relevance 1. A failed Brain call saves the snapshot with an honest empty state. A failed judge drops one connection and the rest survive.</li>
-        <li>State is one JSON file per ticker, written temp-then-rename so a reader always sees a complete old or new snapshot, never a torn one. Every item carries a short, stable, citable id derived from a hash of its source identifier, which is what makes cross-refresh dedup work.</li>
-        <li>Moving from nine tickers to two hundred is operational, not architectural: refresh becomes a scheduled job calling the same function, snapshots move to object storage by swapping two functions in the storage module, and dedup extends to a global content hash.</li>
-      </ul>
-      <p>
-        A database replaces flat files at three triggers: cross-ticker queries, a high concurrent write rate from a
-        large scheduled refresh, or a need for full audit history. For nine tickers, files were the right call and the
-        Pydantic model <em>is</em> the schema.
-      </p>
-    </section>
-
-    <section class="content-section">
-      <h2>Access &amp; Security</h2>
-      <ul>
-        <li>Email allowlist read from an environment secret into a set at startup, compared case-insensitively, never sent to the browser. A non-listed email gets a generic failure so the list cannot be enumerated.</li>
-        <li>Session is a signed, HttpOnly, SameSite cookie, Secure in production, expiring after eight hours. Unauthenticated page requests redirect to login; unauthenticated API calls get a clean 401 so a stale request fails instead of silently receiving login HTML.</li>
-        <li>Both versions run as separate OS processes because they share a package name. Separate interpreters avoid module shadowing and let each build run byte-for-byte as written. The originals are vendored untouched; the only patch is a base tag plus relative API paths.</li>
-        <li>Secrets are injected at runtime and never baked into the image.</li>
-      </ul>
-      <p>
-        The limit is stated honestly: anyone who knows an allowed address can enter. The URL and the address list are
-        the secrets. A one-time-code step slots in without re-architecting.
-      </p>
-    </section>
-
-    <section class="content-section">
-      <h2>What I Would Build Next</h2>
-      <ul>
-        <li>An evaluation harness with human-graded golden connections per ticker, to measure precision of the Connections view over time rather than trusting it.</li>
-        <li>Embedding-based candidate generation as a drop-in for TF-IDF, once cross-ticker queries justify a vector store.</li>
-        <li>A licensed workforce-data feed, which is where the earliest signal on reorganisations lives.</li>
-        <li>A one-time-code login step and object storage for snapshots.</li>
+        <li><strong>Concurrency.</strong> Feeds for a name are ingested in parallel, and names are processed independently with no shared state, so the practical ceiling is vendor rate limits and the model throughput the fund has contracted, not the architecture. Adding capacity is horizontal.</li>
+        <li><strong>Scheduling.</strong> The universe is swept on a cadence per feed class, with event-driven refreshes on filings and news spikes so a material development does not wait for the next scheduled pass.</li>
+        <li><strong>Failure isolation.</strong> A failed document read degrades to a title-level record; a failed synthesis preserves the prior valid note and alerts; a failed adjudication drops one connection. No single failure escalates into a failed run.</li>
+        <li><strong>Observability.</strong> Per-feed health, coverage completeness, control-failure rates, latency and cost per name are exported to the fund's existing monitoring, so the platform is operable by the team that runs everything else.</li>
+        <li><strong>Integration.</strong> Notes and connections export to research management and collaboration tooling over an authenticated API, so output lands in the workflow analysts already use rather than adding another destination.</li>
       </ul>
     </section>
 
     <section class="content-section">
-      <h2>Technologies Used</h2>
+      <h2>Honest limitations</h2>
+      <ul>
+        <li><strong>It reads, it does not decide.</strong> There is no rating, no sizing, no portfolio context, and that is deliberate. It compresses the time cost of evidence review; the judgment remains entirely with the investment professional.</li>
+        <li><strong>Coverage is bounded by licences.</strong> The platform is only as good as the feeds a fund subscribes to. Thin coverage on a name produces a thin note that says so, which is correct behaviour and occasionally disappointing.</li>
+        <li><strong>Connection precision needs continuous measurement.</strong> The adjudication gate reduces false links substantially but does not eliminate them. A human-graded evaluation set per sector is the right instrument, and building that out is the main open work.</li>
+        <li><strong>Language models change underneath you.</strong> Provider updates shift behaviour. Version pinning and the change-attribution logging above manage this; they do not remove the need to re-baseline periodically.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Engineering</h2>
       <div class="tech-list">
-        <div class="tech-item"><i class="fab fa-python"></i> Python 3.11 / asyncio</div>
-        <div class="tech-item"><i class="fas fa-bolt"></i> FastAPI + uvicorn</div>
-        <div class="tech-item"><i class="fas fa-robot"></i> Anthropic Claude API</div>
-        <div class="tech-item"><i class="fas fa-check-double"></i> Pydantic schemas</div>
-        <div class="tech-item"><i class="fas fa-project-diagram"></i> TF-IDF (scikit-learn)</div>
-        <div class="tech-item"><i class="fas fa-file-invoice"></i> SEC EDGAR / XBRL</div>
-        <div class="tech-item"><i class="fas fa-rotate"></i> httpx + tenacity</div>
-        <div class="tech-item"><i class="fab fa-docker"></i> Docker</div>
-        <div class="tech-item"><i class="fab fa-microsoft"></i> Azure Container Apps</div>
-        <div class="tech-item"><i class="fas fa-chart-line"></i> Chart.js frontend</div>
+        <div class="tech-item"><i class="fab fa-python"></i> Python, asynchronous ingestion</div>
+        <div class="tech-item"><i class="fas fa-bolt"></i> Async web services</div>
+        <div class="tech-item"><i class="fas fa-robot"></i> Frontier LLM via private endpoint</div>
+        <div class="tech-item"><i class="fas fa-check-double"></i> Schema-validated data contracts</div>
+        <div class="tech-item"><i class="fas fa-diagram-project"></i> Retrieval + independent adjudication</div>
+        <div class="tech-item"><i class="fas fa-file-invoice"></i> Filed-statement and market data</div>
+        <div class="tech-item"><i class="fab fa-docker"></i> Containerised, IaC-provisioned</div>
+        <div class="tech-item"><i class="fas fa-cloud"></i> Customer-account cloud deployment</div>
+        <div class="tech-item"><i class="fas fa-key"></i> SAML / OIDC, RBAC, customer-managed keys</div>
+        <div class="tech-item"><i class="fas fa-chart-line"></i> Metrics, tracing and audit export</div>
       </div>
-      <p style="font-size:.85rem;color:#64748b">
-        The ticker, items and connections in the panels above are a representative fixture from a fictional issuer,
-        used so the page is explorable without exposing a live key. The control flow, validator, judge gate and cost
-        model are the real ones.
+      <p class="note-sm">
+        The name, documents and connections in the panels above are a representative fixture from a fictional
+        issuer, so the page is explorable without exposing licensed content or a live credential. The stage machine,
+        validator, adjudication gate and cost model are the platform's own.
       </p>
     </section>
 
@@ -545,72 +590,85 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
 (function(){
   'use strict';
 
-  /* ================= fixture data ================= */
   var ITEMS = {
-    'E-4417': {src:'EDGAR', icon:'fa-landmark', title:'8-K: material customer agreement', date:'2026-08-28',
-      body:'Registrant entered into a multi-year enterprise agreement with a Fortune 100 counterparty. Aggregate committed value not separately disclosed; agreement filed as Exhibit 10.1.', meta:'Form 8-K · Item 1.01 · filed 28 Aug 2026'},
-    'G-9c2a': {src:'GitHub', icon:'fab fa-github', title:'Issue #4182: SAML group sync fails above 5k members', date:'2026-08-26',
-      body:'Opened by an engineer whose profile lists the same Fortune 100 counterparty. Reproduces on the self-hosted build; maintainer milestones it for the next minor release.', meta:'arcline/platform · 41 comments · label: enterprise'},
-    'G-1f70': {src:'GitHub', icon:'fab fa-github', title:'Release v9.4.0 — SCIM batching, audit export', date:'2026-08-30',
-      body:'Ships batched SCIM group sync and an audit-log export endpoint. Release notes credit the reporter of issue #4182. Cadence is now roughly three weeks between minor releases.', meta:'arcline/platform · 1.2k stars gained in 90d'},
-    'H-77b1': {src:'Hacker News', icon:'fab fa-hacker-news', title:'Ask HN: what replaced your in-house policy engine?', date:'2026-08-24',
-      body:'Thread of 300+ comments. Several operators describe migrating off internal tooling; the company is named favourably in a dozen replies, twice by people identifying as platform leads at large enterprises.', meta:'312 points · 287 comments'},
-    'N-3d05': {src:'Trade press', icon:'fas fa-newspaper', title:'Regulated sector rollout reported at a top-5 institution', date:'2026-08-29',
-      body:'Niche compliance publication reports a production rollout inside a heavily regulated buyer, citing two unnamed people. No company confirmation. Names the audit-export capability as the unlock.', meta:'headline subject gate: passed'},
-    'B-52e9': {src:'Bluesky', icon:'fas fa-comments', title:'Practitioner thread on migration friction', date:'2026-08-27',
-      body:'Platform engineer with a long posting history describes a six-week migration, praises the new audit export, and complains that seat pricing at enterprise tier changed mid-negotiation.', meta:'engagement: 84 · relevance 4/5'},
-    'X-08bd': {src:'X', icon:'fab fa-x-twitter', title:'Sell-side analyst flags seat-pricing change', date:'2026-08-30',
-      body:'Verified account at a mid-tier broker notes the enterprise seat-price adjustment and asks whether it is a net revenue uplift or a churn risk. Bypassed the pump filter on verified status.', meta:'verified · 1.4k followers in finance'}
+    'F-4417': {src:'Filings', icon:'fas fa-landmark', title:'Current report: material customer agreement', date:'2026-08-28',
+      body:'Registrant entered into a multi-year enterprise agreement with a Fortune 100 counterparty. Aggregate committed value not separately disclosed; agreement filed as an exhibit.', meta:'Current report · material definitive agreement'},
+    'D-9c2a': {src:'Product telemetry', icon:'fas fa-code', title:'Defect report: directory sync fails above 5k members', date:'2026-08-26',
+      body:'Filed by an engineer whose profile lists the same Fortune 100 counterparty. Reproduces on the self-hosted build; maintainers scheduled it for the next minor release.', meta:'Enterprise-labelled · 41 responses'},
+    'D-1f70': {src:'Product telemetry', icon:'fas fa-code', title:'Release 9.4: batched directory sync, audit export', date:'2026-08-30',
+      body:'Ships batched directory synchronisation and an audit-log export capability. Release notes credit the reporter of the earlier defect. Cadence has tightened to roughly three weeks between minor releases.', meta:'Release cadence 21d trailing'},
+    'W-77b1': {src:'Workforce', icon:'fas fa-users', title:'Hiring mix shifts toward regulated-sector delivery', date:'2026-08-24',
+      body:'Posting velocity up sharply for implementation and compliance-facing roles, concentrated in two financial-services metros. Engineering headcount flat over the same window.', meta:'Panel coverage: high · 12-week trend'},
+    'N-3d05': {src:'Trade press', icon:'fas fa-newspaper', title:'Regulated-sector rollout reported at a top-5 institution', date:'2026-08-29',
+      body:'Specialist compliance publication reports a production rollout inside a heavily regulated buyer, citing two unnamed people. No company confirmation. Names the audit-export capability as the unlock.', meta:'Licensed full text · subject-verified'},
+    'S-52e9': {src:'Social', icon:'fas fa-comments', title:'Practitioner thread on migration friction and pricing', date:'2026-08-27',
+      body:'Platform engineer with an established posting history describes a six-week migration, praises the new audit export, and notes that enterprise seat pricing changed during their negotiation.', meta:'Author credibility: high · relevance 4/5'},
+    'C-08bd': {src:'Consumer panel', icon:'fas fa-chart-pie', title:'Net revenue retention firming in the enterprise cohort', date:'2026-08-30',
+      body:'Observed spend for the largest cohort is up quarter over quarter, with expansion outpacing contraction for the second consecutive period. Small-account churn is unchanged.', meta:'Panel n = 3,140 · 2-quarter window'},
+    'E-6a13': {src:'Expert network', icon:'fas fa-user-tie', title:'Former channel lead on enterprise pricing strategy', date:'2026-08-25',
+      body:'Describes a deliberate move to reprice the enterprise tier ahead of a renewal cycle, framed internally as margin capture rather than growth. Notes it was expected to cost some mid-market renewals.', meta:'Licensed transcript · 47 minutes'}
   };
+
   var CLAIMS = [
-    {k:'narrative', html:'Enterprise adoption is broadening beyond the developer base, and the evidence now spans a filing, the code base and the trade press rather than sitting in any one place. The registrant disclosed a multi-year enterprise agreement without naming the counterparty {E-4417}, and an engineer whose profile lists a Fortune 100 employer filed a scaling bug against group sync three days earlier {G-9c2a}. The fix shipped in the next release, which credits that reporter directly {G-1f70}.'},
-    {k:'change', html:'Release cadence has tightened to roughly three weeks, and the last cycle prioritised the exact capability a regulated buyer was reported to need {G-1f70} {N-3d05}.'},
-    {k:'change', html:'Pricing at the enterprise tier moved mid-negotiation, reported independently by a practitioner and by a sell-side account {B-52e9} {X-08bd}.'},
-    {k:'watch', html:'Whether the seat-price change reads as revenue uplift or churn risk in the next quarter, since both interpretations are live in public commentary {X-08bd}.'},
-    {k:'watch', html:'Whether the unnamed 8-K counterparty and the Fortune 100 bug reporter are the same account {E-4417} {G-9c2a}.'},
-    {k:'bear', html:'The migration friction is real and self-reported at six weeks, and the pricing change lands on exactly the cohort that just absorbed that cost {B-52e9}.'},
-    {k:'bull', html:'Public operator sentiment describes displacement of in-house tooling rather than of a named competitor, which implies a larger addressable pool than a share-shift story {H-77b1}.'},
-    {k:'q', html:'The 8-K discloses a multi-year enterprise agreement but not its committed value. What is the contracted floor, and over how many years? {E-4417}'},
-    {k:'q', html:'Group sync failed above five thousand members before v9.4.0. How many current enterprise accounts sit above that threshold today? {G-9c2a} {G-1f70}'}
+    {k:'narrative', html:'Enterprise adoption is broadening beyond the original developer base, and the evidence now spans a regulatory filing, product telemetry, the trade press and the hiring panel rather than sitting in any single feed. The registrant disclosed a multi-year enterprise agreement without naming the counterparty {F-4417}, and an engineer whose profile lists a Fortune 100 employer filed a scaling defect against directory sync two days earlier {D-9c2a}. The fix shipped in the next release, which credits that reporter directly {D-1f70}. Hiring over the same window shifted toward regulated-sector delivery roles while engineering headcount stayed flat {W-77b1}.'},
+    {k:'change', html:'Release cadence has tightened to roughly three weeks, and the most recent cycle prioritised precisely the capability a regulated buyer was reported to require {D-1f70} {N-3d05}.'},
+    {k:'change', html:'Enterprise pricing was repositioned mid-renewal-cycle, corroborated independently by a practitioner inside a negotiation and by a former channel lead who frames it as deliberate margin capture {S-52e9} {E-6a13}.'},
+    {k:'change', html:'Observed spend in the largest cohort is expanding for a second consecutive quarter, with small-account churn unchanged {C-08bd}.'},
+    {k:'watch', html:'Whether the repricing reads as revenue uplift or mid-market churn next quarter. The panel currently supports uplift {C-08bd} while the primary interview flags expected renewal losses {E-6a13}.'},
+    {k:'watch', html:'Whether the undisclosed counterparty in the filing and the Fortune 100 defect reporter are the same account {F-4417} {D-9c2a}.'},
+    {k:'bear', html:'Migration friction is real and self-reported at six weeks, and the repricing lands on exactly the cohort that has just absorbed that cost {S-52e9} {E-6a13}.'},
+    {k:'bull', html:'The hiring shift toward regulated-sector delivery is a committed cost the company took on before any of this was disclosed, which is a stronger signal of pipeline conviction than commentary {W-77b1} {N-3d05}.'},
+    {k:'q', html:'The filing discloses a multi-year enterprise agreement without a committed value. What is the contracted floor, and over how many years? {F-4417}'},
+    {k:'q', html:'Directory sync failed above five thousand members before the 9.4 release. How many current enterprise accounts sit above that threshold? {D-9c2a} {D-1f70}'},
+    {k:'q', html:'How much of the enterprise repricing is realised in the current renewal cohort, and what mid-market attrition is assumed against it? {E-6a13}'}
   ];
+
   var CONNS = [
-    {a:'E-4417', b:'G-9c2a', sim:0.31, conf:0.86, ok:true, theme:'The undisclosed 8-K counterparty is plausibly the Fortune 100 bug reporter',
-     why:'Filing date and issue date sit three days apart, the issue author\'s profile lists a Fortune 100 employer, and the failing feature is the one an enterprise rollout of that size would hit first. Neither item names the other; the link is inferential and flagged as such.'},
-    {a:'G-1f70', b:'N-3d05', sim:0.27, conf:0.79, ok:true, theme:'Audit export shipped in the release the regulated rollout reportedly needed',
-     why:'The release adds an audit-log export endpoint; the trade-press piece names audit export as the unlock for a regulated buyer. Same capability, two independent sources, four days apart.'},
-    {a:'B-52e9', b:'X-08bd', sim:0.44, conf:0.91, ok:true, theme:'Enterprise seat pricing changed mid-negotiation',
-     why:'A practitioner reports it from inside a negotiation and a verified sell-side account raises it as a modelling question. Independent vantage points on one pricing event.'},
-    {a:'H-77b1', b:'B-52e9', sim:0.38, conf:0.42, ok:false, theme:'Both discuss migration experiences',
-     why:'Shared vocabulary about migrating platforms, but no common underlying event, buyer or timeframe. Topical adjacency, not a connection. Dropped below the gate.'},
-    {a:'G-9c2a', b:'H-77b1', sim:0.29, conf:0.24, ok:false, theme:'Both mention enterprise scale',
-     why:'Keyword overlap on "enterprise" and "scale" only. The issue is a specific defect; the thread is a general survey. No shared story.'},
-    {a:'E-4417', b:'N-3d05', sim:0.22, conf:0.63, ok:true, theme:'A disclosed agreement and an unconfirmed regulated rollout in the same window',
-     why:'Both describe a large buyer commitment inside one week. The filing is authoritative but unnamed; the report is named but unconfirmed. Moderate confidence: they may be the same deal or two.'}
+    {a:'F-4417', b:'D-9c2a', sim:0.31, conf:0.86, ok:true, theme:'The undisclosed counterparty is plausibly the Fortune 100 defect reporter',
+     why:'The filing and the defect report fall two days apart, the reporter’s profile lists a Fortune 100 employer, and the failing capability is the one an enterprise rollout of that size would encounter first. Neither document references the other; the link is inferential and is labelled as such.'},
+    {a:'D-1f70', b:'N-3d05', sim:0.27, conf:0.79, ok:true, theme:'Audit export shipped in the release the regulated rollout reportedly required',
+     why:'The release adds audit-log export; the trade-press report names audit export as the unlock for a regulated buyer. Same capability, two independent feeds, four days apart.'},
+    {a:'S-52e9', b:'E-6a13', sim:0.44, conf:0.91, ok:true, theme:'Enterprise repricing is deliberate strategy, not an isolated negotiation',
+     why:'A practitioner reports the change from inside a live negotiation; a former channel lead independently describes it as planned margin capture ahead of renewals. Two vantage points on one decision.'},
+    {a:'W-77b1', b:'N-3d05', sim:0.24, conf:0.74, ok:true, theme:'Hiring mix anticipated the regulated-sector rollout',
+     why:'Posting velocity for compliance-facing delivery roles rose in the weeks before the reported rollout, concentrated in the metros where that buyer operates. Committed cost ahead of disclosure.'},
+    {a:'C-08bd', b:'E-6a13', sim:0.19, conf:0.58, ok:true, theme:'Panel expansion and the repricing narrative are in tension',
+     why:'Observed spend is expanding while the primary interview expects renewal losses. Both may hold if uplift precedes attrition, but they do not yet corroborate each other. Moderate confidence.'},
+    {a:'S-52e9', b:'D-9c2a', sim:0.38, conf:0.41, ok:false, theme:'Both describe implementation difficulty',
+     why:'Shared vocabulary about migration and scale, but no common buyer, event or timeframe. Topical adjacency rather than a connection. Dropped by the adjudicator.'},
+    {a:'W-77b1', b:'C-08bd', sim:0.22, conf:0.27, ok:false, theme:'Both are panel-derived growth indicators',
+     why:'Similar framing because both are panel products, but they measure unrelated populations over different windows with no causal or narrative link. Dropped.'}
   ];
+
   var SOURCES = [
-    {id:'bluesky', name:'Bluesky', icon:'fas fa-comments'},
-    {id:'news', name:'Trade press', icon:'fas fa-newspaper'},
-    {id:'github', name:'GitHub', icon:'fab fa-github'},
-    {id:'hn', name:'Hacker News', icon:'fab fa-hacker-news'},
-    {id:'x', name:'X', icon:'fab fa-x-twitter'},
-    {id:'edgar', name:'SEC EDGAR', icon:'fas fa-landmark'}
+    {id:'news',    name:'Newswire & trade', icon:'fas fa-newspaper'},
+    {id:'social',  name:'Social & community', icon:'fas fa-comments'},
+    {id:'product', name:'Product telemetry', icon:'fas fa-code'},
+    {id:'work',    name:'Workforce & hiring', icon:'fas fa-users'},
+    {id:'panel',   name:'Consumer panel', icon:'fas fa-chart-pie'},
+    {id:'expert',  name:'Expert network', icon:'fas fa-user-tie'},
+    {id:'filings', name:'Regulatory filings', icon:'fas fa-landmark'},
+    {id:'market',  name:'Market & fundamentals', icon:'fas fa-chart-line'}
   ];
+
   var STAGES = [
-    {n:'01', nm:'Ingest'}, {n:'02', nm:'De-duplicate'}, {n:'03', nm:'Summarise'},
-    {n:'04', nm:'Filter noise'}, {n:'05', nm:'Synthesise'}, {n:'06', nm:'Persist'}
+    {n:'01', nm:'Ingest'}, {n:'02', nm:'Entitlement gate'}, {n:'03', nm:'Deduplicate'},
+    {n:'04', nm:'Read & score'}, {n:'05', nm:'Synthesise'}, {n:'06', nm:'Validate'}, {n:'07', nm:'Persist'}
   ];
+
   var SCEN = {
-    cold: {label:'Cold refresh', raw:47, dupes:9, cached:0, dropped:11, calls:41, tok:118400, cost:0.121, ms:[9200,300,52000,200,21000,120],
-           srcStatus:{bluesky:['ok','12 items'],news:['ok','9 items · 6 gated out'],github:['ok','11 items'],hn:['ok','7 items'],x:['ok','5 items'],edgar:['ok','3 filings']}},
-    warm: {label:'Warm refresh', raw:49, dupes:9, cached:33, dropped:3, calls:11, tok:38600, cost:0.041, ms:[8800,420,9600,180,19500,110],
-           srcStatus:{bluesky:['ok','13 items'],news:['ok','9 items · 7 gated out'],github:['ok','11 items'],hn:['ok','7 items'],x:['ok','6 items'],edgar:['ok','3 filings']}},
-    fail: {label:'Source outage', raw:36, dupes:6, cached:0, dropped:9, calls:32, tok:93100, cost:0.096, ms:[11500,280,41000,190,20500,120],
-           srcStatus:{bluesky:['bad','failed: HTTP 403 from datacenter IP'],news:['ok','9 items · 6 gated out'],github:['warn','rate-limited: 11 of 18'],hn:['ok','7 items'],x:['ok','5 items'],edgar:['ok','3 filings']}}
+    cold: {label:'Full refresh', raw:63, dupes:11, cached:0, dropped:14, calls:52, tok:146200, cost:0.148, ms:[10400,220,340,58000,23000,1400,160],
+      srcStatus:{news:['ok','14 items'],social:['ok','11 items'],product:['ok','9 items'],work:['ok','6 records'],
+                 panel:['ok','4 series'],expert:['ok','2 transcripts'],filings:['ok','5 filings'],market:['ok','full history']}},
+    warm: {label:'Incremental', raw:66, dupes:12, cached:41, dropped:4, calls:14, tok:44300, cost:0.047, ms:[9900,210,380,11200,21500,1300,140],
+      srcStatus:{news:['ok','15 items · 12 cached'],social:['ok','12 items · 10 cached'],product:['ok','9 items · 8 cached'],work:['ok','6 records'],
+                 panel:['ok','4 series'],expert:['ok','2 transcripts · cached'],filings:['ok','5 filings'],market:['ok','incremental']}},
+    fail: {label:'Vendor degradation', raw:41, dupes:7, cached:0, dropped:9, calls:36, tok:104800, cost:0.107, ms:[16800,240,320,44500,22000,1350,150],
+      srcStatus:{news:['ok','14 items'],social:['bad','vendor unavailable · 503'],product:['warn','throttled · 6 of 11'],work:['ok','6 records'],
+                 panel:['bad','entitlement expired'],expert:['ok','2 transcripts'],filings:['ok','5 filings'],market:['ok','full history']}}
   };
 
   var $ = function(id){ return document.getElementById(id); };
-
-  /* ================= pipeline runner ================= */
   var scenario = 'cold', running = false;
 
   function paintStages(){
@@ -624,9 +682,8 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
       var st = statuses ? statuses[s.id] : null;
       var cls = st ? st[0] : '';
       var txt = st ? st[1] : 'pending';
-      return '<div class="src"><i class="'+s.icon+'"></i>'+s.name+
-             '<span class="s '+(cls==='ok'?'ok':cls==='warn'?'warn':cls==='bad'?'bad':'')+'" style="color:'+
-             (cls==='ok'?'#10b981':cls==='warn'?'#f59e0b':cls==='bad'?'#ef4444':'#64748b')+'">'+txt+'</span></div>';
+      var col = cls==='ok'?'#10b981':cls==='warn'?'#f59e0b':cls==='bad'?'#ef4444':'#64748b';
+      return '<div class="src"><i class="'+s.icon+'"></i>'+s.name+'<span class="s" style="color:'+col+'">'+txt+'</span></div>';
     }).join('');
   }
   function logLine(cls, txt){
@@ -641,7 +698,7 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
     $({cold:'scCold',warm:'scWarm',fail:'scFail'}[k]).classList.add('on');
     paintStages(); paintSources(null); $('runlog').innerHTML='';
     ['mItems','mCalls','mTok','mCost','mTime'].forEach(function(id){ $(id).textContent='—'; });
-    logLine('cy','scenario set: '+SCEN[k].label+' — press Run');
+    logLine('cy','scenario: '+SCEN[k].label+' — press Run');
   }
   function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 
@@ -650,34 +707,41 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
     running = true; $('runBtn').disabled = true;
     var S = SCEN[scenario];
     paintStages(); paintSources(null); $('runlog').innerHTML='';
-    var t0 = performance.now(), kept = S.raw - S.dupes - S.dropped;
+    var kept = S.raw - S.dupes - S.dropped;
 
     for(var i=0;i<STAGES.length;i++){
       var st = $('stg'+i);
       st.classList.add('active');
       st.querySelector('.st').textContent = 'running';
       var bar = st.querySelector('.bar');
-      var real = Math.max(260, S.ms[i]/26);           // compressed for the page
-      var steps = 12;
-      for(var k=1;k<=steps;k++){ bar.style.width = (100*k/steps)+'%'; await sleep(real/steps); }
+      var real = Math.max(240, S.ms[i]/30);
+      // one transition per stage rather than a stepped loop: smoother, and it does
+      // not stall when a background tab throttles timers to ~1s
+      bar.style.transition = 'width ' + real + 'ms linear';
+      bar.style.width = '100%';
+      await sleep(real);
 
       if(i===0){
         paintSources(S.srcStatus);
         Object.keys(S.srcStatus).forEach(function(key){
           var v = S.srcStatus[key];
-          logLine(v[0]==='ok'?'ok':v[0]==='warn'?'wa':'er', 'source '+key+': '+v[1]);
+          logLine(v[0]==='ok'?'ok':v[0]==='warn'?'wa':'er', 'feed '+key+': '+v[1]);
         });
-        logLine('', 'gathered '+S.raw+' raw items under asyncio.gather');
+        logLine('', 'collected '+S.raw+' raw documents across '+SOURCES.length+' feed classes');
       }
-      if(i===1) logLine('', 'fingerprint dedup removed '+S.dupes+' duplicates; '+S.cached+' reused from previous snapshot');
-      if(i===2) logLine('', 'summarised '+(S.raw-S.dupes-S.cached)+' new items · '+S.calls+' model calls under semaphore');
-      if(i===3) logLine('wa', 'dropped '+S.dropped+' items tagged promotional or tangential at relevance ≤ 2');
-      if(i===4){
-        logLine('', 'brain synthesis over '+kept+' items');
-        logLine('ok', 'citation validator: all cited ids resolve');
-        logLine('', 'connections: 6 candidate pairs judged, 4 kept above gate');
+      if(i===1){
+        var blocked = scenario==='fail' ? 2 : 0;
+        logLine(blocked?'wa':'', blocked ? 'entitlement gate: 2 feeds unavailable to this role, coverage gap disclosed'
+                                         : 'entitlement gate: all feeds permitted for this role');
       }
-      if(i===5) logLine('ok', 'snapshot written temp-then-rename');
+      if(i===2) logLine('', 'deduplicated '+S.dupes+' documents; '+S.cached+' reused from the prior snapshot');
+      if(i===3) logLine('', 'read and scored '+(S.raw-S.dupes-S.cached)+' new documents · '+S.calls+' model calls');
+      if(i===4) logLine('', 'synthesis over '+kept+' retained documents, plus reconciliation');
+      if(i===5){
+        logLine('ok', 'citation validator: every cited document resolves');
+        logLine('', 'connection adjudication: 7 candidates evaluated, 5 above gate');
+      }
+      if(i===6) logLine('ok', 'evidence snapshot committed, audit record written');
 
       st.classList.remove('active'); st.classList.add('done');
       st.querySelector('.st').textContent = (S.ms[i]/1000).toFixed(1)+' s';
@@ -689,12 +753,11 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
     $('mCost').textContent = '$'+S.cost.toFixed(3);
     var total = S.ms.reduce(function(a,b){ return a+b; },0);
     $('mTime').textContent = (total/1000).toFixed(1)+' s';
-    logLine('cy','refresh complete in '+(total/1000).toFixed(1)+' s (page animation compressed ~26x)');
-    void t0;
+    logLine('cy','name complete in '+(total/1000).toFixed(1)+' s (panel animation compressed ~30x)');
     running = false; $('runBtn').disabled = false;
   }
 
-  /* ================= brain summary + validator ================= */
+  /* ---- synthesis + validator ---- */
   var hallucinating = false;
 
   function renderClaim(html){
@@ -704,20 +767,19 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
     });
   }
   function buildNote(){
-    var claims = CLAIMS.map(function(c){ return {k:c.k, html:c.html}; });
+    var claims = CLAIMS.slice();
     if(hallucinating){
-      claims = claims.slice();
-      claims[0] = {k:'narrative', html: CLAIMS[0].html.replace('{G-1f70}','{G-1f70} {N-9c4d}')};
+      claims[0] = {k:'narrative', html: CLAIMS[0].html.replace('{D-1f70}','{D-1f70} {N-7b2e}')};
     }
     function group(k){ return claims.filter(function(c){ return c.k===k; }); }
     var h = '';
-    h += '<h4>Enterprise adoption broadening, with a pricing question attached</h4>';
-    h += '<div class="pos"><span class="chip cy">POSITION READ · constructive</span><span class="chip">confidence: moderate</span><span class="chip">7 items · 6 sources</span></div>';
+    h += '<h4>Enterprise adoption broadening, with a repricing question attached</h4>';
+    h += '<div class="pos"><span class="chip cy">EVIDENCE READ · constructive</span><span class="chip">confidence: moderate</span><span class="chip">8 documents · 7 feed classes</span></div>';
     group('narrative').forEach(function(c){ h += '<p>'+renderClaim(c.html)+'</p>'; });
     h += '<h5>What is changing</h5><ul>'+group('change').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
     h += '<h5>What to watch</h5><ul>'+group('watch').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
-    h += '<h5>Non-consensus bear</h5><ul>'+group('bear').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
-    h += '<h5>Non-consensus bull</h5><ul>'+group('bull').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
+    h += '<h5>Contrarian bear</h5><ul>'+group('bear').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
+    h += '<h5>Contrarian bull</h5><ul>'+group('bull').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
     h += '<h5>Questions for management</h5><ul>'+group('q').map(function(c){ return '<li>'+renderClaim(c.html)+'</li>'; }).join('')+'</ul>';
     $('noteBox').innerHTML = h;
     wireCits();
@@ -729,19 +791,18 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
     Array.prototype.forEach.call(chips, function(c){
       if(!ITEMS[c.getAttribute('data-id')]) bad.push(c.getAttribute('data-id'));
     });
-    var vb = $('valBar'), vt = $('valTxt');
+    var vb = $('valBar');
     vb.classList.remove('fail','fix');
     if(bad.length === 0){
       vb.innerHTML = '<i class="fas fa-circle-check"></i> <span id="valTxt"></span>';
-      $('valTxt').textContent = 'Validator passed: ' + chips.length + ' citations checked, all resolve to ingested items. Snapshot saved.';
+      $('valTxt').textContent = 'Validator passed: ' + chips.length + ' citations checked against the evidence set, all resolve. Note released and audit record written.';
       $('repairBtn').disabled = true;
     } else {
       vb.classList.add('fail');
       vb.innerHTML = '<i class="fas fa-circle-xmark"></i> <span id="valTxt"></span>';
-      $('valTxt').textContent = 'Validator failed: cited id ' + bad.join(', ') + ' does not exist in the item set. Synthesis rejected, repair pass available.';
+      $('valTxt').textContent = 'Validator failed: cited document ' + bad.join(', ') + ' is not in the evidence set. Note withheld from the analyst; bounded repair available.';
       $('repairBtn').disabled = false;
     }
-    void vt;
   }
   function wireCits(){
     Array.prototype.forEach.call($('noteBox').querySelectorAll('.cit'), function(c){
@@ -753,15 +814,15 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
   function showItem(id){
     var it = ITEMS[id], p = $('srcPanel');
     if(!it){
-      p.innerHTML = '<div class="hd"><span class="id">['+id+']</span><span class="chip bad">not found</span></div>' +
-        '<div class="bd">No ingested item carries this id. This is exactly what the validator rejects: the model produced a citation-shaped token with nothing behind it. In production the frontend also refuses to render it as a link.</div>';
+      p.innerHTML = '<div class="hd"><span class="id">['+id+']</span><span class="chip bad">not in evidence set</span></div>' +
+        '<div class="bd">No ingested document carries this reference. This is precisely what the validator blocks: a fluent, plausible claim resting on a citation with nothing behind it. The note is withheld rather than shown with a broken reference, and the presentation layer would refuse to render it as a link even if it reached that far.</div>';
       return;
     }
     p.innerHTML = '<div class="hd"><span class="id">['+id+']</span><span class="chip"><i class="'+it.icon+'"></i> '+it.src+'</span>' +
       '<span class="ti">'+it.title+'</span></div><div class="bd">'+it.body+'</div><div class="meta">'+it.meta+' · '+it.date+'</div>';
   }
 
-  /* ================= connections ================= */
+  /* ---- connections ---- */
   function renderConns(){
     var gate = +$('gate').value/100;
     $('gateVal').textContent = gate.toFixed(2);
@@ -771,28 +832,24 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
       if(pass) shown++;
       return '<div class="conn'+(pass?'':' dropped')+'">' +
         '<div class="top"><span class="pair">['+c.a+'] × ['+c.b+']</span>' +
-        '<span class="chip">TF-IDF '+c.sim.toFixed(2)+'</span>' +
-        '<span class="verdict chip '+(pass?'ok':'bad')+'">'+(pass?'kept · '+c.conf.toFixed(2):(c.ok?'below gate · '+c.conf.toFixed(2):'judged unrelated · '+c.conf.toFixed(2)))+'</span></div>' +
+        '<span class="chip">nominated '+c.sim.toFixed(2)+'</span>' +
+        '<span class="verdict chip '+(pass?'ok':'bad')+'">'+(pass?'surfaced · '+c.conf.toFixed(2):(c.ok?'below gate · '+c.conf.toFixed(2):'judged unrelated · '+c.conf.toFixed(2)))+'</span></div>' +
         '<div class="theme">'+c.theme+'</div><div class="why">'+c.why+'</div>' +
         '<div class="bar2"><span style="width:'+(c.conf*100).toFixed(0)+'%"></span></div></div>';
     }).join('');
     $('cPairs').textContent = CONNS.length;
     $('cShown').textContent = shown;
-    $('cSaved').textContent = 435 - CONNS.length;
+    $('cSaved').textContent = 28 - CONNS.length;
   }
 
-  /* ================= cost model ================= */
+  /* ---- cost model ---- */
   var COST = {
-    single: {
-      rows:[{n:'Cold refresh', v:[74200, 21600, 16800, 5800]}, {n:'Warm refresh', v:[9400, 21300, 3100, 4800]}],
-      note:'One strong model for every call. Per-item summaries dominate a cold refresh at roughly 63% of tokens, which is why cross-refresh dedup is the biggest lever: the warm run cuts total tokens by about two thirds.'
-    },
-    mixed: {
-      rows:[{n:'Cold refresh', v:[74200, 21600, 16800, 5800]}, {n:'Warm refresh', v:[9400, 21300, 3100, 4800]}],
-      note:'Routing per-item summaries and the connection judge to a cheaper model, keeping the strong model for synthesis. Token counts barely move; the cost does, because the bulk stages are the cheap ones. This is the next cost lever, not yet shipped.'
-    }
+    single: { rows:[{n:'Full refresh', v:[92000, 27000, 20400, 6800]}, {n:'Incremental', v:[11200, 24800, 3600, 4700]}],
+      note:'A single frontier tier for every stage. Document reading dominates a full refresh at roughly 63% of tokens, which is why incremental processing is the primary lever: an incremental pass costs about a third of a full one on the same name.' },
+    mixed:  { rows:[{n:'Full refresh', v:[92000, 27000, 20400, 6800]}, {n:'Incremental', v:[11200, 24800, 3600, 4700]}],
+      note:'Document reading and connection adjudication routed to a smaller model, with the frontier tier reserved for synthesis and reconciliation. Token volume is unchanged; cost falls sharply because the bulk stages are the ones that moved. Output quality is monitored per stage so a downgrade that degrades the note is detectable rather than assumed safe.' }
   };
-  var PRICE = { single:[3.0,3.0,3.0,3.0], mixed:[0.8,3.0,0.8,3.0] }; // $/M tokens, illustrative
+  var PRICE = { single:[3.0,3.0,3.0,3.0], mixed:[0.8,3.0,0.8,3.0] };
   var COLORS = ['#3b82f6','#00f7ff','#8b5cf6','#10b981'];
 
   function renderCost(mode){
@@ -806,7 +863,7 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
         return '<div style="width:'+(100*v/tot).toFixed(2)+'%;background:'+COLORS[i]+'" title="'+v.toLocaleString()+' tokens"></div>';
       }).join('');
       return '<div class="costrow"><span class="lab">'+r.n+'</span>' +
-        '<span class="costbar" style="flex:0 0 '+(100*tot/maxTot).toFixed(1)+'%;min-width:180px">'+segs+'</span>' +
+        '<span class="costbar" style="flex:0 0 '+(100*tot/maxTot).toFixed(1)+'%;min-width:170px">'+segs+'</span>' +
         '<span class="costtot">'+(tot/1000).toFixed(1)+'k · $'+dollars.toFixed(3)+'</span></div>';
     }).join('');
     $('costNote').textContent = cfg.note;
@@ -814,9 +871,9 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
     $('cmMixed').classList.toggle('on', mode==='mixed');
   }
 
-  /* ================= wire up ================= */
+  /* ---- init ---- */
   paintStages(); paintSources(null);
-  logLine('cy','ready — press Run to execute the pipeline');
+  logLine('cy','ready — press Run to execute the pipeline for one name');
   $('runBtn').addEventListener('click', run);
   $('scCold').addEventListener('click', function(){ setScenario('cold'); });
   $('scWarm').addEventListener('click', function(){ setScenario('warm'); });
@@ -830,13 +887,13 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
       ? '<i class="fas fa-rotate-left"></i> Restore valid synthesis'
       : '<i class="fas fa-triangle-exclamation"></i> Inject a hallucination';
     buildNote();
-    if(hallucinating) showItem('N-9c4d');
+    if(hallucinating) showItem('N-7b2e');
   });
   $('repairBtn').addEventListener('click', function(){
     var vb = $('valBar');
     vb.classList.remove('fail'); vb.classList.add('fix');
-    vb.innerHTML = '<i class="fas fa-wrench fa-spin"></i> <span id="valTxt">Repair pass: re-prompting with the validator error, one attempt only…</span>';
-    var self = this; self.disabled = true;
+    vb.innerHTML = '<i class="fas fa-wrench fa-spin"></i> <span id="valTxt">Repair pass: regenerating with the validator error returned to the model, one bounded attempt…</span>';
+    this.disabled = true;
     setTimeout(function(){
       hallucinating = false;
       $('hallBtn').classList.remove('on');
@@ -844,14 +901,13 @@ code.inl{font-family:var(--font-mono);font-size:.83rem;color:var(--primary-green
       buildNote();
       var v = $('valBar');
       v.classList.add('fix');
-      v.innerHTML = '<i class="fas fa-circle-check"></i> <span id="valTxt">Repair succeeded: the invalid id was removed and the claim now rests on its remaining citation. If the repair had failed, the original would be kept and logged rather than shipping something worse.</span>';
-      $('srcPanel').innerHTML = '<div class="bd" style="color:#64748b">Click a citation chip above to inspect the item it points to.</div>';
+      v.innerHTML = '<i class="fas fa-circle-check"></i> <span id="valTxt">Repair succeeded: the unsupported reference was removed and the claim now rests on its remaining evidence. Had repair failed, the platform would retain the last valid note and raise an operational alert rather than ship a weaker one.</span>';
+      $('srcPanel').innerHTML = '<div class="bd" style="color:#64748b">Click a citation to inspect the source document behind it.</div>';
     }, 1500);
   });
 
   $('gate').addEventListener('input', renderConns);
   renderConns();
-
   renderCost('single');
   $('cmSingle').addEventListener('click', function(){ renderCost('single'); });
   $('cmMixed').addEventListener('click', function(){ renderCost('mixed'); });

@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="../assets/css/demo-shell.css">
+<link rel="stylesheet" href="../assets/css/demo-shell.css?v=2">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -101,6 +101,18 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 @media(max-width:1024px){.grid{grid-template-columns:1fr}.ctrl-body{flex-direction:column;align-items:stretch}}
 .demo-sub{max-width:1440px;margin:14px auto 0;padding:0 16px;color:var(--muted);font-size:.85rem}
 .demo-sub b{color:var(--text);font-weight:600}
+
+.codepanel .panel-body{padding:0}
+.code-scroll{max-height:392px;overflow:auto;padding:12px 14px}
+.code-scroll pre{margin:0;font-family:var(--mono);font-size:11.2px;line-height:1.72;color:#cbd5e1;white-space:pre}
+.cl{display:block;padding:0 6px;border-left:2px solid transparent;border-radius:0 3px 3px 0}
+.cl.on{background:rgba(6,182,212,.13);border-left-color:var(--cyan)}
+.cl.on .cm{color:#7dd3fc}
+.k{color:#c084fc}.ty{color:#22d3ee}.fn{color:#93c5fd}.nu{color:#fbbf24}.st{color:#86efac}.cm{color:#64748b;font-style:italic}
+.code-live{display:flex;flex-wrap:wrap;gap:14px;padding:9px 14px;border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.code-live b{color:var(--cyan);font-weight:600}
+.code-live .stg{color:var(--green)}
 </style>
 </head>
 <body>
@@ -142,8 +154,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="d-help-section">
         <h3>2 &middot; Driving &amp; physics</h3>
         <dl>
-          <dt>W / S</dt><dd>Accelerate forward / reverse at 0.8 m/s&sup2;, capped at <strong>0.50 m/s</strong> forward and 0.30 m/s in reverse.</dd>
-          <dt>A / D</dt><dd>Angular acceleration 4.0 rad/s&sup2;, capped at <strong>&plusmn;1.5 rad/s</strong> (86 &deg;/s).</dd>
+          <dt>W / S</dt><dd>Accelerate forward / reverse at 2.0 m/s&sup2;, capped at <strong>1.10 m/s</strong> forward and 0.60 m/s in reverse.</dd>
+          <dt>A / D</dt><dd>Angular acceleration 4.0 rad/s&sup2;, capped at <strong>&plusmn;2.2 rad/s</strong> (86 &deg;/s).</dd>
           <dt>Timestep</dt><dd>Fixed <strong>&Delta;t = 1/60 s</strong> integrator with an accumulator, so the physics is frame-rate independent. Released controls decay exponentially (3 s&#8315;&sup1; linear, 6 s&#8315;&sup1; angular).</dd>
         </dl>
       </div>
@@ -215,7 +227,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="kpi-cell" title="Particle-filter estimate of the robot x position, in metres"><div class="lbl">Est. X</div><div class="val c" id="kpiX">0.00</div><div class="unit">m</div></div>
     <div class="kpi-cell" title="Particle-filter estimate of the robot y position, in metres"><div class="lbl">Est. Y</div><div class="val c" id="kpiY">0.00</div><div class="unit">m</div></div>
     <div class="kpi-cell" title="Estimated heading, 0 to 360 degrees"><div class="lbl">Heading</div><div class="val y" id="kpiHeading">0&deg;</div><div class="unit">deg</div></div>
-    <div class="kpi-cell" title="True linear speed, capped at 0.50 m/s"><div class="lbl">Speed</div><div class="val g" id="kpiSpeed">0.00</div><div class="unit">m/s</div></div>
+    <div class="kpi-cell" title="True linear speed, capped at 1.10 m/s"><div class="lbl">Speed</div><div class="val g" id="kpiSpeed">0.00</div><div class="unit">m/s</div></div>
     <div class="kpi-cell" title="Euclidean distance between the filter estimate and the true pose"><div class="lbl">Filter Error</div><div class="val g" id="kpiErr">0.000</div><div class="unit">m</div></div>
     <div class="kpi-cell" title="Euclidean distance between open-loop wheel odometry and the true pose"><div class="lbl">Odom Error</div><div class="val o" id="kpiOdomErr">0.000</div><div class="unit">m</div></div>
     <div class="kpi-cell" title="Observed cells as a share of the cells inside the environment bounding box"><div class="lbl">Map Coverage</div><div class="val b" id="kpiCoverage">0%</div><div class="unit">of mappable cells</div></div>
@@ -230,7 +242,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="ctrl-head"><i class="fas fa-sliders-h"></i> Controls &amp; Environments</div>
     <div class="ctrl-body">
       <div class="ctrl-group">
-        <h4>Drive (0.50 m/s &middot; 1.5 rad/s)</h4>
+        <h4>Drive (1.10 m/s &middot; 2.2 rad/s)</h4>
         <div style="display:flex;gap:4px;align-items:center">
           <span class="key-hint">W</span>
           <span class="key-hint">A</span>
@@ -251,6 +263,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         <h4>Actions</h4>
         <div class="toggle-row">
           <button type="button" class="env-btn" onclick="resetMap()" style="border-color:var(--yellow);color:var(--yellow)"><i class="fas fa-eraser"></i> Clear Map</button>
+          <button type="button" class="env-btn" id="btnParticlesToggle" title="Show the particle cloud, the filter's pose hypotheses"><i class="fas fa-braille"></i> Particles</button>
+          <button type="button" class="env-btn" id="btnEstimateToggle" title="Show the filter's estimated pose as a second outline"><i class="fas fa-crosshairs"></i> Estimated pose</button>
           <button type="button" class="env-btn" id="relocBtn" title="Re-scatter the particle cloud around the current estimate"><i class="fas fa-arrows-to-dot"></i> Re-scatter Particles</button>
         </div>
       </div>
@@ -269,7 +283,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
     <div class="panel-body" style="padding:8px">
       <canvas id="worldCanvas" style="height:420px" aria-label="Top-down view of the true environment showing walls, LiDAR beams, the particle cloud, the true robot pose and the estimated pose"></canvas>
-      <div class="cap"><span><i class="sw" style="background:#4b5563"></i> True walls</span><span><i class="sw" style="background:var(--cyan)"></i> LiDAR beams / true robot</span><span><i class="sw" style="background:var(--purple)"></i> Particles (300)</span><span><i class="sw" style="background:var(--amber)"></i> Filter estimate</span><span><i class="sw" style="background:var(--green)"></i> Path travelled</span></div>
+      <div class="cap"><span><i class="sw" style="background:#4b5563"></i> True walls</span><span><i class="sw" style="background:var(--cyan)"></i> LiDAR beams</span><span><i class="sw" style="background:#f4faff;border:1px solid #0a0e1a"></i> True robot</span><span><i class="sw" style="background:var(--purple)"></i> Particles (300)</span><span><i class="sw" style="background:var(--amber)"></i> Filter estimate</span><span><i class="sw" style="background:var(--green)"></i> Path travelled</span></div>
     </div>
   </div>
 
@@ -294,6 +308,56 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="panel-body">
       <canvas id="lidarCanvas" style="height:350px" aria-label="Polar plot of the current LiDAR scan in the robot body frame with range rings at 2, 4 and 6 metres"></canvas>
       <div class="cap"><span>0&deg; = robot forward</span><span>Rings: 2 / 4 / 6 m</span><span>&sigma;<sub>range</sub> = 2 cm, &sigma;<sub>bearing</sub> = 0.25&deg;</span><span>Max-range returns omitted</span></div>
+    </div>
+  </div>
+
+  <!-- LIVE ALGORITHM -->
+  <div class="panel codepanel">
+    <div class="panel-head">
+      <h3><i class="fas fa-code"></i> Algorithm Executing</h3>
+      <span class="tag">C++ &middot; one pass per scan</span>
+    </div>
+    <div class="panel-body">
+      <div class="code-scroll">
+<pre><span class="cl"><span class="cm">// ParticleFilterSlam::step() &mdash; one LiDAR scan</span></span>
+<span class="cl"><span class="ty">void</span> <span class="fn">step</span>(<span class="k">const</span> <span class="ty">Odometry</span>&amp; u, <span class="k">const</span> <span class="ty">LaserScan</span>&amp; z) {</span>
+<span class="cl"></span>
+<span class="cl" data-stage="1">  <span class="cm">// 1 &middot; motion model: push every hypothesis</span></span>
+<span class="cl" data-stage="1">  <span class="k">for</span> (<span class="ty">Particle</span>&amp; p : particles_)</span>
+<span class="cl" data-stage="1">    p.pose = <span class="fn">sampleMotionModel</span>(u, p.pose, alpha_);</span>
+<span class="cl"></span>
+<span class="cl" data-stage="2">  <span class="cm">// 2 &middot; measurement model: score against the map</span></span>
+<span class="cl" data-stage="2">  <span class="k">for</span> (<span class="ty">Particle</span>&amp; p : particles_) {</span>
+<span class="cl" data-stage="2">    p.logW = <span class="nu">0.0</span>;</span>
+<span class="cl" data-stage="2">    <span class="k">for</span> (<span class="k">const</span> <span class="ty">Beam</span>&amp; b : <span class="fn">subsample</span>(z, kBeamStep))</span>
+<span class="cl" data-stage="2">      p.logW += <span class="fn">std::log</span>(kZHit * <span class="fn">likelihoodField</span>(p.pose, b, grid_)</span>
+<span class="cl" data-stage="2">                         + kZRand);</span>
+<span class="cl" data-stage="2">  }</span>
+<span class="cl"></span>
+<span class="cl" data-stage="3">  <span class="cm">// 3 &middot; normalise, then measure cloud health</span></span>
+<span class="cl" data-stage="3">  <span class="fn">normaliseWeights</span>(particles_);</span>
+<span class="cl" data-stage="3">  <span class="k">const</span> <span class="ty">double</span> nEff = <span class="nu">1.0</span> / <span class="fn">sumOfSquaredWeights</span>(particles_);</span>
+<span class="cl"></span>
+<span class="cl" data-stage="4">  <span class="cm">// 4 &middot; resample only once the cloud collapses</span></span>
+<span class="cl" data-stage="4">  <span class="k">if</span> (nEff &lt; <span class="nu">0.5</span> * kNumParticles)</span>
+<span class="cl" data-stage="4">    particles_ = <span class="fn">lowVarianceResample</span>(particles_);</span>
+<span class="cl"></span>
+<span class="cl" data-stage="5">  <span class="cm">// 5 &middot; pose estimate = weighted mean of the cloud</span></span>
+<span class="cl" data-stage="5">  pose_ = <span class="fn">weightedMean</span>(particles_);</span>
+<span class="cl"></span>
+<span class="cl" data-stage="6">  <span class="cm">// 6 &middot; fuse the scan into the log-odds grid</span></span>
+<span class="cl" data-stage="6">  <span class="k">for</span> (<span class="k">const</span> <span class="ty">Beam</span>&amp; b : z)</span>
+<span class="cl" data-stage="6">    grid_.<span class="fn">integrate</span>(pose_, b, kLogOddsOcc, kLogOddsFree);</span>
+<span class="cl">}</span></pre>
+      </div>
+      <div class="code-live">
+        <span class="stg" id="clStage">stage 1 &middot; motion model</span>
+        <span>N<sub>eff</sub> <b id="clNeff">&mdash;</b> / <span id="clN">300</span></span>
+        <span>beams used <b id="clBeams">&mdash;</b></span>
+        <span>informative <b id="clInfo">&mdash;</b></span>
+        <span>resamples <b id="clResample">0</b></span>
+      </div>
+      <div class="cap"><span>Mirrors the running implementation</span><span>Highlight stepped for readability &mdash; the real loop completes 10&times; per second</span></div>
     </div>
   </div>
 
@@ -387,7 +451,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
           <li>Grid: 150 &times; 150 cells of <code>0.05 m</code>; <code>l_occ = +0.85</code> (p = 0.70), <code>l_free = &minus;0.40</code> (p = 0.40), clamped to <code>[&minus;5, +5]</code>.</li>
           <li>Odometry: +3% translation scale error, 8% proportional translation noise, 6% proportional rotation noise, +0.15 &deg;/s gyro bias.</li>
           <li>Filter: 300 particles, motion-model coefficients &alpha;<sub>1..4</sub> = 0.02 / 0.02 / 0.02 / 0.005, 30 sub-sampled beams, z<sub>hit</sub> = 0.85, z<sub>rand</sub> = 0.15, resample when N<sub>eff</sub> &lt; 150.</li>
-          <li>Drive limits: 0.50 m/s forward (0.30 m/s reverse), 1.5 rad/s, 0.8 m/s&sup2; and 4.0 rad/s&sup2;. Deterministic mulberry32 PRNG, seed 1337, reseeded on every environment load.</li>
+          <li>Drive limits: 1.10 m/s forward (0.60 m/s reverse), 2.2 rad/s, 2.0 m/s&sup2; and 7.0 rad/s&sup2;. Deterministic mulberry32 PRNG, seed 1337, reseeded on every environment load.</li>
         </ul>
       </div>
       <div>
@@ -911,12 +975,16 @@ function canMoveTo(nx,ny){
 }
 
 // --- Physics Update (fixed timestep, SI units internally) ---
+// View layers. Both start hidden: the cloud is visually noisy and the estimate
+// pose draws a second robot, which reads as a bug before you know what it is.
+let showParticles=false, showEstimate=false;
+
 const DT=1/60;                     // explicit physics timestep, 60 Hz
-const V_MAX=0.5*U_PER_M;           // 0.50 m/s forward
-const V_MAX_REV=0.3*U_PER_M;       // 0.30 m/s reverse
-const W_MAX=1.5;                   // 1.5 rad/s (86 deg/s)
-const A_LIN=0.8*U_PER_M;           // 0.8 m/s^2
-const A_ANG=4.0;                   // 4.0 rad/s^2
+const V_MAX=1.1*U_PER_M;           // 1.10 m/s forward
+const V_MAX_REV=0.6*U_PER_M;       // 0.60 m/s reverse
+const W_MAX=2.2;                   // 2.2 rad/s (126 deg/s)
+const A_LIN=2.0*U_PER_M;           // 2.0 m/s^2
+const A_ANG=7.0;                   // 7.0 rad/s^2
 const LIN_DAMP=3.0;                // coast-down rate, 1/s
 const ANG_DAMP=6.0;
 const ROBOT_R=0.10*U_PER_M;        // 0.10 m body radius
@@ -1014,7 +1082,7 @@ function drawWorld(){
   // LiDAR beams
   for(const sc of scanData){
     const a=robot.angle+sc.angle;
-    const alpha=sc.hit?0.3*(1-sc.dist/LIDAR_RANGE)+0.05:0.04;
+    const alpha=sc.hit?0.22*(1-sc.dist/LIDAR_RANGE)+0.04:0.03;
     ctx.strokeStyle=`rgba(6,182,212,${alpha})`;
     ctx.lineWidth=0.8;
     ctx.beginPath();
@@ -1029,13 +1097,17 @@ function drawWorld(){
     }
   }
 
-  // Particle cloud (localisation hypotheses)
-  ctx.fillStyle='rgba(139,92,246,0.5)';
-  for(let i=0;i<particles.length;i++){
-    ctx.fillRect(particles[i].x-0.9,particles[i].y-0.9,1.8,1.8);
+  // Particle cloud (localisation hypotheses) - opt-in, off by default
+  if(showParticles){
+    ctx.fillStyle='rgba(139,92,246,0.5)';
+    for(let i=0;i<particles.length;i++){
+      ctx.fillRect(particles[i].x-0.9,particles[i].y-0.9,1.8,1.8);
+    }
   }
 
-  // Particle-filter estimate (outline)
+  // Particle-filter estimate (outline) - opt-in, off by default so the
+  // world view shows one robot rather than two overlapping triangles
+  if(showEstimate){
   ctx.save();
   ctx.translate(est.x,est.y);
   ctx.rotate(est.angle);
@@ -1046,30 +1118,36 @@ function drawWorld(){
   ctx.closePath();
   ctx.stroke();
   ctx.restore();
+  }
 
-  // Robot (ground truth)
+  // Robot (ground truth). It sits at the origin of its own LiDAR fan, so a
+  // cyan body disappeared into the cyan beams. Drawn last, in white, on top of
+  // a dark disc that punches a hole through the beams behind it.
   ctx.save();
   ctx.translate(robot.x,robot.y);
+  const halo=ctx.createRadialGradient(0,0,6,0,0,26);
+  halo.addColorStop(0,'rgba(5,10,22,0.92)');
+  halo.addColorStop(1,'rgba(5,10,22,0)');
+  ctx.fillStyle=halo;
+  ctx.beginPath();ctx.arc(0,0,26,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(5,10,22,0.9)';
+  ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(232,245,255,0.5)';
+  ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.stroke();
   ctx.rotate(robot.angle);
-  ctx.fillStyle=`rgba(6,182,212,0.9)`;
+  ctx.fillStyle='#f4faff';
   ctx.beginPath();
-  ctx.moveTo(12,0);
-  ctx.lineTo(-7,-6);
-  ctx.lineTo(-4,0);
-  ctx.lineTo(-7,6);
+  ctx.moveTo(15,0);
+  ctx.lineTo(-8,-7.5);
+  ctx.lineTo(-4.5,0);
+  ctx.lineTo(-8,7.5);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle='rgba(6,182,212,0.4)';
-  ctx.lineWidth=1;
+  ctx.strokeStyle='#0a0e1a';
+  ctx.lineWidth=1.8;
+  ctx.lineJoin='round';
   ctx.stroke();
-  // Glow
-  const grd=ctx.createRadialGradient(0,0,0,0,0,20);
-  grd.addColorStop(0,'rgba(6,182,212,0.15)');
-  grd.addColorStop(1,'rgba(6,182,212,0)');
-  ctx.fillStyle=grd;
-  ctx.beginPath();
-  ctx.arc(0,0,20,0,Math.PI*2);
-  ctx.fill();
   ctx.restore();
 
   ctx.restore();
@@ -1118,10 +1196,14 @@ function drawMap(){
           // Never observed
           d[pi]=0x1a; d[pi+1]=0x23; d[pi+2]=0x32; d[pi+3]=255;
         }else{
-          // Occupancy probability p = 1 - 1/(1+e^l), as a grey scale
+          // Occupancy probability p = 1 - 1/(1+e^l).
+          // Cool-toned ramp rather than a white one: pure white occupied cells
+          // glared badly against the dark page.
           const p=1-1/(1+Math.exp(v));
-          const g=Math.round(24+p*220);
-          d[pi]=g; d[pi+1]=g; d[pi+2]=g; d[pi+3]=255;
+          d[pi]=Math.round(18+p*150);
+          d[pi+1]=Math.round(26+p*158);
+          d[pi+2]=Math.round(44+p*156);
+          d[pi+3]=255;
         }
       }
     }
@@ -1581,6 +1663,65 @@ function init(){
 
 document.addEventListener('DOMContentLoaded',init);
 
+
+// Layer toggles: particle cloud and estimated pose, both off on load.
+(function(){
+  function wire(id, get, set){
+    var b = document.getElementById(id);
+    if(!b) return;
+    b.classList.toggle('active', get());
+    b.addEventListener('click', function(){
+      set(!get());
+      b.classList.toggle('active', get());
+    });
+  }
+  wire('btnParticlesToggle', function(){ return showParticles; }, function(v){ showParticles = v; });
+  wire('btnEstimateToggle',  function(){ return showEstimate;  }, function(v){ showEstimate  = v; });
+})();
+
+// ---- Algorithm Executing panel -------------------------------------------
+// Walks the highlight through the six stages of the filter step and shows the
+// live counters the real loop produces. Stepped for readability: the actual
+// cycle runs 10x per second, far too fast to follow.
+(function(){
+  var lines = document.querySelectorAll('.codepanel .cl[data-stage]');
+  if(!lines.length) return;
+  var NAMES = {1:'motion model',2:'measurement model',3:'normalise',
+               4:'resample check',5:'pose estimate',6:'map update'};
+  var stage = 1, resamples = 0, lastW = null;
+  var el = function(id){ return document.getElementById(id); };
+
+  function neff(){
+    if(typeof particles === 'undefined' || !particles.length) return null;
+    var s = 0, any = false;
+    for(var i=0;i<particles.length;i++){
+      var w = particles[i].w;
+      if(typeof w === 'number' && isFinite(w)){ s += w*w; any = true; }
+    }
+    return (any && s > 0) ? 1/s : null;
+  }
+
+  setInterval(function(){
+    stage = stage % 6 + 1;
+    for(var i=0;i<lines.length;i++){
+      lines[i].classList.toggle('on', lines[i].getAttribute('data-stage') === String(stage));
+    }
+    el('clStage').innerHTML = 'stage ' + stage + ' &middot; ' + NAMES[stage];
+
+    var n = neff();
+    el('clNeff').textContent = n === null ? '\u2014' : n.toFixed(0);
+    if (typeof PF_N !== 'undefined') el('clN').textContent = PF_N;
+    if (typeof pfBeamsUsed !== 'undefined') el('clBeams').textContent = pfBeamsUsed;
+    if (typeof pfInformative !== 'undefined') el('clInfo').textContent = pfInformative;
+
+    // a resample flattens the weights: detect the reset rather than instrument
+    if (n !== null && typeof PF_N !== 'undefined') {
+      if (lastW !== null && n > lastW * 1.6 && n > 0.85 * PF_N) resamples++;
+      lastW = n;
+      el('clResample').textContent = resamples;
+    }
+  }, 240);
+})();
 </script>
 
 </body>
