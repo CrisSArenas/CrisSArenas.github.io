@@ -148,11 +148,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
     <div class="d-help-body">
       <div class="d-help-section">
         <h3>1 &middot; What is simulated</h3>
-        <p>A <strong>synthetic cross-sectional panel</strong> is generated once from a fixed seed: 400 names, 180 monthly dates, eight standardised factor exposures per name. Each exposure follows its own AR(1) process (its persistence is what drives turnover) and the eight series are mixed through the Cholesky root of a target correlation matrix, so the heat map reproduces the intended structure. Monthly stock returns are <code>market + &Sigma;<sub>k</sub> &lambda;<sub>k,t</sub> &middot; z<sub>k,t-1</sub> + idiosyncratic</code>, where <strong>&lambda;<sub>k</sub></strong> is a random factor payoff whose mean is calibrated so each factor's univariate rank IC matches its target. Nothing in the UI is read back from that calibration table &mdash; every number shown is re-estimated from the simulated panel.</p>
+        <p>A <strong>synthetic cross-sectional panel</strong> is generated once from a fixed seed: 400 names, 180 monthly dates, eight standardised factor exposures per name. Each exposure follows its own AR(1) process (its persistence is what drives turnover) and the eight series are mixed through the Cholesky root of a target correlation matrix, so the heat map reproduces the intended structure. Inside every date the exposures are standardised, <strong>winsorised at &plusmn;3 SD and re-standardised using that date's cross-section only</strong> &mdash; never a pooled or full-sample moment. Monthly stock returns are <code>market + &Sigma;<sub>k</sub> &lambda;<sub>k,t</sub> &middot; z<sub>k,t-1</sub> + idiosyncratic</code>, where <strong>&lambda;<sub>k</sub></strong> is a random factor payoff whose mean is calibrated so each factor's univariate rank IC matches its target. Nothing in the UI is read back from that calibration table &mdash; every number shown is re-estimated from the simulated panel.</p>
       </div>
       <div class="d-help-section">
         <h3>2 &middot; Walk-forward protocol</h3>
-        <p>The first <strong>60 months are training-only warm-up</strong>. From month 61 the engine walks forward over 119 out-of-sample months: the model is <strong>refitted every 12 months</strong> on the trailing <strong>lookback</strong> window, scores every name at each month end, and holds a <strong>decile long/short book</strong> (top 40 long, bottom 40 short, equal weighted, dollar neutral, 50% gross) rebalanced at the chosen frequency. Only information available before the return month enters a fit, so there is no look-ahead.</p>
+        <p>The first <strong>60 months are training-only warm-up</strong>. From month 61 the engine walks forward over 119 out-of-sample months: the model is <strong>refitted every 12 months</strong> on the trailing <strong>lookback</strong> window, scores every name at each month end, and holds a <strong>decile long/short book</strong> (top 40 long, bottom 40 short, equal weighted, dollar neutral, 50% gross) rebalanced at the chosen frequency. Deciles are formed on the fitted composite <em>as of</em> the rebalance date. Between rebalances the names are held but the weights drift with realised relative performance, and the book is pulled back to dollar neutrality and target gross every month, because that is a mandate constraint a desk enforces continuously rather than only on alpha-refresh dates. Those maintenance trades are charged like any other, so at quarterly and semi-annual settings turnover never falls to zero between rebalances.</p>
+        <p>Every quantity that enters a fit is as-of: the cross-sectional standardisation, winsorisation and ranking use one date's own cross-section, and the return dispersion used to scale the ridge/lasso target is estimated on the <strong>training window only</strong>. Nothing is pooled over the full sample. Because every name has unit market beta in this panel and there are no sectors, a dollar-neutral book is already beta- and sector-neutral &mdash; the neutralisation step a practitioner would run here is a no-op, which is a property of the synthetic data, not a claim about real markets.</p>
       </div>
       <div class="d-help-section">
         <h3>3 &middot; The four learners (all fitted in the browser)</h3>
@@ -171,10 +172,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         <h3>4 &middot; Metrics</h3>
         <dl>
           <dt>Mean IC</dt><dd>Average monthly <strong>Spearman rank correlation</strong> between the composite model score at month end and the cross-sectionally demeaned return of the following month. 0.03&ndash;0.06 is realistic for a composite.</dd>
-          <dt>IC IR</dt><dd>mean(IC) / std(IC) over the 119 monthly observations; the t-statistic is IC-IR &times; &radic;T.</dd>
+          <dt>IC IR</dt><dd>mean(IC) / std(IC) over the 119 monthly observations. The t-statistic reported in the table is <strong>not</strong> IC-IR &times; &radic;T: it is mean(IC) divided by a <strong>Newey&ndash;West</strong> standard error, which allows for serial correlation in the IC series.</dd>
           <dt>Gross / Net Sharpe</dt><dd>Sharpe of the <em>funded</em> strategy (benchmark + overlay): <code>(12&middot;mean &minus; 3.8% cash) / (&sigma;&middot;&radic;12)</code>. Net deducts transaction costs, so it always sits below gross.</dd>
           <dt>Ann. Alpha</dt><dd>Annualised mean of the overlay return after costs. Its tracking error and information ratio are in the summary table.</dd>
-          <dt>Ann. Turnover</dt><dd>One-way turnover <code>&frac12;&Sigma;|w<sub>t</sub> &minus; w<sub>t-1</sub>|</code> summed over a year, expressed as a share of gross exposure. Costs are charged on the full traded notional, i.e. twice the one-way turnover.</dd>
+          <dt>Ann. Turnover</dt><dd>One-way turnover <code>&frac12;&Sigma;|w<sub>t</sub> &minus; w<sub>t-1</sub>|</code> summed over a year, expressed as a share of gross exposure; it includes the drift of the held book, not only signal change. Costs are charged on the full traded notional, i.e. <strong>twice</strong> the one-way turnover, and consist of the linear spread from the slider <em>plus</em> a square-root market-impact charge.</dd>
           <dt>Max DD</dt><dd>Largest peak-to-trough fall of the net cumulative curve.</dd>
           <dt>Hit Rate</dt><dd>Share of months with positive net alpha. 52&ndash;58% is normal even for good books.</dd>
         </dl>
@@ -183,8 +184,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         <h3>5 &middot; Reading the charts</h3>
         <dl>
           <dt>Feature importance</dt><dd>Taken from the most recent fit of the selected model. Lasso can zero a factor out entirely; the forest spreads weight because each stump only sees a sampled subset of features.</dd>
-          <dt>Mean IC by factor</dt><dd>Univariate rank IC of each raw exposure. Whiskers are the <strong>95% confidence interval</strong> (1.96 &times; std(IC) / &radic;T); the t-statistic above the bar is the same quantity as a test against zero.</dd>
-          <dt>IC decay</dt><dd>IC of today's exposure against the return 1, 3, 6, 12 and 24 months ahead. Decay is driven by the persistence of the exposure: momentum and sentiment fade fast, value, quality and size barely decay. The shaded band is the 95% interval around the equal-weighted mean of the selected factors.</dd>
+          <dt>Mean IC by factor</dt><dd>Univariate rank IC of each raw exposure. Whiskers are a <strong>95% Newey&ndash;West interval</strong> (1.96 &times; HAC SE, Bartlett kernel, bandwidth <code>&lfloor;4(T/100)<sup>2/9</sup>&rfloor;</code>); the t-statistic above the bar is the same quantity tested against zero. Quality slips from t = 2.0 to t = 1.8 once the IC series is allowed to be autocorrelated; on this panel only value, momentum and sentiment clear t = 2, and none of them by much.</dd>
+          <dt>IC decay</dt><dd>IC of today's exposure against the return 1, 3, 6, 12 and 24 months ahead. Decay is driven by the persistence of the exposure: momentum and sentiment fade fast, value, quality and size barely decay. The shaded band is the 95% Newey&ndash;West interval around the equal-weighted mean of the selected factors. Note that the target at horizon <em>h</em> is the <em>single</em> month <em>h</em> ahead, not the cumulative <em>h</em>-month return, so consecutive observations do not overlap and no Hansen&ndash;Hodrick overlap correction applies.</dd>
           <dt>Correlation matrix</dt><dd>Realised cross-sectional correlation of the exposures averaged over the evaluation window. Symmetric with a unit diagonal; value vs momentum is about &minus;0.3, quality vs low vol about +0.45.</dd>
           <dt>Cumulative growth</dt><dd>Benchmark, benchmark + gross overlay and benchmark + net overlay on the same seeded path. Red shading marks months below the running peak.</dd>
           <dt>Turnover vs net Sharpe</dt><dd>The whole backtest re-priced at each cost level with the identical net-Sharpe formula, so the highlighted dot always equals the Net Sharpe tile.</dd>
@@ -196,8 +197,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
           <dt>Factor universe</dt><dd>Restricts the feature set the model may use. Panel statistics (IC, decay, correlations) are properties of the data and do not move; everything downstream of the fit does.</dd>
           <dt>Lookback</dt><dd>Length of the trailing training window, 12&ndash;60 months. Short windows track changing premia but are noisy; long windows are stable but stale.</dd>
           <dt>Rebalance</dt><dd>Monthly, quarterly or semi-annual. Longer holding periods cut turnover and cost but let the signal go stale.</dd>
-          <dt>Transaction cost</dt><dd>One-way cost in basis points. 5&ndash;20 bp is typical for liquid large caps.</dd>
+          <dt>Transaction cost</dt><dd>One-way <em>linear</em> cost in basis points &mdash; spread plus commission. 5&ndash;20 bp is typical for liquid large caps. A square-root market-impact charge is added on top of whatever you set here and is <em>not</em> controlled by the slider.</dd>
         </dl>
+      </div>
+      <div class="d-help-section">
+        <h3>7 &middot; Multiple testing (read the last four table rows)</h3>
+        <p>These controls span <strong>15,300 configurations</strong> &mdash; 4 models &times; 5 lookbacks &times; 3 rebalance frequencies &times; 255 non-empty factor subsets &mdash; all evaluated on one seeded panel. Clicking around <em>is</em> a specification search, and the best-looking configuration is partly the luckiest one.</p>
+        <p>The table therefore reports two bounds rather than one number. <strong>Probabilistic Sharpe vs zero</strong> is the skew- and kurtosis-adjusted probability that the overlay's true Sharpe exceeds zero assuming a <em>single</em> trial &mdash; the optimistic bound. <strong>Deflated Sharpe</strong> repeats that test against the Sharpe you would expect the best of 15,300 zero-alpha trials to produce; the <strong>hurdle IR</strong> row is that threshold in annualised information-ratio units. The honest reading of any configuration sits between the two, because the 15,300 trials are heavily overlapping rather than independent, and because the dispersion of the Sharpe across trials is proxied by the estimator's own variance rather than measured across all runs. Nothing in this demo clears the full-grid hurdle: across the complete model &times; lookback &times; rebalance grid and a random sample of factor subsets, the best net IR reached is about 0.8 against a hurdle near 1.3. That is the normal outcome of an honest deflation on ten years of monthly data, and the reason a real research process pre-registers its hypotheses instead of sweeping a grid.</p>
       </div>
     </div>
   </div>
@@ -351,7 +357,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A cross-sectional factor-research loop on a synthetic panel of 400 names over 180 months, generated once from seed 20260131. Eight standardised exposures per name follow their own AR(1) processes and are mixed through the Cholesky root of a target correlation matrix; returns are the equal-weighted market plus random monthly factor payoffs on the lagged exposures plus idiosyncratic noise. After a 60-month warm-up the engine walks forward over 119 out-of-sample months, refitting the selected learner every 12 months on the trailing lookback window, scoring the universe, and holding a decile long/short book rebalanced monthly, quarterly or semi-annually. Rank IC, IC decay, realised correlations, feature importance, turnover, costs and drawdowns are all measured on the simulated data.</p>
+        <p>A cross-sectional factor-research loop on a synthetic panel of 400 names over 180 months, generated once from seed 20260131. Eight exposures per name follow their own AR(1) processes and are mixed through the Cholesky root of a target correlation matrix, then standardised, winsorised at &plusmn;3 SD and re-standardised <em>inside each date's own cross-section</em>; returns are the equal-weighted market plus random monthly factor payoffs on the lagged exposures plus idiosyncratic noise. After a 60-month warm-up the engine walks forward over 119 out-of-sample months, refitting the selected learner every 12 months on the trailing lookback window, scoring the universe, and holding a decile long/short book rebalanced monthly, quarterly or semi-annually. Rank IC, IC decay, realised correlations, feature importance, turnover, costs and drawdowns are all measured on the simulated data. Every input to a fit is as-of the rebalance date &mdash; the standardisation, winsorisation and ranking use one date's cross-section, and the return dispersion that scales the ridge/lasso target is estimated on the training window alone, never pooled over the full sample.</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
@@ -360,7 +366,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
           <li>Benchmark: equal-weighted market moment-matched to 7.0% return / 14.5% volatility over the evaluation window; cash 3.8% p.a.</li>
           <li>Target univariate rank IC: momentum 0.070, sentiment 0.057, value 0.045, quality 0.035, low vol 0.030, macro 0.016, growth 0.015, size 0.012; monthly IC volatility 0.11&ndash;0.22, so per-factor IC-IR lands at 0.1&ndash;0.3.</li>
           <li>Exposure persistence sets turnover: sentiment &asymp;250% and momentum &asymp;210% annual one-way, low vol and growth &asymp;120%, value &asymp;80%, quality &asymp;75%, size &asymp;40%.</li>
-          <li>Book: top and bottom decile, equal weighted, dollar neutral, 50% gross. Costs are charged on the full traded notional (2 &times; one-way turnover &times; cost in bp).</li>
+          <li>Book: top and bottom decile, equal weighted, dollar neutral, 50% gross, formed on the fitted composite as of the rebalance date. Between rebalances the names are held and the weights drift with realised relative returns, but dollar neutrality and target gross are restored every month and the maintenance trades are charged. Left to drift unconstrained for six months this book's net dollar exposure reaches about 20% of gross, which no neutral mandate would permit.</li>
+          <li>Costs are charged on the full traded notional (2 &times; one-way turnover) and have two parts: the linear spread/commission from the slider, plus a square-root market-impact charge <code>0.40 &middot; &sigma;<sub>day</sub> &middot; &radic;(Q / (5 &middot; ADV))</code> priced at a $200m gross book, $40m median daily volume per name and a five-day schedule. That works out near 6 bp of traded notional at the default settings and is reported in the summary table. Both the book size and the ADV are <em>stated assumptions</em>, not quantities estimated from the data.</li>
           <li>The executed book carries a residual common shock of 1.6% per month at the default gross (sector, crowding and single-name risk not spanned by the eight styles); without it a 400-name book would show an implausible information ratio.</li>
           <li>Defaults: Random Forest, 36-month lookback, monthly rebalance, 15 bp one-way cost, all eight factors enabled.</li>
         </ul>
@@ -368,10 +375,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li>Rank IC<sub>t</sub> = Spearman(score<sub>t</sub>, r<sub>t+1</sub>); IC-IR = mean(IC)/std(IC); <code>t = IC-IR &middot; &radic;T</code>; SE of the mean IC = std(IC)/&radic;T, drawn as &plusmn;1.96&nbsp;SE.</li>
+          <li>Rank IC<sub>t</sub> = Spearman(score<sub>t</sub>, r<sub>t+1</sub>) &mdash; the cross-sectional correlation of <em>ranks</em>, not Pearson on the raw scores; IC-IR = mean(IC)/std(IC).</li>
+          <li>Every IC standard error is Newey&ndash;West (Bartlett kernel, bandwidth <code>&lfloor;4(T/100)<sup>2/9</sup>&rfloor;</code> = 4 lags at T = 119), and <code>t = mean(IC) / SE<sub>NW</sub></code>, not IC-IR &middot; &radic;T. Whiskers and bands are &plusmn;1.96&nbsp;SE<sub>NW</sub>. The IC-decay targets are single months h ahead rather than cumulative h-month returns, so the observations do not overlap and no Hansen&ndash;Hodrick correction is applied &mdash; measured lag-1 autocorrelation of those series is at most 0.10 in absolute value at every horizon.</li>
+          <li>Deflated Sharpe: Bailey &amp; L&oacute;pez de Prado (2014). SR* = &radic;V &middot; [(1&minus;&gamma;)&Phi;<sup>-1</sup>(1&minus;1/N) + &gamma;&Phi;<sup>-1</sup>(1&minus;1/(Ne))] with N = 15,300 and &gamma; the Euler&ndash;Mascheroni constant; DSR = &Phi;((SR&minus;SR*)&radic;(T&minus;1) / &radic;(1 &minus; skew&middot;SR + (kurt&minus;1)SR&sup2;/4)). The trial dispersion V is proxied by the estimator's own variance (1+SR&sup2;/2)/(T&minus;1) rather than measured across all 15,300 runs, so the deflation is indicative.</li>
           <li>Ridge: <code>w = (X'X/n + &lambda;I)^-1 X'y/n</code>. Lasso: coordinate descent with soft threshold. Stumps: exhaustive 16-bin search maximising <code>S&sup2;<sub>L</sub>/n<sub>L</sub> + S&sup2;<sub>R</sub>/n<sub>R</sub> &minus; S&sup2;/n</code>; importance is that gain, normalised.</li>
           <li>Turnover<sub>t</sub> = &frac12;&Sigma;<sub>i</sub>|w<sub>i,t</sub> &minus; w<sub>i,t-1</sub>|; cost<sub>t</sub> = 2 &middot; turnover<sub>t</sub> &middot; bp; Sharpe = (12&middot;mean &minus; r<sub>f</sub>)/(&sigma;&radic;12); IR = annualised alpha / tracking error; max drawdown from the cumulative curve.</li>
-          <li>Grinold &amp; Kahn (2000), <em>Active Portfolio Management</em> (IC, breadth, the fundamental law); Fama &amp; French (2015), <em>A Five-Factor Asset Pricing Model</em>; Gu, Kelly &amp; Xiu (2020), <em>Empirical Asset Pricing via Machine Learning</em>.</li>
+          <li>Grinold &amp; Kahn (2000), <em>Active Portfolio Management</em> (IC, breadth, the fundamental law); Fama &amp; French (2015), <em>A Five-Factor Asset Pricing Model</em>; Gu, Kelly &amp; Xiu (2020), <em>Empirical Asset Pricing via Machine Learning</em>; Newey &amp; West (1987); Lo (2002), <em>The Statistics of Sharpe Ratios</em>; Bailey &amp; L&oacute;pez de Prado (2014), <em>The Deflated Sharpe Ratio</em>; Harvey, Liu &amp; Zhu (2016), <em>&hellip;and the Cross-Section of Expected Returns</em>; Almgren et al. (2005) on square-root market impact.</li>
         </ul>
       </div>
       <div>
@@ -379,8 +388,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         <ul>
           <li>Synthetic Gaussian data, not history: no fat tails, no factor crashes, no crowding dynamics, no regime timing.</li>
           <li>The learners are stump- and eight-feature-restricted browser implementations, so the model comparison is indicative rather than a benchmark of the real algorithms. The true process is linear, which structurally favours ridge and lasso.</li>
-          <li>No borrow cost or short constraint, no capacity or market impact, no risk model, no sector or beta neutralisation, one blended cost per name.</li>
-          <li>Costs are linear in turnover; in practice they are concave in participation rate and much higher for small caps.</li>
+          <li>No borrow cost, no short constraint, no risk model, no capacity limit and one blended ADV for every name. The impact term is a stated cost curve, not a capacity study: a real book would also face a shrinking opportunity set as it grows.</li>
+          <li>Universe is fixed &mdash; the same 400 names live for all 180 months. No IPOs, delistings, halts, mergers or missing data. That makes the panel free of survivorship bias by construction, but it also removes the universe churn that drives a real backtest's turnover and many of its worst months.</li>
+          <li>Every name has unit market beta and there are no sectors in the generating process, so a dollar-neutral book is automatically beta- and sector-neutral and the neutralisation step is a no-op. On real data it is not: raw 12&minus;1 momentum in particular carries a large, time-varying market beta, and an unneutralised momentum signal is substantially a beta bet. This panel cannot reproduce that failure mode, so treat the momentum result as a property of the simulation.</li>
+          <li>The factor payoffs and the market path are moment-matched to their targets over the evaluation window. The backtest therefore cannot draw a decade in which a premium simply failed to show up, so genuine out-of-sample premium uncertainty is understated and the realised premia are more reliable than any real ten-year sample would be.</li>
+          <li>Selection bias is real here: the controls span 15,300 configurations on one seeded panel, and browsing them is a specification search. The summary table deflates against that whole grid (deliberately conservative, since the trials overlap heavily) and also shows the single-trial probabilistic Sharpe; the truthful reading is between the two. Across the full model &times; lookback &times; rebalance grid the best net IR is about 0.8 against a hurdle near 1.3 &mdash; nothing clears it.</li>
+          <li>With 119 monthly observations the standard error of an annualised Sharpe is about 0.32, and the standard error of the mean IC is about 0.02. Sharpe ratios are shown to two decimals and ICs to three for comparability only: differences smaller than roughly 0.3 in Sharpe, or 0.04 in IC, are not distinguishable from noise in this sample.</li>
           <li>Backtest Sharpe ratios of this kind routinely halve out of sample; the residual-risk term is a calibration device, not an estimated quantity.</li>
         </ul>
       </div>
@@ -478,6 +491,16 @@ var DECILE=.10;         // decile long-short book
 var SIG_RESID=.032;     // monthly residual risk per unit of gross (sector, crowding, single name)
 var RIDGE_LAM=.15, LASSO_LAM=.012;
 var HORIZONS=[1,3,6,12,24];
+var WINSOR=3.0;         // cross-sectional winsorisation bound in SDs, applied as of each date
+// --- market impact (square-root law). These are STATED ASSUMPTIONS, not estimates.
+var AUM_GROSS=200e6;    // gross book notional the impact model is priced at
+var ADV_NAME=40e6;      // assumed median daily dollar volume per name
+var EXEC_DAYS=5;        // days over which each rebalance is worked
+var IMPACT_C=.40;       // square-root-law coefficient
+var SIG_DAY=Math.sqrt(MKT_SD*MKT_SD+SIG_IDIO*SIG_IDIO)/Math.sqrt(21); // daily total stock vol
+// --- multiple testing: every configuration the controls can reach is one trial
+var N_TRIALS=MODELS.length*5*REBAL_OPTS.length*(Math.pow(2,FACTORS.length)-1);
+var EULER=.5772156649015329;
 
 // ===== STATE =====
 var state={factors:FACTORS.map(function(f){return f.id}),model:'rf',lookback:36,rebalance:'monthly',txCost:15,results:null};
@@ -519,6 +542,43 @@ function lassoCD(A,b,lam){
   return w;
 }
 
+// ===== INFERENCE HELPERS =====
+// Newey-West (Bartlett) HAC standard error of a sample mean. Overlapping h-month
+// forward returns need at least h-1 lags; even the 1-month IC series of a
+// persistent exposure is autocorrelated, so std/sqrt(T) understates the SE.
+function hacLag(n,h){var b=Math.floor(4*Math.pow(n/100,2/9));return Math.max(0,Math.max(h-1,b))}
+function hacSE(a,lag){
+  var n=a.length;if(n<3)return 0;
+  var m=mean(a),i,l,g0=0;
+  for(i=0;i<n;i++){var d=a[i]-m;g0+=d*d}g0/=n;
+  var v=g0;
+  for(l=1;l<=lag&&l<n;l++){
+    var gl=0;for(i=l;i<n;i++)gl+=(a[i]-m)*(a[i-l]-m);gl/=n;
+    v+=2*(1-l/(lag+1))*gl;
+  }
+  if(v<g0*.05)v=g0*.05;   // guard against a degenerate HAC estimate
+  return Math.sqrt(v/n);
+}
+// Normal CDF (Abramowitz & Stegun 7.1.26) and inverse CDF (Acklam's rational fit)
+function normCdf(x){
+  var sg=x<0?-1:1,z=Math.abs(x)/Math.SQRT2,tt=1/(1+.3275911*z);
+  var y=1-(((((1.061405429*tt-1.453152027)*tt)+1.421413741)*tt-.284496736)*tt+.254829592)*tt*Math.exp(-z*z);
+  return .5*(1+sg*y);
+}
+function normInv(p){
+  if(p<=0)return -8;if(p>=1)return 8;
+  var A=[-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239],
+      B=[-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1],
+      C=[-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],
+      D=[7.784695709041462e-3,3.224671290700398e-1,2.445134137142996,3.754408661907416],q,r;
+  if(p<.02425){q=Math.sqrt(-2*Math.log(p));
+    return(((((C[0]*q+C[1])*q+C[2])*q+C[3])*q+C[4])*q+C[5])/((((D[0]*q+D[1])*q+D[2])*q+D[3])*q+1)}
+  if(p>1-.02425){q=Math.sqrt(-2*Math.log(1-p));
+    return -(((((C[0]*q+C[1])*q+C[2])*q+C[3])*q+C[4])*q+C[5])/((((D[0]*q+D[1])*q+D[2])*q+D[3])*q+1)}
+  q=p-.5;r=q*q;
+  return(((((A[0]*r+A[1])*r+A[2])*r+A[3])*r+A[4])*r+A[5])*q/(((((B[0]*r+B[1])*r+B[2])*r+B[3])*r+B[4])*r+1);
+}
+
 // ===== SYNTHETIC PANEL (built once from the fixed seed, independent of the controls) =====
 var PANEL=null;
 function getPanel(){if(!PANEL)PANEL=buildPanel();return PANEL}
@@ -543,13 +603,21 @@ function buildPanel(){
       }
       for(k=0;k<K;k++){var s=0;for(j=0;j<=k;j++)s+=L[k][j]*c[j];z[k][off+i]=s}
     }
+    // Standardise -> winsorise at +/-WINSOR SD -> re-standardise, using only the
+    // moments of THIS date's cross-section. Nothing here touches another month,
+    // so the transform is exactly the one a desk could apply at the rebalance date.
     for(k=0;k<K;k++){
       var m=0,s2=0;
       for(i=0;i<NSTK;i++)m+=z[k][off+i];m/=NSTK;
       for(i=0;i<NSTK;i++){var d=z[k][off+i]-m;s2+=d*d}
       var sd=Math.sqrt(s2/NSTK)||1;
-      for(i=0;i<NSTK;i++)z[k][off+i]=(z[k][off+i]-m)/sd;
-      for(i=0;i<NSTK;i++){var bb=Math.floor((z[k][off+i]+3)/6*NBIN);bin[k][off+i]=bb<0?0:bb>NBIN-1?NBIN-1:bb}
+      for(i=0;i<NSTK;i++){var zv=(z[k][off+i]-m)/sd;z[k][off+i]=zv>WINSOR?WINSOR:zv<-WINSOR?-WINSOR:zv}
+      var m2=0,v2=0;
+      for(i=0;i<NSTK;i++)m2+=z[k][off+i];m2/=NSTK;
+      for(i=0;i<NSTK;i++){var d4=z[k][off+i]-m2;v2+=d4*d4}
+      var sd2=Math.sqrt(v2/NSTK)||1;
+      for(i=0;i<NSTK;i++)z[k][off+i]=(z[k][off+i]-m2)/sd2;
+      for(i=0;i<NSTK;i++){var bb=Math.floor((z[k][off+i]+WINSOR)/(2*WINSOR)*NBIN);bin[k][off+i]=bb<0?0:bb>NBIN-1?NBIN-1:bb}
     }
   }
   // 2. monthly factor payoffs: mean = trueIC x cross-sectional dispersion,
@@ -588,7 +656,7 @@ function buildPanel(){
   mkV=Math.sqrt(mkV/mkN)||1;
   for(t=1;t<NMON;t++)mkRaw[t]=MKT_MU+MKT_SD*(mkRaw[t]-mkS)/mkV;
   var mktEW=new Float64Array(NMON),ret=new Float32Array(NMON*NSTK),retx=new Float32Array(NMON*NSTK);
-  var resid=new Float64Array(NMON),sy2=0,syn=0;
+  var resid=new Float64Array(NMON),sy2=0,syn=0,syM=new Float64Array(NMON);
   for(t=1;t<NMON;t++){
     var mk=mkRaw[t];
     off=t*NSTK;offp=(t-1)*NSTK;
@@ -599,7 +667,9 @@ function buildPanel(){
       ret[off+i]=r;sum+=r;
     }
     var mEW=sum/NSTK;mktEW[t]=mEW;
-    for(i=0;i<NSTK;i++){var d2=ret[off+i]-mEW;retx[off+i]=d2;sy2+=d2*d2;syn++}
+    var sm=0;
+    for(i=0;i<NSTK;i++){var d2=ret[off+i]-mEW;retx[off+i]=d2;sm+=d2*d2}
+    syM[t]=sm/NSTK;sy2+=sm;syn+=NSTK;   // per-month dispersion, so fits can scale as-of
     resid[t]=SIG_RESID*gaussian(rng);
   }
   var sigY=Math.sqrt(sy2/syn);
@@ -633,7 +703,9 @@ function buildPanel(){
     for(k=0;k<K;k++){
       var zk=z[k];
       for(j=k;j<K;j++){var zj=z[j],s3=0;for(i=0;i<NSTK;i++)s3+=zk[offp+i]*zj[offp+i];XX[base+k*K+j]=s3;XX[base+j*K+k]=s3}
-      var sy=0;for(i=0;i<NSTK;i++)sy+=zk[offp+i]*retx[off+i];XY[bY+k]=sy/sigY;
+      // stored unscaled: dividing by a FULL-SAMPLE sigma here would leak the
+      // out-of-sample return dispersion into the fit. fitLinear rescales as-of.
+      var sy=0;for(i=0;i<NSTK;i++)sy+=zk[offp+i]*retx[off+i];XY[bY+k]=sy;
     }
   }
   // 6. realised correlation matrix of the exposures over the evaluation window
@@ -676,7 +748,7 @@ function buildPanel(){
     }
     facTO[k]=cnt?tot/cnt*12/GROSS:0;
   }
-  return{z:z,zr:zr,bin:bin,binSum:binSum,binCnt:binCnt,ret:ret,retx:retx,rr:rr,mktEW:mktEW,resid:resid,sigY:sigY,
+  return{z:z,zr:zr,bin:bin,binSum:binSum,binCnt:binCnt,ret:ret,retx:retx,rr:rr,mktEW:mktEW,resid:resid,sigY:sigY,syM:syM,
          XX:XX,XY:XY,corr:corr,icH:icH,facTO:facTO,K:K};
 }
 
@@ -684,14 +756,18 @@ function buildPanel(){
 function fitLinear(kind,sel,t0,LB,P){
   var K=sel.length,KK=P.K,i,j,t,A=[],b=new Float64Array(K),n=0;
   for(i=0;i<K;i++)A.push(new Float64Array(K));
-  var t1=Math.max(1,t0-LB);
+  var t1=Math.max(1,t0-LB),sv=0,sn=0;
   for(t=t1;t<t0;t++){
     var base=t*KK*KK,bY=t*KK;
     for(i=0;i<K;i++){for(j=0;j<K;j++)A[i][j]+=P.XX[base+sel[i]*KK+sel[j]];b[i]+=P.XY[bY+sel[i]]}
-    n+=NSTK;
+    sv+=P.syM[t];sn++;n+=NSTK;
   }
   if(!n)n=1;
-  for(i=0;i<K;i++){for(j=0;j<K;j++)A[i][j]/=n;b[i]/=n}
+  // Scale the target by the return dispersion of the TRAINING window only. A
+  // full-sample sigma would change the effective ridge / lasso penalty using
+  // information from after the fit date.
+  var sg=sn?Math.sqrt(sv/sn):1;if(!(sg>0))sg=1;
+  for(i=0;i<K;i++){for(j=0;j<K;j++)A[i][j]/=n;b[i]/=(n*sg)}
   var w;
   if(kind==='ridge'){for(i=0;i<K;i++)A[i][i]+=RIDGE_LAM;w=solveSym(A,b)}
   else w=lassoCD(A,b,LASSO_LAM);
@@ -800,11 +876,13 @@ function generateResults(){
   for(i=0;i<REBAL_OPTS.length;i++)if(REBAL_OPTS[i].id===state.rebalance)RB=REBAL_OPTS[i].months;
 
   // --- per-factor IC statistics measured on the panel
-  var icMeans=[],icStds=[],icTstats=[],icIRs=[],facTO=[],nIC=P.icH[0][0].length;
+  var icMeans=[],icStds=[],icSEs=[],icTstats=[],icIRs=[],facTO=[],nIC=P.icH[0][0].length;
   for(i=0;i<nF;i++){
     var ser=P.icH[sel[i]][0],m=mean(ser),s=std(ser);
-    icMeans.push(m);icStds.push(s);
-    icTstats.push(s>0?m/s*Math.sqrt(ser.length):0);
+    // t-stat and whiskers use a Newey-West HAC standard error, not std/sqrt(T).
+    var seF=hacSE(ser,hacLag(ser.length,1));
+    icMeans.push(m);icStds.push(s);icSEs.push(seF);
+    icTstats.push(seF>0?m/seF:0);
     icIRs.push(s>0?m/s:0);
     facTO.push(P.facTO[sel[i]]);
   }
@@ -814,7 +892,12 @@ function generateResults(){
   for(h=0;h<HORIZONS.length;h++){
     var nT2=P.icH[sel[0]][h].length,comb=[];
     for(t=0;t<nT2;t++){var acc=0;for(i=0;i<nF;i++)acc+=P.icH[sel[i]][h][t];comb.push(acc/nF)}
-    var mm=mean(comb),se=std(comb)/Math.sqrt(comb.length);
+    // The horizon-h target is the SINGLE month h ahead, not the cumulative
+    // h-month return, so consecutive observations do not overlap (measured
+    // lag-1 autocorrelation is ~0 at every horizon). No Hansen-Hodrick overlap
+    // correction is warranted; the standard Newey-West bandwidth still covers
+    // whatever residual serial correlation the IC series carries.
+    var mm=mean(comb),se=hacSE(comb,hacLag(comb.length,1));
     decMean.push(mm);decLo.push(mm-1.96*se);decHi.push(mm+1.96*se);
   }
   // --- correlation sub-matrix (already symmetric with a unit diagonal)
@@ -826,7 +909,7 @@ function generateResults(){
   var w=new Float64Array(NSTK),wNew=new Float64Array(NSTK),sc=new Float64Array(NSTK);
   var ord=new Int32Array(NSTK),srt=null;
   var nLong=Math.max(5,Math.round(NSTK*DECILE)),wq=GROSS/2/nLong;
-  var alphaG=[],alphaN=[],bench=[],toSer=[],scIC=[],nRefit=0;
+  var alphaG=[],alphaN=[],bench=[],toSer=[],impSer=[],scIC=[],nRefit=0;
   var rrk=new Float32Array(NSTK),tmpIdx=new Int32Array(NSTK);
   var mR=(NSTK-1)/2,sR=0;for(i=0;i<NSTK;i++){var d0=i-mR;sR+=d0*d0}sR=Math.sqrt(sR/NSTK);
   for(t=WARMUP;t<=NMON-2;t++){
@@ -841,19 +924,39 @@ function generateResults(){
     var icv=0,ro=(t+1)*NSTK;
     for(i=0;i<NSTK;i++)icv+=rrk[i]*P.rr[ro+i];
     scIC.push(icv/NSTK);
-    // decile long-short book
-    for(i=0;i<NSTK;i++)wNew[i]=0;
-    for(i=0;i<nLong;i++){wNew[ord[i]]=wq;wNew[ord[NSTK-1-i]]=-wq}
-    var to=0;
+    // Target book. On a rebalance date the deciles are rebuilt from the
+    // composite score as of t: equal weighted, dollar neutral, GROSS gross.
+    // In between, the names are held but the book is pulled back to dollar
+    // neutrality and target gross, because that is a mandate constraint a desk
+    // enforces continuously -- and pays for. Left to drift for six months the
+    // net dollar exposure of this book reaches ~20% of gross.
     if((t-WARMUP)%RB===0){
-      for(i=0;i<NSTK;i++)to+=Math.abs(wNew[i]-w[i]);
-      to*=.5;
-      var sw=w;w=wNew;wNew=sw;
+      for(i=0;i<NSTK;i++)wNew[i]=0;
+      for(i=0;i<nLong;i++){wNew[ord[i]]=wq;wNew[ord[NSTK-1-i]]=-wq}
+    }else{
+      var nh=0,ns=0;
+      for(i=0;i<NSTK;i++){wNew[i]=w[i];if(w[i]!==0){nh++;ns+=w[i]}}
+      if(nh>0){var adj=ns/nh;for(i=0;i<NSTK;i++)if(w[i]!==0)wNew[i]-=adj}
+      var gn=0;for(i=0;i<NSTK;i++)gn+=Math.abs(wNew[i]);
+      if(gn>0){var kg=GROSS/gn;for(i=0;i<NSTK;i++)wNew[i]*=kg}
+    }
+    var to=0,nTr=0;
+    for(i=0;i<NSTK;i++){var dw=Math.abs(wNew[i]-w[i]);if(dw>1e-12){to+=dw;nTr++}}
+    to*=.5;
+    var sw=w;w=wNew;wNew=sw;
+    // Square-root market impact on top of the linear spread: participation is
+    // the per-name ticket divided by EXEC_DAYS of ADV at the assumed book size.
+    var impc=0;
+    if(to>0&&nTr>0){
+      var part=(2*to/GROSS)*AUM_GROSS/nTr/(EXEC_DAYS*ADV_NAME);
+      impc=2*to*IMPACT_C*SIG_DAY*Math.sqrt(part);
     }
     var g=0;for(i=0;i<NSTK;i++)if(w[i]!==0)g+=w[i]*P.retx[ro+i];
     g+=P.resid[t+1]*GROSS;
-    alphaG.push(g);alphaN.push(g-to*2*state.txCost/10000);
-    bench.push(P.mktEW[t+1]);toSer.push(to);
+    alphaG.push(g);alphaN.push(g-to*2*state.txCost/10000-impc);
+    bench.push(P.mktEW[t+1]);toSer.push(to);impSer.push(impc);
+    // positions drift on realised relative performance until the next trade
+    for(i=0;i<NSTK;i++)if(w[i]!==0)w[i]*=(1+P.retx[ro+i]);
   }
   var nM=alphaG.length,years=nM/12;
   var gS=[],nS=[];
@@ -868,23 +971,43 @@ function generateResults(){
   var hitG=0,hitN=0;for(i=0;i<nM;i++){if(alphaG[i]>0)hitG++;if(alphaN[i]>0)hitN++}
   hitG/=nM;hitN/=nM;
   var annTO=0;for(i=0;i<nM;i++)annTO+=toSer[i];annTO=annTO/years/GROSS;
-  var compIC=mean(scIC),compICsd=std(scIC);
+  var compIC=mean(scIC),compICsd=std(scIC),compICse=hacSE(scIC,hacLag(scIC.length,1));
   var rollingIC=[];
   for(i=0;i<nM;i++){if(i<11)rollingIC.push(null);else rollingIC.push(mean(scIC.slice(i-11,i+1)))}
   // --- cost sensitivity, recomputed with exactly the same net-Sharpe formula
   var tCurve=[];
   for(var c=0;c<=50;c+=5){
     var nr=[];
-    for(i=0;i<nM;i++)nr.push(bench[i]+alphaG[i]-toSer[i]*2*c/10000);
+    for(i=0;i<nM;i++)nr.push(bench[i]+alphaG[i]-toSer[i]*2*c/10000-impSer[i]);
     var sd2=std(nr)*Math.sqrt(12);
     tCurve.push({cost:c,netSharpe:sd2>0?(mean(nr)*12-RF_ANN)/sd2:0});
   }
   var imp=[];for(i=0;i<nF;i++)imp.push(importance[i]);
-  return{sel:sel,nFactors:nF,importance:imp,icMeans:icMeans,icStds:icStds,icTstats:icTstats,icIRs:icIRs,nIC:nIC,
+  // --- multiple testing. The object being searched is the overlay, so the
+  // deflated Sharpe (Bailey & Lopez de Prado 2014) is run on the net alpha.
+  var sdA=std(alphaN),srM=sdA>0?mean(alphaN)/sdA:0,g3=0,g4=3;
+  if(sdA>0){var mA=mean(alphaN);g3=0;g4=0;
+    for(i=0;i<nM;i++){var dA=(alphaN[i]-mA)/sdA;g3+=dA*dA*dA;g4+=dA*dA*dA*dA}
+    g3/=nM;g4/=nM}
+  // Dispersion of the Sharpe across trials is PROXIED by the estimator's own
+  // variance; the full 15,300-run cross-section is not computed in the browser.
+  var vTrial=(1+.5*srM*srM)/Math.max(1,nM-1);
+  var srStar=Math.sqrt(vTrial)*((1-EULER)*normInv(1-1/N_TRIALS)+EULER*normInv(1-1/(N_TRIALS*Math.E)));
+  var dDen=Math.sqrt(Math.max(1e-9,1-g3*srM+(g4-1)/4*srM*srM));
+  var dsr=normCdf((srM-srStar)*Math.sqrt(Math.max(1,nM-1))/dDen);
+  var psr=normCdf(srM*Math.sqrt(Math.max(1,nM-1))/dDen);
+  function shSE(rs){var sd=std(rs);if(!(sd>0))return 0;var sm=(mean(rs)-RF_ANN/12)/sd;
+    return Math.sqrt((1+.5*sm*sm)/nM)*Math.sqrt(12)}
+  var impNum=0,impDen=0;
+  for(i=0;i<nM;i++){impNum+=impSer[i];impDen+=2*toSer[i]}
+  var impactBp=impDen>0?impNum/impDen*1e4:0;
+  return{sel:sel,nFactors:nF,importance:imp,
+    icSEs:icSEs,compICse:compICse,dsr:dsr,psr:psr,hurdleIR:srStar*Math.sqrt(12),nTrials:N_TRIALS,
+    sharpeSEGross:shSE(gS),sharpeSENet:shSE(nS),sharpeSEBench:shSE(bench),impactBp:impactBp,icMeans:icMeans,icStds:icStds,icTstats:icTstats,icIRs:icIRs,nIC:nIC,
     facTO:facTO,horizons:HORIZONS,icDecay:icDecay,decMean:decMean,decLo:decLo,decHi:decHi,
     corrMatrix:corrMatrix,grossEq:gEq,netEq:nEq,benchEq:bEq,rollingIC:rollingIC,turnoverCurve:tCurve,
     compIC:compIC,compICsd:compICsd,icIR:compICsd>0?compIC/compICsd:0,
-    icT:compICsd>0?compIC/compICsd*Math.sqrt(nM):0,compTurnover:annTO,
+    icT:compICse>0?compIC/compICse:0,compTurnover:annTO,
     grossSharpe:grossSharpe,netSharpe:netSharpe,benchSharpe:benchSharpe,
     annGross:rG,annNet:rN,annBench:rB,annGrossAlpha:aGA,annNetAlpha:aNA,
     teGross:teG,teNet:teN,irGross:teG>0?aGA/teG:0,irNet:teN>0?aNA/teN:0,
@@ -1158,13 +1281,13 @@ function attachHover(canvasId){
           var sig=Math.abs(h.tstat)>=2;
           showTT(e.clientX,e.clientY,
             '<div class="tt-title"><span class="tt-swatch" style="background:'+h.color+';display:inline-block;vertical-align:middle;margin-right:5px"></span>'+h.label+'</div>'+
-            '<div class="tt-row"><span class="tt-lbl">Mean rank IC</span><span class="tt-val" style="color:'+h.color+'">'+h.ic.toFixed(4)+'</span></div>'+
-            '<div class="tt-row"><span class="tt-lbl">95% CI</span><span class="tt-val" style="color:#94a3b8">&plusmn;'+h.ci.toFixed(4)+'</span></div>'+
+            '<div class="tt-row"><span class="tt-lbl">Mean rank IC</span><span class="tt-val" style="color:'+h.color+'">'+h.ic.toFixed(3)+'</span></div>'+
+            '<div class="tt-row"><span class="tt-lbl">95% CI (Newey&ndash;West)</span><span class="tt-val" style="color:#94a3b8">&plusmn;'+h.ci.toFixed(3)+'</span></div>'+
             (h.ex?'<div class="tt-row"><span class="tt-lbl">IC volatility</span><span class="tt-val" style="color:#94a3b8">'+h.ex.sd.toFixed(3)+'</span></div>'+
                   '<div class="tt-row"><span class="tt-lbl">IC IR (monthly)</span><span class="tt-val" style="color:#94a3b8">'+h.ex.ir.toFixed(2)+'</span></div>'+
                   '<div class="tt-row"><span class="tt-lbl">Ann. turnover</span><span class="tt-val" style="color:#94a3b8">'+(h.ex.to*100).toFixed(0)+'%</span></div>':'')+
             '<div class="tt-divider"></div>'+
-            '<div class="tt-row"><span class="tt-lbl">t-statistic</span><span class="tt-val" style="color:'+(sig?'#10b981':'#f59e0b')+'">'+h.tstat.toFixed(2)+(sig?' &#10003;':' (weak)')+'</span></div>');
+            '<div class="tt-row"><span class="tt-lbl">t-stat (HAC)</span><span class="tt-val" style="color:'+(sig?'#10b981':'#f59e0b')+'">'+h.tstat.toFixed(2)+(sig?' &#10003;':' (weak)')+'</span></div>');
           return;
         }
       }
@@ -1221,7 +1344,7 @@ function attachHover(canvasId){
         showTT(e.clientX,e.clientY,
           '<div class="tt-title">Cost Impact</div>'+
           '<div class="tt-row"><span class="tt-lbl">Tx Cost</span><span class="tt-val" style="color:#f1f5f9">'+closest.cost+' bps</span></div>'+
-          '<div class="tt-row"><span class="tt-lbl">Net Sharpe</span><span class="tt-val" style="color:'+(closest.sharpe>=0?'#06b6d4':'#ef4444')+'">'+closest.sharpe.toFixed(3)+'</span></div>'+
+          '<div class="tt-row"><span class="tt-lbl">Net Sharpe</span><span class="tt-val" style="color:'+(closest.sharpe>=0?'#06b6d4':'#ef4444')+'">'+closest.sharpe.toFixed(2)+'</span></div>'+
           (closest.isCur?'<div style="margin-top:4px;font-size:10px;color:#10b981;text-align:center">&#9654; Current Setting</div>':''));
       }else hideTT();
     }
@@ -1234,8 +1357,8 @@ function renderKPIs(r){
   function setK(id,v,cls){var e=document.getElementById(id);e.textContent=v;e.className='val '+(cls||'neutral')}
   setK('kGrossSharpe',r.grossSharpe.toFixed(2),r.grossSharpe>=.6?'pos':r.grossSharpe>=.25?'neutral':'neg');
   setK('kNetSharpe',r.netSharpe.toFixed(2),r.netSharpe>=.6?'pos':r.netSharpe>=.25?'neutral':'neg');
-  setK('kAnnAlpha',(r.annNetAlpha*100).toFixed(2)+'%',r.annNetAlpha>0?'pos':'neg');
-  setK('kMeanIC',r.compIC.toFixed(4),r.compIC>=.03?'pos':r.compIC>0?'neutral':'neg');
+  setK('kAnnAlpha',(r.annNetAlpha*100).toFixed(1)+'%',r.annNetAlpha>0?'pos':'neg');
+  setK('kMeanIC',r.compIC.toFixed(3),r.compIC>=.03?'pos':r.compIC>0?'neutral':'neg');
   setK('kICIR',r.icIR.toFixed(2),r.icIR>=.3?'pos':'neutral');
   setK('kTurnover',(r.compTurnover*100).toFixed(0)+'%','neutral');
   setK('kMaxDD','\u2212'+(r.maxDDNet*100).toFixed(1)+'%','neg');
@@ -1257,7 +1380,7 @@ function renderIC(r){
   var l=[],v=[],e=[],t=[],c=[],ex=[];
   for(var i=0;i<r.nFactors;i++){
     var f=FACTORS[r.sel[i]];
-    l.push(f.name);v.push(r.icMeans[i]);e.push(1.96*r.icStds[i]/Math.sqrt(r.nIC));
+    l.push(f.name);v.push(r.icMeans[i]);e.push(1.96*r.icSEs[i]);
     t.push(r.icTstats[i]);c.push(f.color);
     ex.push({sd:r.icStds[i],ir:r.icIRs[i],to:r.facTO[i]});
   }
@@ -1269,7 +1392,7 @@ function renderDecay(r){
   for(var h=0;h<r.horizons.length;h++)xL.push(r.horizons[h]+'m');
   for(var i=0;i<r.nFactors;i++)ds.push({data:r.icDecay[i],color:FACTORS[r.sel[i]].color,width:1.6,name:FACTORS[r.sel[i]].name});
   ds.push({data:r.decMean,color:'#e2e8f0',width:2.6,name:'Selected-factor mean'});
-  drawLineChart('cvDecay',ds,xL,{height:270,padB:52,decimals:4,
+  drawLineChart('cvDecay',ds,xL,{height:270,padB:52,decimals:3,
     xTitle:'Forward horizon (months)',yTitle:'Mean rank IC',
     band:{lo:r.decLo,hi:r.decHi,color:'rgba(226,232,240,.13)'},
     xUnit:function(k){return xL[k]+' ahead'},
@@ -1296,13 +1419,15 @@ function renderReturns(r){
 function renderRollingIC(r){
   var xL=[];for(var i=0;i<r.rollingIC.length;i++)xL.push(i%12===0?'Y'+(i/12):'');
   drawLineChart('cvRollingIC',[{data:r.rollingIC,color:COL.cyan,width:2,name:'Rolling 12M IC'}],xL,
-    {height:230,decimals:4,yTitle:'12-month mean rank IC',
+    {height:230,decimals:3,yTitle:'12-month mean rank IC',
      xUnit:function(k){return 'Month '+k},seriesNames:['Rolling 12M IC']});
 }
 
 function renderTurnover(r){drawTurnoverChart('cvTurnover',r.turnoverCurve,state.txCost)}
 
+function nfmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
 function renderPerfTable(r){
+  var NT=nfmt(r.nTrials);
   var rows=[
     {l:'Annualised return',g:r.annGross,n:r.annNet,b:r.annBench,f:'pct',good:1},
     {l:'Annualised alpha (overlay)',g:r.annGrossAlpha,n:r.annNetAlpha,b:0,f:'pct',good:1},
@@ -1314,21 +1439,32 @@ function renderPerfTable(r){
     {l:'Calmar ratio',g:r.calmarGross,n:r.calmarNet,b:r.calmarBench,f:'num'},
     {l:'Hit rate (monthly alpha &gt; 0)',g:r.hitGross,n:r.hitRate,b:.5,f:'pct'},
     {l:'Mean rank IC (composite)',g:r.compIC,n:r.compIC,b:0,f:'ic'},
-    {l:'Annual turnover (% of gross)',g:r.compTurnover,n:r.compTurnover,b:0,f:'pct'}
+    {l:'Composite IC t-stat (Newey&ndash;West)',n:r.icT,f:'num',only:1},
+    {l:'Annual turnover (% of gross, two-way charged)',g:r.compTurnover,n:r.compTurnover,b:0,f:'pct'},
+    {l:'Realised market impact (bp of notional traded)',n:r.impactBp,f:'num',only:1},
+    {l:'Standard error of the Sharpe (Lo, 2002)',g:r.sharpeSEGross,n:r.sharpeSENet,b:r.sharpeSEBench,f:'num',nodelta:1},
+    {l:'Multiple-testing hurdle IR (N = '+NT+' configurations)',n:r.hurdleIR,f:'num',only:1},
+    {l:'Deflated Sharpe probability (N = '+NT+')',n:r.dsr,f:'pct',only:1},
+    {l:'Probabilistic Sharpe vs zero (single trial)',n:r.psr,f:'pct',only:1}
   ];
   function fmt(v,f,sign){
-    var t=f==='pct'?(v*100).toFixed(2)+'%':f==='ic'?v.toFixed(4):v.toFixed(2);
+    var t=f==='pct'?(v*100).toFixed(1)+'%':f==='ic'?v.toFixed(3):v.toFixed(2);
     return sign&&v>=0?'+'+t:t;
   }
   var html='';
   for(var i=0;i<rows.length;i++){
     var rw=rows[i];
     html+='<tr><td>'+rw.l+'</td>';
+    if(rw.only){
+      html+='<td class="tneut">&mdash;</td><td>'+fmt(rw.n,rw.f,false)+'</td><td class="tneut">&mdash;</td><td class="tneut">&mdash;</td></tr>';
+      continue;
+    }
     var vals=[rw.g,rw.n,rw.b];
     for(var j=0;j<3;j++){
       var cls=rw.good?(vals[j]>0?'tpos':vals[j]<0?'tneg':''):'';
       html+='<td class="'+cls+'">'+fmt(vals[j],rw.f,false)+'</td>';
     }
+    if(rw.nodelta){html+='<td class="tneut">&mdash;</td></tr>';continue}
     var d=rw.n-rw.b;
     html+='<td class="'+(d>0?'tpos':d<0?'tneg':'tneut')+'">'+fmt(d,rw.f,true)+'</td></tr>';
   }
