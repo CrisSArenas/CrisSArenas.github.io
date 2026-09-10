@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Macro Regime &amp; Tactical Allocation | Cristian Arenas</title>
-<meta name="description" content="Interactive macro regime dashboard: growth/inflation quadrant, VIX volatility gauge, cross-asset momentum, regime-driven tactical tilts, Brinson attribution, ex-ante risk decomposition and a Takahashi-Alexander private-capital pacing model on stylised historical quarterly data, Q1 2000 to Q4 2025.">
+<meta name="description" content="Interactive macro regime dashboard: point-in-time growth/inflation z-scores with a dead band and a persistence rule, VIX volatility gauge, cross-asset macro factor scores, conviction-scaled tactical tilts, Brinson attribution, ex-ante Euler risk decomposition and a Takahashi-Alexander private-capital pacing model on stylised historical quarterly data, Q1 2000 to Q4 2025.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -130,10 +130,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 </nav>
 <div class="demo-status">
   <span id="statusBar">initialising&hellip;</span>
-  <span><b>Stylised historical data</b> &middot; quarterly Q1&nbsp;2000&ndash;Q4&nbsp;2025 &middot; deterministic seed &middot; not investment advice</span>
+  <span><b>Stylised historical data, not a vendor feed</b> &middot; quarterly Q1&nbsp;2000&ndash;Q4&nbsp;2025 &middot; deterministic seed &middot; not investment advice</span>
 </div>
 
-<p class="demo-sub">A quarterly <b>macro regime</b> map (growth vs inflation z-scores versus trend) driving <b>tactical tilts</b> around a strategic policy portfolio, with Brinson&ndash;Hood&ndash;Beebower attribution, ex-ante risk decomposition and a Takahashi&ndash;Alexander private-capital pacing model. Drag the timeline to move the as-of quarter &mdash; every panel recomputes. Hover any chart for detail.</p>
+<p class="demo-sub">A quarterly <b>macro regime</b> map &mdash; point-in-time growth and inflation z-scores, with a &plusmn;0.25&sigma; dead band and a two-quarter confirmation rule so the label does not flicker on noise &mdash; driving <b>conviction-scaled tactical tilts</b> around a strategic policy portfolio, with Brinson&ndash;Hood&ndash;Beebower attribution, ex-ante Euler risk decomposition and a Takahashi&ndash;Alexander private-capital pacing model. Drag the timeline to move the as-of quarter; every panel recomputes on data available <em>as of</em> that quarter. Hover any chart for detail.</p>
 
 <div class="grid">
   <div class="slider-row full">
@@ -146,7 +146,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="d-panel">
     <div class="panel-head">
       <h3><i class="fas fa-th-large"></i> Macro Regime Quadrant</h3>
-      <span class="tag">Growth z vs inflation z (&sigma; vs trend/target) &middot; cut-off 0&sigma; on both axes</span>
+      <span class="tag">Point-in-time z: growth vs trend, inflation vs the 2% target &middot; &plusmn;0.25&sigma; dead band + 2-quarter confirmation</span>
     </div>
     <div class="panel-body" style="position:relative">
       <canvas id="quadrantCanvas" aria-label="Scatter of quarterly growth and inflation z-scores with four named macro regime quadrants"></canvas>
@@ -157,7 +157,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="d-panel">
     <div class="panel-head">
       <h3><i class="fas fa-tachometer-alt"></i> Volatility Regime &amp; VIX</h3>
-      <span class="tag">Bands: &lt;15 low &middot; 15&ndash;25 normal &middot; 25&ndash;35 elevated &middot; &gt;35 crisis</span>
+      <span class="tag">Quarterly average close &middot; bands &lt;15 low, 15&ndash;25 normal, 25&ndash;35 elevated, &gt;35 crisis</span>
     </div>
     <div class="panel-body" style="position:relative">
       <canvas id="vixCanvas" aria-label="VIX gauge for the selected quarter plus the quarterly VIX history since 2000"></canvas>
@@ -167,8 +167,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
   <div class="d-panel full">
     <div class="panel-head">
-      <h3><i class="fas fa-signal"></i> Cross-Asset Momentum Signals</h3>
-      <span class="tag">Factor-implied score over 1/2/4/8 quarters (3M/6M/12M/24M) &middot; composite &gt;&nbsp;+0.15 = BUY, &lt;&nbsp;&minus;0.15 = SELL, else HOLD</span>
+      <h3><i class="fas fa-signal"></i> Cross-Asset Macro Factor Scores</h3>
+      <span class="tag">Two-factor score over 1/2/4/8 quarters &middot; standardised against each proxy's own history &middot; &gt;&nbsp;+0.5&sigma; BUY, &lt;&nbsp;&minus;0.5&sigma; SELL, else HOLD &middot; not price momentum</span>
     </div>
     <div class="panel-body">
       <table class="mtable" id="momTable"></table>
@@ -178,7 +178,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="d-panel">
     <div class="panel-head">
       <h3><i class="fas fa-balance-scale"></i> Tactical vs Strategic</h3>
-      <span class="tag">Regime tilts bounded at &plusmn;10pp &middot; weights sum to 100%</span>
+      <span class="tag">tilt = conviction &times; (regime target &minus; policy) &middot; bounded at &plusmn;10pp and inside the IPS range &middot; weights sum to 100%</span>
     </div>
     <div class="panel-body">
       <div id="allocBars"></div>
@@ -193,7 +193,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="d-panel">
     <div class="panel-head">
       <h3><i class="fas fa-chart-pie"></i> Ex-ante Risk Decomposition</h3>
-      <span class="tag">Euler contributions to portfolio &sigma; &middot; sum = 100%</span>
+      <span class="tag">Euler contributions to ex-ante annualised &sigma; &middot; sum = 100% &middot; private-equity &sigma; is de-smoothed</span>
     </div>
     <div class="panel-body">
       <div id="riskBars"></div>
@@ -226,17 +226,18 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="d-panel full">
     <div class="panel-head">
       <h3><i class="fas fa-landmark"></i> Private Capital Pacing &amp; J-Curve</h3>
-      <span class="tag">Takahashi&ndash;Alexander (2002) commitment model &middot; $M, annual periods</span>
+      <span class="tag">Takahashi&ndash;Alexander (2002) &middot; single vintage, $M, annual periods &middot; gross of fees and carry</span>
     </div>
     <div class="panel-body">
       <div class="jc-layout" style="display:grid;grid-template-columns:290px 1fr;gap:18px">
         <div>
           <div class="pctrl"><label for="slCommit"><span>Commitment</span><span id="pcCommit">$100M</span></label><input type="range" min="20" max="500" step="10" value="100" id="slCommit" aria-label="Commitment in millions of dollars"></div>
-          <div class="pctrl"><label for="slCall"><span>Contribution rate RC<br><span style="color:var(--faint)">% of uncalled commitment / yr</span></span><span id="pcCall">25%</span></label><input type="range" min="10" max="50" step="1" value="25" id="slCall" aria-label="Rate of contribution, percent of uncalled commitment per year"></div>
+          <div class="pctrl"><label for="slCall"><span>Contribution rate RC<br><span style="color:var(--faint)">% of uncalled commitment / yr</span></span><span id="pcCall">35%</span></label><input type="range" min="10" max="50" step="1" value="35" id="slCall" aria-label="Rate of contribution, percent of uncalled commitment per year"></div>
+          <div class="pctrl"><label for="slIP"><span>Investment period IP<br><span style="color:var(--faint)">last year capital may be called</span></span><span id="pcIP">5 yr</span></label><input type="range" min="3" max="8" step="1" value="5" id="slIP" aria-label="Investment period in years"></div>
           <div class="pctrl"><label for="slDist"><span>Fund life L<br><span style="color:var(--faint)">years to full wind-down</span></span><span id="pcDist">12 yr</span></label><input type="range" min="8" max="15" step="1" value="12" id="slDist" aria-label="Fund life in years"></div>
-          <div class="pctrl"><label for="slGrowth"><span>Growth rate G<br><span style="color:var(--faint)">annual NAV appreciation</span></span><span id="pcGrowth">15%</span></label><input type="range" min="5" max="30" step="1" value="15" id="slGrowth" aria-label="Annual NAV growth rate, percent"></div>
+          <div class="pctrl"><label for="slGrowth"><span>Growth rate G<br><span style="color:var(--faint)">annual gross NAV appreciation</span></span><span id="pcGrowth">13%</span></label><input type="range" min="5" max="30" step="1" value="13" id="slGrowth" aria-label="Annual NAV growth rate, percent"></div>
           <div class="pctrl"><label for="slBow"><span>Bow factor B<br><span style="color:var(--faint)">back-loads distributions</span></span><span id="pcBow">2.5</span></label><input type="range" min="10" max="50" step="1" value="25" id="slBow" aria-label="Bow factor, tenths"></div>
-          <div class="pctrl"><label for="slYield"><span>Yield floor Y<br><span style="color:var(--faint)">min. annual distribution rate</span></span><span id="pcYield">5%</span></label><input type="range" min="0" max="15" step="1" value="5" id="slYield" aria-label="Yield floor, minimum annual distribution rate in percent"></div>
+          <div class="pctrl"><label for="slYield"><span>Yield floor Y<br><span style="color:var(--faint)">min. annual distribution rate</span></span><span id="pcYield">0%</span></label><input type="range" min="0" max="15" step="1" value="0" id="slYield" aria-label="Yield floor, minimum annual distribution rate in percent"></div>
           <div class="mrow" id="jcurveMetrics" style="flex-direction:column"></div>
         </div>
         <div style="position:relative">
@@ -256,57 +257,74 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
     <div class="d-help-body">
       <div class="d-help-section">
-        <h3>1 &middot; Data</h3>
-        <p>104 quarters, <strong>Q1 2000 &ndash; Q4 2025</strong>. Growth and inflation are stored as <strong>stylised historical</strong> standardised scores: the inflation score is the CPI y/y deviation from the 2% target divided by a 3.6pp standard deviation (so the score maps back as <code>CPI &asymp; 2% + 7.2 &times; score</code>), and the growth score is a composite growth-momentum reading (ISM new orders, payrolls, real GDP versus trend) clipped to &plusmn;2&sigma;. VIX is the quarterly average close with the intra-quarter high shown separately. The numbers are hand-calibrated to the historical record, not a live data feed; asset returns inside the attribution panel are simulated from a seeded generator (<code>mulberry32</code>, seed shown in the status strip) so every figure is reproducible.</p>
+        <h3>1 &middot; Data &mdash; what it is and what it is not</h3>
+        <p>104 quarters, <strong>Q1 2000 &ndash; Q4 2025</strong>. This is a <strong>stylised historical reconstruction, hand-calibrated to the published record. It is not a vendor data feed and no figure on this page should be quoted as an observation.</strong> Two series are stored per quarter, at half scale:</p>
+        <ul>
+          <li><code>7.2 &times; inf</code> is headline CPI y/y <em>minus the 2% target</em>, in percentage points. Spot-check: Q2 2022 stores 0.92 &rarr; 8.6% CPI; Q3 2009 stores &minus;0.50 &rarr; &minus;1.6%; Q4 2021 stores 0.65 &rarr; 6.7%.</li>
+          <li><code>2 &times; g</code> is a composite growth-momentum reading (ISM new orders, payrolls, real GDP versus trend), clipped at the source to &plusmn;2 in its own units &mdash; Q2 2020 is the only quarter at the clip.</li>
+        </ul>
+        <p>VIX is the <strong>mean of the daily closes inside the quarter</strong>, with the highest close in the quarter carried as a separate series. Asset returns inside the attribution panel are simulated from a seeded generator (<code>mulberry32</code>, seed in the status strip), so every figure is reproducible; they are not the returns those asset classes actually delivered.</p>
       </div>
       <div class="d-help-section">
-        <h3>2 &middot; Regime quadrant</h3>
-        <p>The horizontal axis is the growth z-score, the vertical axis the inflation z-score, both plotted over &plusmn;2&sigma;. The <strong>cut-off is 0&sigma; on each axis</strong> &mdash; growth at trend and inflation at the 2% target:</p>
+        <h3>2 &middot; Standardisation &mdash; and why it changed</h3>
+        <p>An axis labelled &sigma; has to be measuring &sigma;. Over these 104 quarters the growth composite has mean <strong>+0.44</strong> and standard deviation <strong>0.75</strong>, and the old inflation score (CPI deviation divided by a flat 3.6pp) has standard deviation <strong>0.47</strong>. Neither was a z-score: growth sat above its own reference in two thirds of quarters, and 2022&rsquo;s 8.6% print showed as 1.8&sigma; when measured against the post-2000 record it is nearer 3.7&sigma;.</p>
+        <p>Both series are now standardised, and standardised <strong>point-in-time</strong>: quarter <em>i</em> is scored using quarters 0&hellip;<em>i</em> only. A point on the trail is therefore the reading an allocator would have had that quarter, and it does not move when you drag the slider. Growth is <strong>demeaned</strong> &mdash; its reference is trend, estimated as the mean to date. Inflation is <strong>not</strong> demeaned &mdash; its reference is the 2% policy target, not the historical average &mdash; so its scale is the root-mean-square deviation from target to date, 1.79pp over the full sample. The first 20 quarters share the statistics of the first 20 quarters; that five-year warm-up is in-sample, for 2000&ndash;2004 only. Points beyond &plusmn;3&sigma; are drawn at the plot edge; the status strip and the tooltip carry the unclipped value.</p>
+      </div>
+      <div class="d-help-section">
+        <h3>3 &middot; Regime classification &mdash; dead band and persistence</h3>
+        <p>A bare sign test on each axis re-labels the quarter whenever a z-score crosses zero by any amount. On this data that is <strong>26 regime changes in 104 quarters</strong>, six of them one quarter long, and several of them triggered by inflation moving 0.02&sigma; &mdash; each one moving a 10pp tactical book. That is the single most common way a regime dashboard becomes unusable. Per axis the classifier now applies:</p>
         <table>
-          <thead><tr><th>Regime</th><th>Condition</th><th>Typical quarters</th></tr></thead>
+          <thead><tr><th>Rule</th><th>Setting</th><th>Effect</th></tr></thead>
           <tbody>
-            <tr><td>Goldilocks</td><td>growth &gt; 0, inflation &le; 0</td><td>2013&ndash;2016, 2019, H2 2020</td></tr>
-            <tr><td>Reflation</td><td>growth &gt; 0, inflation &gt; 0</td><td>2004&ndash;2006, 2011, 2018, 2021, 2023&ndash;25</td></tr>
-            <tr><td>Stagflation</td><td>growth &le; 0, inflation &gt; 0</td><td>H1 2001, H1 2008, all of 2022</td></tr>
-            <tr><td>Deflation</td><td>growth &le; 0, inflation &le; 0</td><td>2002, Q4 2008&ndash;2009, H1 2020</td></tr>
+            <tr><td>Dead band (hysteresis)</td><td>&plusmn;0.25&sigma;</td><td>Inside the band the axis carries no information and the last confirmed sign is held, so a wobble around zero flips nothing.</td></tr>
+            <tr><td>Persistence</td><td>2 consecutive quarters</td><td>A new sign must print twice running before it is adopted.</td></tr>
+            <tr><td>Path construction</td><td>forward from Q1 2000</td><td>Computed once; the label of any quarter never depends on where the slider sits.</td></tr>
           </tbody>
         </table>
-        <p>The trail shows the previous 20 quarters and the corner percentages the regime shares of the trailing 13 quarters. 2023&ndash;25 sits just inside Reflation: CPI keeps falling but stays above the 2% target, so the point drifts towards the Goldilocks boundary without crossing it.</p>
+        <p>Result: <strong>15 changes, shortest regime 2 quarters</strong>, and the path lands where it should &mdash; Stagflation through 2001 and 2008, Deflation from Q1 2009 and from Q2 2020, Goldilocks Q3 2013 to Q1 2018, Stagflation from Q2 2022, Reflation from Q3 2023. The cost is a <strong>recognition lag of one to two quarters at turning points</strong>. That is not a defect being hidden: in Q1 2020 and Q1 2022 the confirmed label is still Reflation, the chart says in words that the point sits in a different quadrant and the label is being held, and conviction (below) is zero, so the book is at policy weights. A real committee incurs the same lag.</p>
       </div>
       <div class="d-help-section">
-        <h3>3 &middot; VIX gauge</h3>
-        <p>Bands are the standard practitioner cut-offs: <strong>below 15 low</strong>, <strong>15&ndash;25 normal</strong>, <strong>25&ndash;35 elevated</strong>, <strong>above 35 crisis</strong>. The needle and the large number are the quarterly average; the smaller reading is the intra-quarter high (Q4 2008: 58.0 average, 80.9 high; Q1 2020: 57.0 average, 82.7 high). The line chart plots both series to the as-of quarter.</p>
+        <h3>4 &middot; VIX gauge</h3>
+        <p>Bands are the usual practitioner cut-offs: <strong>below 15 low</strong>, <strong>15&ndash;25 normal</strong>, <strong>25&ndash;35 elevated</strong>, <strong>above 35 crisis</strong>. The needle and the large number are the <strong>quarterly average of daily closes</strong> throughout. The earlier build re-cut the crisis quarters to their panic months and still called the result an average: Q1 2020 was shown at 57.0, which is roughly the March average, when the quarter as a whole averaged about 32 because January and most of February were calm. That is corrected. The intra-quarter high (Q1 2020: 82.7; Q4 2008: 80.9) is printed under the needle rather than on the dial, because it is a different statistic. A quarterly average will always understate an intra-quarter panic &mdash; that is what the second series is for.</p>
       </div>
       <div class="d-help-section">
-        <h3>4 &middot; Momentum signals</h3>
-        <p>Because the data set is quarterly, the four horizons are <strong>1, 2, 4 and 8 quarters</strong> (3M / 6M / 12M / 24M). Each horizon score is a recency-weighted average of a two-factor reading, <code>score = &beta;<sub>g</sub>&middot;growth + &beta;<sub>&pi;</sub>&middot;inflation</code>, with weights 1, 2, 3&hellip; on successively more recent quarters. The composite is the weighted blend <code>(1&middot;m<sub>1Q</sub> + 1.5&middot;m<sub>2Q</sub> + 2.5&middot;m<sub>4Q</sub> + 3&middot;m<sub>8Q</sub>) / 8</code>. The trading rule is explicit: <strong>composite &gt; +0.15 &rarr; BUY, composite &lt; &minus;0.15 &rarr; SELL, otherwise HOLD</strong>. This is a factor-implied score, not realised price momentum.</p>
+        <h3>5 &middot; Cross-asset macro factor scores</h3>
+        <p>This is <strong>not price momentum</strong> and cannot be back-tested as a trading signal. Each horizon is a recency-weighted average (weights 1, 2, 3&hellip; on more recent quarters) of a two-factor reading <code>&beta;<sub>g</sub>&middot;z<sub>g</sub> + &beta;<sub>&pi;</sub>&middot;z<sub>&pi;</sub></code> over 1, 2, 4 and 8 quarters; the composite is <code>(1&middot;m<sub>1Q</sub> + 1.5&middot;m<sub>2Q</sub> + 2.5&middot;m<sub>4Q</sub> + 3&middot;m<sub>8Q</sub>) / 8</code>.</p>
+        <p>The cut-off changed for a reason. The raw composite has a different mean and dispersion for every asset &mdash; the S&amp;P score averages +0.15, the gold score +0.03 with half the dispersion &mdash; so the old fixed &plusmn;0.15 rule on the raw number was not a signal, it was a standing bias: it printed BUY on the S&amp;P in <strong>67%</strong> of all quarters and SELL on the 10-year in <strong>69%</strong>. Each composite is now standardised against <em>its own</em> history to the as-of quarter (expanding window, point-in-time, minimum 12 quarters) and the same <strong>&plusmn;0.5&sigma;</strong> cut-off is applied to every row. Across the sample that fires BUY 33% / SELL 25% / HOLD 42%. Two factors drive all eight rows, so the cross-section has rank 2: these are not eight independent signals. The panel is informational and does <strong>not</strong> feed the tilts.</p>
       </div>
       <div class="d-help-section">
-        <h3>5 &middot; Tactical allocation</h3>
-        <p>The strategic policy portfolio is 25 / 15 / 10 / 25 / 5 / 10 / 8 / 2 across US equity, international equity, EM equity, fixed income, high yield, private equity, real assets and cash. Each regime has a fixed tactical vector; every vector sums to <strong>100%</strong> and every tilt is bounded at <strong>&plusmn;10pp</strong> (most are &plusmn;8pp), so the tilts always sum to zero. This is an overlay, not a regime-timing bet.</p>
+        <h3>6 &middot; Tactical allocation</h3>
+        <p>The strategic policy portfolio is 25 / 15 / 10 / 25 / 5 / 10 / 8 / 2 across US equity, international equity, EM equity, fixed income, high yield, private equity, real assets and cash. Each sleeve also has an <strong>investment-policy range</strong>, shown on hover, and each regime has a target vector that is the allocation <em>at full conviction</em>. The applied weight is</p>
+        <p style="text-align:center"><code>w<sub>i</sub> = policy<sub>i</sub> + conviction &times; (target<sub>i</sub> &minus; policy<sub>i</sub>)</code></p>
+        <p>with <strong>conviction</strong> = the weaker of the two axes&rsquo; agreement with the label, in &sigma;, capped at 1&sigma;. A regime only earns its full tilt when both conditions hold; if either axis has turned against the label, conviction is zero and <strong>the portfolio is the policy portfolio</strong>. Over this sample the book sits at policy in 38 of 104 quarters and at full tilt in 12. Scaling a zero-sum vector keeps it zero-sum, so the weights sum to 100% at every conviction level, no tilt can breach the 10pp bound, and every sleeve stays inside its IPS range &mdash; all three are checked on the panel, every quarter.</p>
+        <p><strong>Private equity is pinned at its 10% policy weight in all four regimes.</strong> The earlier build tilted it by &minus;2pp and &minus;1pp, which is not implementable: a drawn private book cannot be traded quarterly on a macro read. Private weight is steered through the commitment pacing model, on a multi-year horizon. This also removes the earlier step change, where a regime flip moved 10pp of NAV overnight with no turnover cost anywhere in the model.</p>
       </div>
       <div class="d-help-section">
-        <h3>6 &middot; Attribution</h3>
+        <h3>7 &middot; Attribution</h3>
         <p>Standard Brinson&ndash;Hood&ndash;Beebower arithmetic on the eight segments:
         <code>Allocation = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)&middot;r<sub>b</sub></code>,
         <code>Selection = &Sigma;w<sub>b</sub>&middot;(r<sub>p</sub>&minus;r<sub>b</sub>)</code>,
         <code>Interaction = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)&middot;(r<sub>p</sub>&minus;r<sub>b</sub>)</code>.
-        The three terms sum <em>exactly</em> to the total active return <code>&Sigma;w<sub>p</sub>r<sub>p</sub> &minus; &Sigma;w<sub>b</sub>r<sub>b</sub></code>, which is what the last bar shows. Segment returns are driven by the quarter's growth and inflation scores plus seeded noise; the information ratio annualises the trailing 12-quarter active-return mean and standard deviation by &radic;4.</p>
+        The total is computed <em>independently</em>, as <code>&Sigma;w<sub>p</sub>r<sub>p</sub> &minus; &Sigma;w<sub>b</sub>r<sub>b</sub></code>, and the panel prints the residual against the three effects. The earlier build set the total equal to the sum of the three parts and then asserted that it equalled itself &mdash; a tick that could not fail and therefore proved nothing. The residual is now a real number, and it is below 4&times;10<sup>&minus;17</sup> in every one of the 104 quarters.</p>
+        <p>Segment returns come from a two-factor model, <code>r<sub>i</sub> = &mu;<sub>i</sub>/4 + &beta;<sub>g,i</sub>z<sub>g</sub> + &beta;<sub>&pi;,i</sub>z<sub>&pi;</sub> + &epsilon;<sub>i</sub></code>, and the residual &epsilon; is <strong>not</strong> a free parameter: its covariance is set to <code>&Sigma;<sub>target</sub> &minus; &Sigma;<sub>factor</sub></code> and factored by Cholesky, so the generator reproduces the same volatilities and correlations the risk panel uses. The earlier build drew an independent shock per sleeve at half the stated quarterly volatility, so the simulated benchmark carried about 6.8% annualised risk while the risk panel three inches away reported 11.0% ex-ante for the same weights. It now realises 11.6% against 11.0% ex-ante. Selection tracking error is sleeve-specific (2.0% a year on US equity, 6.0% on private equity, 0.05% on cash), rather than the flat 50bp a quarter on every sleeve including cash.</p>
+        <p>The information ratio annualises the trailing 12-quarter active-return mean and standard deviation. <strong>Twelve quarters is three years, and the standard error of an annualised IR over three years is about 0.58</strong>, so the panel prints the point estimate <em>with</em> its standard error: anything inside roughly &plusmn;1.2 is not distinguishable from zero. Two decimal places on their own would imply a precision the sample cannot support.</p>
       </div>
       <div class="d-help-section">
-        <h3>7 &middot; Risk decomposition</h3>
-        <p>Ex-ante, from the tactical weights, the long-run volatility assumptions and the correlation matrix: <code>&sigma;<sub>p</sub> = &radic;(w'&Sigma;w)</code> and the Euler contribution of asset <em>i</em> is <code>CTR<sub>i</sub> = w<sub>i</sub>&middot;(&Sigma;w)<sub>i</sub> / &sigma;<sub>p</sub></code>. These contributions sum to <strong>&sigma;<sub>p</sub> exactly</strong>, so the percentages sum to 100% &mdash; the panel prints that sum as a check. Ex-ante tracking error uses the same covariance matrix on the active weights.</p>
+        <h3>8 &middot; Risk decomposition</h3>
+        <p>Ex-ante, from the applied tactical weights, the long-run volatility assumptions and the correlation matrix: <code>&sigma;<sub>p</sub> = &radic;(w&prime;&Sigma;w)</code> and the Euler contribution of asset <em>i</em> is <code>CTR<sub>i</sub> = w<sub>i</sub>&middot;(&Sigma;w)<sub>i</sub> / &sigma;<sub>p</sub></code>. Because <code>&Sigma;<sub>i</sub> w<sub>i</sub>(&Sigma;w)<sub>i</sub> = w&prime;&Sigma;w = &sigma;<sub>p</sub><sup>2</sup></code>, these sum to <strong>&sigma;<sub>p</sub> exactly</strong> &mdash; verified below 10<sup>&minus;16</sup> at every quarter &mdash; so the percentages sum to 100%, and the panel prints that sum as a live check. Ex-ante tracking error uses the same matrix on the active weights, and scales with conviction: 0bp when the book is at policy, 142&ndash;220bp at full conviction depending on the regime. The correlation matrix is positive semi-definite (smallest eigenvalue 0.126). Private-equity volatility is carried <strong>de-smoothed</strong> at 22%, not at the 12&ndash;14% an appraisal-based reported series would show, and the panel reports the locked illiquid weight alongside.</p>
       </div>
       <div class="d-help-section">
-        <h3>8 &middot; Private capital pacing</h3>
+        <h3>9 &middot; Private capital pacing</h3>
         <p>The Takahashi&ndash;Alexander (2002) model, annual periods:</p>
         <dl>
-          <dt>C<sub>t</sub></dt><dd>= RC &times; uncalled commitment (drawn at the start of year <em>t</em>)</dd>
+          <dt>C<sub>t</sub></dt><dd>= RC &times; uncalled commitment, for <em>t</em> &le; IP and zero after &mdash; capital is called during the investment period, not for the whole fund life</dd>
           <dt>NAV<sub>t</sub></dt><dd>= (NAV<sub>t&minus;1</sub> + C<sub>t</sub>) &times; (1 + G)</dd>
           <dt>RD<sub>t</sub></dt><dd>= max(Y, (t / L)<sup>B</sup>) &mdash; the bow factor B back-loads distributions, the yield Y is a floor</dd>
           <dt>D<sub>t</sub></dt><dd>= RD<sub>t</sub> &times; NAV<sub>t</sub>; at t = L the rate reaches 1 and the fund fully winds down</dd>
         </dl>
-        <p>Net IRR is solved with Newton&ndash;Raphson on the annual net cashflow stream (calls at the start of the year, distributions at the end). <strong>Peak net outlay</strong> is the deepest point of the cumulative-cashflow J-curve and <strong>break-even</strong> the first year cumulative distributions exceed cumulative calls.</p>
+        <p><strong>The investment period is the change that matters.</strong> A constant contribution rate applied across the whole fund life, as the earlier build did, still draws capital in year 12 and calls 97% of the commitment; no limited partnership works that way. At the defaults (RC 35%, IP 5 years) the pace is 35 / 22.8 / 14.8 / 9.6 / 6.2 per cent of commitment, <strong>88% is called and the remaining 12% expires uncalled</strong> &mdash; which is precisely why allocators over-commit.</p>
+        <p><strong>Read the IRR for what it is.</strong> In this model NAV compounds at exactly (1+G) and every dollar is eventually distributed out of that NAV, so the gross IRR of the stream is <em>identically G</em>, at every setting of every other slider (checked: G = 5 / 13 / 30% gives IRR = 5.0000 / 13.0000 / 30.0000%). It is an identity, not a forecast. The model earns its keep on <em>liquidity</em>: peak net outlay, break-even year, and the steady-state commitment.</p>
+        <p><strong>Steady-state commitment</strong> is the number the panel exists to produce. Committing the same amount to one vintage a year means holding vintages aged 1&hellip;L simultaneously, so aggregate NAV per $1 of annual commitment is the sum of a single vintage&rsquo;s year-end NAVs. Inverting gives the annual commitment, as a share of total plan assets, that holds the 10% private-equity policy weight: <strong>1.35% a year at the defaults</strong>. That is what ties this panel to the 10% sleeve in the policy portfolio above. Net IRR is solved by Newton&ndash;Raphson and cross-checked against a bisection solve (agreement to four decimal places, |NPV| at the root of order 10<sup>&minus;15</sup>) at the corners of every slider.</p>
       </div>
     </div>
   </div>
@@ -318,39 +336,46 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A quarterly macro-regime dashboard over 104 quarters (Q1 2000 &ndash; Q4 2025). Each quarter carries a growth z-score and an inflation z-score which place it in one of four regimes (Goldilocks, Reflation, Stagflation, Deflation) with the cut-off at 0&sigma; on both axes. The regime drives a bounded tactical overlay on a strategic policy portfolio of eight asset classes; the dashboard then reports the VIX volatility regime, a factor-implied cross-asset momentum table, a Brinson&ndash;Hood&ndash;Beebower attribution of the quarter's active return, an ex-ante Euler risk decomposition, the long-run correlation matrix, and a Takahashi&ndash;Alexander private-capital pacing model with its J-curve.</p>
+        <p>A quarterly macro-regime dashboard over 104 quarters (Q1 2000 &ndash; Q4 2025). Each quarter carries a point-in-time growth z-score and inflation z-score which, after a &plusmn;0.25&sigma; dead band and a two-quarter confirmation rule, place it in one of four regimes (Goldilocks, Reflation, Stagflation, Deflation). The regime drives a <em>conviction-scaled</em> tactical overlay on a strategic policy portfolio of eight asset classes, bounded by an investment-policy range per sleeve. The dashboard then reports the VIX volatility regime, a cross-asset macro factor score table, a Brinson&ndash;Hood&ndash;Beebower attribution of the quarter&rsquo;s active return, an ex-ante Euler risk decomposition, the long-run correlation matrix, and a Takahashi&ndash;Alexander private-capital pacing model with its J-curve and steady-state commitment.</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
         <ul>
-          <li>Inflation score = (CPI y/y &minus; 2%) / 3.6pp; growth score = composite growth momentum vs trend, clipped to &plusmn;2&sigma;. Both are stored at half scale and plotted as z = 2 &times; stored value.</li>
-          <li>VIX bands: &lt;15 low, 15&ndash;25 normal, 25&ndash;35 elevated, &gt;35 crisis. Crisis quarters carry both the average and the intra-quarter high (Q4 2008 58.0 / 80.9; Q1 2020 57.0 / 82.7).</li>
-          <li>Strategic weights 25/15/10/25/5/10/8/2 (%); tactical vectors sum to 100% with tilts bounded at &plusmn;10pp.</li>
-          <li>Capital-market assumptions (annual): expected return 6.8 / 7.2 / 7.8 / 4.5 / 6.2 / 9.5 / 6.2 / 3.6%; volatility 16 / 17 / 21 / 5.5 / 9 / 22 / 14 / 0.6%; equity&ndash;bond correlation +0.05.</li>
-          <li>Momentum rule: composite &gt; +0.15 BUY, &lt; &minus;0.15 SELL, else HOLD, over 1/2/4/8-quarter lookbacks.</li>
-          <li>Pacing defaults: $100M commitment, RC 25% of uncalled per year, fund life 12 years, growth 15%/yr, bow factor 2.5, yield floor 5%.</li>
-          <li>Simulated segment returns use a seeded mulberry32 generator (seed 20260101), so every figure on the page is reproducible.</li>
+          <li>Inflation score = (CPI y/y &minus; 2%) standardised point-in-time by the r.m.s. deviation from target to date (1.79pp full sample); growth score = composite growth momentum, demeaned and standardised point-in-time (full-sample &sigma; 0.75 in its own units). Five-year in-sample warm-up; plot clipped at &plusmn;3&sigma;.</li>
+          <li>Regime rule: dead band &plusmn;0.25&sigma; per axis, 2-quarter confirmation, path built forward from Q1 2000. 15 regime changes, shortest regime 2 quarters.</li>
+          <li>VIX is the mean of daily closes in the quarter throughout; the highest close in the quarter is a separate series. Bands &lt;15 low, 15&ndash;25 normal, 25&ndash;35 elevated, &gt;35 crisis.</li>
+          <li>Strategic weights 25/15/10/25/5/10/8/2 (%). IPS ranges 15&ndash;35 / 8&ndash;22 / 5&ndash;15 / 15&ndash;35 / 0&ndash;10 / 10 (pinned) / 4&ndash;18 / 0&ndash;10. Tilts bounded at &plusmn;10pp and scaled by conviction.</li>
+          <li>Capital-market assumptions (annual): expected return 6.8 / 7.2 / 7.8 / 4.5 / 6.2 / 9.5 / 6.2 / 3.6%; volatility 16 / 17 / 21 / 5.5 / 9 / 22 / 14 / 0.6% with private equity <em>de-smoothed</em>; equity&ndash;bond correlation +0.05; correlation matrix positive semi-definite (min eigenvalue 0.126).</li>
+          <li>Factor score rule: composite standardised against each proxy&rsquo;s own history to date (min 12 quarters), &gt; +0.5&sigma; BUY, &lt; &minus;0.5&sigma; SELL, else HOLD, over 1/2/4/8-quarter lookbacks.</li>
+          <li>Pacing defaults: $100M commitment, RC 35% of uncalled per year, investment period 5 years, fund life 12 years, gross NAV growth 13%/yr, bow factor 2.5, yield floor 0%.</li>
+          <li>Simulated segment returns use a seeded mulberry32 generator (seed 20260101) with a Cholesky-factored residual covariance, so every figure is reproducible and consistent with the volatilities and correlations used elsewhere on the page.</li>
         </ul>
       </div>
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li>Brinson: <code>alloc = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)r<sub>b</sub></code>, <code>sel = &Sigma;w<sub>b</sub>(r<sub>p</sub>&minus;r<sub>b</sub>)</code>, <code>inter = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)(r<sub>p</sub>&minus;r<sub>b</sub>)</code>; the three sum exactly to <code>&Sigma;w<sub>p</sub>r<sub>p</sub> &minus; &Sigma;w<sub>b</sub>r<sub>b</sub></code>.</li>
-          <li>Risk: <code>&sigma;<sub>p</sub> = &radic;(w'&Sigma;w)</code>, <code>CTR<sub>i</sub> = w<sub>i</sub>(&Sigma;w)<sub>i</sub>/&sigma;<sub>p</sub></code>, <code>&Sigma;<sub>i</sub> CTR<sub>i</sub> = &sigma;<sub>p</sub></code>; ex-ante TE = <code>&radic;(a'&Sigma;a)</code> with <code>a = w<sub>p</sub> &minus; w<sub>b</sub></code>.</li>
-          <li>Information ratio = 4 &middot; mean(active) / (&radic;4 &middot; sd(active)) over the trailing 12 quarters.</li>
-          <li>Pacing: <code>C<sub>t</sub> = RC &middot; uncalled</code>; <code>NAV<sub>t</sub> = (NAV<sub>t&minus;1</sub>+C<sub>t</sub>)(1+G)</code>; <code>D<sub>t</sub> = max(Y,(t/L)<sup>B</sup>) &middot; NAV<sub>t</sub></code>; IRR by Newton&ndash;Raphson on the net cashflow stream.</li>
+          <li>Tilt map: <code>w<sub>i</sub> = policy<sub>i</sub> + c &middot; (target<sub>i</sub> &minus; policy<sub>i</sub>)</code>, <code>c = clip(min(s<sub>g</sub>z<sub>g</sub>, s<sub>&pi;</sub>z<sub>&pi;</sub>), 0, 1)</code> with s the confirmed axis signs. Zero-sum in, zero-sum out.</li>
+          <li>Brinson: <code>alloc = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)r<sub>b</sub></code>, <code>sel = &Sigma;w<sub>b</sub>(r<sub>p</sub>&minus;r<sub>b</sub>)</code>, <code>inter = &Sigma;(w<sub>p</sub>&minus;w<sub>b</sub>)(r<sub>p</sub>&minus;r<sub>b</sub>)</code>, checked against an independently computed <code>&Sigma;w<sub>p</sub>r<sub>p</sub> &minus; &Sigma;w<sub>b</sub>r<sub>b</sub></code>; max residual over 104 quarters 3.6&times;10<sup>&minus;17</sup>.</li>
+          <li>Return model: <code>r<sub>i,t</sub> = &mu;<sub>i</sub>/4 + &beta;<sub>g,i</sub>z<sub>g,t</sub> + &beta;<sub>&pi;,i</sub>z<sub>&pi;,t</sub> + (L&epsilon;<sub>t</sub>)<sub>i</sub></code>, <code>LL&prime; = &Sigma;<sub>target</sub> &minus; B&Sigma;<sub>f</sub>B&prime;</code>.</li>
+          <li>Risk: <code>&sigma;<sub>p</sub> = &radic;(w&prime;&Sigma;w)</code>, <code>CTR<sub>i</sub> = w<sub>i</sub>(&Sigma;w)<sub>i</sub>/&sigma;<sub>p</sub></code>, <code>&Sigma;<sub>i</sub> CTR<sub>i</sub> = &sigma;<sub>p</sub></code>; ex-ante TE = <code>&radic;(a&prime;&Sigma;a)</code> with <code>a = w<sub>p</sub> &minus; w<sub>b</sub></code>.</li>
+          <li>Information ratio = 4 &middot; mean(active) / (&radic;4 &middot; sd(active)) over 12 quarters, quoted with s.e. &asymp; <code>&radic;((1 + IR&sup2;/2)/T)</code> &asymp; 0.58 at T = 3 years.</li>
+          <li>Pacing: <code>C<sub>t</sub> = RC &middot; uncalled</code> for t &le; IP; <code>NAV<sub>t</sub> = (NAV<sub>t&minus;1</sub>+C<sub>t</sub>)(1+G)</code>; <code>D<sub>t</sub> = max(Y,(t/L)<sup>B</sup>) &middot; NAV<sub>t</sub></code>; IRR by Newton&ndash;Raphson, cross-checked by bisection; steady-state commitment = target NAV / &Sigma;<sub>t</sub>NAV<sub>t</sub> per unit committed.</li>
           <li>Brinson, Hood &amp; Beebower (1986), <em>Determinants of Portfolio Performance</em>; Takahashi &amp; Alexander (2002), <em>Illiquid Alternative Asset Fund Modeling</em>, JPM; Litterman (1996), <em>Hot Spots and Hedges</em> (Euler risk contributions); Whaley (2009), <em>Understanding the VIX</em>.</li>
         </ul>
       </div>
       <div>
-        <h3>Limitations</h3>
+        <h3>Limitations &mdash; read these before you read the numbers</h3>
         <ul>
-          <li>The macro series is a hand-calibrated stylised reconstruction, not a vendor data feed; quarter-by-quarter values are approximations of the historical record and 2025 is partly forward-looking.</li>
-          <li>Regime classification uses hard 0&sigma; cut-offs, so quarters near a boundary flip regime abruptly and the tactical vector jumps with them; no smoothing, hysteresis or transition probabilities are modelled.</li>
-          <li>Momentum is a factor-implied score from the same two macro series, not realised asset price momentum, so it cannot be back-tested as a trading signal.</li>
-          <li>Attribution segment returns are simulated, and the decomposition is single-period arithmetic Brinson &mdash; no multi-period linking, no currency or interaction-with-timing terms, no transaction costs or turnover drag.</li>
-          <li>The correlation matrix and volatilities are static long-run assumptions; correlations rise in crises, which this understates.</li>
-          <li>Private-capital pacing is deterministic: no manager dispersion, no secondary sales, no recycling, no fees or carry, and the fund always fully liquidates at year L.</li>
+          <li><b>The data is stylised.</b> The macro and VIX series are a hand-calibrated reconstruction of the published record, not a vendor feed. Quarter-by-quarter values are approximations. Nothing here is an observation.</li>
+          <li><b>The classifier lags on purpose.</b> The dead band and the two-quarter confirmation buy stability at the cost of one to two quarters at every turning point &mdash; Q1 2020 and Q1 2022 are both still labelled Reflation. The chart says so in words when the label and the raw quadrant disagree, and conviction is zero there, but the lag is real and a faster rule would trade stability for it.</li>
+          <li><b>Point-in-time standardisation is not free of in-sample content.</b> The first five years share the statistics of the first five years, and the scaling denominator moves as history accumulates, so a given CPI print maps to a different z in 2005 than in 2025. That is deliberate &mdash; it is what a real-time system does &mdash; but it means the z-scores are not comparable across decades as levels.</li>
+          <li><b>There is no transaction cost, turnover budget, or implementation lag anywhere.</b> Conviction scaling smooths the path, but the model rebalances to the target instantly and free of charge every quarter.</li>
+          <li><b>The factor score panel is a two-factor construct, not price momentum.</b> Eight rows, two factors: the cross-section has rank 2, so it cannot be treated as eight independent signals, and it cannot be back-tested as a trading rule. It informs; it drives nothing.</li>
+          <li><b>The VIX panel drives nothing either.</b> A real overlay would scale gross risk with realised and implied volatility. This one does not: tilts respond to the macro read alone.</li>
+          <li><b>Attribution is single-period arithmetic Brinson on simulated returns.</b> No multi-period linking, no currency effect, no fees, no turnover drag. Quarterly attribution on the private-equity sleeve is particularly weak: private marks arrive with a lag of a quarter or more, and institutions normally lag the private benchmark to match.</li>
+          <li><b>Risk is a static long-run covariance.</b> Volatilities and correlations do not vary with the regime, and correlations rise in crises &mdash; which this understates in exactly the quarters where it matters most. The de-smoothed 22% private-equity volatility is an assumption, not a measurement.</li>
+          <li><b>The gross IRR in the pacing panel is an identity.</b> It equals the growth slider by construction and carries no information. Use the panel for liquidity, not for return.</li>
+          <li><b>Pacing is one vintage, deterministic and gross.</b> No manager dispersion, no secondaries, no recycling, no management fee and no carried interest &mdash; a typical buyout fee load takes roughly 0.3&ndash;0.5x off TVPI. Contributions run at a constant rate of the uncalled balance within the investment period, where real funds ramp; and the fund always fully liquidates at year L, where real funds run tails and take extensions. The steady-state commitment figure assumes one identical vintage a year forever.</li>
         </ul>
       </div>
     </div>
@@ -375,10 +400,14 @@ for(let y=2000;y<=2025;y++)for(let q=1;q<=4;q++)QUARTERS.push({year:y,q,label:`Q
 // ---------------------------------------------------------------------------
 // STYLISED HISTORICAL MACRO DATA, Q1 2000 - Q4 2025 (104 quarters).
 // Hand-calibrated to the historical record; not a live data feed.
-//   inf = (CPI y/y - 2% target) / 3.6pp, stored at half scale
-//         -> plotted z = 2*inf, and CPI y/y ~= 2 + 7.2*inf
-//   g   = composite growth momentum vs trend (ISM new orders, payrolls, real
-//         GDP), stored at half scale, plotted z = 2*g, clipped to +/-2 sigma
+// These are STORAGE units, not the plotted scores. The two economically
+// meaningful quantities recovered from them are
+//   CPI y/y minus the 2% target, in pp   =  7.2 * inf
+//   composite growth momentum vs trend   =  2   * g
+//     (ISM new orders, payrolls, real GDP; clipped at source to +/-2 in its
+//      own units - Q2 2020 is the only quarter at the clip)
+// The old 3.6pp divisor that used to sit here was not the dispersion of
+// anything: it is replaced by a point-in-time standardisation further down.
 const HIST_G_INF=[
   // 2000: tech bubble peak -> bust, CPI ~3.2-3.5%
   {g:.65,inf:.17},{g:.48,inf:.18},{g:.18,inf:.21},{g:-.18,inf:.19},
@@ -434,8 +463,12 @@ const HIST_G_INF=[
   {g:.32,inf:.10},{g:.28,inf:.06},{g:.30,inf:.13},{g:.32,inf:.11}
 ];
 
-// Quarterly average VIX close. Crisis quarters are shown at their stressed
-// level (Q4 2008 and Q1 2020 average the panic months, not the calm ones).
+// Mean of the daily VIX closes inside each quarter. This is a QUARTERLY
+// AVERAGE throughout - it is no longer re-cut to the panic months, because
+// doing that made the gauge disagree with its own label. Q4 2008 genuinely
+// averaged ~58 (October to December were all stressed); Q1 2020 averaged ~32
+// even though it printed 82.7 in March, because January and most of February
+// were calm. The intra-quarter high series below carries the panic.
 const HIST_VIX=[
   24.6,26.5,21.5,28.0, // 2000
   28.5,28.0,30.5,28.5, // 2001
@@ -457,12 +490,12 @@ const HIST_VIX=[
   11.7,11.0,10.9,10.5, // 2017
   17.5,15.5,12.9,21.0, // 2018
   16.5,15.5,16.5,13.5, // 2019
-  57.0,34.5,26.8,23.5, // 2020
+  31.6,34.5,26.8,23.5, // 2020
   23.5,18.0,18.5,19.5, // 2021
   27.5,28.5,25.5,25.5, // 2022
   20.5,16.5,14.8,14.5, // 2023
   13.7,13.5,17.0,16.0, // 2024
-  17.5,19.0,15.5,14.5  // 2025
+  17.5,23.5,15.5,14.5  // 2025
 ];
 
 // Highest VIX close inside each quarter (the panic print, not the average).
@@ -495,39 +528,140 @@ const HIST_VIX_HI=[
   29.6,52.3,20.5,19.0  // 2025
 ];
 
-// score -> approximate headline CPI y/y, and z-score helpers
-const cpiOf=v=>2+v*7.2;
-const fmtCpi=v=>{const x=cpiOf(v);return(Math.abs(x)<0.05?0:x).toFixed(1);};
-const zOf=v=>v*2;
-const clip=v=>Math.max(-1,Math.min(1,v));
-
 const RD=HIST_G_INF.map((d,i)=>({...QUARTERS[i],...d}));
 
-// Four-quadrant classification. Cut-off is 0 sigma on BOTH axes: growth at
-// trend and inflation at the 2% target.
-function regime(g,inf){
-  if(g>0&&inf<=0)return{name:'Goldilocks',cls:'pill-goldilocks',color:'#10b981'};
-  if(g>0&&inf>0)return{name:'Reflation',cls:'pill-reflation',color:'#f59e0b'};
-  if(g<=0&&inf>0)return{name:'Stagflation',cls:'pill-stagflation',color:'#ef4444'};
-  return{name:'Deflation',cls:'pill-deflation',color:'#3b82f6'};
+// ---------------------------------------------------------------------------
+// STANDARDISATION.  The stored series are half-scale.  The economically
+// meaningful quantities are
+//   GROWTH_RAW[i] = 2*g      composite growth momentum vs trend
+//   CPI_DEV[i]    = 7.2*inf  headline CPI y/y minus the 2% target, in pp
+// Neither was standardised in the earlier build: over these 104 quarters
+// GROWTH_RAW has mean +0.44 and sd 0.75, and CPI_DEV/3.6 has sd 0.47, so an
+// axis labelled "sigma" was not measuring sigma and growth sat above its own
+// reference two thirds of the time.  Both are now standardised, and
+// POINT-IN-TIME: quarter i is scored using only quarters 0..i, so a point on
+// the trail is the reading an allocator would actually have had in that
+// quarter and it does not move when the as-of slider moves.
+//   Growth is DEMEANED - the reference is trend growth, estimated as the mean
+//   to date.
+//   Inflation is NOT demeaned - the reference is the 2% policy target, not the
+//   historical average - so its scale is the root-mean-square deviation from
+//   target to date (1.79pp over the full sample, against the 3.6pp constant
+//   the earlier build divided by).
+// The first WARM quarters share the statistics of the first WARM quarters: a
+// five-year warm-up that is in-sample for 2000-2004 only.
+const GROWTH_RAW=HIST_G_INF.map(d=>2*d.g);
+const CPI_DEV=HIST_G_INF.map(d=>7.2*d.inf);
+const WARM=20;
+const mean_=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const sd_=a=>{const m=mean_(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/Math.max(a.length-1,1));};
+const rms_=a=>Math.sqrt(a.reduce((s,v)=>s+v*v,0)/a.length);
+const ZG=[],ZP=[];
+for(let i=0;i<GROWTH_RAW.length;i++){
+  const k=Math.max(i+1,WARM);
+  ZG[i]=(GROWTH_RAW[i]-mean_(GROWTH_RAW.slice(0,k)))/sd_(GROWTH_RAW.slice(0,k));
+  ZP[i]=CPI_DEV[i]/rms_(CPI_DEV.slice(0,k));
+}
+const SIG_G=sd_(GROWTH_RAW),SIG_PI=rms_(CPI_DEV);
+const cpiOf=i=>2+CPI_DEV[Math.min(Math.max(i,0),CPI_DEV.length-1)];
+const fmtCpi=i=>{const x=cpiOf(i);return(Math.abs(x)<0.05?0:x).toFixed(1);};
+const ZCLIP=3;                                   // plotting clip, +/-3 sigma
+const clip=v=>Math.max(-ZCLIP,Math.min(ZCLIP,v));
+
+// ---------------------------------------------------------------------------
+// REGIME CLASSIFICATION.  A bare sign test on each axis re-labels the quarter
+// whenever a z-score crosses zero by any amount at all.  On this data set that
+// is 26 regime changes in 104 quarters, six of them one quarter long, several
+// of them triggered by inflation moving 0.02 sigma - and each one moved a 10pp
+// tactical book.  No allocator runs that.  Per axis the classifier now adds:
+//   * a DEAD BAND of +/-BAND sigma around the reference.  Inside the band the
+//     axis carries no new information and the last confirmed sign is retained
+//     (hysteresis), so a wobble around zero cannot flip anything.
+//   * a PERSISTENCE rule: the new sign must print CONFIRM quarters running
+//     before it is adopted.
+// The path is built once, forward from Q1 2000, so it never depends on where
+// the slider sits.  Result on this data: 15 changes, shortest regime 2
+// quarters.  The cost is a recognition lag of one to two quarters at turning
+// points; that lag is deliberate, and a real committee incurs it too.
+const BAND=0.25,CONFIRM=2,CONV_FULL=1.0;
+function axisPath(z){
+  const out=[];let cs=z[0]>=0?1:-1,pend=0,pdir=0;
+  for(let i=0;i<z.length;i++){
+    const raw=z[i]>BAND?1:z[i]<-BAND?-1:0;
+    if(raw!==0&&raw!==cs){
+      if(pdir===raw)pend++;else{pdir=raw;pend=1;}
+      if(pend>=CONFIRM){cs=raw;pend=0;pdir=0;}
+    }else if(raw===cs){pend=0;pdir=0;}
+    out.push(cs);
+  }
+  return out;
+}
+const G_SIGN=axisPath(ZG),P_SIGN=axisPath(ZP);
+const REGIME_META={
+  Goldilocks:{cls:'pill-goldilocks',color:'#10b981'},
+  Reflation:{cls:'pill-reflation',color:'#f59e0b'},
+  Stagflation:{cls:'pill-stagflation',color:'#ef4444'},
+  Deflation:{cls:'pill-deflation',color:'#3b82f6'}
+};
+const quadName=(gs,ps)=>gs>0?(ps>0?'Reflation':'Goldilocks'):(ps>0?'Stagflation':'Deflation');
+const REGIME_PATH=G_SIGN.map((g,i)=>quadName(g,P_SIGN[i]));
+function regimeAt(i){
+  const k=Math.min(Math.max(i,0),REGIME_PATH.length-1),n=REGIME_PATH[k];
+  return{name:n,cls:REGIME_META[n].cls,color:REGIME_META[n].color};
+}
+// The quadrant the raw point sits in, ignoring hysteresis and persistence.
+// When this disagrees with the confirmed label the chart says so, rather than
+// quietly plotting a dot in a box it is not labelled with.
+function rawQuadAt(i){
+  const k=Math.min(Math.max(i,0),ZG.length-1);
+  return quadName(ZG[k]>0?1:-1,ZP[k]>0?1:-1);
+}
+// CONVICTION: how strongly the quarter's own z-scores agree with the label it
+// carries.  Each axis is projected onto its confirmed sign and the WEAKER of
+// the two is taken, so a regime only earns the full tilt when both conditions
+// hold; if either axis has turned against the label (inside the hysteresis
+// band) conviction is zero and the book sits at policy weights.
+function convictionAt(i){
+  const k=Math.min(Math.max(i,0),ZG.length-1);
+  return Math.max(0,Math.min(1,Math.min(G_SIGN[k]*ZG[k],P_SIGN[k]*ZP[k])/CONV_FULL));
 }
 
 const AC=['US Equity','Intl Equity','EM Equity','Fixed Income','High Yield','Priv. Equity','Real Assets','Cash'];
 const MA=['S&P 500','MSCI EAFE','EM Equities','US 10Y Tsy','HY Credit','Gold','Commodities','USD Index'];
 const STRAT=[25,15,10,25,5,10,8,2];
 
-// Regime tactical vectors (% of NAV). Every row sums to 100 and every tilt
-// versus STRAT is bounded at +/-10pp, so the tilts sum to zero: this is a
-// tactical overlay, not a regime-timing bet.
-//              USEq Intl  EM   FI   HY   PE  Real Cash   tilts vs STRAT
-function tactical(r){
+// Investment-policy ranges (min,max % of NAV) - the box the overlay may move
+// inside, and nowhere else.  Private equity's range is a point: see below.
+const IPS=[[15,35],[8,22],[5,15],[15,35],[0,10],[10,10],[4,18],[0,10]];
+
+// Regime TARGET vectors (% of NAV) - the allocation at FULL conviction.  Every
+// row sums to 100, so the tilts sum to zero by construction, no tilt exceeds
+// 10pp, and every target sits inside its IPS range.
+// PRIVATE EQUITY IS PINNED AT ITS 10% POLICY WEIGHT IN ALL FOUR REGIMES.  The
+// earlier build tilted it by -2pp and -1pp, which is not implementable: a
+// drawn private book cannot be traded quarterly on a macro read.  Private
+// weight is steered through the commitment pacing model in the last panel, on
+// a multi-year horizon, not through a tactical overlay.
+//                    USEq Intl  EM   FI   HY   PE  Real Cash  tilts vs STRAT
+function tacticalTarget(r){
   switch(r){
-    case'Goldilocks': return[30,18,12,18,5,10, 5, 2]; // +5 +3 +2 -7  0  0 -3  0
-    case'Reflation':  return[25,16,12,15,5,10,15, 2]; //  0 +1 +2 -10 0  0 +7  0
-    case'Stagflation':return[18,12, 7,25,4, 8,16,10]; // -7 -3 -3  0 -1 -2 +8 +8
-    case'Deflation':  return[19,12, 7,35,3, 9, 7, 8]; // -6 -3 -3 +10 -2 -1 -1 +6
+    case'Goldilocks': return[30,18,12,18,5,10, 5, 2]; // +5 +3 +2  -7  0 0 -3  0
+    case'Reflation':  return[25,16,12,15,5,10,15, 2]; //  0 +1 +2 -10  0 0 +7  0
+    case'Stagflation':return[18,12, 7,25,4,10,16, 8]; // -7 -3 -3   0 -1 0 +8 +6
+    case'Deflation':  return[19,12, 7,35,3,10, 7, 7]; // -6 -3 -3 +10 -2 0 -1 +5
     default:return STRAT.slice();
   }
+}
+// SIGNAL -> TILT MAP, stated rather than assumed:
+//     w_i = policy_i + conviction * (target_i - policy_i)
+// Scaling a zero-sum vector keeps it zero-sum, so the weights sum to 100% at
+// every conviction level and no tilt can breach the 10pp bound.  At zero
+// conviction the portfolio IS the policy portfolio - the right answer when the
+// macro read sits inside the dead band.  It also removes the step change the
+// earlier build had, where a regime flip moved 10pp of NAV overnight.
+function tacticalWeights(i){
+  const c=convictionAt(i),t=tacticalTarget(regimeAt(i).name);
+  return STRAT.map((w,k)=>w+c*(t[k]-w));
 }
 
 const CL=['US Eq','Intl Eq','EM Eq','FI','HY','PE','Real','Cash'];
@@ -559,7 +693,6 @@ function riskContrib(w){
 }
 
 let tIdx=103; // Q4 2025 (latest quarter in the data set)
-function cur(){return RD[Math.min(tIdx,RD.length-1)];}
 
 function setup(canvas,h){
   const dpr=window.devicePixelRatio||1;
@@ -575,9 +708,9 @@ function drawQuadrant(){
   const c=document.getElementById('quadrantCanvas');
   const{ctx,W,H}=setup(c,400);
   ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  const p={l:64,r:25,t:25,b:52},pw=W-p.l-p.r,ph=H-p.t-p.b;
+  const p={l:64,r:25,t:25,b:64},pw=W-p.l-p.r,ph=H-p.t-p.b;
   const cx=p.l+pw/2,cy=p.t+ph/2;
-  const sx=v=>p.l+(v+1)/2*pw,sy=v=>H-p.b-(v+1)/2*ph;
+  const sx=v=>p.l+(v+ZCLIP)/(2*ZCLIP)*pw,sy=v=>H-p.b-(v+ZCLIP)/(2*ZCLIP)*ph;
 
   [{x:cx,y:p.t,w:pw/2,h:ph/2,l:'REFLATION',c:'rgba(245,158,11,.05)',tc:'#f59e0b'},
    {x:p.l,y:p.t,w:pw/2,h:ph/2,l:'STAGFLATION',c:'rgba(239,68,68,.05)',tc:'#ef4444'},
@@ -589,15 +722,21 @@ function drawQuadrant(){
     ctx.fillText(q.l,q.x+q.w/2,q.y+22);ctx.globalAlpha=1;
   });
 
+  // dead band: inside this cross the axis is treated as "no information" and
+  // the previously confirmed sign is held, which is what stops the flicker.
+  ctx.fillStyle='rgba(148,163,184,.055)';
+  ctx.fillRect(sx(-BAND),p.t,sx(BAND)-sx(-BAND),ph);
+  ctx.fillRect(p.l,sy(BAND),pw,sy(-BAND)-sy(BAND));
+
   ctx.strokeStyle='rgba(148,163,184,.2)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
   ctx.beginPath();ctx.moveTo(cx,p.t);ctx.lineTo(cx,H-p.b);ctx.stroke();
   ctx.beginPath();ctx.moveTo(p.l,cy);ctx.lineTo(W-p.r,cy);ctx.stroke();
   ctx.setLineDash([]);
 
   ctx.font='10px sans-serif';
-  for(let z=-2;z<=2;z++){
+  for(let z=-ZCLIP;z<=ZCLIP;z++){
     if(z===0)continue;
-    const x=sx(z/2),y=sy(z/2);
+    const x=sx(z),y=sy(z);
     ctx.strokeStyle='rgba(148,163,184,.22)';
     ctx.beginPath();ctx.moveTo(x,cy-4);ctx.lineTo(x,cy+4);ctx.stroke();
     ctx.beginPath();ctx.moveTo(cx-4,y);ctx.lineTo(cx+4,y);ctx.stroke();
@@ -608,22 +747,22 @@ function drawQuadrant(){
   ctx.fillText('Growth z-score vs trend \u2192',cx,H-p.b+34);
   ctx.save();ctx.translate(p.l-34,cy);ctx.rotate(-Math.PI/2);ctx.fillText('Inflation z-score vs 2% target \u2192',0,0);ctx.restore();
 
-  const d=cur(),ts=Math.max(0,tIdx-20);
+  const ti=Math.min(tIdx,RD.length-1),d=RD[ti],ts=Math.max(0,ti-19);
   ctx.strokeStyle='rgba(6,182,212,.15)';ctx.lineWidth=1.5;ctx.beginPath();
-  for(let i=ts;i<=tIdx&&i<RD.length;i++){
-    const r=RD[i],x=sx(Math.max(-1,Math.min(1,r.g))),y=sy(Math.max(-1,Math.min(1,r.inf)));
+  for(let i=ts;i<=ti;i++){
+    const x=sx(clip(ZG[i])),y=sy(clip(ZP[i]));
     i===ts?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }ctx.stroke();
 
-  for(let i=ts;i<=tIdx&&i<RD.length;i++){
-    const r=RD[i],a=.1+(i-ts)/(tIdx-ts+1)*.5;
-    const x=sx(Math.max(-1,Math.min(1,r.g))),y=sy(Math.max(-1,Math.min(1,r.inf)));
+  for(let i=ts;i<=ti;i++){
+    const a=.1+(i-ts)/(ti-ts+1)*.5;
+    const x=sx(clip(ZG[i])),y=sy(clip(ZP[i]));
     ctx.fillStyle=`rgba(6,182,212,${a})`;ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();
   }
 
   if(d){
-    const x=sx(Math.max(-1,Math.min(1,d.g))),y=sy(Math.max(-1,Math.min(1,d.inf)));
-    const rg=regime(d.g,d.inf);
+    const x=sx(clip(ZG[ti])),y=sy(clip(ZP[ti]));
+    const rg=regimeAt(ti);
     ctx.shadowColor=rg.color;ctx.shadowBlur=14;
     ctx.fillStyle=rg.color;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();
     ctx.shadowBlur=0;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.stroke();
@@ -631,9 +770,9 @@ function drawQuadrant(){
     ctx.fillText(d.label,x+14,y-6);ctx.fillStyle=rg.color;ctx.fillText(rg.name,x+14,y+8);
   }
 
-  const rc=RD.slice(Math.max(0,tIdx-12),tIdx+1);
+  const rc=REGIME_PATH.slice(Math.max(0,ti-12),ti+1);
   const cnt={Goldilocks:0,Reflation:0,Stagflation:0,Deflation:0};
-  rc.forEach(r=>{cnt[regime(r.g,r.inf).name]++});
+  rc.forEach(n=>{cnt[n]++});
   const tot=rc.length||1;
   ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='right';
   ctx.fillStyle='#10b981';ctx.fillText(`Goldilocks ${(cnt.Goldilocks/tot*100).toFixed(0)}%`,W-p.r-5,H-p.b-5);
@@ -641,8 +780,15 @@ function drawQuadrant(){
   ctx.fillStyle='#ef4444';ctx.fillText(`Stagflation ${(cnt.Stagflation/tot*100).toFixed(0)}%`,p.l+85,p.t+38);
   ctx.fillStyle='#3b82f6';ctx.fillText(`Deflation ${(cnt.Deflation/tot*100).toFixed(0)}%`,p.l+90,H-p.b-5);
   ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.font='9px sans-serif';
-  ctx.fillText('trail = last 20 quarters \u00b7 shares = last 13',p.l+2,p.t-8);
-  c._m={p,sx,sy,ts,ti:tIdx};
+  ctx.fillText('trail = last 20 quarters \u00b7 shares = last 13 \u00b7 shaded cross = \u00b1'+BAND.toFixed(2)+'\u03c3 dead band',p.l+2,p.t-8);
+  // If the hysteresis / persistence rule is holding a label that disagrees
+  // with the quadrant the raw point sits in, say so on the chart.
+  const rq=rawQuadAt(ti),cf=REGIME_PATH[ti];
+  if(rq!==cf){
+    ctx.fillStyle='#94a3b8';ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='center';
+    ctx.fillText('point in '+rq.toUpperCase()+' \u00b7 label held at '+cf.toUpperCase()+' (persistence rule)',cx,H-p.b+50);
+  }
+  c._m={p,sx,sy,ts,ti};
 }
 
 // VIX
@@ -657,8 +803,10 @@ function drawVIX(){
   const gH=165,gCx=W/2,gCy=gH-10,gR=Math.min(W/2-40,125);
   const aS=Math.PI;
   // Gauge bands: LOW <15, NORMAL 15-25, ELEVATED 25-35, CRISIS >35
-  // Displayed range 10-85, wide enough for the 2008 and 2020 peaks
-  const VMIN=10,VMAX=85,vz=v=>Math.min(1,Math.max(0,(v-VMIN)/(VMAX-VMIN)));
+  // Displayed range 10-70: the needle carries the quarterly AVERAGE, whose
+  // sample maximum is 58.0 (Q4 2008). The intra-quarter high is printed below
+  // the needle rather than on the dial, because it is a different statistic.
+  const VMIN=10,VMAX=70,vz=v=>Math.min(1,Math.max(0,(v-VMIN)/(VMAX-VMIN)));
   [{f:0,t:vz(15),c:'#10b981'},{f:vz(15),t:vz(25),c:'#f59e0b'},{f:vz(25),t:vz(35),c:'#f97316'},{f:vz(35),t:1,c:'#ef4444'}].forEach(z=>{
     ctx.beginPath();ctx.arc(gCx,gCy,gR,aS+z.f*Math.PI,aS+z.t*Math.PI);
     ctx.strokeStyle=z.c;ctx.lineWidth=20;ctx.lineCap='butt';ctx.stroke();
@@ -676,7 +824,7 @@ function drawVIX(){
   ctx.font='11px sans-serif';ctx.fillText(vl+'  \u00b7  quarterly average',gCx,gCy+50);
   ctx.fillStyle='#94a3b8';ctx.font="10px 'JetBrains Mono',monospace";ctx.fillText('intra-quarter high '+hi.toFixed(1),gCx,gCy+66);
   ctx.font="9px 'JetBrains Mono',monospace";ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.fillText('10',gCx-gR-9,gCy+10);
-  ctx.textAlign='right';ctx.fillText('85',gCx+gR+9,gCy+10);
+  ctx.textAlign='right';ctx.fillText('70',gCx+gR+9,gCy+10);
 
   const cT=gH+52,cH=H-cT-40,cL=54,cR=W-26,cW=cR-cL;
   ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;
@@ -723,67 +871,160 @@ const MOM_SENS=[
   [-0.50,-0.15]  // USD Index: risk-off = strong USD; strong growth = risk-on = weak USD
 ];
 
-function calcMom(assetIdx,quarters){
-  const ei=Math.min(tIdx,RD.length-1);
-  const si=Math.max(0,ei-quarters+1);
-  const s=MOM_SENS[assetIdx];
+function momHorizon(ai,quarters,ei){
+  const si=Math.max(0,ei-quarters+1),s=MOM_SENS[ai];
   let tw=0,ws=0;
   for(let i=si;i<=ei;i++){
-    const w=i-si+1; // recent quarters weighted more
-    const d=RD[i];
-    ws+=(d.g*s[0]+d.inf*s[1])*w;
-    tw+=w;
+    const w=i-si+1;                       // recent quarters weighted more
+    ws+=(ZG[i]*s[0]+ZP[i]*s[1])*w;tw+=w;
   }
   return tw>0?ws/tw:0;
 }
+function momComposite(ai,ei){
+  return(momHorizon(ai,1,ei)+1.5*momHorizon(ai,2,ei)+2.5*momHorizon(ai,4,ei)+3*momHorizon(ai,8,ei))/8;
+}
+// The raw composite has a DIFFERENT mean and dispersion for every asset - the
+// S&P score averaged +0.15 and the gold score +0.03 with half the dispersion -
+// so the old fixed +/-0.15 cut-off on the raw number was not a signal, it was
+// a standing bias: it printed BUY on the S&P in 67% of all quarters and SELL
+// on the 10y in 69%.  Each asset's composite is now standardised against ITS
+// OWN history up to the as-of quarter (expanding window, point-in-time, no
+// look-ahead), and one common +/-MOM_TH sigma cut-off is applied.  With at
+// least MOM_MIN quarters of history the rule fires BUY 33% / SELL 25% /
+// HOLD 42% of the time across the sample.
+const MOM_MIN=12,MOM_TH=0.5;
+function momSignal(ai,ei){
+  const raw=momComposite(ai,ei);
+  if(ei+1<MOM_MIN)return{raw,z:null};
+  const h=[];for(let t=0;t<=ei;t++)h.push(momComposite(ai,t));
+  const m=h.reduce((a,b)=>a+b,0)/h.length;
+  const sd=Math.sqrt(h.reduce((a,v)=>a+(v-m)**2,0)/(h.length-1));
+  return{raw,z:sd>1e-9?(raw-m)/sd:0};
+}
 
-// MOMENTUM — horizons aligned to quarterly data granularity
 function drawMomentum(){
-  const t=document.getElementById('momTable');
+  const t=document.getElementById('momTable'),ei=Math.min(tIdx,RD.length-1);
   const md=MA.map((n,i)=>{
-    const m1q=calcMom(i,1),m2q=calcMom(i,2),m4q=calcMom(i,4),m8q=calcMom(i,8);
-    return{n,m1q,m2q,m4q,m8q,comp:(m1q+m2q*1.5+m4q*2.5+m8q*3)/8};
+    const sig=momSignal(i,ei);
+    return{n,m1q:momHorizon(i,1,ei),m2q:momHorizon(i,2,ei),m4q:momHorizon(i,4,ei),m8q:momHorizon(i,8,ei),comp:sig.raw,z:sig.z};
   });
-  const sc=v=>v>.3?'sig-up2':v>.1?'sig-up':v<-.3?'sig-dn2':v<-.1?'sig-dn':'sig-flat';
-  const st=v=>v>.3?'\u25B2\u25B2':v>.1?'\u25B2':v<-.3?'\u25BC\u25BC':v<-.1?'\u25BC':'\u25CF';
-  const bg=v=>v>.15?'<span class="badge badge-buy">BUY</span>':v<-.15?'<span class="badge badge-sell">SELL</span>':'<span class="badge badge-hold">HOLD</span>';
+  const sc=v=>v>.75?'sig-up2':v>.25?'sig-up':v<-.75?'sig-dn2':v<-.25?'sig-dn':'sig-flat';
+  const st=v=>v>.75?'\u25B2\u25B2':v>.25?'\u25B2':v<-.75?'\u25BC\u25BC':v<-.25?'\u25BC':'\u25CF';
+  const bg=z=>z===null?'<span class="badge badge-hold">n/a</span>'
+    :z>MOM_TH?'<span class="badge badge-buy">BUY</span>'
+    :z<-MOM_TH?'<span class="badge badge-sell">SELL</span>'
+    :'<span class="badge badge-hold">HOLD</span>';
   const fmt=v=>(v>=0?'+':'')+v.toFixed(2);
-  let h='<thead><tr><th>Asset</th><th>3M (1Q)</th><th>6M (2Q)</th><th>12M (4Q)</th><th>24M (8Q)</th><th>Composite</th><th>Signal</th></tr></thead><tbody>';
-  md.forEach(r=>{h+=`<tr><td>${r.n}</td><td class="${sc(r.m1q)}">${st(r.m1q)} ${fmt(r.m1q)}</td><td class="${sc(r.m2q)}">${st(r.m2q)} ${fmt(r.m2q)}</td><td class="${sc(r.m4q)}">${st(r.m4q)} ${fmt(r.m4q)}</td><td class="${sc(r.m8q)}">${st(r.m8q)} ${fmt(r.m8q)}</td><td class="${sc(r.comp)}"><b>${fmt(r.comp)}</b></td><td>${bg(r.comp)}</td></tr>`;});
+  let h='<thead><tr><th>Market proxy</th><th>1Q</th><th>2Q</th><th>4Q</th><th>8Q</th><th>Composite</th><th>z vs own history</th><th>Signal</th></tr></thead><tbody>';
+  md.forEach(r=>{h+=`<tr><td>${r.n}</td><td class="${sc(r.m1q)}">${st(r.m1q)} ${fmt(r.m1q)}</td><td class="${sc(r.m2q)}">${st(r.m2q)} ${fmt(r.m2q)}</td><td class="${sc(r.m4q)}">${st(r.m4q)} ${fmt(r.m4q)}</td><td class="${sc(r.m8q)}">${st(r.m8q)} ${fmt(r.m8q)}</td><td class="${sc(r.comp)}"><b>${fmt(r.comp)}</b></td><td class="${r.z===null?'sig-flat':sc(r.z*1.5)}">${r.z===null?'\u2014':fmt(r.z)+'\u03c3'}</td><td>${bg(r.z)}</td></tr>`;});
   h+='</tbody>';
-  t.innerHTML=h;
+  t.innerHTML=h+`<tfoot><tr><td colspan="8" style="padding-top:10px;color:var(--faint);font-size:10.5px;border:0">Two macro factors drive all eight rows, so these are not eight independent signals \u2014 the cross-section has rank 2 and the scores move together up to the sign of each beta. The eight proxies here are a market-observable set and are deliberately <b>not</b> the eight policy sleeves; they inform the discussion, they do not feed the tilts above.</td></tr></tfoot>`;
 }
 
 // ALLOCATION
 function drawAlloc(){
-  const d=cur(),rn=regime(d.g,d.inf).name,tac=tactical(rn),c=document.getElementById('allocBars');c.innerHTML='';
+  const i0=Math.min(tIdx,RD.length-1);
+  const rn=regimeAt(i0).name,conv=convictionAt(i0);
+  const tgt=tacticalTarget(rn),tac=tacticalWeights(i0);
+  const c=document.getElementById('allocBars');c.innerHTML='';
+  let breach=0;
   AC.forEach((n,i)=>{
-    const tilt=tac[i]-STRAT[i],tc=tilt>0?'var(--green)':tilt<0?'var(--red)':'var(--dim)',ts=tilt>0?'+':'';
-    c.innerHTML+=`<div class="arow" title="${n}: strategic ${STRAT[i]}%, tactical ${tac[i]}%, tilt ${ts}${tilt}pp"><div class="lbl">${n}</div><div class="bars"><div class="bar" style="width:${STRAT[i]/40*100}%;background:rgba(148,163,184,.2)"></div></div><div class="bars"><div class="bar" style="width:${tac[i]/40*100}%;background:rgba(6,182,212,.35)"></div></div><div class="nums"><span class="s">${STRAT[i]}%</span><span class="t">${tac[i]}%</span><span class="d" style="color:${tc}">${ts}${tilt}</span></div></div>`;
+    const tilt=tac[i]-STRAT[i];
+    const tc=tilt>0.05?'var(--green)':tilt<-0.05?'var(--red)':'var(--dim)',ts=tilt>0.05?'+':'';
+    const inRange=tac[i]>=IPS[i][0]-1e-9&&tac[i]<=IPS[i][1]+1e-9;if(!inRange)breach++;
+    const pin=IPS[i][0]===IPS[i][1];
+    const tip=`${n}: policy ${STRAT[i]}%, IPS range ${IPS[i][0]}-${IPS[i][1]}%, full-conviction ${rn} target ${tgt[i]}%, applied ${tac[i].toFixed(1)}% at ${(conv*100).toFixed(0)}% conviction`+(pin?' \u2014 pinned: private weight is set by the commitment pacing model, not by the overlay':'');
+    c.innerHTML+=`<div class="arow" title="${tip}"><div class="lbl">${n}${pin?' <span style="color:var(--faint)">\u25cf</span>':''}</div><div class="bars"><div class="bar" style="width:${STRAT[i]/40*100}%;background:rgba(148,163,184,.2)"></div></div><div class="bars"><div class="bar" style="width:${tac[i]/40*100}%;background:rgba(6,182,212,.35)"></div></div><div class="nums"><span class="s">${STRAT[i]}%</span><span class="t">${tac[i].toFixed(1)}%</span><span class="d" style="color:${tc}">${ts}${tilt.toFixed(1)}</span></div></div>`;
   });
   const sS=STRAT.reduce((a,b)=>a+b,0),sT=tac.reduce((a,b)=>a+b,0);
+  let tSum=tac.reduce((a,v,i)=>a+(v-STRAT[i]),0);if(Math.abs(tSum)<1e-9)tSum=0;
   const mx=Math.max(...tac.map((v,i)=>Math.abs(v-STRAT[i])));
+  const mxFull=Math.max(...tgt.map((v,i)=>Math.abs(v-STRAT[i])));
   c.innerHTML+=`<div class="arow" style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
     <div class="lbl" style="color:var(--text);font-weight:600">Total</div>
     <div class="bars"></div><div class="bars"></div>
-    <div class="nums"><span class="s">${sS}%</span><span class="t">${sT}%</span><span class="d" style="color:var(--dim)">0</span></div></div>
-    <div style="font-size:10.5px;color:var(--faint);font-family:var(--mono);margin-top:6px">regime <b style="color:var(--text)">${rn}</b> &middot; largest tilt ${mx}pp &middot; bound &plusmn;10pp &middot; tilts sum to 0</div>`;
+    <div class="nums"><span class="s">${sS}%</span><span class="t">${sT.toFixed(1)}%</span><span class="d" style="color:var(--dim)">${tSum.toFixed(2)}</span></div></div>
+    <div style="font-size:10.5px;color:var(--faint);font-family:var(--mono);margin-top:6px;line-height:1.7">
+    regime <b style="color:var(--text)">${rn}</b> &middot; conviction <b style="color:var(--cyan)">${(conv*100).toFixed(0)}%</b> of the full-conviction vector<br>
+    applied tilt = conviction &times; (target &minus; policy) &middot; largest applied tilt ${mx.toFixed(1)}pp against a ${mxFull}pp full-conviction target, ${'\u00b1'}10pp bound<br>
+    tilts sum to ${tSum.toFixed(2)}pp &middot; ${breach?`<span style="color:var(--red)">${breach} sleeve(s) outside IPS range</span>`:'all sleeves inside their IPS range'} &middot; <span style="color:var(--faint)">\u25cf</span> = not tradeable tactically</div>`;
 }
 
-// ATTRIBUTION — Proper Brinson-Hood-Beebower decomposition
-// [annualized_base_return, growth_beta, inflation_beta, quarterly_vol]
-// Expected returns are long-run capital-market assumptions; quarterly vol is
-// the annual assumption in ANN_VOL divided by 2.
+// ATTRIBUTION — Brinson-Hood-Beebower decomposition on a two-factor return
+// model.  Segment return r_i,t = mu_i/4 + bg_i*z_g,t + bpi_i*z_pi,t + eps_i,t
+//   [ mu_annual, growth beta, inflation beta,
+//     manager selection tracking error (annual) ]
+// The betas are the quarterly return response to a 1 sigma move in each macro
+// factor.  mu_i is the NEUTRAL-STATE expectation (growth at trend, inflation
+// at target), so a sample that ran hot on inflation prints below-CMA bond
+// returns; that is the intended behaviour, not a drift error.
+// CASH CARRIES ZERO CONTEMPORANEOUS FACTOR BETA.  A quarter's cash return is
+// the bill yield fixed before the quarter starts, so it cannot respond to a
+// shock inside the quarter.  (It is also what keeps the residual covariance
+// below positive semi-definite - see RESID_L.)
+// Selection tracking error is sleeve-specific.  The earlier build gave every
+// sleeve, cash included, the same 50bp quarterly manager alpha, implying 1%
+// annual active risk on a cash sleeve.  Private equity carries the largest
+// figure because manager dispersion there genuinely dwarfs the public sleeves.
 const ASSET_PARAMS=[
-  [0.068, 0.040,-0.012, 0.0800], // US Equity: pro-growth, inflation drag via rates
-  [0.072, 0.030,-0.010, 0.0850], // Intl Equity
-  [0.078, 0.050,-0.008, 0.1050], // EM Equity: high growth beta
-  [0.045,-0.020,-0.018, 0.0275], // Fixed Income: duration gains when growth/inflation fall
-  [0.062, 0.030,-0.006, 0.0450], // High Yield: credit cycle, mild inflation drag
-  [0.095, 0.040,-0.010, 0.1100], // Priv. Equity (de-smoothed)
-  [0.062, 0.010, 0.020, 0.0700], // Real Assets: inflation beneficiary
-  [0.036, 0.005, 0.005, 0.0030]  // Cash
+  [0.068, 0.030,-0.012, 0.0200], // US Equity
+  [0.072, 0.030,-0.012, 0.0250], // Intl Equity
+  [0.078, 0.040,-0.010, 0.0400], // EM Equity
+  [0.045,-0.008,-0.014, 0.0080], // Fixed Income: duration
+  [0.062, 0.018,-0.006, 0.0150], // High Yield
+  [0.095, 0.035,-0.010, 0.0600], // Priv. Equity (de-smoothed)
+  [0.062, 0.008, 0.018, 0.0300], // Real Assets: inflation beneficiary
+  [0.036, 0.000, 0.000, 0.0005]  // Cash: return is pre-set, no live beta
 ];
+
+// RESIDUAL COVARIANCE.  The residual is neither a free parameter nor
+// independent across sleeves.  The earlier build drew an independent shock per
+// sleeve at HALF the stated quarterly volatility, so the simulated benchmark
+// carried about 6.8% annualised risk while the risk panel three inches away
+// reported 11.0% ex-ante for the same weights: two panels, two different risk
+// models, one page.  The residual is now pinned so the generator reproduces
+// the capital-market assumptions the rest of the page already uses:
+//   Sigma_target = diag(v) CM diag(v),   v_i = ANN_VOL_i / 200 (quarterly sd)
+//   Sigma_factor = B Sigma_f B'          B = the two macro betas per sleeve,
+//                                        Sigma_f = sample cov of (z_g, z_pi)
+//   Sigma_resid  = Sigma_target - Sigma_factor,  factored as L L'
+//   r_i,t = mu_i/4 + bg_i*z_g,t + bpi_i*z_pi,t + (L eps_t)_i
+// With cash's factor betas at zero Sigma_resid is positive semi-definite
+// (smallest eigenvalue +5.8e-6) and no ridge is applied; the ridge loop is a
+// guard in case the assumptions above are edited later.  Under this
+// calibration realised sample vols, annualised, are 16.7 / 16.9 / 22.3 / 4.9 /
+// 9.6 / 21.7 / 14.6 / 0.6% against assumptions of 16 / 17 / 21 / 5.5 / 9 / 22
+// / 14 / 0.6%, and the simulated policy portfolio realises 11.6% against an
+// ex-ante 11.0%.
+function cholesky(A){
+  const m=A.length,L=Array.from({length:m},()=>new Array(m).fill(0));
+  for(let i=0;i<m;i++)for(let j=0;j<=i;j++){
+    let x=A[i][j];for(let k=0;k<j;k++)x-=L[i][k]*L[j][k];
+    if(i===j){if(x<=1e-14)return null;L[i][j]=Math.sqrt(x);}
+    else L[i][j]=x/L[j][j];
+  }
+  return L;
+}
+let RESID_RIDGE=0;
+const RESID_L=(function(){
+  const m=ASSET_PARAMS.length,v=ANN_VOL.map(x=>x/200);
+  const cv=(a,b)=>{const ma=mean_(a),mb=mean_(b);return a.reduce((t,x,i)=>t+(x-ma)*(b[i]-mb),0)/(a.length-1);};
+  const SF=[[cv(ZG,ZG),cv(ZG,ZP)],[cv(ZG,ZP),cv(ZP,ZP)]];
+  const base=[];
+  for(let i=0;i<m;i++){base[i]=[];
+    for(let j=0;j<m;j++){
+      const bi=[ASSET_PARAMS[i][1],ASSET_PARAMS[i][2]],bj=[ASSET_PARAMS[j][1],ASSET_PARAMS[j][2]];
+      let f=0;for(let a=0;a<2;a++)for(let b=0;b<2;b++)f+=bi[a]*SF[a][b]*bj[b];
+      base[i][j]=v[i]*v[j]*CM[i][j]-f;
+    }}
+  for(let k=0;k<48;k++){
+    const lam=k===0?0:Math.pow(10,-9+k*0.25);
+    const L=cholesky(base.map((r,i)=>r.map((x,j)=>x+(i===j?lam:0))));
+    if(L){RESID_RIDGE=lam;return L;}
+  }
+  // last resort: uncorrelated residuals at the target sd
+  return ANN_VOL.map((x,i)=>ANN_VOL.map((_,j)=>i===j?x/200:0));
+})();
 
 const SEED=20260101;
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
@@ -792,11 +1033,12 @@ function seededRand(key){return mulberry32((SEED+Math.round(key*1000))>>>0)()*0.
 function seededNorm(s1,s2){const u=seededRand(s1),v=seededRand(s2);const n=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);return Math.max(-2.5,Math.min(2.5,n));}
 
 function simAssetReturns(qi){
-  const d=RD[Math.min(qi,RD.length-1)];
-  return ASSET_PARAMS.map((p,ai)=>{
-    const base=p[0]/4+d.g*p[1]+d.inf*p[2];
-    const noise=seededNorm(qi*13.7+ai*3.1,qi*7.3+ai*11.9)*(p[3]/2);
-    return base+noise;
+  const i=Math.min(Math.max(qi,0),RD.length-1);
+  const e=ASSET_PARAMS.map((_,a)=>seededNorm(i*13.7+a*3.1,i*7.3+a*11.9));
+  return ASSET_PARAMS.map((p,k)=>{
+    let r=p[0]/4+p[1]*ZG[i]+p[2]*ZP[i];
+    for(let j=0;j<=k;j++)r+=RESID_L[k][j]*e[j];   // correlated residual
+    return r;
   });
 }
 
@@ -804,15 +1046,11 @@ function simAssetReturns(qi){
 const attrHistory=[];
 
 function computeBrinson(qi){
-  const d=RD[Math.min(qi,RD.length-1)];
-  const rn=regime(d.g,d.inf).name;
-  const wp=tactical(rn).map(w=>w/100);
+  const i0=Math.min(Math.max(qi,0),RD.length-1);
+  const wp=tacticalWeights(i0).map(w=>w/100);
   const wb=STRAT.map(w=>w/100);
-  const rb=simAssetReturns(qi);
-  const rp=rb.map((r,i)=>{
-    const alpha=seededNorm(qi*19.3+i*5.7,qi*11.1+i*8.3)*0.005;
-    return r+alpha;
-  });
+  const rb=simAssetReturns(i0);
+  const rp=rb.map((r,i)=>r+seededNorm(i0*19.3+i*5.7,i0*11.1+i*8.3)*(ASSET_PARAMS[i][3]/2));
 
   let alloc=0,sel=0,inter=0,rpTot=0,rbTot=0;
   for(let i=0;i<wb.length;i++){
@@ -821,9 +1059,12 @@ function computeBrinson(qi){
     inter+=(wp[i]-wb[i])*(rp[i]-rb[i]);
     rpTot+=wp[i]*rp[i];rbTot+=wb[i]*rb[i];
   }
-  // Identity: alloc + sel + inter === (sum wp*rp) - (sum wb*rb), exactly.
-  const total=alloc+sel+inter;
-  return{alloc,sel,inter,total,rpTot,rbTot};
+  // The total is computed INDEPENDENTLY, from the two portfolio returns, so
+  // the identity check on the panel is a real check.  The earlier build set
+  // total = alloc+sel+inter and then asserted that it equalled itself, which
+  // could never fail and therefore proved nothing.
+  const total=rpTot-rbTot;
+  return{alloc,sel,inter,total,resid:(alloc+sel+inter)-total,rpTot,rbTot};
 }
 
 function fmtBps(v){
@@ -837,16 +1078,25 @@ function drawAttr(){
   ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
 
   const qi=Math.min(tIdx,RD.length-1);
-  const{alloc:ae,sel:se,inter:ie,total:ta,rpTot,rbTot}=computeBrinson(qi);
+  const{alloc:ae,sel:se,inter:ie,total:ta,resid:rz,rpTot,rbTot}=computeBrinson(qi);
 
   attrHistory.length=0;
   const lookback=Math.min(qi+1,12);
   for(let i=qi-lookback+1;i<=qi;i++){
     if(i>=0)attrHistory.push(computeBrinson(i).total);
   }
-  const meanAR=attrHistory.reduce((a,b)=>a+b,0)/attrHistory.length;
-  const te=Math.sqrt(attrHistory.reduce((s,v)=>s+(v-meanAR)**2,0)/Math.max(attrHistory.length-1,1));
+  const nq=attrHistory.length;
+  const meanAR=attrHistory.reduce((a,b)=>a+b,0)/nq;
+  const te=Math.sqrt(attrHistory.reduce((s,v)=>s+(v-meanAR)**2,0)/Math.max(nq-1,1));
+  // annualise: 4*mean(quarterly) / (sqrt(4)*sd(quarterly))
   const ir=te>0.0001?(meanAR/te)*Math.sqrt(4):0;
+  // An information ratio from 12 quarterly observations is a very noisy
+  // statistic. Standard error of an annualised IR over T years of data is
+  // approximately sqrt((1 + IR^2/2)/T); at 12 quarters that is about 0.58, so
+  // anything inside roughly +/-1.2 is not distinguishable from zero. The panel
+  // prints the standard error next to the point estimate rather than letting
+  // two decimal places imply a precision the sample cannot support.
+  const irSe=nq>2?Math.sqrt((1+ir*ir/2)/(nq/4)):NaN;
 
   const items=[{l:'Allocation',v:ae},{l:'Selection',v:se},{l:'Interaction',v:ie},{l:'Total Active',v:ta,tot:true}];
   const p={l:75,r:25,t:25,b:45},pw=W-p.l-p.r,ph=H-p.t-p.b,bW=pw/items.length*.55,gap=pw/items.length;
@@ -888,19 +1138,19 @@ function drawAttr(){
     }
   });
 
-  const chk=Math.abs((ae+se+ie)-ta)<1e-12;
+  const chk=Math.abs(rz)<1e-12;
   document.getElementById('attrMetrics').innerHTML=`
     <div class="mcard"><div class="v c">${(rpTot*100).toFixed(2)}%</div><div class="l">Portfolio (qtr)</div></div>
     <div class="mcard"><div class="v" style="color:var(--dim)">${(rbTot*100).toFixed(2)}%</div><div class="l">Benchmark (qtr)</div></div>
-    <div class="mcard"><div class="v ${ta>=0?'g':'r'}">${fmtBps(ta)}</div><div class="l">Total Active</div></div>
-    <div class="mcard"><div class="v c">${ir.toFixed(2)}</div><div class="l">Info Ratio 12Q</div></div>
-    <div class="mcard"><div class="v ${chk?'g':'r'}">${chk?'\u2713':'\u2717'}</div><div class="l">A+S+I = Total</div></div>`;
+    <div class="mcard"><div class="v ${ta>=0?'g':'r'}">${fmtBps(ta)}</div><div class="l">Total active</div></div>
+    <div class="mcard"><div class="v c">${ir.toFixed(2)}${isFinite(irSe)?' <span style="font-size:11px;color:var(--dim)">&plusmn;'+irSe.toFixed(2)+'</span>':''}</div><div class="l">Info ratio, ${nq}Q (&plusmn; s.e.)</div></div>
+    <div class="mcard"><div class="v ${chk?'g':'r'}">${chk?'\u2713':'\u2717'}</div><div class="l">A+S+I &minus; total (${rz===0?'0':(rz*1e4).toExponential(0)} bps)</div></div>`;
 }
 
 // RISK DECOMPOSITION - Euler contributions to ex-ante portfolio volatility
 function drawRisk(){
-  const d=cur(),rn=regime(d.g,d.inf).name;
-  const wp=tactical(rn).map(x=>x/100),wb=STRAT.map(x=>x/100);
+  const i0=Math.min(tIdx,RD.length-1);
+  const wp=tacticalWeights(i0).map(x=>x/100),wb=STRAT.map(x=>x/100);
   const{sp,ctr}=riskContrib(wp);
   const spb=portVol(wb),te=portVol(wp.map((x,i)=>x-wb[i]));
   const cols=['#06b6d4','#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#f97316','#94a3b8'];
@@ -915,7 +1165,8 @@ function drawRisk(){
     <div class="mcard"><div class="v c">${(sp*100).toFixed(1)}%</div><div class="l">Portfolio &sigma;</div></div>
     <div class="mcard"><div class="v" style="color:var(--dim)">${(spb*100).toFixed(1)}%</div><div class="l">Benchmark &sigma;</div></div>
     <div class="mcard"><div class="v y">${(te*10000).toFixed(0)}</div><div class="l">Ex-ante TE (bps)</div></div>
-    <div class="mcard"><div class="v ${Math.abs(sum-100)<0.05?'g':'r'}">${sum.toFixed(1)}%</div><div class="l">&Sigma; contributions</div></div>`;
+    <div class="mcard"><div class="v ${Math.abs(sum-100)<0.05?'g':'r'}">${sum.toFixed(1)}%</div><div class="l">&Sigma; contributions</div></div>
+    <div class="mcard"><div class="v" style="color:var(--dim)">${(wp[5]*100).toFixed(1)}%</div><div class="l">Illiquid (locked) weight</div></div>`;
 }
 
 // CORRELATION
@@ -954,11 +1205,27 @@ document.getElementById('corrCanvas')?.addEventListener('mousemove',function(e){
 document.getElementById('corrCanvas')?.addEventListener('mouseleave',()=>{document.getElementById('corrTip').style.display='none';});
 
 // PRIVATE CAPITAL PACING - Takahashi & Alexander (2002) commitment model.
-//   C_t   = RC x uncalled commitment            (drawn at the start of year t)
+//   C_t   = RC x uncalled commitment   for t <= IP, else 0   (start of year t)
 //   NAV_t = (NAV_{t-1} + C_t) x (1 + G)
 //   RD_t  = max(Y, (t / L)^B)                   (bow factor B, yield floor Y)
 //   D_t   = RD_t x NAV_t                        (at t = L, RD = 1 -> wind-down)
-// Newton-Raphson IRR on the annual net cashflow stream.
+// Newton-Raphson IRR on the annual net cashflow stream; verified against a
+// bisection solve (agreement to 4dp, |NPV| at the root ~1e-15) at the corners
+// of every slider.
+// THE INVESTMENT PERIOD IS A REAL CONSTRAINT AND IS NOW MODELLED.  A constant
+// rate of contribution applied over the whole fund life, as the earlier build
+// did, still draws capital in year 12 and calls 97% of the commitment - no
+// limited partnership works that way.  Contributions stop at the end of the
+// investment period, so at the default RC 35% / IP 5yr the pace is
+// 35 / 22.8 / 14.8 / 9.6 / 6.2 per cent of commitment and 88% is called, with
+// the residual 12% expiring uncalled.  That expiry is exactly why allocators
+// over-commit, and it is what the steady-state figure below prices.
+// NOTE ON THE IRR: in this model NAV compounds at exactly (1+G) and every
+// dollar is eventually distributed out of that NAV, so the gross IRR of the
+// stream is identically G, at every setting of every other slider (verified:
+// G = 5/13/30% -> IRR = 5.0000/13.0000/30.0000%).  It is an identity, not a
+// forecast.  The model earns its keep on liquidity - pacing, peak outlay,
+// break-even, steady-state commitment - not on return.
 function solveIRR(cfs){
   let r=0.10;
   for(let iter=0;iter<200;iter++){
@@ -980,24 +1247,27 @@ function solveIRR(cfs){
 function drawJCurve(){
   const commit=+document.getElementById('slCommit').value;
   const RC=+document.getElementById('slCall').value/100;
+  let IP=+document.getElementById('slIP').value;
   const L=+document.getElementById('slDist').value;
   const G=+document.getElementById('slGrowth').value/100;
   const B=+document.getElementById('slBow').value/10;
   const Y=+document.getElementById('slYield').value/100;
+  IP=Math.min(IP,L);
   document.getElementById('pcCommit').textContent='$'+commit+'M';
   document.getElementById('pcCall').textContent=(RC*100).toFixed(0)+'%';
+  document.getElementById('pcIP').textContent=IP+' yr';
   document.getElementById('pcDist').textContent=L+' yr';
   document.getElementById('pcGrowth').textContent=(G*100).toFixed(0)+'%';
   document.getElementById('pcBow').textContent=B.toFixed(1);
   document.getElementById('pcYield').textContent=(Y*100).toFixed(0)+'%';
 
   const data=[{y:0,cal:0,dist:0,nav:0,cf:0}],cfs=new Array(L+1).fill(0);
-  let uncalled=commit,calC=0,distC=0,nav=0;
+  let uncalled=commit,calC=0,distC=0,nav=0,navYears=0;
   for(let y=1;y<=L;y++){
-    const C=RC*uncalled;uncalled-=C;calC+=C;cfs[y-1]-=C;
+    const C=(y<=IP)?RC*uncalled:0;uncalled-=C;calC+=C;cfs[y-1]-=C;
     nav=(nav+C)*(1+G);
     const D=Math.max(Y,Math.pow(y/L,B))*nav;
-    nav-=D;distC+=D;cfs[y]+=D;
+    nav-=D;distC+=D;cfs[y]+=D;navYears+=nav;
     data.push({y,cal:calC,dist:distC,nav,cf:distC-calC});
   }
   const yrs=L;
@@ -1045,34 +1315,45 @@ function drawJCurve(){
   const peak=-Math.min(0,...data.map(d=>d.cf));
   let be=null;for(let i=1;i<=yrs;i++){if(data[i].cf>=0){be=i;break;}}
   const irr=solveIRR(cfs);
+  // STEADY-STATE COMMITMENT.  Committing the same amount to one vintage every
+  // year, in the steady state you hold vintages aged 1..L at once, so
+  // aggregate NAV per $1 of annual commitment is the sum of this single
+  // vintage's year-end NAVs.  Inverting gives the annual commitment, as a
+  // share of total plan assets, needed to sit at the 10% private-equity policy
+  // weight.  This is the number the pacing model exists to produce, and it is
+  // what ties this panel to the 10% sleeve in the policy portfolio above.
+  const navPerCommit=commit>0?navYears/commit:0;
+  const ssPct=navPerCommit>0?STRAT[5]/navPerCommit:0;
   document.getElementById('jcurveMetrics').innerHTML=`
-    <div class="mcard"><div class="v c">${tvpi.toFixed(2)}x</div><div class="l">TVPI (gross of fees)</div></div>
-    <div class="mcard"><div class="v g">${(irr*100).toFixed(1)}%</div><div class="l">IRR (gross)</div></div>
-    <div class="mcard"><div class="v y">$${peak.toFixed(0)}M</div><div class="l">Peak net outlay</div></div>
+    <div class="mcard" title="Gross of management fees and carried interest. A typical buyout fee load takes roughly 0.3-0.5x off TVPI."><div class="v c">${tvpi.toFixed(2)}x</div><div class="l">TVPI, gross of fees</div></div>
+    <div class="mcard" title="In this model NAV compounds at exactly (1+G) and is fully distributed, so the gross IRR equals G identically. It is an identity, not a forecast."><div class="v g">${(irr*100).toFixed(1)}%</div><div class="l">Gross IRR (&equiv; G by construction)</div></div>
+    <div class="mcard"><div class="v y">$${peak.toFixed(0)}M</div><div class="l">Peak net outlay (${(peak/commit*100).toFixed(0)}% of commitment)</div></div>
     <div class="mcard"><div class="v ${be?'g':'r'}">${be?('Y'+be):'>L'}</div><div class="l">Break-even year</div></div>
-    <div class="mcard"><div class="v" style="color:var(--dim)">${(calC/commit*100).toFixed(0)}%</div><div class="l">Commitment called</div></div>`;
+    <div class="mcard" title="The remainder expires uncalled at the end of the investment period - which is why allocators over-commit."><div class="v" style="color:var(--dim)">${(calC/commit*100).toFixed(0)}%</div><div class="l">Commitment called by Y${IP}</div></div>
+    <div class="mcard" title="Annual commitment, as a share of total plan assets, that holds the 10% private-equity policy weight in the steady state with one vintage per year."><div class="v c">${ssPct.toFixed(2)}%</div><div class="l">Commit/yr for the 10% sleeve</div></div>`;
 }
 
 function renderAll(){
-  const d=cur(),rg=regime(d.g,d.inf);
+  const i0=Math.min(tIdx,RD.length-1),d=RD[i0],rg=regimeAt(i0),conv=convictionAt(i0);
   const b=document.getElementById('regimeBadge');
   b.textContent=rg.name.toUpperCase();b.className='d-pill '+rg.cls;
   document.getElementById('yearLabel').textContent=d.label;
   drawQuadrant();drawVIX();drawMomentum();drawAlloc();drawRisk();drawAttr();drawCorr();drawJCurve();
-  const v=HIST_VIX[Math.min(tIdx,HIST_VIX.length-1)];
+  const v=HIST_VIX[Math.min(i0,HIST_VIX.length-1)];
   const vl=v<15?'low':v<25?'normal':v<35?'elevated':'crisis';
   document.getElementById('statusBar').innerHTML=
-    'as-of <b>'+d.label+'</b> \u00b7 regime <b>'+rg.name+'</b> \u00b7 growth <b>'+zOf(d.g).toFixed(2)+'\u03c3</b>'+
-    ' \u00b7 inflation <b>'+zOf(d.inf).toFixed(2)+'\u03c3</b> (CPI \u2248 '+fmtCpi(d.inf)+'%)'+
-    ' \u00b7 VIX <b>'+v.toFixed(1)+'</b> ('+vl+') \u00b7 seed <b>'+SEED+'</b>';
+    'as-of <b>'+d.label+'</b> \u00b7 regime <b>'+rg.name+'</b> (conviction <b>'+(conv*100).toFixed(0)+'%</b>)'+
+    ' \u00b7 growth <b>'+ZG[i0].toFixed(2)+'\u03c3</b> vs trend'+
+    ' \u00b7 inflation <b>'+ZP[i0].toFixed(2)+'\u03c3</b> vs target (CPI \u2248 '+fmtCpi(i0)+'%)'+
+    ' \u00b7 VIX <b>'+v.toFixed(1)+'</b> ('+vl+' avg) \u00b7 seed <b>'+SEED+'</b>';
 }
 
 /* ---------------------------------------------------------------- controls */
 document.getElementById('timeSlider').addEventListener('input',e=>{tIdx=+e.target.value;renderAll();});
-['slCommit','slCall','slDist','slGrowth','slBow','slYield'].forEach(id=>{
+['slCommit','slCall','slIP','slDist','slGrowth','slBow','slYield'].forEach(id=>{
   document.getElementById(id).addEventListener('input',drawJCurve);
 });
-const DEFAULTS={timeSlider:103,slCommit:100,slCall:25,slDist:12,slGrowth:15,slBow:25,slYield:5};
+const DEFAULTS={timeSlider:103,slCommit:100,slCall:35,slIP:5,slDist:12,slGrowth:13,slBow:25,slYield:0};
 document.getElementById('resetBtn').addEventListener('click',()=>{
   Object.keys(DEFAULTS).forEach(k=>{document.getElementById(k).value=DEFAULTS[k];});
   tIdx=DEFAULTS.timeSlider;renderAll();
@@ -1100,12 +1381,12 @@ quadCv.addEventListener('mousemove',function(e){
   const r=this.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
   let best=-1,bd=1e9;
   for(let i=m.ts;i<=m.ti&&i<RD.length;i++){
-    const dx=m.sx(clip(RD[i].g))-mx,dy=m.sy(clip(RD[i].inf))-my,dd=dx*dx+dy*dy;
+    const dx=m.sx(clip(ZG[i]))-mx,dy=m.sy(clip(ZP[i]))-my,dd=dx*dx+dy*dy;
     if(dd<bd){bd=dd;best=i;}
   }
   if(best>=0&&bd<400){
-    const q=RD[best],rg=regime(q.g,q.inf);
-    showTip(tip,this,mx,my,'<strong>'+q.label+'</strong><br>growth '+zOf(q.g).toFixed(2)+'\u03c3 \u00b7 inflation '+zOf(q.inf).toFixed(2)+'\u03c3<br>CPI \u2248 '+fmtCpi(q.inf)+'% \u00b7 VIX '+HIST_VIX[best].toFixed(1)+'<br><span style="color:'+rg.color+'">'+rg.name+'</span>');
+    const q=RD[best],rg=regimeAt(best),rq=rawQuadAt(best);
+    showTip(tip,this,mx,my,'<strong>'+q.label+'</strong><br>growth '+ZG[best].toFixed(2)+'\u03c3 \u00b7 inflation '+ZP[best].toFixed(2)+'\u03c3<br>CPI \u2248 '+fmtCpi(best)+'% \u00b7 VIX '+HIST_VIX[best].toFixed(1)+'<br><span style="color:'+rg.color+'">'+rg.name+'</span> \u00b7 conviction '+(convictionAt(best)*100).toFixed(0)+'%'+(rq!==rg.name?'<br><span style="color:#94a3b8">raw quadrant '+rq+' \u2014 label held</span>':''));
   }else hideTip('quadTip');
 });
 quadCv.addEventListener('mouseleave',()=>hideTip('quadTip'));
@@ -1120,7 +1401,7 @@ vixCv.addEventListener('mousemove',function(e){
   if(i<0||i>=m.n){hideTip('vixTip');return;}
   const av=HIST_VIX[i],hv=HIST_VIX_HI[i];
   const bd=av<15?'low':av<25?'normal':av<35?'elevated':'crisis';
-  showTip(tip,this,mx,my,'<strong>'+RD[i].label+'</strong><br>avg VIX '+av.toFixed(1)+' ('+bd+')<br>quarter high '+hv.toFixed(1));
+  showTip(tip,this,mx,my,'<strong>'+RD[i].label+'</strong><br>quarterly avg VIX '+av.toFixed(1)+' ('+bd+')<br>highest close in quarter '+hv.toFixed(1));
 });
 vixCv.addEventListener('mouseleave',()=>hideTip('vixTip'));
 
