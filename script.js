@@ -88,18 +88,14 @@ if (typingElement) {
     // Get actual text length
     const textLength = typingElement.textContent.length;
     
-    // Get the full width of the text content
-    typingElement.style.width = 'auto';
-    const fullWidth = typingElement.scrollWidth;
-    typingElement.style.width = '0';
-    
-    
-    // Create custom animation with exact width
+    // Animate to 100% instead of a pixel width measured once at load: the
+    // element is capped by max-width: fit-content, so the tagline re-fits on
+    // resize or rotation instead of holding the width it had on first paint.
     const styleSheet = document.createElement('style');
     styleSheet.textContent = `
         @keyframes typing-precise {
             from { width: 0; }
-            to { width: ${fullWidth}px; }
+            to { width: 100%; }
         }
     `;
     document.head.appendChild(styleSheet);
