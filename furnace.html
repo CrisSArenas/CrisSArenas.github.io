@@ -21,56 +21,43 @@ a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-.stage{max-width:1180px;margin:18px auto;padding:0 16px}
-.screen{position:relative;width:100%;aspect-ratio:320/200;background:#000;
+/* The game owns the viewport. Nothing scrolls, nothing is selectable, and
+   the screen is sized to fit whichever of width or height runs out first,
+   so no key press can ever shift the page under the player. */
+html,body{height:100%;overflow:hidden}
+body{display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
+.stage{flex:1;min-height:0;display:grid;place-items:center;padding:10px 14px 6px;gap:0}
+.screenwrap{display:grid;place-items:center;width:100%;height:100%;min-height:0}
+.screen{position:relative;aspect-ratio:320/200;height:100%;width:auto;
+  max-width:100%;max-height:100%;background:#000;
   border:1px solid #2a2118;border-radius:8px;overflow:hidden;
   box-shadow:0 0 0 1px rgba(255,106,42,.08),0 24px 70px rgba(0,0,0,.75)}
 #game{position:absolute;inset:0;width:100%;height:100%;display:block;
   image-rendering:pixelated;image-rendering:crisp-edges;cursor:crosshair}
-.scanlines{position:absolute;inset:0;pointer-events:none;opacity:.16;
-  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.85) 2px 3px)}
+.scanlines{position:absolute;inset:0;pointer-events:none;opacity:.10;
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 3px,rgba(0,0,0,.8) 3px 4px)}
 .vignette{position:absolute;inset:0;pointer-events:none;
-  box-shadow:inset 0 0 120px rgba(0,0,0,.72)}
+  box-shadow:inset 0 0 120px rgba(0,0,0,.66)}
 
 .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  background:rgba(4,4,7,.86);backdrop-filter:blur(2px);text-align:center;padding:20px;z-index:5}
+  background:rgba(4,4,7,.88);backdrop-filter:blur(2px);text-align:center;padding:20px;z-index:5}
 .overlay.hide{display:none}
-.overlay .box{max-width:520px}
-.overlay h2{font-family:var(--mono);font-size:clamp(16px,2.6vw,24px);letter-spacing:.14em;
-  color:#ff7a34;text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 18px rgba(255,106,42,.45)}
-.overlay p{color:#b9b2a8;font-size:clamp(11px,1.5vw,13.5px);line-height:1.75;margin-bottom:14px}
+.overlay .box{max-width:540px}
+.overlay h2{font-family:var(--mono);font-size:clamp(17px,2.2vw,26px);letter-spacing:.14em;
+  color:#ff7a34;text-transform:uppercase;margin-bottom:12px;text-shadow:0 0 18px rgba(255,106,42,.45)}
+.overlay p{color:#c2bbb1;font-size:clamp(12px,1.25vw,14.5px);line-height:1.75;margin-bottom:14px}
 .overlay kbd{font-family:var(--mono);background:#1a1610;border:1px solid #3a3025;border-radius:4px;
   padding:1px 6px;color:#e8c49a;font-size:.92em}
 .bigbtn{font-family:var(--mono);background:linear-gradient(180deg,#b8441a,#7d2a0d);
-  border:1px solid #ff8a48;color:#ffe6d2;border-radius:6px;padding:11px 26px;font-size:14px;
+  border:1px solid #ff8a48;color:#ffe6d2;border-radius:6px;padding:13px 30px;font-size:15px;
   letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-weight:700;
   box-shadow:0 0 22px rgba(255,106,42,.3)}
 .bigbtn:hover{background:linear-gradient(180deg,#d4501f,#95330f)}
 
-.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
-.bar .grow{flex:1}
-.hint{font-family:var(--mono);font-size:11px;color:#6f675d}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;
+  padding:4px 16px 10px;flex:none}
+.hint{font-family:var(--mono);font-size:11px;color:#6f675d;text-align:center}
 .hint b{color:#b08a5e}
-
-.info{max-width:1180px;margin:26px auto 0;padding:0 16px;display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
-.info section h3{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
-  color:#ff7a34;margin-bottom:9px}
-.info section p,.info section li{color:var(--muted);font-size:12.5px;line-height:1.75}
-.info section ul{list-style:none}
-.info section li{padding-left:14px;position:relative;margin-bottom:5px}
-.info section li::before{content:'\25B8';position:absolute;left:0;color:#7a6a58}
-.keys{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12px;align-items:baseline}
-.keys dt{font-family:var(--mono);color:#e8c49a;white-space:nowrap}
-.keys dd{color:var(--muted)}
-
-.legal{max-width:1180px;margin:26px auto 0;padding:14px 16px;border-top:1px solid #241d16;
-  color:#6f675d;font-size:11.5px;line-height:1.8}
-.legal b{color:#9a9086}
-footer.mini{max-width:1180px;margin:0 auto;padding:16px;display:flex;justify-content:space-between;
-  gap:14px;flex-wrap:wrap;font-size:11.5px;color:#5d564d}
-footer.mini a{color:#8a8076;margin-left:14px}
-footer.mini a:hover{color:var(--cyan)}
 @media(max-width:620px){.overlay p{display:none}.overlay p.keep{display:block}}
 </style>
 </head>
@@ -80,9 +67,9 @@ footer.mini a:hover{color:var(--cyan)}
   <a class="demo-brand" href="index.html">cristian@portfolio:~$ <span class="crumb">/ &hellip; / furnace</span></a>
   <h1 class="demo-title" style="color:#ff7a34"><i class="fas fa-fire"></i> FURNACE</h1>
   <div class="demo-links">
-    <a href="index.html#projects">Projects</a>
-    <a href="index.html#demos">Demos</a>
-    <a href="robotics-embedded.html">Robotics</a>
+    <a href="arcade.html">Briefing</a>
+    <a href="index.html#arcade">Arcade</a>
+    <a href="index.html">Portfolio</a>
   </div>
   <div class="demo-actions">
     <span class="d-pill" id="verPill" style="color:#ff9a5e;border-color:rgba(255,122,52,.35);background:rgba(255,122,52,.08)">E1 &middot; v1.0</span>
@@ -91,66 +78,29 @@ footer.mini a:hover{color:var(--cyan)}
 </nav>
 
 <div class="stage">
-  <div class="screen" id="screen">
-    <canvas id="game" width="320" height="200" aria-label="FURNACE game viewport"></canvas>
-    <div class="scanlines"></div>
-    <div class="vignette"></div>
-    <div class="overlay" id="clickToPlay">
-      <div class="box">
-        <h2>Click to play</h2>
-        <p>The mouse gets captured for looking. Press <kbd>Esc</kbd> to release it at any time.</p>
-        <p class="keep"><button type="button" class="bigbtn" id="startBtn">Enter FURNACE</button></p>
-        <p class="hint" style="margin-top:14px">Best with a keyboard and mouse. Sound is on &mdash; every noise you hear is synthesised in the browser.</p>
+  <div class="screenwrap">
+    <div class="screen" id="screen">
+      <canvas id="game" width="1280" height="800" aria-label="FURNACE game viewport"></canvas>
+      <div class="scanlines"></div>
+      <div class="vignette"></div>
+      <div class="overlay" id="clickToPlay">
+        <div class="box">
+          <h2>Click to play</h2>
+          <p>The mouse is captured for looking. Press <kbd>Esc</kbd> to release it at any time.</p>
+          <p><button type="button" class="bigbtn" id="startBtn">Enter FURNACE</button></p>
+          <p class="hint" style="margin-top:16px">Keyboard and mouse. Sound is on &mdash; every noise is
+          synthesised in the browser. New here? Read the <a href="arcade.html">briefing</a> first.</p>
+        </div>
       </div>
     </div>
   </div>
-  <div class="bar">
-    <span class="hint">Move <b>WASD</b> &middot; Look <b>mouse</b> &middot; Fire <b>click / Ctrl</b> &middot; Use <b>E / Space</b> &middot; Weapons <b>1&ndash;4</b> &middot; Run <b>Shift</b> &middot; Map <b>Tab</b> &middot; Sound <b>M</b></span>
-    <span class="grow"></span>
-    <span class="hint" id="fpsOut">&mdash;</span>
-  </div>
 </div>
-
-<div class="info">
-  <section>
-    <h3>What this is</h3>
-    <p>A first-person shooter written the way they were written in 1993, from nothing. No engine, no game library, no external files &mdash; every texture, every sprite, every sound effect is generated by code when the page loads. The whole game is one HTML file.</p>
-    <p>The renderer is a raycaster: for each of the 320 screen columns it walks a grid with a DDA until it hits a wall, then draws one vertical textured strip at a height set by the perpendicular distance. Floors and ceilings are cast per pixel, sprites are billboards clipped against a per-column depth buffer, and light falls off with distance, which is most of why it feels like the era.</p>
-  </section>
-  <section>
-    <h3>Controls</h3>
-    <dl class="keys">
-      <dt>W A S D</dt><dd>move and strafe</dd>
-      <dt>Mouse / &larr; &rarr;</dt><dd>turn</dd>
-      <dt>Shift</dt><dd>run</dd>
-      <dt>Click / Ctrl</dt><dd>fire</dd>
-      <dt>E / Space</dt><dd>open doors, hit switches</dd>
-      <dt>1 2 3 4</dt><dd>select weapon</dd>
-      <dt>Q / Wheel</dt><dd>cycle weapons</dd>
-      <dt>Tab</dt><dd>automap</dd>
-      <dt>M</dt><dd>mute</dd>
-      <dt>Esc</dt><dd>release the mouse</dd>
-    </dl>
-  </section>
-  <section>
-    <h3>Notes for the curious</h3>
-    <ul>
-      <li>Three levels, each with a par time, a kill count, an item count and hidden areas. The tally screen between levels is scored the way you remember.</li>
-      <li>Doors are true thin planes at the cell midline, so a ray can pass through the gap while one is sliding open.</li>
-      <li>Green sludge hurts. Armour absorbs a third of incoming damage until it runs out.</li>
-      <li>There are cheat codes. Type them during play. They are not the ones you know, but they are the same idea, and the first one is a synonym for invulnerable skin.</li>
-      <li>Every level was checked by a flood-fill validator before it shipped: solid borders, exactly one exit, and every key reachable before the door it opens.</li>
-    </ul>
-  </section>
+<div class="bar">
+  <span class="hint">Move <b>WASD</b> &middot; Look <b>mouse</b> &middot; Fire <b>click / Ctrl</b> &middot;
+  Use <b>E / Space</b> &middot; Weapons <b>1&ndash;4</b> &middot; Run <b>Shift</b> &middot;
+  Map <b>Tab</b> &middot; Sound <b>M</b> &middot; Release mouse <b>Esc</b>
+  &nbsp;|&nbsp; <span id="fpsOut">&mdash;</span></span>
 </div>
-
-<div class="legal">
-  <b>FURNACE is an original game.</b> It is not DOOM, it contains no id Software code, art, audio, level data or trademarks, and it is not affiliated with or endorsed by id Software or ZeniMax. It is a homage written from scratch to the techniques of the early-1990s first-person shooter &mdash; grid raycasting, billboard sprites, distance-diminished lighting &mdash; with all content generated procedurally in the browser. If it makes you want to go and play the real thing, buy the real thing.
-</div>
-<footer class="mini">
-  <span>&copy; 2026 Cristian Arenas</span>
-  <span><a href="index.html">Home</a><a href="index.html#demos">Demos</a><a href="robotics-embedded.html">Robotics</a></span>
-</footer>
 
 <script>
 'use strict';
@@ -171,10 +121,43 @@ function angDiff(a,b){let d=(a-b)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;r
 const RW=320, RH=200, VIEW_H=168;          // 200-line screen, 32-line status bar
 const cvs=document.getElementById('game');
 const ctx=cvs.getContext('2d',{alpha:false});
-ctx.imageSmoothingEnabled=false;
-const frame=ctx.createImageData(RW,VIEW_H);
+
+// The 3D view stays a 320x168 software buffer - that is the whole point - but
+// the canvas backing store is sized to the real display. The world is blitted
+// up with nearest-neighbour so it keeps its chunky pixels, while the status
+// bar, the messages and every menu are drawn afterwards through a scale
+// transform, so their TEXT rasterises at full resolution and is readable
+// instead of being six blocky pixels tall.
+let SCALE=4;
+const fbc=document.createElement('canvas');fbc.width=RW;fbc.height=VIEW_H;
+const fbx=fbc.getContext('2d');
+const frame=fbx.createImageData(RW,VIEW_H);
 const buf=new Uint32Array(frame.data.buffer);
 const zbuf=new Float32Array(RW);
+
+function resizeCanvas(){
+  const r=cvs.getBoundingClientRect();
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const w=Math.max(RW,Math.round((r.width||640)*dpr));
+  if(cvs.width!==w){cvs.width=w;cvs.height=Math.round(w*RH/RW);}
+  SCALE=cvs.width/RW;
+  ctx.imageSmoothingEnabled=false;
+}
+// Blit the finished software frame, then hand the context back in 320x200
+// user units with the scale transform applied.
+function blitWorld(){
+  fbx.putImageData(frame,0,0);
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(fbc,0,0,RW,VIEW_H,0,0,cvs.width,VIEW_H*SCALE);
+  ctx.setTransform(SCALE,0,0,SCALE,0,0);
+}
+function beginUI(){
+  ctx.setTransform(SCALE,0,0,SCALE,0,0);
+  ctx.imageSmoothingEnabled=false;
+}
+addEventListener('resize',resizeCanvas);
+document.addEventListener('fullscreenchange',resizeCanvas);
 
 // 32 shade levels, applied per channel with a lookup instead of a multiply.
 const SHADES=32;
@@ -968,12 +951,21 @@ function msg(t){G.msg=t;G.msgT=3.2;}
 /* ------------------------------------------------------------------ input */
 const keys={};
 let mouseDX=0;
+// Space and the arrows scroll a page, and Tab moves focus. Once the player is
+// in, every key the game uses is swallowed so nothing can shift under them.
+const GAMEKEYS=new Set(['Space','Tab','Enter','ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
+  'KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','KeyM','ShiftLeft','ShiftRight',
+  'ControlLeft','ControlRight','Digit1','Digit2','Digit3','Digit4']);
 addEventListener('keydown',e=>{
+  if(G.started&&GAMEKEYS.has(e.code))e.preventDefault();
   if(e.repeat)return;
   keys[e.code]=true;
   handleKey(e);
 });
-addEventListener('keyup',e=>{keys[e.code]=false;});
+addEventListener('keyup',e=>{
+  if(G.started&&GAMEKEYS.has(e.code))e.preventDefault();
+  keys[e.code]=false;
+});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
 
 let cheatBuf='';
@@ -1686,11 +1678,11 @@ function drawOverlayFX(){
   }
   if(G.msgT>0&&G.msg){
     ctx.globalAlpha=clamp(G.msgT,0,1);
-    px(ctx,G.msg,6,12,8,'#e8dcc4');
+    px(ctx,G.msg,7,14,9.5,'#e8dcc4');
     ctx.globalAlpha=1;
   }
   if(G.god||G.noclip){
-    px(ctx,(G.god?'IRONHIDE ':'')+(G.noclip?'GHOSTWALK':''),RW-4,12,7,'#6fe0ff','right');
+    px(ctx,(G.god?'IRONHIDE ':'')+(G.noclip?'GHOSTWALK':''),RW-6,14,8.5,'#6fe0ff','right');
   }
 }
 function drawAutomap(){
@@ -1723,7 +1715,7 @@ function drawAutomap(){
   ctx.fillStyle='#ffd27a';
   ctx.beginPath();ctx.moveTo(5,0);ctx.lineTo(-3,-3.2);ctx.lineTo(-1,0);ctx.lineTo(-3,3.2);ctx.closePath();ctx.fill();
   ctx.restore();
-  px(ctx,LEVELS[G.level].name,RW/2,VIEW_H-6,8,'#c9a227','center');
+  px(ctx,LEVELS[G.level].name,RW/2,VIEW_H-7,11,'#c9a227','center');
 }
 function markSeen(){
   // Reveal the cells around the player for the automap.
@@ -1751,40 +1743,39 @@ function drawTitle(dt){
   g.addColorStop(1,'rgba(255,60,10,0)');
   ctx.fillStyle=g;ctx.fillRect(0,60,RW,RH-60);
   ctx.save();
-  ctx.shadowColor='rgba(255,110,40,.9)';ctx.shadowBlur=18;
-  px(ctx,'FURNACE',RW/2,64,42,'#ffb066','center');
+  ctx.shadowColor='rgba(255,110,40,.9)';ctx.shadowBlur=16;
+  px(ctx,'FURNACE',RW/2,66,40,'#ffb066','center');
   ctx.restore();
-  px(ctx,'E P I S O D E   O N E',RW/2,80,8,'#c08050','center');
-  px(ctx,'an original raycasting shooter',RW/2,96,7,'#7a6a5c','center');
-  px(ctx,'written from scratch, 2026',RW/2,106,7,'#7a6a5c','center');
-  if((titleT*1.6|0)%2===0)px(ctx,'PRESS ENTER',RW/2,138,11,'#ffd27a','center');
-  px(ctx,'no engine  ·  no libraries  ·  no asset files',RW/2,162,6.5,'#5f564c','center');
-  px(ctx,'not DOOM, and not affiliated with id Software',RW/2,176,6.5,'#4e463e','center');
-  px(ctx,'© 2026 CRISTIAN ARENAS',RW/2,192,6.5,'#3e3830','center');
+  px(ctx,'E P I S O D E   O N E',RW/2,84,10,'#c08050','center');
+  px(ctx,'An original raycasting shooter, written from scratch.',RW/2,104,9,'#8d7c6c','center');
+  px(ctx,'No engine. No libraries. No asset files.',RW/2,117,9,'#8d7c6c','center');
+  if((titleT*1.6|0)%2===0)px(ctx,'PRESS ENTER',RW/2,148,15,'#ffd27a','center');
+  px(ctx,'Not DOOM \u00b7 not affiliated with id Software',RW/2,178,8,'#585047','center');
+  px(ctx,'\u00a9 2026 CRISTIAN ARENAS',RW/2,191,8,'#463f38','center');
 }
 function drawSkill(){
   bg();
-  px(ctx,'HOW ROUGH DO YOU WANT IT',RW/2,34,11,'#ff9a5e','center');
+  px(ctx,'HOW ROUGH DO YOU WANT IT',RW/2,36,15,'#ff9a5e','center');
   SKILLS.forEach((s,i)=>{
-    const y=64+i*22, on=i===G.skill;
+    const y=68+i*23, on=i===G.skill;
     if(on){
-      ctx.fillStyle='rgba(255,122,52,.12)';ctx.fillRect(28,y-12,RW-56,20);
-      ctx.fillStyle='#ff7a34';ctx.fillRect(28,y-12,2,20);
-      px(ctx,'▸',36,y+2,10,'#ffd27a');
+      ctx.fillStyle='rgba(255,122,52,.13)';ctx.fillRect(20,y-14,RW-40,22);
+      ctx.fillStyle='#ff7a34';ctx.fillRect(20,y-14,2,22);
+      px(ctx,'\u25b8',28,y+2,12,'#ffd27a');
     }
-    px(ctx,s.n,50,y+2,11,on?'#ffe0b0':'#8a7a6a');
-    px(ctx,s.d,RW-32,y+2,7,on?'#c0a890':'#5f564c','right');
+    px(ctx,s.n,42,y+2,13,on?'#ffe0b0':'#8a7a6a');
+    px(ctx,s.d,RW-24,y+2,9.5,on?'#c5ad94':'#655c51','right');
   });
-  px(ctx,'↑ ↓ to choose  ·  ENTER to descend',RW/2,190,7,'#7a6a5c','center');
+  px(ctx,'\u2191 \u2193 to choose \u00b7 ENTER to descend',RW/2,193,10,'#8a7a6a','center');
 }
 function drawTally(){
   bg();
   const t=G.tally;
-  px(ctx,'E1M'+(G.level+1)+'   '+t.name,RW/2,30,12,'#ff9a5e','center');
-  px(ctx,'F I N I S H E D',RW/2,44,7,'#7a6a5c','center');
+  px(ctx,'E1M'+(G.level+1)+'   '+t.name,RW/2,34,16,'#ff9a5e','center');
+  px(ctx,'F I N I S H E D',RW/2,50,10,'#7a6a5c','center');
   const row=(label,val,y,col)=>{
-    px(ctx,label,86,y,10,'#c08050','right');
-    px(ctx,val,RW-86,y,10,col||'#ffd27a','left');
+    px(ctx,label,98,y,13,'#c08050','right');
+    px(ctx,val,RW-98,y,13,col||'#ffd27a','left');
   };
   row('KILLS',t.kills+'%',76, t.kills>=100?'#6fe08a':'#ffd27a');
   row('ITEMS',t.items+'%',94, t.items>=100?'#6fe08a':'#ffd27a');
@@ -1792,25 +1783,25 @@ function drawTally(){
   const tt=t.time|0, pp=t.par|0;
   row('TIME',(tt/60|0)+':'+String(tt%60).padStart(2,'0'),136, tt<=pp?'#6fe08a':'#ff8a5e');
   row('PAR',(pp/60|0)+':'+String(pp%60).padStart(2,'0'),150,'#8a7a6a');
-  px(ctx,t.last?'PRESS ENTER FOR THE TALLY':'PRESS ENTER FOR THE NEXT LEVEL',RW/2,184,8,'#e8dcc4','center');
+  px(ctx,t.last?'PRESS ENTER FOR THE TALLY':'PRESS ENTER FOR THE NEXT LEVEL',RW/2,188,11,'#e8dcc4','center');
 }
 function drawEnd(){
   bg();
-  px(ctx,'THE FURNACE IS COLD',RW/2,42,15,'#ff9a5e','center');
-  px(ctx,'You walked out. Nothing else did.',RW/2,62,8,'#a89684','center');
+  px(ctx,'THE FURNACE IS COLD',RW/2,46,19,'#ff9a5e','center');
+  px(ctx,'You walked out. Nothing else did.',RW/2,68,11,'#a89684','center');
   const k=G.totals.kills,i=G.totals.items,s=G.totals.secrets,t=G.totals.time|0;
-  const row=(l,v,y)=>{px(ctx,l,150,y,9,'#c08050','right');px(ctx,v,170,y,9,'#ffd27a','left');};
+  const row=(l,v,y)=>{px(ctx,l,154,y,12,'#c08050','right');px(ctx,v,170,y,12,'#ffd27a','left');};
   row('TOTAL KILLS',String(k),94);
   row('TOTAL ITEMS',String(i),110);
   row('SECRETS',String(s),126);
   row('TOTAL TIME',(t/60|0)+':'+String(t%60).padStart(2,'0'),142);
-  px(ctx,'SKILL: '+SKILLS[G.skill].n,RW/2,162,8,'#8a7a6a','center');
-  px(ctx,'PRESS ENTER',RW/2,186,9,'#e8dcc4','center');
+  px(ctx,'SKILL: '+SKILLS[G.skill].n,RW/2,168,11,'#8a7a6a','center');
+  px(ctx,'PRESS ENTER',RW/2,190,12,'#e8dcc4','center');
 }
 function drawDead(){
   ctx.fillStyle='rgba(60,4,4,.55)';ctx.fillRect(0,0,RW,VIEW_H);
-  px(ctx,'YOU DIED',RW/2,80,26,'#ff3a2a','center');
-  px(ctx,'PRESS ENTER',RW/2,104,9,'#e8dcc4','center');
+  px(ctx,'YOU DIED',RW/2,84,30,'#ff3a2a','center');
+  px(ctx,'PRESS ENTER',RW/2,112,12,'#e8dcc4','center');
 }
 
 /* ------------------------------------------------------------- main loop */
@@ -1819,6 +1810,7 @@ const fpsOut=document.getElementById('fpsOut');
 function loop(now){
   let dt=(now-last)/1000;last=now;
   if(dt>0.1)dt=0.1;
+  resizeCanvas();
   fpsAcc+=dt;fpsN++;
   if(fpsAcc>0.5){fpsOut.textContent=Math.round(fpsN/fpsAcc)+' fps · 320×200';fpsAcc=0;fpsN=0;}
 
@@ -1829,20 +1821,23 @@ function loop(now){
     updateEnemies(dt);
     markSeen();
     renderWorld();
-    ctx.putImageData(frame,0,0);
+    blitWorld();
     if(G.mapOn)drawAutomap();
     else drawWeapon();
     drawOverlayFX();
     drawStatusBar();
   }else if(G.scene==='dead'){
     renderWorld();
-    ctx.putImageData(frame,0,0);
+    blitWorld();
     drawDead();
     drawStatusBar();
-  }else if(G.scene==='title'){drawTitle(dt);}
-  else if(G.scene==='skill'){drawSkill();}
-  else if(G.scene==='tally'){drawTally();}
-  else if(G.scene==='end'){drawEnd();}
+  }else{
+    beginUI();
+    if(G.scene==='title')drawTitle(dt);
+    else if(G.scene==='skill')drawSkill();
+    else if(G.scene==='tally')drawTally();
+    else if(G.scene==='end')drawEnd();
+  }
 
   requestAnimationFrame(loop);
 }
@@ -1868,6 +1863,7 @@ document.getElementById('fsBtn').addEventListener('click',()=>{
   if(!document.fullscreenElement)el.requestFullscreen&&el.requestFullscreen();
   else document.exitFullscreen();
 });
+resizeCanvas();
 loadLevel(0);          // preload so the title screen has a world behind it
 G.scene='title';
 requestAnimationFrame(loop);

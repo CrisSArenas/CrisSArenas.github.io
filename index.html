@@ -19,13 +19,39 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-/* An unmarked door. It sits at the end of the footer line, reads as a
-   punctuation mark until you hover it, and goes somewhere from 1993. */
-.footer .footer-subtext a.ember{display:inline-block;margin-left:10px;color:#2a2f3a;font-size:.78em;
-  line-height:1;text-decoration:none;transition:color .5s ease,text-shadow .5s ease;
-  vertical-align:baseline;cursor:default}
+/* ---- Arcade section ---- */
+.arcade-section{border-top:1px solid rgba(255,106,42,.12)}
+.arcade-card{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:0;
+  border:1px solid #2a2118;border-radius:12px;overflow:hidden;text-decoration:none;
+  background:linear-gradient(180deg,#120e0b,#0d0a09);transition:border-color .25s,box-shadow .25s,transform .25s}
+.arcade-card:hover{border-color:rgba(255,122,52,.55);transform:translateY(-4px);
+  box-shadow:0 14px 44px rgba(255,106,42,.16)}
+.arcade-art{position:relative;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:10px;min-height:196px;padding:26px 18px;
+  background:radial-gradient(420px 190px at 50% 128%,rgba(255,106,42,.34),rgba(255,60,10,0) 72%),
+             linear-gradient(180deg,#0b0709,#150c07);
+  border-right:1px solid #2a2118}
+.arcade-logo{font-family:var(--font-mono,monospace);font-weight:700;letter-spacing:.13em;
+  font-size:clamp(26px,4.2vw,40px);color:#ffb066;line-height:1;
+  text-shadow:0 0 22px rgba(255,110,40,.6),0 0 54px rgba(255,70,10,.3)}
+.arcade-ep{font-family:var(--font-mono,monospace);letter-spacing:.4em;font-size:9.5px;color:#a9744a}
+.arcade-body{padding:24px 26px}
+.arcade-body h3{font-size:1.15rem;color:var(--text-primary);margin-bottom:10px}
+.arcade-body p{color:var(--text-secondary);font-size:.92rem;line-height:1.8;margin-bottom:14px}
+.arcade-specs{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;
+  font-family:var(--font-mono,monospace);font-size:11px;color:#776d61}
+.arcade-specs b{color:#ff9a5e}
+.arcade-link{color:#ff9a5e!important}
+@media(max-width:760px){.arcade-card{grid-template-columns:1fr}
+  .arcade-art{min-height:150px;border-right:0;border-bottom:1px solid #2a2118}}
+
+/* A second way in, for the people who would go looking for one anyway. */
+.footer .footer-subtext a.ember{display:inline-block;margin-left:14px;color:#ff7a34;
+  font-family:var(--font-mono,monospace);font-size:.74em;letter-spacing:.12em;line-height:1;
+  text-decoration:none;vertical-align:baseline;cursor:pointer;opacity:.78;
+  transition:opacity .25s ease,text-shadow .25s ease}
 .footer .footer-subtext a.ember:hover,.footer .footer-subtext a.ember:focus-visible{
-  color:#ff6a2a;text-shadow:0 0 12px rgba(255,106,42,.85);cursor:pointer}
+  opacity:1;text-shadow:0 0 14px rgba(255,106,42,.85)}
 @media (prefers-reduced-motion:reduce){.footer .footer-subtext a.ember{transition:none}}
 </style>
 </head>
@@ -48,6 +74,7 @@
                 <li><a href="#projects">Projects</a></li>
                 <li><a href="#research">Research</a></li>
                 <li><a href="#demos">Demos</a></li>
+                <li><a href="#arcade">Game</a></li>
                 <li><a href="robotics-embedded.html">Robotics</a></li>
             </ul>
         </div>
@@ -525,27 +552,29 @@
             </p>
             <div class="projects-grid">
 
-                <!-- Factor Replication & Multiple-Testing Lab -->
-                <div class="project-card clickable-card" onclick="window.location.href='factor-replication-lab.html'">
+                <!-- Limit Order Book & Execution Engine -->
+                <div class="project-card clickable-card" onclick="window.location.href='execution-engine.html'">
                     <div class="project-header">
-                        <h3>Factor Replication &amp; Multiple-Testing Lab</h3>
-                        <span class="project-type">Quantitative Research</span>
+                        <h3>Limit Order Book &amp; Execution Engine</h3>
+                        <span class="project-type">Quant Development</span>
                     </div>
                     <p class="project-description">
-                        Twenty published equity anomalies re-tested the way a referee would. Every t-statistic is
-                        computed from a simulated monthly series with Newey&ndash;West standard errors, then put through
-                        Bonferroni, Benjamini&ndash;Hochberg FDR or the Harvey&ndash;Liu&ndash;Zhu <em>t</em>&nbsp;&gt;&nbsp;3.0
-                        hurdle. Switch to the post-publication window to see McLean&ndash;Pontiff decay, and mine pure
-                        noise under the same rules to see what an uncorrected 5% test actually buys you.
+                        A price&ndash;time-priority matching engine with synthetic order flow, and five execution algorithms
+                        working a parent order through it. Child orders join the queue at the touch and fill only when the
+                        size ahead of them is consumed, or cross and pay for it. Temporary impact is fitted from
+                        contemporaneous slippage; permanent impact is identified from exogenous variation in order size,
+                        because the naive regression of price on flow is endogenous and overstates it fivefold. Ends in an
+                        Almgren&ndash;Chriss frontier calibrated from this market.
                     </p>
                     <div class="project-tags">
-                        <span class="tag">Multiple Testing</span>
-                        <span class="tag">Newey&ndash;West HAC</span>
-                        <span class="tag">False Discovery Rate</span>
-                        <span class="tag">Replication</span>
+                        <span class="tag">Matching Engine</span>
+                        <span class="tag">Market Microstructure</span>
+                        <span class="tag">Execution Algorithms</span>
+                        <span class="tag">Transaction Cost Analysis</span>
+                        <span class="tag">Almgren&ndash;Chriss</span>
                     </div>
                     <div class="project-link">
-                        <i class="fas fa-microscope"></i> Open the lab
+                        <i class="fas fa-layer-group"></i> Work an order
                     </div>
                 </div>
 
@@ -698,13 +727,58 @@
         </div>
     </section>
 
+    <!-- Arcade / the game -->
+    <section id="arcade" class="projects arcade-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="title-number">[06]</span> Game
+            </h2>
+            <p class="section-intro">
+                Something entirely different. A first-person shooter written from scratch the way they were
+                written in 1993 &mdash; no engine, no game library, and not one image or audio file.
+            </p>
+            <a class="arcade-card" href="arcade.html">
+                <div class="arcade-art" aria-hidden="true">
+                    <span class="arcade-logo">FURNACE</span>
+                    <span class="arcade-ep">EPISODE ONE</span>
+                </div>
+                <div class="arcade-body">
+                    <h3>FURNACE</h3>
+                    <p>
+                        A hand-written raycasting renderer: one ray per screen column, a DDA through the level
+                        grid, textured wall strips sized by perpendicular distance, per-pixel floor and ceiling
+                        casting, billboard sprites clipped against a depth buffer, and light that falls off with
+                        distance. Every texture, every enemy frame and every sound is generated by code when the
+                        page loads. Three levels, four weapons, keycards, secrets, and the tally screen between
+                        levels.
+                    </p>
+                    <div class="arcade-specs">
+                        <span><b>3</b> levels</span>
+                        <span><b>77 KB</b> one file</span>
+                        <span><b>0</b> asset files</span>
+                        <span><b>&lt;1 ms</b> per frame</span>
+                    </div>
+                    <div class="project-tags">
+                        <span class="tag">Raycasting</span>
+                        <span class="tag">Software Renderer</span>
+                        <span class="tag">Procedural Art</span>
+                        <span class="tag">Web Audio Synthesis</span>
+                    </div>
+                    <div class="project-link arcade-link">
+                        <i class="fas fa-gamepad"></i> Read the briefing, then play
+                    </div>
+                </div>
+            </a>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-text">
                     <p>&copy; 2026 Cristian Arenas. Quantitative Investment & AI/ML Engineering.</p>
-                    <p class="footer-subtext"> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a><a href="furnace.html" class="ember" title="&hellip;" aria-label="An unmarked door">&#9608;</a></p>
+                    <p class="footer-subtext"> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a><a href="arcade.html" class="ember" title="FURNACE — an original raycasting shooter">&#9608;&nbsp;FURNACE</a></p>
                 </div>
                 <div class="footer-links">
                     <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener" aria-label="LinkedIn">
@@ -729,8 +803,9 @@
     <div class="viz-tip" id="vizTip" role="tooltip"></div>
     <script src="script.js"></script>
 <script>
-/* The old sequence. Enter it anywhere on the page and the door opens.
-   Ignored while the caret is in a field, so it cannot fire while typing. */
+/* The old sequence, kept as a shortcut straight past the briefing for anyone
+   who tries it. Ignored while the caret is in a field so it cannot fire
+   while someone is typing. */
 (function(){
   var SEQ=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight',
            'ArrowLeft','ArrowRight','KeyB','KeyA'];
