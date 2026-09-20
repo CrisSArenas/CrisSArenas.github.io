@@ -18,6 +18,16 @@
     <link rel="stylesheet" href="styles.css?v=2">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* An unmarked door. It sits at the end of the footer line, reads as a
+   punctuation mark until you hover it, and goes somewhere from 1993. */
+.footer .footer-subtext a.ember{display:inline-block;margin-left:10px;color:#2a2f3a;font-size:.78em;
+  line-height:1;text-decoration:none;transition:color .5s ease,text-shadow .5s ease;
+  vertical-align:baseline;cursor:default}
+.footer .footer-subtext a.ember:hover,.footer .footer-subtext a.ember:focus-visible{
+  color:#ff6a2a;text-shadow:0 0 12px rgba(255,106,42,.85);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.footer .footer-subtext a.ember{transition:none}}
+</style>
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -508,11 +518,60 @@
                 <span class="title-number">[05]</span> Interactive Demos
             </h2>
             <p class="section-intro">
-                Finance tools that run entirely in the browser on seeded synthetic data, with the methodology and
-                assumptions written under each one. Robotics and embedded-systems simulators live on their
+                Quantitative research, investment and agentic-AI tools that run entirely in the browser on seeded
+                synthetic data, with the methodology, assumptions and limitations written under each one.
+                Robotics and embedded-systems simulators live on their
                 <a href="robotics-embedded.html" style="color: var(--primary-cyan);">own page</a>.
             </p>
             <div class="projects-grid">
+
+                <!-- Factor Replication & Multiple-Testing Lab -->
+                <div class="project-card clickable-card" onclick="window.location.href='factor-replication-lab.html'">
+                    <div class="project-header">
+                        <h3>Factor Replication &amp; Multiple-Testing Lab</h3>
+                        <span class="project-type">Quantitative Research</span>
+                    </div>
+                    <p class="project-description">
+                        Twenty published equity anomalies re-tested the way a referee would. Every t-statistic is
+                        computed from a simulated monthly series with Newey&ndash;West standard errors, then put through
+                        Bonferroni, Benjamini&ndash;Hochberg FDR or the Harvey&ndash;Liu&ndash;Zhu <em>t</em>&nbsp;&gt;&nbsp;3.0
+                        hurdle. Switch to the post-publication window to see McLean&ndash;Pontiff decay, and mine pure
+                        noise under the same rules to see what an uncorrected 5% test actually buys you.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">Multiple Testing</span>
+                        <span class="tag">Newey&ndash;West HAC</span>
+                        <span class="tag">False Discovery Rate</span>
+                        <span class="tag">Replication</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-microscope"></i> Open the lab
+                    </div>
+                </div>
+
+                <!-- Agentic Portfolio Monitoring -->
+                <div class="project-card clickable-card" onclick="window.location.href='agentic-portfolio-monitor.html'">
+                    <div class="project-header">
+                        <h3>Agentic Portfolio Monitoring</h3>
+                        <span class="project-type">Agentic AI &middot; Investments</span>
+                    </div>
+                    <p class="project-description">
+                        A standing fleet of thirteen agents watching a $1.0bn multi-asset book against its IPS, its
+                        risk limits and its liquidity constraints. Run a cycle and the fleet executes as a DAG,
+                        drafts and costs remediation, re-checks it against the post-trade book, and routes it for
+                        approval. Inject a sell-off, a capital call or a pricing outage and watch the data-quality
+                        gate stop auto-execution dead. Every action lands in a hash-chained audit trail.
+                    </p>
+                    <div class="project-tags">
+                        <span class="tag">Multi-Agent Systems</span>
+                        <span class="tag">Guardrails</span>
+                        <span class="tag">Human-in-the-Loop</span>
+                        <span class="tag">Auditability</span>
+                    </div>
+                    <div class="project-link">
+                        <i class="fas fa-robot"></i> Run the fleet
+                    </div>
+                </div>
 
                 <!-- Portfolio Optimizer Demo -->
                 <div class="project-card clickable-card" onclick="window.location.href='portfolio-optimizer.html'">
@@ -645,7 +704,7 @@
             <div class="footer-content">
                 <div class="footer-text">
                     <p>&copy; 2026 Cristian Arenas. Quantitative Investment & AI/ML Engineering.</p>
-                    <p class="footer-subtext"> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+                    <p class="footer-subtext"> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a><a href="furnace.html" class="ember" title="&hellip;" aria-label="An unmarked door">&#9608;</a></p>
                 </div>
                 <div class="footer-links">
                     <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener" aria-label="LinkedIn">
@@ -669,5 +728,24 @@
 
     <div class="viz-tip" id="vizTip" role="tooltip"></div>
     <script src="script.js"></script>
+<script>
+/* The old sequence. Enter it anywhere on the page and the door opens.
+   Ignored while the caret is in a field, so it cannot fire while typing. */
+(function(){
+  var SEQ=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight',
+           'ArrowLeft','ArrowRight','KeyB','KeyA'];
+  var at=0;
+  document.addEventListener('keydown',function(e){
+    var t=e.target;
+    if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+    if(e.code===SEQ[at]){
+      at++;
+      if(at===SEQ.length){at=0;window.location.href='furnace.html';}
+    }else{
+      at=(e.code===SEQ[0])?1:0;
+    }
+  });
+})();
+</script>
 </body>
 </html>
