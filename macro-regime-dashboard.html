@@ -53,6 +53,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .slider-row .hint{font-size:10.5px;color:var(--faint);font-family:var(--mono);white-space:nowrap}
 
 /* MOMENTUM TABLE */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tnote{margin:12px 0 0;color:var(--faint);font-size:10.5px;line-height:1.6}
+.tnote b{color:var(--dim)}
+.tscroll .mtable{min-width:640px}
 .mtable{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
 .mtable th{color:var(--dim);font-weight:600;padding:10px 10px;text-align:center;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
 .mtable th:first-child{text-align:left}
@@ -79,6 +83,9 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .arow .nums .s{color:var(--dim)}
 .arow .nums .t{color:var(--cyan)}
 .arow .nums .d{font-weight:700}
+.arow-hd{margin-bottom:10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint)}
+.arow-hd .lbl,.arow-hd .nums .t,.arow-hd .nums .s{color:var(--faint);font-size:10px}
+.arow-hd .bars{align-items:center;font-family:inherit}
 
 /* METRICS */
 .mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -171,7 +178,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <span class="tag">Two-factor score over 1/2/4/8 quarters &middot; standardised against each proxy's own history &middot; &gt;&nbsp;+0.5&sigma; BUY, &lt;&nbsp;&minus;0.5&sigma; SELL, else HOLD &middot; not price momentum</span>
     </div>
     <div class="panel-body">
-      <table class="mtable" id="momTable"></table>
+      <div class="tscroll"><table class="mtable" id="momTable"></table></div>
+      <p class="tnote" id="momNote"></p>
     </div>
   </div>
 
@@ -323,7 +331,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
           <dt>D<sub>t</sub></dt><dd>= RD<sub>t</sub> &times; NAV<sub>t</sub>; at t = L the rate reaches 1 and the fund fully winds down</dd>
         </dl>
         <p><strong>The investment period is the change that matters.</strong> A constant contribution rate applied across the whole fund life, as the earlier build did, still draws capital in year 12 and calls 97% of the commitment; no limited partnership works that way. At the defaults (RC 35%, IP 5 years) the pace is 35 / 22.8 / 14.8 / 9.6 / 6.2 per cent of commitment, <strong>88% is called and the remaining 12% expires uncalled</strong> &mdash; which is precisely why allocators over-commit.</p>
-        <p><strong>Read the IRR for what it is.</strong> In this model NAV compounds at exactly (1+G) and every dollar is eventually distributed out of that NAV, so the gross IRR of the stream is <em>identically G</em>, at every setting of every other slider (checked: G = 5 / 13 / 30% gives IRR = 5.0000 / 13.0000 / 30.0000%). It is an identity, not a forecast. The model earns its keep on <em>liquidity</em>: peak net outlay, break-even year, and the steady-state commitment.</p>
+        <p><strong>Read the IRR for what it is.</strong> In this model NAV compounds at exactly (1+G) and every dollar is eventually distributed out of that NAV, so the gross IRR of the stream is <em>identically G</em>, at every setting of every other slider (checked: G = 5 / 13 / 30% gives IRR = 5.0000 / 13.0000 / 30.0000%). It is an identity, not a forecast, so the panel reports the <em>net</em> IRR instead &mdash; after a 2.0% management fee and 20% carry over an 8% compounded preferred return, run as a European whole-fund waterfall with a full GP catch-up. That figure does move with the bow factor, the yield floor and the call rate, because all three change <em>when</em> capital comes back and therefore how much preferred return accrues before the GP is in the money. Beyond return, the model earns its keep on <em>liquidity</em>: peak net outlay, break-even year, and the steady-state commitment.</p>
         <p><strong>Steady-state commitment</strong> is the number the panel exists to produce. Committing the same amount to one vintage a year means holding vintages aged 1&hellip;L simultaneously, so aggregate NAV per $1 of annual commitment is the sum of a single vintage&rsquo;s year-end NAVs. Inverting gives the annual commitment, as a share of total plan assets, that holds the 10% private-equity policy weight: <strong>1.35% a year at the defaults</strong>. That is what ties this panel to the 10% sleeve in the policy portfolio above. Net IRR is solved by Newton&ndash;Raphson and cross-checked against a bisection solve (agreement to four decimal places, |NPV| at the root of order 10<sup>&minus;15</sup>) at the corners of every slider.</p>
       </div>
     </div>
@@ -374,7 +382,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
           <li><b>The VIX panel drives nothing either.</b> A real overlay would scale gross risk with realised and implied volatility. This one does not: tilts respond to the macro read alone.</li>
           <li><b>Attribution is single-period arithmetic Brinson on simulated returns.</b> No multi-period linking, no currency effect, no fees, no turnover drag. Quarterly attribution on the private-equity sleeve is particularly weak: private marks arrive with a lag of a quarter or more, and institutions normally lag the private benchmark to match.</li>
           <li><b>Risk is a static long-run covariance.</b> Volatilities and correlations do not vary with the regime, and correlations rise in crises &mdash; which this understates in exactly the quarters where it matters most. The de-smoothed 22% private-equity volatility is an assumption, not a measurement.</li>
-          <li><b>The gross IRR in the pacing panel is an identity.</b> It equals the growth slider by construction and carries no information. Use the panel for liquidity, not for return.</li>
+          <li><b>Gross IRR in the pacing panel is an identity</b> &mdash; it equals the growth slider by construction &mdash; which is why the tile reports net IRR after fees and carry instead. The fee terms are a fixed market-standard 2 &amp; 20 over an 8% pref, not a negotiated schedule, and there is no fee step-down on a successor fund, no transaction or monitoring fee offset, and no management-fee waiver. Real terms vary enough that the net figure is an order of magnitude, not a quote.</li>
           <li><b>Pacing is one vintage, deterministic and gross.</b> No manager dispersion, no secondaries, no recycling, no management fee and no carried interest &mdash; a typical buyout fee load takes roughly 0.3&ndash;0.5x off TVPI. Contributions run at a constant rate of the uncalled balance within the investment period, where real funds ramp; and the fund always fully liquidates at year L, where real funds run tails and take extensions. The steady-state commitment figure assumes one identical vintage a year forever.</li>
         </ul>
       </div>
@@ -708,18 +716,33 @@ function drawQuadrant(){
   const c=document.getElementById('quadrantCanvas');
   const{ctx,W,H}=setup(c,400);
   ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  const p={l:64,r:25,t:25,b:64},pw=W-p.l-p.r,ph=H-p.t-p.b;
+  const p={l:74,r:25,t:25,b:64},pw=W-p.l-p.r,ph=H-p.t-p.b;
   const cx=p.l+pw/2,cy=p.t+ph/2;
   const sx=v=>p.l+(v+ZCLIP)/(2*ZCLIP)*pw,sy=v=>H-p.b-(v+ZCLIP)/(2*ZCLIP)*ph;
 
-  [{x:cx,y:p.t,w:pw/2,h:ph/2,l:'REFLATION',c:'rgba(245,158,11,.05)',tc:'#f59e0b'},
-   {x:p.l,y:p.t,w:pw/2,h:ph/2,l:'STAGFLATION',c:'rgba(239,68,68,.05)',tc:'#ef4444'},
-   {x:p.l,y:cy,w:pw/2,h:ph/2,l:'DEFLATION',c:'rgba(59,130,246,.05)',tc:'#3b82f6'},
-   {x:cx,y:cy,w:pw/2,h:ph/2,l:'GOLDILOCKS',c:'rgba(16,185,129,.05)',tc:'#10b981'}
+  // Trailing-13-quarter share of each regime, computed here so a quadrant
+  // carries ONE label - its name with its share underneath - instead of the
+  // name in one corner and a separate "Stagflation 23%" line in another.
+  const qti=Math.min(tIdx,RD.length-1);
+  const qrc=REGIME_PATH.slice(Math.max(0,qti-12),qti+1);
+  const qcnt={Goldilocks:0,Reflation:0,Stagflation:0,Deflation:0};
+  qrc.forEach(n=>{qcnt[n]++});
+  const qtot=qrc.length||1;
+
+  [{x:cx,y:p.t,w:pw/2,h:ph/2,l:'REFLATION',k:'Reflation',c:'rgba(245,158,11,.05)',tc:'#f59e0b'},
+   {x:p.l,y:p.t,w:pw/2,h:ph/2,l:'STAGFLATION',k:'Stagflation',c:'rgba(239,68,68,.05)',tc:'#ef4444'},
+   {x:p.l,y:cy,w:pw/2,h:ph/2,l:'DEFLATION',k:'Deflation',c:'rgba(59,130,246,.05)',tc:'#3b82f6'},
+   {x:cx,y:cy,w:pw/2,h:ph/2,l:'GOLDILOCKS',k:'Goldilocks',c:'rgba(16,185,129,.05)',tc:'#10b981'}
   ].forEach(q=>{
     ctx.fillStyle=q.c;ctx.fillRect(q.x,q.y,q.w,q.h);
-    ctx.fillStyle=q.tc;ctx.globalAlpha=.25;ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+    ctx.textAlign='center';
+    ctx.fillStyle=q.tc;ctx.globalAlpha=.3;ctx.font='bold 12px sans-serif';
     ctx.fillText(q.l,q.x+q.w/2,q.y+22);ctx.globalAlpha=1;
+    const share=qcnt[q.k]/qtot;
+    if(share>0){                       // a quadrant never visited prints nothing
+      ctx.fillStyle=q.tc;ctx.globalAlpha=.85;ctx.font='11px "JetBrains Mono",monospace';
+      ctx.fillText((share*100).toFixed(0)+'%',q.x+q.w/2,q.y+39);ctx.globalAlpha=1;
+    }
   });
 
   // dead band: inside this cross the axis is treated as "no information" and
@@ -745,7 +768,7 @@ function drawQuadrant(){
   }
   ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.textAlign='center';
   ctx.fillText('Growth z-score vs trend \u2192',cx,H-p.b+34);
-  ctx.save();ctx.translate(p.l-34,cy);ctx.rotate(-Math.PI/2);ctx.fillText('Inflation z-score vs 2% target \u2192',0,0);ctx.restore();
+  ctx.save();ctx.translate(p.l-46,cy);ctx.rotate(-Math.PI/2);ctx.fillText('Inflation z-score vs 2% target \u2192',0,0);ctx.restore();
 
   const ti=Math.min(tIdx,RD.length-1),d=RD[ti],ts=Math.max(0,ti-19);
   ctx.strokeStyle='rgba(6,182,212,.15)';ctx.lineWidth=1.5;ctx.beginPath();
@@ -754,10 +777,20 @@ function drawQuadrant(){
     i===ts?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }ctx.stroke();
 
+  // Observations outside the +/-3 sigma frame are clamped to the boundary.
+  // Drawn as a filled dot they read as real points sitting on the edge, so a
+  // clamped quarter is drawn hollow and the caption says so.
+  let nClamped=0;
   for(let i=ts;i<=ti;i++){
     const a=.1+(i-ts)/(ti-ts+1)*.5;
-    const x=sx(clip(ZG[i])),y=sy(clip(ZP[i]));
-    ctx.fillStyle=`rgba(6,182,212,${a})`;ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();
+    const gz=ZG[i],pz=ZP[i],x=sx(clip(gz)),y=sy(clip(pz));
+    if(Math.abs(gz)>ZCLIP||Math.abs(pz)>ZCLIP){
+      nClamped++;
+      ctx.strokeStyle=`rgba(6,182,212,${Math.min(1,a+.4)})`;ctx.lineWidth=1.3;
+      ctx.beginPath();ctx.arc(x,y,3.8,0,Math.PI*2);ctx.stroke();
+    }else{
+      ctx.fillStyle=`rgba(6,182,212,${a})`;ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();
+    }
   }
 
   if(d){
@@ -770,17 +803,11 @@ function drawQuadrant(){
     ctx.fillText(d.label,x+14,y-6);ctx.fillStyle=rg.color;ctx.fillText(rg.name,x+14,y+8);
   }
 
-  const rc=REGIME_PATH.slice(Math.max(0,ti-12),ti+1);
-  const cnt={Goldilocks:0,Reflation:0,Stagflation:0,Deflation:0};
-  rc.forEach(n=>{cnt[n]++});
-  const tot=rc.length||1;
-  ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='right';
-  ctx.fillStyle='#10b981';ctx.fillText(`Goldilocks ${(cnt.Goldilocks/tot*100).toFixed(0)}%`,W-p.r-5,H-p.b-5);
-  ctx.fillStyle='#f59e0b';ctx.fillText(`Reflation ${(cnt.Reflation/tot*100).toFixed(0)}%`,W-p.r-5,p.t+38);
-  ctx.fillStyle='#ef4444';ctx.fillText(`Stagflation ${(cnt.Stagflation/tot*100).toFixed(0)}%`,p.l+85,p.t+38);
-  ctx.fillStyle='#3b82f6';ctx.fillText(`Deflation ${(cnt.Deflation/tot*100).toFixed(0)}%`,p.l+90,H-p.b-5);
   ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.font='9px sans-serif';
-  ctx.fillText('trail = last 20 quarters \u00b7 shares = last 13 \u00b7 shaded cross = \u00b1'+BAND.toFixed(2)+'\u03c3 dead band',p.l+2,p.t-8);
+  const cap='trail 20q \u00b7 shares 13q \u00b7 shaded cross = \u00b1'+BAND.toFixed(2)+'\u03c3 dead band'
+    +(nClamped?' \u00b7 \u25cb = clamped at \u00b1'+ZCLIP+'\u03c3':'');
+  if(ctx.measureText(cap).width>pw)ctx.font='8px sans-serif';  // shrink, never overrun the plot
+  ctx.fillText(cap,p.l+2,p.t-8);
   // If the hysteresis / persistence rule is holding a label that disagrees
   // with the quadrant the raw point sits in, say so on the chart.
   const rq=rawQuadAt(ti),cf=REGIME_PATH[ti];
@@ -800,17 +827,32 @@ function drawVIX(){
   const vd=HIST_VIX,qi=Math.min(tIdx,vd.length-1);
   const cv=vd[qi],hi=HIST_VIX_HI[qi];
 
-  const gH=165,gCx=W/2,gCy=gH-10,gR=Math.min(W/2-40,125);
+  // LAYOUT.  Every readout is positioned off gH, and the history chart top
+  // is gH+70, so the value, the state word and the chart legend each own a
+  // band of the canvas and cannot land on one another at any width.
+  const gH=168,gCx=W/2,gCy=gH-16,gR=Math.min(W/2-46,112);
   const aS=Math.PI;
   // Gauge bands: LOW <15, NORMAL 15-25, ELEVATED 25-35, CRISIS >35
   // Displayed range 10-70: the needle carries the quarterly AVERAGE, whose
-  // sample maximum is 58.0 (Q4 2008). The intra-quarter high is printed below
-  // the needle rather than on the dial, because it is a different statistic.
+  // sample maximum is 58.0 (Q4 2008). The intra-quarter high is a different
+  // statistic and is reported in the chart legend, not on the dial.
   const VMIN=10,VMAX=70,vz=v=>Math.min(1,Math.max(0,(v-VMIN)/(VMAX-VMIN)));
   [{f:0,t:vz(15),c:'#10b981'},{f:vz(15),t:vz(25),c:'#f59e0b'},{f:vz(25),t:vz(35),c:'#f97316'},{f:vz(35),t:1,c:'#ef4444'}].forEach(z=>{
     ctx.beginPath();ctx.arc(gCx,gCy,gR,aS+z.f*Math.PI,aS+z.t*Math.PI);
     ctx.strokeStyle=z.c;ctx.lineWidth=20;ctx.lineCap='butt';ctx.stroke();
   });
+
+  // Band boundaries on the dial. The caption names four bands; without these
+  // the dial marked only its two end points.
+  ctx.font="9px 'JetBrains Mono',monospace";ctx.textBaseline='middle';
+  [{v:VMIN,c:'#64748b'},{v:15,c:'#10b981'},{v:25,c:'#f59e0b'},{v:35,c:'#f97316'},{v:VMAX,c:'#64748b'}].forEach(tk=>{
+    const ang=aS+vz(tk.v)*Math.PI,ca=Math.cos(ang),sa=Math.sin(ang);
+    ctx.strokeStyle='rgba(8,13,26,.85)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(gCx+ca*(gR-10),gCy+sa*(gR-10));ctx.lineTo(gCx+ca*(gR+10),gCy+sa*(gR+10));ctx.stroke();
+    ctx.fillStyle=tk.c;ctx.textAlign='center';
+    ctx.fillText(tk.v,gCx+ca*(gR+19),gCy+sa*(gR+19));
+  });
+  ctx.textBaseline='alphabetic';
 
   const vn=vz(cv),na=aS+vn*Math.PI;
   ctx.save();ctx.translate(gCx,gCy);ctx.rotate(na);
@@ -820,13 +862,10 @@ function drawVIX(){
 
   const vc=cv<15?'#10b981':cv<25?'#f59e0b':cv<35?'#f97316':'#ef4444';
   const vl=cv<15?'LOW':cv<25?'NORMAL':cv<35?'ELEVATED':'CRISIS';
-  ctx.fillStyle=vc;ctx.font="bold 26px 'JetBrains Mono',monospace";ctx.textAlign='center';ctx.fillText(cv.toFixed(1),gCx,gCy+34);
-  ctx.font='11px sans-serif';ctx.fillText(vl+'  \u00b7  quarterly average',gCx,gCy+50);
-  ctx.fillStyle='#94a3b8';ctx.font="10px 'JetBrains Mono',monospace";ctx.fillText('intra-quarter high '+hi.toFixed(1),gCx,gCy+66);
-  ctx.font="9px 'JetBrains Mono',monospace";ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.fillText('10',gCx-gR-9,gCy+10);
-  ctx.textAlign='right';ctx.fillText('70',gCx+gR+9,gCy+10);
+  ctx.fillStyle=vc;ctx.font="bold 26px 'JetBrains Mono',monospace";ctx.textAlign='center';ctx.fillText(cv.toFixed(1),gCx,gCy+38);
+  ctx.font='11px sans-serif';ctx.fillText(vl,gCx,gCy+56);
 
-  const cT=gH+52,cH=H-cT-40,cL=54,cR=W-26,cW=cR-cL;
+  const cT=gH+70,cH=H-cT-40,cL=54,cR=W-26,cW=cR-cL;
   ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;
   const vm=Math.max(...HIST_VIX_HI.slice(0,tIdx+1))*1.08;
   for(let i=0;i<=4;i++){const y=cT+cH*i/4;ctx.beginPath();ctx.moveTo(cL,y);ctx.lineTo(cR,y);ctx.stroke();
@@ -852,9 +891,17 @@ function drawVIX(){
   ctx.fillStyle='#64748b';ctx.font="9px 'JetBrains Mono',monospace";ctx.textAlign='center';
   for(let y=2000;y<=2025;y+=5){const i=(y-2000)*4,x=cL+(i/(RD.length-1))*cW;ctx.fillText(y,x,cT+cH+14);}
   ctx.save();ctx.translate(cL-38,cT+cH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText('VIX (index level)',0,0);ctx.restore();
-  ctx.textAlign='left';ctx.font='9px sans-serif';
-  ctx.fillStyle='#06b6d4';ctx.fillText('\u2014 quarterly average',cL+2,cT-8);
-  ctx.fillStyle='#94a3b8';ctx.fillText('\u2014 intra-quarter high',cL+124,cT-8);
+  // Legend sits inside the plot at the top right, where neither series ever
+  // reaches, and carries each line's current value - so the two readings that
+  // used to be stacked under the gauge now have somewhere to live.
+  ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='right';
+  [{t:'quarterly average '+cv.toFixed(1),c:'#06b6d4'},
+   {t:'intra-quarter high '+hi.toFixed(1),c:'#94a3b8'}].forEach((l,i)=>{
+    const ly=cT+14+i*13,tw=ctx.measureText(l.t).width;
+    ctx.fillStyle=l.c;ctx.fillText(l.t,cR-6,ly);
+    ctx.strokeStyle=l.c;ctx.lineWidth=2;ctx.beginPath();
+    ctx.moveTo(cR-20-tw,ly-3);ctx.lineTo(cR-10-tw,ly-3);ctx.stroke();
+  });
   c._m={cL,cT,cH,cW,n,vm};
 }
 
@@ -902,6 +949,24 @@ function momSignal(ai,ei){
   return{raw,z:sd>1e-9?(raw-m)/sd:0};
 }
 
+// Hit rate of the +/-MOM_TH rule over the whole sample, computed once and
+// memoised.  An all-HOLD quarter is ordinary - the rule is quiet about two
+// quarters in five - and without this the reader who lands on a quiet quarter
+// has no way to tell a calm signal from a broken one.
+let MOM_RATE=null;
+function momHitRate(){
+  if(MOM_RATE)return MOM_RATE;
+  let b=0,se=0,h=0;
+  for(let t=MOM_MIN-1;t<RD.length;t++)for(let a=0;a<MA.length;a++){
+    const z=momSignal(a,t).z;
+    if(z===null)continue;
+    if(z>MOM_TH)b++;else if(z<-MOM_TH)se++;else h++;
+  }
+  const n=b+se+h||1;
+  MOM_RATE={buy:100*b/n,sell:100*se/n,hold:100*h/n,n};
+  return MOM_RATE;
+}
+
 function drawMomentum(){
   const t=document.getElementById('momTable'),ei=Math.min(tIdx,RD.length-1);
   const md=MA.map((n,i)=>{
@@ -916,9 +981,12 @@ function drawMomentum(){
     :'<span class="badge badge-hold">HOLD</span>';
   const fmt=v=>(v>=0?'+':'')+v.toFixed(2);
   let h='<thead><tr><th>Market proxy</th><th>1Q</th><th>2Q</th><th>4Q</th><th>8Q</th><th>Composite</th><th>z vs own history</th><th>Signal</th></tr></thead><tbody>';
-  md.forEach(r=>{h+=`<tr><td>${r.n}</td><td class="${sc(r.m1q)}">${st(r.m1q)} ${fmt(r.m1q)}</td><td class="${sc(r.m2q)}">${st(r.m2q)} ${fmt(r.m2q)}</td><td class="${sc(r.m4q)}">${st(r.m4q)} ${fmt(r.m4q)}</td><td class="${sc(r.m8q)}">${st(r.m8q)} ${fmt(r.m8q)}</td><td class="${sc(r.comp)}"><b>${fmt(r.comp)}</b></td><td class="${r.z===null?'sig-flat':sc(r.z*1.5)}">${r.z===null?'\u2014':fmt(r.z)+'\u03c3'}</td><td>${bg(r.z)}</td></tr>`;});
+  md.forEach(r=>{h+=`<tr><td>${r.n}</td><td class="${sc(r.m1q)}">${st(r.m1q)} ${fmt(r.m1q)}</td><td class="${sc(r.m2q)}">${st(r.m2q)} ${fmt(r.m2q)}</td><td class="${sc(r.m4q)}">${st(r.m4q)} ${fmt(r.m4q)}</td><td class="${sc(r.m8q)}">${st(r.m8q)} ${fmt(r.m8q)}</td><td class="${sc(r.comp)}"><b>${fmt(r.comp)}</b></td><td class="${r.z===null?'sig-flat':sc(r.z*1.5)}">${r.z===null?'\u2014':(r.z>=0?'+':'')+r.z.toFixed(3)+'\u03c3'}</td><td>${bg(r.z)}</td></tr>`;});
   h+='</tbody>';
-  t.innerHTML=h+`<tfoot><tr><td colspan="8" style="padding-top:10px;color:var(--faint);font-size:10.5px;border:0">Two macro factors drive all eight rows, so these are not eight independent signals \u2014 the cross-section has rank 2 and the scores move together up to the sign of each beta. The eight proxies here are a market-observable set and are deliberately <b>not</b> the eight policy sleeves; they inform the discussion, they do not feed the tilts above.</td></tr></tfoot>`;
+  t.innerHTML=h;
+  // The note sits outside the table's horizontal scroll rail. Inside it,
+  // the prose scrolled sideways with the columns instead of wrapping.
+  document.getElementById('momNote').innerHTML=`Two macro factors drive all eight rows, so these are not eight independent signals \u2014 the cross-section has rank 2 and the scores move together up to the sign of each beta. The eight proxies here are a market-observable set and are deliberately <b>not</b> the eight policy sleeves; they inform the discussion, they do not feed the tilts above. Over the full sample the \u00b1${MOM_TH}\u03c3 rule prints <b>BUY ${momHitRate().buy.toFixed(0)}%</b>, <b>SELL ${momHitRate().sell.toFixed(0)}%</b> and <b>HOLD ${momHitRate().hold.toFixed(0)}%</b> of the time, so a quarter in which every row reads HOLD is a quiet macro quarter, not a dead column.`;
 }
 
 // ALLOCATION
@@ -1123,7 +1191,11 @@ function drawAttr(){
     let yTop,yBot;
     if(it.tot){yTop=it.v>=0?sv(it.v):zY;yBot=it.v>=0?zY:sv(it.v);}
     else{const ps=rs;rs+=it.v;yTop=sv(Math.max(ps,rs));yBot=sv(Math.min(ps,rs));}
-    const bH=Math.max(yBot-yTop,3);
+    // A +1bp interaction step is sub-pixel next to a -36bp total. Give every
+    // step a 7px floor centred on its true span; the label still reads the
+    // real value, the bar just stays visible.
+    let bH=yBot-yTop;
+    if(bH<7){const mid=(yTop+yBot)/2;yTop=mid-3.5;yBot=mid+3.5;bH=7;}
     ctx.fillStyle=col;ctx.globalAlpha=it.tot?.9:.7;
     const rx=Math.min(4,bH/2);
     ctx.beginPath();ctx.moveTo(x+rx,yTop);ctx.lineTo(x+bW-rx,yTop);ctx.quadraticCurveTo(x+bW,yTop,x+bW,yTop+rx);ctx.lineTo(x+bW,yBot-rx);ctx.quadraticCurveTo(x+bW,yBot,x+bW-rx,yBot);ctx.lineTo(x+rx,yBot);ctx.quadraticCurveTo(x,yBot,x,yBot-rx);ctx.lineTo(x,yTop+rx);ctx.quadraticCurveTo(x,yTop,x+rx,yTop);ctx.fill();
@@ -1144,7 +1216,7 @@ function drawAttr(){
     <div class="mcard"><div class="v" style="color:var(--dim)">${(rbTot*100).toFixed(2)}%</div><div class="l">Benchmark (qtr)</div></div>
     <div class="mcard"><div class="v ${ta>=0?'g':'r'}">${fmtBps(ta)}</div><div class="l">Total active</div></div>
     <div class="mcard"><div class="v c">${ir.toFixed(2)}${isFinite(irSe)?' <span style="font-size:11px;color:var(--dim)">&plusmn;'+irSe.toFixed(2)+'</span>':''}</div><div class="l">Info ratio, ${nq}Q (&plusmn; s.e.)</div></div>
-    <div class="mcard"><div class="v ${chk?'g':'r'}">${chk?'\u2713':'\u2717'}</div><div class="l">A+S+I &minus; total (${rz===0?'0':(rz*1e4).toExponential(0)} bps)</div></div>`;
+    <div class="mcard"><div class="v ${chk?'g':'r'}">${chk?'\u2713':'\u2717'}</div><div class="l">A+S+I &minus; total (${Math.abs(rz*1e4)<0.05?'0.0':(rz*1e4).toFixed(1)} bps)</div></div>`;
 }
 
 // RISK DECOMPOSITION - Euler contributions to ex-ante portfolio volatility
@@ -1155,17 +1227,21 @@ function drawRisk(){
   const spb=portVol(wb),te=portVol(wp.map((x,i)=>x-wb[i]));
   const cols=['#06b6d4','#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#f97316','#94a3b8'];
   const mx=Math.max(...ctr.map(Math.abs))||1;
-  let h='',sum=0;
+  // -0.02% used to print as "-0.0%": a minus sign on a zero.
+  const z1=v=>(Math.abs(v)<0.05?0:v).toFixed(1);
+  let h='<div class="arow arow-hd"><div class="lbl">Asset class</div>'
+       +'<div class="bars">Share of portfolio risk</div>'
+       +'<div class="nums"><span class="t">% risk</span><span class="s">% weight</span></div></div>',sum=0;
   AC.forEach((n,i)=>{
     const pct=sp>0?ctr[i]/sp*100:0;sum+=pct;
-    h+=`<div class="arow" title="${n}: ${(wp[i]*100).toFixed(0)}% weight, ${ANN_VOL[i].toFixed(1)}% vol, ${pct.toFixed(1)}% of portfolio risk"><div class="lbl">${n}</div><div class="bars"><div class="bar" style="width:${Math.max(Math.abs(ctr[i])/mx*100,1.5)}%;background:${cols[i]}44;border-left:3px solid ${cols[i]}"></div></div><div class="nums"><span class="t">${pct.toFixed(1)}%</span><span class="s">${(wp[i]*100).toFixed(0)}% w</span></div></div>`;
+    h+=`<div class="arow" title="${n}: ${(wp[i]*100).toFixed(0)}% weight, ${ANN_VOL[i].toFixed(1)}% vol, ${pct.toFixed(1)}% of portfolio risk"><div class="lbl">${n}</div><div class="bars"><div class="bar" style="width:${Math.max(Math.abs(ctr[i])/mx*100,1.5)}%;background:${cols[i]}44;border-left:3px solid ${cols[i]}"></div></div><div class="nums"><span class="t">${z1(pct)}%</span><span class="s">${(wp[i]*100).toFixed(0)}%</span></div></div>`;
   });
   document.getElementById('riskBars').innerHTML=h;
   document.getElementById('riskMetrics').innerHTML=`
     <div class="mcard"><div class="v c">${(sp*100).toFixed(1)}%</div><div class="l">Portfolio &sigma;</div></div>
     <div class="mcard"><div class="v" style="color:var(--dim)">${(spb*100).toFixed(1)}%</div><div class="l">Benchmark &sigma;</div></div>
     <div class="mcard"><div class="v y">${(te*10000).toFixed(0)}</div><div class="l">Ex-ante TE (bps)</div></div>
-    <div class="mcard"><div class="v ${Math.abs(sum-100)<0.05?'g':'r'}">${sum.toFixed(1)}%</div><div class="l">&Sigma; contributions</div></div>
+    <div class="mcard"><div class="v ${Math.abs(sum-100)<0.05?'g':'r'}">${z1(sum)}%</div><div class="l">&Sigma; contributions</div></div>
     <div class="mcard"><div class="v" style="color:var(--dim)">${(wp[5]*100).toFixed(1)}%</div><div class="l">Illiquid (locked) weight</div></div>`;
 }
 
@@ -1178,9 +1254,13 @@ function drawCorr(){
 
   for(let i=0;i<n;i++){for(let j=0;j<n;j++){
     const v=CM[i][j],x=p.l+j*cw,y=p.t+i*ch;
-    let r,g,b;
-    if(v>=0){const t=v;r=Math.round(8+t*10);g=Math.round(13+t*70);b=Math.round(26+t*180);}
-    else{const t=-v;r=Math.round(8+t*210);g=Math.round(13+t*20);b=Math.round(26+t*20);}
+    // The old linear ramp started at rgb(8,13,26) - all but the panel
+    // background - and gave every 0.1 step the same 19-unit RGB separation,
+    // so 0.00, 0.05 and 0.10 were a single block of near-black. Lift the
+    // floor clear of the background and gamma-spread the low end.
+    let r,g,b;const t=Math.pow(Math.min(1,Math.abs(v)),0.62);
+    if(v>=0){r=Math.round(16+t*6);g=Math.round(28+t*66);b=Math.round(52+t*156);}
+    else{r=Math.round(52+t*168);g=Math.round(20+t*18);b=Math.round(34+t*18);}
     ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(x+1,y+1,cw-2,ch-2);
     ctx.fillStyle=Math.abs(v)>.4?'#e2e8f0':'#94a3b8';ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.fillText(v.toFixed(2),x+cw/2,y+ch/2+4);
   }}
@@ -1224,8 +1304,9 @@ document.getElementById('corrCanvas')?.addEventListener('mouseleave',()=>{docume
 // dollar is eventually distributed out of that NAV, so the gross IRR of the
 // stream is identically G, at every setting of every other slider (verified:
 // G = 5/13/30% -> IRR = 5.0000/13.0000/30.0000%).  It is an identity, not a
-// forecast.  The model earns its keep on liquidity - pacing, peak outlay,
-// break-even, steady-state commitment - not on return.
+// forecast, which is why the panel reports NET IRR after a 2 & 20 / 8% pref
+// European waterfall instead.  Beyond that the model earns its keep on
+// liquidity - pacing, peak outlay, break-even, steady-state commitment.
 function solveIRR(cfs){
   let r=0.10;
   for(let iter=0;iter<200;iter++){
@@ -1262,20 +1343,61 @@ function drawJCurve(){
   document.getElementById('pcYield').textContent=(Y*100).toFixed(0)+'%';
 
   const data=[{y:0,cal:0,dist:0,nav:0,cf:0}],cfs=new Array(L+1).fill(0);
+  const yrC=new Array(L+1).fill(0),yrD=new Array(L+1).fill(0),navPrev=new Array(L+1).fill(0);
   let uncalled=commit,calC=0,distC=0,nav=0,navYears=0;
   for(let y=1;y<=L;y++){
-    const C=(y<=IP)?RC*uncalled:0;uncalled-=C;calC+=C;cfs[y-1]-=C;
+    navPrev[y]=nav;
+    const C=(y<=IP)?RC*uncalled:0;uncalled-=C;calC+=C;cfs[y-1]-=C;yrC[y]=C;
     nav=(nav+C)*(1+G);
     const D=Math.max(Y,Math.pow(y/L,B))*nav;
-    nav-=D;distC+=D;cfs[y]+=D;navYears+=nav;
+    nav-=D;distC+=D;cfs[y]+=D;navYears+=nav;yrD[y]=D;
     data.push({y,cal:calC,dist:distC,nav,cf:distC-calC});
   }
   const yrs=L;
 
+  // NET OF FEES.  Gross IRR here is identically G - NAV compounds at (1+G)
+  // and every dollar is eventually distributed out of it - so reporting it
+  // told the reader nothing they had not just typed in.  Market-standard
+  // terms are applied instead: a 2.0% annual management fee, charged on
+  // COMMITTED capital through the investment period and on prior year-end NAV
+  // after it, drawn on top of the commitment; and 20% carried interest over
+  // an 8% compounded preferred return, run as a European (whole-fund)
+  // waterfall with a full GP catch-up.  Unlike the gross number this one
+  // responds to the bow factor, the yield floor, the call rate and fund life,
+  // because all of those move WHEN capital comes back and therefore how much
+  // preferred return accrues before the GP is in the money.
+  const MGMT=0.020,CARRY=0.20,PREF=0.08;
+  const lpCf=new Array(L+1).fill(0);
+  let unreturned=0,prefOwed=0,lpPref=0,gpCarry=0,lpDist=0,lpOut=0,feeTot=0;
+  for(let y=1;y<=L;y++){
+    const fee=MGMT*(y<=IP?commit:navPrev[y]);feeTot+=fee;
+    const contrib=yrC[y]+fee;
+    lpCf[y-1]-=contrib;lpOut+=contrib;
+    prefOwed+=PREF*unreturned;                                       // on capital still out
+    unreturned+=contrib;
+    let d=yrD[y];
+    const t1=Math.min(d,unreturned);unreturned-=t1;d-=t1;            // 1. return of capital
+    const t2=Math.min(d,Math.max(0,prefOwed-lpPref));lpPref+=t2;d-=t2; // 2. preferred return
+    const catchUp=lpPref*CARRY/(1-CARRY);                            // 3. GP catch-up to 20%
+    const t3=Math.min(d,Math.max(0,catchUp-gpCarry));gpCarry+=t3;d-=t3;
+    gpCarry+=CARRY*d;                                                // 4. 80/20 thereafter
+    const lpGet=t1+t2+(1-CARRY)*d;
+    lpCf[y]+=lpGet;lpDist+=lpGet;
+  }
+  const netIrr=solveIRR(lpCf),netTvpi=lpOut>0?lpDist/lpOut:0;
+
   const c=document.getElementById('jcurveCanvas');
   const{ctx,W,H}=setup(c,300);
   ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  const p={l:64,r:24,t:26,b:44},pw=W-p.l-p.r,ph=H-p.t-p.b;
+  // Legend laid out from measured text. The old fixed quarter-width slots
+  // were 95px and "Net cashflow (J-curve)" ran to 104px, so it sat under the
+  // NAV swatch; a second row is used when one will not fit.
+  const LEG=[{l:'Net cashflow',c:'#f59e0b'},{l:'NAV',c:'#06b6d4'},
+             {l:'Cum. called',c:'#ef4444'},{l:'Cum. distributed',c:'#10b981'}];
+  ctx.font='9px sans-serif';
+  const legW=LEG.map(l=>14+ctx.measureText(l.l).width);
+  const legRows=(legW.reduce((a,b)=>a+b+16,0)-16)>(W-88)?2:1;
+  const p={l:64,r:24,t:legRows>1?40:26,b:44},pw=W-p.l-p.r,ph=H-p.t-p.b;
   const maxV=Math.max(...data.map(d=>Math.max(d.cal,d.dist,d.nav,d.cf)))*1.12;
   const minV=Math.min(0,...data.map(d=>d.cf))*1.12;
   const range=(maxV-minV)||1;
@@ -1302,11 +1424,14 @@ function drawJCurve(){
   ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';
   ctx.fillText('Fund year',(p.l+W-p.r)/2,H-p.b+30);
   ctx.save();ctx.translate(p.l-44,p.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('Cumulative $M',0,0);ctx.restore();
-  ctx.textAlign='left';
-  [{l:'Net cashflow (J-curve)',c:'#f59e0b'},{l:'NAV',c:'#06b6d4'},{l:'Cum. called',c:'#ef4444'},{l:'Cum. distributed',c:'#10b981'}].forEach((l,i)=>{
-    const lx=p.l+i*Math.min(140,pw/4);
-    ctx.fillStyle=l.c;ctx.fillRect(lx,p.t-16,10,3);
-    ctx.fillStyle='#94a3b8';ctx.fillText(l.l,lx+14,p.t-13);
+  ctx.textAlign='left';ctx.font='9px sans-serif';
+  let legX=p.l,legRow=0;
+  LEG.forEach((l,i)=>{
+    if(legX+legW[i]>W-p.r&&legX>p.l){legX=p.l;legRow++;}
+    const legY=p.t-16+(legRow-(legRows-1))*12;
+    ctx.fillStyle=l.c;ctx.fillRect(legX,legY,10,3);
+    ctx.fillStyle='#94a3b8';ctx.fillText(l.l,legX+14,legY+3);
+    legX+=legW[i]+16;
   });
   c._m={p,pw,yrs,data,sx,sy};
 
@@ -1325,8 +1450,8 @@ function drawJCurve(){
   const navPerCommit=commit>0?navYears/commit:0;
   const ssPct=navPerCommit>0?STRAT[5]/navPerCommit:0;
   document.getElementById('jcurveMetrics').innerHTML=`
-    <div class="mcard" title="Gross of management fees and carried interest. A typical buyout fee load takes roughly 0.3-0.5x off TVPI."><div class="v c">${tvpi.toFixed(2)}x</div><div class="l">TVPI, gross of fees</div></div>
-    <div class="mcard" title="In this model NAV compounds at exactly (1+G) and is fully distributed, so the gross IRR equals G identically. It is an identity, not a forecast."><div class="v g">${(irr*100).toFixed(1)}%</div><div class="l">Gross IRR (&equiv; G by construction)</div></div>
+    <div class="mcard" title="Gross TVPI is distributions plus residual NAV over capital called. Net TVPI is LP distributions after fees and carry over LP outlay including the $${feeTot.toFixed(0)}M of management fees."><div class="v c">${tvpi.toFixed(2)}x <span style="font-size:13px;color:var(--dim)">/ ${netTvpi.toFixed(2)}x</span></div><div class="l">TVPI, gross / net of fees</div></div>
+    <div class="mcard" title="2.0% management fee on committed capital through the investment period then on prior year-end NAV, plus 20% carry over an 8% compounded preferred return under a European whole-fund waterfall with full GP catch-up. Gross IRR is ${(irr*100).toFixed(1)}%, which equals the growth slider identically in this model."><div class="v g">${(netIrr*100).toFixed(1)}%</div><div class="l">Net IRR, after 2 &amp; 20 over an 8% pref</div></div>
     <div class="mcard"><div class="v y">$${peak.toFixed(0)}M</div><div class="l">Peak net outlay (${(peak/commit*100).toFixed(0)}% of commitment)</div></div>
     <div class="mcard"><div class="v ${be?'g':'r'}">${be?('Y'+be):'>L'}</div><div class="l">Break-even year</div></div>
     <div class="mcard" title="The remainder expires uncalled at the end of the investment period - which is why allocators over-commit."><div class="v" style="color:var(--dim)">${(calC/commit*100).toFixed(0)}%</div><div class="l">Commitment called by Y${IP}</div></div>
