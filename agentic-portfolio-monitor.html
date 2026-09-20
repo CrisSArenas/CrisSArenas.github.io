@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic Portfolio Monitoring | Cristian Arenas</title>
+<meta name="description" content="Interactive demonstration of a standing agent fleet monitoring an institutional multi-asset portfolio: IPS guideline and concentration checks, ex-ante risk and liquidity limits, data-quality gating, an LLM-drafted remediation queue, human-in-the-loop approval, post-trade compliance simulation and a hash-chained audit trail.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/demo-shell.css?v=2">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-size:14px;line-height:1.6}
+a{color:var(--cyan);text-decoration:none}
+::-webkit-scrollbar{width:5px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+.pill-clear{color:var(--green);border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.08)}
+.pill-watch{color:var(--yellow);border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08)}
+.pill-breach{color:var(--red);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08)}
+
+.demo-sub{max-width:1440px;margin:14px auto 0;padding:0 16px;color:var(--muted);font-size:.85rem;line-height:1.65}
+.demo-sub b{color:var(--text);font-weight:600}
+
+.grid{max-width:1440px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.full{grid-column:1/-1}
+
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border)}
+.panel-head h3{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.panel-head h3 i{color:var(--cyan);font-size:13px}
+.panel-head .tag{font-size:10px;color:var(--faint);font-style:italic;text-align:right;max-width:56%}
+.panel-body{padding:16px 18px}
+canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+
+/* CONTROL BAR */
+.ctrls{max-width:1440px;margin:16px auto 0;padding:0 16px;display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+.cbox{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px}
+.cbox h4{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.cbox h4 i{color:var(--cyan)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:7px 11px;font-size:11.5px;font-family:var(--mono);cursor:pointer;transition:all .18s;text-align:left}
+.seg button:hover{border-color:var(--border-strong);color:var(--text)}
+.seg button.on{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.45);color:var(--cyan);font-weight:600}
+.seg button.ev{border-color:rgba(245,158,11,.22)}
+.seg button.ev:hover{border-color:rgba(245,158,11,.55);color:var(--yellow)}
+.cnote{font-size:10px;color:var(--faint);margin-top:9px;line-height:1.55}
+.cnote b{color:var(--dim)}
+.runbar{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+
+/* KPI STRIP */
+.vstrip{max-width:1440px;margin:16px auto 0;padding:0 16px;display:flex;gap:12px;flex-wrap:wrap}
+.vcard{flex:1;min-width:142px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 15px;text-align:center}
+.vcard .v{font-size:24px;font-weight:700;font-family:var(--mono);line-height:1.15}
+.vcard .v.g{color:var(--green)}.vcard .v.c{color:var(--cyan)}.vcard .v.r{color:var(--red)}.vcard .v.y{color:var(--yellow)}
+.vcard .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-top:5px;line-height:1.45}
+
+/* AGENT FLEET */
+.alane{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,2fr) 66px;gap:9px;align-items:center;margin-bottom:7px;font-size:12px}
+.alane .an{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11.5px;min-width:0}
+.alane .an i{width:13px;text-align:center;color:var(--faint);font-size:11px;flex:none}
+.alane .an span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alane .track{height:16px;background:var(--card2);border:1px solid var(--border);border-radius:5px;overflow:hidden;position:relative}
+.alane .fill{height:100%;width:0;background:linear-gradient(90deg,rgba(6,182,212,.35),rgba(6,182,212,.75));border-radius:4px}
+.alane.done .fill{background:linear-gradient(90deg,rgba(16,185,129,.3),rgba(16,185,129,.62))}
+.alane.hit .fill{background:linear-gradient(90deg,rgba(245,158,11,.3),rgba(245,158,11,.7))}
+.alane.idle .fill{width:0}
+.alane .st{font-family:var(--mono);font-size:10.5px;text-align:right;color:var(--faint);white-space:nowrap}
+.alane.done .st{color:var(--green)}
+.alane.hit .st{color:var(--yellow)}
+.alane.done .an,.alane.hit .an{color:var(--text)}
+.tier{font-size:8.5px;padding:1px 5px;border-radius:4px;font-family:var(--mono);letter-spacing:.04em;flex:none}
+.t-frontier{background:rgba(139,92,246,.14);color:#a78bfa;border:1px solid rgba(139,92,246,.26)}
+.t-balanced{background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.24)}
+.t-fast{background:rgba(148,163,184,.1);color:var(--dim);border:1px solid rgba(148,163,184,.18)}
+
+/* SLEEVE BARS */
+.srow{display:grid;grid-template-columns:minmax(0,96px) minmax(0,1fr) 144px;gap:10px;align-items:center;margin-bottom:8px;font-size:12px}
+.srow .nm{color:var(--dim);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .rail{position:relative;height:20px;background:var(--card2);border:1px solid var(--border);border-radius:5px;overflow:hidden}
+.srow .band{position:absolute;top:0;bottom:0;background:rgba(16,185,129,.09);border-left:1px solid rgba(16,185,129,.3);border-right:1px solid rgba(16,185,129,.3)}
+.srow .pol{position:absolute;top:0;bottom:0;width:2px;background:rgba(148,163,184,.55)}
+.srow .act{position:absolute;top:4px;height:12px;border-radius:3px;background:var(--cyan)}
+.srow.bad .act{background:var(--red)}
+.srow .nums{font-family:var(--mono);font-size:11px;text-align:right;color:var(--muted);white-space:nowrap}
+.srow .nums b{color:var(--cyan)}
+.srow.bad .nums b{color:var(--red)}
+.srow-hd{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin-bottom:9px}
+.srow-hd .rail{background:none;border:0;height:auto}
+
+/* FINDINGS */
+.find{border:1px solid var(--border);border-left-width:3px;border-radius:9px;padding:11px 13px;margin-bottom:9px;background:var(--card2)}
+.find.sev-critical{border-left-color:var(--red)}
+.find.sev-high{border-left-color:#f97316}
+.find.sev-medium{border-left-color:var(--yellow)}
+.find.sev-low{border-left-color:var(--dim)}
+.find .fh{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.find .ft{font-size:12.5px;color:var(--text);font-weight:600}
+.find .fm{font-size:10.5px;color:var(--faint);font-family:var(--mono);margin-top:5px;line-height:1.6}
+.find .fm b{color:var(--dim)}
+.sev{font-size:9.5px;font-weight:700;font-family:var(--mono);padding:2px 7px;border-radius:4px;letter-spacing:.04em;white-space:nowrap}
+.sev-c{background:rgba(239,68,68,.14);color:var(--red);border:1px solid rgba(239,68,68,.28)}
+.sev-h{background:rgba(249,115,22,.14);color:#fb923c;border:1px solid rgba(249,115,22,.28)}
+.sev-m{background:rgba(245,158,11,.13);color:var(--yellow);border:1px solid rgba(245,158,11,.26)}
+.sev-l{background:rgba(148,163,184,.09);color:var(--dim);border:1px solid rgba(148,163,184,.17)}
+.empty{text-align:center;color:var(--faint);font-size:12px;padding:26px 10px;line-height:1.7}
+.empty i{display:block;font-size:22px;color:rgba(16,185,129,.5);margin-bottom:9px}
+
+/* PROPOSALS */
+.prop{border:1px solid var(--border);border-radius:9px;padding:12px 13px;margin-bottom:9px;background:var(--card2)}
+.prop.approved{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.04)}
+.prop.rejected{opacity:.5}
+.prop.blocked{border-color:rgba(239,68,68,.3)}
+.prop .ph{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:7px}
+.prop .pt{font-size:12.5px;color:var(--text);font-weight:600}
+.prop .legs{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.75}
+.prop .legs .buy{color:var(--green)}
+.prop .legs .sell{color:var(--red)}
+.prop .why{font-size:10.5px;color:var(--faint);margin-top:7px;line-height:1.6}
+.prop .acts{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.abtn{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 11px;font-size:11px;font-family:var(--mono);cursor:pointer;transition:all .16s}
+.abtn:hover:not(:disabled){border-color:var(--border-strong);color:var(--text)}
+.abtn.ok:hover:not(:disabled){border-color:rgba(16,185,129,.5);color:var(--green)}
+.abtn.no:hover:not(:disabled){border-color:rgba(239,68,68,.5);color:var(--red)}
+.abtn:disabled{opacity:.4;cursor:not-allowed}
+.tagmini{font-size:9.5px;font-family:var(--mono);padding:2px 7px;border-radius:4px;background:rgba(148,163,184,.08);color:var(--dim);border:1px solid rgba(148,163,184,.16)}
+.tagmini.auto{background:rgba(6,182,212,.1);color:var(--cyan);border-color:rgba(6,182,212,.22)}
+.tagmini.gate{background:rgba(239,68,68,.11);color:var(--red);border-color:rgba(239,68,68,.24)}
+.tagmini.ok{background:rgba(16,185,129,.11);color:var(--green);border-color:rgba(16,185,129,.24)}
+
+/* AUDIT */
+.audit{font-family:var(--mono);font-size:10.5px;line-height:1.85;max-height:300px;overflow-y:auto;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:8px;padding:11px 13px}
+.audit div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.audit .h{color:#8b5cf6}
+.audit .t{color:var(--faint)}
+.audit .a{color:var(--cyan)}
+.audit .w{color:var(--yellow)}
+.audit .e{color:var(--red)}
+.audit .g{color:var(--green)}
+
+.mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.mcard{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:92px}
+.mcard .v{font-size:16px;font-weight:700;font-family:var(--mono)}
+.mcard .v.g{color:var(--green)}.mcard .v.c{color:var(--cyan)}.mcard .v.r{color:var(--red)}.mcard .v.y{color:var(--yellow)}
+.mcard .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;line-height:1.4}
+
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tscroll .mtable{min-width:600px}
+.mtable{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.mtable th{color:var(--dim);font-weight:600;padding:8px 9px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.mtable th:first-child{text-align:left}
+.mtable td{padding:8px 9px;text-align:right;border-bottom:1px solid rgba(30,41,59,.4);font-family:var(--mono);white-space:nowrap}
+.mtable td:first-child{text-align:left;font-family:inherit;color:var(--text)}
+.tnote{margin:12px 0 0;color:var(--faint);font-size:10.5px;line-height:1.65}
+.tnote b{color:var(--dim)}
+.legend{display:flex;gap:14px;margin-top:10px;font-size:11px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px;color:var(--dim)}
+.legend .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+.d-help-section table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
+.d-help-section th,.d-help-section td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--muted)}
+.d-help-section th{color:var(--text);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.d-help-section td:first-child{color:var(--text);font-family:var(--mono);font-size:.74rem}
+
+@media(max-width:1024px){.grid,.ctrls{grid-template-columns:1fr}}
+@media(max-width:720px){.alane .tier{display:none}}
+@media(max-width:560px){.alane{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 58px}.srow{grid-template-columns:minmax(0,80px) minmax(0,1fr) 128px}.srow .nums{font-size:10.5px}}
+</style>
+</head>
+<body>
+
+<nav class="demo-nav">
+  <a class="demo-brand" href="index.html">cristian@portfolio:~$ <span class="crumb">/ demos / agentic-monitor</span></a>
+  <h1 class="demo-title"><i class="fas fa-robot"></i> Agentic Portfolio Monitoring</h1>
+  <div class="demo-links">
+    <a href="index.html#projects">Projects</a>
+    <a href="index.html#research">Research</a>
+    <a href="index.html#demos" class="active">Demos</a>
+    <a href="robotics-embedded.html">Robotics</a>
+  </div>
+  <div class="demo-actions">
+    <span class="d-pill pill-watch" id="stateBadge">IDLE</span>
+    <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button>
+  </div>
+</nav>
+<div class="demo-status">
+  <span id="statusBar">initialising&hellip;</span>
+  <span><b>Simulated fleet on a synthetic book &mdash; no model is called and no order is placed</b> &middot; $1.0bn notional &middot; deterministic &middot; not investment advice</span>
+</div>
+
+<p class="demo-sub">A standing fleet of <b>thirteen agents</b> watching a $1.0bn multi-asset book against its investment policy statement, its risk limits and its liquidity constraints. Press <b>Run monitoring cycle</b> and the fleet executes as a DAG &mdash; independent checks fan out in parallel, then triage, planning, costing and a post-trade compliance simulation run in sequence. Findings land in the register, remediation lands in the queue, and <b>nothing reaches the market without a human</b> unless you raise the autonomy level. Inject an event to create something worth finding.</p>
+
+<div class="ctrls">
+  <div class="cbox">
+    <h4><i class="fas fa-bolt"></i> Inject an event, then run the cycle</h4>
+    <div class="seg" id="segEvent">
+      <button type="button" class="ev" data-e="selloff">Equity sell-off &minus;14%</button>
+      <button type="button" class="ev" data-e="call">$34m capital call</button>
+      <button type="button" class="ev" data-e="redemption">$90m redemption</button>
+      <button type="button" class="ev" data-e="downgrade">Issuer downgrade</button>
+      <button type="button" class="ev" data-e="outage">Pricing feed outage</button>
+    </div>
+    <div class="runbar">
+      <button type="button" class="d-btn" id="runBtn"><i class="fas fa-play"></i> Run monitoring cycle</button>
+      <button type="button" class="d-btn sm" id="approveAll"><i class="fas fa-check-double"></i> Approve all eligible</button>
+      <span class="cnote" style="margin:0" id="cycleNote"></span>
+    </div>
+  </div>
+  <div class="cbox">
+    <h4><i class="fas fa-user-shield"></i> Autonomy level</h4>
+    <div class="seg" id="segAuto">
+      <button type="button" data-a="observe">Observe only</button>
+      <button type="button" data-a="propose" class="on">Propose &amp; await approval</button>
+      <button type="button" data-a="assisted">Auto-execute small &amp; low-risk</button>
+    </div>
+    <div class="cnote" id="autoNote"></div>
+  </div>
+</div>
+
+<div class="vstrip">
+  <div class="vcard"><div class="v" id="kOpen">&mdash;</div><div class="l">Open findings</div></div>
+  <div class="vcard"><div class="v" id="kCrit">&mdash;</div><div class="l">Critical / high</div></div>
+  <div class="vcard"><div class="v c" id="kTE">&mdash;</div><div class="l">Ex-ante TE vs policy (bps)</div></div>
+  <div class="vcard"><div class="v c" id="kIlliq">&mdash;</div><div class="l">Illiquid weight</div></div>
+  <div class="vcard"><div class="v c" id="kCash">&mdash;</div><div class="l">Cash</div></div>
+  <div class="vcard"><div class="v" id="kCost" style="color:var(--dim)">&mdash;</div><div class="l">Cost per cycle</div></div>
+</div>
+
+<div class="grid">
+
+  <div class="d-panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-diagram-project"></i> Agent fleet</h3>
+      <span class="tag">Six checks fan out in parallel, then triage &rarr; plan &rarr; cost &rarr; pre-check &rarr; route</span>
+    </div>
+    <div class="panel-body">
+      <div id="fleet"></div>
+      <div class="mrow" id="fleetMetrics"></div>
+      <p class="tnote">Bars show each agent&rsquo;s slot in the critical path, not a progress spinner: an agent cannot start before its dependencies finish, so the wall-clock cost of a cycle is the longest path through the DAG, not the sum of the work. Tier labels are the model class each role is routed to &mdash; the three cheap checks do not need a frontier model, and routing them down is most of the cost saving.</p>
+    </div>
+  </div>
+
+  <div class="d-panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-ruler-combined"></i> Book against policy</h3>
+      <span class="tag">Green band is the IPS range &middot; grey tick is the policy weight</span>
+    </div>
+    <div class="panel-body">
+      <div id="sleeves"></div>
+      <div class="legend">
+        <span><i class="dot" style="background:rgba(16,185,129,.35)"></i> IPS range</span>
+        <span><i class="dot" style="background:#94a3b8"></i> policy weight</span>
+        <span><i class="dot" style="background:#06b6d4"></i> actual, in range</span>
+        <span><i class="dot" style="background:#ef4444"></i> actual, outside</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-triangle-exclamation"></i> Finding register</h3>
+      <span class="tag" id="findTag">&mdash;</span>
+    </div>
+    <div class="panel-body"><div id="findings"></div></div>
+  </div>
+
+  <div class="d-panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-clipboard-check"></i> Remediation queue</h3>
+      <span class="tag">Drafted by the planner, costed, re-checked post-trade, then routed for approval</span>
+    </div>
+    <div class="panel-body"><div id="proposals"></div></div>
+  </div>
+
+  <div class="d-panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-building-columns"></i> Issuer concentration</h3>
+      <span class="tag">Look-through to the largest single-issuer exposures &middot; 5.0% of NAV limit</span>
+    </div>
+    <div class="panel-body">
+      <div class="tscroll"><table class="mtable" id="issuerTable"></table></div>
+      <p class="tnote">Look-through is why a sleeve can sit comfortably inside its IPS range while the book still breaches: the guideline monitor sees 26% in US equity and passes it, and the concentration monitor sees one name at 5.4% of total NAV and does not.</p>
+    </div>
+  </div>
+
+  <div class="d-panel">
+    <div class="panel-head">
+      <h3><i class="fas fa-fingerprint"></i> Audit trail</h3>
+      <span class="tag">Hash-chained &middot; every finding, decision and fill, with the actor that caused it</span>
+    </div>
+    <div class="panel-body">
+      <div class="audit" id="audit"></div>
+      <p class="tnote">Each line carries an 8-character digest of <em>itself plus the previous digest</em>, so an entry cannot be altered or removed without breaking every digest after it. The chain is what makes the difference between an agent that acted and an agent that can be shown to have acted, which is the only version a regulated investor can use.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- GUIDE ------------------------------------------------------------- -->
+<div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="d-help-modal">
+    <div class="d-help-head">
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; Agentic Portfolio Monitoring</h2>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="d-help-body">
+
+      <div class="d-help-section">
+        <h3>1 &middot; What you are looking at</h3>
+        <p>Portfolio monitoring is a good fit for agents and a bad fit for a chatbot. The work is <em>continuous</em>, it is <em>rule-bounded</em>, it spans a dozen unrelated data sources, and the output is a short list of things a human needs to decide. It is also the part of the job where a mistake is expensive and an unexplained action is unacceptable &mdash; which is why most of the engineering here is about <strong>controls</strong>, not about the model.</p>
+        <p>Press <strong>Run monitoring cycle</strong>. Thirteen agents execute as a dependency graph. The six detection agents are independent and run concurrently; everything downstream of triage is sequential because each stage consumes the last one&rsquo;s output. What you get at the end is a finding register, a costed remediation queue, and an audit trail.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>2 &middot; The fleet</h3>
+        <table>
+          <tr><th>Agent</th><th>Tier</th><th>Responsibility</th></tr>
+          <tr><td>market-data-ingest</td><td>balanced</td><td>Pulls marks, FX and the position file; normalises and timestamps every record.</td></tr>
+          <tr><td>data-quality</td><td>fast</td><td>Staleness, missing marks, FX age, position-file reconciliation. <strong>Gates everything downstream.</strong></td></tr>
+          <tr><td>guideline-monitor</td><td>balanced</td><td>IPS ranges per sleeve, cash floor, illiquid cap.</td></tr>
+          <tr><td>risk-sentinel</td><td>balanced</td><td>Ex-ante tracking error and volatility from the covariance matrix.</td></tr>
+          <tr><td>liquidity-watch</td><td>balanced</td><td>Days to liquidate, unfunded commitment coverage, redemption runway.</td></tr>
+          <tr><td>concentration-monitor</td><td>fast</td><td>Single-issuer look-through against the 5% limit.</td></tr>
+          <tr><td>corporate-actions</td><td>fast</td><td>Pending events that change eligibility or weight before settlement.</td></tr>
+          <tr><td>finding-triage</td><td>balanced</td><td>De-duplicates, assigns severity, suppresses findings already covered by an open item.</td></tr>
+          <tr><td>remediation-planner</td><td>frontier</td><td>Drafts the trades. The only role that genuinely needs the strongest model, because it has to reason about interactions between constraints.</td></tr>
+          <tr><td>impact-estimator</td><td>balanced</td><td>Spread, market impact and the total cost of each proposal.</td></tr>
+          <tr><td>compliance-simulator</td><td>balanced</td><td>Re-runs every rule against the <em>post-trade</em> book. A proposal that fixes one breach and opens another is rejected here, not by the human.</td></tr>
+          <tr><td>approval-router</td><td>fast</td><td>Applies the autonomy policy and routes.</td></tr>
+          <tr><td>audit-logger</td><td>fast</td><td>Writes the hash-chained record.</td></tr>
+        </table>
+      </div>
+
+      <div class="d-help-section">
+        <h3>3 &middot; Autonomy, and why the default is not the highest one</h3>
+        <p>Three levels. <strong>Observe only</strong> detects and explains, and proposes nothing &mdash; the right setting for the first months of a deployment, when you are measuring the false-positive rate. <strong>Propose and await approval</strong> is the default: every trade is drafted, costed and pre-checked, and a human clicks. <strong>Auto-execute small and low-risk</strong> releases proposals that clear <em>all</em> of a notional cap, a severity cap and a post-trade clean re-check.</p>
+        <p>Two hard gates sit above the autonomy setting and cannot be overridden from the UI:</p>
+        <ul>
+          <li><strong>The data-quality gate.</strong> If any mark is stale, nothing auto-executes at any autonomy level. An agent acting confidently on a price from yesterday is the single most expensive failure mode in this design, and the cheapest one to prevent. Run the pricing-feed outage event and watch every proposal fall back to manual.</li>
+          <li><strong>The non-tradeable gate.</strong> A breach in private equity or real assets cannot be fixed by a trade. The planner says so and proposes a pacing action for the committee instead of inventing an order. An agent that produces a plausible instruction for an impossible trade is worse than one that produces nothing.</li>
+        </ul>
+      </div>
+
+      <div class="d-help-section">
+        <h3>4 &middot; The rules being checked</h3>
+        <table>
+          <tr><th>Rule</th><th>Limit</th><th>Severity if breached</th></tr>
+          <tr><td>IPS range per sleeve</td><td>per-sleeve band</td><td>critical</td></tr>
+          <tr><td>Cash floor</td><td>&ge; 1.0% of NAV</td><td>critical</td></tr>
+          <tr><td>Illiquid cap</td><td>&le; 25% of NAV</td><td>critical</td></tr>
+          <tr><td>Single issuer</td><td>&le; 5.0% of NAV</td><td>high</td></tr>
+          <tr><td>Ex-ante tracking error</td><td>&le; 150 bps</td><td>high</td></tr>
+          <tr><td>Liquidity horizon</td><td>&ge; 70% of NAV realisable in 10 business days</td><td>high</td></tr>
+          <tr><td>Commitment coverage</td><td>liquid assets &ge; 2.0&times; uncalled commitments plus noticed redemptions</td><td>high</td></tr>
+          <tr><td>Mark staleness</td><td>&le; 24 hours</td><td>medium, and gates execution</td></tr>
+          <tr><td>Drift from policy</td><td>&gt; 300 bps</td><td>medium</td></tr>
+        </table>
+      </div>
+
+      <div class="d-help-section">
+        <h3>5 &middot; The economics</h3>
+        <p>The cost panel is the part most demonstrations leave out, and it is usually what decides whether a fleet ships. A cycle here runs about <strong>54,000 tokens</strong> for roughly <strong>$0.43</strong>. Routing every role to a frontier model would be the obvious build and <strong>2.9&times;</strong> the cost; the detection agents are doing structured comparison against numeric limits, which a fast model does as well and far cheaper. The frontier model is reserved for the planner, which is the one role that has to reason about several constraints interacting.</p>
+        <p>The other number that matters is the <strong>critical path</strong>. Total agent work is well over the cycle&rsquo;s wall-clock time because the six detection agents overlap. Running them sequentially would roughly double the latency for no benefit.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>6 &middot; What is simulated and what is not</h3>
+        <p><strong>No model is called.</strong> There is no API key on this page and no network request leaves it. The agents are deterministic functions with scripted latencies and token counts; the &ldquo;reasoning&rdquo; in each finding is generated from the rule that fired and the numbers that fired it. What is real is the <em>architecture</em>: the dependency graph, the gating, the post-trade re-check, the approval routing and the hash chain are the ones I would build.</p>
+        <p><strong>The portfolio is synthetic.</strong> A $1.0bn book across eight sleeves with eight look-through issuers. It resembles an institutional multi-asset mandate; it is not one.</p>
+        <p><strong>The cost figures are illustrative.</strong> Tier prices are round numbers chosen to show the shape of the routing decision, not a current price list.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="demo-footer">
+  <div class="inner">
+    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
+    <div class="grid">
+      <div>
+        <h3>What this models</h3>
+        <p>A production-shaped control loop for agentic portfolio oversight. A fleet of thirteen role-scoped agents executes as a dependency graph over a synthetic $1.0bn multi-asset book: six independent detection agents check investment-policy ranges, ex-ante tracking error, liquidity, single-issuer concentration, corporate actions and data quality; a triage agent de-duplicates and assigns severity; a planner drafts remediation; an estimator costs it; a compliance simulator re-runs every rule against the post-trade book; a router applies the autonomy policy; and a logger writes a hash-chained audit record. Events can be injected to create genuine breaches, and approvals genuinely change the book and re-trigger detection.</p>
+      </div>
+      <div>
+        <h3>Key assumptions</h3>
+        <ul>
+          <li>Eight sleeves with policy weights 25/15/10/25/5/10/8/2 and per-sleeve IPS ranges; illiquid sleeves are private equity and real assets, capped at 25% combined.</li>
+          <li>Liquidity is tested as the share of NAV realisable inside a 10-business-day horizon, against a 70% floor. The obvious alternative &mdash; <em>days to liquidate 90% of the book</em> &mdash; cannot be satisfied by any portfolio holding 14% in privates, and a limit that can never pass is noise on the board rather than a control.</li>
+          <li>Ex-ante tracking error is <code>&radic;(a&prime;&Sigma;a)</code> on active weights <code>a = w<sub>p</sub> &minus; w<sub>policy</sub></code>, with a long-run covariance built from sleeve volatilities and a fixed correlation matrix.</li>
+          <li>Trading cost is a half-spread plus a square-root impact term, both scaled by sleeve liquidity: 4bp all-in on developed equity rising to 38bp on high yield. Private sleeves are marked non-tradeable rather than given a price.</li>
+          <li>Agent latencies and token counts are fixed per role. Cycle wall-clock is the longest path through the DAG; cycle cost is the sum over all agents of input and output tokens at the tier price.</li>
+          <li>The audit digest is a 32-bit FNV-1a over the previous digest concatenated with the entry, rendered as eight hex characters. It demonstrates chaining; it is not a cryptographic commitment and would be SHA-256 in anything real.</li>
+          <li>Everything is deterministic. The same sequence of events and clicks reproduces the same book, the same findings and the same chain.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Design decisions worth naming</h3>
+        <ul>
+          <li><b>Detection is deterministic; only planning is generative.</b> Limit checks are arithmetic and belong in code, where they are testable and cannot hallucinate. The model is used where judgement is needed &mdash; drafting a remediation that respects several constraints at once &mdash; and its output is then re-checked by the same deterministic rules.</li>
+          <li><b>The post-trade simulator is not optional.</b> Rebalancing to fix one breach very often opens another: funding an equity top-up out of cash breaks the cash floor. The simulator catches that before a human sees the proposal, so the human is reviewing judgement calls rather than arithmetic.</li>
+          <li><b>Data quality gates execution, not detection.</b> Stale marks should not stop you from <em>looking</em> &mdash; they should stop you from <em>acting</em>. Detection continues and is labelled provisional; auto-execution stops dead.</li>
+          <li><b>Every finding names the agent that raised it.</b> Attribution is what makes a false-positive rate measurable per role, which is what lets you tune or retire an agent instead of the whole fleet.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Limitations &mdash; read these before you read the numbers</h3>
+        <ul>
+          <li><b>No model is called anywhere on this page.</b> The agents are deterministic functions with scripted latency and token counts. This demonstrates an architecture and a set of controls; it does not demonstrate model quality, and it cannot tell you anything about how a real LLM would behave on these tasks.</li>
+          <li><b>Token, latency and cost figures are illustrative.</b> They are chosen to show the shape of the routing trade-off. Real numbers depend on prompt design, context length, caching and the provider&rsquo;s price list.</li>
+          <li><b>Risk is a static long-run covariance.</b> Volatilities and correlations do not move with the market, so the tracking error after an injected sell-off understates what a real risk model would print, because correlations rise in exactly those weeks.</li>
+          <li><b>Trading costs are a stylised function, not a broker estimate</b>, and there is no modelling of settlement, borrow, tax lots, wash sales or minimum lot sizes &mdash; all of which constrain real remediation.</li>
+          <li><b>The false-positive rate is not modelled.</b> In a real deployment it is the number that decides whether the fleet is used or ignored, and you only learn it by running in observe-only mode against a human baseline for months.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">Educational demonstration. The portfolio, the events, the agents and the audit trail are all simulated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
+    <div class="bottom">
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+/* ======================= BOOK, POLICY, LIMITS ==========================
+   A synthetic $1.0bn institutional multi-asset mandate. Policy weights and
+   IPS ranges are the sort a mid-size endowment or foundation runs; the
+   numbers are illustrative, not anyone's actual book.                    */
+const NAV0=1000;                                   // $m
+const SLEEVE=[
+ {k:'US Equity',    pol:25,lo:15,hi:35,vol:16.0,cost:4,  liqDays:1,  priv:false},
+ {k:'Intl Equity',  pol:15,lo: 8,hi:22,vol:17.0,cost:7,  liqDays:2,  priv:false},
+ {k:'EM Equity',    pol:10,lo: 5,hi:15,vol:21.0,cost:16, liqDays:3,  priv:false},
+ {k:'Core Fixed',   pol:25,lo:15,hi:35,vol: 5.5,cost:6,  liqDays:2,  priv:false},
+ {k:'High Yield',   pol: 5,lo: 0,hi:10,vol: 9.0,cost:38, liqDays:6,  priv:false},
+ {k:'Private Equity',pol:10,lo: 4,hi:14,vol:22.0,cost:0, liqDays:900,priv:true},
+ {k:'Real Assets',  pol: 8,lo: 4,hi:14,vol:14.0,cost:0,  liqDays:400,priv:true},
+ {k:'Cash',         pol: 2,lo: 1,hi:10,vol: 0.6,cost:0,  liqDays:0,  priv:false}
+];
+const N=SLEEVE.length, ILLIQ=[5,6], CASH=7;
+// Long-run correlation matrix, symmetric and positive semi-definite.
+const CORR=[
+ [1.00,0.85,0.75,0.05,0.68,0.72,0.55,0.00],
+ [0.85,1.00,0.80,0.08,0.62,0.66,0.58,0.00],
+ [0.75,0.80,1.00,0.05,0.65,0.60,0.60,0.00],
+ [0.05,0.08,0.05,1.00,0.30,0.02,0.20,0.10],
+ [0.68,0.62,0.65,0.30,1.00,0.55,0.45,0.00],
+ [0.72,0.66,0.60,0.02,0.55,1.00,0.48,0.00],
+ [0.55,0.58,0.60,0.20,0.45,0.48,1.00,0.00],
+ [0.00,0.00,0.00,0.10,0.00,0.00,0.00,1.00]
+];
+const LIMIT={te:150,issuer:5.0,illiq:25.0,cash:1.0,liqHorizon:10,liqMin:70,stale:24,drift:300,cover:2.0};
+
+const START={
+  w:[27.4,15.8,15.6,21.2,5.1,10.4,3.6,0.9],   // drifted: EM, Real and Cash out of range
+  nav:NAV0,
+  uncalled:96,                                 // $m unfunded private commitments
+  issuers:[
+    {n:'Issuer 01',s:'Semiconductors', w:5.42,rating:'A' },
+    {n:'Issuer 02',s:'Software',       w:4.10,rating:'A-'},
+    {n:'Issuer 03',s:'Pharmaceuticals',w:3.24,rating:'A+'},
+    {n:'Issuer 04',s:'Banks',          w:2.81,rating:'BBB+'},
+    {n:'Issuer 05',s:'Energy',         w:2.36,rating:'BBB'},
+    {n:'Issuer 06',s:'Retail',         w:1.92,rating:'BBB-'},
+    {n:'Issuer 07',s:'Industrials',    w:1.61,rating:'A-'},
+    {n:'Issuer 08',s:'Utilities',      w:1.18,rating:'BBB+'}
+  ],
+  staleHrs:[2,3,4,1,6,72,96,0],                // privates are always stale by design
+  corpAct:[],
+  pendingRedemption:0
+};
+
+/* ============================== STATE ================================== */
+let B, findings, proposals, auditLog, lastHash, cycleNo, running, lastCycle;
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function resetAll(){
+  B=clone(START);
+  findings=[];proposals=[];auditLog=[];lastHash='00000000';cycleNo=0;running=false;
+  lastCycle={ms:0,tok:0,cost:0,work:0};
+  S.auto='propose';
+  [].forEach.call(document.querySelectorAll('#segAuto button'),function(b){b.classList.toggle('on',b.dataset.a==='propose');});
+  push('system','fleet initialised · book $'+B.nav.toFixed(0)+'m · 13 agents registered','a');
+}
+const S={auto:'propose'};
+
+/* ============================ HASH CHAIN ===============================
+   FNV-1a over (previous digest + entry). Demonstrates chaining; a real
+   implementation would use SHA-256 and sign the head.                    */
+function fnv(str){
+  let h=0x811c9dc5;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}
+  return('0000000'+h.toString(16)).slice(-8);
+}
+function push(actor,msg,cls){
+  const seq=('000'+(auditLog.length+1)).slice(-3);
+  const entry=seq+'|'+actor+'|'+msg;
+  lastHash=fnv(lastHash+entry);
+  auditLog.push({seq,actor,msg,cls:cls||'t',hash:lastHash});
+}
+
+/* =========================== PORTFOLIO MATHS ============================ */
+function cov(i,j){return CORR[i][j]*SLEEVE[i].vol/100*SLEEVE[j].vol/100;}
+function quad(v){let s=0;for(let i=0;i<N;i++)for(let j=0;j<N;j++)s+=v[i]*v[j]*cov(i,j);return s;}
+function trackingError(){                          // bps, ex-ante, vs policy
+  const a=B.w.map(function(x,i){return(x-SLEEVE[i].pol)/100;});
+  return Math.sqrt(Math.max(0,quad(a)))*10000;
+}
+function portVol(){return Math.sqrt(Math.max(0,quad(B.w.map(function(x){return x/100;}))))*100;}
+function illiqPct(){return ILLIQ.reduce(function(a,i){return a+B.w[i];},0);}
+function driftBps(){return B.w.reduce(function(a,x,i){return a+Math.abs(x-SLEEVE[i].pol);},0)/2*100;}
+// Share of NAV realisable inside the liquidity horizon. Asking instead for
+// "days to liquidate 90%" is a rule that can never pass once the book holds
+// privates - 90% is unreachable without them - and a limit that can never
+// pass is not a limit, it is noise on the board every single cycle.
+function liquidWithin(days){
+  return SLEEVE.reduce(function(a,s,i){return a+(s.liqDays<=days?B.w[i]:0);},0);
+}
+function liquidPct(){return B.w.reduce(function(a,x,i){return a+(SLEEVE[i].priv?0:x);},0);}
+// Liquid assets against everything that can be called on them: uncalled
+// private commitments plus any redemption already noticed.
+function callsOnCapital(){return B.uncalled+B.pendingRedemption;}
+function coverage(){
+  const c=callsOnCapital();
+  return c>0?(liquidPct()/100*B.nav)/c:Infinity;
+}
+function maxStale(){return Math.max.apply(null,B.staleHrs.map(function(h,i){return SLEEVE[i].priv?0:h;}));}
+function staleNames(){return SLEEVE.filter(function(s,i){return !s.priv&&B.staleHrs[i]>LIMIT.stale;}).map(function(s){return s.k;});}
+function normalise(){
+  const t=B.w.reduce(function(a,b){return a+b;},0);
+  if(Math.abs(t-100)>1e-9)for(let i=0;i<N;i++)B.w[i]=B.w[i]*100/t;
+}
+// Cost of a trade: half-spread plus a square-root impact term on the
+// participation implied by the trade size, scaled by sleeve liquidity.
+function tradeCostBps(i,pctNav){
+  const s=SLEEVE[i];
+  if(s.priv)return NaN;
+  const size=Math.abs(pctNav);
+  return s.cost*0.5+s.cost*0.5*Math.sqrt(Math.max(size,0.01)/2.0);
+}
+
+/* ============================ AGENT FLEET ==============================
+   Latency and token counts are fixed per role. Tier prices are illustrative
+   round numbers, chosen to show the shape of the routing decision.       */
+const PRICE={frontier:{in:15,out:75},balanced:{in:3,out:15},fast:{in:0.8,out:4}};   // $ per Mtok
+const AGENTS=[
+ {id:'ingest',   n:'market-data-ingest',    i:'fa-download',      tier:'balanced',dep:[],        ms:420,tin:3200,tout:420},
+ {id:'dq',       n:'data-quality',          i:'fa-shield-halved', tier:'fast',    dep:['ingest'],ms:310,tin:2600,tout:380},
+ {id:'guideline',n:'guideline-monitor',     i:'fa-ruler',         tier:'balanced',dep:['ingest'],ms:480,tin:4100,tout:620},
+ {id:'risk',     n:'risk-sentinel',         i:'fa-wave-square',   tier:'balanced',dep:['ingest'],ms:640,tin:5200,tout:710},
+ {id:'liquidity',n:'liquidity-watch',       i:'fa-droplet',       tier:'balanced',dep:['ingest'],ms:520,tin:3800,tout:540},
+ {id:'conc',     n:'concentration-monitor', i:'fa-layer-group',   tier:'fast',    dep:['ingest'],ms:290,tin:2900,tout:340},
+ {id:'corpact',  n:'corporate-actions',     i:'fa-calendar-check',tier:'fast',    dep:['ingest'],ms:260,tin:1900,tout:260},
+ {id:'triage',   n:'finding-triage',        i:'fa-filter',        tier:'balanced',dep:['dq','guideline','risk','liquidity','conc','corpact'],ms:380,tin:4600,tout:880},
+ {id:'planner',  n:'remediation-planner',   i:'fa-brain',         tier:'frontier',dep:['triage'],ms:910,tin:7400,tout:2100},
+ {id:'impact',   n:'impact-estimator',      i:'fa-coins',         tier:'balanced',dep:['planner'],ms:440,tin:3100,tout:480},
+ {id:'precheck', n:'compliance-simulator',  i:'fa-clipboard-list',tier:'balanced',dep:['impact'],ms:500,tin:4400,tout:690},
+ {id:'router',   n:'approval-router',       i:'fa-route',         tier:'fast',    dep:['precheck'],ms:180,tin:1500,tout:210},
+ {id:'audit',    n:'audit-logger',          i:'fa-fingerprint',   tier:'fast',    dep:['router'],ms:140,tin:1100,tout:160}
+];
+// Earliest start of each agent = latest finish among its dependencies.
+const SCHED=(function(){
+  const end={},start={};
+  AGENTS.forEach(function(a){
+    const t0=a.dep.length?Math.max.apply(null,a.dep.map(function(d){return end[d];})):0;
+    start[a.id]=t0;end[a.id]=t0+a.ms;
+  });
+  const span=Math.max.apply(null,AGENTS.map(function(a){return end[a.id];}));
+  return{start,end,span};
+})();
+function agentCost(a){const p=PRICE[a.tier];return(a.tin*p.in+a.tout*p.out)/1e6;}
+const CYCLE_TOK=AGENTS.reduce(function(s,a){return s+a.tin+a.tout;},0);
+const CYCLE_COST=AGENTS.reduce(function(s,a){return s+agentCost(a);},0);
+const ALL_FRONTIER=AGENTS.reduce(function(s,a){return s+(a.tin*PRICE.frontier.in+a.tout*PRICE.frontier.out)/1e6;},0);
+const TOTAL_WORK=AGENTS.reduce(function(s,a){return s+a.ms;},0);
+
+/* ============================== EVENTS ================================= */
+const EVENTS={
+  selloff:function(){
+    // Public equity marked down 14%, HY down 6%, govvies up 2.5%. Weights are
+    // re-derived from the new market values, which is what actually moves a
+    // book - nobody trades, and every weight changes.
+    const shock=[-14,-14,-17,2.5,-6,-2,-3,0];
+    const mv=B.w.map(function(x,i){return x*(1+shock[i]/100);});
+    const tot=mv.reduce(function(a,b){return a+b;},0);
+    B.nav=B.nav*tot/100;
+    B.w=mv.map(function(x){return x*100/tot;});
+    push('market','equity sell-off: developed −14%, EM −17%, HY −6%, govt +2.5% · NAV $'+B.nav.toFixed(0)+'m','w');
+    return 'Equity sell-off marked through. NAV $'+B.nav.toFixed(0)+'m.';
+  },
+  call:function(){
+    const amt=34;
+    if(B.uncalled<amt){push('market','capital call declined \u2014 only $'+B.uncalled.toFixed(0)+'m uncalled remains','w');return 'No uncalled commitment left to draw.';}
+    const pct=amt/B.nav*100;
+    // Funded out of cash first, then pro-rata across the liquid sleeves. A
+    // call is not optional: if the cash is not there, assets are sold, and
+    // the forced sale is exactly the liquidity event worth surfacing.
+    let need=pct;
+    const fromCash=Math.min(Math.max(B.w[CASH],0),need);
+    B.w[CASH]-=fromCash;need-=fromCash;
+    let sold=0;
+    if(need>1e-9){
+      const liqIdx=[0,1,2,3,4],base=liqIdx.reduce(function(a,i){return a+B.w[i];},0);
+      liqIdx.forEach(function(i){B.w[i]-=need*B.w[i]/base;});
+      sold=need;
+    }
+    B.w[5]+=pct;B.uncalled-=amt;
+    normalise();
+    push('market','capital call $'+amt+'m drawn to private equity \u00b7 $'+(fromCash/100*B.nav).toFixed(0)
+      +'m from cash'+(sold>0?', $'+(sold/100*B.nav).toFixed(0)+'m raised by selling liquid sleeves':'')
+      +' \u00b7 uncalled now $'+B.uncalled.toFixed(0)+'m','w');
+    return '$'+amt+'m capital call funded'+(sold>0?' \u2014 cash was short, liquid sleeves were sold to meet it':'')+'.';
+  },
+  redemption:function(){
+    const amt=90;
+    B.pendingRedemption+=amt;
+    // Met from cash first, then pro-rata across the liquid sleeves.
+    let need=amt/B.nav*100;
+    const fromCash=Math.min(Math.max(B.w[CASH],0),need);
+    B.w[CASH]-=fromCash;need-=fromCash;
+    if(need>0){
+      const liqIdx=[0,1,2,3,4],base=liqIdx.reduce(function(a,i){return a+B.w[i];},0);
+      liqIdx.forEach(function(i){B.w[i]-=need*B.w[i]/base;});
+    }
+    B.nav-=amt;
+    normalise();
+    push('market','redemption notice $'+amt+'m · met from cash then pro-rata across liquid sleeves · NAV $'+B.nav.toFixed(0)+'m','w');
+    return '$'+amt+'m redemption settled. Privates are now a larger share of a smaller book.';
+  },
+  downgrade:function(){
+    const iss=B.issuers[3];
+    iss.rating='BB+';iss.downgraded=true;
+    B.corpAct.push({t:'Rating action',d:iss.n+' cut to BB+ by two agencies',impact:'below-investment-grade eligibility'});
+    push('market',iss.n+' downgraded to BB+ · falls outside the investment-grade eligibility list','w');
+    return iss.n+' downgraded to BB+.';
+  },
+  outage:function(){
+    B.staleHrs[2]=41;B.staleHrs[4]=63;B.staleHrs[1]=29;
+    B.corpAct.push({t:'Data incident',d:'primary pricing vendor unavailable since 06:12',impact:'3 sleeves on stale marks'});
+    push('market','pricing feed outage · EM equity 41h, high yield 63h, intl equity 29h since last good mark','e');
+    return 'Pricing vendor down. Three sleeves on stale marks.';
+  }
+};
+
+/* ============================= DETECTION =============================== */
+let fid=0;
+function F(agent,sev,title,detail,extra){
+  return Object.assign({id:++fid,agent,sev,title,detail},extra||{});
+}
+function detect(){
+  const out=[];
+  // --- guideline-monitor: IPS ranges, cash floor, illiquid cap -----------
+  SLEEVE.forEach(function(s,i){
+    const w=B.w[i];
+    if(w>s.hi+1e-9)
+      out.push(F('guideline-monitor','critical','IPS range breach — '+s.k,
+        s.k+' at '+w.toFixed(2)+'% against an upper bound of '+s.hi.toFixed(0)+'%. Overweight '+(w-s.hi).toFixed(2)+'pp beyond the band.',
+        {rule:'ips',sleeve:i,dir:-1,target:s.hi-0.5}));
+    else if(w<s.lo-1e-9)
+      out.push(F('guideline-monitor','critical','IPS range breach — '+s.k,
+        s.k+' at '+w.toFixed(2)+'% against a lower bound of '+s.lo.toFixed(0)+'%. Underweight '+(s.lo-w).toFixed(2)+'pp below the band.',
+        {rule:'ips',sleeve:i,dir:1,target:s.lo+0.5}));
+  });
+  const il=illiqPct();
+  if(il>LIMIT.illiq)
+    out.push(F('guideline-monitor','critical','Illiquid cap breach',
+      'Private equity plus real assets at '+il.toFixed(2)+'% against a '+LIMIT.illiq.toFixed(0)+'% cap. '
+      +'Neither sleeve can be sold to fix this.',{rule:'illiq'}));
+  const dr=driftBps();
+  if(dr>LIMIT.drift)
+    out.push(F('guideline-monitor','medium','Drift from policy',
+      'Aggregate one-way distance from the policy portfolio is '+dr.toFixed(0)+'bps against a '+LIMIT.drift+'bps review trigger.',{rule:'drift'}));
+
+  // --- risk-sentinel -----------------------------------------------------
+  const te=trackingError();
+  if(te>LIMIT.te)
+    out.push(F('risk-sentinel','high','Tracking error above limit',
+      'Ex-ante TE against the policy portfolio is '+te.toFixed(0)+'bps against a '+LIMIT.te+'bps limit, '
+      +'driven by the active weights currently outside their bands. Portfolio volatility '+portVol().toFixed(1)+'%.',{rule:'te'}));
+
+  // --- liquidity-watch ---------------------------------------------------
+  const lw=liquidWithin(LIMIT.liqHorizon);
+  if(lw<LIMIT.liqMin)
+    out.push(F('liquidity-watch','high','Liquidity horizon breach',
+      'Only '+lw.toFixed(1)+'% of NAV can be realised within '+LIMIT.liqHorizon+' business days, against a '
+      +LIMIT.liqMin+'% floor. The shortfall is locked in private equity and real assets.',{rule:'liq'}));
+  const cov=coverage();
+  if(cov<LIMIT.cover)
+    out.push(F('liquidity-watch','high','Commitment coverage thin',
+      '$'+callsOnCapital().toFixed(0)+'m of calls on capital ($'+B.uncalled.toFixed(0)+'m uncalled'
+      +(B.pendingRedemption>0?' plus $'+B.pendingRedemption.toFixed(0)+'m noticed redemptions':'')
+      +') against $'+(liquidPct()/100*B.nav).toFixed(0)+'m of liquid assets \u2014 coverage '
+      +cov.toFixed(2)+'x against a '+LIMIT.cover.toFixed(1)+'x floor.',{rule:'cover'}));
+
+  // --- concentration-monitor --------------------------------------------
+  B.issuers.forEach(function(iss){
+    if(iss.w>LIMIT.issuer)
+      out.push(F('concentration-monitor','high','Single-issuer limit breach — '+iss.n,
+        iss.n+' ('+iss.s+') at '+iss.w.toFixed(2)+'% of NAV against a '+LIMIT.issuer.toFixed(1)+'% limit. '
+        +'Look-through across all equity sleeves.',{rule:'issuer',issuer:iss.n}));
+    if(iss.downgraded)
+      out.push(F('corporate-actions','high','Eligibility breach — '+iss.n,
+        iss.n+' was cut to '+iss.rating+', outside the investment-grade eligibility list. '
+        +'Held at '+iss.w.toFixed(2)+'% of NAV.',{rule:'eligibility',issuer:iss.n}));
+  });
+
+  // --- data-quality ------------------------------------------------------
+  const stale=staleNames();
+  if(stale.length)
+    out.push(F('data-quality','medium','Stale marks',
+      stale.length+' sleeve'+(stale.length>1?'s':'')+' priced from marks older than '+LIMIT.stale+'h: '+stale.join(', ')
+      +'. Oldest '+maxStale()+'h. Detection continues; execution is gated.',{rule:'stale',gate:true}));
+
+  // --- corporate-actions -------------------------------------------------
+  B.corpAct.forEach(function(ca){
+    if(ca.t==='Data incident')
+      out.push(F('corporate-actions','medium',ca.t,ca.d+' — '+ca.impact+'.',{rule:'incident'}));
+  });
+
+  return out;
+}
+
+/* ============================== PLANNING ================================
+   Deterministic remediation. Range breaches are funded from, or into, the
+   most liquid sleeve that has room; private breaches are explicitly NOT
+   given a trade.                                                          */
+function plan(fs){
+  const out=[];let pid=0;
+  // Candidate funding sleeves, cheapest first, that have room to move.
+  // delta is the change applied to the FUNDING sleeve. One that has to grow
+  // needs headroom below its upper bound; one that has to shrink needs room
+  // above its lower bound. The old test read the wrong side of the band and
+  // could pick a funder with no room at all.
+  function funder(exclude,delta){
+    const order=[CASH,3,0,1,4,2];
+    for(let k=0;k<order.length;k++){
+      const i=order[k];
+      if(i===exclude||SLEEVE[i].priv)continue;
+      const room=delta>0?(SLEEVE[i].hi-B.w[i]-0.6):(B.w[i]-SLEEVE[i].lo-0.6);
+      if(room>=Math.abs(delta))return i;
+    }
+    return -1;
+  }
+  fs.forEach(function(f){
+    if(f.rule==='ips'){
+      const i=f.sleeve,s=SLEEVE[i];
+      if(s.priv){
+        out.push({id:++pid,fid:f.id,title:'Pacing action — '+s.k,legs:[],tradeable:false,cost:0,notional:0,
+          why:s.k+' is drawn capital. It cannot be sold into the market to clear a range breach. The planner escalates '
+             +'a commitment-pacing action to the investment committee — slow the next vintage, or rebalance the denominator '
+             +'by adding to public sleeves — rather than drafting an order that could not be filled.',
+          sev:f.sev});
+        return;
+      }
+      const need=f.target-B.w[i];                 // + = buy, - = sell
+      const j=funder(i,-need);
+      if(j<0){
+        out.push({id:++pid,fid:f.id,title:'No feasible funding — '+s.k,legs:[],tradeable:false,cost:0,notional:0,
+          why:'Moving '+s.k+' by '+need.toFixed(2)+'pp needs an offsetting leg, and every liquid sleeve is already at a bound. '
+             +'This requires a policy decision, not a trade.',sev:f.sev});
+        return;
+      }
+      const notional=Math.abs(need)/100*B.nav;
+      const cost=(tradeCostBps(i,Math.abs(need))+tradeCostBps(j,Math.abs(need)))/2/10000*notional;
+      out.push({id:++pid,fid:f.id,tradeable:true,sev:f.sev,
+        title:(need>0?'Buy ':'Sell ')+Math.abs(need).toFixed(2)+'pp '+s.k,
+        legs:[{i,d:need},{i:j,d:-need}],
+        notional,cost,
+        why:'Brings '+s.k+' to '+f.target.toFixed(2)+'%, half a point inside the '+s.lo+'–'+s.hi+'% band rather than exactly on it, '
+           +'so ordinary market drift does not re-breach it tomorrow. Funded '+(need>0?'from ':'into ')+SLEEVE[j].k
+           +', the cheapest sleeve with room.'});
+    }
+    else if(f.rule==='issuer'){
+      const iss=B.issuers.filter(function(x){return x.n===f.issuer;})[0];
+      const trim=iss.w-(LIMIT.issuer-0.5);
+      const notional=trim/100*B.nav;
+      out.push({id:++pid,fid:f.id,tradeable:true,sev:f.sev,issuer:iss.n,trim,
+        title:'Trim '+iss.n+' by '+trim.toFixed(2)+'pp',
+        legs:[],notional,cost:tradeCostBps(0,trim)/10000*notional,
+        why:'Takes '+iss.n+' to '+(LIMIT.issuer-0.5).toFixed(2)+'% of NAV, inside the '+LIMIT.issuer.toFixed(1)+'% limit with a half-point buffer. '
+           +'Proceeds stay inside the same sleeve, so no IPS range moves and no other rule is disturbed.'});
+    }
+    else if(f.rule==='eligibility'){
+      const iss=B.issuers.filter(function(x){return x.n===f.issuer;})[0];
+      out.push({id:++pid,fid:f.id,tradeable:true,sev:f.sev,issuer:iss.n,trim:iss.w,
+        title:'Exit '+iss.n+' — outside eligibility',
+        legs:[],notional:iss.w/100*B.nav,cost:tradeCostBps(4,iss.w)/10000*(iss.w/100*B.nav),
+        why:iss.n+' is rated '+iss.rating+' and no longer eligible. The mandate allows a 30-day orderly disposal window, '
+           +'so the proposal is a full exit rather than a forced same-day sale. Costed at the high-yield spread, not the equity spread.'});
+    }
+    else if(f.rule==='illiq'||f.rule==='cover'||f.rule==='liq'){
+      out.push({id:++pid,fid:f.id,tradeable:false,sev:f.sev,legs:[],cost:0,notional:0,
+        title:'Escalate — '+f.title.toLowerCase(),
+        why:'This is a structural constraint, not a drift. It is resolved through commitment pacing, a secondary sale or a '
+           +'liquidity facility, all of which are committee decisions on a multi-month horizon. The fleet raises it and stops; '
+           +'an agent that drafted a trade here would be drafting a trade that cannot be executed.'});
+    }
+  });
+  return out;
+}
+
+/* Post-trade compliance simulation: apply the legs to a copy of the book
+   and re-run every hard rule. A proposal that opens a new breach is flagged
+   here rather than reaching the approver. */
+function violations(w){
+  const v={};
+  SLEEVE.forEach(function(s,i){
+    if(w[i]>s.hi+1e-9)v[s.k+' > '+s.hi+'%']=w[i]-s.hi;
+    if(w[i]<s.lo-1e-9)v[s.k+' < '+s.lo+'%']=s.lo-w[i];
+  });
+  const il=ILLIQ.reduce(function(a,i){return a+w[i];},0);
+  if(il>LIMIT.illiq)v['illiquid > '+LIMIT.illiq+'%']=il-LIMIT.illiq;
+  return v;
+}
+function precheck(p){
+  if(!p.tradeable)return{ok:false,reason:'non-tradeable, escalated'};
+  if(!p.legs.length)return{ok:true,reason:'intra-sleeve, no policy weight moves'};
+  const before=violations(B.w),saved=B.w.slice();
+  p.legs.forEach(function(l){B.w[l.i]+=l.d;});
+  const after=violations(B.w),te=trackingError();
+  B.w=saved;
+  // Only a breach this trade OPENS or WORSENS blocks it. Gating on breaches
+  // it does not touch deadlocks the queue: with three ranges already out, no
+  // proposal could ever clear - including the ones that fix them.
+  const opened=Object.keys(after).filter(function(k){return !(k in before)||after[k]>before[k]+1e-9;});
+  const cleared=Object.keys(before).filter(function(k){return !(k in after);});
+  if(opened.length)return{ok:false,reason:'would open '+opened.join(', ')};
+  return{ok:true,reason:'clean'+(cleared.length?', clears '+cleared.join(' and '):', opens nothing')
+    +' \u00b7 post-trade TE '+te.toFixed(0)+'bps'};
+}
+
+/* Autonomy policy. Two gates sit above the setting and cannot be overridden. */
+const AUTO_MAX_NOTIONAL=25;      // $m
+function route(p){
+  if(!p.pre.ok)              return{mode:'blocked',why:p.pre.reason};
+  if(S.auto==='observe')     return{mode:'manual',why:'observe-only: no trade is proposed for release'};
+  if(staleNames().length)    return{mode:'manual',why:'data-quality gate: stale marks block auto-execution at any autonomy level'};
+  if(S.auto!=='assisted')    return{mode:'manual',why:'autonomy is propose-and-approve'};
+  if(p.sev==='critical')     return{mode:'manual',why:'critical severity is never auto-executed'};
+  if(p.notional>AUTO_MAX_NOTIONAL)return{mode:'manual',why:'$'+p.notional.toFixed(1)+'m exceeds the $'+AUTO_MAX_NOTIONAL+'m auto cap'};
+  return{mode:'auto',why:'small, low-severity, post-trade clean'};
+}
+
+/* ============================== RENDER ================================= */
+function sevClass(s){return{critical:'sev-c',high:'sev-h',medium:'sev-m',low:'sev-l'}[s];}
+
+function renderFleet(state){
+  const el=document.getElementById('fleet');
+  el.innerHTML=AGENTS.map(function(a){
+    const st=state&&state[a.id];
+    return '<div class="alane '+(st||'idle')+'" id="lane-'+a.id+'" title="'+a.n+' · '+a.tier+' tier · '
+      +a.ms+'ms · '+(a.tin+a.tout).toLocaleString()+' tokens · starts at t+'+SCHED.start[a.id]+'ms">'
+      +'<div class="an"><i class="fas '+a.i+'"></i><span>'+a.n+'</span><span class="tier t-'+a.tier+'">'+a.tier+'</span></div>'
+      +'<div class="track"><div class="fill" id="fill-'+a.id+'"></div></div>'
+      +'<div class="st" id="st-'+a.id+'">'+a.ms+'ms</div></div>';
+  }).join('');
+}
+function renderFleetMetrics(){
+  document.getElementById('fleetMetrics').innerHTML=
+     '<div class="mcard"><div class="v c">'+(SCHED.span/1000).toFixed(2)+'s</div><div class="l">Critical path</div></div>'
+    +'<div class="mcard"><div class="v" style="color:var(--dim)">'+(TOTAL_WORK/1000).toFixed(2)+'s</div><div class="l">Total agent work</div></div>'
+    +'<div class="mcard"><div class="v g">'+(TOTAL_WORK/SCHED.span).toFixed(2)+'&times;</div><div class="l">Parallel speed-up</div></div>'
+    +'<div class="mcard"><div class="v c">'+(CYCLE_TOK/1000).toFixed(1)+'k</div><div class="l">Tokens per cycle</div></div>'
+    +'<div class="mcard"><div class="v y">$'+CYCLE_COST.toFixed(3)+'</div><div class="l">Cost per cycle</div></div>'
+    +'<div class="mcard"><div class="v r">'+(ALL_FRONTIER/CYCLE_COST).toFixed(1)+'&times;</div><div class="l">Cost if all frontier</div></div>';
+}
+
+function renderSleeves(){
+  const SC=40;                              // rail spans 0-40% of NAV
+  const pct=function(v){return Math.min(100,Math.max(0,v/SC*100));};
+  let h='<div class="srow srow-hd"><div class="nm">Sleeve</div><div class="rail"></div><div class="nums">actual / policy</div></div>';
+  SLEEVE.forEach(function(s,i){
+    const w=B.w[i],bad=w>s.hi+1e-9||w<s.lo-1e-9;
+    h+='<div class="srow '+(bad?'bad':'')+'" title="'+s.k+' · IPS '+s.lo+'–'+s.hi+'% · policy '+s.pol+'% · vol '+s.vol.toFixed(1)+'% · '
+      +(s.priv?'not tradeable':'~'+s.cost+'bp round trip, T+'+s.liqDays)+'">'
+      +'<div class="nm">'+s.k+'</div>'
+      +'<div class="rail">'
+        +'<div class="band" style="left:'+pct(s.lo)+'%;width:'+(pct(s.hi)-pct(s.lo))+'%"></div>'
+        +'<div class="pol" style="left:'+pct(s.pol)+'%"></div>'
+        +'<div class="act" style="left:0;width:'+pct(w)+'%"></div>'
+      +'</div>'
+      +'<div class="nums"><b>'+w.toFixed(2)+'%</b> / '+s.pol+'% <span style="color:var(--faint)">['+s.lo+'–'+s.hi+']</span></div>'
+    +'</div>';
+  });
+  document.getElementById('sleeves').innerHTML=h;
+}
+
+function renderFindings(){
+  const el=document.getElementById('findings');
+  if(!findings.length){
+    el.innerHTML='<div class="empty"><i class="fas fa-circle-check"></i>No open findings.<br>'
+      +(cycleNo?'The last cycle checked every rule and the book is inside all of them.':'Run a monitoring cycle to check the book against policy.')+'</div>';
+    document.getElementById('findTag').textContent=cycleNo?'clean as of cycle '+cycleNo:'not yet run';
+    return;
+  }
+  const order={critical:0,high:1,medium:2,low:3};
+  el.innerHTML=findings.slice().sort(function(a,b){return order[a.sev]-order[b.sev];}).map(function(f){
+    return '<div class="find sev-'+f.sev+'">'
+      +'<div class="fh"><span class="ft">'+f.title+'</span><span class="sev '+sevClass(f.sev)+'">'+f.sev.toUpperCase()+'</span></div>'
+      +'<div class="fm">'+f.detail+'<br><b>raised by</b> '+f.agent+' · <b>rule</b> '+f.rule+' · <b>cycle</b> '+cycleNo+'</div>'
+    +'</div>';
+  }).join('');
+  const c=findings.filter(function(f){return f.sev==='critical'||f.sev==='high';}).length;
+  document.getElementById('findTag').textContent=findings.length+' open · '+c+' critical or high · cycle '+cycleNo;
+}
+
+function renderProposals(){
+  const el=document.getElementById('proposals');
+  if(!proposals.length){
+    el.innerHTML='<div class="empty"><i class="fas fa-inbox"></i>Nothing queued.<br>'
+      +(cycleNo?'No finding in the register needs a trade.':'Run a monitoring cycle first.')+'</div>';
+    return;
+  }
+  el.innerHTML=proposals.map(function(p){
+    const legs=p.legs.length
+      ? p.legs.map(function(l){
+          return '<span class="'+(l.d>0?'buy':'sell')+'">'+(l.d>0?'BUY ':'SELL ')+Math.abs(l.d).toFixed(2)+'pp</span> '
+            +SLEEVE[l.i].k+' &nbsp;<span style="color:var(--faint)">$'+Math.abs(l.d/100*B.nav).toFixed(1)+'m</span>';
+        }).join('<br>')
+      : (p.issuer?'<span class="sell">TRIM '+p.trim.toFixed(2)+'pp</span> '+p.issuer+' &nbsp;<span style="color:var(--faint)">$'+p.notional.toFixed(1)+'m</span>'
+                 :'<span style="color:var(--faint)">no market order — escalation only</span>');
+    const st=p.state==='approved'?'<span class="tagmini ok">APPLIED</span>'
+            :p.state==='rejected'?'<span class="tagmini">REJECTED</span>'
+            :p.route.mode==='auto'?'<span class="tagmini auto">AUTO-ELIGIBLE</span>'
+            :p.route.mode==='blocked'?'<span class="tagmini gate">BLOCKED</span>'
+            :'<span class="tagmini">NEEDS APPROVAL</span>';
+    const canAct=p.state==='open'&&p.tradeable&&p.pre.ok;
+    return '<div class="prop '+(p.state==='approved'?'approved':p.state==='rejected'?'rejected':p.route.mode==='blocked'?'blocked':'')+'">'
+      +'<div class="ph"><span class="pt">'+p.title+'</span>'
+        +'<span><span class="sev '+sevClass(p.sev)+'">'+p.sev.toUpperCase()+'</span> '+st+'</span></div>'
+      +'<div class="legs">'+legs+'</div>'
+      +'<div class="why">'+p.why+'</div>'
+      +'<div class="why" style="color:var(--dim)"><b>pre-check</b> '+p.pre.reason
+        +(p.tradeable&&p.notional>0?' · <b>est. cost</b> $'+(p.cost*1000).toFixed(0)+'k on $'+p.notional.toFixed(1)+'m ('+(p.cost/p.notional*10000).toFixed(1)+'bp)':'')
+        +' · <b>routing</b> '+p.route.why+'</div>'
+      +'<div class="acts">'
+        +'<button type="button" class="abtn ok" data-ap="'+p.id+'" '+(canAct?'':'disabled')+'><i class="fas fa-check"></i> Approve</button>'
+        +'<button type="button" class="abtn no" data-rj="'+p.id+'" '+(p.state==='open'?'':'disabled')+'><i class="fas fa-xmark"></i> Reject</button>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function renderIssuers(){
+  let h='<thead><tr><th>Issuer</th><th>Sector</th><th>Rating</th><th>% NAV</th><th>Headroom</th><th>Status</th></tr></thead><tbody>';
+  B.issuers.slice().sort(function(a,b){return b.w-a.w;}).forEach(function(i){
+    const over=i.w>LIMIT.issuer, inel=!!i.downgraded;
+    h+='<tr><td>'+i.n+'</td><td style="color:var(--faint)">'+i.s+'</td>'
+      +'<td class="'+(inel?'':'')+'" style="color:'+(inel?'var(--red)':'var(--dim)')+'">'+i.rating+'</td>'
+      +'<td style="color:'+(over?'var(--red)':'var(--cyan)')+'"><b>'+i.w.toFixed(2)+'%</b></td>'
+      +'<td style="color:var(--dim)">'+(LIMIT.issuer-i.w).toFixed(2)+'pp</td>'
+      +'<td>'+(over?'<span class="sev sev-h">OVER LIMIT</span>':inel?'<span class="sev sev-h">INELIGIBLE</span>':'<span class="sev sev-l">ok</span>')+'</td></tr>';
+  });
+  document.getElementById('issuerTable').innerHTML=h+'</tbody>';
+}
+
+function renderAudit(){
+  const el=document.getElementById('audit');
+  el.innerHTML=auditLog.slice(-60).map(function(e){
+    return '<div><span class="h">'+e.hash+'</span> <span class="t">'+e.seq+'</span> '
+      +'<span class="a">'+e.actor+'</span> <span class="'+e.cls+'">'+e.msg+'</span></div>';
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+function renderKpis(){
+  const te=trackingError(),il=illiqPct(),crit=findings.filter(function(f){return f.sev==='critical'||f.sev==='high';}).length;
+  const set=function(id,txt,cls){const e=document.getElementById(id);e.textContent=txt;if(cls!==undefined)e.className='v '+cls;};
+  set('kOpen',findings.length,findings.length?(crit?'r':'y'):'g');
+  set('kCrit',crit,crit?'r':'g');
+  set('kTE',te.toFixed(0),te>LIMIT.te?'r':'c');
+  set('kIlliq',il.toFixed(1)+'%',il>LIMIT.illiq?'r':'c');
+  set('kCash',B.w[CASH].toFixed(2)+'%',B.w[CASH]<LIMIT.cash?'r':'c');
+  document.getElementById('kCost').textContent=cycleNo?'$'+(CYCLE_COST*cycleNo).toFixed(3):'$0.000';
+
+  const badge=document.getElementById('stateBadge');
+  if(running){badge.textContent='RUNNING';badge.className='d-pill pill-watch';}
+  else if(!cycleNo){badge.textContent='IDLE';badge.className='d-pill pill-watch';}
+  else if(crit){badge.textContent=crit+' TO CLEAR';badge.className='d-pill pill-breach';}
+  else if(findings.length){badge.textContent='WATCH';badge.className='d-pill pill-watch';}
+  else{badge.textContent='ALL CLEAR';badge.className='d-pill pill-clear';}
+
+  document.getElementById('statusBar').innerHTML=
+    'cycle <b>'+cycleNo+'</b> · NAV <b>$'+B.nav.toFixed(0)+'m</b> · findings <b>'+findings.length
+    +'</b> ('+crit+' critical/high) · TE <b>'+te.toFixed(0)+'bps</b>/'+LIMIT.te
+    +' · illiquid <b>'+il.toFixed(1)+'%</b>/'+LIMIT.illiq+' · cash <b>'+B.w[CASH].toFixed(2)+'%</b> · autonomy <b>'+S.auto+'</b>'
+    +(staleNames().length?' · <span style="color:var(--red)">execution gated: stale marks</span>':'');
+
+  document.getElementById('autoNote').innerHTML=({
+    observe:'Detection and explanation only. <b>No trade is drafted for release</b> — the queue still shows what the planner would do, so you can measure the fleet against a human baseline before letting it near an order.',
+    propose:'The fleet drafts, costs and pre-checks every trade, and <b>a human clicks</b>. This is the setting a real deployment runs in for a long time.',
+    assisted:'Proposals under $'+AUTO_MAX_NOTIONAL+'m that are not critical severity and pass the post-trade re-check are marked auto-eligible. <b>Stale marks still block everything</b>, and critical severity is never auto-executed.'
+  })[S.auto];
+}
+
+function renderAll(){renderSleeves();renderFindings();renderProposals();renderIssuers();renderAudit();renderKpis();}
+
+/* ============================== THE CYCLE =============================== */
+// The whole cycle is computed synchronously so the UI is correct even if the
+// reveal animation never runs (a hidden tab suspends rAF and throttles
+// timers). The lanes are then animated with one CSS transition each.
+function runCycle(){
+  if(running)return;
+  running=true;cycleNo++;
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-circle-notch fa-spin"></i> Running cycle '+cycleNo;
+
+  push('orchestrator','cycle '+cycleNo+' started · 13 agents · critical path '+SCHED.span+'ms','a');
+
+  findings=detect();
+  const hits={};
+  findings.forEach(function(f){
+    const a=AGENTS.filter(function(x){return x.n===f.agent;})[0];
+    if(a)hits[a.id]=true;
+  });
+
+  proposals=plan(findings).map(function(p){
+    p.pre=precheck(p);
+    p.route=route(p);
+    p.state='open';
+    return p;
+  });
+
+  findings.forEach(function(f){
+    push(f.agent,'['+f.sev+'] '+f.title,f.sev==='critical'?'e':f.sev==='high'?'e':'w');
+  });
+  push('finding-triage',findings.length+' finding'+(findings.length===1?'':'s')+' after de-duplication','a');
+  push('remediation-planner','drafted '+proposals.length+' item'+(proposals.length===1?'':'s')+' · '
+    +proposals.filter(function(p){return p.tradeable;}).length+' tradeable, '
+    +proposals.filter(function(p){return !p.tradeable;}).length+' escalated','a');
+  proposals.forEach(function(p){
+    push('compliance-simulator','#'+p.id+' '+p.title+' — '+p.pre.reason,p.pre.ok?'g':'e');
+  });
+  const autoN=proposals.filter(function(p){return p.route.mode==='auto';}).length;
+  push('approval-router','autonomy '+S.auto+' · '+autoN+' auto-eligible, '
+    +proposals.filter(function(p){return p.route.mode==='manual';}).length+' to a human, '
+    +proposals.filter(function(p){return p.route.mode==='blocked';}).length+' blocked',autoN?'w':'a');
+  push('audit-logger','cycle '+cycleNo+' sealed · '+CYCLE_TOK.toLocaleString()+' tokens · $'+CYCLE_COST.toFixed(3),'a');
+
+  renderAll();
+
+  // --- animate the lanes (purely cosmetic; state is already committed) ---
+  const SPEED=0.55;
+  renderFleet(null);
+  AGENTS.forEach(function(a){
+    const fill=document.getElementById('fill-'+a.id),lane=document.getElementById('lane-'+a.id),st=document.getElementById('st-'+a.id);
+    fill.style.transition='width '+(a.ms*SPEED)+'ms linear '+(SCHED.start[a.id]*SPEED)+'ms';
+    st.textContent='queued';
+    requestAnimationFrame(function(){fill.style.width='100%';});
+    setTimeout(function(){
+      lane.classList.remove('idle');
+      lane.classList.add(hits[a.id]?'hit':'done');
+      st.textContent=(hits[a.id]?'● ':'✓ ')+a.ms+'ms';
+    },(SCHED.start[a.id]+a.ms)*SPEED);
+  });
+  const total=SCHED.span*SPEED+80;
+  setTimeout(function(){
+    running=false;
+    btn.disabled=false;btn.innerHTML='<i class="fas fa-play"></i> Run monitoring cycle';
+    document.getElementById('cycleNote').innerHTML=
+      'cycle '+cycleNo+' · '+findings.length+' findings · '+proposals.length+' queued · '
+      +(SCHED.span/1000).toFixed(2)+'s critical path · $'+CYCLE_COST.toFixed(3);
+    renderKpis();
+  },total);
+}
+
+/* --------------------------- APPROVE / REJECT --------------------------- */
+function applyProposal(p,who){
+  if(p.state!=='open')return;
+  if(!p.tradeable||!p.pre.ok)return;
+  if(p.legs.length){
+    p.legs.forEach(function(l){B.w[l.i]+=l.d;});
+    normalise();
+  }else if(p.issuer){
+    const iss=B.issuers.filter(function(x){return x.n===p.issuer;})[0];
+    if(iss){
+      if(p.trim>=iss.w-1e-9){iss.w=0;iss.downgraded=false;iss.rating=iss.rating+' (exited)';}
+      else iss.w-=p.trim;
+    }
+  }
+  p.state='approved';
+  push(who,'#'+p.id+' '+p.title+' — executed · $'+p.notional.toFixed(1)+'m at ~'
+    +(p.notional>0?(p.cost/p.notional*10000).toFixed(1):'0')+'bp','g');
+  // Re-run detection: the whole point of the loop is that the book changed.
+  findings=detect();
+  const stillOpen=proposals.filter(function(x){return x.state==='open';});
+  stillOpen.forEach(function(x){x.pre=precheck(x);x.route=route(x);});
+  push('guideline-monitor','re-check after fill · '+findings.length+' finding'+(findings.length===1?'':'s')+' remain',
+    findings.length?'w':'g');
+  renderAll();
+}
+document.getElementById('proposals').addEventListener('click',function(e){
+  const ap=e.target.closest('[data-ap]'),rj=e.target.closest('[data-rj]');
+  if(ap){
+    const p=proposals.filter(function(x){return x.id===+ap.dataset.ap;})[0];
+    if(p)applyProposal(p,'human:portfolio-manager');
+  }else if(rj){
+    const p=proposals.filter(function(x){return x.id===+rj.dataset.rj;})[0];
+    if(p&&p.state==='open'){
+      p.state='rejected';
+      push('human:portfolio-manager','#'+p.id+' '+p.title+' — rejected, finding stays open','w');
+      renderAll();
+    }
+  }
+});
+document.getElementById('approveAll').addEventListener('click',function(){
+  const elig=proposals.filter(function(p){return p.state==='open'&&p.tradeable&&p.pre.ok;});
+  if(!elig.length){push('human:portfolio-manager','approve-all: nothing eligible','t');renderAudit();return;}
+  elig.forEach(function(p){applyProposal(p,'human:portfolio-manager');});
+});
+
+/* ------------------------------- EVENTS --------------------------------- */
+document.getElementById('segEvent').addEventListener('click',function(e){
+  const b=e.target.closest('button');if(!b||running)return;
+  const msg=EVENTS[b.dataset.e]();
+  findings=[];proposals=[];
+  document.getElementById('cycleNote').innerHTML='<b>'+msg+'</b> Run the cycle to see what the fleet finds.';
+  renderAll();
+});
+document.getElementById('segAuto').addEventListener('click',function(e){
+  const b=e.target.closest('button');if(!b)return;
+  S.auto=b.dataset.a;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.classList.toggle('on',x===b);});
+  proposals.filter(function(p){return p.state==='open';}).forEach(function(p){p.route=route(p);});
+  push('approval-router','autonomy changed to '+S.auto,'a');
+  renderAll();
+});
+document.getElementById('runBtn').addEventListener('click',runCycle);
+document.getElementById('resetBtn').addEventListener('click',function(){
+  if(running)return;
+  resetAll();renderFleet(null);renderAll();
+  document.getElementById('cycleNote').textContent='';
+});
+
+/* -------------------------------- HELP ---------------------------------- */
+const helpOverlay=document.getElementById('helpOverlay');
+document.getElementById('helpBtn').addEventListener('click',function(){helpOverlay.classList.add('show');});
+document.getElementById('helpClose').addEventListener('click',function(){helpOverlay.classList.remove('show');});
+helpOverlay.addEventListener('click',function(e){if(e.target===helpOverlay)helpOverlay.classList.remove('show');});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')helpOverlay.classList.remove('show');});
+
+/* -------------------------------- BOOT ---------------------------------- */
+resetAll();
+renderFleet(null);
+renderFleetMetrics();
+renderAll();
+</script>
+</body>
+</html>
