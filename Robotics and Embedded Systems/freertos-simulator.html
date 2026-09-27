@@ -226,12 +226,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <span><b>Simulated kernel</b> &middot; deterministic, no RNG &middot; Cortex-M4F @168&nbsp;MHz, context switch 84&nbsp;cycles &asymp; 0.50&nbsp;&micro;s &middot; not hardware-validated</span>
 </div>
 
-<p class="demo-sub">A <b>fixed-priority preemptive</b> FreeRTOS scheduler: higher number = higher priority, priority&nbsp;0 is reserved for the idle task, equal priorities share the CPU by 1-tick round-robin slices, and mutexes optionally apply the <b>priority-inheritance protocol</b> (mutexes only &mdash; never semaphores or queues).</p>
+<p class="demo-sub">A <b>fixed-priority preemptive</b> FreeRTOS scheduler: higher number = higher priority, priority&nbsp;0 is reserved for the idle task, equal priorities share the CPU by 1-tick round-robin slices, and mutexes optionally apply the <b>priority-inheritance protocol</b> (mutexes only: never semaphores or queues).</p>
 
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; FreeRTOS Kernel Simulator</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: FreeRTOS Kernel Simulator</h2>
       <button type="button" class="d-help-close" onclick="toggleHelp()" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
@@ -250,12 +250,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       </div>
       <div class="d-help-section">
         <h3>3 &middot; Priority inversion and inheritance</h3>
-        <p><strong>Bounded inversion</strong> is normal: a high-priority task waiting on a mutex held by a low-priority task waits at most for the critical section. It becomes <strong>unbounded</strong> when a medium-priority task &mdash; which needs nothing from the mutex &mdash; preempts the holder, so the high-priority task now waits for unrelated work. That is the <em>Inversion</em> preset, and the red banner and red Gantt outline mark the ticks where it is active.</p>
-        <p>The <strong>priority-inheritance protocol</strong> raises the mutex holder to the priority of its highest waiter and restores its base priority on the give. FreeRTOS implements this for <strong>mutexes only</strong> (<code>xSemaphoreCreateMutex</code>); binary and counting semaphores and queues have no owner, so they cannot inherit &mdash; which is why the <em>Prod-Con</em> preset shows no inheritance.</p>
+        <p><strong>Bounded inversion</strong> is normal: a high-priority task waiting on a mutex held by a low-priority task waits at most for the critical section. It becomes <strong>unbounded</strong> when a medium-priority task, which needs nothing from the mutex, preempts the holder, so the high-priority task now waits for unrelated work. That is the <em>Inversion</em> preset, and the red banner and red Gantt outline mark the ticks where it is active.</p>
+        <p>The <strong>priority-inheritance protocol</strong> raises the mutex holder to the priority of its highest waiter and restores its base priority on the give. FreeRTOS implements this for <strong>mutexes only</strong> (<code>xSemaphoreCreateMutex</code>); binary and counting semaphores and queues have no owner, so they cannot inherit, which is why the <em>Prod-Con</em> preset shows no inheritance.</p>
       </div>
       <div class="d-help-section">
         <h3>4 &middot; Utilisation and deadlines</h3>
-        <p>Each periodic task has a period <strong>T</strong> and a worst-case execution time <strong>C</strong>, with an implicit deadline <strong>D = T</strong>. The scheduler load is <strong>U = &Sigma; C<sub>i</sub>/T<sub>i</sub></strong>. Liu &amp; Layland's rate-monotonic bound is <strong>n(2<sup>1/n</sup> &minus; 1)</strong> &mdash; 0.828 for n=2, 0.780 for n=3, tending to ln&nbsp;2 &asymp; 0.693. Below the bound, RM priority assignment is guaranteed schedulable; between the bound and 1.0 it may still work (test it here); above 1.0 misses are unavoidable, which is what the <em>Deadline</em> preset shows at U = 113%.</p>
+        <p>Each periodic task has a period <strong>T</strong> and a worst-case execution time <strong>C</strong>, with an implicit deadline <strong>D = T</strong>. The scheduler load is <strong>U = &Sigma; C<sub>i</sub>/T<sub>i</sub></strong>. Liu &amp; Layland's rate-monotonic bound is <strong>n(2<sup>1/n</sup> &minus; 1)</strong>: 0.828 for n=2, 0.780 for n=3, tending to ln&nbsp;2 &asymp; 0.693. Below the bound, RM priority assignment is guaranteed schedulable; between the bound and 1.0 it may still work (test it here); above 1.0 misses are unavoidable, which is what the <em>Deadline</em> preset shows at U = 113%.</p>
       </div>
       <div class="d-help-section">
         <h3>5 &middot; Cost model</h3>
@@ -298,7 +298,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="guide-card">
         <span class="step">STEP 4</span>
         <h3>Toggle Priority Inheritance</h3>
-        <p>Enable <strong>Priority Inheritance</strong> and reload the <strong>Inversion</strong> preset: the mutex holder is raised to its waiter's priority, so the medium task can no longer preempt it. Mutexes only &mdash; semaphores never inherit.</p>
+        <p>Enable <strong>Priority Inheritance</strong> and reload the <strong>Inversion</strong> preset: the mutex holder is raised to its waiter's priority, so the medium task can no longer preempt it. Mutexes only, semaphores never inherit.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 5</span>
@@ -317,7 +317,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="kpi-cell" title="Number of context switches"><div class="lbl">Ctx Switches</div><div class="val neutral" id="kCtx">0</div></div>
     <div class="kpi-cell" title="Share of elapsed ticks spent in the idle task (prvIdleTask, priority 0)"><div class="lbl">Idle (P0) %</div><div class="val neutral" id="kIdle">100.0</div></div>
     <div class="kpi-cell" title="Number of priority inversions detected"><div class="lbl">Inversions</div><div class="val neutral" id="kInv">0</div></div>
-    <div class="kpi-cell" title="Scheduler load U = sum of C_i / T_i over the periodic tasks, against the Liu &amp; Layland rate-monotonic bound n(2^(1/n) - 1)"><div class="lbl">Util U = &Sigma;C/T</div><div class="val neutral" id="kUtilU">0.0%</div><div class="sub" id="kBound">RM bound &mdash;</div></div>
+    <div class="kpi-cell" title="Scheduler load U = sum of C_i / T_i over the periodic tasks, against the Liu &amp; Layland rate-monotonic bound n(2^(1/n) - 1)"><div class="lbl">Util U = &Sigma;C/T</div><div class="val neutral" id="kUtilU">0.0%</div><div class="sub" id="kBound">RM bound -</div></div>
     <div class="kpi-cell" title="Currently running task name"><div class="lbl">Running</div><div class="val pos" id="kRunning">IDLE</div></div>
     <div class="kpi-cell" title="Elapsed kernel time = ticks / configTICK_RATE_HZ"><div class="lbl">Elapsed (ms)</div><div class="val neutral" id="kElapsed">0</div></div>
   </div>
@@ -428,11 +428,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <input type="text" id="inpTaskName" placeholder="e.g., Task_Sensor" maxlength="20">
     </div>
     <div class="form-group">
-      <label>Priority (uxPriority) 1-7 &mdash; 0 is tskIDLE_PRIORITY</label>
+      <label>Priority (uxPriority) 1-7: 0 is tskIDLE_PRIORITY</label>
       <input type="number" id="inpTaskPri" min="1" max="7" value="3">
     </div>
     <div class="form-group">
-      <label>Period T (ticks) &mdash; deadline D = T, 0 = aperiodic</label>
+      <label>Period T (ticks), deadline D = T, 0 = aperiodic</label>
       <input type="number" id="inpTaskPeriod" min="0" max="200" value="20">
     </div>
     <div class="form-group">
@@ -1564,7 +1564,7 @@ function renderStats() {
         '<button type="button" onclick="removeTask(' + t.id + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:3px 5px;min-width:22px;min-height:22px;border-radius:4px" title="vTaskDelete" aria-label="Delete ' + t.name + '"><i class="fas fa-times"></i></button>' +
         '</td>' +
         '<td>' + priTxt + '</td>' +
-        '<td>' + (t.period > 0 ? t.execTime + '/' + t.period : t.execTime + '/&mdash;') + ' <span style="color:var(--faint);font-size:10px">' + ui + '</span></td>' +
+        '<td>' + (t.period > 0 ? t.execTime + '/' + t.period : t.execTime + '/-') + ' <span style="color:var(--faint);font-size:10px">' + ui + '</span></td>' +
         '<td>' + share.toFixed(1) + '%</td>' +
         '<td>' + t.ticksBlocked + '</td>' +
         '<td>' + t.ticksReady + '</td>' +
@@ -1953,7 +1953,7 @@ document.addEventListener('DOMContentLoaded', init);
         <ul>
           <li>Scheduler load <code>U = &Sigma; C_i / T_i</code>; rate-monotonic sufficient bound <code>n(2^(1/n) &minus; 1)</code> &rarr; 0.828 (n=2), 0.780 (n=3), ln&nbsp;2 &asymp; 0.693 as n&rarr;&infin;.</li>
           <li>Measured CPU busy <code>= 1 &minus; idle ticks / elapsed ticks</code>; per-task share <code>= run ticks / elapsed ticks</code>.</li>
-          <li>Priority inheritance: on block, <code>holder.priority = max(holder.priority, waiter.priority)</code>; on <code>xSemaphoreGive</code> the holder returns to its base priority. Mutexes only &mdash; semaphores and queues have no owner.</li>
+          <li>Priority inheritance: on block, <code>holder.priority = max(holder.priority, waiter.priority)</code>; on <code>xSemaphoreGive</code> the holder returns to its base priority. Mutexes only, semaphores and queues have no owner.</li>
           <li>Switch overhead <code>= switches &times; 84 / 168&nbsp;MHz</code>.</li>
           <li>Liu &amp; Layland (1973), <em>Scheduling Algorithms for Multiprogramming in a Hard-Real-Time Environment</em>; Sha, Rajkumar &amp; Lehoczky (1990), <em>Priority Inheritance Protocols</em>; Barry, <em>Mastering the FreeRTOS Real Time Kernel</em>.</li>
         </ul>
@@ -1972,7 +1972,7 @@ document.addEventListener('DOMContentLoaded', init);
     </div>
     <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>

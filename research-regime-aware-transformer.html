@@ -622,7 +622,7 @@ footer{border-top:1px solid var(--border);background:var(--darker);padding:2.5re
 
 <footer>
   <div class="wrap fbot">
-    <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+    <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
     <span>
       <a href="index.html">Home</a>
       <a href="research.html">Research</a>
@@ -845,7 +845,7 @@ footer{border-top:1px solid var(--border);background:var(--darker);padding:2.5re
         cfg.pct ? (v * 100).toFixed(0) + '%' : v.toFixed(1)));
     });
     svgMetric.appendChild(el('text', { x: L + (W - L - R) / 2, y: H - 8, 'text-anchor': 'middle', fill: C.muted, 'font-size': 10.5 },
-      cfg.label + ' — ' + cfg.better + ' is better'));
+      cfg.label + ': ' + cfg.better + ' is better'));
     ORDER1.forEach(function (m, idx) {
       var pair = T1[m][cfg.key], mean = pair[0], sd = pair[1], g = GRP[m];
       var cy = T + rowH * idx + rowH / 2, bh = Math.min(18, rowH * 0.58);
@@ -1046,7 +1046,7 @@ footer{border-top:1px solid var(--border);background:var(--darker);padding:2.5re
           fill: REGIMES[j].c, opacity: REGIMES[j].n === 'Crisis' ? 0.5 : 1,
           stroke: REGIMES[j].n === 'Crisis' ? REGIMES[j].c : 'none', 'stroke-width': 1, 'stroke-dasharray': REGIMES[j].n === 'Crisis' ? '3 2' : null }));
         bindTip(grp, '<b>' + row.n + '</b><br>' + REGIMES[j].n + ' regime<br>Sharpe ' + fmt(v) +
-          '<br><span class="d">' + REGIMES[j].obs + ' months in test set' + (REGIMES[j].obs < 10 ? ' — unreliable' : '') + '</span>');
+          '<br><span class="d">' + REGIMES[j].obs + ' months in test set' + (REGIMES[j].obs < 10 ? ', unreliable' : '') + '</span>');
         svg.appendChild(grp);
       });
       svg.appendChild(el('text', { x: cx, y: H - B + 18, 'text-anchor': 'middle', fill: C.text, 'font-size': 10.5 }, row.n));
@@ -1136,7 +1136,7 @@ footer{border-top:1px solid var(--border);background:var(--darker);padding:2.5re
       fill: 'none', stroke: '#00ff41', 'stroke-width': 1.2, 'stroke-dasharray': '5 4', opacity: 0.6 }));
     svg.appendChild(el('polygon', { points: '219,' + (BY + BH + 6) + ' 227,' + (BY + BH + 6) + ' 223,' + (BY + BH - 2), fill: '#00ff41', opacity: 0.6 }));
     svg.appendChild(el('text', { x: 529, y: 215, 'text-anchor': 'middle', fill: '#00ff41', 'font-size': 10, opacity: 0.75, 'font-family': 'JetBrains Mono, monospace' }, 'gradients: one objective, no separate regime label loss'));
-    svg.appendChild(el('text', { x: 12, y: 26, fill: '#83838d', 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, 'RAT-CARD forward pass — click a block'));
+    svg.appendChild(el('text', { x: 12, y: 26, fill: '#83838d', 'font-size': 10.5, 'font-family': 'JetBrains Mono, monospace' }, 'RAT-CARD forward pass, click a block'));
 
     function select(id) {
       var b = null, i;

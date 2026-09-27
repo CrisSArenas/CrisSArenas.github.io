@@ -233,7 +233,7 @@ table.stress tr:hover{background:var(--accent-bg)}
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; Portable Alpha Simulator</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: Portable Alpha Simulator</h2>
       <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
@@ -264,8 +264,8 @@ table.stress tr:hover{background:var(--accent-bg)}
         <p>Three things then have to line up in a bad month:</p>
         <ul>
           <li><strong>Variation margin is daily, not monthly.</strong> Settling once a month understates how much cash a drawdown actually consumes, because it ignores the path inside the month. The model samples the intra-month <em>low</em> of the futures P&amp;L exactly, from the Brownian bridge that ends at the realised month return: min = (R &minus; &radic;(R&sup2; &minus; 2&sigma;&sup2;&thinsp;ln&thinsp;U)) / 2 with U uniform. A month that ends down 2% may well have been down 6% on the way.</li>
-          <li><strong>Initial margin rises in stress.</strong> Clearing houses raise performance bonds when volatility spikes &mdash; CME lifted E-mini requirements roughly 60% between February and March 2020. The requirement here is scaled 1.6&times; in a crisis and 1.25&times; in a rate shock, so the collateral you need goes <em>up</em> while the collateral you have goes down.</li>
-          <li><strong>The escape routes are finite.</strong> A shortfall is met first from cash, then from a committed credit line sized to the <strong>liquidity buffer</strong> (one month at Rf + spread + 100 bp). If both are exhausted the programme has no choice: it <strong>cuts futures notional</strong> down to what the remaining collateral can margin, paying 5 bp of traded notional in calm markets and 20 bp in a crisis. That cut happens at the intra-month low, and the notional stays cut until the next redemption window &mdash; so the programme sells beta at the bottom and buys it back higher.</li>
+          <li><strong>Initial margin rises in stress.</strong> Clearing houses raise performance bonds when volatility spikes: CME lifted E-mini requirements roughly 60% between February and March 2020. The requirement here is scaled 1.6&times; in a crisis and 1.25&times; in a rate shock, so the collateral you need goes <em>up</em> while the collateral you have goes down.</li>
+          <li><strong>The escape routes are finite.</strong> A shortfall is met first from cash, then from a committed credit line sized to the <strong>liquidity buffer</strong> (one month at Rf + spread + 100 bp). If both are exhausted the programme has no choice: it <strong>cuts futures notional</strong> down to what the remaining collateral can margin, paying 5 bp of traded notional in calm markets and 20 bp in a crisis. That cut happens at the intra-month low, and the notional stays cut until the next redemption window, so the programme sells beta at the bottom and buys it back higher.</li>
         </ul>
         <p>This is <strong>forced de-leveraging</strong>, and it is what closed most 2008-vintage portable-alpha programmes: the alpha sleeve was gated exactly when the beta overlay was calling for cash. The health panel counts these months, the average notional actually carried, and the minimum collateral cushion on the path. At the default 50% alpha allocation none of it triggers; raise the allocation towards 85% or the notional towards 130% and it does. That is the trade-off the simulator exists to show.</p>
       </div>
@@ -275,7 +275,7 @@ table.stress tr:hover{background:var(--accent-bg)}
           <li><strong>Growth / drawdown</strong> charts show the benchmark and the programme on the same seeded path; shaded bands are stress regimes.</li>
           <li><strong>Tracking error</strong> = annualised standard deviation of (PA &minus; benchmark) monthly returns; <strong>information ratio</strong> = annualised active return / tracking error; <strong>Sharpe</strong> = (annualised arithmetic return &minus; Rf) / annualised volatility; <strong>max drawdown</strong> = worst peak-to-trough fall of the $100 path.</li>
           <li><strong>Return decomposition</strong> sums the arithmetic annualised monthly contributions; the net differs slightly from the geometric CAGR in the table. The alpha sleeve gross bar includes the Rf earned inside the sleeve, the collateral bar the Rf on the rest. The beta bar is the notional actually carried times (benchmark &minus; Rf), so it falls short of N &times; (benchmark &minus; Rf) whenever the programme was de-levered.</li>
-          <li><strong>One path is not an answer.</strong> On a 3% tracking error the standard error of a 15-year active return is close to 0.9%/y, so the chart you are looking at is one draw out of a very wide distribution. The health panel therefore re-runs the same programme on 96 alternative market paths and reports the 10th, 50th and 90th percentiles of the active return, and how often it is positive. Read those two rows before reading anything else in the KPI table. On the shipped defaults the median path adds only a few tenths of a percent a year and the 10th-to-90th band is several percent wide &mdash; and the default seed happens to sit near the bottom of that band. It has been left there rather than swapped for a flattering one.</li>
+          <li><strong>One path is not an answer.</strong> On a 3% tracking error the standard error of a 15-year active return is close to 0.9%/y, so the chart you are looking at is one draw out of a very wide distribution. The health panel therefore re-runs the same programme on 96 alternative market paths and reports the 10th, 50th and 90th percentiles of the active return, and how often it is positive. Read those two rows before reading anything else in the KPI table. On the shipped defaults the median path adds only a few tenths of a percent a year and the 10th-to-90th band is several percent wide, and the default seed happens to sit near the bottom of that band. It has been left there rather than swapped for a flattering one.</li>
         </ul>
       </div>
       <div class="d-help-section">
@@ -321,7 +321,7 @@ table.stress tr:hover{background:var(--accent-bg)}
         <ul>
           <li>Synthetic Gaussian regime mixture, not historical data; fat tails only arise from regime switching. Jumps, gaps and limit-down sessions are not modelled, so the true tail of the collateral drain is worse than what is shown.</li>
           <li>Constant cash rate; no term structure, no total-return-swap alternative, no taxes and no dividend-withholding effects on futures.</li>
-          <li>One blended margin rate for both legs, with no cross-margining offset between equity and Treasury futures &mdash; a real clearing member would net some of it, so the margin here is conservative.</li>
+          <li>One blended margin rate for both legs, with no cross-margining offset between equity and Treasury futures, a real clearing member would net some of it, so the margin here is conservative.</li>
           <li>Variation margin is checked once per month at the sampled intra-month low rather than day by day, and the credit line is assumed committed and always available at the stated rate. Both understate the number of calls; a real facility can be pulled precisely when it is needed.</li>
           <li>Forced de-leveraging is modelled, but the alpha sleeve is assumed to honour redemptions in full on its redemption dates. <strong>Gates, side-pockets and suspensions are not modelled</strong>, and in 2008 they were the binding constraint: a gated sleeve turns a de-leveraged programme into a permanently de-leveraged one.</li>
           <li>The alpha sleeve is one composite stream: no manager dispersion, no lock-ups, no notice periods beyond the redemption cycle, and performance fees crystallise monthly rather than annually, which overstates the fee drag on a choppy path.</li>
@@ -333,7 +333,7 @@ table.stress tr:hover{background:var(--accent-bg)}
     </div>
     <div class="disclaimer">Educational demonstration built on synthetic (or stylised historical) data generated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>
@@ -743,13 +743,13 @@ function renderKPIs(baseS,paS){
     ['Sharpe ratio',f2(baseS.sharpe),f2(paS.sharpe),paS.sharpe-baseS.sharpe],
     ['Max drawdown',pct(baseS.maxDD),pct(paS.maxDD),paS.maxDD-baseS.maxDD],
     ['Worst 12 months',pct(baseS.worst12),pct(paS.worst12),paS.worst12-baseS.worst12],
-    ['Active return','&mdash;',spct(paS.active),null],
-    ['Tracking error','&mdash;',pct(paS.te),null],
-    ['Information ratio','&mdash;',sf2(paS.ir),null],
+    ['Active return','-',spct(paS.active),null],
+    ['Tracking error','-',pct(paS.te),null],
+    ['Information ratio','-',sf2(paS.ir),null],
     ['Beta to benchmark','1.00',f2(paS.beta),null]
   ];
   var html='';
-  for(var i=0;i<rows.length;i++){var r=rows[i],dc='delta-neut',dv='&mdash;';
+  for(var i=0;i<rows.length;i++){var r=rows[i],dc='delta-neut',dv='-';
     if(r[3]!==null){var isVol=r[0]==='Volatility',isMDD=r[0]==='Max drawdown';
       if(isMDD){dc=r[3]>0.001?'delta-pos':r[3]<-0.001?'delta-neg':'delta-neut';dv=spct(r[3]);}
       else if(isVol){dc=r[3]>0.005?'delta-neg':r[3]<-0.005?'delta-pos':'delta-neut';dv=spct(r[3]);}

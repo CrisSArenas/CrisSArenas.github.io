@@ -281,7 +281,7 @@
                 <p class="hero-description">
                     Production ML classification system that predicts risk-on / risk-off market states in real time
                     by synthesizing momentum factors, credit spreads, yield signals, fund flows, volatility surfaces,
-                    macro indicators, and sentiment data — improving regime detection accuracy by 80% over
+                    macro indicators, and sentiment data, improving regime detection accuracy by 80% over
                     the prior rules-based approach.
                 </p>
 
@@ -305,8 +305,8 @@
             <section class="content-section">
                 <h2>Problem & Motivation</h2>
                 <p>
-                    Investment portfolios that span multiple asset classes — equities, fixed income, credit,
-                    real assets, alternatives — require continuous awareness of the prevailing market regime.
+                    Investment portfolios that span multiple asset classes (equities, fixed income, credit,
+                    real assets, alternatives) require continuous awareness of the prevailing market regime.
                     A risk-on regime (strong growth, tight spreads, risk appetite) calls for different positioning
                     than a risk-off regime (deteriorating macro, widening credit, flight to safety). Getting
                     that classification wrong, or detecting a regime shift too late, directly translates to
@@ -315,7 +315,7 @@
                 <p>
                     The legacy approach relied on a static, hand-coded rules engine: fixed thresholds on a
                     small number of indicators (VIX level, yield curve slope, a single credit spread). While
-                    interpretable, the rules were brittle — they broke down during non-standard regimes,
+                    interpretable, the rules were brittle, they broke down during non-standard regimes,
                     missed compound signals, and required constant manual recalibration as market structure
                     evolved.
                 </p>
@@ -323,12 +323,12 @@
                     The objective was to replace the rules engine with a trained ML classification pipeline
                     that ingests a broad, diverse signal universe, learns non-linear relationships between
                     signals and regime labels, and produces stable, actionable risk-on / risk-off predictions
-                    with measurable accuracy — fully automated and production-deployed.
+                    with measurable accuracy, fully automated and production-deployed.
                 </p>
 
                 <div class="highlight-box">
                     <strong>Core goal:</strong> At any given date, given the current state of momentum,
-                    credit, rates, flows, volatility, macro, and sentiment — what regime are we in,
+                    credit, rates, flows, volatility, macro, and sentiment, what regime are we in,
                     and how confident is the model?
                 </div>
             </section>
@@ -342,7 +342,7 @@
   │              Raw Signal Universe (7 categories)         │
   │  Momentum · Credit · Yields · Flows · Vol · Macro · Sent│
   └────────────────────────┬────────────────────────────────┘
-                           │ [Daily ingestion — Airflow DAG]
+                           │ [Daily ingestion: Airflow DAG]
                            ▼
   ┌─────────────────────────────────────────────────────────┐
   │               Feature Engineering Pipeline              │
@@ -380,7 +380,7 @@
 
             <!-- Signal Universe -->
             <section class="content-section">
-                <h2>Signal Universe — 7 Categories</h2>
+                <h2>Signal Universe: 7 Categories</h2>
                 <p>
                     The most critical design decision was breadth and diversity of the signal universe.
                     No single indicator reliably predicts regime transitions across all market cycles.
@@ -491,7 +491,7 @@
                 <h4>Rate-of-Change Features</h4>
                 <ul>
                     <li>1-week, 4-week, 12-week deltas for each signal</li>
-                    <li>Momentum of signal momentum (second derivative — regime acceleration)</li>
+                    <li>Momentum of signal momentum (second derivative: regime acceleration)</li>
                     <li>Directional change counts (number of consecutive up/down moves)</li>
                 </ul>
 
@@ -544,7 +544,7 @@ Raw Signal [any category]
                 <p>
                     Supervised classification requires ground-truth labels. Regime labels were constructed
                     historically using a combination of objective market indicators and established
-                    economic turning-point methodologies — rather than subjective annotation — to
+                    economic turning-point methodologies, rather than subjective annotation, to
                     ensure reproducibility and reduce labeling bias.
                 </p>
 
@@ -552,11 +552,11 @@ Raw Signal [any category]
                 <ul>
                     <li>
                         <strong>Risk-On:</strong> Periods where a composite of market-based and
-                        macro signals simultaneously indicate positive risk appetite — tightening
+                        macro signals simultaneously indicate positive risk appetite, tightening
                         conditions, positive flows, and improving fundamental backdrop.
                     </li>
                     <li>
-                        <strong>Risk-Off:</strong> Periods where the same composite signals flip —
+                        <strong>Risk-Off:</strong> Periods where the same composite signals flip,
                         deteriorating market pricing, defensive positioning, outflows from risk assets,
                         and weakening macro conditions occurring in combination.
                     </li>
@@ -567,7 +567,7 @@ Raw Signal [any category]
                     Raw label switches are noisy. A minimum persistence filter (e.g., require N consecutive
                     weeks of consistent signal before declaring a regime change) smooths spurious
                     transitions. This reflects the real-world truth that genuine regime shifts
-                    persist — one-day spikes do not constitute a new regime.
+                    persist, one-day spikes do not constitute a new regime.
                 </p>
 
                 <h3>Multi-Class Extension</h3>
@@ -576,10 +576,10 @@ Raw Signal [any category]
                     aligned with the classic growth-inflation quadrant:
                 </p>
                 <ul>
-                    <li><strong>Goldilocks</strong> — above-trend growth, below-target inflation</li>
-                    <li><strong>Reflation</strong> — above-trend growth, above-target inflation</li>
-                    <li><strong>Stagflation</strong> — below-trend growth, above-target inflation</li>
-                    <li><strong>Deflation</strong> — below-trend growth, below-target inflation</li>
+                    <li><strong>Goldilocks</strong>: above-trend growth, below-target inflation</li>
+                    <li><strong>Reflation</strong>: above-trend growth, above-target inflation</li>
+                    <li><strong>Stagflation</strong>: below-trend growth, above-target inflation</li>
+                    <li><strong>Deflation</strong>: below-trend growth, below-target inflation</li>
                 </ul>
             </section>
 
@@ -598,16 +598,16 @@ Raw Signal [any category]
                 <h4>Base Learners</h4>
                 <ul>
                     <li>
-                        <strong>Random Forest Classifier</strong> — low variance, handles feature
+                        <strong>Random Forest Classifier</strong>: low variance, handles feature
                         collinearity well (relevant given correlated macro/credit signals), strong baseline.
                     </li>
                     <li>
-                        <strong>Gradient Boosted Trees (XGBoost / LightGBM)</strong> — higher
+                        <strong>Gradient Boosted Trees (XGBoost / LightGBM)</strong>: higher
                         discriminative power on tabular financial data; captures sequential signal
                         interactions that Random Forest may miss.
                     </li>
                     <li>
-                        <strong>L1/L2-Regularized Logistic Regression</strong> — linear baseline
+                        <strong>L1/L2-Regularized Logistic Regression</strong>: linear baseline
                         providing a probability-calibrated reference and enforcing sparsity; used
                         as meta-learner in stacking layer.
                     </li>
@@ -652,7 +652,7 @@ Fold N:  Train [2005 → 2023]  |  Validate [2023 → 2024]
                 </p>
                 <ul>
                     <li>Remove features with near-zero variance across the training window</li>
-                    <li>Drop highly correlated feature pairs (|ρ| &gt; 0.92) — keep the one with higher
+                    <li>Drop highly correlated feature pairs (|ρ| &gt; 0.92), keep the one with higher
                         individual predictive power (measured by univariate AUC)</li>
                     <li>Recursive Feature Elimination (RFE) driven by XGBoost feature importance</li>
                     <li>Final model operates on ~60–80 selected features per training fold</li>
@@ -664,7 +664,7 @@ Fold N:  Train [2005 → 2023]  |  Validate [2023 → 2024]
                     <li>Key hyperparameters: tree depth, learning rate, subsample ratio, L1/L2
                         regularization, minimum samples per leaf</li>
                     <li>Objective: maximize out-of-sample F1 on the risk-off class
-                        (false negatives — missed risk-off — are more costly than false positives)</li>
+                        (false negatives, missed risk-off, are more costly than false positives)</li>
                 </ul>
             </section>
 
@@ -676,14 +676,14 @@ Fold N:  Train [2005 → 2023]  |  Validate [2023 → 2024]
                 <div class="architecture-diagram">
                     <pre>
 dag_regime_classifier/
-├── task_ingest_market_data        (daily — APIs, vendor feeds)
-├── task_ingest_macro_releases     (event-triggered — data calendar)
-├── task_ingest_fund_flows         (weekly — fund flow providers)
-├── task_feature_engineering       (daily — transforms all signals)
+├── task_ingest_market_data        (daily: APIs, vendor feeds)
+├── task_ingest_macro_releases     (event-triggered: data calendar)
+├── task_ingest_fund_flows         (weekly: fund flow providers)
+├── task_feature_engineering       (daily: transforms all signals)
 ├── task_feature_validation        (schema + distribution checks)
-├── task_run_inference             (daily — apply current model)
-├── task_retrain_models            (weekly — rolling walk-forward)
-└── task_publish_regime_output     (daily — downstream systems)
+├── task_run_inference             (daily: apply current model)
+├── task_retrain_models            (weekly: rolling walk-forward)
+└── task_publish_regime_output     (daily: downstream systems)
                     </pre>
                 </div>
 
@@ -700,8 +700,8 @@ dag_regime_classifier/
                 <p>
                     Before any inference, feature distributions are compared to training-time
                     distributions (Great Expectations or equivalent). If any signal shows
-                    extreme distribution shift — indicating a data quality issue rather than
-                    genuine market move — the pipeline halts and alerts, rather than producing
+                    extreme distribution shift, indicating a data quality issue rather than
+                    genuine market move, the pipeline halts and alerts, rather than producing
                     a potentially corrupted regime prediction.
                 </p>
 
@@ -709,7 +709,7 @@ dag_regime_classifier/
                 <ul>
                     <li>Each trained model artifact is logged with: training window, feature set version,
                         hyperparameters, OOS validation metrics</li>
-                    <li>Inference always references a pinned model version — no silent model swaps</li>
+                    <li>Inference always references a pinned model version, no silent model swaps</li>
                     <li>Challenger / champion framework: new model versions run in shadow mode
                         before promotion</li>
                 </ul>
@@ -751,7 +751,7 @@ dag_regime_classifier/
                 <ul>
                     <li>
                         <strong>Tactical allocation engine:</strong> regime label and confidence
-                        score feed directly into the tactical overweight/underweight tilt logic —
+                        score feed directly into the tactical overweight/underweight tilt logic,
                         risk-off triggers defensive positioning (increase duration, reduce credit,
                         increase cash), risk-on triggers pro-risk tilt.
                     </li>
@@ -776,10 +776,10 @@ dag_regime_classifier/
                     zones are defined:
                 </p>
                 <ul>
-                    <li><strong>High confidence risk-on</strong> (P &lt; 0.35) — full pro-risk allocation</li>
-                    <li><strong>Uncertain / transitional</strong> (P 0.35–0.65) — neutral / reduced tilt,
+                    <li><strong>High confidence risk-on</strong> (P &lt; 0.35), full pro-risk allocation</li>
+                    <li><strong>Uncertain / transitional</strong> (P 0.35–0.65), neutral / reduced tilt,
                         signal flagged for analyst review</li>
-                    <li><strong>High confidence risk-off</strong> (P &gt; 0.65) — defensive positioning activated</li>
+                    <li><strong>High confidence risk-off</strong> (P &gt; 0.65), defensive positioning activated</li>
                 </ul>
                 <p>
                     The uncertain zone is intentional. Forcing a binary output in periods of genuine
@@ -794,13 +794,13 @@ dag_regime_classifier/
 
                 <h3>Evaluation Metrics</h3>
                 <ul>
-                    <li><strong>AUC-ROC</strong> — overall discriminative ability across all confidence thresholds</li>
-                    <li><strong>F1 (risk-off class)</strong> — primary metric; penalizes missing genuine risk-off periods</li>
-                    <li><strong>Precision / Recall tradeoff</strong> — tuned to minimize false negatives (missed risk-off)
+                    <li><strong>AUC-ROC</strong>: overall discriminative ability across all confidence thresholds</li>
+                    <li><strong>F1 (risk-off class)</strong>: primary metric; penalizes missing genuine risk-off periods</li>
+                    <li><strong>Precision / Recall tradeoff</strong>: tuned to minimize false negatives (missed risk-off)
                         while keeping false positives manageable (excess defensiveness has a cost)</li>
-                    <li><strong>Regime persistence accuracy</strong> — does the model agree with itself over
+                    <li><strong>Regime persistence accuracy</strong>: does the model agree with itself over
                         consecutive days within the same true regime? (measures signal stability)</li>
-                    <li><strong>Transition detection lead time</strong> — how many days before a consensus
+                    <li><strong>Transition detection lead time</strong>: how many days before a consensus
                         regime change does the model first signal the new regime?</li>
                 </ul>
 
@@ -848,7 +848,7 @@ dag_regime_classifier/
                 <ul>
                     <li>All model artifacts versioned with full training provenance (data window, feature
                         list, hyperparameters, validation metrics)</li>
-                    <li>Regime output logs retained for audit — every prediction is traceable to the
+                    <li>Regime output logs retained for audit, every prediction is traceable to the
                         exact model version and input feature snapshot that produced it</li>
                     <li>Model changes require validation sign-off before production promotion; challenger
                         models run in shadow mode for a minimum period before replacing champion</li>
@@ -857,7 +857,7 @@ dag_regime_classifier/
                 <h3>Operational Controls</h3>
                 <ul>
                     <li>Pipeline processes have read-only access to upstream data sources</li>
-                    <li>No write-back to source systems — regime outputs are written only to
+                    <li>No write-back to source systems, regime outputs are written only to
                         designated output tables and message queues</li>
                     <li>Alerting on pipeline failures triggers immediate notification before
                         market open so downstream consumers know to treat the signal as stale</li>
@@ -871,18 +871,18 @@ dag_regime_classifier/
                     <ul>
                         <li><strong>80% improvement in regime detection accuracy</strong> over the prior
                             rules-based system, measured out-of-sample across multiple market cycles</li>
-                        <li><strong>Earlier regime transition detection</strong> — multi-signal confluence
+                        <li><strong>Earlier regime transition detection</strong>: multi-signal confluence
                             identifies turning points 3–4 weeks ahead of single-indicator threshold triggers</li>
-                        <li><strong>Stable, actionable signals</strong> — the confidence banding and
+                        <li><strong>Stable, actionable signals</strong>: the confidence banding and
                             smoothing architecture eliminated the whipsawing that plagued the rules engine
                             during ambiguous market periods</li>
-                        <li><strong>Interpretable outputs</strong> — per-prediction feature attribution
+                        <li><strong>Interpretable outputs</strong>: per-prediction feature attribution
                             lets portfolio managers understand why the model is risk-on or risk-off,
                             not just that it is</li>
-                        <li><strong>Fully automated</strong> — zero manual intervention required for
+                        <li><strong>Fully automated</strong>: zero manual intervention required for
                             daily regime classification; analysts freed to focus on interpretation
                             and response rather than signal aggregation</li>
-                        <li><strong>Extensible architecture</strong> — new signal categories can be
+                        <li><strong>Extensible architecture</strong>: new signal categories can be
                             added to the feature pipeline without retraining from scratch; the
                             walk-forward framework handles expanding signal universes gracefully</li>
                     </ul>
@@ -934,7 +934,7 @@ dag_regime_classifier/
         <div class="container">
             <div class="footer-content">
                 <div class="footer-text">
-                    <p>&copy; 2026 Cristian Arenas. Quantitative Investment & AI/ML Engineering.</p>
+                    <p>&copy; 2026 Cristian Arenas. Quantitative Research & AI/ML Engineering.</p>
                     <p class="footer-subtext"> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
                 </div>
                 <div class="footer-links">

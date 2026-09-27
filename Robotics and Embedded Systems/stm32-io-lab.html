@@ -163,7 +163,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; STM32 Memory-Mapped I/O Lab</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: STM32 Memory-Mapped I/O Lab</h2>
       <button type="button" class="d-help-close" id="helpClose" onclick="toggleHelp()" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
@@ -198,7 +198,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         <h3>4 &middot; USART2 baud arithmetic</h3>
         <p>With 16&times; oversampling (OVER8 = 0), <strong>USARTDIV = f<sub>PCLK</sub> / (16 &times; baud)</strong>. USART2 hangs off APB1, so PCLK1 = 42 MHz. For 115200 baud:</p>
         <p><code>USARTDIV = 42 000 000 / (16 &times; 115 200) = 22.786</code></p>
-        <p>The mantissa is the integer part, <strong>22 = 0x16</strong>, and the fraction field counts sixteenths: <code>round(0.786 &times; 16) = 13 = 0xD</code>. So <code>BRR = (22 &lt;&lt; 4) | 13 = 0x16D</code>, and the realised baud rate is 42e6 / (16 &times; 22.8125) = 115 068 baud, a &minus;0.11% error &mdash; well inside the &plusmn;2% a UART receiver tolerates. Registers: <code>SR +0x00</code> (TXE bit 7, RXNE bit 5), <code>DR +0x04</code>, <code>BRR +0x08</code>, <code>CR1 +0x0C</code> (UE 13, TE 3, RE 2).</p>
+        <p>The mantissa is the integer part, <strong>22 = 0x16</strong>, and the fraction field counts sixteenths: <code>round(0.786 &times; 16) = 13 = 0xD</code>. So <code>BRR = (22 &lt;&lt; 4) | 13 = 0x16D</code>, and the realised baud rate is 42e6 / (16 &times; 22.8125) = 115 068 baud, a &minus;0.11% error, well inside the &plusmn;2% a UART receiver tolerates. Registers: <code>SR +0x00</code> (TXE bit 7, RXNE bit 5), <code>DR +0x04</code>, <code>BRR +0x08</code>, <code>CR1 +0x0C</code> (UE 13, TE 3, RE 2).</p>
       </div>
       <div class="d-help-section">
         <h3>5 &middot; SPI1</h3>
@@ -207,7 +207,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="d-help-section">
         <h3>6 &middot; NVIC, the vector table and interrupt entry</h3>
         <p>Interrupt <em>n</em> is enabled by setting bit <code>n mod 32</code> of <code>ISER[n / 32]</code>, where ISER0 lives at <strong>0xE000E100</strong> (ISER1 at 0xE000E104) and the mirrored clear-enable array ICER0 at <strong>0xE000E180</strong>. On this part EXTI0 is IRQ 6 (bit 6 of ISER0), TIM2 is IRQ 28 (bit 28 of ISER0) and USART2 is IRQ 38, which is bit 38 mod 32 = <strong>6 of ISER1</strong>. A pin interrupt also needs SYSCFG (0x40013800) to route the port to the EXTI line and EXTI (0x40013C00) to unmask it and pick the edge.</p>
-        <p><strong>Priority</strong> lives in the byte array at <strong>0xE000E400</strong> (IPR), one byte per IRQ. The STM32F4 implements only the top <strong>4 bits</strong> of that byte, so there are 16 levels and 0 is the most urgent. <code>SCB-&gt;AIRCR.PRIGROUP</code> splits those 4 bits into pre-emption and sub-priority; the CMSIS default on ST parts is group 4 &mdash; all 4 bits pre-emption, no sub-priority &mdash; so any higher-priority IRQ pre-empts a running handler and equal priorities never pre-empt each other.</p>
+        <p><strong>Priority</strong> lives in the byte array at <strong>0xE000E400</strong> (IPR), one byte per IRQ. The STM32F4 implements only the top <strong>4 bits</strong> of that byte, so there are 16 levels and 0 is the most urgent. <code>SCB-&gt;AIRCR.PRIGROUP</code> splits those 4 bits into pre-emption and sub-priority; the CMSIS default on ST parts is group 4 (all 4 bits pre-emption, no sub-priority) so any higher-priority IRQ pre-empts a running handler and equal priorities never pre-empt each other.</p>
         <p><strong>Entry flow.</strong> The vector table starts at the address in <code>SCB-&gt;VTOR</code> (0xE000ED08, 512-byte aligned): offset <strong>0x00 holds the initial main stack pointer</strong>, offset <strong>0x04 the reset handler</strong>, then the 14 system exceptions, with IRQ <em>n</em> at 0x40 + 4<em>n</em>. When an enabled interrupt fires, hardware pushes eight words (xPSR, PC, LR, R12, R3&ndash;R0) onto the current stack, loads LR with an EXC_RETURN pattern, fetches the handler address from the vector table and switches to handler mode on the MSP. That is about 12 cycles &asymp; 71 ns at 168 MHz; tail-chaining a second pending interrupt costs roughly 6. With the FPU active, lazy stacking reserves but does not fill another 18 words.</p>
       </div>
       <div class="d-help-section">
@@ -217,10 +217,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="d-help-section">
         <h3>8 &middot; Using the lab</h3>
         <dl>
-          <dt>Peripheral tabs</dt><dd>Load that block's registers into the editor. Tabs are buttons &mdash; Tab and Enter work.</dd>
+          <dt>Peripheral tabs</dt><dd>Load that block's registers into the editor. Tabs are buttons: Tab and Enter work.</dd>
           <dt>Bit cells</dt><dd>Click (or focus and press Enter/Space) to toggle. Reserved bits are inert. Hover for the field name, bit range, current value and meaning.</dd>
           <dt>Under each register</dt><dd>The value in hex, the same value in binary, and the C statement that would produce it.</dd>
-          <dt>BSRR</dt><dd>Clicking a BSRR bit performs the write: the low half sets an ODR bit, the high half clears it, and BSRR itself falls straight back to 0 &mdash; the real hardware behaviour.</dd>
+          <dt>BSRR</dt><dd>Clicking a BSRR bit performs the write: the low half sets an ODR bit, the high half clears it, and BSRR itself falls straight back to 0, the real hardware behaviour.</dd>
           <dt>Presets</dt><dd>Six worked configurations, each of which also sets the RCC clock-enable and alternate-function bits it needs.</dd>
         </dl>
       </div>      </div>
@@ -240,7 +240,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="guide-card"><span class="step">STEP 2</span><h3>Select a peripheral</h3><p>Choose <strong>GPIOA, TIM2, USART2, SPI1, ADC1 or NVIC/SysTick</strong> to load its registers.</p></div>
       <div class="guide-card"><span class="step">STEP 3</span><h3>Toggle bits</h3><p><strong>Click any bit</strong> to flip it. Hex, binary, the C line, the pin map and the waveform update instantly.</p></div>
       <div class="guide-card"><span class="step">STEP 4</span><h3>Read the waveform</h3><p>Idealised scope: GPIO levels, PWM period and duty, a UART frame, SPI SCK/MOSI, ADC sampling, the SysTick ramp.</p></div>
-      <div class="guide-card"><span class="step">STEP 5</span><h3>Try the presets</h3><p><strong>LED, PWM 1 kHz, UART 115200, SPI 2.6 MHz, ADC, SysTick 1 kHz</strong> &mdash; each one is a complete, correct register sequence.</p></div>
+      <div class="guide-card"><span class="step">STEP 5</span><h3>Try the presets</h3><p><strong>LED, PWM 1 kHz, UART 115200, SPI 2.6 MHz, ADC, SysTick 1 kHz</strong>: each one is a complete, correct register sequence.</p></div>
     </div>
   </div>
 </div>
@@ -676,8 +676,8 @@ function buildTabs(){
     c.appendChild(t);
   }
   var p=PERIPHS[curPeriph],on=clkOn(curPeriph);
-  var clkTxt=p.clk?('<br><span style="font-family:var(--mono);font-size:10px;color:'+(on?'var(--green)':'var(--amber)')+'">Clock gate: RCC-&gt;'+p.clk[0]+' bit '+p.clk[1]+' = '+(on?'1 &mdash; enabled':'0 &mdash; gated OFF, on hardware every register below would read 0')+'</span>'):'';
-  document.getElementById('periphInfo').innerHTML='<strong>'+p.name+'</strong> &mdash; '+p.desc+'<br><span style="color:var(--cyan);font-family:var(--mono);font-size:10px">Base: '+hex32(p.base)+' &bull; Bus: '+p.bus+' &bull; '+p.regs.length+' registers</span>'+clkTxt;
+  var clkTxt=p.clk?('<br><span style="font-family:var(--mono);font-size:10px;color:'+(on?'var(--green)':'var(--amber)')+'">Clock gate: RCC-&gt;'+p.clk[0]+' bit '+p.clk[1]+' = '+(on?'1, enabled':'0, gated OFF, on hardware every register below would read 0')+'</span>'):'';
+  document.getElementById('periphInfo').innerHTML='<strong>'+p.name+'</strong>, '+p.desc+'<br><span style="color:var(--cyan);font-family:var(--mono);font-size:10px">Base: '+hex32(p.base)+' &bull; Bus: '+p.bus+' &bull; '+p.regs.length+' registers</span>'+clkTxt;
   document.getElementById('statusL').innerHTML='sel <b>'+p.name+'</b> \u2022 base '+hex32(p.base)+' \u2022 '+p.bus+(p.clk?(' \u2022 clock '+(on?'<span class="ok">ON</span>':'<span class="clk-off">GATED OFF (RCC-&gt;'+p.clk[0]+' bit '+p.clk[1]+')</span>')):'');
   document.getElementById('regTag').textContent=p.name+' registers';
 }
@@ -1138,7 +1138,7 @@ function drawWaveform(){
       ctx.fillText('green dashes = sampling edge (CPHA='+cfg.cpha+') \u2022 SCK period '+(1e9/fsk).toFixed(1)+' ns = '+Math.round(168e6/fsk)+' core cycles \u2022 '+(cfg.lsbfirst?'LSB':'MSB')+' first',ml+gW/2,mt+gH+18);
     }else{
       ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
-      ctx.fillText(cfg.spe?'Set MSTR=1 (CR1 bit 2) for a master transfer':'SPI disabled \u2014 set MSTR, BR, then SPE (CR1 bit 6)',ml+gW/2,mt+gH/2);
+      ctx.fillText(cfg.spe?'Set MSTR=1 (CR1 bit 2) for a master transfer':'SPI disabled, set MSTR, BR, then SPE (CR1 bit 6)',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#94a3b8"></span>NSS</div>'+
       '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#06b6d4"></span>SCK</div>'+
@@ -1165,7 +1165,7 @@ function drawWaveform(){
     }
     ctx.textAlign='left';ctx.fillStyle='#94a3b8';ctx.font='10px JetBrains Mono,Courier New,monospace';
     ctx.fillText('Peripheral clocks currently enabled:',ml+8,by+bh2+28);
-    var txt=cfg.on.length?cfg.on.join('   '):'none \u2014 every peripheral below is gated off and would read back 0';
+    var txt=cfg.on.length?cfg.on.join('   '):'none, every peripheral below is gated off and would read back 0';
     ctx.fillStyle=cfg.on.length?'#10b981':'#f59e0b';
     ctx.font='11px JetBrains Mono,Courier New,monospace';
     ctx.fillText(txt.length>92?txt.slice(0,89)+'\u2026':txt,ml+8,by+bh2+48);
@@ -1180,7 +1180,7 @@ function drawWaveform(){
       '<span class="wf-lbl">Source:</span><span class="wf-val">'+(cfg.clksrc?'AHB 168 MHz':'AHB/8 21 MHz')+'</span>'+
       '<span class="wf-lbl">RELOAD:</span><span class="wf-val">'+cfg.reload+'</span>'+
       '<span class="wf-lbl">Period:</span><span class="wf-val">'+(cfg.reload>0?pStr+' ('+rStr+')':'--')+'</span>'+
-      '<span class="wf-lbl">NVIC:</span><span class="wf-val">'+cfg.nirq+' IRQ enabled'+(cfg.names.length?' &mdash; '+cfg.names.join(', '):'')+'</span>';
+      '<span class="wf-lbl">NVIC:</span><span class="wf-val">'+cfg.nirq+' IRQ enabled'+(cfg.names.length?' · '+cfg.names.join(', '):'')+'</span>';
     if(cfg.en&&cfg.reload>0){
       var cyc=3, cw=gW/cyc, top=mt+gH*0.14, bot=mt+gH*0.78;
       ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
@@ -1198,7 +1198,7 @@ function drawWaveform(){
       ctx.fillText('underflow every '+pStr+' = '+(cfg.reload+1)+' ticks \u00d7 '+(1e9/fS).toFixed(2)+' ns \u2022 exception entry costs ~12 cycles \u2248 71 ns',ml+gW/2,mt+gH+18);
     }else{
       ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
-      ctx.fillText(cfg.reload>0?'SysTick stopped \u2014 set SYST_CSR ENABLE (bit 0)':'Load SYST_RVR with a non-zero RELOAD first',ml+gW/2,mt+gH/2);
+      ctx.fillText(cfg.reload>0?'SysTick stopped, set SYST_CSR ENABLE (bit 0)':'Load SYST_RVR with a non-zero RELOAD first',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#a855f7"></span>SYST_CVR counts down to 0</div>'+
       '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#10b981"></span>Exception on underflow when TICKINT=1</div>';
@@ -1206,7 +1206,7 @@ function drawWaveform(){
   }
 
   if(PERIPHS[curPeriph].clk&&!clkOn(curPeriph)){
-    infoEl.innerHTML='<span class="wf-chip" style="color:var(--amber);border-color:rgba(245,158,11,.5)"><i class="fas fa-triangle-exclamation"></i> RCC clock gated OFF &mdash; on hardware these registers read 0</span>'+infoEl.innerHTML;
+    infoEl.innerHTML='<span class="wf-chip" style="color:var(--amber);border-color:rgba(245,158,11,.5)"><i class="fas fa-triangle-exclamation"></i> RCC clock gated OFF, on hardware these registers read 0</span>'+infoEl.innerHTML;
   }
 
   // Scope border
@@ -1574,7 +1574,7 @@ animWF();
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A bit-accurate model of seven STM32F407 register blocks &mdash; RCC, GPIOA, TIM2, USART2, SPI1, ADC1 and the Cortex-M4 SysTick/NVIC core registers. Every register is stored as a 32-bit word; toggling a bit recomputes the field values, the hex and binary view, the equivalent CMSIS C statement, the port A pin map and an idealised waveform for that peripheral. Addresses, offsets, bit positions, reset values and alternate-function numbers are taken from RM0090 and the Cortex-M4 generic user guide; nothing is executed, so there is no CPU, no bus timing and no analogue behaviour.</p>
+        <p>A bit-accurate model of seven STM32F407 register blocks: RCC, GPIOA, TIM2, USART2, SPI1, ADC1 and the Cortex-M4 SysTick/NVIC core registers. Every register is stored as a 32-bit word; toggling a bit recomputes the field values, the hex and binary view, the equivalent CMSIS C statement, the port A pin map and an idealised waveform for that peripheral. Addresses, offsets, bit positions, reset values and alternate-function numbers are taken from RM0090 and the Cortex-M4 generic user guide; nothing is executed, so there is no CPU, no bus timing and no analogue behaviour.</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
@@ -1614,7 +1614,7 @@ animWF();
     </div>
     <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated. Always check RM0090 and the datasheet before writing production firmware.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>

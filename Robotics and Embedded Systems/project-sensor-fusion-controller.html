@@ -321,19 +321,19 @@
             <section class="content-section">
                 <h2>Hardware Integration</h2>
 
-                <h3>MPU-6050 — Inertial Measurement Unit</h3>
+                <h3>MPU-6050: Inertial Measurement Unit</h3>
                 <p>
                     The MPU-6050 provides 3-axis gyroscope and 3-axis accelerometer data over I2C at 400 kHz.
                     The raw data is read at 1 kHz and buffered for the fusion task:
                 </p>
                 <ul>
-                    <li>Gyroscope: angular velocity (degrees/second) — fast response, but drifts over time</li>
-                    <li>Accelerometer: gravity vector — no drift, but noisy and sensitive to vibration</li>
+                    <li>Gyroscope: angular velocity (degrees/second), fast response, but drifts over time</li>
+                    <li>Accelerometer: gravity vector, no drift, but noisy and sensitive to vibration</li>
                     <li>I2C reads: burst read of 14 bytes (accel XYZ + temp + gyro XYZ) to minimize bus transactions</li>
                     <li>Calibration: offset and scale correction computed at startup from 1000-sample average at rest</li>
                 </ul>
 
-                <h3>HC-SR04 — Ultrasonic Distance Sensor</h3>
+                <h3>HC-SR04: Ultrasonic Distance Sensor</h3>
                 <p>
                     The HC-SR04 provides distance measurements via time-of-flight pulse timing. A GPIO trigger
                     pulse initiates a measurement, and the echo pulse width encodes the distance. Readings are
@@ -371,7 +371,7 @@
                 <ul>
                     <li><strong>Predict step:</strong> Propagates angle state using gyroscope rate and process noise covariance (Q)</li>
                     <li><strong>Update step:</strong> Corrects prediction using accelerometer measurement and measurement noise (R)</li>
-                    <li><strong>Tuning:</strong> Q and R are tuned experimentally — Q reflects gyro drift rate, R reflects accel noise level</li>
+                    <li><strong>Tuning:</strong> Q and R are tuned experimentally: Q reflects gyro drift rate, R reflects accel noise level</li>
                     <li><strong>Result:</strong> Smoother output than the complementary filter with better transient response</li>
                 </ul>
                 <p>
@@ -389,7 +389,7 @@
                     The system uses two nested PID loops:
                 </p>
 
-                <h4>Inner Loop — Angle Control (100 Hz)</h4>
+                <h4>Inner Loop: Angle Control (100 Hz)</h4>
                 <ul>
                     <li>Input: filtered tilt angle from Kalman filter</li>
                     <li>Setpoint: target angle from outer loop (or 0 for pure balancing)</li>
@@ -398,7 +398,7 @@
                     <li>Anti-windup: integral term clamped to prevent saturation buildup</li>
                 </ul>
 
-                <h4>Outer Loop — Position Control (20 Hz)</h4>
+                <h4>Outer Loop: Position Control (20 Hz)</h4>
                 <ul>
                     <li>Input: filtered distance from HC-SR04 ultrasonic sensor</li>
                     <li>Setpoint: target position (distance from reference wall)</li>
@@ -513,7 +513,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-text">
-                    <p>&copy; 2026 Cristian Arenas. Building reliable systems — from cloud to silicon.</p>
+                    <p>&copy; 2026 Cristian Arenas. Building reliable systems, from cloud to silicon.</p>
                     <p class="footer-subtext"> <a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
                 </div>
                 <div class="footer-links">

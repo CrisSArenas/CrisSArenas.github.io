@@ -199,7 +199,7 @@ body{line-height:1.5}
       <div class="ctrl-row"><label>Risk-free rate <input type="range" class="d-range" id="rf" min="0" max="8" step="0.25" value="3.75"> <span class="ctrl-val" id="rfVal">3.75%</span></label></div>
       <div class="ctrl-hint">Cash returns this rate; it is the Sharpe / Sortino hurdle.</div>
       <div class="ctrl-row"><label>Illiquidity budget <input type="range" class="d-range" id="illiqB" min="0" max="45" step="1" value="28"> <span class="ctrl-val" id="illiqBVal">28%</span></label></div>
-      <div class="ctrl-hint">The allocation decision that actually comes first. Private equity and real estate count in full, hedge funds at 50% for gates and lock-ups. Set from liquidity needs, then optimise inside it &mdash; not the other way round.</div>
+      <div class="ctrl-hint">The allocation decision that actually comes first. Private equity and real estate count in full, hedge funds at 50% for gates and lock-ups. Set from liquidity needs, then optimise inside it, not the other way round.</div>
       <div class="ctrl-row"><label>Spending rate <input type="range" class="d-range" id="spend" min="2" max="7" step="0.25" value="4.5"> <span class="ctrl-val" id="spendVal">4.5%</span></label></div>
       <div class="ctrl-hint">Annual draw. Drives the liquidity-coverage test: the daily-liquid sleeve must fund spending and capital calls through a closed market.</div>
       <div class="ctrl-row"><label><input type="checkbox" id="policyBands" checked> Endowment policy bands</label></div>
@@ -256,7 +256,7 @@ body{line-height:1.5}
 </div>
 
 <!-- CORRELATION -->
-<div class="section-label">Correlation matrix <span class="hint">C in &Sigma; = D C D &mdash; symmetric, unit diagonal, positive semi-definite (min eigenvalue 0.14)</span></div>
+<div class="section-label">Correlation matrix <span class="hint">C in &Sigma; = D C D, symmetric, unit diagonal, positive semi-definite (min eigenvalue 0.14)</span></div>
 <div class="panel corr-panel" style="margin-bottom:20px">
   <div class="panel-hdr">Pairwise Correlations</div>
   <div class="panel-body" style="overflow-x:auto;padding:16px">
@@ -286,7 +286,7 @@ body{line-height:1.5}
 <!-- GROWTH CHART -->
 <div class="section-label">Performance <span class="hint">Path 1 of the 200 simulated 15-year paths</span></div>
 <div class="chart-wrap chart-wide" id="pathChartWrap">
-  <div class="chart-title">Growth of $1 &mdash; simulated path 1 of 200</div>
+  <div class="chart-title">Growth of $1, simulated path 1 of 200</div>
   <div class="chart-legend"><span><span class="dot port"></span>Portfolio</span><span><span class="dot bm"></span>60/40 BM</span></div>
   <div class="chart-crosshair" id="pathCrosshair"></div>
   <canvas id="pathChart" aria-label="Growth of one dollar for the portfolio and the 60/40 benchmark over 180 simulated months"></canvas>
@@ -326,7 +326,7 @@ body{line-height:1.5}
 <div class="d-help-overlay" id="guideOverlay" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="guideTitle"><i class="fas fa-book-open"></i> Guide &mdash; Multi-Asset Portfolio Optimizer</h2>
+      <h2 id="guideTitle"><i class="fas fa-book-open"></i> Guide: Multi-Asset Portfolio Optimizer</h2>
       <button type="button" class="d-help-close" id="guideClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
@@ -369,9 +369,9 @@ body{line-height:1.5}
         <h3>5 &middot; Monte Carlo and risk metrics</h3>
         <p>200 seeded paths of 180 monthly returns. Each month draws correlated standard normals through the Cholesky factor of C and maps them to <strong>log-normal</strong> asset returns with <code>r = exp(m &minus; &frac12;s&sup2; + s&middot;z) &minus; 1</code>, calibrated so that E[r] = &mu;/12 exactly. Wealth compounds multiplicatively, so a &minus;50% month cannot be undone by a +50% month.</p>
         <ul>
-          <li><strong>VaR / CVaR</strong> &mdash; empirical 5% and 1% quantiles of the pooled 36,000 monthly portfolio returns, <em>1-month horizon</em>, reported as positive loss numbers (VaR 95% = 4.8% means a 5% chance of losing at least 4.8% in a month). CVaR is the mean of the returns beyond the quantile.</li>
-          <li><strong>Max drawdown</strong> &mdash; worst peak-to-trough fall of each simulated wealth path; the tile shows the median across the 200 paths and the tooltip the 95th percentile.</li>
-          <li><strong>Worst 12m</strong> &mdash; 5th percentile across paths of that path&#39;s worst rolling 12-month return.</li>
+          <li><strong>VaR / CVaR</strong>: empirical 5% and 1% quantiles of the pooled 36,000 monthly portfolio returns, <em>1-month horizon</em>, reported as positive loss numbers (VaR 95% = 4.8% means a 5% chance of losing at least 4.8% in a month). CVaR is the mean of the returns beyond the quantile.</li>
+          <li><strong>Max drawdown</strong>: worst peak-to-trough fall of each simulated wealth path; the tile shows the median across the 200 paths and the tooltip the 95th percentile.</li>
+          <li><strong>Worst 12m</strong>: 5th percentile across paths of that path&#39;s worst rolling 12-month return.</li>
           <li><strong>Sortino</strong> = (&mu;<sub>p</sub> &minus; R<sub>f</sub>) / target semi-deviation below the monthly R<sub>f</sub>, annualised. <strong>Calmar</strong> = geometric return / median max drawdown.</li>
           <li><strong>Tracking error, information ratio, beta, active share</strong> are all measured against the 60/40 (60% US equity / 40% Treasuries) benchmark on the displayed path; active share is &frac12;&Sigma;|w<sub>i</sub> &minus; w<sub>b,i</sub>|.</li>
         </ul>
@@ -459,7 +459,7 @@ body{line-height:1.5}
     </div>
     <div class="disclaimer">Educational demonstration built on synthetic (or stylised historical) data generated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>
@@ -472,8 +472,8 @@ window.onerror=function(msg,url,line){
   if(b)b.innerHTML='<span class="warn">JS ERROR: '+msg+' (line '+line+')</span>';
 };
 (function(){
-const F = v => typeof v==='number'&&!isNaN(v)?v.toFixed(2):'—';
-const P = v => typeof v==='number'&&!isNaN(v)?(v*100).toFixed(2)+'%':'—';
+const F = v => typeof v==='number'&&!isNaN(v)?v.toFixed(2):'-';
+const P = v => typeof v==='number'&&!isNaN(v)?(v*100).toFixed(2)+'%':'-';
 
 const ASSETS=['US_EQ','INTL_EQ','EM_EQ','PRIV_EQ','HEDGE_FUND','REAL_EST','US_TSY','CASH'];
 const LABELS=['US Equity','Intl Equity','EM Equity','Private Equity','Hedge Funds','Real Estate','US Treasuries','Cash'];
@@ -1098,7 +1098,7 @@ function render(){
   document.getElementById('maxW').value=APP.state.maxW.toString();
   document.getElementById('targetVol').value=(APP.state.targetVol*100).toFixed(1);
 
-  // KPIs — conditional coloring
+  // KPIs, conditional coloring
   const retC=ret>=rf?'pos':'neg';
   const shC=sh>=.5?'pos':sh<0?'neg':'';
   const srtC=srt>=.5?'pos':srt<0?'neg':'';
@@ -1122,7 +1122,7 @@ function render(){
   document.getElementById('kpiTertiary').innerHTML=[
     '<div class="kpi-cell" title="(μ − Rf) / annualised target semi-deviation below the monthly risk-free rate, pooled over 36,000 simulated months"><div class="lbl">Sortino</div><div class="val '+srtC+'">'+F(srt)+'</div></div>',
     '<div class="kpi-cell" title="Realised active return vs 60/40 divided by tracking error, displayed path"><div class="lbl">Info Ratio</div><div class="val '+irC+'">'+F(ir)+'</div></div>',
-    '<div class="kpi-cell" title="Systematic risk vs 60/40: Cov(Rp,Rb) / Var(Rb), displayed path"><div class="lbl">Beta</div><div class="val '+btC+'">'+(Math.abs(bt)>10?'—':F(bt))+'</div></div>',
+    '<div class="kpi-cell" title="Systematic risk vs 60/40: Cov(Rp,Rb) / Var(Rb), displayed path"><div class="lbl">Beta</div><div class="val '+btC+'">'+(Math.abs(bt)>10?'-':F(bt))+'</div></div>',
     '<div class="kpi-cell" title="1-month Value at Risk, empirical 5% / 1% quantile of 36,000 simulated monthly returns. Positive = loss."><div class="lbl">VaR 95/99 (1m)</div><div class="val neg">'+F(st.var95)+' / '+F(st.var99)+'%</div></div>',
     '<div class="kpi-cell" title="1-month Conditional VaR (expected shortfall): mean monthly return beyond the 5% / 1% quantile. Positive = loss."><div class="lbl">CVaR 95/99 (1m)</div><div class="val neg">'+F(st.cvar95)+' / '+F(st.cvar99)+'%</div></div>',
     '<div class="kpi-cell" title="Geometric return (μ − ½σ²) divided by the median simulated max drawdown"><div class="lbl">Calmar</div><div class="val '+calC+'">'+F(cal)+'</div></div>'
@@ -1150,7 +1150,7 @@ function render(){
   const volP=i=>(Math.sqrt(Sigma[i][i])*100).toFixed(1)+'%';
   document.getElementById('corrTable').innerHTML=
     '<tr><th></th>'+SHORT.map(a=>'<th>'+a+'</th>').join('')+'</tr>'+
-    SHORT.map((a,i)=>'<tr><th title="'+LABELS[i]+' — annualised vol '+volP(i)+'">'+a+'</th>'+corr[i].map((v,j)=>{
+    SHORT.map((a,i)=>'<tr><th title="'+LABELS[i]+', annualised vol '+volP(i)+'">'+a+'</th>'+corr[i].map((v,j)=>{
       const al=Math.abs(v)*.55;
       const bg=v>=0?'rgba(59,130,246,'+al+')':'rgba(239,68,68,'+al+')';
       const tip=LABELS[i]+' vs '+LABELS[j]+': '+v.toFixed(3);
@@ -1160,8 +1160,8 @@ function render(){
   // Opt results with descriptive info
   const od=document.getElementById('optResults');
   const tvTarget=Math.round(APP.state.targetVol*100);
-  const tvNote=Math.abs(APP.tvGap)>.005?' — closest attainable, target not feasible':'';
-  const optDesc={'Policy Portfolio':'Least risk that still clears '+(requiredReturn()*100).toFixed(2).replace(/0$/,'')+'% = '+(APP.state.spend*100).toFixed(2).replace(/0$/,'')+'% spending + '+(ASSUMED_INFLATION*100).toFixed(1)+'% inflation'+(APP.hurdleMet?'':' — UNREACHABLE, showing the highest-return portfolio'),'Min Variance':'Lowest variance in the feasible set','Max Sharpe':'Tangency portfolio at Rf = '+F(rf*100)+'%','Target Vol':'Frontier point nearest '+tvTarget+'% vol'+tvNote};
+  const tvNote=Math.abs(APP.tvGap)>.005?', closest attainable, target not feasible':'';
+  const optDesc={'Policy Portfolio':'Least risk that still clears '+(requiredReturn()*100).toFixed(2).replace(/0$/,'')+'% = '+(APP.state.spend*100).toFixed(2).replace(/0$/,'')+'% spending + '+(ASSUMED_INFLATION*100).toFixed(1)+'% inflation'+(APP.hurdleMet?'':' · UNREACHABLE, showing the highest-return portfolio'),'Min Variance':'Lowest variance in the feasible set','Max Sharpe':'Tangency portfolio at Rf = '+F(rf*100)+'%','Target Vol':'Frontier point nearest '+tvTarget+'% vol'+tvNote};
   if(APP.optResults){
     od.innerHTML=APP.optResults.map((r,i)=>{
       const applied=w.every((v,j)=>Math.abs(v-r.w[j])<.001);
@@ -1190,10 +1190,10 @@ function render(){
         '<br><b style="color:var(--muted)">Liquidity:</b> illiquidity used '+(used*100).toFixed(1)+'% of a '+Math.round(budget*100)+'% budget'+
         ' · daily-liquid sleeve '+(liq*100).toFixed(1)+'%'+
         ' · covers <span style="color:'+(ok?'var(--green)':'var(--red)')+'">'+yrs.toFixed(1)+' years</span> of a '+(APP.state.spend*100).toFixed(2).replace(/0$/,'')+'% draw'+
-        (ok?'':' — below the 3-year floor most committees hold')+
+        (ok?'':', below the 3-year floor most committees hold')+
         '<br><b style="color:var(--muted)">Private marks:</b> '+(APP.state.desmooth
-          ? 'de-smoothed — PE vol '+(volVec(true)[3]*100).toFixed(1)+'% vs '+(VOL_REPORTED[3]*100).toFixed(1)+'% reported, RE '+(volVec(true)[5]*100).toFixed(1)+'% vs '+(VOL_REPORTED[5]*100).toFixed(1)+'%'
-          : '<span style="color:var(--amber)">reported (smoothed)</span> — private risk and correlation understated, so the volatility and Sharpe shown here flatter the portfolio by roughly two points of vol');
+          ? 'de-smoothed: PE vol '+(volVec(true)[3]*100).toFixed(1)+'% vs '+(VOL_REPORTED[3]*100).toFixed(1)+'% reported, RE '+(volVec(true)[5]*100).toFixed(1)+'% vs '+(VOL_REPORTED[5]*100).toFixed(1)+'%'
+          : '<span style="color:var(--amber)">reported (smoothed)</span>, private risk and correlation understated, so the volatility and Sharpe shown here flatter the portfolio by roughly two points of vol');
     })()+'<br>'+
     '<br><b style="color:var(--muted)">Parameters:</b> Rf = '+F(rf*100)+'% · seed = '+APP.state.seed+
     ' · 200 paths × 180 months · benchmark 60% US equity / 40% Treasuries'+
@@ -1271,7 +1271,7 @@ function render(){
   // --- INTERACTIVITY ---
   const tt=document.getElementById('chartTooltip');
 
-  // Growth tooltip — use canvas rect for accurate position
+  // Growth tooltip, use canvas rect for accurate position
   const pw=document.getElementById('pathChartWrap'),ch=document.getElementById('pathCrosshair');
   const pathCvs=document.getElementById('pathChart');
   pw.onmousemove=e=>{
@@ -1293,7 +1293,7 @@ function render(){
   };
   pw.onmouseleave=()=>{tt.classList.remove('show');ch.classList.remove('show')};
 
-  // Risk bars tooltip — use canvas rect
+  // Risk bars tooltip, use canvas rect
   const rw=document.getElementById('riskChartWrap');
   const riskCvs=document.getElementById('riskChart');
   rw.onmousemove=e=>{
@@ -1308,7 +1308,7 @@ function render(){
   };
   rw.onmouseleave=()=>tt.classList.remove('show');
 
-  // Frontier tooltip — use canvas rect for accurate position
+  // Frontier tooltip, use canvas rect for accurate position
   const fw=document.getElementById('frontierChartWrap');
   const frCvs=document.getElementById('frontierChart');
   fw.onmousemove=e=>{
@@ -1325,7 +1325,7 @@ function render(){
   };
   fw.onmouseleave=()=>tt.classList.remove('show');
 
-  // Drawdown tooltip — use canvas rect for accurate position
+  // Drawdown tooltip, use canvas rect for accurate position
   const dw=document.getElementById('ddChartWrap');
   const ddCvs=document.getElementById('ddChart');
   dw.onmousemove=e=>{

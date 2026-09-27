@@ -142,18 +142,18 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; Alpha Signal Discovery Engine</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: Alpha Signal Discovery Engine</h2>
       <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
       <div class="d-help-section">
         <h3>1 &middot; What is simulated</h3>
-        <p>A <strong>synthetic cross-sectional panel</strong> is generated once from a fixed seed: 400 names, 180 monthly dates, eight standardised factor exposures per name. Each exposure follows its own AR(1) process (its persistence is what drives turnover) and the eight series are mixed through the Cholesky root of a target correlation matrix, so the heat map reproduces the intended structure. Inside every date the exposures are standardised, <strong>winsorised at &plusmn;3 SD and re-standardised using that date's cross-section only</strong> &mdash; never a pooled or full-sample moment. Monthly stock returns are <code>market + &Sigma;<sub>k</sub> &lambda;<sub>k,t</sub> &middot; z<sub>k,t-1</sub> + idiosyncratic</code>, where <strong>&lambda;<sub>k</sub></strong> is a random factor payoff whose mean is calibrated so each factor's univariate rank IC matches its target. Nothing in the UI is read back from that calibration table &mdash; every number shown is re-estimated from the simulated panel.</p>
+        <p>A <strong>synthetic cross-sectional panel</strong> is generated once from a fixed seed: 400 names, 180 monthly dates, eight standardised factor exposures per name. Each exposure follows its own AR(1) process (its persistence is what drives turnover) and the eight series are mixed through the Cholesky root of a target correlation matrix, so the heat map reproduces the intended structure. Inside every date the exposures are standardised, <strong>winsorised at &plusmn;3 SD and re-standardised using that date's cross-section only</strong>, never a pooled or full-sample moment. Monthly stock returns are <code>market + &Sigma;<sub>k</sub> &lambda;<sub>k,t</sub> &middot; z<sub>k,t-1</sub> + idiosyncratic</code>, where <strong>&lambda;<sub>k</sub></strong> is a random factor payoff whose mean is calibrated so each factor's univariate rank IC matches its target. Nothing in the UI is read back from that calibration table, every number shown is re-estimated from the simulated panel.</p>
       </div>
       <div class="d-help-section">
         <h3>2 &middot; Walk-forward protocol</h3>
         <p>The first <strong>60 months are training-only warm-up</strong>. From month 61 the engine walks forward over 119 out-of-sample months: the model is <strong>refitted every 12 months</strong> on the trailing <strong>lookback</strong> window, scores every name at each month end, and holds a <strong>decile long/short book</strong> (top 40 long, bottom 40 short, equal weighted, dollar neutral, 50% gross) rebalanced at the chosen frequency. Deciles are formed on the fitted composite <em>as of</em> the rebalance date. Between rebalances the names are held but the weights drift with realised relative performance, and the book is pulled back to dollar neutrality and target gross every month, because that is a mandate constraint a desk enforces continuously rather than only on alpha-refresh dates. Those maintenance trades are charged like any other, so at quarterly and semi-annual settings turnover never falls to zero between rebalances.</p>
-        <p>Every quantity that enters a fit is as-of: the cross-sectional standardisation, winsorisation and ranking use one date's own cross-section, and the return dispersion used to scale the ridge/lasso target is estimated on the <strong>training window only</strong>. Nothing is pooled over the full sample. Because every name has unit market beta in this panel and there are no sectors, a dollar-neutral book is already beta- and sector-neutral &mdash; the neutralisation step a practitioner would run here is a no-op, which is a property of the synthetic data, not a claim about real markets.</p>
+        <p>Every quantity that enters a fit is as-of: the cross-sectional standardisation, winsorisation and ranking use one date's own cross-section, and the return dispersion used to scale the ridge/lasso target is estimated on the <strong>training window only</strong>. Nothing is pooled over the full sample. Because every name has unit market beta in this panel and there are no sectors, a dollar-neutral book is already beta- and sector-neutral, the neutralisation step a practitioner would run here is a no-op, which is a property of the synthetic data, not a claim about real markets.</p>
       </div>
       <div class="d-help-section">
         <h3>3 &middot; The four learners (all fitted in the browser)</h3>
@@ -166,7 +166,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
             <tr><td>Gradient Boost</td><td>40 depth-1 stumps fitted sequentially to the residual rank on an 8,000-row draw, learning rate 0.15, 4 features sampled per stump</td><td>share of squared-error reduction</td></tr>
           </tbody>
         </table>
-        <p>These are deliberately small learners: honest implementations of the named algorithm restricted to stumps and eight features, not library-grade estimators. Because the data-generating process is linear, the linear models usually win &mdash; the same result most cross-sectional equity researchers report.</p>
+        <p>These are deliberately small learners: honest implementations of the named algorithm restricted to stumps and eight features, not library-grade estimators. Because the data-generating process is linear, the linear models usually win, the same result most cross-sectional equity researchers report.</p>
       </div>
       <div class="d-help-section">
         <h3>4 &middot; Metrics</h3>
@@ -197,13 +197,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
           <dt>Factor universe</dt><dd>Restricts the feature set the model may use. Panel statistics (IC, decay, correlations) are properties of the data and do not move; everything downstream of the fit does.</dd>
           <dt>Lookback</dt><dd>Length of the trailing training window, 12&ndash;60 months. Short windows track changing premia but are noisy; long windows are stable but stale.</dd>
           <dt>Rebalance</dt><dd>Monthly, quarterly or semi-annual. Longer holding periods cut turnover and cost but let the signal go stale.</dd>
-          <dt>Transaction cost</dt><dd>One-way <em>linear</em> cost in basis points &mdash; spread plus commission. 5&ndash;20 bp is typical for liquid large caps. A square-root market-impact charge is added on top of whatever you set here and is <em>not</em> controlled by the slider.</dd>
+          <dt>Transaction cost</dt><dd>One-way <em>linear</em> cost in basis points, spread plus commission. 5&ndash;20 bp is typical for liquid large caps. A square-root market-impact charge is added on top of whatever you set here and is <em>not</em> controlled by the slider.</dd>
         </dl>
       </div>
       <div class="d-help-section">
         <h3>7 &middot; Multiple testing (read the last four table rows)</h3>
-        <p>These controls span <strong>15,300 configurations</strong> &mdash; 4 models &times; 5 lookbacks &times; 3 rebalance frequencies &times; 255 non-empty factor subsets &mdash; all evaluated on one seeded panel. Clicking around <em>is</em> a specification search, and the best-looking configuration is partly the luckiest one.</p>
-        <p>The table therefore reports two bounds rather than one number. <strong>Probabilistic Sharpe vs zero</strong> is the skew- and kurtosis-adjusted probability that the overlay's true Sharpe exceeds zero assuming a <em>single</em> trial &mdash; the optimistic bound. <strong>Deflated Sharpe</strong> repeats that test against the Sharpe you would expect the best of 15,300 zero-alpha trials to produce; the <strong>hurdle IR</strong> row is that threshold in annualised information-ratio units. The honest reading of any configuration sits between the two, because the 15,300 trials are heavily overlapping rather than independent, and because the dispersion of the Sharpe across trials is proxied by the estimator's own variance rather than measured across all runs. Nothing in this demo clears the full-grid hurdle: across the complete model &times; lookback &times; rebalance grid and a random sample of factor subsets, the best net IR reached is about 0.8 against a hurdle near 1.3. That is the normal outcome of an honest deflation on ten years of monthly data, and the reason a real research process pre-registers its hypotheses instead of sweeping a grid.</p>
+        <p>These controls span <strong>15,300 configurations</strong>, 4 models &times; 5 lookbacks &times; 3 rebalance frequencies &times; 255 non-empty factor subsets, all evaluated on one seeded panel. Clicking around <em>is</em> a specification search, and the best-looking configuration is partly the luckiest one.</p>
+        <p>The table therefore reports two bounds rather than one number. <strong>Probabilistic Sharpe vs zero</strong> is the skew- and kurtosis-adjusted probability that the overlay's true Sharpe exceeds zero assuming a <em>single</em> trial, the optimistic bound. <strong>Deflated Sharpe</strong> repeats that test against the Sharpe you would expect the best of 15,300 zero-alpha trials to produce; the <strong>hurdle IR</strong> row is that threshold in annualised information-ratio units. The honest reading of any configuration sits between the two, because the 15,300 trials are heavily overlapping rather than independent, and because the dispersion of the Sharpe across trials is proxied by the estimator's own variance rather than measured across all runs. Nothing in this demo clears the full-grid hurdle: across the complete model &times; lookback &times; rebalance grid and a random sample of factor subsets, the best net IR reached is about 0.8 against a hurdle near 1.3. That is the normal outcome of an honest deflation on ten years of monthly data, and the reason a real research process pre-registers its hypotheses instead of sweeping a grid.</p>
       </div>
     </div>
   </div>
@@ -289,7 +289,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="grid">
   <div class="panel">
-    <div class="panel-head"><h3><i class="fas fa-chart-bar"></i> ML Feature Importance</h3><span class="tag" id="impTag">&mdash;</span></div>
+    <div class="panel-head"><h3><i class="fas fa-chart-bar"></i> ML Feature Importance</h3><span class="tag" id="impTag">-</span></div>
     <div class="panel-body"><canvas id="cvImportance" role="img" aria-label="Feature importance of each factor in the fitted model" height="280"></canvas></div>
   </div>
   <div class="panel">
@@ -357,7 +357,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A cross-sectional factor-research loop on a synthetic panel of 400 names over 180 months, generated once from seed 20260131. Eight exposures per name follow their own AR(1) processes and are mixed through the Cholesky root of a target correlation matrix, then standardised, winsorised at &plusmn;3 SD and re-standardised <em>inside each date's own cross-section</em>; returns are the equal-weighted market plus random monthly factor payoffs on the lagged exposures plus idiosyncratic noise. After a 60-month warm-up the engine walks forward over 119 out-of-sample months, refitting the selected learner every 12 months on the trailing lookback window, scoring the universe, and holding a decile long/short book rebalanced monthly, quarterly or semi-annually. Rank IC, IC decay, realised correlations, feature importance, turnover, costs and drawdowns are all measured on the simulated data. Every input to a fit is as-of the rebalance date &mdash; the standardisation, winsorisation and ranking use one date's cross-section, and the return dispersion that scales the ridge/lasso target is estimated on the training window alone, never pooled over the full sample.</p>
+        <p>A cross-sectional factor-research loop on a synthetic panel of 400 names over 180 months, generated once from seed 20260131. Eight exposures per name follow their own AR(1) processes and are mixed through the Cholesky root of a target correlation matrix, then standardised, winsorised at &plusmn;3 SD and re-standardised <em>inside each date's own cross-section</em>; returns are the equal-weighted market plus random monthly factor payoffs on the lagged exposures plus idiosyncratic noise. After a 60-month warm-up the engine walks forward over 119 out-of-sample months, refitting the selected learner every 12 months on the trailing lookback window, scoring the universe, and holding a decile long/short book rebalanced monthly, quarterly or semi-annually. Rank IC, IC decay, realised correlations, feature importance, turnover, costs and drawdowns are all measured on the simulated data. Every input to a fit is as-of the rebalance date, the standardisation, winsorisation and ranking use one date's cross-section, and the return dispersion that scales the ridge/lasso target is estimated on the training window alone, never pooled over the full sample.</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
@@ -375,8 +375,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li>Rank IC<sub>t</sub> = Spearman(score<sub>t</sub>, r<sub>t+1</sub>) &mdash; the cross-sectional correlation of <em>ranks</em>, not Pearson on the raw scores; IC-IR = mean(IC)/std(IC).</li>
-          <li>Every IC standard error is Newey&ndash;West (Bartlett kernel, bandwidth <code>&lfloor;4(T/100)<sup>2/9</sup>&rfloor;</code> = 4 lags at T = 119), and <code>t = mean(IC) / SE<sub>NW</sub></code>, not IC-IR &middot; &radic;T. Whiskers and bands are &plusmn;1.96&nbsp;SE<sub>NW</sub>. The IC-decay targets are single months h ahead rather than cumulative h-month returns, so the observations do not overlap and no Hansen&ndash;Hodrick correction is applied &mdash; measured lag-1 autocorrelation of those series is at most 0.10 in absolute value at every horizon.</li>
+          <li>Rank IC<sub>t</sub> = Spearman(score<sub>t</sub>, r<sub>t+1</sub>), the cross-sectional correlation of <em>ranks</em>, not Pearson on the raw scores; IC-IR = mean(IC)/std(IC).</li>
+          <li>Every IC standard error is Newey&ndash;West (Bartlett kernel, bandwidth <code>&lfloor;4(T/100)<sup>2/9</sup>&rfloor;</code> = 4 lags at T = 119), and <code>t = mean(IC) / SE<sub>NW</sub></code>, not IC-IR &middot; &radic;T. Whiskers and bands are &plusmn;1.96&nbsp;SE<sub>NW</sub>. The IC-decay targets are single months h ahead rather than cumulative h-month returns, so the observations do not overlap and no Hansen&ndash;Hodrick correction is applied, measured lag-1 autocorrelation of those series is at most 0.10 in absolute value at every horizon.</li>
           <li>Deflated Sharpe: Bailey &amp; L&oacute;pez de Prado (2014). SR* = &radic;V &middot; [(1&minus;&gamma;)&Phi;<sup>-1</sup>(1&minus;1/N) + &gamma;&Phi;<sup>-1</sup>(1&minus;1/(Ne))] with N = 15,300 and &gamma; the Euler&ndash;Mascheroni constant; DSR = &Phi;((SR&minus;SR*)&radic;(T&minus;1) / &radic;(1 &minus; skew&middot;SR + (kurt&minus;1)SR&sup2;/4)). The trial dispersion V is proxied by the estimator's own variance (1+SR&sup2;/2)/(T&minus;1) rather than measured across all 15,300 runs, so the deflation is indicative.</li>
           <li>Ridge: <code>w = (X'X/n + &lambda;I)^-1 X'y/n</code>. Lasso: coordinate descent with soft threshold. Stumps: exhaustive 16-bin search maximising <code>S&sup2;<sub>L</sub>/n<sub>L</sub> + S&sup2;<sub>R</sub>/n<sub>R</sub> &minus; S&sup2;/n</code>; importance is that gain, normalised.</li>
           <li>Turnover<sub>t</sub> = &frac12;&Sigma;<sub>i</sub>|w<sub>i,t</sub> &minus; w<sub>i,t-1</sub>|; cost<sub>t</sub> = 2 &middot; turnover<sub>t</sub> &middot; bp; Sharpe = (12&middot;mean &minus; r<sub>f</sub>)/(&sigma;&radic;12); IR = annualised alpha / tracking error; max drawdown from the cumulative curve.</li>
@@ -389,10 +389,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
           <li>Synthetic Gaussian data, not history: no fat tails, no factor crashes, no crowding dynamics, no regime timing.</li>
           <li>The learners are stump- and eight-feature-restricted browser implementations, so the model comparison is indicative rather than a benchmark of the real algorithms. The true process is linear, which structurally favours ridge and lasso.</li>
           <li>No borrow cost, no short constraint, no risk model, no capacity limit and one blended ADV for every name. The impact term is a stated cost curve, not a capacity study: a real book would also face a shrinking opportunity set as it grows.</li>
-          <li>Universe is fixed &mdash; the same 400 names live for all 180 months. No IPOs, delistings, halts, mergers or missing data. That makes the panel free of survivorship bias by construction, but it also removes the universe churn that drives a real backtest's turnover and many of its worst months.</li>
+          <li>Universe is fixed, the same 400 names live for all 180 months. No IPOs, delistings, halts, mergers or missing data. That makes the panel free of survivorship bias by construction, but it also removes the universe churn that drives a real backtest's turnover and many of its worst months.</li>
           <li>Every name has unit market beta and there are no sectors in the generating process, so a dollar-neutral book is automatically beta- and sector-neutral and the neutralisation step is a no-op. On real data it is not: raw 12&minus;1 momentum in particular carries a large, time-varying market beta, and an unneutralised momentum signal is substantially a beta bet. This panel cannot reproduce that failure mode, so treat the momentum result as a property of the simulation.</li>
           <li>The factor payoffs and the market path are moment-matched to their targets over the evaluation window. The backtest therefore cannot draw a decade in which a premium simply failed to show up, so genuine out-of-sample premium uncertainty is understated and the realised premia are more reliable than any real ten-year sample would be.</li>
-          <li>Selection bias is real here: the controls span 15,300 configurations on one seeded panel, and browsing them is a specification search. The summary table deflates against that whole grid (deliberately conservative, since the trials overlap heavily) and also shows the single-trial probabilistic Sharpe; the truthful reading is between the two. Across the full model &times; lookback &times; rebalance grid the best net IR is about 0.8 against a hurdle near 1.3 &mdash; nothing clears it.</li>
+          <li>Selection bias is real here: the controls span 15,300 configurations on one seeded panel, and browsing them is a specification search. The summary table deflates against that whole grid (deliberately conservative, since the trials overlap heavily) and also shows the single-trial probabilistic Sharpe; the truthful reading is between the two. Across the full model &times; lookback &times; rebalance grid the best net IR is about 0.8 against a hurdle near 1.3, nothing clears it.</li>
           <li>With 119 monthly observations the standard error of an annualised Sharpe is about 0.32, and the standard error of the mean IC is about 0.02. Sharpe ratios are shown to two decimals and ICs to three for comparability only: differences smaller than roughly 0.3 in Sharpe, or 0.04 in IC, are not distinguishable from noise in this sample.</li>
           <li>Backtest Sharpe ratios of this kind routinely halve out of sample; the residual-risk term is a calibration device, not an estimated quantity.</li>
         </ul>
@@ -400,7 +400,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
     </div>
     <div class="disclaimer">Educational demonstration built on synthetic (or stylised historical) data generated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>
@@ -1456,7 +1456,7 @@ function renderPerfTable(r){
     var rw=rows[i];
     html+='<tr><td>'+rw.l+'</td>';
     if(rw.only){
-      html+='<td class="tneut">&mdash;</td><td>'+fmt(rw.n,rw.f,false)+'</td><td class="tneut">&mdash;</td><td class="tneut">&mdash;</td></tr>';
+      html+='<td class="tneut">-</td><td>'+fmt(rw.n,rw.f,false)+'</td><td class="tneut">-</td><td class="tneut">-</td></tr>';
       continue;
     }
     var vals=[rw.g,rw.n,rw.b];
@@ -1464,7 +1464,7 @@ function renderPerfTable(r){
       var cls=rw.good?(vals[j]>0?'tpos':vals[j]<0?'tneg':''):'';
       html+='<td class="'+cls+'">'+fmt(vals[j],rw.f,false)+'</td>';
     }
-    if(rw.nodelta){html+='<td class="tneut">&mdash;</td></tr>';continue}
+    if(rw.nodelta){html+='<td class="tneut">-</td></tr>';continue}
     var d=rw.n-rw.b;
     html+='<td class="'+(d>0?'tpos':d<0?'tneg':'tneut')+'">'+fmt(d,rw.f,true)+'</td></tr>';
   }

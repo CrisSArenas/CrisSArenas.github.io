@@ -911,7 +911,7 @@
 
 <div class="hint-bar" id="hintBar">
   <i class="fas fa-lightbulb"></i>
-  <span>Press <kbd>G</kbd> then click the map to send a goal. <kbd>O</kbd> drops a dynamic obstacle in the robot's way to trigger replanning and recoveries. The <b>Global Costmap</b> and <b>Particles</b> layers start hidden &mdash; switch them on under the map to see the inflation field and the localisation cloud. <kbd>H</kbd> opens the full guide.</span>
+  <span>Press <kbd>G</kbd> then click the map to send a goal. <kbd>O</kbd> drops a dynamic obstacle in the robot's way to trigger replanning and recoveries. The <b>Global Costmap</b> and <b>Particles</b> layers start hidden, switch them on under the map to see the inflation field and the localisation cloud. <kbd>H</kbd> opens the full guide.</span>
   <button type="button" class="close" id="hintClose" aria-label="Dismiss hint"><i class="fas fa-xmark"></i></button>
 </div>
 
@@ -921,7 +921,7 @@
 <div class="d-help-overlay" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; ROS 2 Nav2 Simulator</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: ROS 2 Nav2 Simulator</h2>
       <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
@@ -941,12 +941,12 @@
           <tr><td class="p">inflation_radius</td><td class="p">0.55 m</td><td>cost decays to 0 beyond this</td></tr>
           <tr><td class="p">cost_scaling_factor</td><td class="p">3.0</td><td>exponential decay rate</td></tr>
         </table>
-        <p style="margin-top:8px"><code>cost = 253 &middot; exp(&minus;3.0 &middot; (d &minus; 0.22))</code> for 0.22&nbsp;m &lt; d &lt; 0.55&nbsp;m; cells inside an obstacle are <strong>lethal (254)</strong>. Walls (static layer) and obstacles (obstacle layer) are rasterised into one 8-bit grid, and <code>d</code> comes from a <strong>3&times;3 chamfer distance transform</strong> over that grid &mdash; the same O(cells) trick <code>nav2_costmap_2d</code> uses instead of a brute-force distance query, which is what makes every planner and controller lookup O(1). The whole grid is rebuilt at <strong>5&nbsp;Hz</strong>, so moving obstacles genuinely change the cost the planner sees. The <em>Global Costmap</em> button draws the entire grid; the <em>Local Costmap</em> button draws the 3&nbsp;m&nbsp;&times;&nbsp;3&nbsp;m rolling window the controller actually checks, with its live count of cells at or above the inscribed cost.</p>
+        <p style="margin-top:8px"><code>cost = 253 &middot; exp(&minus;3.0 &middot; (d &minus; 0.22))</code> for 0.22&nbsp;m &lt; d &lt; 0.55&nbsp;m; cells inside an obstacle are <strong>lethal (254)</strong>. Walls (static layer) and obstacles (obstacle layer) are rasterised into one 8-bit grid, and <code>d</code> comes from a <strong>3&times;3 chamfer distance transform</strong> over that grid, the same O(cells) trick <code>nav2_costmap_2d</code> uses instead of a brute-force distance query, which is what makes every planner and controller lookup O(1). The whole grid is rebuilt at <strong>5&nbsp;Hz</strong>, so moving obstacles genuinely change the cost the planner sees. The <em>Global Costmap</em> button draws the entire grid; the <em>Local Costmap</em> button draws the 3&nbsp;m&nbsp;&times;&nbsp;3&nbsp;m rolling window the controller actually checks, with its live count of cells at or above the inscribed cost.</p>
       </div>
 
       <div class="d-help-section">
         <h3>3 &middot; Global planner (planner_server)</h3>
-        <p><strong>A* over the inflated costmap</strong>, 8-connected, expanded on a 0.20&nbsp;m search lattice (four costmap cells) so the search stays interactive. The heuristic is the <strong>octile distance</strong> in metres with unit step cost &mdash; exactly admissible and consistent for 8-connected motion, and used <em>unweighted</em> (<code>f = g + h</code>), so the returned path is optimal on that lattice. Any cell whose cost is &ge; 253 (inscribed or lethal) is rejected outright, so <strong>the path can never cross a lethal cell</strong>; the remaining inflation cost is added to <code>g</code> as a penalty, which pushes the path towards the centre of free space instead of hugging walls. The result is then shortened by a line-of-sight pass that re-checks the same costmap.</p>
+        <p><strong>A* over the inflated costmap</strong>, 8-connected, expanded on a 0.20&nbsp;m search lattice (four costmap cells) so the search stays interactive. The heuristic is the <strong>octile distance</strong> in metres with unit step cost, exactly admissible and consistent for 8-connected motion, and used <em>unweighted</em> (<code>f = g + h</code>), so the returned path is optimal on that lattice. Any cell whose cost is &ge; 253 (inscribed or lethal) is rejected outright, so <strong>the path can never cross a lethal cell</strong>; the remaining inflation cost is added to <code>g</code> as a penalty, which pushes the path towards the centre of free space instead of hugging walls. The result is then shortened by a line-of-sight pass that re-checks the same costmap.</p>
       </div>
 
       <div class="d-help-section">
@@ -956,7 +956,7 @@
 
       <div class="d-help-section">
         <h3>5 &middot; AMCL-style localisation</h3>
-        <p>A <strong>500-particle</strong> filter runs beside the simulator. Particles are propagated with the sampled odometry motion model (&delta;<sub>rot1</sub>, &delta;<sub>trans</sub>, &delta;<sub>rot2</sub> with noise coefficients &alpha;<sub>1..4</sub>), weighted by an <strong>8-beam likelihood-field endpoint model</strong> against analytically raycast ranges, and <strong>low-variance resampled</strong> whenever <code>N_eff = 1/&Sigma;w&sup2;</code> falls below N/2. Like AMCL it only updates after <code>update_min_d</code> = 0.20&nbsp;m or <code>update_min_a</code> = 0.20&nbsp;rad of motion. Press <strong>P</strong> and click to teleport the robot: the cloud is re-scattered with 0.5&nbsp;m / 0.5&nbsp;rad spread and you can watch it reconverge. It is called <em>AMCL-style</em> and not AMCL because the particle count is fixed (no KLD adaptive resampling) and, honestly, <strong>the controller still drives on ground truth</strong> &mdash; the filter is observed, not closed into the loop.</p>
+        <p>A <strong>500-particle</strong> filter runs beside the simulator. Particles are propagated with the sampled odometry motion model (&delta;<sub>rot1</sub>, &delta;<sub>trans</sub>, &delta;<sub>rot2</sub> with noise coefficients &alpha;<sub>1..4</sub>), weighted by an <strong>8-beam likelihood-field endpoint model</strong> against analytically raycast ranges, and <strong>low-variance resampled</strong> whenever <code>N_eff = 1/&Sigma;w&sup2;</code> falls below N/2. Like AMCL it only updates after <code>update_min_d</code> = 0.20&nbsp;m or <code>update_min_a</code> = 0.20&nbsp;rad of motion. Press <strong>P</strong> and click to teleport the robot: the cloud is re-scattered with 0.5&nbsp;m / 0.5&nbsp;rad spread and you can watch it reconverge. It is called <em>AMCL-style</em> and not AMCL because the particle count is fixed (no KLD adaptive resampling) and, honestly, <strong>the controller still drives on ground truth</strong>, the filter is observed, not closed into the loop.</p>
       </div>
 
       <div class="d-help-section">
@@ -971,7 +971,7 @@
     ├─ Spin 1.57 rad
     ├─ BackUp 0.15 m
     └─ Wait 5 s</pre>
-        <p style="margin-top:8px">The <code>RateController</code> re-plans once a second and immediately if a waypoint inside the local window turns lethal. If planning fails, the round robin runs the <em>next</em> recovery in the list and re-ticks the pipeline; it only gives up after all four have been tried without a path. That is why placing an obstacle on the path first produces a silent replan, and walling the robot in produces the full recovery sequence. One honest caveat: <code>ClearEntireCostmap</code> rebuilds the grid rather than wiping an accumulated obstacle layer, because obstacles here are ground truth rather than remembered sensor marks &mdash; it returns SUCCESS but rarely changes anything, so in practice <em>Spin</em> and <em>BackUp</em> do the useful work.</p>
+        <p style="margin-top:8px">The <code>RateController</code> re-plans once a second and immediately if a waypoint inside the local window turns lethal. If planning fails, the round robin runs the <em>next</em> recovery in the list and re-ticks the pipeline; it only gives up after all four have been tried without a path. That is why placing an obstacle on the path first produces a silent replan, and walling the robot in produces the full recovery sequence. One honest caveat: <code>ClearEntireCostmap</code> rebuilds the grid rather than wiping an accumulated obstacle layer, because obstacles here are ground truth rather than remembered sensor marks, it returns SUCCESS but rarely changes anything, so in practice <em>Spin</em> and <em>BackUp</em> do the useful work.</p>
       </div>
 
       <div class="d-help-section">
@@ -989,7 +989,7 @@
 
       <div class="d-help-section">
         <h3>8 &middot; Reading the console</h3>
-        <p>Log lines use the ROS 2 format <code>[LEVEL] [stamp] [node]: message</code>, with the node that would really emit them &mdash; <code>[planner_server]</code>, <code>[controller_server]</code>, <code>[bt_navigator]</code>, <code>[behavior_server]</code>, <code>[amcl]</code>, <code>[local_costmap]</code>, <code>[lifecycle_manager]</code>. The timestamp is simulated seconds since the page loaded, not epoch time.</p>
+        <p>Log lines use the ROS 2 format <code>[LEVEL] [stamp] [node]: message</code>, with the node that would really emit them, <code>[planner_server]</code>, <code>[controller_server]</code>, <code>[bt_navigator]</code>, <code>[behavior_server]</code>, <code>[amcl]</code>, <code>[local_costmap]</code>, <code>[lifecycle_manager]</code>. The timestamp is simulated seconds since the page loaded, not epoch time.</p>
       </div>
 
     </div>
@@ -1025,7 +1025,7 @@
 
         <div class="viewport">
             <div class="viewport-toolbar">
-                <div class="viewport-label">/map &mdash; nav_msgs/OccupancyGrid</div>
+                <div class="viewport-label">/map · nav_msgs/OccupancyGrid</div>
                 <div class="mode-indicator" id="modeIndicator">
                     <span>Click on map to set navigation goal</span>
                     <button type="button" class="mode-close" onclick="hideModeIndicator()" aria-label="Hide tool hint">&times;</button>
@@ -1051,11 +1051,11 @@
                     </div>
                     <div class="overlay-row">
                         <span class="overlay-label">goal_dist:</span>
-                        <span class="overlay-value" id="distDisplay">—</span>
+                        <span class="overlay-value" id="distDisplay">-</span>
                     </div>
                     <div class="overlay-row">
                         <span class="overlay-label">path_len:</span>
-                        <span class="overlay-value" id="pathDisplay">—</span>
+                        <span class="overlay-value" id="pathDisplay">-</span>
                     </div>
                 </div>
                 <div class="legend-overlay">
@@ -1216,7 +1216,7 @@
                         </div>
                         <div class="topic-row">
                             <span class="topic-path">/amcl_pose</span>
-                            <span class="topic-hz" id="amclHz">— Hz</span>
+                            <span class="topic-hz" id="amclHz">- Hz</span>
                         </div>
                         <div class="topic-row">
                             <span class="topic-path">/cmd_vel</span>
@@ -1224,7 +1224,7 @@
                         </div>
                         <div class="topic-row">
                             <span class="topic-path">/global_plan</span>
-                            <span class="topic-hz" id="planHz">— Hz</span>
+                            <span class="topic-hz" id="planHz">- Hz</span>
                         </div>
                         <div class="topic-row">
                             <span class="topic-path">/local_costmap</span>
@@ -1255,9 +1255,9 @@
                 <div class="panel-title">AMCL-style Localisation</div>
                 <div class="panel-body">
                     <div class="loc-row"><span>particles</span><b id="locCount">500</b></div>
-                    <div class="loc-row"><span>N_eff</span><b id="locNeff">—</b></div>
-                    <div class="loc-row"><span>cloud &sigma;_xy</span><b id="locSpread">—</b></div>
-                    <div class="loc-row"><span>|est − truth|</span><b id="locErr">—</b></div>
+                    <div class="loc-row"><span>N_eff</span><b id="locNeff">-</b></div>
+                    <div class="loc-row"><span>cloud &sigma;_xy</span><b id="locSpread">-</b></div>
+                    <div class="loc-row"><span>|est − truth|</span><b id="locErr">-</b></div>
                     <div class="loc-row"><span>resamples</span><b id="locResample">0</b></div>
                 </div>
             </div>
@@ -1287,7 +1287,7 @@
 
         <div class="console">
             <div class="console-toolbar">
-                <div class="console-label">/rosout &mdash; console output</div>
+                <div class="console-label">/rosout · console output</div>
                 <button type="button" class="console-btn" onclick="clearConsole()">Clear</button>
             </div>
             <div class="console-output" id="consoleOutput"></div>
@@ -1348,8 +1348,8 @@
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li>Inflation layer: <code>cost = 253 &middot; exp(&minus;cost_scaling_factor &middot; (d &minus; inscribed_radius))</code> for <code>inscribed_radius &lt; d &lt; inflation_radius</code>, with <code>d</code> from a two-sweep 3&times;3 chamfer distance transform (1, &radic;2 weights) &mdash; within a few percent of the exact Euclidean distance.</li>
-          <li>Octile heuristic: <code>h = (dx + dy) + (&radic;2 &minus; 2)&middot;min(dx, dy)</code> &mdash; admissible and consistent for 8-connected grids with unit/&radic;2 step costs.</li>
+          <li>Inflation layer: <code>cost = 253 &middot; exp(&minus;cost_scaling_factor &middot; (d &minus; inscribed_radius))</code> for <code>inscribed_radius &lt; d &lt; inflation_radius</code>, with <code>d</code> from a two-sweep 3&times;3 chamfer distance transform (1, &radic;2 weights), within a few percent of the exact Euclidean distance.</li>
+          <li>Octile heuristic: <code>h = (dx + dy) + (&radic;2 &minus; 2)&middot;min(dx, dy)</code>, admissible and consistent for 8-connected grids with unit/&radic;2 step costs.</li>
           <li>Pure pursuit: <code>&kappa; = 2&middot;sin(&alpha;) / L_d</code>, <code>&omega; = &kappa;&middot;v</code>, with curvature, proximity and approach regulation (Macenski, Moore, Lu, Merzlyakov &amp; Ferguson, 2023, <em>From the desks of ROS maintainers: a survey of modern &amp; capable mobile robotics algorithms in the robot operating system 2</em>).</li>
           <li>Particle filter: sampled odometry motion model and likelihood-field range model, low-variance resampling, <code>N_eff = 1 / &Sigma;w&sup2;</code> (Thrun, Burgard &amp; Fox, 2005, <em>Probabilistic Robotics</em>, ch. 5, 6 and 8).</li>
           <li>Behaviour tree and lifecycle architecture: Macenski, Mart&iacute;n, White &amp; Clavero (2020), <em>The Marathon 2: A Navigation System</em> (IROS).</li>
@@ -1362,7 +1362,7 @@
           <li>No real ROS: no DDS, no lifecycle transitions, no action servers or preemption, no TF buffering or extrapolation. The transform tree and topic rates in the sidebar are labels, not live publishers.</li>
           <li>A* runs on a 0.20 m lattice over the 0.05 m costmap, so the plan is optimal on that lattice, not on the full-resolution grid. Nav2's NavFn/Smac planners search the full costmap.</li>
           <li>Kinematics only: no mass, wheel slip, motor dynamics or IMU; collisions simply stop the robot rather than being resolved physically.</li>
-          <li>2-D, axis-aligned world with perfectly reflective surfaces; the laser has no dropout, mixed pixels or incidence-angle effects, and the costmap has no sensor field-of-view or clearing raycasts &mdash; every obstacle is always visible, whereas a real obstacle layer only marks what the LiDAR currently sees.</li>
+          <li>2-D, axis-aligned world with perfectly reflective surfaces; the laser has no dropout, mixed pixels or incidence-angle effects, and the costmap has no sensor field-of-view or clearing raycasts, every obstacle is always visible, whereas a real obstacle layer only marks what the LiDAR currently sees.</li>
           <li>Distances behind the inflation layer come from a chamfer transform on cell centres, so cost boundaries can be off by up to half a cell (2.5 cm).</li>
           <li><code>ClearEntireCostmap</code> rebuilds the grid instead of clearing remembered sensor marks (there are none), so that recovery almost always succeeds without changing anything.</li>
           <li>Simulation runs 3&times; faster than wall time so a 0.26 m/s robot stays watchable; on-screen distances and velocities are physical, elapsed times are not.</li>
@@ -1371,7 +1371,7 @@
     </div>
     <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>
@@ -2731,7 +2731,7 @@
                 recoveryIndex = 0;
                 updateBT('');
                 document.getElementById('stateDisplay').textContent = 'Goal Reached';
-                document.getElementById('planHz').textContent = '— Hz';
+                document.getElementById('planHz').textContent = '- Hz';
                 setTimeout(() => {
                     const el = document.getElementById('stateDisplay');
                     if (el.textContent === 'Goal Reached') el.textContent = 'Ready';
@@ -2785,7 +2785,7 @@
                         recoveryIndex = 0;
                         updateBT('');
                         document.getElementById('stateDisplay').textContent = 'Aborted';
-                        document.getElementById('planHz').textContent = '— Hz';
+                        document.getElementById('planHz').textContent = '- Hz';
                     } else {
                         startRecovery();
                     }
@@ -3027,9 +3027,9 @@
                     }
                 }
             } else {
-                document.getElementById('distDisplay').textContent = '—';
-                document.getElementById('pathDisplay').textContent = '—';
-                document.getElementById('planHz').textContent = '— Hz';
+                document.getElementById('distDisplay').textContent = '-';
+                document.getElementById('pathDisplay').textContent = '-';
+                document.getElementById('planHz').textContent = '- Hz';
             }
         }
 

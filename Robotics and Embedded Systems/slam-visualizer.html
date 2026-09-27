@@ -143,13 +143,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; SLAM Mapping Visualizer</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: SLAM Mapping Visualizer</h2>
       <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
       <div class="d-help-section">
         <h3>1 &middot; What is simulated</h3>
-        <p>A differential-drive robot (body radius <strong>0.10 m</strong>) drives through a <strong>7.5 m &times; 7.5 m</strong> line-segment world. Everything runs in the browser from a seeded PRNG: there is no recorded dataset and no hardware in the loop. Three estimates of the pose are tracked at once &mdash; <strong>ground truth</strong> (green), <strong>wheel odometry alone</strong> (dead reckoning) and the <strong>particle-filter estimate</strong> (amber) that the map is actually built from.</p>
+        <p>A differential-drive robot (body radius <strong>0.10 m</strong>) drives through a <strong>7.5 m &times; 7.5 m</strong> line-segment world. Everything runs in the browser from a seeded PRNG: there is no recorded dataset and no hardware in the loop. Three estimates of the pose are tracked at once, <strong>ground truth</strong> (green), <strong>wheel odometry alone</strong> (dead reckoning) and the <strong>particle-filter estimate</strong> (amber) that the map is actually built from.</p>
       </div>
       <div class="d-help-section">
         <h3>2 &middot; Driving &amp; physics</h3>
@@ -161,15 +161,15 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       </div>
       <div class="d-help-section">
         <h3>3 &middot; LiDAR model</h3>
-        <p><strong>360 beams over 360&deg;</strong> (1.0&deg; increment), <strong>6.0 m</strong> maximum range, scanning at <strong>10 Hz</strong> &mdash; roughly an RPLIDAR A1 class sensor. Each beam is raycast analytically against the true wall segments (ray/segment intersection), then corrupted with <strong>&sigma;<sub>r</sub> = 2 cm</strong> Gaussian range noise and <strong>&sigma;<sub>&theta;</sub> = 0.25&deg;</strong> Gaussian bearing noise. Beams that reach 6.0 m without an intersection are reported as max-range returns: they carve free space but never mark an obstacle.</p>
+        <p><strong>360 beams over 360&deg;</strong> (1.0&deg; increment), <strong>6.0 m</strong> maximum range, scanning at <strong>10 Hz</strong>, roughly an RPLIDAR A1 class sensor. Each beam is raycast analytically against the true wall segments (ray/segment intersection), then corrupted with <strong>&sigma;<sub>r</sub> = 2 cm</strong> Gaussian range noise and <strong>&sigma;<sub>&theta;</sub> = 0.25&deg;</strong> Gaussian bearing noise. Beams that reach 6.0 m without an intersection are reported as max-range returns: they carve free space but never mark an obstacle.</p>
       </div>
       <div class="d-help-section">
         <h3>4 &middot; Occupancy grid (mapping)</h3>
-        <p>A <strong>150 &times; 150</strong> grid of <strong>5 cm</strong> cells stores log-odds <code>l = log(p / (1 &minus; p))</code>, initialised at 0 (p = 0.5, unknown). For every beam the cells along the free portion are updated with <code>l += l_free = &minus;0.40</code> (inverse-sensor probability 0.40) and the endpoint cell with <code>l += l_occ = +0.85</code> (probability 0.70); values are clamped to <strong>[&minus;5, +5]</strong>, i.e. p &isin; [0.007, 0.993]. The map panel renders <code>p = 1 &minus; 1/(1 + e&#8319;)</code> directly as a grey scale &mdash; dark grey is confidently free, light grey confidently occupied, and slate blue is a cell that has never been observed.</p>
+        <p>A <strong>150 &times; 150</strong> grid of <strong>5 cm</strong> cells stores log-odds <code>l = log(p / (1 &minus; p))</code>, initialised at 0 (p = 0.5, unknown). For every beam the cells along the free portion are updated with <code>l += l_free = &minus;0.40</code> (inverse-sensor probability 0.40) and the endpoint cell with <code>l += l_occ = +0.85</code> (probability 0.70); values are clamped to <strong>[&minus;5, +5]</strong>, i.e. p &isin; [0.007, 0.993]. The map panel renders <code>p = 1 &minus; 1/(1 + e&#8319;)</code> directly as a grey scale, dark grey is confidently free, light grey confidently occupied, and slate blue is a cell that has never been observed.</p>
       </div>
       <div class="d-help-section">
         <h3>5 &middot; Odometry drift &amp; the particle filter</h3>
-        <p>Wheel odometry is deliberately imperfect: a <strong>+3% translation scale error</strong>, 8% proportional noise on each translation increment, 6% on each rotation increment and a <strong>+0.15 &deg;/s gyro bias</strong>. Integrated open loop it walks away from the truth &mdash; that is the orange curve on the error chart.</p>
+        <p>Wheel odometry is deliberately imperfect: a <strong>+3% translation scale error</strong>, 8% proportional noise on each translation increment, 6% on each rotation increment and a <strong>+0.15 &deg;/s gyro bias</strong>. Integrated open loop it walks away from the truth, that is the orange curve on the error chart.</p>
         <p><strong>Monte-Carlo localisation with 300 particles</strong> corrects it. Each 10 Hz cycle the particles are propagated with the textbook <em>odometry motion model</em> (&delta;<sub>rot1</sub>, &delta;<sub>trans</sub>, &delta;<sub>rot2</sub> with noise coefficients &alpha;<sub>1..4</sub> = 0.02, 0.02, 0.02, 0.005), then weighted by an <em>endpoint likelihood field</em>: 30 sub-sampled beams are projected from each particle and scored as <code>w &prop; &prod; (0.85&middot;p_occ + 0.15)</code>, where p_occ is the maximum occupancy probability in the 3 &times; 3 neighbourhood of the endpoint cell (a one-cell-&sigma; approximation of a true distance-transform likelihood field). Cells that have never been observed carry no information and are skipped; if fewer than 8 beams land on known cells the weights are left untouched and the filter coasts on odometry. <strong>Low-variance (systematic) resampling</strong> fires whenever the effective sample size N<sub>eff</sub> = 1/&Sigma;w&sup2; drops below N/2 = 150.</p>
       </div>
       <div class="d-help-section">
@@ -182,7 +182,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
           <dt>World View</dt><dd>Ground truth: walls, LiDAR beams (cyan), the particle cloud (purple), the true robot (cyan, filled) and the filter estimate (amber, outline). A 1 m scale bar is drawn bottom-left.</dd>
           <dt>Occupancy Grid</dt><dd>The map as the robot believes it, in the estimate frame. Grey scale = occupancy probability.</dd>
           <dt>LiDAR Scan</dt><dd>Polar plot in the robot body frame, 0&deg; = forward, rings at 2 / 4 / 6 m. Max-range returns are omitted.</dd>
-          <dt>Charts</dt><dd>Position error (m) for the filter and for raw odometry, and map coverage (%) &mdash; both sampled once per scan at 10 Hz.</dd>
+          <dt>Charts</dt><dd>Position error (m) for the filter and for raw odometry, and map coverage (%), both sampled once per scan at 10 Hz.</dd>
         </dl>
       </div>
     </div>
@@ -319,7 +319,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
     <div class="panel-body">
       <div class="code-scroll">
-<pre><span class="cl"><span class="cm">// ParticleFilterSlam::step() &mdash; one LiDAR scan</span></span>
+<pre><span class="cl"><span class="cm">// ParticleFilterSlam::step(), one LiDAR scan</span></span>
 <span class="cl"><span class="ty">void</span> <span class="fn">step</span>(<span class="k">const</span> <span class="ty">Odometry</span>&amp; u, <span class="k">const</span> <span class="ty">LaserScan</span>&amp; z) {</span>
 <span class="cl"></span>
 <span class="cl" data-stage="1">  <span class="cm">// 1 &middot; motion model: push every hypothesis</span></span>
@@ -352,12 +352,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       </div>
       <div class="code-live">
         <span class="stg" id="clStage">stage 1 &middot; motion model</span>
-        <span>N<sub>eff</sub> <b id="clNeff">&mdash;</b> / <span id="clN">300</span></span>
-        <span>beams used <b id="clBeams">&mdash;</b></span>
-        <span>informative <b id="clInfo">&mdash;</b></span>
+        <span>N<sub>eff</sub> <b id="clNeff">-</b> / <span id="clN">300</span></span>
+        <span>beams used <b id="clBeams">-</b></span>
+        <span>informative <b id="clInfo">-</b></span>
         <span>resamples <b id="clResample">0</b></span>
       </div>
-      <div class="cap"><span>Mirrors the running implementation</span><span>Highlight stepped for readability &mdash; the real loop completes 10&times; per second</span></div>
+      <div class="cap"><span>Mirrors the running implementation</span><span>Highlight stepped for readability, the real loop completes 10&times; per second</span></div>
     </div>
   </div>
 
@@ -388,13 +388,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <span class="tag">Real-time</span>
     </div>
     <div class="panel-body" style="padding:8px 16px">
-      <div class="telem-section">Pose &mdash; filter estimate</div>
+      <div class="telem-section">Pose, filter estimate</div>
       <table class="telem-table">
         <tr><td>Position X (m)</td><td id="telX">0.00</td></tr>
         <tr><td>Position Y (m)</td><td id="telY">0.00</td></tr>
         <tr><td>Heading &theta; (deg)</td><td id="telTheta">0.0&deg;</td></tr>
       </table>
-      <div class="telem-section" style="margin-top:8px">Pose &mdash; ground truth</div>
+      <div class="telem-section" style="margin-top:8px">Pose, ground truth</div>
       <table class="telem-table">
         <tr><td>True X / Y (m)</td><td id="telTrueXY">0.00, 0.00</td></tr>
         <tr><td>True &theta; (deg)</td><td id="telTrueTheta">0.0&deg;</td></tr>
@@ -470,7 +470,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
           <li><strong>No loop closure and no pose-graph optimisation.</strong> Nothing detects a revisited place and no back-end re-optimises past poses, so accumulated error is baked into the map permanently.</li>
           <li>Rao-Blackwellised SLAM would carry one map per particle; here all particles score against a single shared map, which understates the filter's true uncertainty.</li>
           <li>The likelihood field is a 3&times;3 maximum rather than a Euclidean distance transform, so the weight surface is coarse and flat-cornered.</li>
-          <li>Kinematics only: no wheel slip, no inertia or mass, no motor dynamics. Collisions are resolved geometrically &mdash; the blocked axis is dropped so the body slides along the wall &mdash; not by contact forces.</li>
+          <li>Kinematics only: no wheel slip, no inertia or mass, no motor dynamics. Collisions are resolved geometrically, the blocked axis is dropped so the body slides along the wall, not by contact forces.</li>
           <li>2-D, static world with perfectly reflective thin walls; no dynamic obstacles, no glass or specular surfaces, no multipath, no sensor dropout.</li>
           <li>Coverage is measured against the bounding box of the current environment, which includes cells inside walls that can never be observed, so 100% is not reachable.</li>
         </ul>
@@ -478,7 +478,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
     <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>
@@ -1709,7 +1709,7 @@ document.addEventListener('DOMContentLoaded',init);
     el('clStage').innerHTML = 'stage ' + stage + ' &middot; ' + NAMES[stage];
 
     var n = neff();
-    el('clNeff').textContent = n === null ? '\u2014' : n.toFixed(0);
+    el('clNeff').textContent = n === null ? '-' : n.toFixed(0);
     if (typeof PF_N !== 'undefined') el('clN').textContent = PF_N;
     if (typeof pfBeamsUsed !== 'undefined') el('clBeams').textContent = pfBeamsUsed;
     if (typeof pfInformative !== 'undefined') el('clInfo').textContent = pfInformative;

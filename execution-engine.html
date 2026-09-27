@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Limit Order Book &amp; Execution Engine | Cristian Arenas</title>
-<meta name="description" content="A price-time-priority matching engine with synthetic order flow, five execution algorithms working a parent order through the book, an identification strategy for permanent impact that beats the naive Kyle regression, implementation-shortfall decomposition off the tape, and the Almgren-Chriss cost-risk frontier calibrated from the simulated market.">
+<meta name="description" content="A guided, step-by-step execution simulator: a real price-time-priority limit order book, five institutional execution strategies, an exact implementation-shortfall breakdown that separates your own price impact from market luck, and an impact calibration scored against the simulator's true parameters.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,106 +15,243 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-size:14px;line-height:1.6}
 a{color:var(--cyan);text-decoration:none}
-::-webkit-scrollbar{width:5px;height:6px}
+::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px}
 :focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+b,strong{color:var(--text);font-weight:600}
 
 .pill-buy{color:var(--green);border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.08)}
 .pill-sell{color:var(--red);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08)}
 .pill-idle{color:var(--dim);border-color:rgba(148,163,184,.25);background:rgba(148,163,184,.07)}
 
-.demo-sub{max-width:1440px;margin:14px auto 0;padding:0 16px;color:var(--muted);font-size:.85rem;line-height:1.65}
-.demo-sub b{color:var(--text);font-weight:600}
+/* ---------------------------------------------------------------- hero */
+.hero{max-width:1180px;margin:26px auto 0;padding:0 18px}
+.hero-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);display:flex;gap:8px;align-items:center}
+.hero-title{font-size:clamp(1.3rem,3.2vw,1.9rem);line-height:1.25;letter-spacing:-.01em;margin:10px 0 10px;color:#fff;max-width:900px}
+.hero-text{color:var(--muted);font-size:.95rem;line-height:1.75;max-width:900px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:14px;font-size:12px;color:var(--faint)}
+.hero-meta i{color:var(--cyan);margin-right:6px}
 
-.grid{max-width:1440px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.full{grid-column:1/-1}
-.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border)}
-.panel-head h3{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.panel-head h3 i{color:var(--cyan);font-size:13px}
-.panel-head .tag{font-size:10px;color:var(--faint);font-style:italic;text-align:right;max-width:56%}
-.panel-body{padding:16px 18px}
-canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
-.canvas-wrap{position:relative}
+/* ------------------------------------------------------------- stepper */
+.stepper{position:sticky;top:var(--navh,56px);z-index:40;max-width:1180px;margin:22px auto 0;padding:10px 18px;
+  display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:rgba(10,14,39,.94);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.stepper::-webkit-scrollbar{display:none}
+.st{flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);font:600 12.5px var(--sans);cursor:pointer;transition:all .18s;white-space:nowrap}
+.st:hover:not(:disabled){border-color:var(--border-strong);color:var(--text)}
+.st-n{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 11.5px var(--mono);
+  background:var(--card2);border:1px solid var(--border-strong);color:var(--muted)}
+.st-l{overflow:hidden;text-overflow:ellipsis}
+.st.active{border-color:rgba(6,182,212,.6);background:rgba(6,182,212,.1);color:#fff}
+.st.active .st-n{background:var(--cyan);border-color:var(--cyan);color:#04121a}
+.st.done .st-n{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.5);color:var(--green)}
+.st:disabled{opacity:.42;cursor:not-allowed}
 
-/* controls */
-.ctrls{max-width:1440px;margin:16px auto 0;padding:0 16px;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:16px}
-.cbox{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px}
-.cbox h4{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:7px}
-.cbox h4 i{color:var(--cyan)}
+/* --------------------------------------------------------------- steps */
+.steps{max-width:1180px;margin:0 auto;padding:6px 18px 10px}
+.step{display:none;animation:stepIn .28s ease}
+.step.active{display:block}
+@keyframes stepIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.step{animation:none}}
+.step-head{margin:22px 0 16px}
+.step-badge{font:600 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)}
+.step-head h2{font-size:1.45rem;color:#fff;margin:4px 0 6px;letter-spacing:-.01em}
+.step-head p{color:var(--muted);font-size:.93rem;line-height:1.7;max-width:880px}
+
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;align-items:start}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.grid2 .full{grid-column:1/-1}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;min-width:0}
+.card h3{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.card h3 i{color:var(--cyan);font-size:12.5px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.card-head h3{margin:0}
+.card-head .tag{font-size:11px;color:var(--faint)}
+.card-tools{display:flex;align-items:center;gap:8px}
+.hint{font-size:12px;color:var(--faint);line-height:1.65;margin-top:10px}
+.hint b{color:var(--muted)}
+
+.glossary{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:13px}
+.glossary dt{font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.glossary dd{color:var(--muted);line-height:1.6}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+.sw-bid{background:#10b981}.sw-ask{background:#ef4444}
+
+.try{margin-top:16px;padding:12px 16px;border-radius:10px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.22);
+  color:var(--muted);font-size:13px;line-height:1.65}
+.try i{color:var(--yellow);margin-right:6px}
+.try b{color:#fcd34d}
+
+.step-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:22px 0 8px;flex-wrap:wrap}
+.d-btn.big{padding:11px 22px;font-size:.9rem;border-radius:9px}
+.run-wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.run-wrap .hint{margin:0;max-width:300px;text-align:right}
+
+.stale{display:none;margin:0 0 14px;padding:11px 15px;border-radius:10px;background:rgba(245,158,11,.08);
+  border:1px solid rgba(245,158,11,.3);color:#fcd34d;font-size:13px;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.stale.show{display:flex}
+
+/* --------------------------------------------------------- selectors */
+.regimes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rcard,.acard{text-align:left;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;
+  color:var(--muted);font:inherit;transition:all .16s;min-width:0}
+.rcard:hover,.acard:hover{border-color:var(--border-strong);color:var(--text)}
+.rcard.on,.acard.on{border-color:rgba(6,182,212,.6);background:rgba(6,182,212,.09);color:var(--text)}
+.rcard .rt{font-weight:600;font-size:13px;color:var(--text);display:flex;gap:7px;align-items:center}
+.rcard .rt i{color:var(--cyan);font-size:12px}
+.rcard .rs{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px}
+.algos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.acard .at{font-weight:600;font-size:13px;color:var(--text)}
+.acard svg{display:block;width:100%;height:34px;margin:6px 0 4px}
+.acard .ad{font-size:11.5px;line-height:1.5;color:var(--faint)}
+.acard.on .ad{color:var(--muted)}
+
 .seg{display:flex;gap:6px;flex-wrap:wrap}
-.seg button{background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:6px 11px;font-size:11.5px;font-family:var(--mono);cursor:pointer;transition:all .18s}
+.seg button{background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:6px 14px;font:600 12px var(--sans);cursor:pointer;transition:all .16s}
 .seg button:hover{border-color:var(--border-strong);color:var(--text)}
-.seg button.on{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.45);color:var(--cyan);font-weight:600}
-.srow{margin-top:11px}
-.srow label{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);margin-bottom:4px;line-height:1.4}
+.seg button.on{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.5);color:var(--cyan)}
+.seg.small button{padding:4px 9px;font:600 11px var(--mono)}
+.srow{margin-top:14px}
+.srow label{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--muted);margin-bottom:3px}
 .srow label span:last-child{color:var(--cyan);font-family:var(--mono);font-weight:600}
 .srow input[type=range]{width:100%}
-.sub{font-size:10px;color:var(--faint);margin-top:4px;line-height:1.55}
-.runbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.sub{font-size:11.5px;color:var(--faint);margin-top:3px;line-height:1.55}
+.sub b{color:var(--muted)}
+.ends{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);font-family:var(--mono)}
 
-/* kpis */
-.vstrip{max-width:1440px;margin:16px auto 0;padding:0 16px;display:flex;gap:12px;flex-wrap:wrap}
-.vcard{flex:1;min-width:134px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 15px;text-align:center}
-.vcard .v{font-size:23px;font-weight:700;font-family:var(--mono);line-height:1.15}
-.vcard .v.g{color:var(--green)}.vcard .v.c{color:var(--cyan)}.vcard .v.r{color:var(--red)}.vcard .v.y{color:var(--yellow)}
-.vcard .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-top:5px;line-height:1.45}
+.ticket{border:1px solid rgba(6,182,212,.35);background:linear-gradient(135deg,rgba(6,182,212,.09),rgba(6,182,212,.02));
+  border-radius:12px;padding:15px 18px;margin-bottom:16px;font-size:15px;line-height:1.6;color:var(--muted)}
+.ticket .tk{font:600 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px}
+.ticket b{color:#fff}
+.ticket .buy{color:var(--green)}.ticket .sell{color:var(--red)}
 
-/* ladder */
+/* --------------------------------------------------------------- tiles */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 12px;min-width:0}
+.tile .v{font:700 18px var(--mono);color:var(--cyan);line-height:1.2;white-space:nowrap}
+.tile .v.g{color:var(--green)}.tile .v.r{color:var(--red)}.tile .v.y{color:var(--yellow)}.tile .v.w{color:#fff}
+.tile .l{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35}
+.tile .s{font-size:10.5px;color:var(--faint);margin-top:2px;line-height:1.4}
+
+/* --------------------------------------------------------------- ladder */
 .ladder{font-family:var(--mono);font-size:11.5px}
-.lrow{display:grid;grid-template-columns:76px 1fr 66px 1fr 76px;align-items:center;gap:6px;height:17px}
+.lrow{display:grid;grid-template-columns:74px 1fr 64px 1fr 74px;align-items:center;gap:6px;height:18px}
 .lrow .px{text-align:center;color:var(--dim);font-size:11px}
-.lrow.best .px{color:var(--text);font-weight:600}
+.lrow.best .px{color:#fff;font-weight:600}
 .lrow .bq{text-align:right;color:#4ade80}
 .lrow .aq{text-align:left;color:#f87171}
-.lbar{height:11px;border-radius:2px}
-.lbar.b{background:linear-gradient(90deg,rgba(16,185,129,.12),rgba(16,185,129,.55));margin-left:auto}
-.lbar.a{background:linear-gradient(90deg,rgba(239,68,68,.55),rgba(239,68,68,.12))}
-.lrow .mine{box-shadow:inset 0 0 0 1px var(--cyan)}
-.lhd{display:grid;grid-template-columns:76px 1fr 66px 1fr 76px;gap:6px;font-size:9.5px;
+.lbar{height:11px;border-radius:2px;transition:width .12s linear}
+.lbar.b{background:linear-gradient(90deg,rgba(16,185,129,.12),rgba(16,185,129,.6));margin-left:auto}
+.lbar.a{background:linear-gradient(90deg,rgba(239,68,68,.6),rgba(239,68,68,.12))}
+.lbar.mine{box-shadow:0 0 0 1.5px var(--cyan),0 0 10px rgba(6,182,212,.5)}
+.lhd{display:grid;grid-template-columns:74px 1fr 64px 1fr 74px;gap:6px;font-size:10px;
   text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin-bottom:6px}
-.lhd span:nth-child(1){text-align:right}.lhd span:nth-child(3){text-align:center}.lhd span:nth-child(5){text-align:left}
-.spreadrow{display:flex;justify-content:center;align-items:center;gap:10px;height:21px;margin:3px 0;
+.lhd span:nth-child(1){text-align:right}.lhd span:nth-child(3){text-align:center}
+.spreadrow{display:flex;justify-content:center;align-items:center;gap:10px;height:22px;margin:3px 0;
   font-family:var(--mono);font-size:10.5px;color:var(--faint);
-  border-top:1px dashed rgba(148,163,184,.18);border-bottom:1px dashed rgba(148,163,184,.18)}
+  border-top:1px dashed rgba(148,163,184,.2);border-bottom:1px dashed rgba(148,163,184,.2)}
 .spreadrow b{color:var(--yellow)}
-.qpos{margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.7}
+.qpos{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.6;min-height:38px}
 .qpos b{color:var(--cyan)}
+.clock{font:700 13px var(--mono);color:var(--cyan)}
 
-.mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.mcard{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:92px}
-.mcard .v{font-size:15px;font-weight:700;font-family:var(--mono)}
-.mcard .v.g{color:var(--green)}.mcard .v.c{color:var(--cyan)}.mcard .v.r{color:var(--red)}.mcard .v.y{color:var(--yellow)}
-.mcard .l{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;line-height:1.4}
+/* --------------------------------------------------------------- replay */
+.player{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.player input[type=range]{flex:1;min-width:180px}
+.sessions{display:flex;gap:5px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--faint)}
+.chip{background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:3px 8px;
+  font:600 10.5px var(--mono);cursor:pointer}
+.chip:hover{border-color:var(--border-strong);color:var(--text)}
+.chip.on{border-color:rgba(6,182,212,.55);color:var(--cyan);background:rgba(6,182,212,.1)}
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.pbar{height:6px;border-radius:3px;background:var(--card2);margin-top:7px;overflow:hidden}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,#06b6d4,#10b981);border-radius:3px}
+.log{font-size:12px;line-height:1.55;max-height:262px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.log .ev{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:6px 8px;border-radius:7px;background:var(--card2);border-left:2px solid var(--border-strong)}
+.log .ev .tt{font:600 10.5px var(--mono);color:var(--faint);padding-top:1px}
+.log .ev .tx{color:var(--muted)}
+.log .ev.pass{border-left-color:#10b981}.log .ev.aggr{border-left-color:#f59e0b}
+.log .ev.sys{border-left-color:#06b6d4}.log .ev.mile{border-left-color:#8b5cf6}
+.log .empty{color:var(--faint);font-size:12px;padding:10px 2px}
+.keys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.key{font-size:12.5px;color:var(--muted);line-height:1.6;padding:12px 14px;border-radius:10px;background:var(--card);border:1px solid var(--border)}
+.key .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:7px;vertical-align:-1px}
 
-.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tscroll .mtable{min-width:620px}
-.mtable{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-.mtable th{color:var(--dim);font-weight:600;padding:8px 9px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
-.mtable th:first-child{text-align:left}
-.mtable td{padding:8px 9px;text-align:right;border-bottom:1px solid rgba(30,41,59,.4);font-family:var(--mono);white-space:nowrap}
-.mtable td:first-child{text-align:left;font-family:inherit;color:var(--text)}
-.mtable tr.hl td{background:rgba(6,182,212,.07)}
-.tnote{margin:12px 0 0;color:var(--faint);font-size:10.5px;line-height:1.65}
-.tnote b{color:var(--dim)}
-.legend{display:flex;gap:14px;margin-top:10px;font-size:11px;flex-wrap:wrap}
-.legend span{display:flex;align-items:center;gap:5px;color:var(--dim)}
+canvas{display:block;width:100%;border-radius:8px}
+.canvas-wrap{position:relative}
+.legend{display:flex;gap:14px;margin-top:10px;font-size:11.5px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px;color:var(--muted)}
 .legend .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
-.tip{position:absolute;background:rgba(15,22,41,.97);border:1px solid var(--border-strong);border-radius:8px;padding:8px 12px;font-size:11.5px;line-height:1.55;pointer-events:none;display:none;z-index:10;font-family:var(--mono);box-shadow:var(--shadow)}
+.legend .ln{width:16px;height:0;border-top:2px solid;display:inline-block}
+.legend .ln.dash{border-top-style:dashed}
+.tip{position:absolute;background:rgba(15,22,41,.97);border:1px solid var(--border-strong);border-radius:8px;padding:8px 11px;font-size:11.5px;
+  line-height:1.55;pointer-events:none;display:none;z-index:10;font-family:var(--mono);box-shadow:var(--shadow);max-width:280px}
 .tip strong{color:var(--text)}
 
-.scrub{max-width:1440px;margin:16px auto 0;padding:12px 18px;background:var(--card);
-  border:1px solid var(--border);border-radius:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.scrub input[type=range]{flex:1;min-width:190px}
-.scrub .t{font-family:var(--mono);font-size:13px;color:var(--cyan);font-weight:700;min-width:96px}
+/* ----------------------------------------------------------------- cost */
+.headline{display:grid;grid-template-columns:auto 1fr;gap:6px 26px;align-items:center;margin-bottom:16px}
+.headline .big{font:700 clamp(1.9rem,5vw,2.6rem) var(--mono);line-height:1;color:#fff}
+.headline .big small{font-size:.45em;color:var(--faint);font-weight:600;margin-left:6px}
+.headline .usd{font:600 13px var(--mono);color:var(--muted);margin-top:6px}
+.headline .say{color:var(--muted);font-size:14px;line-height:1.7}
+.headline .say .skill{color:#67e8f9;font-weight:600}.headline .say .luck{color:#c4b5fd;font-weight:600}
+.clist{display:flex;flex-direction:column;gap:9px}
+.citem{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:start;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.citem .sw{margin-top:5px}
+.citem .cn{color:var(--text);font-weight:600}
+.citem .cv{font:600 12px var(--mono);text-align:right;white-space:nowrap}
+.citem .cv small{display:block;color:var(--faint);font-weight:500;font-size:10.5px}
+.csum{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.csum div{padding:10px 12px;border-radius:9px;font-size:12px;color:var(--muted);line-height:1.5}
+.csum .v{font:700 17px var(--mono);display:block;margin-bottom:2px}
+.csum .skill{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.25)}.csum .skill .v{color:#67e8f9}
+.csum .luck{background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.25)}.csum .luck .v{color:#c4b5fd}
+
+/* -------------------------------------------------------------- compare */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tscroll .mtable{min-width:700px}
+.mtable{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}
+.mtable th{color:var(--muted);font-weight:600;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.mtable th:first-child{text-align:left}
+.mtable th small{display:block;text-transform:none;letter-spacing:0;font-weight:500;color:var(--faint);font-size:10px}
+.mtable td{padding:9px 10px;text-align:right;border-bottom:1px solid rgba(30,41,59,.55);font-family:var(--mono);white-space:nowrap;color:var(--muted)}
+.mtable td:first-child{text-align:left;font-family:var(--sans);color:var(--text);font-weight:600}
+.mtable td .se{color:var(--faint);font-size:10.5px;margin-left:3px}
+.mtable td small{display:block;font-weight:400;color:var(--faint);font-size:11px;white-space:normal;margin-top:2px;line-height:1.45;max-width:260px}
+.mtable tr.hl td{background:rgba(6,182,212,.07)}
+.mtable td.best{color:#4ade80}
+.take{display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted);line-height:1.65}
+.take p b{color:#fff}
+.empty-state{text-align:center;padding:30px 12px;color:var(--faint);font-size:13px;line-height:1.7}
+.empty-state i{display:block;font-size:22px;color:var(--border-strong);margin-bottom:8px}
+
+/* ------------------------------------------------------------ internals */
+.prose p{color:var(--muted);font-size:13px;line-height:1.75;margin-bottom:10px}
+.prose ul{padding-left:18px;margin-bottom:10px}
+.prose li{color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:5px}
+.prose code{font-family:var(--mono);font-size:11.5px;color:var(--cyan-bright);background:rgba(6,182,212,.08);padding:1px 5px;border-radius:4px}
+.ratio-ok{color:#4ade80}.ratio-bad{color:#f87171}
+
+.busy{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;z-index:600;
+  background:rgba(15,22,41,.97);border:1px solid rgba(6,182,212,.45);color:var(--text);border-radius:999px;padding:9px 18px;
+  font:600 12.5px var(--sans);box-shadow:var(--shadow);transition:all .2s;display:flex;gap:9px;align-items:center}
+.busy.show{opacity:1;transform:translateX(-50%)}
+.busy i{color:var(--cyan)}
 
 .d-help-section table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
 .d-help-section th,.d-help-section td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--muted)}
 .d-help-section th{color:var(--text);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
 .d-help-section td:first-child{color:var(--text);font-family:var(--mono);font-size:.74rem}
 
-@media(max-width:1180px){.ctrls{grid-template-columns:1fr 1fr}}
-@media(max-width:900px){.grid,.ctrls{grid-template-columns:1fr}}
+@media(max-width:980px){.cols,.grid2{grid-template-columns:1fr}.keys{grid-template-columns:1fr}}
+@media(max-width:760px){.tiles,.strip{grid-template-columns:1fr 1fr}.headline{grid-template-columns:1fr}
+  .st-l{display:none}.st.active .st-l{display:inline}.st{flex:none}}
+@media(max-width:520px){.regimes{grid-template-columns:1fr}.csum{grid-template-columns:1fr}
+  .lrow,.lhd{grid-template-columns:64px 1fr 58px 1fr 64px}.run-wrap .hint{text-align:left}}
 </style>
 </head>
 <body>
@@ -139,287 +276,426 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <span><b>Synthetic order flow, not a market data feed</b> &middot; 1-second resolution &middot; deterministic seed &middot; not investment advice</span>
 </div>
 
-<p class="demo-sub">A working <b>price&ndash;time-priority matching engine</b> with a synthetic order-flow model, and five
-execution algorithms working a parent order through it. Child orders join the queue at the touch and fill only when the size
-ahead of them is consumed, or cross the spread and pay for it. The shortfall is then decomposed off the tape, and the
-<b>Almgren&ndash;Chriss</b> frontier is drawn with &eta; and &gamma; <b>regressed out of this market</b> rather than assumed.
-Getting &gamma; right is the interesting part: the obvious regression of price change on order flow is <b>endogenous</b> &mdash;
-flow leans toward fair value, so both move together &mdash; and it overstates the coefficient roughly fivefold. What identifies
-it is our own order, which is worked to a schedule and therefore exogenous. Drag the timeline to inspect the book at any second.</p>
+<header class="hero">
+  <div class="hero-kicker"><i class="fas fa-layer-group"></i> Quant development &middot; market microstructure</div>
+  <h2 class="hero-title">How do you buy 200,000 shares without pushing the price up on yourself?</h2>
+  <p class="hero-text">Every large order moves the market. Trade fast and you pay for the push; trade slowly and the price has time to
+  drift away from you. This page runs a working <b>limit order book</b>, the matching engine at the centre of every stock
+  exchange, and lets you work an institutional order through it using the five strategies professional trading desks use.
+  Then it shows you what the trade cost, where every basis point went, and how much of it was skill and how much was luck.</p>
+  <div class="hero-meta">
+    <span><i class="far fa-clock"></i>Six short steps, about three minutes</span>
+    <span><i class="fas fa-microchip"></i>Everything runs in your browser</span>
+    <span><i class="fas fa-flask"></i>Synthetic market, calibrated to a liquid large-cap</span>
+  </div>
+</header>
 
-<div class="ctrls">
-  <div class="cbox">
-    <h4><i class="fas fa-file-invoice"></i> Parent order</h4>
-    <div class="seg" id="segSide">
-      <button type="button" data-s="1" class="on">BUY</button>
-      <button type="button" data-s="-1">SELL</button>
+<nav class="stepper" id="stepper" aria-label="Walkthrough steps">
+  <button type="button" class="st" data-go="1"><span class="st-n">1</span><span class="st-l">The market</span></button>
+  <button type="button" class="st" data-go="2"><span class="st-n">2</span><span class="st-l">Your trade</span></button>
+  <button type="button" class="st" data-go="3"><span class="st-n">3</span><span class="st-l">Watch it trade</span></button>
+  <button type="button" class="st" data-go="4"><span class="st-n">4</span><span class="st-l">What it cost</span></button>
+  <button type="button" class="st" data-go="5"><span class="st-n">5</span><span class="st-l">Compare strategies</span></button>
+  <button type="button" class="st" data-go="6"><span class="st-n">6</span><span class="st-l">Under the hood</span></button>
+</nav>
+
+<main class="steps">
+
+<!-- ============================ STEP 1 ============================ -->
+<section class="step" id="step1" aria-labelledby="h1">
+  <div class="step-head">
+    <span class="step-badge">Step 1 of 6</span>
+    <h2 id="h1">Meet the market</h2>
+    <p>Before you trade, look at what you are trading into. Here is a live order book for a synthetic large-cap stock
+    trading around $100. Each row is a price, one cent apart; the bars show how many shares are waiting there.</p>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <div class="card">
+        <h3><i class="fas fa-book-open"></i> How to read an order book</h3>
+        <dl class="glossary">
+          <dt><span class="sw sw-bid"></span>Bids</dt><dd>Shares people are waiting to <b>buy</b>. The best (highest) bid sits just below the middle.</dd>
+          <dt><span class="sw sw-ask"></span>Asks</dt><dd>Shares people are waiting to <b>sell</b>. The best (lowest) ask sits just above the middle.</dd>
+          <dt>Spread</dt><dd>The gap between the best bid and the best ask. Buy right now and you pay the ask, half the spread above the mid price.</dd>
+          <dt>Depth</dt><dd>How many shares wait at each price. Buy more than the best ask shows and you climb to worse prices.</dd>
+          <dt>Queue</dt><dd>At any one price, orders fill first come, first served. Join the bid and you wait behind everyone already there.</dd>
+        </dl>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-cloud-sun"></i> Choose the market conditions</h3>
+        <div class="regimes" id="regimeCards"></div>
+        <p class="hint" id="regimeNote"></p>
+      </div>
     </div>
-    <div class="srow">
-      <label for="slQty"><span>Order size</span><span id="vQty">400,000</span></label>
-      <input type="range" id="slQty" min="25" max="1200" step="25" value="400">
-      <div class="sub" id="povNote"></div>
-    </div>
-    <div class="srow">
-      <label for="slHorizon"><span>Horizon</span><span id="vHorizon">30 min</span></label>
-      <input type="range" id="slHorizon" min="5" max="30" step="5" value="30">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head">
+          <h3><i class="fas fa-list-ol"></i> Live order book</h3>
+          <div class="card-tools"><span class="clock" id="mktClock">10:00:00</span>
+            <button type="button" class="d-btn sm" id="mktPlay"><i class="fas fa-pause"></i> Pause</button></div>
+        </div>
+        <div class="lhd"><span>Bid size</span><span></span><span>Price</span><span></span><span>Ask size</span></div>
+        <div class="ladder" id="mktLadder"></div>
+      </div>
+      <div class="tiles" id="mktTiles"></div>
+      <div class="card">
+        <div class="card-head"><h3><i class="fas fa-chart-line"></i> The price so far</h3><span class="tag">mid price, the halfway point between best bid and best ask</span></div>
+        <canvas id="mktCanvas" aria-label="Recent mid price of the simulated stock"></canvas>
+      </div>
     </div>
   </div>
+  <div class="try"><i class="fas fa-lightbulb"></i><b>Try this:</b> switch to <em>Thin book</em> and watch how little waits at each
+  price, then to <em>Stressed</em>, the spread widens and the book lurches. Those are the markets where a large order hurts.</div>
+  <div class="step-nav"><span></span>
+    <button type="button" class="d-btn primary big" data-go="2">Next: set up your trade <i class="fas fa-arrow-right"></i></button></div>
+</section>
 
-  <div class="cbox">
-    <h4><i class="fas fa-diagram-project"></i> Algorithm</h4>
-    <div class="seg" id="segAlgo">
-      <button type="button" data-a="twap" class="on">TWAP</button>
-      <button type="button" data-a="vwap">VWAP</button>
-      <button type="button" data-a="pov">POV</button>
-      <button type="button" data-a="ac">Almgren&ndash;Chriss</button>
-      <button type="button" data-a="is">Arrival</button>
+<!-- ============================ STEP 2 ============================ -->
+<section class="step" id="step2" aria-labelledby="h2">
+  <div class="step-head">
+    <span class="step-badge">Step 2 of 6</span>
+    <h2 id="h2">Set up your trade</h2>
+    <p>You are the trader. A portfolio manager has handed you an order to fill. Decide how big it is and how long you have, then
+    choose the strategy the algorithm will use to slice it into small child orders.</p>
+  </div>
+  <div class="ticket" id="ticket"></div>
+  <div class="cols">
+    <div class="card">
+      <h3><i class="fas fa-file-invoice"></i> The order</h3>
+      <div class="seg" id="segSide" role="group" aria-label="Side">
+        <button type="button" data-s="1" class="on">Buy</button>
+        <button type="button" data-s="-1">Sell</button>
+      </div>
+      <div class="srow">
+        <label for="slQty"><span>Shares</span><span id="vQty">200,000</span></label>
+        <input type="range" id="slQty" min="25" max="1000" step="25" value="200">
+        <div class="sub" id="qtyNote"></div>
+      </div>
+      <div class="srow">
+        <label for="slHorizon"><span>Time allowed</span><span id="vHorizon">30 min</span></label>
+        <input type="range" id="slHorizon" min="5" max="30" step="5" value="30">
+        <div class="sub">Less time means trading faster, which pushes the price harder, but leaves the market less time to move against you.</div>
+      </div>
+      <div class="srow">
+        <label for="slAggr"><span>Patience</span><span id="vAggr">patient</span></label>
+        <input type="range" id="slAggr" min="0" max="100" step="5" value="35">
+        <div class="ends"><span>wait in line</span><span>cross the spread</span></div>
+        <div class="sub">Patient orders rest in the queue and <b>earn</b> the spread when someone trades with them. Impatient ones
+        cross the spread as soon as they fall behind, and <b>pay</b> it.</div>
+      </div>
     </div>
-    <div class="srow">
-      <label for="slAggr"><span>Aggression</span><span id="vAggr">35</span></label>
-      <input type="range" id="slAggr" min="0" max="100" step="5" value="35">
-      <div class="sub">0 rests at the touch and waits for the queue. 100 crosses the spread on every slice. In between it
-      posts passively and only crosses to catch up when it falls behind schedule.</div>
-    </div>
-    <div class="srow" id="acRow">
-      <label for="slLambda"><span>Risk aversion &lambda;</span><span id="vLambda">1.0e-6</span></label>
-      <input type="range" id="slLambda" min="-9" max="-4" step="0.25" value="-6">
-    </div>
-    <div class="srow" id="povRow" style="display:none">
-      <label for="slPov"><span>Participation target</span><span id="vPov">12%</span></label>
-      <input type="range" id="slPov" min="2" max="40" step="1" value="12">
+    <div class="stack">
+      <div class="card">
+        <h3><i class="fas fa-diagram-project"></i> Pick a strategy</h3>
+        <div class="algos" id="algoCards"></div>
+        <div class="srow" id="acRow">
+          <label for="slLambda"><span>Urgency (risk aversion &lambda;)</span><span id="vLambda">1.0e-5</span></label>
+          <input type="range" id="slLambda" min="-8" max="-3" step="0.25" value="-5">
+          <div class="ends"><span>relaxed</span><span>in a hurry</span></div>
+        </div>
+        <div class="srow" id="povRow">
+          <label for="slPov"><span>Target share of market volume</span><span id="vPov">15%</span></label>
+          <input type="range" id="slPov" min="3" max="40" step="1" value="15">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3><i class="fas fa-stairs"></i> The plan</h3><span class="tag">share of the order done, minute by minute &middot; bold is yours, faint the other four</span></div>
+        <canvas id="planCanvas" aria-label="Planned cumulative execution of each strategy"></canvas>
+        <p class="hint" id="planNote"></p>
+      </div>
     </div>
   </div>
-
-  <div class="cbox">
-    <h4><i class="fas fa-water"></i> Market regime</h4>
-    <div class="seg" id="segRegime">
-      <button type="button" data-r="calm">Calm</button>
-      <button type="button" data-r="normal" class="on">Normal</button>
-      <button type="button" data-r="thin">Thin book</button>
-      <button type="button" data-r="stress">Stressed</button>
-    </div>
-    <div class="sub" id="regimeNote" style="margin-top:9px"></div>
-    <div class="runbar">
-      <button type="button" class="d-btn" id="runBtn"><i class="fas fa-play"></i> Run execution</button>
-      <button type="button" class="d-btn sm" id="sweepBtn"><i class="fas fa-chart-line"></i> Compare all five</button>
+  <div class="step-nav">
+    <button type="button" class="d-btn" data-go="1"><i class="fas fa-arrow-left"></i> Back</button>
+    <div class="run-wrap">
+      <span class="hint">Runs your order through <b>eight independent trading sessions</b> and averages them, one session is mostly luck.</span>
+      <button type="button" class="d-btn primary big" id="runBtn"><i class="fas fa-play"></i> Run the trade</button>
     </div>
   </div>
-</div>
+</section>
 
-<div class="vstrip">
-  <div class="vcard"><div class="v" id="kIS">&mdash;</div><div class="l">Shortfall, mean of 8 paths (bps)</div></div>
-  <div class="vcard"><div class="v c" id="kFill">&mdash;</div><div class="l">Filled</div></div>
-  <div class="vcard"><div class="v c" id="kPassive">&mdash;</div><div class="l">Passive fill share</div></div>
-  <div class="vcard"><div class="v c" id="kPov">&mdash;</div><div class="l">Realised participation</div></div>
-  <div class="vcard"><div class="v y" id="kPerm">&mdash;</div><div class="l">Permanent impact (bps)</div></div>
-  <div class="vcard"><div class="v" id="kVsVwap">&mdash;</div><div class="l">vs interval VWAP, mean (bps)</div></div>
-</div>
-
-<div class="scrub">
-  <span style="font-size:11px;color:var(--faint);font-family:var(--mono)">TIMELINE</span>
-  <input type="range" id="slTime" min="0" max="1800" step="1" value="1800">
-  <span class="t" id="tLabel">30:00</span>
-  <button type="button" class="d-btn sm" id="playBtn"><i class="fas fa-play"></i> Replay</button>
-</div>
-
-<div class="grid">
-
-  <div class="d-panel">
-    <div class="panel-head">
-      <h3><i class="fas fa-list-ol"></i> Order book</h3>
-      <span class="tag">Ten levels a side at the selected second &middot; cyan outline is your resting order</span>
+<!-- ============================ STEP 3 ============================ -->
+<section class="step" id="step3" aria-labelledby="h3">
+  <div class="step-head">
+    <span class="step-badge">Step 3 of 6</span>
+    <h2 id="h3">Watch it trade</h2>
+    <p>A second-by-second replay of one session. Your resting order glows in the book, every fill lands on the chart, and the
+    trade log narrates what the algorithm is doing and why. Pick another session to see how differently the same order can go.</p>
+  </div>
+  <div class="stale" id="stale3"></div>
+  <div class="card player">
+    <button type="button" class="d-btn primary" id="playBtn"><i class="fas fa-play"></i> Play</button>
+    <input type="range" id="slTime" min="0" max="1800" step="1" value="0" aria-label="Replay time">
+    <span class="clock" id="tLabel">10:00:00</span>
+    <div class="seg small" id="segSpeed" role="group" aria-label="Replay speed">
+      <button type="button" data-v="30">30&times;</button>
+      <button type="button" data-v="90" class="on">90&times;</button>
+      <button type="button" data-v="240">240&times;</button>
     </div>
-    <div class="panel-body">
+    <div class="sessions" id="sessionChips"></div>
+  </div>
+  <div class="strip" id="liveStrip"></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head"><h3><i class="fas fa-list-ol"></i> Order book</h3><span class="tag">your order is outlined in cyan</span></div>
       <div class="lhd"><span>Bid size</span><span></span><span>Price</span><span></span><span>Ask size</span></div>
       <div class="ladder" id="ladder"></div>
       <div class="qpos" id="qpos"></div>
     </div>
-  </div>
-
-  <div class="d-panel">
-    <div class="panel-head">
-      <h3><i class="fas fa-chart-line"></i> Price path and your fills</h3>
-      <span class="tag">Mid inside the bid&ndash;offer band, with every print you made marked</span>
-    </div>
-    <div class="panel-body">
-      <div class="canvas-wrap"><canvas id="pxCanvas" aria-label="Mid price path with and without the parent order, with executed fills marked"></canvas><div class="tip" id="pxTip"></div></div>
+    <div class="card">
+      <div class="card-head"><h3><i class="fas fa-chart-line"></i> The price, and your fills</h3></div>
+      <div class="canvas-wrap"><canvas id="pxCanvas" aria-label="Mid price with your fills, against the same session without your order"></canvas><div class="tip" id="pxTip"></div></div>
       <div class="legend">
-        <span><i class="dot" style="background:#06b6d4"></i> mid</span>
-        <span><i class="dot" style="background:#10b98155"></i> best bid / offer</span>
+        <span><i class="ln" style="border-color:#06b6d4"></i> price with your order</span>
+        <span><i class="ln dash" style="border-color:#94a3b8"></i> same session without it</span>
         <span><i class="dot" style="background:#10b981"></i> passive fill</span>
-        <span><i class="dot" style="background:#f59e0b"></i> aggressive fill</span>
+        <span><i class="dot" style="background:#f59e0b"></i> crossed the spread</span>
       </div>
     </div>
-  </div>
-
-  <div class="d-panel">
-    <div class="panel-head">
-      <h3><i class="fas fa-stairs"></i> Schedule versus actual</h3>
-      <span class="tag">Cumulative shares the algorithm planned against what the book actually gave it</span>
+    <div class="card">
+      <div class="card-head"><h3><i class="fas fa-stairs"></i> Plan versus reality</h3><span class="tag">share of the order done</span></div>
+      <div class="canvas-wrap"><canvas id="schCanvas" aria-label="Planned and actual execution over time"></canvas><div class="tip" id="schTip"></div></div>
     </div>
-    <div class="panel-body">
-      <div class="canvas-wrap"><canvas id="schCanvas" aria-label="Planned and realised cumulative execution"></canvas><div class="tip" id="schTip"></div></div>
-      <div class="mrow" id="schMetrics"></div>
+    <div class="card">
+      <div class="card-head"><h3><i class="fas fa-scroll"></i> Trade log</h3><span class="tag">newest first</span></div>
+      <div class="log" id="tradeLog"></div>
     </div>
   </div>
+  <div class="keys">
+    <div class="key"><i class="dot" style="background:#10b981"></i><b>Green dots are passive fills.</b> Someone sold into the bid
+    you were resting on. You bought below the mid price and earned half the spread, but only once the queue ahead of you was used up.</div>
+    <div class="key"><i class="dot" style="background:#f59e0b"></i><b>Amber dots are crossings.</b> The algorithm fell behind its
+    plan, so it bought from the ask to catch up. Faster, but it pays the spread and eats into the book.</div>
+    <div class="key"><i class="dot" style="background:#94a3b8"></i><b>The dashed line is the counterfactual:</b> the identical
+    session with your order removed. The gap between the two lines is your own footprint on the price.</div>
+  </div>
+  <div class="step-nav">
+    <button type="button" class="d-btn" data-go="2"><i class="fas fa-arrow-left"></i> Back</button>
+    <button type="button" class="d-btn primary big" data-go="4">Next: what did it cost? <i class="fas fa-arrow-right"></i></button>
+  </div>
+</section>
 
-  <div class="d-panel">
-    <div class="panel-head">
-      <h3><i class="fas fa-money-bill-trend-up"></i> Where the shortfall went</h3>
-      <span class="tag">Arrival price to average execution price, decomposed &middot; bps of notional</span>
+<!-- ============================ STEP 4 ============================ -->
+<section class="step" id="step4" aria-labelledby="h4">
+  <div class="step-head">
+    <span class="step-badge">Step 4 of 6</span>
+    <h2 id="h4">What it cost</h2>
+    <p>Desks measure a trade with <b>implementation shortfall</b>: the average price you actually paid against the mid price at the
+    moment the order arrived. It is quoted in <b>basis points</b>, hundredths of a percent, so 10&nbsp;bps on a $20m
+    order is $20,000. Every number here is the average over the eight sessions.</p>
+  </div>
+  <div class="stale" id="stale4"></div>
+  <div class="card headline" id="costHeadline"></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head"><h3><i class="fas fa-money-bill-trend-up"></i> Where the cost came from</h3><span class="tag">bps of the order&rsquo;s value</span></div>
+      <div class="canvas-wrap"><canvas id="wfCanvas" aria-label="Waterfall of the cost components"></canvas><div class="tip" id="wfTip"></div></div>
     </div>
-    <div class="panel-body">
-      <div class="canvas-wrap"><canvas id="wfCanvas" aria-label="Waterfall of implementation shortfall components"></canvas><div class="tip" id="wfTip"></div></div>
-      <p class="tnote" id="wfNote"></p>
+    <div class="card">
+      <h3><i class="fas fa-comment-dollar"></i> In plain English</h3>
+      <div class="clist" id="costList"></div>
+    </div>
+    <div class="card full">
+      <div class="card-head"><h3><i class="fas fa-dice"></i> Eight sessions, eight outcomes</h3>
+        <button type="button" class="d-btn sm" id="rerollBtn"><i class="fas fa-shuffle"></i> Try eight new sessions</button></div>
+      <canvas id="sessCanvas" aria-label="Cost of each of the eight sessions"></canvas>
+      <p class="hint" id="sessNote"></p>
     </div>
   </div>
-
-  <div class="d-panel">
-    <div class="panel-head">
-      <h3><i class="fas fa-chart-area"></i> Execution frontier</h3>
-      <span class="tag">Almgren&ndash;Chriss expected cost against cost uncertainty, over risk aversion</span>
-    </div>
-    <div class="panel-body">
-      <div class="canvas-wrap"><canvas id="frCanvas" aria-label="Efficient frontier of expected execution cost against cost standard deviation"></canvas><div class="tip" id="frTip"></div></div>
-      <div class="legend">
-        <span><i class="dot" style="background:#06b6d4"></i> frontier</span>
-        <span><i class="dot" style="background:#f59e0b"></i> the five schedules</span>
-        <span><i class="dot" style="background:#ef4444"></i> what this run actually cost</span>
-      </div>
-    </div>
+  <div class="try"><i class="fas fa-lightbulb"></i><b>Try this:</b> go back a step, cut the time allowed to 10 minutes and run it
+  again. Your price impact goes up, and the eight outcomes bunch much closer together. That is the trade-off every execution
+  desk manages.</div>
+  <div class="step-nav">
+    <button type="button" class="d-btn" data-go="3"><i class="fas fa-arrow-left"></i> Back</button>
+    <button type="button" class="d-btn primary big" data-go="5">Next: compare strategies <i class="fas fa-arrow-right"></i></button>
   </div>
+</section>
 
-  <div class="d-panel">
-    <div class="panel-head">
-      <h3><i class="fas fa-flask"></i> Impact calibration</h3>
-      <span class="tag">&eta; from contemporaneous slippage &middot; &gamma; identified from exogenous order size</span>
-    </div>
-    <div class="panel-body">
-      <div class="canvas-wrap"><canvas id="calCanvas" aria-label="Measured temporary and permanent impact against execution rate with fitted lines"></canvas><div class="tip" id="calTip"></div></div>
-      <div class="mrow" id="calMetrics"></div>
-    </div>
+<!-- ============================ STEP 5 ============================ -->
+<section class="step" id="step5" aria-labelledby="h5">
+  <div class="step-head">
+    <span class="step-badge">Step 5 of 6</span>
+    <h2 id="h5">Compare the five strategies</h2>
+    <p>Same order, same eight sessions, all five strategies. Because every strategy faces the identical market news, the
+    differences between them are the strategies and nothing else.</p>
   </div>
-
-  <div class="d-panel full">
-    <div class="panel-head">
-      <h3><i class="fas fa-table-list"></i> Algorithm comparison</h3>
-      <span class="tag" id="cmpTag">Press &ldquo;compare all five&rdquo; to run every schedule against the identical order-flow stream</span>
-    </div>
-    <div class="panel-body">
+  <div class="card player">
+    <button type="button" class="d-btn primary" id="sweepBtn"><i class="fas fa-play"></i> Run all five strategies</button>
+    <span class="hint" style="margin:0" id="cmpHint">Takes about a second: forty sessions in total.</span>
+  </div>
+  <div class="stale" id="stale5"></div>
+  <div class="grid2">
+    <div class="card full">
+      <h3><i class="fas fa-table-list"></i> Results</h3>
       <div class="tscroll"><table class="mtable" id="cmpTable"></table></div>
-      <p class="tnote" id="cmpNote"></p>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3><i class="fas fa-chart-area"></i> The trade-off: cost against risk</h3></div>
+      <div class="canvas-wrap"><canvas id="frCanvas" aria-label="Trading cost against timing risk for each strategy, with the Almgren-Chriss frontier"></canvas><div class="tip" id="frTip"></div></div>
+      <div class="legend">
+        <span><i class="ln" style="border-color:#06b6d4"></i> Almgren&ndash;Chriss theory, from urgent (top left) to patient</span>
+        <span><i class="dot" style="background:#f59e0b"></i> simulated strategies</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-graduation-cap"></i> What this shows</h3>
+      <div class="take" id="cmpTakeaway"></div>
     </div>
   </div>
+  <div class="step-nav">
+    <button type="button" class="d-btn" data-go="4"><i class="fas fa-arrow-left"></i> Back</button>
+    <button type="button" class="d-btn primary big" data-go="6">Next: under the hood <i class="fas fa-arrow-right"></i></button>
+  </div>
+</section>
 
-</div>
+<!-- ============================ STEP 6 ============================ -->
+<section class="step" id="step6" aria-labelledby="h6">
+  <div class="step-head">
+    <span class="step-badge">Step 6 of 6 &middot; for the quants</span>
+    <h2 id="h6">Under the hood</h2>
+    <p>The strategies above need two numbers about the market: how much the price gives way while you trade (<b>temporary
+    impact, &eta;</b>) and how much of that push stays (<b>permanent impact, &gamma;</b>). Here they are estimated from the
+    market the way you would on real data, and, because this is a simulator, scored against the true values.</p>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head"><h3><i class="fas fa-flask"></i> Faster trading costs more per share</h3></div>
+      <div class="canvas-wrap"><canvas id="calCanvas" aria-label="Temporary cost per share against execution rate with the fitted and true lines"></canvas><div class="tip" id="calTip"></div></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#f59e0b"></i> measured</span>
+        <span><i class="ln" style="border-color:#06b6d4"></i> fitted</span>
+        <span><i class="ln dash" style="border-color:#10b981"></i> true slope</span>
+      </div>
+      <p class="hint">Seven order sizes on each of fourteen sessions, all executed at a constant rate. Each point is the cost per
+      share after removing the session&rsquo;s own market move and the permanent part.</p>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-bullseye"></i> Estimates against the truth</h3>
+      <div class="tscroll"><table class="mtable" id="truthTable" style="min-width:380px"></table></div>
+      <p class="hint" id="truthNote"></p>
+    </div>
+    <div class="card full prose">
+      <h3><i class="fas fa-triangle-exclamation"></i> Why the obvious regression gets permanent impact wrong</h3>
+      <p>The natural way to measure permanent impact is to regress price changes on signed order flow, buying volume minus
+      selling volume, and read off the slope (a <em>Kyle lambda</em>). On this market that slope comes out
+      <b id="naiveX">several</b> times too large.</p>
+      <p>The reason is <b>endogeneity</b>. Some traders know where fair value is and buy when the price is below it. Their buying
+      and the price rise that follows are both caused by the same thing, the gap to fair value, so the regression
+      credits the order flow with a move it did not cause.</p>
+      <p>The fix is an input that cannot know anything about fair value. There is one: <b>our own order</b>. It follows a schedule,
+      so its size is exogenous. Run the same session at seven sizes, difference out each session&rsquo;s own move (a seed fixed
+      effect), wait five minutes for the temporary push to fade, and the relationship between our size and the lasting price change
+      identifies &gamma;. That recovers the true value to within a few per cent.</p>
+    </div>
+    <div class="card full prose">
+      <h3><i class="fas fa-gears"></i> How the simulator makes prices</h3>
+      <ul>
+        <li><b>A real matching engine.</b> Prices are whole cents; each side of the book is an array indexed by price with pointers to
+        the best bid and ask. Orders match by <b>price, then time</b>, and the engine tracks how many shares are ahead of yours in the queue.</li>
+        <li><b>Order flow</b> arrives every second: limit orders placed around fair value, market orders that cluster in bursts (a
+        Hawkes process), and cancellations as a hazard on resting size. Activity follows the intraday volume curve, fading through
+        the morning.</li>
+        <li><b>Fair value</b> is a random walk with the chosen volatility, drawn from its own random stream. That is what lets the
+        simulator replay the identical session <em>without</em> your order, the counterfactual a real desk never has.</li>
+        <li><b>Your impact</b> has two parts with known sizes: a permanent shift per share (&gamma;) and a temporary footprint that decays
+        with a one-minute half-life, the Obizhaeva&ndash;Wang picture of a book that refills, but not instantly.</li>
+        <li><b>Each session starts after three minutes of warm-up,</b> so the book is at its natural depth when your order arrives.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="step-nav">
+    <button type="button" class="d-btn" data-go="5"><i class="fas fa-arrow-left"></i> Back</button>
+    <button type="button" class="d-btn" data-go="1"><i class="fas fa-rotate-left"></i> Start again</button>
+  </div>
+</section>
+
+</main>
+
+<div class="busy" id="busy" role="status" aria-live="polite"><i class="fas fa-circle-notch fa-spin"></i><span id="busyText">Working&hellip;</span></div>
+
 
 <!-- GUIDE -->
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; Limit Order Book &amp; Execution Engine</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: Limit Order Book &amp; Execution Engine</h2>
       <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
 
       <div class="d-help-section">
-        <h3>1 &middot; The matching engine</h3>
-        <p>A real one, not a price series with a spread bolted on. Prices are integer ticks and each side of the book is a
-        dense array indexed by tick, with the best bid and best ask held as pointers that walk outward when a level empties
-        &mdash; which is how venues actually store a liquid instrument, because it makes the hot path O(1).</p>
-        <p>Matching is <strong>price&ndash;time priority</strong>. A marketable order walks the opposite side from the touch,
-        consuming whole levels until it is filled or its limit stops it. Within a level the queue is first in, first out, and
-        that detail is the entire reason passive execution is hard: when you post at the bid you are not at the front, you are
-        behind everything already resting there.</p>
+        <h3>1 &middot; What the page does</h3>
+        <p>It simulates a single stock trading on one exchange, second by second, and lets you work a large order through it. The
+        walkthrough goes: look at the market, set up the order and strategy, watch it trade, read the bill, compare all five strategies
+        on identical sessions, and finally see how the impact model is estimated and how close the estimates get to the truth.</p>
+        <p>Nothing is pre-computed. Every session is generated in your browser from a seed, so the same settings always reproduce the
+        same result.</p>
       </div>
 
       <div class="d-help-section">
-        <h3>2 &middot; Queue position, and why it decides everything</h3>
-        <p>The engine tracks, for each of your resting orders, the quantity <em>ahead</em> of it in its level. An incoming
-        sell that takes 5,000 shares at your price consumes that 5,000 from the front of the queue: it eats the size ahead of
-        you first, and only reaches you once that is gone. Cancellations are removed proportionally from ahead and behind,
-        which is the standard approximation and roughly what happens in practice.</p>
-        <p>The consequence you can watch in the ladder panel: a passive order at a deep queue position can sit for minutes
-        without a fill while the price walks away from it. That is <strong>adverse selection</strong> &mdash; you get filled
-        quickly precisely when you did not want to be, and slowly when you did.</p>
+        <h3>2 &middot; The matching engine</h3>
+        <p>Prices are whole cents. Each side of the book is an array indexed by price, with the best bid and best ask held as pointers
+        that move when a level empties, how exchanges store a liquid instrument, because it keeps every operation constant-time.</p>
+        <p>Matching is <strong>price&ndash;time priority</strong>. A buy that crosses takes the lowest asks first and walks up the book;
+        within a price, the order that arrived first fills first. The engine tracks how many shares are ahead of your resting order,
+        so it only fills once those are used up. Cancellations are removed proportionally from ahead of and behind you.</p>
       </div>
 
       <div class="d-help-section">
-        <h3>3 &middot; The order-flow model</h3>
-        <p>Every simulated second the engine draws:</p>
+        <h3>3 &middot; The order flow</h3>
         <ul>
-          <li><strong>Limit orders</strong> on both sides, Poisson in count, placed at a distance from an unobserved fair value
-          that is exponentially distributed. Quoting around fair value rather than around the touch is what makes the book
-          stable and gives it a realistic shape instead of collapsing or exploding.</li>
-          <li><strong>Market orders</strong>, Poisson in count with a Hawkes-style self-excitation term so trades cluster,
-          which real trades do. Direction is biased toward fair value, so order flow is partly informed and prices mean-revert
-          to it &mdash; without that, impact would be pure noise.</li>
-          <li><strong>Cancellations</strong>, as a hazard rate on resting size.</li>
+          <li><strong>Limit orders</strong> arrive at a Poisson rate, placed a random number of ticks from where liquidity is centred.</li>
+          <li><strong>Market orders</strong> cluster in bursts through a Hawkes-style self-excitation. Some are informed and trade toward
+          fair value; the rest toss a coin.</li>
+          <li><strong>Cancellations</strong> are a hazard on resting size, so depth settles at an equilibrium instead of draining.</li>
+          <li>All three follow the <strong>intraday volume curve</strong> by clock time, fading through the morning from 10:00.</li>
+          <li>Every session starts after <strong>three minutes of warm-up</strong>, so the book is at its natural depth when the order arrives.</li>
         </ul>
-        <p>Fair value itself is a random walk scaled to the chosen regime's volatility. The emergent spread, depth and volume
-        are not set directly; they come out of the arrival, cancel and trade rates.</p>
       </div>
 
       <div class="d-help-section">
-        <h3>4 &middot; Identifying impact, and the thing that went wrong first</h3>
-        <p>The first version of this page measured impact by running every configuration <em>twice against an identical
-        order-flow stream</em> &mdash; once with the parent order and once without &mdash; and differencing the two mid-price
-        paths. It is a clean idea and it does not work here. Common random numbers synchronise the <em>inputs</em>, not the
-        <em>state</em>: the moment one fill differs the two books diverge, and the gap between the paths became a random walk
-        with a standard deviation above 100&nbsp;bps around an effect worth under 10. The measurement was noise.</p>
-        <p>What replaced it is what you could actually run against real data, and it has a textbook identification problem in
-        the middle of it.</p>
+        <h3>4 &middot; How prices form</h3>
+        <p><strong>Fair value</strong> is a random walk at the regime&rsquo;s volatility, drawn from its own random stream: one draw a
+        second, whatever else happens. That is what lets the simulator replay a session with your order removed and see the same news.</p>
+        <p><strong>Permanent impact.</strong> Every uninformed share traded, and every share of yours, moves fair value by &gamma; and it
+        stays moved. Informed flow only closes the gap between the price and fair value, so it moves nothing.</p>
+        <p><strong>Temporary impact.</strong> Each share of yours also shifts where liquidity is centred, and that footprint decays with a
+        one-minute half-life, a book that refills, but not instantly (Obizhaeva &amp; Wang, 2013).</p>
+        <p>Both coefficients are known, which is what lets step 6 score the estimators against the true values.</p>
       </div>
 
       <div class="d-help-section">
-        <h3>5 &middot; Calibrating &eta; and &gamma;</h3>
-        <p><strong>Temporary impact, &eta;.</strong> For each fill, the slippage against the mid <em>prevailing when it
-        printed</em>. Because the comparison is contemporaneous, the price drift cancels and the estimator is quiet. Those
-        volume-weighted slippages are regressed on execution rate across a sweep of constant-rate executions, giving
-        <code>cost = &epsilon; + &eta;v</code>. The fitted &epsilon; lands within a cent of the measured half-spread, which is
-        a useful check that nothing is broken. The fit is deliberately run out to very high participation, where you can see
-        the points bend away from the line &mdash; real temporary impact is closer to a square root of rate than a straight
-        line, and the chart shows that rather than hiding it.</p>
-        <p><strong>Permanent impact, &gamma;, and why the obvious estimator fails.</strong> The natural thing is to regress
-        the change in mid on signed order flow &mdash; a Kyle lambda. On this market that returns a coefficient about
-        <strong>five times too large</strong>, and the page prints it next to the good one so you can see the gap. The reason
-        is endogeneity: market orders lean toward fair value, so flow and price are both driven by the same unobserved thing,
-        and the regression credits flow with a move it did not cause.</p>
-        <p>The fix is an exogenous instrument, and there is one sitting right there: <em>our own parent order</em>. It is
-        worked to a schedule and knows nothing, so its size is uncorrelated with fair value. Sweeping order size across seven
-        levels for each of fourteen independent seeds, then differencing out a <strong>seed fixed effect</strong> to remove the
-        background move common to that seed, leaves the variation in our own size to identify &gamma;. The price change is read
-        after a <strong>150-second cool-down</strong> so the transient push has decayed and only the part that stays is
-        measured &mdash; without that the coefficient still came in more than twice too high.</p>
-        <p>The panel prints the fitted &gamma; with its t-statistic and R&sup2;. On a model whose true coefficient is known, it
-        recovers it to within about fifteen per cent.</p>
-      </div>
-
-      <div class="d-help-section">
-        <h3>6 &middot; The five schedules</h3>
+        <h3>5 &middot; The five strategies</h3>
         <table>
-          <tr><th>Algorithm</th><th>Target</th><th>When it makes sense</th></tr>
-          <tr><td>TWAP</td><td>Equal shares per unit time.</td><td>The honest baseline. Predictable, and therefore easy to detect and trade against.</td></tr>
-          <tr><td>VWAP</td><td>Shares proportional to a U-shaped volume curve.</td><td>When the benchmark is the day's VWAP and you want to track it.</td></tr>
-          <tr><td>POV</td><td>A fixed share of whatever volume prints.</td><td>When you care more about hiding in the flow than about finishing on time. It may not finish.</td></tr>
-          <tr><td>Almgren&ndash;Chriss</td><td>Exponential decay of the remaining position, front-loaded as &lambda; rises.</td><td>When you can state how much cost variance you are willing to take.</td></tr>
-          <tr><td>Arrival</td><td>Heavily front-loaded.</td><td>When the benchmark is the arrival price and timing risk dominates impact.</td></tr>
+          <tr><th>Strategy</th><th>What it targets</th><th>When it makes sense</th></tr>
+          <tr><td>TWAP</td><td>Equal shares per unit of time.</td><td>The baseline. Predictable, and so easy for others to detect.</td></tr>
+          <tr><td>VWAP</td><td>Shares in proportion to the expected volume curve.</td><td>When you are benchmarked against the day&rsquo;s average price.</td></tr>
+          <tr><td>POV</td><td>A fixed share of what actually trades.</td><td>When blending in matters more than finishing on time.</td></tr>
+          <tr><td>Almgren&ndash;Chriss</td><td>The optimal trajectory for a stated risk aversion.</td><td>When you can say how much cost uncertainty you will accept.</td></tr>
+          <tr><td>Arrival price</td><td>Heavily front-loaded.</td><td>When the benchmark is the arrival price and timing risk dominates.</td></tr>
         </table>
-        <p>Each one is also evaluated <em>analytically</em> through the Almgren&ndash;Chriss cost and variance functionals, so
-        all five appear on the frontier chart as points and you can see how far each sits from the efficient boundary.</p>
+        <p>Each strategy rests a child order at the best price, sized to what its schedule still needs and never more than a share of the
+        visible queue, and crosses the spread with a marketable limit order, never more than six cents through, when it falls behind.</p>
       </div>
 
       <div class="d-help-section">
-        <h3>7 &middot; Reading the shortfall</h3>
-        <p>Implementation shortfall is the average execution price against the arrival mid, signed so positive is always worse
-        for you. Every print decomposes exactly into what it cost against the mid at the time, and where that mid already was
-        relative to arrival &mdash; so <strong>spread paid</strong>, <strong>temporary impact</strong> and <strong>price move
-        while working</strong> sum to the shortfall with no residual, and the panel prints the residual to show it.</p>
-        <p>What is <em>not</em> a fourth bar is your own permanent footprint. It is not separable by measurement: it is already
-        inside the price move while you were working, and no amount of arithmetic on your own fills can tell you how much of
-        that move you caused. The page applies the calibrated &gamma; to the flow you had already put through the book at each
-        print and reports that as an attribution under the chart, labelled as an estimate. Anything that presents that split as
-        a measurement is overselling it.</p>
+        <h3>6 &middot; Reading the cost</h3>
+        <p>Implementation shortfall splits exactly into six parts, with no residual: <strong>spread paid</strong> and <strong>book
+        walked</strong> on crossings, <strong>spread earned</strong> on passive fills, <strong>your price impact</strong>,
+        <strong>market drift</strong>, and <strong>unfilled shares</strong> at the closing price.</p>
+        <p>Separating your impact from market drift needs to know what the price would have done without you. A real desk never has
+        that. The simulator does: it re-runs each session with the order removed, and the same fair-value path. That turns
+        &ldquo;what did my strategy cost&rdquo; into something measured to a fraction of a basis point, while the market&rsquo;s drift, which swings by tens of basis points, is reported separately as luck.</p>
+      </div>
+
+      <div class="d-help-section">
+        <h3>7 &middot; Estimating impact the way you would on real data</h3>
+        <p>No counterfactual, only prints. Constant-rate orders at seven sizes on each of fourteen sessions, all crossing. Within a
+        session every size sees the same fair-value path, so a <strong>seed fixed effect</strong> removes the market&rsquo;s move and our
+        own size (exogenous, because it is scheduled) identifies the coefficients. &gamma; comes from the price change after a
+        five-minute cool-down; &eta; from cost per share against rate, with the permanent half taken back out.</p>
+        <p>The naive Kyle regression of price change on all signed flow is shown next to it. It overstates &gamma; several times over,
+        because informed flow and the price move it anticipates are driven by the same gap to fair value.</p>
       </div>
 
     </div>
@@ -432,77 +708,63 @@ it is our own order, which is worked to a schedule and therefore exogenous. Drag
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A single-name limit order book with price&ndash;time priority matching, driven by a synthetic order-flow model
-        (Poisson limit arrivals placed around an unobserved fair value, self-exciting market orders biased toward that fair
-        value, cancellation as a hazard on resting size, and a Kyle-style channel through which signed flow updates fair
-        value). A parent order is worked through it by one of five execution schedules, posting passively at the touch and
-        crossing to catch up. Temporary impact is estimated from contemporaneous fill slippage against rate; permanent impact
-        is identified from exogenous variation in our own order size with a seed fixed effect and a cool-down window, because
-        the naive contemporaneous regression is endogenous and overstates it about fivefold. The Almgren&ndash;Chriss
-        cost&ndash;risk frontier is then drawn from those coefficients.</p>
+        <p>A single-name limit order book with price&ndash;time priority matching and queue-position tracking, driven by a
+        synthetic order-flow model: Poisson limit arrivals centred on fair value, self-exciting market orders split between
+        informed and noise, cancellation as a hazard on resting size, and an intraday activity curve. Fair value follows its own
+        random walk; uninformed and own flow move it permanently, and own flow leaves a transient footprint that decays. A parent
+        order is worked by one of five schedules, resting at the touch and crossing to catch up. Costs are decomposed exactly,
+        with own impact separated from market drift by replaying each session without the order.</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
         <ul>
-          <li>One instrument, one venue. No fragmentation, no routing, no dark pools, no auctions, no latency and no queue
-          jumping by faster participants.</li>
-          <li>Tick size $0.01 on a $100 stock. Levels are dense arrays over a &plusmn;$10 band; the best bid and ask are
-          pointers that walk when a level empties.</li>
-          <li>Within a level the queue is FIFO. Cancellations remove size proportionally from ahead of and behind your order,
-          which approximates a randomly chosen resting order being pulled.</li>
-          <li>Time is bucketed to one second, with several arrivals, trades and cancels interleaved inside each bucket.</li>
-          <li>Almgren&ndash;Chriss uses the discrete formulation of the 2000 paper: linear temporary and permanent impact,
-          arithmetic Brownian price, and the exact closed-form cost and variance of the optimal trajectory.</li>
-          <li>Everything is deterministic in the seed. The same controls reproduce the same book, the same fills and the
-          same decomposition.</li>
-          <li>Calibration runs 14 seeds &times; 7 order sizes over a 600-second window with a 150-second cool-down, which is
-          about a hundred paired observations and roughly a second of compute at page load.</li>
+          <li>One instrument, one venue, a one-cent tick on a $100 stock. No routing, dark pools, auctions, fees or latency.</li>
+          <li>Regimes are set to measured annual volatility of 13%, 22%, 25% and 50%, with spreads of roughly one to three cents and
+          between about 0.8 and 2.3 million shares traded in a morning half-hour, a liquid large-cap.</li>
+          <li>Time is bucketed to one second, with several arrivals, trades and cancels interleaved inside each second.</li>
+          <li>Transient impact decays with a one-minute half-life; permanent impact is linear in shares.</li>
+          <li>Every result is the mean of eight independent sessions. All five strategies see the same eight sessions.</li>
+          <li>Impact calibration runs 14 sessions &times; 7 sizes over ten minutes plus a five-minute cool-down, about a quarter of a
+          second of compute per regime.</li>
         </ul>
       </div>
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li><b>Cost and risk:</b> <code>E = &frac12;&gamma;X&sup2; + &epsilon;&Sigma;|n<sub>k</sub>| + (&eta;&#771;/&tau;)&Sigma;n<sub>k</sub>&sup2;</code>,
+          <li><b>Cost and risk:</b> <code>E = &frac12;&gamma;X&sup2; + &epsilon;X + (&eta;&#771;/&tau;)&Sigma;n<sub>k</sub>&sup2;</code>,
           <code>V = &sigma;&sup2;&Sigma;&tau;x<sub>k</sub>&sup2;</code>, with <code>&eta;&#771; = &eta; &minus; &frac12;&gamma;&tau;</code>.</li>
           <li><b>Optimal trajectory:</b> <code>x<sub>j</sub> = X&middot;sinh(&kappa;(T&minus;t<sub>j</sub>))/sinh(&kappa;T)</code>,
-          with <code>cosh(&kappa;&tau;) = 1 + &frac12;&kappa;&#771;&sup2;&tau;&sup2;</code> and <code>&kappa;&#771;&sup2; = &lambda;&sigma;&sup2;/&eta;&#771;</code>.</li>
-          <li><b>Almgren &amp; Chriss (2000)</b>, &ldquo;Optimal Execution of Portfolio Transactions&rdquo;, <em>Journal of Risk</em> 3(2)
-          &mdash; the trajectory and the closed-form cost and variance used here.</li>
+          <code>cosh(&kappa;&tau;) = 1 + &frac12;&kappa;&#771;&sup2;&tau;&sup2;</code>, <code>&kappa;&#771;&sup2; = &lambda;&sigma;&sup2;/&eta;&#771;</code>.</li>
+          <li><b>Almgren &amp; Chriss (2000)</b>, &ldquo;Optimal Execution of Portfolio Transactions&rdquo;, <em>Journal of Risk</em> 3(2).</li>
+          <li><b>Obizhaeva &amp; Wang (2013)</b>, &ldquo;Optimal Trading Strategy and Supply/Demand Dynamics&rdquo;, <em>Journal of
+          Financial Markets</em> 16(1), the decaying transient footprint.</li>
+          <li><b>Kyle (1985)</b>, &ldquo;Continuous Auctions and Insider Trading&rdquo;, <em>Econometrica</em> 53(6), the lambda
+          the naive regression estimates.</li>
           <li><b>Cont, Stoikov &amp; Talreja (2010)</b>, &ldquo;A Stochastic Model for Order Book Dynamics&rdquo;, <em>Operations
-          Research</em> 58(3) &mdash; the arrival, cancel and market-order structure this flow model follows.</li>
+          Research</em> 58(3), the arrival, cancel and market-order structure.</li>
           <li><b>Perold (1988)</b>, &ldquo;The Implementation Shortfall: Paper versus Reality&rdquo;, <em>Journal of Portfolio
-          Management</em> 14(3) &mdash; the benchmark the shortfall is measured against.</li>
+          Management</em> 14(3).</li>
         </ul>
       </div>
       <div>
-        <h3>Limitations &mdash; read these before you read the numbers</h3>
+        <h3>Limitations: read these before you read the numbers</h3>
         <ul>
-          <li><b>The flow is synthetic.</b> It is a zero-intelligence model with an informed drift, not a replay of real
-          messages. It produces a plausible spread, depth profile and volume, and it responds to pressure in the right
-          direction and roughly the right magnitude &mdash; but the absolute bps are a property of this model, not of any
-          real stock.</li>
-          <li><b>Nobody reacts to you.</b> Real counterparties detect a large child-order footprint and fade or front-run it.
-          Here the flow is indifferent, so predictable schedules like TWAP are treated far more kindly than they would be.</li>
-          <li><b>No latency, no fragmentation, no fees.</b> Orders arrive instantly, there is one venue, and there are no
-          exchange fees or rebates &mdash; and maker rebates are frequently the difference between a passive strategy paying
-          and not paying.</li>
-          <li><b>&gamma; is identified, but not precisely.</b> The within-seed estimator recovers the model's true
-          permanent coefficient to within about fifteen per cent, with a t-statistic around two on roughly a hundred
-          observations. That is enough to reject the naive estimate, which is five times too large, but it is not a tight
-          number, and the own-impact attribution under the waterfall inherits that uncertainty.</li>
-          <li><b>&eta; is fitted linearly and the data are not.</b> The calibration sweep runs out past fifty per cent
-          participation, where temporary impact bends below the straight line &mdash; real impact is closer to a square root of
-          rate. The R&sup2; on that fit tells you how much that costs, and the points are plotted so you can see the curvature
-          rather than take the coefficient on trust.</li>
-          <li><b>One path is one path.</b> A single run's realised shortfall carries enormous sampling error relative to the
-          expected cost. The frontier is an expectation; the red cross is one draw from a wide distribution.</li>
+          <li><b>The flow is synthetic.</b> It reproduces a plausible spread, depth, volume and volatility and responds to pressure in
+          the right direction, but absolute basis points are a property of this model, not of any real stock.</li>
+          <li><b>Nobody reacts to you.</b> Real counterparties detect a predictable child-order pattern and trade ahead of it. Here the
+          flow is indifferent, so TWAP in particular is treated more kindly than it would be.</li>
+          <li><b>Impact is linear in rate.</b> Real temporary impact is closer to a square root of participation. The transient footprint
+          here also ramps up over a minute or two, which is why a constant-cost model fitted to it reads &eta; about 15% low.</li>
+          <li><b>The counterfactual is a luxury.</b> Splitting own impact from market drift is only possible because the simulator can
+          replay a session without the order. Real TCA has to estimate that split from a model.</li>
+          <li><b>Eight sessions is a small sample.</b> Trading costs are measured tightly; totals carry several basis points of noise.</li>
         </ul>
       </div>
     </div>
     <div class="disclaimer">Educational demonstration built on synthetic order flow generated in the browser. Nothing here is
     investment advice, a recommendation, or a representation of any real venue, instrument or execution service.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>
@@ -586,57 +848,89 @@ function midOf(b,fallback){
 
 /* ----------------------------------------------------------- the regimes */
 /* Cancellation is a hazard on RESTING SIZE, not a fixed volume, so depth has
-   an equilibrium: supply - trades = cancels pins the book at a stable depth
-   instead of draining or exploding. The Hawkes increment is held well below
-   (1 - decay) so the branching ratio stays under one and the market-order
-   rate cannot run away. kInfo is the Kyle-style coefficient that lets signed
-   order flow move fair value, which is where permanent impact comes from -
-   without it a trade's effect always decays and gamma is identically zero. */
+   an equilibrium instead of draining or exploding. The Hawkes increment is
+   derived from a target amplification so the branching ratio stays under one.
+   Two impact parameters are the simulator's ground truth, which is what lets
+   the calibration panel score its own estimators against the answer:
+     kInfo    permanent: every uninformed share, and every share of ours,
+              moves the fundamental by this much and it stays moved
+     kTrans   transient: each share of ours shifts where liquidity centres,
+              decaying with halfLife - the Obizhaeva-Wang picture of a book
+              that refills, but not instantly                             */
 const HAWKES_DECAY=0.72;
 // `amp` is the steady-state multiple the self-excitation applies to the
 // market-order rate; the per-order increment is derived from it so the
 // branching ratio can never be set above one by accident.
 function hawkesInc(lamM,amp){return(1-HAWKES_DECAY)*(1-1/amp)/lamM;}
 const REGIMES={
-  calm  :{vol:0.30,lamL:11,lamM:0.30,sizeL:300,sizeM:330,cancelN:11,cancelF:0.100,spreadPull:3.2,amp:1.35,kInfo:4.0e-7,
-          note:'Tight spread, deep book, quiet flow. The easiest market to work a large order in.'},
-  normal:{vol:0.50,lamL:10,lamM:0.40,sizeL:250,sizeM:380,cancelN:12,cancelF:0.110,spreadPull:2.8,amp:1.50,kInfo:6.0e-7,
-          note:'The default. A one to two cent spread, a few hundred shares at the touch, about 1.4m shares in thirty minutes.'},
-  thin  :{vol:0.54,lamL:6, lamM:0.36,sizeL:170,sizeM:360,cancelN:12,cancelF:0.130,spreadPull:2.2,amp:1.55,kInfo:1.2e-6,
-          note:'Same volatility, a third of the resting depth. Crossing the spread gets expensive fast.'},
-  stress:{vol:1.10,lamL:8, lamM:0.75,sizeL:180,sizeM:520,cancelN:14,cancelF:0.170,spreadPull:1.8,amp:1.90,kInfo:2.0e-6,
-          note:'Wide, shallow and fast, and order flow moves fair value three times as hard.'}
+  calm  :{vol:0.13,lamL:11,lamM:0.30,sizeL:300,sizeM:330,cancelN:11,cancelF:0.100,spreadPull:3.2,amp:1.35,kInfo:4.0e-7,kTrans:2.5e-6,halfLife:60,
+          label:'Calm',icon:'fa-mug-hot',
+          note:'A quiet morning. Tight spread, plenty of size resting at every price, and a price that barely moves.'},
+  normal:{vol:0.22,lamL:10,lamM:0.40,sizeL:250,sizeM:380,cancelN:12,cancelF:0.110,spreadPull:2.8,amp:1.50,kInfo:6.0e-7,kTrans:4.0e-6,halfLife:60,
+          label:'Normal',icon:'fa-chart-line',
+          note:'An ordinary day in a liquid large-cap: a one-cent spread most of the time and steady depth at every price.'},
+  thin  :{vol:0.25,lamL:6, lamM:0.36,sizeL:170,sizeM:360,cancelN:12,cancelF:0.130,spreadPull:2.2,amp:1.55,kInfo:1.2e-6,kTrans:8.0e-6,halfLife:60,
+          label:'Thin book',icon:'fa-feather',
+          note:'Well under half the resting size and about 60% of the volume. Every share you take has to come from further up the book.'},
+  stress:{vol:0.50,lamL:8, lamM:0.75,sizeL:180,sizeM:520,cancelN:14,cancelF:0.170,spreadPull:1.8,amp:1.90,kInfo:2.0e-6,kTrans:1.1e-5,halfLife:60,
+          label:'Stressed',icon:'fa-bolt',
+          note:'A risk-off morning. The spread widens to about three cents, the price swings hard, and every trade moves fair value three times as much.'}
 };
-for(const k in REGIMES)REGIMES[k].hawkes=hawkesInc(REGIMES[k].lamM,REGIMES[k].amp);
+for(const k in REGIMES){
+  const r=REGIMES[k];
+  r.hawkes=hawkesInc(r.lamM,r.amp);
+  r.tDecay=Math.pow(0.5,1/r.halfLife);         // per-second survival of the transient
+  r.etaTrue=r.kTrans/(1-r.tDecay);              // steady-state temporary cost per unit rate
+}
+
+/* Intraday activity by clock time. The session opens at 9:30 and the parent
+   order arrives at 10:00; the curve is normalised so the average multiplier
+   over 10:00-10:30 is one, which keeps each regime's calibrated depth. */
+const OPEN_OFFSET=1800, DAY=23400;
+function uShape(u){                              // intraday volume curve
+  return 0.55+1.25*Math.exp(-6.5*u)+1.05*Math.exp(-6.5*(1-u));
+}
+const PROF_NORM=(function(){let a=0;for(let i=0;i<1800;i++)a+=uShape((OPEN_OFFSET+i+0.5)/DAY);return a/1800;})();
+function volProfile(sec){return uShape((OPEN_OFFSET+sec+0.5)/DAY)/PROF_NORM;}
+function clockOf(sec){                          // 0 -> "10:00:00"
+  const s=36000+Math.round(sec),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return h+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');
+}
 
 /* ============================ THE SIMULATION ============================
-   One run. The background flow draws from `rf` and the execution logic from
-   `re`, kept separate so a paired run with and without the parent order
-   sees an IDENTICAL sequence of incoming orders. That separation is what
-   makes the measured impact a measurement rather than an assumption.    */
+   One session. The background flow draws from its own generator, so two
+   sessions with the same seed see the same incoming orders until the parent
+   order changes the book - after which they diverge, which is why results
+   are averaged across independent seeds rather than paired.              */
+const MAX_WALK=6;                                // catch-up orders are marketable LIMITS
 function simulate(opts){
   const R=REGIMES[opts.regime];
   const T=opts.horizon;                          // seconds
-  const rf=mulberry32(opts.seed);                // background flow
-  const re=mulberry32(opts.seed^0x9E3779B9);     // our own randomness
+  const rf=mulberry32(opts.seed);                // order flow
+  const rv=mulberry32(opts.seed^0x9E3779B9);     // the fundamental: one draw a second, always
   const b=newBook();
 
-  // Seed the book so it does not start empty.
+  // Seed the book so it does not start empty. The warm-up below takes it the
+  // rest of the way to equilibrium; 9,000 seed orders used to leave 230,000
+  // shares at the touch at t = 0, fifty times what the book settles to.
   let V=REF;
-  for(let k=0;k<9000;k++){
+  for(let k=0;k<700;k++){
     const side=rf()<0.5?1:-1;
     const d=1+Math.floor(-Math.log(1-rf())*R.spreadPull);
     postLimit(b,side,Math.round((V+side*-d*TICK)/TICK),Math.max(50,Math.round(R.sizeL*(0.4+1.6*rf()))));
   }
 
-  const sigS=REF*R.vol/Math.sqrt(252*23400);   // per-second price volatility in $
+  const sigS=REF*R.vol/Math.sqrt(252*23400);   // per-second fundamental volatility in $
   const hist={
-    T,mid:new Float64Array(T+1),cf:null,bb:new Float64Array(T+1),ba:new Float64Array(T+1),
+    T,mid:new Float64Array(T+1),bb:new Float64Array(T+1),ba:new Float64Array(T+1),
     vol:new Float64Array(T+1),cumVol:new Float64Array(T+1),
     plan:new Float64Array(T+1),done:new Float64Array(T+1),
     fills:[],snaps:[],spreadSum:0,arrival:0,queueLog:new Float64Array(T+1),
-    preMid:new Float64Array(T+1),signed:new Float64Array(T+1)
+    preMid:new Float64Array(T+1),signed:new Float64Array(T+1),
+    fair:new Float64Array(T+1),foot:new Float64Array(T+1),touchQ:new Float64Array(T+1),
+    side:opts.side,qty:opts.exec?opts.qty:0,snapEvery:opts.snapEvery||10
   };
+  const SNAP=hist.snapEvery;
 
   // our resting order: one at a time, at the near touch
   let myTick=-1,myAhead=0,myQty=0;
@@ -644,8 +938,9 @@ function simulate(opts){
   let filledQty=0,filledNotional=0,passiveQty=0,aggrQty=0,crossCount=0;
   const side=opts.side;
 
-  let excite=0,lastMid=midOf(b),curT=0;
-  hist.arrival=lastMid;
+  let excite=0,lastMid=midOf(b),curT=0,curRef=REF;  // curRef: mid before the order now matching
+  let D=0,ownSec=0;                              // our transient footprint; our fills this second
+  const WARM=180;                                // seconds of flow before the order arrives
 
   /* Fires for every level a marketable order consumes, so our resting order
      is matched in true queue order: the size ahead of us is eaten first. */
@@ -656,30 +951,41 @@ function simulate(opts){
     myAhead-=eatAhead;
     const mine=Math.min(got-eatAhead,myQty);
     if(mine>0){
-      myQty-=mine;remaining-=mine;filledQty+=mine;
+      myQty-=mine;remaining-=mine;filledQty+=mine;ownSec+=side*mine;
       filledNotional+=mine*pxOf(tick);passiveQty+=mine;
-      hist.fills.push({t:curT,px:pxOf(tick),qty:mine,aggr:false});
+      hist.fills.push({t:curT,px:pxOf(tick),qty:mine,aggr:false,ref:curRef});
+      if(myQty<=0)myTick=-1;
     }
   };
 
-  for(let t=0;t<=T;t++){
+  /* Three minutes of ordinary flow before the parent order arrives, so t = 0
+     is an ordinary moment in a book at its own equilibrium rather than the
+     first second of an artificial one. Nothing is recorded until then. */
+  for(let t=-WARM;t<=T;t++){
+    const live=t>=0;
     curT=t;
-    let signed=0,secVol=0;
-    hist.preMid[t]=lastMid;                   // benchmark for this second's fills
+    let signed=0,noise=0,secVol=0;
+    ownSec=0;
+    if(t===0)hist.arrival=lastMid;
+    if(live)hist.preMid[t]=lastMid;           // benchmark for this second's fills
 
-    /* ---- fair value: intrinsic noise now, information from flow later ---- */
-    V+=sigS*gaussFrom(rf);
+    /* ---- the fundamental moves on its own stream; liquidity centres on the
+            fundamental plus whatever transient footprint we have left ---- */
+    V+=sigS*gaussFrom(rv);
+    const C=V+D;
+    const prof=volProfile(t);                  // this minute's share of the day
 
-    /* ---- limit arrivals. One that would cross is marketable, which is how
-            the spread actually gets crossed when fair value jumps. ---- */
-    const nL=poisson(rf,R.lamL*2);
+    /* ---- limit arrivals around C. One that would cross is marketable,
+            which is how the book catches up when C jumps. ---- */
+    const nL=poisson(rf,R.lamL*2*prof);
     for(let k=0;k<nL;k++){
       const sd=rf()<0.5?1:-1;
       const d=1+Math.floor(-Math.log(1-rf())*R.spreadPull);
-      const tick=Math.round(V/TICK)+(sd>0?-d:d);
+      const tick=Math.round(C/TICK)+(sd>0?-d:d);
       const q=Math.max(50,Math.round(R.sizeL*(0.35+1.7*rf())));
       const opp=sd>0?b.ba:b.bb;
       if(opp>=0&&((sd>0&&tick>=opp)||(sd<0&&tick<=opp))){
+        curRef=midOf(b,lastMid);
         const res=take(b,sd,q,tick,onLevel);
         secVol+=res.filled;signed+=sd*res.filled;
         if(res.filled<q-1e-9)postLimit(b,sd,tick,q-res.filled);
@@ -688,12 +994,12 @@ function simulate(opts){
 
     /* ---- our passive order rides the touch ----
        Sized to what the schedule still wants done right now, plus a small
-       look-ahead. Without that cap the resting order alone fills the whole
-       parent before any schedule ever falls behind, nothing ever crosses,
-       and every algorithm returns the identical execution - which is exactly
-       what the first version did. */
-    const planNow=opts.exec?opts.schedule(t,(t?hist.cumVol[t-1]:0),opts.qty):0;
-    if(opts.exec&&remaining>0){
+       look-ahead, and never more than a share of the visible queue. Without
+       those caps the resting order alone fills the whole parent before any
+       schedule falls behind, nothing crosses, and every algorithm returns
+       the identical execution - which is exactly what the first version did. */
+    const planNow=(opts.exec&&live)?opts.schedule(t,(t?hist.cumVol[t-1]:0),opts.qty):0;
+    if(opts.exec&&live&&remaining>0){
       const touch=side>0?b.bb:b.ba;
       const due=Math.max(0,planNow-filledQty)+opts.qty*0.004;
       const tq=touch>=0?(side>0?b.bid[touch-T_MIN]:b.ask[touch-T_MIN]):0;
@@ -736,53 +1042,67 @@ function simulate(opts){
       const mineHere=(tick===myTick&&((sd>0&&side>0)||(sd<0&&side<0)))?myQty:0;
       const other=arr[i]-mineHere;            // we never cancel our own order
       if(other<=0)continue;
-      const cut=Math.min(other,other*R.cancelF*(0.4+1.2*rf()));
+      const cut=Math.min(other,other*R.cancelF*prof*(0.4+1.2*rf()));
       if(mineHere>0&&other>0)                 // a pull is as likely ahead as behind
         myAhead=Math.max(0,myAhead-cut*(myAhead/other));
       arr[i]-=cut;
       if(arr[i]<=1e-9){arr[i]=0;if(sd>0)walkBid(b);else walkAsk(b);}
     }
 
-    /* ---- market orders, self-exciting and pulled toward fair value ---- */
-    const nM=poisson(rf,R.lamM*(1+excite));
+    /* ---- market orders, self-exciting. Some are informed and trade toward
+            C; the rest are noise and toss a coin. The marginal probability
+            of a buy is 0.5 + pull either way. ---- */
+    const nM=poisson(rf,R.lamM*prof*(1+excite));
     excite*=HAWKES_DECAY;
     for(let k=0;k<nM;k++){
-      const pull=clamp((V-midOf(b,lastMid))/TICK*0.16,-0.33,0.33);
-      const sd=rf()<0.5+pull?1:-1;
+      const pull=clamp((C-midOf(b,lastMid))/TICK*0.16,-0.33,0.33);
+      const informed=rf()<2*Math.abs(pull);
+      const sd=informed?(pull>0?1:-1):(rf()<0.5?1:-1);
       const q=Math.max(60,Math.round(R.sizeM*(0.3+1.9*rf())));
+      curRef=midOf(b,lastMid);
       const res=take(b,sd,q,undefined,onLevel);
       secVol+=res.filled;signed+=sd*res.filled;
+      if(!informed)noise+=sd*res.filled;
       excite+=R.hawkes;
     }
 
-    /* ---- catch up on the schedule by crossing ---- */
+    /* ---- catch up on the schedule by crossing. A marketable LIMIT, never a
+            naked market order: take what is within a few ticks of the touch
+            and come back next second for the rest. ---- */
     let plan=planNow;
-    if(opts.exec){
+    if(opts.exec&&live){
       plan=opts.schedule(t,(t?hist.cumVol[t-1]:0)+secVol,opts.qty);
       const deficit=plan-filledQty;
       const tol=opts.qty*0.012*(1-opts.aggr)+opts.qty*0.0008;
       if(deficit>tol&&remaining>0){
         const want=Math.min(remaining,deficit*(0.45+0.55*opts.aggr),opts.maxChild);
-        if(want>0){
-          const res=take(b,side,want,undefined,null);
+        const touch=side>0?b.ba:b.bb;
+        if(want>0&&touch>=0){
+          const ref=midOf(b,lastMid);
+          const res=take(b,side,want,touch+side*MAX_WALK,null);
           if(res.filled>0){
-            filledQty+=res.filled;remaining-=res.filled;
+            filledQty+=res.filled;remaining-=res.filled;ownSec+=side*res.filled;
             filledNotional+=res.notional;aggrQty+=res.filled;crossCount++;
-            hist.fills.push({t,px:res.notional/res.filled,qty:res.filled,aggr:true});
+            hist.fills.push({t,px:res.notional/res.filled,qty:res.filled,aggr:true,
+              ref,touch:pxOf(touch),behind:deficit});
             excite+=R.hawkes*0.6;secVol+=res.filled;signed+=side*res.filled;
           }
         }
       }
     }
 
-    /* ---- signed flow carries information into fair value. This is the only
-            source of PERMANENT impact: without it every trade's effect decays
-            and the fitted gamma is identically zero. ---- */
-    V+=R.kInfo*signed;
+    /* ---- information. Uninformed flow and our own fills move the
+            fundamental for good; informed flow only closes the gap between
+            the mid and C, so it moves nothing. Our fills also leave a
+            transient footprint that decays. ---- */
+    V+=R.kInfo*(noise+ownSec);
+    D=D*R.tDecay+R.kTrans*ownSec;
 
     /* ---- record ---- */
     lastMid=midOf(b,lastMid);
+    if(!live)continue;
     hist.mid[t]=lastMid;
+    hist.fair[t]=V;hist.foot[t]=D;
     hist.bb[t]=b.bb>=0?pxOf(b.bb):NaN;
     hist.ba[t]=b.ba>=0?pxOf(b.ba):NaN;
     hist.vol[t]=secVol;
@@ -791,8 +1111,9 @@ function simulate(opts){
     hist.done[t]=filledQty;
     hist.queueLog[t]=myQty>0?myAhead:NaN;
     hist.signed[t]=signed;
+    hist.touchQ[t]=(b.bb>=0&&b.ba>=0)?(b.bid[b.bb-T_MIN]+b.ask[b.ba-T_MIN])/2:0;
     if(b.bb>=0&&b.ba>=0)hist.spreadSum+=pxOf(b.ba)-pxOf(b.bb);
-    if(t%10===0)hist.snaps.push(snapshot(b,myTick,myQty,side));
+    if(t%SNAP===0)hist.snaps.push(snapshot(b,myTick,myQty,side));
   }
 
   hist.filledQty=filledQty;
@@ -820,17 +1141,13 @@ function snapshot(b,myTick,myQty,side){
 }
 
 /* ---------------------------------------------------------- the schedules */
-function uShape(u){                              // intraday volume curve, normalised
-  return 0.55+1.25*Math.exp(-6.5*u)+1.05*Math.exp(-6.5*(1-u));
-}
-const UNORM=(function(){let s=0;for(let i=0;i<1000;i++)s+=uShape((i+0.5)/1000);return s/1000;})();
 function makeSchedule(algo,T,pov,lam,ac){
   if(algo==='twap')return(t,cum,X)=>X*Math.min(1,t/T);
-  if(algo==='vwap')return(t,cum,X)=>{
-    let s=0;const n=Math.max(1,Math.round(t));
-    for(let i=0;i<n;i++)s+=uShape((i+0.5)/T);
-    return X*Math.min(1,s/(UNORM*T));
-  };
+  if(algo==='vwap'){                            // expected volume curve, by clock time
+    const c=new Float64Array(T+2);
+    for(let i=0;i<=T;i++)c[i+1]=c[i]+volProfile(i);
+    return(t,cum,X)=>X*Math.min(1,c[Math.max(0,Math.min(T+1,Math.round(t)))]/c[T]);
+  }
   if(algo==='pov') return(t,cum,X)=>Math.min(X,cum*pov);
   if(algo==='is')  return(t,cum,X)=>X*Math.min(1,1-Math.pow(1-t/T,2.1));
   return(t,cum,X)=>{                             // Almgren-Chriss
@@ -879,55 +1196,46 @@ function trajectoryCostRisk(sched,X,T,tau,eps,eta,gamma,sigma){
 }
 
 /* ================================ STATE ================================= */
-const S={side:1,qty:400000,horizonMin:30,algo:'twap',aggr:0.35,lamExp:-6,pov:0.12,
-         regime:'normal',seed:20260501,t:1800,playing:false};
-let RUN=null,BASE=null,CAL=null,CMP=null;
+// S.t is the replay clock in seconds; S.step the walkthrough step on screen.
+const DEFAULTS={side:1,qty:200000,horizonMin:30,algo:'twap',aggr:0.35,lamExp:-5,pov:0.15,regime:'normal'};
+const S=Object.assign({seed:20260501,t:0,step:1},DEFAULTS);
+let RUN=null,CAL=null,CMP=null,MKT=null;
 
 const el=id=>document.getElementById(id);
 const horizonSec=()=>S.horizonMin*60;
 function lambda(){return Math.pow(10,S.lamExp);}
 
-/* ------------------------------------------------- impact calibration ----
-   Constant-rate executions at several participation rates, each measured
-   against the mid prevailing at each print. Regress temporary cost on rate and
-   permanent drift on size.                                               */
 /* ------------------------------------------------------ impact calibration
-   The first version of this measured impact by running each configuration
-   twice against an identical order-flow stream and differencing the two mid
-   paths. That is the right idea in principle and it does not work here: once
-   one fill differs the two books diverge chaotically, and the difference
-   became a random walk whose standard deviation (over 100bps) dwarfed the
-   effect being measured (under 10bps). Common random numbers synchronise the
-   inputs, not the state.
-
-   What replaces it is what you can actually run on real data:
-     eta  - volume-weighted slippage of each fill against the mid prevailing
-            when it printed, regressed on execution rate. Contemporaneous, so
-            the price drift cancels and the estimator is quiet.
-     gamma- a Kyle lambda: regress the one-second mid change on that second's
-            signed volume, pooled across every second of several independent
-            baselines. Thousands of observations rather than one path.        */
+   What you could run against real data - no counterfactual, only prints.
+   Constant-rate executions at seven sizes on each of fourteen seeds, all
+   crossing, each followed by a cool-down. Within a seed every size sees the
+   same fundamental path, so a seed fixed effect removes the market's move
+   and leaves the variation in OUR size - which is exogenous, because the
+   order is scheduled and knows nothing - to identify the coefficients:
+     gamma  mid change after the cool-down, on shares done
+     eta    cost per share against arrival, on rate; since X = vT the slope
+            is eta + gamma*T/2, and the permanent half is taken back out
+     eps    the half-spread actually paid on every crossing, measured
+   The naive Kyle regression of price change on market-wide signed flow is
+   kept only as a diagnostic: flow leans toward fair value, so it is
+   endogenous and overstates the coefficient several times.            */
+const CAL_SEED=20261492;                       // calibration sessions never overlap the trading ones
 function calibrate(){
-  const T=600, COOL=150;                       // trade for T, then let it settle
+  const T=600, COOL=300;                       // trade for T, then let the transient decay
   const SEEDS=[0,7717,15443,23189,30011,37831,45659,53479,61331,69163,76991,84827,92657,100493];
   const rates=[0.04,0.09,0.16,0.25,0.36,0.48,0.62];
-  const acc=rates.map(()=>({v:0,X:0,temp:0,filled:0,n:0}));
+  const BLOCK=30;
   let sig2=0,sigN=0,halfSpread=0,windowVol=0;
-  const BLOCK=30;                              // seconds per regression observation
-  let kxy=0,kxx=0,ky=0,kyy=0,kn=0;             // Kyle regression accumulators
-
+  let kxy=0,kxx=0,ky=0,kyy=0,kn=0;             // naive Kyle regression accumulators
+  let epsNum=0,epsDen=0;
   const panel=[];
   for(let gi=0;gi<SEEDS.length;gi++){
-    const off=SEEDS[gi];
-    const seed=S.seed+991+off;
+    const seed=CAL_SEED+SEEDS[gi];
     const base=simulate({seed,regime:S.regime,horizon:T+COOL,exec:false,side:1,qty:0});
-    for(let t=1;t<=T;t++){
-      const d=base.mid[t]-base.mid[t-1];
-      sig2+=d*d;sigN++;
-    }
-    // Blocked regression: the change in mid over BLOCK seconds against the
-    // signed volume over the same block. At one second this measures the
-    // transient response; at thirty it is much closer to the part that stays.
+    // Volatility from one-minute changes. The mid lags the fundamental, so its
+    // one-second changes understate the diffusion by about half - and
+    // Almgren-Chriss risk by about four times.
+    for(let t=60;t<=T+COOL;t+=60){const d=base.mid[t]-base.mid[t-60];sig2+=d*d/60;sigN++;}
     for(let t0=0;t0+BLOCK<=T;t0+=BLOCK){
       let x=0;for(let t=t0+1;t<=t0+BLOCK;t++)x+=base.signed[t];
       const d=base.mid[t0+BLOCK]-base.mid[t0];
@@ -935,604 +1243,877 @@ function calibrate(){
     }
     halfSpread+=base.avgSpread/2;
     windowVol+=base.cumVol[T];
-    rates.forEach((r,i)=>{
+    rates.forEach((r,ri)=>{
       const X=Math.max(2000,Math.round(base.cumVol[T]*r));
       const run=simulate({seed,regime:S.regime,horizon:T+COOL,exec:true,side:1,qty:X,
         schedule:(t,c,x)=>x*Math.min(1,t/T),aggr:1,passiveClip:0,maxChild:X/T*5+600});
       if(!(run.filledQty>0))return;
-      // volume-weighted slippage against the mid prevailing at each print
-      let num=0,den=0;
-      for(const f of run.fills){num+=f.qty*(f.px-run.preMid[f.t]);den+=f.qty;}
-      const a=acc[i];
-      a.v+=run.filledQty/T;a.X+=run.filledQty;
-      a.temp+=den>0?num/den:0;a.filled+=run.filledQty;a.n++;
-      // For the permanent coefficient: our own order is scheduled, not
-      // information-driven, so its size is exogenous to fair value. Recording
-      // (seed, size, price change) lets the background move be differenced
-      // out with a seed fixed effect below.
-      // Measured after the cool-down: reading mid[T] the instant trading
-      // stops still carries the transient push, which biased the coefficient
-      // high. Two and a half minutes of quiet lets that decay out.
-      panel.push({g:gi,X:run.filledQty,dp:run.mid[T+COOL]-run.mid[0]});
+      for(const f of run.fills)if(f.aggr){epsNum+=(f.touch-f.ref)*f.qty;epsDen+=f.qty;}
+      panel.push({g:gi,ri,X:run.filledQty,v:run.filledQty/T,
+        c:run.avgPx-run.arrival,dp:run.mid[T+COOL]-run.mid[0]});
     });
   }
-  const pts=acc.filter(a=>a.n>0).map(a=>({v:a.v/a.n,X:a.X/a.n,temp:a.temp/a.n,filled:a.filled/a.n}));
-
-  const fit=(xs,ys)=>{
-    const n=xs.length;
-    if(n<2)return{a:0,b:0,r2:0};
-    let sx=0,sy=0,sxy=0,sxx=0;
-    for(let i=0;i<n;i++){sx+=xs[i];sy+=ys[i];sxy+=xs[i]*ys[i];sxx+=xs[i]*xs[i];}
-    const b=(n*sxy-sx*sy)/Math.max(1e-12,n*sxx-sx*sx),a=(sy-b*sx)/n;
-    let ss=0,st=0;const my=sy/n;
-    for(let i=0;i<n;i++){ss+=Math.pow(ys[i]-(a+b*xs[i]),2);st+=Math.pow(ys[i]-my,2);}
-    return{a,b,r2:st>0?Math.max(0,1-ss/st):0};
-  };
-  const ft=fit(pts.map(p=>p.v),pts.map(p=>p.temp));
-
-  /* PERMANENT IMPACT, identified properly.
-     The contemporaneous regression of price change on signed flow is badly
-     endogenous here: market orders lean toward fair value, so flow and price
-     are both driven by the same thing and the coefficient came out roughly
-     five times the truth. Our own order is the exception - it is worked to a
-     schedule and knows nothing - so its size is exogenous. Differencing out a
-     seed fixed effect removes the common background move within each seed and
-     leaves the variation in OUR size to identify the coefficient. */
-  let pb=0,pr2=0,pT=0;
-  if(panel.length>2){
+  // within-seed (fixed-effect) regression of y on x
+  const within=(xk,yk)=>{
     const groups={};
     panel.forEach(p=>{(groups[p.g]=groups[p.g]||[]).push(p);});
-    const dx=[],dy=[];
+    let sxy=0,sxx=0,syy=0,n=0;
     for(const g in groups){
       const rows=groups[g];
-      const mx=rows.reduce((a,r)=>a+r.X,0)/rows.length;
-      const my=rows.reduce((a,r)=>a+r.dp,0)/rows.length;
-      rows.forEach(r=>{dx.push(r.X-mx);dy.push(r.dp-my);});
+      const mx=rows.reduce((a,r)=>a+r[xk],0)/rows.length,my=rows.reduce((a,r)=>a+r[yk],0)/rows.length;
+      rows.forEach(r=>{const dx=r[xk]-mx,dy=r[yk]-my;sxy+=dx*dy;sxx+=dx*dx;syy+=dy*dy;n++;});
     }
-    let sxy=0,sxx=0,syy=0;
-    for(let i=0;i<dx.length;i++){sxy+=dx[i]*dy[i];sxx+=dx[i]*dx[i];syy+=dy[i]*dy[i];}
-    pb=sxx>0?sxy/sxx:0;
-    const rss=syy-2*pb*sxy+pb*pb*sxx;
-    pr2=syy>0?Math.max(0,1-rss/syy):0;
-    const df=Math.max(1,dx.length-Object.keys(groups).length-1);
-    const se=sxx>0?Math.sqrt(Math.max(0,rss/df)/sxx):0;
-    pT=se>0?pb/se:0;
-  }
-  // the naive contemporaneous coefficient, kept as a diagnostic
+    const b=sxx>0?sxy/sxx:0,rss=Math.max(0,syy-2*b*sxy+b*b*sxx);
+    const df=Math.max(1,n-Object.keys(groups).length-1);
+    const se=sxx>0?Math.sqrt(rss/df/sxx):0;
+    return{b,t:se>0?b/se:0,r2:syy>0?Math.max(0,1-rss/syy):0,n};
+  };
+  const g=within('X','dp');
+  const gamma=Math.max(0,g.b);
+  const cv=within('v','c');
+  const eta=Math.max(1e-9,cv.b-0.5*gamma*T);
+  const eps=epsDen>0?epsNum/epsDen:halfSpread/SEEDS.length;
+  // points for the chart: temporary cost per share at each rate, seed effects
+  // and the permanent half removed, so what is left is eps + eta*v plus noise
+  const byG={};panel.forEach(p=>{(byG[p.g]=byG[p.g]||[]).push(p);});
+  const adj=p=>p.c-0.5*gamma*p.X;
+  const seedMean={};for(const k in byG)seedMean[k]=byG[k].reduce((a,p)=>a+adj(p),0)/byG[k].length;
+  const grand=panel.reduce((a,p)=>a+adj(p),0)/panel.length;
+  const vbar=panel.reduce((a,p)=>a+p.v,0)/panel.length;
+  const pts=rates.map((r,ri)=>{
+    const rows=panel.filter(p=>p.ri===ri);
+    if(!rows.length)return null;
+    const v=rows.reduce((a,p)=>a+p.v,0)/rows.length;
+    const temp=rows.reduce((a,p)=>a+adj(p)-seedMean[p.g],0)/rows.length+grand;
+    return{v,temp,X:rows.reduce((a,p)=>a+p.X,0)/rows.length};
+  }).filter(Boolean);
+  const intercept=grand-eta*vbar;              // where the fitted line meets zero rate
+  // the naive coefficient, kept as a diagnostic
   const lam=kxx>0?kxy/kxx:0;
-  let rss=0;const ybar=ky/kn;let tss=0;
-  // recomputed from the sufficient statistics we kept
-  rss=kyy-2*lam*kxy+lam*lam*kxx;
-  tss=kyy-kn*ybar*ybar;
-  const seLam=kxx>0?Math.sqrt(Math.max(0,rss/Math.max(1,kn-1))/kxx):0;
-  return{pts,seeds:SEEDS.length,
-    eps:Math.max(0,ft.a),eta:Math.max(1e-9,ft.b),
-    gamma:Math.max(0,pb),lamT:pT,block:BLOCK,panelN:panel.length,
-    lamNaive:lam,r2naive:tss>0?Math.max(0,1-rss/tss):0,
-    r2t:ft.r2,r2p:pr2,kn,
+  const rssK=kyy-2*lam*kxy+lam*lam*kxx,tssK=kyy-kn*(ky/kn)*(ky/kn);
+  const R=REGIMES[S.regime];
+  return{pts,seeds:SEEDS.length,panelN:g.n,grand,vbar,
+    eps,eta,gamma,lamT:g.t,r2p:g.r2,etaT:cv.t,r2t:cv.r2,intercept,
+    lamNaive:lam,r2naive:tssK>0?Math.max(0,1-rssK/tssK):0,kn,block:BLOCK,
     sigma:Math.sqrt(sig2/sigN),
-    windowVol:windowVol/SEEDS.length,halfSpread:halfSpread/SEEDS.length,T};
+    windowVol:windowVol/SEEDS.length,halfSpread:halfSpread/SEEDS.length,T,
+    trueGamma:R.kInfo,trueEta:R.etaTrue,trueSigma:REF*R.vol/Math.sqrt(252*23400)};
 }
 
 /* ----------------------------------------------------------------- a run */
-const PATHS=8;                               // independent order-flow paths per result
-function execute(algo,extra){
+const PATHS=8;                               // independent sessions per result
+function execute(algo,seed){
   const T=horizonSec();
-  const ac=acParams(lambda(),CAL.sigma,CAL.eta,CAL.gamma,S.qty,T,1);
-  const sched=makeSchedule(algo||S.algo,T,S.pov,lambda(),ac);
+  const ac=acParams(lambda(),CAL.sigma,CAL.eta,CAL.gamma,T,1);
+  const sched=makeSchedule(algo,T,S.pov,lambda(),ac);
   const clip=Math.max(200,Math.round(S.qty/T*24*(1-S.aggr)+200));
-  const opts={seed:S.seed,regime:S.regime,horizon:T,exec:true,side:S.side,qty:S.qty,
+  const opts={seed,regime:S.regime,horizon:T,exec:true,side:S.side,qty:S.qty,snapEvery:5,
     schedule:sched,aggr:S.aggr,passiveClip:clip,maxChild:Math.max(400,S.qty/T*26)};
-  const run=simulate(opts);
-  return{run,ac,sched,T};
+  return{run:simulate(opts),ac,sched,T};
 }
 
-/* One path's shortfall is dominated by where the price happened to go, not by
-   the schedule: at the same settings two seeds came back 80bps apart. Every
-   result on this page is therefore the mean over PATHS independent flows,
-   with the standard error printed next to it. Path 0 is kept for the ladder
-   and the charts so there is still something concrete to scrub through. */
+/* One session's shortfall is dominated by where the price happened to go, not
+   by the strategy: at identical settings two seeds came back 80bps apart.
+   Every result is therefore the mean over PATHS independent sessions, with
+   its standard error, and the spread across sessions is reported as the
+   strategy's risk. All sessions are kept so any one can be replayed.    */
+const CF={};                                 // no-order sessions, by regime|horizon|seed
+function counterfactual(seed,T){
+  const key=S.regime+'|'+T+'|'+seed;
+  if(!CF[key])CF[key]=simulate({seed,regime:S.regime,horizon:T,exec:false,side:1,qty:0,snapEvery:T});
+  return CF[key];
+}
 function executeMany(algo){
-  const T=horizonSec(),base=S.seed;
-  const runs=[],tcas=[];
+  const T=horizonSec(),runs=[],tcas=[],cfs=[];
+  let ac=null;
   for(let k=0;k<PATHS;k++){
-    S.seed=base+k*104729;
-    const r=execute(algo);
-    r.tca=tca(r.run,r.T);
-    runs.push(r.run);tcas.push(r.tca);
-    if(k===0)var first=r;
+    const seed=S.seed+k*104729;
+    const r=execute(algo,seed),cf=counterfactual(seed,T);
+    runs.push(r.run);cfs.push(cf);tcas.push(tca(r.run,T,cf));ac=r.ac;
   }
-  S.seed=base;
   const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
-  const se=a=>{const m=mean(a);return Math.sqrt(a.reduce((x,y)=>x+(y-m)*(y-m),0)/Math.max(1,a.length-1)/a.length);};
-  const pick=f=>tcas.map(f), pr=f=>runs.map(f);
-  first.agg={
-    n:PATHS,
-    is:mean(pick(t=>t.total)), isSe:se(pick(t=>t.total)),
-    vsVwap:mean(pick(t=>t.vsVwap)), vsVwapSe:se(pick(t=>t.vsVwap)),
-    perm:mean(pick(t=>t.permanent)),
-    fill:mean(pr(r=>r.filledQty/S.qty)),
-    passive:mean(pr(r=>r.filledQty>0?r.passiveQty/r.filledQty:0)),
-    crosses:mean(pr(r=>r.crossCount)),
-    pov:mean(pr(r=>r.cumVol[T]>0?r.filledQty/r.cumVol[T]:0)),
-    comp:first.tca.comp.map((c,i)=>({n:c.n,v:mean(tcas.map(t=>t.comp[i].v))}))
+  const sd=a=>{const m=mean(a);return Math.sqrt(a.reduce((x,y)=>x+(y-m)*(y-m),0)/Math.max(1,a.length-1));};
+  const is=tcas.map(t=>t.total),tr=tcas.map(t=>t.trading),lk=tcas.map(t=>t.luck);
+  const agg={
+    n:PATHS,is:mean(is),isSd:sd(is),isSe:sd(is)/Math.sqrt(PATHS),
+    trading:mean(tr),tradingSe:sd(tr)/Math.sqrt(PATHS),luck:mean(lk),luckSd:sd(lk),
+    usd:mean(tcas.map(t=>t.usd)),
+    vsVwap:mean(tcas.map(t=>t.vsVwap)),
+    own:mean(tcas.map(t=>t.own)),
+    fill:mean(runs.map(r=>r.filledQty/S.qty)),
+    passive:mean(runs.map(r=>r.filledQty>0?r.passiveQty/r.filledQty:0)),
+    crosses:mean(runs.map(r=>r.crossCount)),
+    pov:mean(runs.map(r=>r.cumVol[T]>0?r.filledQty/r.cumVol[T]:0)),
+    avgPx:mean(runs.map(r=>r.filledQty>0?r.avgPx:r.arrival)),
+    comp:tcas[0].comp.map((c,i)=>({k:c.k,n:c.n,v:mean(tcas.map(t=>t.comp[i].v))}))
   };
-  return first;
+  return{algo,T,runs,tcas,cfs,agg,ac,
+    cfg:{side:S.side,qty:S.qty,horizonMin:S.horizonMin,algo,aggr:S.aggr,regime:S.regime,pov:S.pov,lamExp:S.lamExp}};
 }
 
 /* --------------------------------------------------------------- the TCA */
-/* The shortfall, measured off this run's own tape - which is all a real TCA
-   system ever has. Each part is computed independently and the residual
-   against the total is printed rather than being forced to zero.          */
-function tca(run,T){
-  const side=S.side,arrival=run.arrival,X=S.qty,filled=run.filledQty;
-  const avg=filled>0?run.avgPx:arrival;
-  const isBps=filled>0?side*(avg-arrival)/arrival*1e4:0;
-
+/* Each fill's price splits exactly into what it cost against the mid that
+   prevailed when it printed, plus where that mid already was against the
+   arrival price - so the parts below sum to the total with no residual.
+     spread    aggressive fills: the touch against the mid, half-spread paid
+     walk      aggressive fills: the price beyond the touch, depth consumed
+     earn      passive fills: fill against the mid, half-spread earned
+     impact    prevailing mid against the SAME session re-run without the
+               order: how far you had pushed the price yourself
+     market    that no-order mid against arrival: what the market did anyway
+     unfilled  shares never done, marked at the final mid (Perold)
+   Splitting impact from market needs the counterfactual, which a real desk
+   never has. The simulator does - the fundamental runs on its own random
+   stream, so the no-order session sees the same news - and that is what
+   makes "what you caused" and "what was luck" separately measurable here. */
+function tca(run,T,cf){
+  const side=run.side,arrival=run.arrival,X=run.qty,filled=run.filledQty;
+  const bps=v=>v/(X*arrival)*1e4;               // $ -> bps of parent notional
+  let spread=0,walk=0,earn=0,impact=0,market=0,paid=0,own=0,cum=0;
+  for(const f of run.fills){
+    if(f.aggr){spread+=side*(f.touch-f.ref)*f.qty;walk+=side*(f.px-f.touch)*f.qty;}
+    else earn+=side*(f.px-f.ref)*f.qty;
+    const base=cf?(cf.preMid[f.t]+cf.mid[f.t])/2:f.ref;
+    impact+=side*(f.ref-base)*f.qty;
+    market+=side*(base-arrival)*f.qty;
+    paid+=side*(f.px-arrival)*f.qty;
+    own+=(CAL?CAL.gamma:0)*cum*f.qty;         // permanent part, from the calibrated gamma
+    cum+=f.qty;
+  }
+  const unfilled=side*(run.mid[T]-arrival)*(X-filled);
+  const comp=[{k:'spread',n:'Crossing the spread',v:bps(spread)},
+              {k:'walk',n:'Walking the book',v:bps(walk)},
+              {k:'earn',n:'Earned by waiting',v:bps(earn)},
+              {k:'impact',n:'Your price impact',v:bps(impact)},
+              {k:'market',n:'Market drift',v:bps(market)},
+              {k:'unfilled',n:'Unfilled shares',v:bps(unfilled)}];
+  const total=bps(paid+unfilled);
   let pv=0,vv=0;
   for(let t=0;t<=T;t++){pv+=run.mid[t]*run.vol[t];vv+=run.vol[t];}
   const ivwap=vv>0?pv/vv:arrival;
-  const vsVwap=filled>0?side*(avg-ivwap)/ivwap*1e4:0;
-
-  // spread: what crossing actually cost, from the prints themselves
-  let sNum=0,sDen=0,tNum=0;
-  for(const f of run.fills){
-    const slip=side*(f.px-run.preMid[f.t]);
-    tNum+=f.qty*slip;sDen+=f.qty;
-    if(f.aggr)sNum+=f.qty*slip;
-  }
-  const slippage=sDen>0?tNum/sDen/arrival*1e4:0;          // vs prevailing mid
-  const spreadCost=sDen>0?sNum/sDen/arrival*1e4:0;
-  const temporary=slippage-spreadCost;
-
-  // How much the mid had already moved when each fill printed. Together with
-  // the slippage above this sums exactly to the shortfall.
-  let wd=0,wq=0,wOwn=0,cum=0;
-  for(const f of run.fills){
-    wd+=side*(run.preMid[f.t]-arrival)/arrival*1e4*f.qty;
-    wOwn+=cum*f.qty;                       // own flow already done when it printed
-    cum+=f.qty;wq+=f.qty;
-  }
-  const timing=wq>0?wd/wq:0;
-  // Model attribution of that move: the Kyle coefficient on the flow we had
-  // already put through the book by the time each fill printed. This is an
-  // estimate, not a measurement - you never observe the counterfactual.
-  const ownFlow=wq>0?wOwn/wq:0;
-  const permanent=CAL?side*CAL.gamma*ownFlow/arrival*1e4:0;
-  const oppCost=X>filled?side*(run.mid[T]-arrival)/arrival*1e4*(X-filled)/X:0;
-
-  const fillShare=filled/X;
-  const parts=[{n:'Spread paid',v:spreadCost*fillShare},
-               {n:'Temporary impact',v:temporary*fillShare},
-               {n:'Price move while working',v:timing*fillShare},
-               {n:'Opportunity',v:oppCost}];
-  const total=isBps*fillShare+oppCost;
-  const resid=total-parts.reduce((a,p)=>a+p.v,0);
-  return{arrival,avg,isBps,ivwap,vsVwap,filled,X,comp:parts,total,resid,
-         permanent,exog:timing*fillShare-permanent,slippage,timing};
+  const avg=filled>0?run.avgPx:arrival;
+  return{arrival,avg,total,comp,usd:paid+unfilled,
+    trading:bps(spread+walk+earn+impact),luck:bps(market),
+    resid:total-comp.reduce((a,c)=>a+c.v,0),
+    ivwap,vsVwap:filled>0?side*(avg-ivwap)/ivwap*1e4:0,
+    own:bps(own),filled,X};
 }
 
 /* ================================ RENDER ================================ */
+const NAMES={twap:'TWAP',vwap:'VWAP',pov:'POV',ac:'Almgren–Chriss',is:'Arrival price'};
+const ALGOS=[
+  {k:'twap',d:'The same number of shares every minute. The honest baseline, and the easiest to spot.'},
+  {k:'vwap',d:'Follows the market’s usual volume curve: more when the market is busy, less when it is quiet.'},
+  {k:'pov', d:'A fixed share of whatever actually trades. Hides in the flow, but may run out of time.'},
+  {k:'ac',  d:'The textbook optimum between impact and risk. Front-loads more as urgency rises.'},
+  {k:'is',  d:'Heavily front-loaded, to lock in a price close to where the order arrived.'}];
+const COL={cyan:'#06b6d4',green:'#10b981',amber:'#f59e0b',red:'#ef4444',violet:'#a78bfa',
+  grid:'rgba(51,65,85,.45)',axis:'#7788a0',text:'#94a3b8',bg:'#0b1122'};
+const CALS={};
+S.visited=new Set([1]);S.speed=90;
+const usd=v=>(v<0?'−$':'$')+fmt(Math.abs(Math.round(v)));
+const sgn=(v,d)=>(v>=0?'+':'−')+Math.abs(v).toFixed(d===undefined?1:d);
+const pct=(v,d)=>(v*100).toFixed(d===undefined?0:d)+'%';
+const money=v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'m':'$'+fmt(v);
+const cfgKey=withAlgo=>[S.side,S.qty,S.horizonMin,S.aggr,S.lamExp,S.pov,S.regime,S.seed,withAlgo===false?'':S.algo].join('|');
+function ensureCal(){if(!CALS[S.regime])CALS[S.regime]=calibrate();CAL=CALS[S.regime];}
+function navH(){const n=document.querySelector('.demo-nav');return n?n.offsetHeight:56;}
+function measureNav(){document.documentElement.style.setProperty('--navh',navH()+'px');}
+
+// expected market volume, by second, over the window - what VWAP and POV plan against
+function expCum(T){
+  let base=0;for(let i=0;i<600;i++)base+=volProfile(i);
+  const perSec=CAL.windowVol/base,c=new Float64Array(T+1);
+  for(let t=1;t<=T;t++)c[t]=c[t-1]+perSec*volProfile(t-1);
+  return c;
+}
+
+/* ------------------------------------------------------------ busy toast */
+function busy(msg,fn){
+  el('busyText').textContent=msg;el('busy').classList.add('show');
+  setTimeout(()=>{try{fn();}finally{el('busy').classList.remove('show');}},40);
+}
+
+/* -------------------------------------------------------------- canvases */
 function setup(c,h){
   const dpr=window.devicePixelRatio||1;
-  const W=c.clientWidth||c.parentElement.clientWidth;
+  const W=Math.max(10,c.clientWidth||c.parentElement.clientWidth||300);
   c.style.height=h+'px';
-  c.width=Math.max(1,Math.round(W*dpr));c.height=Math.round(h*dpr);
-  const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
-  return{ctx:x,W,H:h};
+  c.width=Math.round(W*dpr);c.height=Math.round(h*dpr);
+  const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle=COL.bg;ctx.fillRect(0,0,W,h);
+  return{ctx,W,H:h};
 }
-function axes(ctx,p,W,H,rows,fmtY,title){
-  ctx.font='9px "JetBrains Mono",monospace';
-  for(let i=0;i<=rows.n;i++){
-    const y=p.t+(H-p.t-p.b)*i/rows.n,v=rows.hi-(rows.hi-rows.lo)*i/rows.n;
-    ctx.strokeStyle='rgba(30,41,59,.5)';ctx.lineWidth=.5;
-    ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();
-    ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.fillText(fmtY(v),p.l-6,y+3);
+function yGrid(ctx,p,W,H,lo,hi,n,f){
+  ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='right';
+  for(let i=0;i<=n;i++){
+    const v=lo+(hi-lo)*i/n,y=p.t+(H-p.t-p.b)*(1-i/n);
+    ctx.strokeStyle=COL.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();
+    ctx.fillStyle=COL.axis;ctx.fillText(f(v),p.l-7,y+3.5);
   }
-  if(title){ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText(title,p.l,12);}
 }
-
-/* ---- ladder ---- */
-function renderLadder(){
-  if(!RUN){el('ladder').innerHTML='<div class="sub" style="padding:18px 0;text-align:center">Run an execution to build the book.</div>';el('qpos').textContent='';return;}
-  const si=Math.min(RUN.run.snaps.length-1,Math.round(S.t/10));
-  const sn=RUN.run.snaps[si];
-  const maxQ=Math.max(1,...sn.bids.map(r=>r[1]),...sn.asks.map(r=>r[1]));
-  let h='';
-  for(let i=sn.asks.length-1;i>=0;i--){
-    const [t,q,mine]=sn.asks[i];
-    h+=row(t,0,q,mine,i===0,maxQ,'a');
+function xClock(ctx,p,W,H,T,t0){
+  ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.fillStyle=COL.axis;
+  const span=T,step=span<=300?60:span<=900?120:300,start=t0||0;
+  for(let s=Math.ceil(start/step)*step;s<=start+span;s+=step){
+    const x=p.l+(s-start)/span*(W-p.l-p.r);ctx.fillText(clockOf(s).slice(0,-3),x,H-p.b+16);
   }
-  const bb=sn.bids.length?pxOf(sn.bids[0][0]):NaN, ba=sn.asks.length?pxOf(sn.asks[0][0]):NaN;
-  h+='<div class="spreadrow">spread <b>'+(isFinite(ba-bb)?((ba-bb)*100).toFixed(0)+'¢':'—')
-    +'</b> &nbsp;·&nbsp; mid <b>'+(isFinite((ba+bb)/2)?((ba+bb)/2).toFixed(2):'—')+'</b></div>';
-  for(let i=0;i<sn.bids.length;i++){
-    const [t,q,mine]=sn.bids[i];
-    h+=row(t,q,0,mine,i===0,maxQ,'b');
-  }
-  el('ladder').innerHTML=h;
-  const ahead=RUN.run.queueLog[Math.min(S.t,RUN.T)];
-  el('qpos').innerHTML=isFinite(ahead)
-    ? 'Your resting order has <b>'+fmt(ahead)+'</b> shares ahead of it in the queue at this second. '
-      +'Until that is consumed you do not trade.'
-    : 'No resting order at this second — either it filled, or the algorithm is crossing instead.';
-  function row(t,bq,aq,mine,best,maxQ,sideCls){
-    const q=bq||aq, w=Math.max(2,q/maxQ*100);
-    const bar='<div class="lbar '+sideCls+(mine>0?' mine':'')+'" style="width:'+w+'%"></div>';
-    return '<div class="lrow'+(best?' best':'')+'">'
-      +'<span class="bq">'+(bq?fmt(bq):'')+(mine>0&&sideCls==='b'?' ◀':'')+'</span>'
-      +'<span>'+(sideCls==='b'?bar:'')+'</span>'
-      +'<span class="px">'+pxOf(t).toFixed(2)+'</span>'
-      +'<span>'+(sideCls==='a'?bar:'')+'</span>'
-      +'<span class="aq">'+(mine>0&&sideCls==='a'?'▶ ':'')+(aq?fmt(aq):'')+'</span></div>';
-  }
+}
+function niceRange(lo,hi,padFrac){
+  if(!isFinite(lo)||!isFinite(hi)){lo=0;hi=1;}
+  if(hi-lo<1e-9){lo-=0.5;hi+=0.5;}
+  const pad=(hi-lo)*(padFrac===undefined?0.1:padFrac);return[lo-pad,hi+pad];
 }
 
-/* ---- price path ---- */
-let pxMeta=null;
-function renderPrice(){
-  const c=el('pxCanvas');const{ctx,W,H}=setup(c,270);
-  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  if(!RUN){pxMeta=null;return;}
-  const{run,T}=RUN;
-  const p={l:52,r:14,t:20,b:34},pw=W-p.l-p.r,ph=H-p.t-p.b;
-  let lo=Infinity,hi=-Infinity;
-  for(let t=0;t<=T;t++){lo=Math.min(lo,run.mid[t]);hi=Math.max(hi,run.mid[t]);}
-  const pad=(hi-lo)*0.12||0.05;lo-=pad;hi+=pad;
-  const sx=t=>p.l+t/T*pw, sy=v=>p.t+ph-(v-lo)/(hi-lo)*ph;
-  axes(ctx,p,W,H,{n:4,lo,hi},v=>v.toFixed(2),'mid price ($)');
-  // arrival
-  ctx.strokeStyle='rgba(245,158,11,.45)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(p.l,sy(run.arrival));ctx.lineTo(W-p.r,sy(run.arrival));ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#b58236';ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='left';
-  ctx.fillText('arrival '+run.arrival.toFixed(2),p.l+3,sy(run.arrival)-4);
-  // best bid and offer as a band, then the mid
-  const line=(arr,col,dash,wdt)=>{
-    ctx.strokeStyle=col;ctx.lineWidth=wdt;ctx.setLineDash(dash);ctx.beginPath();
-    for(let t=0;t<=T;t++){const x=sx(t),y=sy(arr[t]);t?ctx.lineTo(x,y):ctx.moveTo(x,y);}
-    ctx.stroke();ctx.setLineDash([]);
+/* --------------------------------------------------------------- ladder */
+function ladderHTML(sn){
+  const N=10,rows=[...sn.bids.slice(0,N),...sn.asks.slice(0,N)];
+  const maxQ=Math.max(1,...rows.map(r=>r[1]));
+  const row=(r,sd,best)=>{
+    const t=r[0],q=r[1],mine=r[2],w=Math.max(2,q/maxQ*100);
+    const bar='<div class="lbar '+sd+(mine>0?' mine':'')+'" style="width:'+w.toFixed(1)+'%"></div>';
+    return '<div class="lrow'+(best?' best':'')+'"><span class="bq">'+(sd==='b'?fmt(q):'')+'</span><span>'+(sd==='b'?bar:'')
+      +'</span><span class="px">'+pxOf(t).toFixed(2)+'</span><span>'+(sd==='a'?bar:'')+'</span><span class="aq">'+(sd==='a'?fmt(q):'')+'</span></div>';
   };
-  line(run.bb,'rgba(16,185,129,.30)',[],1);
-  line(run.ba,'rgba(239,68,68,.30)',[],1);
-  line(run.mid,'#06b6d4',[],1.6);
-  // fills
-  for(const f of run.fills){
-    if(f.t>S.t)continue;
-    ctx.fillStyle=f.aggr?'rgba(245,158,11,.75)':'rgba(16,185,129,.7)';
-    const r=clamp(Math.sqrt(f.qty)/26,1.1,4.2);
-    ctx.beginPath();ctx.arc(sx(f.t),sy(f.px),r,0,Math.PI*2);ctx.fill();
-  }
-  // scrub marker
-  ctx.strokeStyle='rgba(226,232,240,.5)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(sx(S.t),p.t);ctx.lineTo(sx(S.t),p.t+ph);ctx.stroke();
-  // x axis
-  ctx.fillStyle='#64748b';ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='center';
-  for(let m=0;m<=S.horizonMin;m+=Math.max(5,Math.round(S.horizonMin/6))){
-    ctx.fillText(m+'m',sx(m*60),p.t+ph+14);
-  }
-  pxMeta={p,pw,ph,sx,sy,T,lo,hi};
+  let h='';
+  for(let i=N-1;i>=0;i--)h+=sn.asks[i]?row(sn.asks[i],'a',i===0):'<div class="lrow"></div>';
+  const bb=sn.bids[0]?pxOf(sn.bids[0][0]):NaN,ba=sn.asks[0]?pxOf(sn.asks[0][0]):NaN;
+  h+='<div class="spreadrow">spread <b>'+(isFinite(ba-bb)?Math.round((ba-bb)*100)+'¢':'-')+'</b> &middot; mid <b>'
+    +(isFinite(ba+bb)?'$'+((ba+bb)/2).toFixed(3):'-')+'</b></div>';
+  for(let i=0;i<N;i++)h+=sn.bids[i]?row(sn.bids[i],'b',i===0):'<div class="lrow"></div>';
+  return h;
 }
 
-/* ---- schedule ---- */
-let schMeta=null;
-function renderSchedule(){
-  const c=el('schCanvas');const{ctx,W,H}=setup(c,250);
-  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  if(!RUN){schMeta=null;el('schMetrics').innerHTML='';return;}
-  const{run,T}=RUN;
-  const p={l:58,r:14,t:20,b:32},pw=W-p.l-p.r,ph=H-p.t-p.b;
-  const hi=S.qty*1.04;
-  const sx=t=>p.l+t/T*pw, sy=v=>p.t+ph-v/hi*ph;
-  axes(ctx,p,W,H,{n:4,lo:0,hi},v=>(v/1000).toFixed(0)+'k','cumulative shares');
-  ctx.strokeStyle='rgba(148,163,184,.55)';ctx.setLineDash([4,4]);ctx.lineWidth=1.4;
-  ctx.beginPath();for(let t=0;t<=T;t++){const x=sx(t),y=sy(Math.min(S.qty,run.plan[t]));t?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();ctx.setLineDash([]);
-  ctx.strokeStyle='#06b6d4';ctx.lineWidth=1.8;
-  ctx.beginPath();for(let t=0;t<=T;t++){const x=sx(t),y=sy(run.done[t]);t?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
-  ctx.strokeStyle='rgba(226,232,240,.45)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(sx(S.t),p.t);ctx.lineTo(sx(S.t),p.t+ph);ctx.stroke();
-  ctx.fillStyle='#64748b';ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='center';
-  for(let m=0;m<=S.horizonMin;m+=Math.max(5,Math.round(S.horizonMin/6)))ctx.fillText(m+'m',sx(m*60),p.t+ph+14);
-  ctx.textAlign='left';ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';
-  ctx.fillText('— realised',p.l+2,p.t+ph-8);
-  ctx.fillStyle='#8b96a5';ctx.fillText('- - planned',p.l+66,p.t+ph-8);
-  schMeta={p,pw,ph,sx,sy,T};
-
-  const fillPct=run.filledQty/S.qty*100;
-  const pov=run.cumVol[T]>0?run.filledQty/run.cumVol[T]*100:0;
-  el('schMetrics').innerHTML=
-     '<div class="mcard"><div class="v c">'+fmt(run.filledQty)+'</div><div class="l">Shares filled</div></div>'
-    +'<div class="mcard"><div class="v '+(fillPct>99?'g':'y')+'">'+fillPct.toFixed(1)+'%</div><div class="l">Of parent</div></div>'
-    +'<div class="mcard"><div class="v c">'+run.crossCount+'</div><div class="l">Times it crossed</div></div>'
-    +'<div class="mcard"><div class="v c">'+pov.toFixed(1)+'%</div><div class="l">Participation</div></div>'
-    +'<div class="mcard"><div class="v c">'+fmt(Math.round(run.cumVol[T]))+'</div><div class="l">Market volume</div></div>';
+/* ================================ STEPS ================================ */
+function canGo(n){return n<=2||n>=5||!!RUN;}
+function goStep(n,noScroll){
+  if(!canGo(n))return;
+  S.step=n;S.visited.add(n);
+  document.querySelectorAll('.step').forEach(s=>s.classList.toggle('active',s.id==='step'+n));
+  updateStepper();
+  if(n===1)mktStart();else mktStop();
+  if(n!==3)replayStop();
+  renderStep(n);
+  const top=el('stepper').offsetTop-navH();
+  if(!noScroll&&window.scrollY>top)window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+  refreshStatus();
 }
-
-/* ---- waterfall ---- */
-let wfMeta=null;
-function renderWaterfall(){
-  const c=el('wfCanvas');const{ctx,W,H}=setup(c,250);
-  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  if(!RUN){wfMeta=null;el('wfNote').textContent='';return;}
-  const K=RUN.tca,A=RUN.agg;
-  const items=A.comp.concat([{n:'Total',v:A.is,tot:true}]);
-  const p={l:46,r:14,t:20,b:40},pw=W-p.l-p.r,ph=H-p.t-p.b;
-  let run=0,lo=0,hi=0;
-  const steps=[];
-  for(const it of items){
-    if(it.tot){steps.push({n:it.n,a:0,b:it.v,tot:true});lo=Math.min(lo,0,it.v);hi=Math.max(hi,0,it.v);}
-    else{steps.push({n:it.n,a:run,b:run+it.v});run+=it.v;lo=Math.min(lo,run);hi=Math.max(hi,run);}
-  }
-  const pad=Math.max(1,(hi-lo)*0.2);lo-=pad;hi+=pad;
-  const sy=v=>p.t+ph-(v-lo)/(hi-lo)*ph;
-  axes(ctx,p,W,H,{n:4,lo,hi},v=>v.toFixed(0),'bps of parent notional');
-  ctx.strokeStyle='rgba(148,163,184,.35)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(p.l,sy(0));ctx.lineTo(W-p.r,sy(0));ctx.stroke();
-  const gap=pw/steps.length,bw=gap*0.54;
-  const hits=[];
-  steps.forEach((s,i)=>{
-    const x=p.l+gap*i+gap/2-bw/2;
-    const y0=sy(Math.max(s.a,s.b)),y1=sy(Math.min(s.a,s.b));
-    let hgt=Math.max(2,y1-y0),yy=y0;
-    if(hgt<3){yy=(y0+y1)/2-1.5;hgt=3;}
-    ctx.fillStyle=s.tot?(s.b>=0?'rgba(239,68,68,.85)':'rgba(16,185,129,.85)')
-                       :(s.b-s.a>=0?'rgba(239,68,68,.6)':'rgba(16,185,129,.6)');
-    ctx.fillRect(x,yy,bw,hgt);
-    ctx.fillStyle=s.tot?'#fca5a5':'#94a3b8';
-    ctx.font='bold 9.5px "JetBrains Mono",monospace';ctx.textAlign='center';
-    const val=s.tot?s.b:s.b-s.a;
-    ctx.fillText((val>=0?'+':'')+val.toFixed(1),x+bw/2,yy-5);
-    ctx.fillStyle='#64748b';ctx.font='8.5px sans-serif';
-    const words=s.n.split(' ');
-    words.forEach((w,k)=>ctx.fillText(w,x+bw/2,p.t+ph+14+k*9));
-    hits.push({x:p.l+gap*i,w:gap,s,val});
+function updateStepper(){
+  document.querySelectorAll('#stepper .st').forEach(b=>{
+    const n=+b.dataset.go;
+    b.classList.toggle('active',n===S.step);
+    b.classList.toggle('done',n!==S.step&&S.visited.has(n));
+    b.disabled=!canGo(n);
+    b.title=canGo(n)?'':'Run the trade in step 2 first';
+    if(n===S.step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');
   });
-  wfMeta={hits};
-  el('wfNote').innerHTML='Average execution <b>$'+K.avg.toFixed(4)+'</b> against an arrival mid of <b>$'
-    +K.arrival.toFixed(4)+'</b>. The first three bars are independent measurements off the tape and they sum to the '
-    +'shortfall exactly, because every print decomposes into what it cost against the mid at the time and where that '
-    +'mid already was; the residual is <b>'+K.resid.toFixed(3)+' bps</b>. '
-    +'Of the <b>'+K.comp[2].v.toFixed(1)+' bps</b> the price moved while you were working, the Kyle coefficient '
-    +'attributes <b>'+K.permanent.toFixed(1)+' bps</b> to your own flow and <b>'+K.exog.toFixed(1)+' bps</b> to the '
-    +'market. That split is a model estimate, not a measurement \u2014 you never get to observe the counterfactual.';
 }
-
-/* ---- frontier ---- */
-let frMeta=null;
-function renderFrontier(){
-  const c=el('frCanvas');const{ctx,W,H}=setup(c,250);
-  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  if(!RUN||!CAL){frMeta=null;return;}
-  const T=RUN.T,tau=1,X=S.qty,arrival=RUN.run.arrival;
-  const toBps=v=>v/(X*arrival)*1e4;
-  const pts=[];
-  for(let i=0;i<=60;i++){
-    const lam=Math.pow(10,-9+i*(5/60));
-    const a=acParams(lam,CAL.sigma,CAL.eta,CAL.gamma,X,T,tau);
-    const E=acExpected(X,CAL.eps,CAL.eta,CAL.gamma,CAL.sigma,T,tau,a.kappa);
-    const V=acVariance(X,CAL.sigma,T,tau,a.kappa);
-    pts.push({lam,E:toBps(E),R:toBps(Math.sqrt(Math.max(0,V)))});
-  }
-  const algos=[['twap','TWAP'],['vwap','VWAP'],['pov','POV'],['ac','A–C'],['is','Arrival']];
-  const marks=algos.map(([k,n])=>{
-    const a=acParams(lambda(),CAL.sigma,CAL.eta,CAL.gamma,X,T,tau);
-    const sc=makeSchedule(k,T,S.pov,lambda(),a);
-    const cr=trajectoryCostRisk(sc,X,T,Math.max(1,Math.round(T/60)),CAL.eps,CAL.eta,CAL.gamma,CAL.sigma);
-    return{n,E:toBps(cr.E),R:toBps(Math.sqrt(Math.max(0,cr.V))),on:k===S.algo};
-  });
-  const realised={E:RUN.agg.is,R:null};
-  let xlo=0,xhi=Math.max(...pts.map(p=>p.R),...marks.map(m=>m.R))*1.12;
-  let ylo=Math.min(0,...pts.map(p=>p.E),...marks.map(m=>m.E),realised.E)*1.05;
-  let yhi=Math.max(...pts.map(p=>p.E),...marks.map(m=>m.E),realised.E)*1.12;
-  if(yhi-ylo<2){yhi=ylo+2;}
-  const p={l:50,r:16,t:20,b:36},pw=W-p.l-p.r,ph=H-p.t-p.b;
-  const sx=v=>p.l+(v-xlo)/(xhi-xlo)*pw, sy=v=>p.t+ph-(v-ylo)/(yhi-ylo)*ph;
-  axes(ctx,p,W,H,{n:4,lo:ylo,hi:yhi},v=>v.toFixed(0),'expected cost (bps)');
-  ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';ctx.textAlign='center';
-  ctx.fillText('cost standard deviation (bps)',p.l+pw/2,p.t+ph+30);
-  ctx.fillStyle='#64748b';ctx.font='9px "JetBrains Mono",monospace';
-  for(let i=0;i<=4;i++){const v=xlo+(xhi-xlo)*i/4;ctx.fillText(v.toFixed(0),sx(v),p.t+ph+14);}
-  ctx.strokeStyle='#06b6d4';ctx.lineWidth=2;ctx.beginPath();
-  pts.forEach((q,i)=>{const x=sx(q.R),y=sy(q.E);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
-  ctx.stroke();
-  marks.forEach(m=>{
-    ctx.fillStyle=m.on?'#ffd27a':'rgba(245,158,11,.8)';
-    ctx.beginPath();ctx.arc(sx(m.R),sy(m.E),m.on?5:3.4,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=m.on?'#ffe0b0':'#8a7a6a';ctx.font=(m.on?'bold ':'')+'9px "JetBrains Mono",monospace';
-    ctx.textAlign='left';ctx.fillText(m.n,sx(m.R)+7,sy(m.E)+3);
-  });
-  // realised cost of this run, drawn as a level line since one path has no sd
-  const ry=sy(realised.E);
-  ctx.strokeStyle='rgba(239,68,68,.75)';ctx.setLineDash([3,3]);ctx.lineWidth=1.2;
-  ctx.beginPath();ctx.moveTo(p.l,ry);ctx.lineTo(W-p.r,ry);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#f87171';ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='right';
-  ctx.fillText('realised '+realised.E.toFixed(1)+'\u00b1'+RUN.agg.isSe.toFixed(1)+' bps',W-p.r-3,ry-4);
-  frMeta={p,pw,ph,sx,sy,pts,xlo,xhi};
+function renderStep(n){
+  if(n===1){renderRegimes();renderMarket();}
+  else if(n===2)renderSetup();
+  else if(n===3)renderReplay();
+  else if(n===4)renderCost();
+  else if(n===5)renderCompare();
+  else if(n===6)renderInternals();
 }
-
-/* ---- calibration ---- */
-let calMeta=null;
-function renderCal(){
-  const c=el('calCanvas');const{ctx,W,H}=setup(c,250);
-  ctx.fillStyle='#080d1a';ctx.fillRect(0,0,W,H);
-  if(!CAL){calMeta=null;return;}
-  const p={l:52,r:14,t:20,b:36},pw=W-p.l-p.r,ph=H-p.t-p.b;
-  const xs=CAL.pts.map(q=>q.v),ys=CAL.pts.map(q=>q.temp);
-  const xhi=Math.max(...xs)*1.14,ylo=Math.min(0,...ys)*1.1,yhi=Math.max(...ys)*1.15||0.01;
-  const sx=v=>p.l+v/xhi*pw, sy=v=>p.t+ph-(v-ylo)/(yhi-ylo)*ph;
-  axes(ctx,p,W,H,{n:4,lo:ylo,hi:yhi},v=>(v*100).toFixed(1)+'¢','temporary cost per share');
-  ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';ctx.textAlign='center';
-  ctx.fillText('execution rate (shares / second)',p.l+pw/2,p.t+ph+30);
-  ctx.fillStyle='#64748b';ctx.font='9px "JetBrains Mono",monospace';
-  for(let i=0;i<=4;i++){const v=xhi*i/4;ctx.fillText(v.toFixed(0),sx(v),p.t+ph+14);}
-  // fitted line
-  ctx.strokeStyle='rgba(6,182,212,.8)';ctx.lineWidth=1.6;ctx.beginPath();
-  ctx.moveTo(sx(0),sy(CAL.eps));ctx.lineTo(sx(xhi),sy(CAL.eps+CAL.eta*xhi));ctx.stroke();
-  CAL.pts.forEach(q=>{
-    ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(sx(q.v),sy(q.temp),4,0,Math.PI*2);ctx.fill();
-  });
-  calMeta={p,pw,ph,sx,sy,xhi};
-  el('calMetrics').innerHTML=
-     '<div class="mcard" title="Fixed cost per share, essentially the half-spread you pay to cross."><div class="v c">'+(CAL.eps*100).toFixed(2)+'¢</div><div class="l">&epsilon; fixed</div></div>'
-    +'<div class="mcard" title="Temporary impact per unit of execution rate."><div class="v c">'+(CAL.eta*1e4).toFixed(2)+'</div><div class="l">&eta; &times;10&#8315;&#8308;</div></div>'
-    +'<div class="mcard" title="Permanent impact per share, identified from the exogenous variation in our own order size with a seed fixed effect. This is the one used for the attribution."><div class="v y">'+(CAL.gamma*1e6).toFixed(2)+'</div><div class="l">&gamma; &times;10&#8315;&#8310;</div></div>'
-    +'<div class="mcard" title="t-statistic on gamma across '+CAL.panelN+' within-seed observations."><div class="v '+(Math.abs(CAL.lamT)>3?'g':'y')+'">'+CAL.lamT.toFixed(1)+'</div><div class="l">t on &gamma;</div></div>'
-    +'<div class="mcard" title="The naive contemporaneous regression of price change on signed flow. Order flow leans toward fair value, so it is endogenous and this is biased upward - the gap against gamma is the size of that bias."><div class="v r">'+(CAL.lamNaive*1e6).toFixed(2)+'</div><div class="l">Naive &lambda; (biased)</div></div>'
-    +'<div class="mcard"><div class="v '+(CAL.r2t>0.8?'g':'y')+'">'+(CAL.r2t*100).toFixed(0)+'%</div><div class="l">R&sup2; temporary</div></div>'
-    +'<div class="mcard"><div class="v '+(CAL.r2p>0.3?'g':'y')+'">'+(CAL.r2p*100).toFixed(0)+'%</div><div class="l">R&sup2; on &lambda;</div></div>'
-    +'<div class="mcard"><div class="v c">'+(CAL.sigma*100).toFixed(2)+'¢</div><div class="l">&sigma; per second</div></div>'
-    +'<div class="mcard"><div class="v" style="color:var(--dim)">'+CAL.seeds+'</div><div class="l">Seeds averaged</div></div>';
-}
-
-/* ---- comparison table ---- */
-function renderCompare(){
-  const t=el('cmpTable');
-  if(!CMP){t.innerHTML='';el('cmpNote').textContent='';return;}
-  let h='<thead><tr><th>Algorithm</th><th>Filled</th><th>Avg price</th><th>IS (bps, mean &plusmn; s.e.)</th>'
-       +'<th>vs VWAP (bps)</th><th>Passive %</th><th>Crosses</th><th>Perm. impact (bps)</th>'
-       +'<th>Model E (bps)</th></tr></thead><tbody>';
-  const best=Math.min(...CMP.map(r=>r.agg.is));
-  CMP.forEach(r=>{
-    const on=r.key===S.algo,A=r.agg;
-    h+='<tr class="'+(on?'hl':'')+'"><td>'+r.name+(on?' \u25c0':'')+'</td>'
-      +'<td>'+(A.fill*100).toFixed(1)+'%</td>'
-      +'<td>'+r.tca.avg.toFixed(4)+'</td>'
-      +'<td style="color:'+(Math.abs(A.is-best)<1e-9?'#4ade80':'#e2e8f0')+'"><b>'+A.is.toFixed(1)+'</b>'
-        +' <span style="color:var(--faint);font-size:10px">\u00b1'+A.isSe.toFixed(1)+'</span></td>'
-      +'<td style="color:'+(A.vsVwap<0?'#4ade80':'#f87171')+'">'+(A.vsVwap>=0?'+':'')+A.vsVwap.toFixed(1)+'</td>'
-      +'<td>'+(A.passive*100).toFixed(0)+'%</td>'
-      +'<td>'+A.crosses.toFixed(0)+'</td>'
-      +'<td>'+A.perm.toFixed(1)+'</td>'
-      +'<td style="color:var(--dim)">'+r.modelE.toFixed(1)+'</td></tr>';
-  });
-  t.innerHTML=h+'</tbody>';
-  el('cmpTag').textContent='All five worked the same parent order against an identical order-flow stream';
-  el('cmpNote').innerHTML='Every row is the same '+fmt(S.qty)+' share order over '+S.horizonMin
-    +' minutes against the <b>same seed</b>, so the differences are the schedules and nothing else. '
-    +'The last column is what Almgren&ndash;Chriss <em>expected</em> each trajectory to cost given the calibrated '
-    +'&eta; and &gamma;; the gap between it and the realised IS is the sampling error of a single path, '
-    +'which at this size is large. One run is not evidence that one algorithm beats another.';
-}
-
-/* ------------------------------------------------------------ orchestrate */
-function refreshKpis(){
-  const set=(id,txt,cls)=>{const e=el(id);e.textContent=txt;if(cls!==undefined)e.className='v '+cls;};
-  if(!RUN){['kIS','kFill','kPassive','kPov','kPerm','kVsVwap'].forEach(i=>set(i,'\u2014',''));return;}
-  const A=RUN.agg,r=RUN.run,K=RUN.tca;
-  set('kIS',(A.is>=0?'+':'')+A.is.toFixed(1),A.is>25?'r':A.is>0?'y':'g');
-  set('kFill',(A.fill*100).toFixed(1)+'%',A.fill>0.995?'g':'y');
-  set('kPassive',(A.passive*100).toFixed(0)+'%','c');
-  set('kPov',(A.pov*100).toFixed(1)+'%','c');
-  set('kPerm',A.perm.toFixed(1),'y');
-  set('kVsVwap',(A.vsVwap>=0?'+':'')+A.vsVwap.toFixed(1),A.vsVwap>0?'r':'g');
+function refreshStatus(){
+  const R=REGIMES[S.regime];
+  let h='step <b>'+S.step+'</b> of 6 &middot; <b>'+R.label.toLowerCase()+'</b> market &middot; '
+    +(S.side>0?'buy ':'sell ')+'<b>'+fmt(S.qty)+'</b> over <b>'+S.horizonMin+' min</b> &middot; <b>'+NAMES[S.algo]+'</b>';
+  if(RUN)h+=' &middot; last run: shortfall <b>'+sgn(RUN.agg.is)+' bps</b> over '+RUN.agg.n+' sessions';
+  el('statusBar').innerHTML=h;
   const badge=el('stateBadge');
   badge.textContent=(S.side>0?'BUY ':'SELL ')+fmt(S.qty);
   badge.className='d-pill '+(S.side>0?'pill-buy':'pill-sell');
-  el('statusBar').innerHTML=
-    (S.side>0?'buy ':'sell ')+'<b>'+fmt(S.qty)+'</b> over <b>'+S.horizonMin+'m</b> \u00b7 '
-    +'<b>'+S.algo.toUpperCase()+'</b> \u00b7 aggression <b>'+(S.aggr*100).toFixed(0)+'</b> \u00b7 '
-    +'regime <b>'+S.regime+'</b> \u00b7 IS <b>'+A.is.toFixed(1)+' \u00b1 '+A.isSe.toFixed(1)+' bps</b> '
-    +'over <b>'+A.n+'</b> paths \u00b7 \u03b3 <b>'+(CAL.gamma*1e6).toFixed(2)+'e-6</b> (t '+CAL.lamT.toFixed(1)+')'
-    +' \u00b7 seed '+S.seed;
-}
-function drawAll(){renderLadder();renderPrice();renderSchedule();renderWaterfall();renderFrontier();renderCal();renderCompare();refreshKpis();}
-
-function doRun(){
-  el('runBtn').disabled=true;
-  const r=executeMany(S.algo);
-  RUN=r;CMP=null;
-  S.t=r.T;el('slTime').max=r.T;el('slTime').value=r.T;updateTimeLabel();
-  drawAll();
-  el('runBtn').disabled=false;
-}
-function doSweep(){
-  el('sweepBtn').disabled=true;
-  const names={twap:'TWAP',vwap:'VWAP',pov:'POV',ac:'Almgren–Chriss',is:'Arrival'};
-  const T=horizonSec(),tau=Math.max(1,Math.round(T/60));
-  const out=[];
-  for(const k of ['twap','vwap','pov','ac','is']){
-    const r=executeMany(k);
-    const a=acParams(lambda(),CAL.sigma,CAL.eta,CAL.gamma,S.qty,T,tau);
-    const cr=trajectoryCostRisk(makeSchedule(k,T,S.pov,lambda(),a),S.qty,T,tau,CAL.eps,CAL.eta,CAL.gamma,CAL.sigma);
-    out.push({key:k,name:names[k],run:r.run,tca:r.tca,agg:r.agg,
-      modelE:cr.E/(S.qty*r.run.arrival)*1e4});
-    if(k===S.algo){RUN=r;}
-  }
-  CMP=out;
-  S.t=T;el('slTime').max=T;el('slTime').value=T;updateTimeLabel();
-  drawAll();
-  el('sweepBtn').disabled=false;
-}
-function recalibrate(){
-  el('statusBar').textContent='calibrating impact against this market…';
-  CAL=calibrate();
 }
 
-/* -------------------------------------------------------------- controls */
-function updateTimeLabel(){
-  const m=Math.floor(S.t/60),s=S.t%60;
-  el('tLabel').textContent=m+':'+String(s).padStart(2,'0');
+/* ============================== STEP 1 ================================= */
+let mktTimer=null,mktPaused=false;
+function loadMarket(){
+  MKT=simulate({seed:S.seed+17,regime:S.regime,horizon:1500,exec:false,side:1,qty:0,snapEvery:1});
+  MKT.t=200;
+  let tq=0;for(let t=0;t<=MKT.T;t++)tq+=MKT.touchQ[t];
+  MKT.avgTouch=tq/(MKT.T+1);
 }
-function updateDerived(){
+function mktStart(){
+  if(mktTimer||mktPaused||document.hidden||S.step!==1)return;
+  mktTimer=setInterval(mktTick,170);syncMktBtn();
+}
+function mktStop(){clearInterval(mktTimer);mktTimer=null;syncMktBtn();}
+function syncMktBtn(){el('mktPlay').innerHTML=mktPaused?'<i class="fas fa-play"></i> Play':'<i class="fas fa-pause"></i> Pause';}
+function mktTick(){
+  if(!MKT)return;
+  MKT.t++;if(MKT.t>MKT.T)MKT.t=200;
+  renderMarketLive();
+}
+function renderRegimes(){
+  el('regimeCards').innerHTML=Object.keys(REGIMES).map(k=>{
+    const R=REGIMES[k],C=CALS[k];
+    const stat=Math.round(R.vol*100)+'% volatility'+(C?' · '+(C.halfSpread*200).toFixed(1)+'¢ spread':'');
+    return '<button type="button" class="rcard'+(k===S.regime?' on':'')+'" data-r="'+k+'" aria-pressed="'+(k===S.regime)+'">'
+      +'<div class="rt"><i class="fas '+R.icon+'"></i>'+R.label+'</div><div class="rs">'+stat+'</div></button>';
+  }).join('');
+  el('regimeNote').textContent=REGIMES[S.regime].note;
+}
+function renderMarket(){
+  const yr=Math.sqrt(252*23400),spread=CAL.halfSpread*2;
+  const tiles=[
+    {v:(spread*100).toFixed(2)+'¢',l:'Typical spread',s:(spread/REF*1e4).toFixed(1)+' bps of the price'},
+    {v:fmt(Math.round(MKT.avgTouch)),l:'Shares at the best price',s:'on each side, on average'},
+    {v:fmt(Math.round(CAL.windowVol/10)),l:'Shares traded a minute',s:'about '+money(CAL.windowVol/10*REF)+' a minute'},
+    {v:(CAL.sigma/REF*yr*100).toFixed(0)+'%',l:'Volatility, per year',s:'about '+(CAL.sigma*Math.sqrt(60)*100).toFixed(0)+'¢ in a typical minute'}];
+  el('mktTiles').innerHTML=tiles.map(x=>'<div class="tile"><div class="v">'+x.v+'</div><div class="l">'+x.l+'</div><div class="s">'+x.s+'</div></div>').join('');
+  renderMarketLive();
+}
+function renderMarketLive(){
+  if(!MKT)return;
+  el('mktLadder').innerHTML=ladderHTML(MKT.snaps[MKT.t]);
+  el('mktClock').textContent=clockOf(MKT.t-200+0);
+  // chart: the last four minutes
+  const c=el('mktCanvas');const{ctx,W,H}=setup(c,170);
+  const span=240,t1=MKT.t,t0=Math.max(0,t1-span);
+  const p={l:56,r:12,t:12,b:24};
+  let lo=Infinity,hi=-Infinity;
+  for(let t=t0;t<=t1;t++){if(isFinite(MKT.bb[t]))lo=Math.min(lo,MKT.bb[t]);if(isFinite(MKT.ba[t]))hi=Math.max(hi,MKT.ba[t]);}
+  [lo,hi]=niceRange(lo,hi,0.15);
+  const sx=t=>p.l+(t-t0)/span*(W-p.l-p.r),sy=v=>p.t+(H-p.t-p.b)*(1-(v-lo)/(hi-lo));
+  yGrid(ctx,p,W,H,lo,hi,3,v=>'$'+v.toFixed(2));
+  ctx.fillStyle='rgba(148,163,184,.10)';ctx.beginPath();
+  for(let t=t0;t<=t1;t++){const y=sy(isFinite(MKT.ba[t])?MKT.ba[t]:MKT.mid[t]);t===t0?ctx.moveTo(sx(t),y):ctx.lineTo(sx(t),y);}
+  for(let t=t1;t>=t0;t--)ctx.lineTo(sx(t),sy(isFinite(MKT.bb[t])?MKT.bb[t]:MKT.mid[t]));
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle=COL.cyan;ctx.lineWidth=1.7;ctx.beginPath();
+  for(let t=t0;t<=t1;t++){t===t0?ctx.moveTo(sx(t),sy(MKT.mid[t])):ctx.lineTo(sx(t),sy(MKT.mid[t]));}
+  ctx.stroke();
+  ctx.fillStyle=COL.axis;ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='left';
+  ctx.fillText('4 minutes ago',p.l+2,H-7);ctx.textAlign='right';ctx.fillText('now',W-p.r,H-7);
+}
+
+/* ============================== STEP 2 ================================= */
+function buildAlgoCards(){
+  const shape={twap:u=>u,vwap:u=>{let a=0,b=0;for(let i=0;i<60;i++){const w=volProfile(i*30);b+=w;if(i/60<u)a+=w;}return a/b;},
+    pov:u=>Math.min(1,u*1.12),ac:u=>1-Math.sinh(2.4*(1-u))/Math.sinh(2.4),is:u=>1-Math.pow(1-u,2.1)};
+  el('algoCards').innerHTML=ALGOS.map(a=>{
+    let d='';for(let i=0;i<=24;i++){const u=i/24;d+=(i?'L':'M')+(2+u*96).toFixed(1)+' '+(32-shape[a.k](u)*28).toFixed(1);}
+    return '<button type="button" class="acard" data-a="'+a.k+'"><div class="at">'+NAMES[a.k]+'</div>'
+      +'<svg viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true"><path d="M2 32H98" stroke="#334155" stroke-width="1" fill="none"/>'
+      +'<path d="'+d+'" stroke="#06b6d4" stroke-width="2" fill="none" vector-effect="non-scaling-stroke"/></svg>'
+      +'<div class="ad">'+a.d+'</div></button>';
+  }).join('');
+}
+function patienceWord(a){return a<0.2?'very patient':a<0.5?'patient':a<0.7?'balanced':a<0.9?'eager':'impatient';}
+function syncControls(){
+  el('slQty').value=S.qty/1000;el('slHorizon').value=S.horizonMin;el('slAggr').value=Math.round(S.aggr*100);
+  el('slLambda').value=S.lamExp;el('slPov').value=Math.round(S.pov*100);
+  [...el('segSide').querySelectorAll('button')].forEach(b=>b.classList.toggle('on',+b.dataset.s===S.side));
+}
+function renderSetup(){
+  const T=horizonSec(),ev=expCum(T)[T],share=S.qty/ev;
   el('vQty').textContent=fmt(S.qty);
   el('vHorizon').textContent=S.horizonMin+' min';
-  el('vAggr').textContent=(S.aggr*100).toFixed(0);
+  el('vAggr').textContent=patienceWord(S.aggr);
   el('vLambda').textContent=lambda().toExponential(1);
-  el('vPov').textContent=(S.pov*100).toFixed(0)+'%';
+  el('vPov').textContent=pct(S.pov);
   el('acRow').style.display=S.algo==='ac'?'':'none';
   el('povRow').style.display=S.algo==='pov'?'':'none';
-  el('regimeNote').textContent=REGIMES[S.regime].note;
-  const wv=CAL?CAL.windowVol*(horizonSec()/CAL.T):0;
-  el('povNote').innerHTML=wv>0
-    ? 'About <b>'+(S.qty/wv*100).toFixed(1)+'%</b> of the '+fmt(Math.round(wv))+' shares this regime is expected to print in '+S.horizonMin+' minutes.'
-    : '';
+  [...el('algoCards').querySelectorAll('.acard')].forEach(b=>{b.classList.toggle('on',b.dataset.a===S.algo);b.setAttribute('aria-pressed',b.dataset.a===S.algo);});
+  const size=share<0.05?'a small order: the market will barely notice it'
+    :share<0.2?'a large order, but an ordinary one for an institution'
+    :share<0.35?'an aggressive order: you will be a big part of the market'
+    :'a very aggressive order: you will be most of the market';
+  el('qtyNote').innerHTML='About <b>'+pct(share)+'</b> of expected volume: '+size+'.';
+  el('ticket').innerHTML='<div class="tk">Order ticket &middot; 10:00:00</div>'
+    +'<b class="'+(S.side>0?'buy':'sell')+'">'+(S.side>0?'BUY':'SELL')+'</b> <b>'+fmt(S.qty)+'</b> shares (about <b>'+money(S.qty*REF)
+    +'</b>) within <b>'+S.horizonMin+' minutes</b>, in a <b>'+REGIMES[S.regime].label.toLowerCase()+'</b> market, using <b>'+NAMES[S.algo]
+    +'</b>. That is roughly <b>'+pct(share)+'</b> of the <b>'+fmt(Math.round(ev/1000)*1000)+'</b> shares this market usually trades in that time: '+size+'.';
+  renderPlan();
+  refreshStatus();
 }
-function seg(id,key,parse,after){
-  el(id).addEventListener('click',e=>{
-    const b=e.target.closest('button');if(!b)return;
-    S[key]=parse(b);
-    [...e.currentTarget.querySelectorAll('button')].forEach(x=>x.classList.toggle('on',x===b));
-    updateDerived();if(after)after();
+function planCurve(algo,T,cumV){
+  const ac=acParams(lambda(),CAL.sigma,CAL.eta,CAL.gamma,T,1);
+  const f=makeSchedule(algo,T,S.pov,lambda(),ac),out=new Float64Array(T+1);
+  for(let t=0;t<=T;t++)out[t]=Math.min(1,f(t,cumV[t],S.qty)/S.qty);
+  return out;
+}
+function renderPlan(){
+  const T=horizonSec(),cumV=expCum(T);
+  const c=el('planCanvas');const{ctx,W,H}=setup(c,220);
+  const p={l:44,r:16,t:12,b:26};
+  const sx=t=>p.l+t/T*(W-p.l-p.r),sy=v=>p.t+(H-p.t-p.b)*(1-v);
+  yGrid(ctx,p,W,H,0,1,4,v=>Math.round(v*100)+'%');
+  xClock(ctx,p,W,H,T);
+  const curves=ALGOS.map(a=>({k:a.k,c:planCurve(a.k,T,cumV)}));
+  const draw=(cv,on)=>{
+    ctx.strokeStyle=on?COL.cyan:'rgba(148,163,184,.35)';ctx.lineWidth=on?2.6:1.2;ctx.beginPath();
+    for(let t=0;t<=T;t+=Math.max(1,Math.floor(T/300)))t?ctx.lineTo(sx(t),sy(cv.c[t])):ctx.moveTo(sx(t),sy(cv.c[t]));
+    ctx.lineTo(sx(T),sy(cv.c[T]));ctx.stroke();
+  };
+  curves.filter(x=>x.k!==S.algo).forEach(x=>draw(x,false));
+  curves.filter(x=>x.k===S.algo).forEach(x=>draw(x,true));
+  const mine=curves.find(x=>x.k===S.algo).c;
+  const tl=Math.round(T*0.58);
+  ctx.font='600 11.5px "Inter",sans-serif';ctx.textAlign='left';ctx.fillStyle=COL.cyan;
+  ctx.fillText('your plan: '+NAMES[S.algo],sx(tl)+8,Math.min(H-p.b-6,sy(mine[tl])+16));
+  const when=f=>{for(let t=0;t<=T;t++)if(mine[t]>=f-1e-9)return clockOf(t);return null;};
+  const h50=when(0.5),h90=when(0.9),done=mine[T];
+  el('planNote').innerHTML='<b>'+NAMES[S.algo]+'</b> plans to be half done by <b>'+(h50||'-')+'</b>'
+    +(h90?' and 90% done by <b>'+h90+'</b>':'')+(done<0.995?', and expects to finish only <b>'+pct(done)+'</b> of the order in time at this target':'')+'. '
+    +'The curves are plans; in step 3 you will see what the market actually allowed.';
+}
+
+function doRun(){
+  busy('Running your order through eight sessions…',()=>{
+    ensureCal();
+    RUN=executeMany(S.algo);
+    RUN.key=cfgKey();RUN.sess=0;RUN.logs={};
+    S.t=0;
+    goStep(3);
+    replayStart();
   });
 }
-seg('segSide','side',b=>+b.dataset.s);
-seg('segAlgo','algo',b=>b.dataset.a);
-seg('segRegime','regime',b=>b.dataset.r,()=>{recalibrate();updateDerived();drawAll();});
 
-el('slQty').addEventListener('input',e=>{S.qty=+e.target.value*1000;updateDerived();});
-el('slHorizon').addEventListener('input',e=>{S.horizonMin=+e.target.value;updateDerived();});
-el('slAggr').addEventListener('input',e=>{S.aggr=+e.target.value/100;updateDerived();});
-el('slLambda').addEventListener('input',e=>{S.lamExp=+e.target.value;updateDerived();if(RUN)renderFrontier();});
-el('slPov').addEventListener('input',e=>{S.pov=+e.target.value/100;updateDerived();});
-el('slTime').addEventListener('input',e=>{S.t=+e.target.value;updateTimeLabel();renderLadder();renderPrice();renderSchedule();});
+/* ============================== STEP 3 ================================= */
+let rpTimer=null;
+function replayStart(){
+  if(!RUN)return;
+  if(S.t>=RUN.T)S.t=0;
+  clearInterval(rpTimer);
+  rpTimer=setInterval(()=>{
+    S.t=Math.min(RUN.T,S.t+S.speed*0.05);
+    renderReplayFrame();
+    if(S.t>=RUN.T)replayStop();
+  },50);
+  syncPlayBtn();
+}
+function replayStop(){clearInterval(rpTimer);rpTimer=null;syncPlayBtn();}
+function syncPlayBtn(){
+  el('playBtn').innerHTML=rpTimer?'<i class="fas fa-pause"></i> Pause'
+    :'<i class="fas fa-'+(RUN&&S.t>=RUN.T?'rotate-left':'play')+'"></i> '+(RUN&&S.t>=RUN.T?'Replay':'Play');
+}
+function staleBanner(id,key,label,act){
+  const b=el(id);
+  if(key&&key!==cfgKey(act==='resweep'?false:undefined)){
+    b.innerHTML='<span><i class="fas fa-circle-exclamation"></i> These results are from '+label+'. You have changed the settings since.</span>'
+      +'<button type="button" class="d-btn sm" data-act="'+act+'"><i class="fas fa-rotate"></i> Re-run with current settings</button>';
+    b.classList.add('show');
+  }else b.classList.remove('show');
+}
+function renderReplay(){
+  if(!RUN)return;
+  staleBanner('stale3',RUN.key,'the previous run','rerun');
+  el('slTime').max=RUN.T;
+  el('sessionChips').innerHTML='<span>Session:</span>'+RUN.tcas.map((t,i)=>
+    '<button type="button" class="chip'+(i===RUN.sess?' on':'')+'" data-sess="'+i+'" title="Session '+(i+1)+': shortfall '+sgn(t.total)+' bps">'
+    +(i+1)+'</button>').join('');
+  [...el('segSpeed').querySelectorAll('button')].forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));
+  renderReplayFrame();
+}
+function renderReplayFrame(){
+  if(!RUN)return;
+  const run=RUN.runs[RUN.sess],T=RUN.T,t=Math.min(T,Math.floor(S.t));
+  el('slTime').value=t;el('tLabel').textContent=clockOf(t);
+  // live strip
+  const done=run.done[t],X=run.qty;
+  let n=0,q=0;for(const f of run.fills){if(f.t>t)break;n+=f.px*f.qty;q+=f.qty;}
+  const avg=q>0?n/q:NaN,bp=q>0?run.side*(avg-run.arrival)/run.arrival*1e4:NaN,mv=run.cumVol[t];
+  const tiles=[
+    {v:fmt(Math.round(done)),l:'of '+fmt(X)+' shares done',bar:done/X},
+    {v:isFinite(avg)?'$'+avg.toFixed(3):'-',l:'your average price',s:'arrival price $'+run.arrival.toFixed(3)},
+    {v:isFinite(bp)?sgn(bp)+' bps':'-',l:'cost so far, on shares done',cls:isFinite(bp)?(bp>0?'r':'g'):'w'},
+    {v:fmt(Math.round(mv)),l:'shares the market traded',s:mv>0?'you were '+pct(done/Math.max(1,mv))+' of it':''}];
+  el('liveStrip').innerHTML=tiles.map(x=>'<div class="tile"><div class="v '+(x.cls||'')+'">'+x.v+'</div><div class="l">'+x.l+'</div>'
+    +(x.bar!==undefined?'<div class="pbar"><i style="width:'+(x.bar*100).toFixed(1)+'%"></i></div>':'<div class="s">'+(x.s||'')+'</div>')+'</div>').join('');
+  // book
+  const sn=run.snaps[Math.min(run.snaps.length-1,Math.floor(t/run.snapEvery))];
+  el('ladder').innerHTML=ladderHTML(sn);
+  const ahead=run.queueLog[t],side=run.side>0?'bid':'offer';
+  el('qpos').innerHTML=done>=X-0.5?'<b>Order complete.</b> Nothing left resting.'
+    :isFinite(ahead)?'Your resting '+side+' has <b>'+fmt(Math.round(ahead))+'</b> shares ahead of it in the queue. It only trades once those are used up, or the price moves away and the algorithm re-posts.'
+    :'No resting order this second, the algorithm is re-positioning or catching up by crossing the spread.';
+  renderPrice(run,RUN.cfs[RUN.sess],T,t);
+  renderSchedule(run,T,t);
+  renderLog(run,T,t);
+  syncPlayBtn();
+}
+let pxMeta=null;
+function renderPrice(run,cf,T,tt){
+  const c=el('pxCanvas');const{ctx,W,H}=setup(c,280);
+  const p={l:58,r:14,t:14,b:26};
+  let lo=Infinity,hi=-Infinity;
+  for(let t=0;t<=T;t++){lo=Math.min(lo,run.mid[t],cf.mid[t]);hi=Math.max(hi,run.mid[t],cf.mid[t]);}
+  for(const f of run.fills){lo=Math.min(lo,f.px);hi=Math.max(hi,f.px);}
+  [lo,hi]=niceRange(lo,hi,0.08);
+  const sx=t=>p.l+t/T*(W-p.l-p.r),sy=v=>p.t+(H-p.t-p.b)*(1-(v-lo)/(hi-lo));
+  yGrid(ctx,p,W,H,lo,hi,4,v=>'$'+v.toFixed(2));
+  xClock(ctx,p,W,H,T);
+  ctx.strokeStyle='rgba(245,158,11,.55)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(p.l,sy(run.arrival));ctx.lineTo(W-p.r,sy(run.arrival));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#d6a24a';ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='left';
+  ctx.fillText('arrival $'+run.arrival.toFixed(2),p.l+4,sy(run.arrival)-5);
+  const step=Math.max(1,Math.floor(T/700));
+  const path=(arr,t1)=>{ctx.beginPath();for(let t=0;t<=t1;t+=step)t?ctx.lineTo(sx(t),sy(arr[t])):ctx.moveTo(sx(t),sy(arr[t]));ctx.lineTo(sx(t1),sy(arr[t1]));};
+  ctx.strokeStyle='rgba(148,163,184,.75)';ctx.setLineDash([5,4]);ctx.lineWidth=1.3;path(cf.mid,tt);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle=COL.cyan;ctx.lineWidth=1.8;path(run.mid,tt);ctx.stroke();
+  for(const f of run.fills){
+    if(f.t>tt)break;
+    ctx.fillStyle=f.aggr?'rgba(245,158,11,.85)':'rgba(16,185,129,.8)';
+    ctx.beginPath();ctx.arc(sx(f.t),sy(f.px),clamp(Math.sqrt(f.qty)/22,1.3,4.6),0,Math.PI*2);ctx.fill();
+  }
+  ctx.strokeStyle='rgba(226,232,240,.45)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(sx(tt),p.t);ctx.lineTo(sx(tt),H-p.b);ctx.stroke();
+  pxMeta={p,W,H,T,sx};
+}
+let schMeta=null;
+function renderSchedule(run,T,tt){
+  const c=el('schCanvas');const{ctx,W,H}=setup(c,230);
+  const p={l:44,r:14,t:12,b:26},X=run.qty;
+  const sx=t=>p.l+t/T*(W-p.l-p.r),sy=v=>p.t+(H-p.t-p.b)*(1-v);
+  yGrid(ctx,p,W,H,0,1,4,v=>Math.round(v*100)+'%');
+  xClock(ctx,p,W,H,T);
+  ctx.strokeStyle='rgba(148,163,184,.7)';ctx.setLineDash([5,4]);ctx.lineWidth=1.5;ctx.beginPath();
+  for(let t=0;t<=T;t++)t?ctx.lineTo(sx(t),sy(Math.min(1,run.plan[t]/X))):ctx.moveTo(sx(t),sy(Math.min(1,run.plan[t]/X)));
+  ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(6,182,212,.14)';ctx.beginPath();ctx.moveTo(sx(0),sy(0));
+  for(let t=0;t<=tt;t++)ctx.lineTo(sx(t),sy(run.done[t]/X));
+  ctx.lineTo(sx(tt),sy(0));ctx.closePath();ctx.fill();
+  ctx.strokeStyle=COL.cyan;ctx.lineWidth=2;ctx.beginPath();
+  for(let t=0;t<=tt;t++)t?ctx.lineTo(sx(t),sy(run.done[t]/X)):ctx.moveTo(sx(t),sy(run.done[t]/X));
+  ctx.stroke();
+  ctx.font='10.5px "Inter",sans-serif';ctx.textAlign='left';
+  ctx.fillStyle='#9fb0c6';ctx.fillText('dashed: plan',p.l+8,p.t+12);
+  ctx.fillStyle=COL.cyan;ctx.fillText('solid: actually done',p.l+84,p.t+12);
+  schMeta={p,W,T,sx};
+}
+function buildLog(run,T){
+  const ev=[],X=run.qty,side=run.side,verb=side>0?'bought':'sold';
+  ev.push({t:0,c:'sys',h:'Order arrives: <b>'+(side>0?'BUY':'SELL')+' '+fmt(X)+'</b> shares with '+NAMES[RUN.algo]+'. The mid price is <b>$'
+    +run.arrival.toFixed(3)+'</b>, the arrival price every fill is measured against.'});
+  for(let t=0;t<=T;t++)if(isFinite(run.queueLog[t])){
+    ev.push({t,c:'sys',h:'Joined the queue at the best '+(side>0?'bid':'offer')+' with <b>'+fmt(Math.round(run.queueLog[t]))
+      +'</b> shares ahead. It waits there until those are traded away.'});break;}
+  let bucket=null,cum=0,notion=0,mi=0;
+  const miles=[0.25,0.5,0.75,1];
+  const flush=()=>{
+    if(bucket&&bucket.q>0)ev.push({t:bucket.t1,c:'pass',h:'Resting order filled: <b>'+fmt(Math.round(bucket.q))+'</b> shares at <b>$'
+      +(bucket.n/bucket.q).toFixed(3)+'</b> · '+(side>0?'sellers hit your bid':'buyers lifted your offer')
+      +(bucket.k>1?' ('+bucket.k+' fills this minute)':'')+'.'});
+    bucket=null;
+  };
+  for(const f of run.fills){
+    if(f.aggr){
+      flush();
+      ev.push({t:f.t,c:'aggr',h:'Behind plan by <b>'+fmt(Math.round(f.behind))+'</b> shares, so it crossed the spread: '+verb+' <b>'
+        +fmt(Math.round(f.qty))+'</b> at <b>$'+f.px.toFixed(3)+'</b> (best '+(side>0?'ask':'bid')+' was $'+f.touch.toFixed(2)+').'});
+    }else{
+      const b=Math.floor(f.t/60);
+      if(bucket&&bucket.b!==b)flush();
+      if(!bucket)bucket={b,t1:f.t,q:0,n:0,k:0};
+      bucket.q+=f.qty;bucket.n+=f.qty*f.px;bucket.k++;bucket.t1=f.t;
+    }
+    cum+=f.qty;notion+=f.qty*f.px;
+    while(mi<miles.length&&cum>=X*miles[mi]-0.5){
+      flush();
+      const a=notion/cum,bp=side*(a-run.arrival)/run.arrival*1e4;
+      ev.push({t:f.t,c:'mile',h:miles[mi]<1
+        ?'<b>'+miles[mi]*100+'% done.</b> Average price so far $'+a.toFixed(3)+', '+sgn(bp)+' bps against arrival.'
+        :'<b>Order complete:</b> '+fmt(X)+' shares at an average $'+a.toFixed(3)+', '+sgn(bp)+' bps against arrival.'});
+      mi++;
+    }
+  }
+  flush();
+  if(run.filledQty<X-0.5)ev.push({t:T,c:'mile',h:'<b>Time is up.</b> '+fmt(Math.round(X-run.filledQty))
+    +' shares were never done. They count at the closing price as opportunity cost.'});
+  ev.sort((a,b)=>a.t-b.t);
+  return ev;
+}
+function renderLog(run,T,t){
+  if(!RUN.logs[RUN.sess])RUN.logs[RUN.sess]=buildLog(run,T);
+  const ev=RUN.logs[RUN.sess].filter(e=>e.t<=t).slice(-14).reverse();
+  el('tradeLog').innerHTML=ev.length?ev.map(e=>'<div class="ev '+e.c+'"><span class="tt">'+clockOf(e.t)+'</span><span class="tx">'+e.h+'</span></div>').join('')
+    :'<div class="empty">Press play to start the session.</div>';
+}
+
+/* ============================== STEP 4 ================================= */
+const CNOTE={
+  spread:'Each time the algorithm bought from the ask to catch up, it paid half the spread above the mid.',
+  walk:'When a crossing order was bigger than what sat at the best price, the rest filled one or more cents worse.',
+  earn:'Fills on your resting order came in below the mid: the spread you earn for being patient.',
+  impact:'Your own buying had already pushed the price up by the time later fills printed. Measured against the same session with your order removed.',
+  market:'Where the market went on its own while you traded. Pure luck: it averages out over many trades, but it is the risk you carry while the order is open.',
+  unfilled:'Shares not done in time, charged at the closing price.'};
+const CCOL={spread:'#f87171',walk:'#fb923c',earn:'#10b981',impact:'#06b6d4',market:'#a78bfa',unfilled:'#94a3b8'};
+function sellWords(){return S.side>0?{act:'buying',push:'up'}:{act:'selling',push:'down'};}
+function renderCost(){
+  if(!RUN)return;
+  staleBanner('stale4',RUN.key,'the previous run','rerun');
+  const A=RUN.agg,notional=RUN.cfg.qty*RUN.runs[0].arrival,d=v=>v/1e4*notional;
+  const luckWord=A.luck>=0?'the market drifted against you by <span class="luck">'+A.luck.toFixed(1)+' bps</span>'
+    :'the market happened to drift your way by <span class="luck">'+Math.abs(A.luck).toFixed(1)+' bps</span>';
+  el('costHeadline').innerHTML='<div><div class="big">'+sgn(A.is)+'<small>bps</small></div>'
+    +'<div class="usd">≈ '+usd(d(A.is))+' on a '+money(notional)+' order &middot; &plusmn;'+A.isSe.toFixed(1)+' bps across sessions</div></div>'
+    +'<div class="say">Of that, <span class="skill">'+A.trading.toFixed(1)+' bps</span> ('+usd(d(A.trading))+') is your <b>trading cost</b>: '
+    +'what your '+sellWords().act+' did to the price, and the part a strategy can control. On top of it, '+luckWord
+    +', timing, not skill. Against the market&rsquo;s own average price over the window (VWAP) you paid '
+    +sgn(A.vsVwap)+' bps.</div>';
+  // waterfall
+  const comps=A.comp.filter(c=>c.k!=='unfilled'||Math.abs(c.v)>0.05);
+  renderWaterfall(comps,A.is);
+  el('costList').innerHTML=A.comp.filter(c=>c.k!=='unfilled'||Math.abs(c.v)>0.05).map(c=>
+    '<div class="citem"><i class="sw" style="background:'+CCOL[c.k]+'"></i><div><span class="cn">'+c.n+'.</span> '+CNOTE[c.k]+'</div>'
+    +'<div class="cv" style="color:'+(c.v>0.05?'#fca5a5':c.v<-0.05?'#86efac':'#94a3b8')+'">'+sgn(c.v)+' bps<small>'+usd(d(c.v))+'</small></div></div>').join('')
+    +'<div class="csum"><div class="skill"><span class="v">'+sgn(A.trading)+' bps</span>Your trading cost: spread, book and impact. Measured to &plusmn;'
+    +A.tradingSe.toFixed(1)+' bps.</div><div class="luck"><span class="v">'+sgn(A.luck)+' bps</span>Market drift: luck. It swung by &plusmn;'
+    +A.luckSd.toFixed(0)+' bps from one session to the next.</div></div>';
+  renderSessions();
+}
+let wfMeta=null;
+function renderWaterfall(comps,total){
+  const c=el('wfCanvas');const{ctx,W,H}=setup(c,270);
+  const p={l:46,r:12,t:20,b:40};
+  const steps=[];let run=0,lo=0,hi=0;
+  comps.forEach(cm=>{steps.push({k:cm.k,n:cm.n,a:run,b:run+cm.v,v:cm.v});run+=cm.v;lo=Math.min(lo,run);hi=Math.max(hi,run);});
+  steps.push({k:'total',n:'Total',a:0,b:total,v:total});lo=Math.min(lo,total);hi=Math.max(hi,total);
+  [lo,hi]=niceRange(lo,hi,0.15);
+  const sy=v=>p.t+(H-p.t-p.b)*(1-(v-lo)/(hi-lo));
+  yGrid(ctx,p,W,H,lo,hi,4,v=>v.toFixed(0));
+  ctx.strokeStyle='rgba(148,163,184,.5)';ctx.beginPath();ctx.moveTo(p.l,sy(0));ctx.lineTo(W-p.r,sy(0));ctx.stroke();
+  const gap=(W-p.l-p.r)/steps.length,bw=Math.min(46,gap*0.6);
+  const short={spread:['Spread','paid'],walk:['Walking','the book'],earn:['Earned by','waiting'],impact:['Your','impact'],market:['Market','drift'],unfilled:['Unfilled'],total:['Total']};
+  const hits=[];
+  steps.forEach((s,i)=>{
+    const x=p.l+gap*i+gap/2-bw/2,y0=sy(Math.max(s.a,s.b)),y1=sy(Math.min(s.a,s.b));
+    let h=Math.max(2,y1-y0),yy=y0;if(h<3){yy=(y0+y1)/2-1.5;h=3;}
+    ctx.fillStyle=s.k==='total'?(s.v>=0?'#ef4444':'#10b981'):CCOL[s.k];
+    ctx.globalAlpha=s.k==='total'?0.9:0.78;ctx.fillRect(x,yy,bw,h);ctx.globalAlpha=1;
+    if(i<steps.length-1){ctx.strokeStyle='rgba(148,163,184,.35)';ctx.setLineDash([2,3]);ctx.beginPath();
+      ctx.moveTo(x+bw,sy(s.b));ctx.lineTo(x+gap,sy(s.b));ctx.stroke();ctx.setLineDash([]);}
+    ctx.fillStyle='#e2e8f0';ctx.font='600 10.5px "JetBrains Mono",monospace';ctx.textAlign='center';
+    ctx.fillText(sgn(s.v),x+bw/2,s.v>=0?yy-5:yy+h+12);
+    ctx.fillStyle=COL.text;ctx.font='10px "Inter",sans-serif';
+    short[s.k].forEach((w,k)=>ctx.fillText(w,x+bw/2,H-p.b+14+k*11));
+    hits.push({x:p.l+gap*i,w:gap,s});
+  });
+  wfMeta={hits};
+}
+function renderSessions(){
+  const c=el('sessCanvas');const{ctx,W,H}=setup(c,150);
+  const p={l:118,r:20,t:14,b:26};
+  const tot=RUN.tcas.map(t=>t.total),tr=RUN.tcas.map(t=>t.trading);
+  let [lo,hi]=niceRange(Math.min(0,...tot,...tr),Math.max(0,...tot,...tr),0.08);
+  const sx=v=>p.l+(v-lo)/(hi-lo)*(W-p.l-p.r);
+  ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';
+  const n=5;for(let i=0;i<=n;i++){const v=lo+(hi-lo)*i/n,x=sx(v);
+    ctx.strokeStyle=COL.grid;ctx.beginPath();ctx.moveTo(x,p.t);ctx.lineTo(x,H-p.b);ctx.stroke();
+    ctx.fillStyle=COL.axis;ctx.fillText(v.toFixed(0)+' bps',x,H-p.b+15);}
+  ctx.strokeStyle='rgba(148,163,184,.55)';ctx.beginPath();ctx.moveTo(sx(0),p.t);ctx.lineTo(sx(0),H-p.b);ctx.stroke();
+  const rows=[{y:p.t+26,vals:tr,c:'#22d3ee',lab:'Trading cost'},{y:p.t+74,vals:tot,c:'#c4b5fd',lab:'Total cost'}];
+  rows.forEach(r=>{
+    ctx.fillStyle='#cbd5e1';ctx.font='600 11.5px "Inter",sans-serif';ctx.textAlign='right';ctx.fillText(r.lab,p.l-14,r.y+4);
+    const m=r.vals.reduce((a,b)=>a+b,0)/r.vals.length;
+    const mn=Math.min(...r.vals),mx=Math.max(...r.vals);
+    ctx.strokeStyle=r.c;ctx.globalAlpha=0.35;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(sx(mn),r.y);ctx.lineTo(sx(mx),r.y);ctx.stroke();ctx.globalAlpha=1;ctx.lineWidth=1;
+    r.vals.forEach((v,i)=>{ctx.fillStyle=r.c;ctx.beginPath();ctx.arc(sx(v),r.y+(i%2?4:-4),4.2,0,Math.PI*2);ctx.fill();});
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx(m),r.y-11);ctx.lineTo(sx(m),r.y+11);ctx.stroke();ctx.lineWidth=1;
+  });
+  const rng=v=>Math.min(...v).toFixed(0)+' to '+Math.max(...v).toFixed(0);
+  el('sessNote').innerHTML='Each dot is one session; the white tick is the average. Your <b>trading cost</b> barely moved from session to session ('
+    +rng(tr)+' bps). The <b>total</b> ranged from '+rng(tot)+' bps, and almost all of that spread is the market moving while you worked. '
+    +'That is why one trade tells you very little about a strategy, and why desks judge execution over hundreds of orders.';
+}
+
+/* ============================== STEP 5 ================================= */
+function doSweep(){
+  busy('Running all five strategies on the same eight sessions…',()=>{
+    ensureCal();
+    CMP={key:cfgKey(false),cal:CAL,rows:ALGOS.map(a=>({k:a.k,r:executeMany(a.k)}))};
+    renderCompare();refreshStatus();
+  });
+}
+let frMeta=null;
+function renderCompare(){
+  const t=el('cmpTable');
+  if(!CMP){
+    el('stale5').classList.remove('show');
+    t.innerHTML='<tbody><tr><td colspan="8"><div class="empty-state"><i class="fas fa-table-list"></i>Press <b>Run all five strategies</b> to fill this in.</div></td></tr></tbody>';
+    el('cmpTakeaway').innerHTML='<p>Once the five strategies have run, this panel explains what the table and the chart are telling you.</p>';
+    const c=el('frCanvas');const{ctx,W,H}=setup(c,290);ctx.fillStyle=COL.axis;ctx.font='12px "Inter",sans-serif';ctx.textAlign='center';
+    ctx.fillText('Run the comparison to draw the trade-off',W/2,H/2);frMeta=null;return;
+  }
+  staleBanner('stale5',CMP.key,'the previous comparison','resweep');
+  const rows=CMP.rows,notional=CMP.rows[0].r.cfg.qty*CMP.rows[0].r.runs[0].arrival;
+  const fin=x=>x.r.agg.fill>0.99,pool=rows.filter(fin).length?rows.filter(fin):rows;
+  const bestT=Math.min(...pool.map(x=>x.r.agg.trading)),bestR=Math.min(...pool.map(x=>x.r.agg.isSd));
+  let foot='';
+  let h='<thead><tr><th>Strategy</th><th>Trading cost<small>bps, mean &plusmn; s.e.</small></th><th>Timing risk<small>s.d. across sessions</small></th>'
+    +'<th>Average total<small>bps</small></th><th>Trading cost<small>in dollars</small></th><th>Finished</th><th>Passive<small>share of fills</small></th><th>Crossings<small>per session</small></th></tr></thead><tbody>';
+  rows.forEach(x=>{
+    const A=x.r.agg,on=x.k===S.algo;
+    h+='<tr class="'+(on?'hl':'')+'"><td>'+NAMES[x.k]+(on?' <span style="color:var(--cyan);font-size:11px">(yours)</span>':'')+'</td>'
+      +'<td class="'+(fin(x)&&Math.abs(A.trading-bestT)<1e-9?'best':'')+'">'+A.trading.toFixed(1)+(fin(x)?'':'*')+'<span class="se">&plusmn;'+A.tradingSe.toFixed(1)+'</span></td>'
+      +'<td class="'+(fin(x)&&Math.abs(A.isSd-bestR)<1e-9?'best':'')+'">&plusmn;'+A.isSd.toFixed(1)+'</td>'
+      +'<td>'+sgn(A.is)+'</td>'
+      +'<td>'+usd(A.trading/1e4*notional)+'</td>'
+      +'<td style="color:'+(A.fill>0.995?'var(--muted)':'#fbbf24')+'">'+pct(A.fill,A.fill>0.995?0:1)+'</td>'
+      +'<td>'+pct(A.passive)+'</td><td>'+A.crosses.toFixed(0)+'</td></tr>';
+    if(!fin(x))foot='<tr><td colspan="8" style="font-family:var(--sans);font-weight:400;color:var(--faint);font-size:11.5px;white-space:normal">'
+      +'* Did not finish the order, so its trading cost is on fewer shares. The unfinished part shows up in the total and in its risk instead.</td></tr>';
+  });
+  t.innerHTML=h+foot+'</tbody>';
+  renderFrontier();
+  // what it shows
+  const byT=pool.slice().sort((a,b)=>a.r.agg.trading-b.r.agg.trading),byR=pool.slice().sort((a,b)=>a.r.agg.isSd-b.r.agg.isSd);
+  const cheap=byT[0],safe=byR[0];
+  let tk='<p><b>Cheapest to trade'+(pool.length<rows.length?' among the strategies that finished':'')+':</b> '+NAMES[cheap.k]+', at '+cheap.r.agg.trading.toFixed(1)+' bps. <b>Least risky:</b> '+NAMES[safe.k]
+    +', whose outcome varied by only &plusmn;'+safe.r.agg.isSd.toFixed(0)+' bps.</p>';
+  if(cheap.k!==safe.k)tk+='<p>Going from the cheapest to the least risky strategy cut the swing in outcomes from &plusmn;'+cheap.r.agg.isSd.toFixed(0)
+    +' to &plusmn;'+safe.r.agg.isSd.toFixed(0)+' bps, and cost '+(safe.r.agg.trading-cheap.r.agg.trading).toFixed(1)
+    +' bps more to trade. That is the core trade-off of execution: <b>trade faster and you push the price harder, but the market has less time to move against you.</b></p>';
+  const pov=rows.find(x=>x.k==='pov');
+  if(pov&&pov.r.agg.fill<0.995)tk+='<p><b>POV finished only '+pct(pov.r.agg.fill)+'</b> of the order. It trades a fixed share of what the market trades, so when the market is quieter than hoped it simply runs out of time, the unfinished shares are a risk in themselves.</p>';
+  tk+='<p>The <b>average totals</b> sit much closer together than the trading costs do, because all five saw the same market drift. Trading costs are measured to about &plusmn;'
+    +Math.max(...rows.map(x=>x.r.agg.tradingSe)).toFixed(1)+' bps; the totals carry &plusmn;'+Math.max(...rows.map(x=>x.r.agg.isSe)).toFixed(0)
+    +' bps of noise with only eight sessions. Judge a strategy by its trading cost and its risk, never by one day&rsquo;s total.</p>';
+  el('cmpTakeaway').innerHTML=tk;
+}
+function renderFrontier(){
+  const c=el('frCanvas');const{ctx,W,H}=setup(c,300);
+  const rows=CMP.rows,r0=rows[0].r,T=r0.T,X=r0.cfg.qty,arrival=r0.runs[0].arrival,toB=v=>v/(X*arrival)*1e4,K=CMP.cal;
+  const pts=rows.map(x=>({k:x.k,R:x.r.agg.isSd,E:x.r.agg.trading,se:x.r.agg.tradingSe,fill:x.r.agg.fill}));
+  const Rmax=Math.max(...pts.map(q=>q.R)),Emin=Math.min(...pts.map(q=>q.E)),Emax=Math.max(...pts.map(q=>q.E));
+  const spanE=Math.max(4,Emax-Emin);
+  const xhi=Rmax*1.8,ylo=Math.max(0,Emin-spanE*0.9),yhi=Emax+spanE*1.2;
+  const curve=[];
+  for(let i=0;i<=160;i++){
+    const lam=Math.pow(10,-10+i*(8/160)),a=acParams(lam,K.sigma,K.eta,K.gamma,T,1);
+    curve.push({lam,E:toB(acExpected(X,K.eps,K.eta,K.gamma,K.sigma,T,1,a.kappa)),
+      R:toB(Math.sqrt(Math.max(0,acVariance(X,K.sigma,T,1,a.kappa))))});
+  }
+  const p={l:50,r:16,t:16,b:40};
+  const sx=v=>p.l+v/xhi*(W-p.l-p.r),sy=v=>p.t+(H-p.t-p.b)*(1-(v-ylo)/(yhi-ylo));
+  yGrid(ctx,p,W,H,ylo,yhi,4,v=>v.toFixed(0));
+  ctx.fillStyle=COL.axis;ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';
+  for(let i=0;i<=4;i++){const v=xhi*i/4;ctx.fillText('±'+v.toFixed(0),sx(v),H-p.b+15);}
+  ctx.font='10.5px "Inter",sans-serif';ctx.fillStyle=COL.text;
+  ctx.fillText('timing risk: how much the outcome swings (bps) →',p.l+(W-p.l-p.r)/2,H-5);
+  ctx.save();ctx.translate(12,p.t+(H-p.t-p.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText('trading cost (bps) →',0,0);ctx.restore();
+  ctx.save();ctx.beginPath();ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);ctx.clip();
+  ctx.strokeStyle=COL.cyan;ctx.lineWidth=2;ctx.beginPath();
+  curve.forEach((q,i)=>i?ctx.lineTo(sx(q.R),sy(q.E)):ctx.moveTo(sx(q.R),sy(q.E)));ctx.stroke();
+  ctx.restore();
+  // name the two ends of the curve where they leave the plot
+  const inBox=curve.filter(q=>q.R<=xhi&&q.E<=yhi&&q.E>=ylo);
+  ctx.font='10.5px "Inter",sans-serif';ctx.fillStyle='#67e8f9';
+  if(inBox.length){
+    const a=inBox[0],b=inBox[inBox.length-1];
+    ctx.textAlign='left';ctx.fillText('more urgent',sx(b.R)+8,Math.max(p.t+10,sy(b.E)+4));
+  }
+  // points; labels sit in a column at the right, each tied to its point by
+  // a leader line, so a tight cluster of strategies never overprints
+  const L=pts.map(q=>({q,x:sx(q.R),y:sy(q.E)})).sort((a,b)=>a.y-b.y);
+  const colX=Math.max(...L.map(l=>l.x))+26;
+  L.forEach(l=>l.ly=l.y);
+  for(let i=1;i<L.length;i++)if(L[i].ly-L[i-1].ly<15)L[i].ly=L[i-1].ly+15;
+  const over=L[L.length-1].ly-(H-p.b-6);if(over>0)L.forEach(l=>l.ly-=over);
+  const under=p.t+6-L[0].ly;if(under>0)L.forEach(l=>l.ly+=under);
+  L.forEach(l=>{
+    const q=l.q,on=q.k===S.algo;
+    ctx.strokeStyle='rgba(245,158,11,.4)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(l.x+5,l.y);ctx.lineTo(colX-4,l.ly);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(l.x,sy(q.E-q.se));ctx.lineTo(l.x,sy(q.E+q.se));ctx.stroke();
+    ctx.beginPath();ctx.arc(l.x,l.y,on?6:4.5,0,Math.PI*2);
+    if(q.fill>0.99){ctx.fillStyle=on?'#fcd34d':COL.amber;ctx.fill();}else{ctx.strokeStyle=COL.amber;ctx.lineWidth=1.8;ctx.stroke();ctx.lineWidth=1;}
+    ctx.fillStyle=on?'#fde68a':'#d6b98a';ctx.font=(on?'600 ':'')+'11px "Inter",sans-serif';ctx.textAlign='left';
+    ctx.fillText(NAMES[q.k]+(q.fill>0.99?'':' ('+pct(q.fill)+' done)'),colX,l.ly+4);
+  });
+  frMeta={p,W,sx,sy,xhi,pts,curve:inBox};
+}
+
+/* ============================== STEP 6 ================================= */
+let calMeta=null;
+function renderInternals(){
+  ensureCal();
+  const C=CAL,c=el('calCanvas');const{ctx,W,H}=setup(c,260);
+  const p={l:54,r:14,t:14,b:38};
+  const xs=C.pts.map(q=>q.v),ys=C.pts.map(q=>q.temp);
+  const xhi=Math.max(...xs)*1.1,line=v=>C.intercept+C.eta*v,truth=v=>C.grand+C.trueEta*(v-C.vbar);
+  const [ylo,yhi]=niceRange(Math.min(0,...ys,line(0),truth(0)),Math.max(...ys,line(xhi),truth(xhi)),0.08);
+  const sx=v=>p.l+v/xhi*(W-p.l-p.r),sy=v=>p.t+(H-p.t-p.b)*(1-(v-ylo)/(yhi-ylo));
+  yGrid(ctx,p,W,H,ylo,yhi,4,v=>(v*100).toFixed(1)+'¢');
+  ctx.fillStyle=COL.axis;ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';
+  for(let i=0;i<=4;i++){const v=xhi*i/4;ctx.fillText(v.toFixed(0),sx(v),H-p.b+15);}
+  ctx.font='10.5px "Inter",sans-serif';ctx.fillStyle=COL.text;ctx.fillText('execution rate (shares per second) →',p.l+(W-p.l-p.r)/2,H-5);
+  ctx.strokeStyle='rgba(16,185,129,.8)';ctx.setLineDash([5,4]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(sx(0),sy(truth(0)));ctx.lineTo(sx(xhi),sy(truth(xhi)));ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle=COL.cyan;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx(0),sy(line(0)));ctx.lineTo(sx(xhi),sy(line(xhi)));ctx.stroke();
+  C.pts.forEach(q=>{ctx.fillStyle=COL.amber;ctx.beginPath();ctx.arc(sx(q.v),sy(q.temp),4.5,0,Math.PI*2);ctx.fill();});
+  calMeta={sx,sy};
+  const rat=(a,b)=>b>0?a/b:NaN,ok=r=>r>0.75&&r<1.33;
+  const row=(name,est,tru,fmtv,note,bad)=>{const r=rat(est,tru);
+    return '<tr><td>'+name+'<small>'+note+'</small></td><td>'+fmtv(est)+'</td><td>'+fmtv(tru)+'</td><td class="'+(bad?'ratio-bad':ok(r)?'ratio-ok':'')+'">'+(isFinite(r)?r.toFixed(2)+'×':'-')+'</td></tr>';};
+  const e=v=>v.toExponential(2);
+  el('truthTable').innerHTML='<thead><tr><th>What, and how</th><th>Estimated</th><th>True</th><th>Ratio</th></tr></thead><tbody>'
+    +row('Permanent impact &gamma;',C.gamma,C.trueGamma,e,'Own order size, seed fixed effect, 5-minute cool-down. t = '+C.lamT.toFixed(0))
+    +row('Temporary impact &eta;',C.eta,C.trueEta,e,'Cost per share on rate, within session. t = '+C.etaT.toFixed(0))
+    +row('Volatility &sigma; per &radic;s',C.sigma,C.trueSigma,v=>'$'+v.toFixed(4),'One-minute price changes, no-order sessions')
+    +row('Naive Kyle &lambda;',C.lamNaive,C.trueGamma,e,'Price change on all signed flow. Endogenous, so biased up',true)
+    +'</tbody>';
+  const k=Math.LN2/REGIMES[S.regime].halfLife*C.T,ramp=1-(1-Math.exp(-k))/k;
+  el('truthNote').innerHTML='&gamma; is recovered almost exactly. &eta; reads about '+Math.round((1-C.eta/C.trueEta)*100)
+    +'% low, and that is a limitation of the linear model rather than of the estimator: the simulator&rsquo;s footprint takes a minute or two '
+    +'to build up, so a ten-minute order spends part of its life below steady state, on average '+pct(ramp)+' of it, for a one-minute half-life. '
+    +'A model with a constant temporary cost has no way to represent that ramp.';
+  el('naiveX').textContent=(C.lamNaive/C.trueGamma).toFixed(1)+' times';
+}
+
+/* ============================== CONTROLS =============================== */
+document.addEventListener('click',e=>{
+  const go=e.target.closest('[data-go]');
+  if(go&&!go.disabled){goStep(+go.dataset.go);return;}
+  const act=e.target.closest('[data-act]');
+  if(act){if(act.dataset.act==='rerun')doRun();else if(act.dataset.act==='resweep')doSweep();}
+});
+el('regimeCards').addEventListener('click',e=>{
+  const b=e.target.closest('.rcard');if(!b||b.dataset.r===S.regime)return;
+  S.regime=b.dataset.r;
+  busy('Building and calibrating the '+REGIMES[S.regime].label.toLowerCase()+' market…',()=>{
+    ensureCal();loadMarket();renderRegimes();renderMarket();refreshStatus();
+  });
+});
+el('mktPlay').addEventListener('click',()=>{mktPaused=!mktPaused;if(mktPaused)mktStop();else mktStart();syncMktBtn();});
+el('algoCards').addEventListener('click',e=>{const b=e.target.closest('.acard');if(!b)return;S.algo=b.dataset.a;renderSetup();});
+el('segSide').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.side=+b.dataset.s;
+  [...el('segSide').querySelectorAll('button')].forEach(x=>x.classList.toggle('on',x===b));renderSetup();});
+el('slQty').addEventListener('input',e=>{S.qty=+e.target.value*1000;renderSetup();});
+el('slHorizon').addEventListener('input',e=>{S.horizonMin=+e.target.value;renderSetup();});
+el('slAggr').addEventListener('input',e=>{S.aggr=+e.target.value/100;renderSetup();});
+el('slLambda').addEventListener('input',e=>{S.lamExp=+e.target.value;renderSetup();});
+el('slPov').addEventListener('input',e=>{S.pov=+e.target.value/100;renderSetup();});
 el('runBtn').addEventListener('click',doRun);
 el('sweepBtn').addEventListener('click',doSweep);
-el('resetBtn').addEventListener('click',()=>{
-  S.side=1;S.qty=400000;S.horizonMin=30;S.algo='twap';S.aggr=0.35;S.lamExp=-6;S.pov=0.12;S.regime='normal';
-  el('slQty').value=400;el('slHorizon').value=30;el('slAggr').value=35;el('slLambda').value=-6;el('slPov').value=12;
-  [['segSide','1','s'],['segAlgo','twap','a'],['segRegime','normal','r']].forEach(([id,val,attr])=>{
-    [...el(id).querySelectorAll('button')].forEach(b=>b.classList.toggle('on',b.dataset[attr]===val));
+el('playBtn').addEventListener('click',()=>{if(rpTimer)replayStop();else replayStart();});
+el('slTime').addEventListener('input',e=>{replayStop();S.t=+e.target.value;renderReplayFrame();});
+el('segSpeed').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.speed=+b.dataset.v;
+  [...el('segSpeed').querySelectorAll('button')].forEach(x=>x.classList.toggle('on',x===b));});
+el('sessionChips').addEventListener('click',e=>{const b=e.target.closest('[data-sess]');if(!b)return;RUN.sess=+b.dataset.sess;renderReplay();});
+el('rerollBtn').addEventListener('click',()=>{
+  S.seed=20260501+Math.floor(Math.random()*900000)*7;
+  busy('Running eight fresh sessions…',()=>{
+    ensureCal();RUN=executeMany(S.algo);RUN.key=cfgKey();RUN.sess=0;RUN.logs={};S.t=RUN.T;
+    renderCost();refreshStatus();
   });
-  recalibrate();updateDerived();doRun();
 });
-let playTimer=null;
-el('playBtn').addEventListener('click',()=>{
-  if(!RUN)return;
-  if(playTimer){clearInterval(playTimer);playTimer=null;el('playBtn').innerHTML='<i class="fas fa-play"></i> Replay';return;}
-  S.t=0;el('playBtn').innerHTML='<i class="fas fa-pause"></i> Pause';
-  playTimer=setInterval(()=>{
-    S.t=Math.min(RUN.T,S.t+Math.max(4,Math.round(RUN.T/220)));
-    el('slTime').value=S.t;updateTimeLabel();renderLadder();renderPrice();renderSchedule();
-    if(S.t>=RUN.T){clearInterval(playTimer);playTimer=null;el('playBtn').innerHTML='<i class="fas fa-play"></i> Replay';}
-  },55);
+el('resetBtn').addEventListener('click',()=>{
+  replayStop();
+  Object.assign(S,DEFAULTS,{seed:20260501,t:0});S.visited=new Set([1]);
+  RUN=null;CMP=null;mktPaused=false;
+  syncControls();
+  busy('Resetting…',()=>{ensureCal();loadMarket();goStep(1);});
 });
 
 /* ------------------------------------------------------------- tooltips */
 function hookTip(cid,tid,resolve){
   const c=el(cid),tip=el(tid);
-  if(!c)return;
-  c.addEventListener('mousemove',function(e){
-    const r=this.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
-    const html=resolve(mx,my);
+  c.addEventListener('mousemove',function(ev){
+    const r=this.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,html=resolve(mx,my);
     if(html){tip.style.display='block';tip.innerHTML=html;
       tip.style.left=Math.max(4,Math.min(mx+14,this.clientWidth-tip.offsetWidth-4))+'px';
       tip.style.top=Math.max(4,my-14)+'px';}
@@ -1540,62 +2121,43 @@ function hookTip(cid,tid,resolve){
   });
   c.addEventListener('mouseleave',()=>{tip.style.display='none';});
 }
-hookTip('pxCanvas','pxTip',(mx)=>{
+hookTip('pxCanvas','pxTip',mx=>{
   if(!pxMeta||!RUN)return null;
-  if(mx<pxMeta.p.l||mx>pxMeta.p.l+pxMeta.pw)return null;
-  const t=clamp(Math.round((mx-pxMeta.p.l)/pxMeta.pw*pxMeta.T),0,pxMeta.T);
-  const{run}=RUN;
-  return '<strong>t + '+Math.floor(t/60)+':'+String(t%60).padStart(2,'0')+'</strong>'
-    +'<br>mid <span style="color:#06b6d4">'+run.mid[t].toFixed(3)+'</span>'
-    +' · from arrival <strong>'+((run.mid[t]-run.arrival)/run.arrival*1e4).toFixed(1)+' bps</strong>'
-    +'<br>signed flow this second '+(run.signed[t]>=0?'+':'')+fmt(Math.round(run.signed[t]))
-    +'<br>spread '+((run.ba[t]-run.bb[t])*100).toFixed(0)+'¢ · vol '+fmt(run.vol[t])
-    +'<br>done '+fmt(run.done[t])+' of '+fmt(S.qty);
+  const{p,W,T}=pxMeta;if(mx<p.l||mx>W-p.r)return null;
+  const t=clamp(Math.round((mx-p.l)/(W-p.l-p.r)*T),0,T),run=RUN.runs[RUN.sess],cf=RUN.cfs[RUN.sess];
+  const gap=run.side*(run.mid[t]-cf.mid[t])/run.arrival*1e4;
+  return '<strong>'+clockOf(t)+'</strong><br>with your order <span style="color:#06b6d4">$'+run.mid[t].toFixed(3)+'</span>'
+    +'<br>without it $'+cf.mid[t].toFixed(3)+'<br>your footprint <strong>'+sgn(gap)+' bps</strong>'
+    +'<br>done '+fmt(Math.round(run.done[t]))+' of '+fmt(run.qty);
 });
-hookTip('schCanvas','schTip',(mx)=>{
+hookTip('schCanvas','schTip',mx=>{
   if(!schMeta||!RUN)return null;
-  if(mx<schMeta.p.l||mx>schMeta.p.l+schMeta.pw)return null;
-  const t=clamp(Math.round((mx-schMeta.p.l)/schMeta.pw*schMeta.T),0,schMeta.T);
-  const r=RUN.run;
-  return '<strong>t + '+Math.floor(t/60)+':'+String(t%60).padStart(2,'0')+'</strong>'
-    +'<br>planned '+fmt(Math.min(S.qty,r.plan[t]))
-    +'<br>realised <span style="color:#06b6d4">'+fmt(r.done[t])+'</span>'
-    +'<br>behind by '+fmt(Math.max(0,Math.min(S.qty,r.plan[t])-r.done[t]));
+  const{p,W,T}=schMeta;if(mx<p.l||mx>W-p.r)return null;
+  const t=clamp(Math.round((mx-p.l)/(W-p.l-p.r)*T),0,T),r=RUN.runs[RUN.sess],pl=Math.min(r.qty,r.plan[t]);
+  return '<strong>'+clockOf(t)+'</strong><br>plan '+fmt(Math.round(pl))+'<br>done <span style="color:#06b6d4">'+fmt(Math.round(r.done[t]))+'</span>'
+    +'<br>'+(r.done[t]>=pl?'ahead by '+fmt(Math.round(r.done[t]-pl)):'behind by '+fmt(Math.round(pl-r.done[t])));
 });
-hookTip('wfCanvas','wfTip',(mx)=>{
+hookTip('wfCanvas','wfTip',mx=>{
   if(!wfMeta)return null;
-  const h=wfMeta.hits.find(q=>mx>=q.x&&mx<q.x+q.w);
-  if(!h)return null;
-  const notes={
-    'Spread paid':'What crossing cost, measured as the slippage of each aggressive print against the mid prevailing at the time.',
-    'Temporary impact':'Slippage beyond the spread on the same prints: the book walking away as you take it, which decays once you stop.',
-    'Price move while working':'Where the mid had already travelled from arrival when each of your fills printed, volume-weighted. Part of this is your own footprint and part is the market; the split is estimated below, not measured.',
-    'Opportunity':'Shares you never filled, marked at the closing mid.',
-    'Total':'Arrival-price implementation shortfall on the full parent order. The three measured bars sum to it exactly.'};
-  return '<strong>'+h.s.n+'</strong><br><span style="color:'+(h.val>=0?'#f87171':'#4ade80')+'">'
-    +(h.val>=0?'+':'')+h.val.toFixed(2)+' bps</span><br>'+notes[h.s.n];
+  const h=wfMeta.hits.find(q=>mx>=q.x&&mx<q.x+q.w);if(!h)return null;
+  const note=h.s.k==='total'?'Implementation shortfall on the whole order: the bars to the left add up to exactly this.':CNOTE[h.s.k];
+  return '<strong>'+h.s.n+'</strong> <span style="color:'+(h.s.v>=0?'#f87171':'#4ade80')+'">'+sgn(h.s.v,2)+' bps</span><br><span style="font-family:var(--sans)">'+note+'</span>';
 });
-hookTip('frCanvas','frTip',(mx)=>{
+hookTip('frCanvas','frTip',(mx,my)=>{
   if(!frMeta)return null;
-  if(mx<frMeta.p.l||mx>frMeta.p.l+frMeta.pw)return null;
-  const R=frMeta.xlo+(mx-frMeta.p.l)/frMeta.pw*(frMeta.xhi-frMeta.xlo);
-  let best=null,bd=1e9;
-  frMeta.pts.forEach(q=>{const d=Math.abs(q.R-R);if(d<bd){bd=d;best=q;}});
-  if(!best)return null;
-  return '<strong>&lambda; = '+best.lam.toExponential(1)+'</strong>'
-    +'<br>expected cost <span style="color:#06b6d4">'+best.E.toFixed(1)+' bps</span>'
-    +'<br>cost s.d. '+best.R.toFixed(1)+' bps'
-    +'<br><span style="color:#94a3b8">higher &lambda; trades faster: less risk, more impact</span>';
+  let best=null,bd=18;
+  frMeta.pts.forEach(q=>{const d=Math.hypot(frMeta.sx(q.R)-mx,frMeta.sy(q.E)-my);if(d<bd){bd=d;best=q;}});
+  if(best)return '<strong>'+NAMES[best.k]+'</strong><br>trading cost '+best.E.toFixed(1)+' &plusmn; '+best.se.toFixed(1)+' bps<br>timing risk &plusmn;'+best.R.toFixed(1)+' bps';
+  let bc=null;bd=14;
+  frMeta.curve.forEach(q=>{const d=Math.hypot(frMeta.sx(q.R)-mx,frMeta.sy(q.E)-my);if(d<bd){bd=d;bc=q;}});
+  return bc?'<strong>Almgren–Chriss, &lambda; = '+bc.lam.toExponential(1)+'</strong><br>expected cost '+bc.E.toFixed(1)+' bps<br>risk &plusmn;'+bc.R.toFixed(1)+' bps':null;
 });
 hookTip('calCanvas','calTip',(mx,my)=>{
   if(!calMeta||!CAL)return null;
-  let best=null,bd=1e9;
-  CAL.pts.forEach(q=>{const d=Math.hypot(calMeta.sx(q.v)-mx,calMeta.sy(q.temp)-my);if(d<bd&&d<22){bd=d;best=q;}});
-  if(!best)return null;
-  return '<strong>'+fmt(Math.round(best.filled))+' shares</strong> at '+best.v.toFixed(1)+'/sec'
-    +'<br>temporary <span style="color:#f59e0b">'+(best.temp*100).toFixed(2)+'¢</span> per share'
-    +'<br>permanent '+(best.perm*100).toFixed(2)+'¢ on the mid'
-    +'<br><span style="color:#94a3b8">both measured against the paired run</span>';
+  let best=null,bd=18;
+  CAL.pts.forEach(q=>{const d=Math.hypot(calMeta.sx(q.v)-mx,calMeta.sy(q.temp)-my);if(d<bd){bd=d;best=q;}});
+  return best?'<strong>'+fmt(Math.round(best.X))+' shares in 10 minutes</strong><br>'+best.v.toFixed(0)+' shares a second<br>temporary cost '
+    +(best.temp*100).toFixed(2)+'¢ a share':null;
 });
 
 /* ----------------------------------------------------------------- help */
@@ -1604,12 +2166,14 @@ el('helpBtn').addEventListener('click',()=>helpOverlay.classList.add('show'));
 el('helpClose').addEventListener('click',()=>helpOverlay.classList.remove('show'));
 helpOverlay.addEventListener('click',e=>{if(e.target===helpOverlay)helpOverlay.classList.remove('show');});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')helpOverlay.classList.remove('show');});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){mktStop();replayStop();}else if(S.step===1)mktStart();});
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{measureNav();renderStep(S.step);},160);});
 
 /* ----------------------------------------------------------------- boot */
-recalibrate();
-updateDerived();
-doRun();
-let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(drawAll,200);});
+measureNav();
+buildAlgoCards();
+syncControls();
+busy('Building the order book…',()=>{ensureCal();loadMarket();goStep(1,true);});
 </script>
 </body>
 </html>

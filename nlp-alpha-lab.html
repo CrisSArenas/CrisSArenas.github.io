@@ -174,11 +174,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
   <span id="statusRight"><b>Synthetic transcripts</b> &middot; fictional issuers &middot; deterministic seed &middot; net of costs &middot; not investment advice</span>
 </div>
 
-<p class="demo-sub">Turn earnings-call language into a tradable signal &mdash; and find out how little of it survives. A finance lexicon scores tone on synthetic transcripts from fictional issuers, with the arithmetic shown behind every highlighted word, then blends that sentiment with analyst revisions, options flow and supply-chain data into a <b>composite alpha</b> whose weights you control. The signal is tradable no earlier than <b>the open after the call</b>, an earnings call is worth <b>four independent bets a year</b>, and costs carry square-root market impact, so the net alpha has a genuine <b>capacity limit</b>. Standalone earnings sentiment does not clear its costs here; that is the finding, not a bug.</p>
+<p class="demo-sub">Turn earnings-call language into a tradable signal, and find out how little of it survives. A finance lexicon scores tone on synthetic transcripts from fictional issuers, with the arithmetic shown behind every highlighted word, then blends that sentiment with analyst revisions, options flow and supply-chain data into a <b>composite alpha</b> whose weights you control. The signal is tradable no earlier than <b>the open after the call</b>, an earnings call is worth <b>four independent bets a year</b>, and costs carry square-root market impact, so the net alpha has a genuine <b>capacity limit</b>. Standalone earnings sentiment does not clear its costs here; that is the finding, not a bug.</p>
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; NLP Earnings Sentiment Alpha Lab</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: NLP Earnings Sentiment Alpha Lab</h2>
       <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
@@ -190,19 +190,19 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         <h3>2 &middot; How the words are scored (this is the actual code)</h3>
         <p>The transcript is tokenised on whitespace and each token is looked up in a hand-built finance lexicon of roughly 200 terms with polarities in &minus;3&hellip;+3. Two modifiers are applied, exactly as shown in the heatmap:</p>
         <ul>
-          <li><strong>Negation</strong> &mdash; if a negator (<code>no</code>, <code>not</code>, <code>never</code>, <code>without</code>, <code>fails</code>, <code>despite</code>&hellip;) appears within the three preceding tokens, the polarity is flipped. Loughran&ndash;McDonald negate positives only; this demo flips both directions, so &ldquo;no sign of <em>softening</em>&rdquo; scores positive.</li>
-          <li><strong>Amplifiers / diminishers</strong> &mdash; <code>significantly</code>, <code>dramatically</code>, <code>overwhelmingly</code> multiply the next scored token by 1.3&ndash;1.6; <code>slightly</code>, <code>modestly</code>, <code>somewhat</code> by 0.5&ndash;0.7. Scores are clipped to &plusmn;3.</li>
+          <li><strong>Negation</strong>: if a negator (<code>no</code>, <code>not</code>, <code>never</code>, <code>without</code>, <code>fails</code>, <code>despite</code>&hellip;) appears within the three preceding tokens, the polarity is flipped. Loughran&ndash;McDonald negate positives only; this demo flips both directions, so &ldquo;no sign of <em>softening</em>&rdquo; scores positive.</li>
+          <li><strong>Amplifiers / diminishers</strong>: <code>significantly</code>, <code>dramatically</code>, <code>overwhelmingly</code> multiply the next scored token by 1.3&ndash;1.6; <code>slightly</code>, <code>modestly</code>, <code>somewhat</code> by 0.5&ndash;0.7. Scores are clipped to &plusmn;3.</li>
         </ul>
-        <p>Sentence tone = <code>tanh( &Sigma; w<sub>i</sub> / (3&middot;&radic;n) )</code> over the n tokens of the sentence, so a long neutral sentence cannot be dominated by one word. Document tone = <code>tanh( 1.5 &middot; &Sigma;<sub>s</sub> &omega;<sub>s</sub>&middot;raw<sub>s</sub> / &Sigma;<sub>s</sub> &omega;<sub>s</sub> )</code> with section weights <strong>&omega; = 0.8</strong> (CEO prepared remarks), <strong>1.0</strong> (CFO prepared remarks) and <strong>1.4</strong> (analyst Q&amp;A) &mdash; unscripted answers carry more information than a scripted script. Hover any highlighted word to see its lexicon polarity, whether it was negated, the multiplier applied and the resulting score. There is no transformer here and none is claimed.</p>
+        <p>Sentence tone = <code>tanh( &Sigma; w<sub>i</sub> / (3&middot;&radic;n) )</code> over the n tokens of the sentence, so a long neutral sentence cannot be dominated by one word. Document tone = <code>tanh( 1.5 &middot; &Sigma;<sub>s</sub> &omega;<sub>s</sub>&middot;raw<sub>s</sub> / &Sigma;<sub>s</sub> &omega;<sub>s</sub> )</code> with section weights <strong>&omega; = 0.8</strong> (CEO prepared remarks), <strong>1.0</strong> (CFO prepared remarks) and <strong>1.4</strong> (analyst Q&amp;A), unscripted answers carry more information than a scripted script. Hover any highlighted word to see its lexicon polarity, whether it was negated, the multiplier applied and the resulting score. There is no transformer here and none is claimed.</p>
       </div>
       <div class="d-help-section">
         <h3>3 &middot; From tone to a tradable signal</h3>
-        <p>Document tone is standardised against a stylised cross-section (mean +0.10, s.d. 0.28 &mdash; earnings-call language is positively skewed) to give <code>z<sub>NLP</sub></code>. The other three signal z-scores are fixed synthetic values stored with each transcript. The composite is
+        <p>Document tone is standardised against a stylised cross-section (mean +0.10, s.d. 0.28, earnings-call language is positively skewed) to give <code>z<sub>NLP</sub></code>. The other three signal z-scores are fixed synthetic values stored with each transcript. The composite is
         <code>z<sub>c</sub> = &Sigma; w<sub>i</sub> z<sub>i</sub> / &radic;(w&rsquo;Cw)</code>, so it is itself unit-variance, and its information coefficient follows the same Grinold&ndash;Kahn combination rule
-        <code>IC<sub>c</sub>(h) = &Sigma; w<sub>i</sub> IC<sub>i</sub>(h) / &radic;(w&rsquo;Cw)</code>. Weights are yours to set and are renormalised to sum to 1; C is the assumed signal correlation matrix (0.10&ndash;0.35). Because the signals are correlated the composite beats the best single signal only modestly &mdash; about 0.048 against 0.045 at the default settings.</p>
+        <code>IC<sub>c</sub>(h) = &Sigma; w<sub>i</sub> IC<sub>i</sub>(h) / &radic;(w&rsquo;Cw)</code>. Weights are yours to set and are renormalised to sum to 1; C is the assumed signal correlation matrix (0.10&ndash;0.35). Because the signals are correlated the composite beats the best single signal only modestly, about 0.048 against 0.045 at the default settings.</p>
       </div>
       <div class="d-help-section">
-        <h3>4 &middot; Point-in-time integrity &mdash; the timestamps that decide whether any of this is real</h3>
+        <h3>4 &middot; Point-in-time integrity: the timestamps that decide whether any of this is real</h3>
         <p>Almost every published earnings-text result that fails to replicate fails here, so the convention is written down explicitly:</p>
         <ul>
           <li><strong>t = 0, after the close.</strong> Most US large-cap calls run between 16:30 and 18:00 ET, after the print. A minority are pre-open. Nothing in the transcript exists before that moment.</li>
@@ -225,17 +225,17 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
             <tr><td>Supply chain</td><td>0.031</td><td>70 d</td><td>0.025</td><td>0.30</td><td>12</td></tr>
           </tbody>
         </table>
-        <p>The last column is the part most sentiment demos leave out. <strong>An earnings call arrives four times a year.</strong> Rebalancing monthly does not manufacture new information in between, so breadth is capped at <code>N<sub>eff</sub> &middot; min(252/h, refresh)</code>. Worse, if you hold for less time than the gap between refreshes the book is only invested part of the time, and holding tracking error constant means sizing up by <code>lev = (252/h) / refresh</code> &mdash; which multiplies the clip and the turnover without buying a single extra bet. At h = 21 days the NLP sleeve needs 3&times; sizing, which triples its turnover, lifts its clip to 2.4% of median daily volume and pushes its all-in cost above 4% a year against a gross alpha of 1.4%. That single constraint is why the NLP-only line on the growth chart does not pay for itself at any horizon, while the composite does.</p>
+        <p>The last column is the part most sentiment demos leave out. <strong>An earnings call arrives four times a year.</strong> Rebalancing monthly does not manufacture new information in between, so breadth is capped at <code>N<sub>eff</sub> &middot; min(252/h, refresh)</code>. Worse, if you hold for less time than the gap between refreshes the book is only invested part of the time, and holding tracking error constant means sizing up by <code>lev = (252/h) / refresh</code>, which multiplies the clip and the turnover without buying a single extra bet. At h = 21 days the NLP sleeve needs 3&times; sizing, which triples its turnover, lifts its clip to 2.4% of median daily volume and pushes its all-in cost above 4% a year against a gross alpha of 1.4%. That single constraint is why the NLP-only line on the growth chart does not pay for itself at any horizon, while the composite does.</p>
         <p>The dashed cyan line on the decay chart marks the holding period you selected. Half-life is read off the composite curve by linear interpolation, which is why it moves when you change the weights.</p>
       </div>
       <div class="d-help-section">
         <h3>6 &middot; The backtest</h3>
         <p>The overlay is sized to a constant <strong>4.5% tracking error</strong>. Gross skill uses the fundamental law with a transfer coefficient:
-        <code>IR<sub>gross</sub> = TC &middot; IC(h,L) &middot; &radic;(N<sub>eff</sub> &middot; min(252/h, refresh))</code> with <strong>TC = 0.45</strong> and <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per refresh &mdash; far below the 500-name universe, because cross-sectional bets share common factor exposure.</p>
-        <p>Costs carry a real <strong>capacity</strong> constraint rather than a flat rate. Two-way annual turnover is <code>2&kappa;&middot;252/h</code>, and the cost per unit of turnover is <code>5 bp + Y&middot;&sigma;<sub>daily</sub>&middot;&radic;(clip / ADV)</code> &mdash; half-spread and commission plus the standard square-root market-impact law, with Y = 0.8, &sigma;<sub>daily</sub> = 1.8% and a clip of <code>&kappa; &middot; AUM &middot; lev / 500 names</code> against a median ADV of US$80m. Execution is assumed to happen in one session, because an event signal cannot be worked slowly without losing it. <strong>Double the capital and the impact rises by &radic;2</strong>, which is what makes the AUM slider bite: at the default settings the composite is worth about 1.5%/y net at US$500m, breaks even near US$2bn, and is a cost centre above that. The optimal holding period moves out as capital grows &mdash; roughly a week at US$200m, three weeks at US$1bn &mdash; because impact pushes you towards trading less.</p>
+        <code>IR<sub>gross</sub> = TC &middot; IC(h,L) &middot; &radic;(N<sub>eff</sub> &middot; min(252/h, refresh))</code> with <strong>TC = 0.45</strong> and <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per refresh, far below the 500-name universe, because cross-sectional bets share common factor exposure.</p>
+        <p>Costs carry a real <strong>capacity</strong> constraint rather than a flat rate. Two-way annual turnover is <code>2&kappa;&middot;252/h</code>, and the cost per unit of turnover is <code>5 bp + Y&middot;&sigma;<sub>daily</sub>&middot;&radic;(clip / ADV)</code>, half-spread and commission plus the standard square-root market-impact law, with Y = 0.8, &sigma;<sub>daily</sub> = 1.8% and a clip of <code>&kappa; &middot; AUM &middot; lev / 500 names</code> against a median ADV of US$80m. Execution is assumed to happen in one session, because an event signal cannot be worked slowly without losing it. <strong>Double the capital and the impact rises by &radic;2</strong>, which is what makes the AUM slider bite: at the default settings the composite is worth about 1.5%/y net at US$500m, breaks even near US$2bn, and is a cost centre above that. The optimal holding period moves out as capital grows (roughly a week at US$200m, three weeks at US$1bn) because impact pushes you towards trading less.</p>
         <p><strong>Net alpha = gross alpha &minus; cost</strong>, and net is always below gross.</p>
         <p>One honesty note on breadth. <code>BR = N<sub>eff</sub> &middot; f</code> treats consecutive rebalances as independent, which they are not: a signal with half-life HL still has autocorrelation <code>&rho; = 2<sup>&minus;interval/HL</sup></code> at the next rebalance, and Grinold&rsquo;s correction scales breadth by <code>(1&minus;&rho;)/(1+&rho;)</code>. The table reports both breadths and the net alpha the stricter convention would give, but the headline figures use the unadjusted one. At the default settings the adjustment cuts composite breadth from 1440 to about 290 bets a year and turns the headline net alpha negative. Note what it does <em>not</em> do to the NLP sleeve: run at its natural quarterly cadence, its breadth falls only from 480 to about 310, while the composite&rsquo;s falls by four fifths. Rebalancing a slow signal quickly was never buying independent bets in the first place; the adjustment simply stops pretending it was.</p>
-        <p>Monthly active returns are drawn as shuffled normal quantiles standardised to exactly the modelled mean and volatility, so the realised annual alpha, tracking error, information ratio and hit rate in the table match the model rather than drifting with sampling noise, while the path &mdash; and therefore the max drawdown &mdash; stays a genuine random walk from the seed. The hit rate is therefore a <em>consequence</em> of the modelled alpha and tracking error, not an input: at the default net alpha of about 1.5% on 4.5% TE it lands near 53%, which is what a real signal of this strength looks like. Any earnings-sentiment strategy advertising a 60% monthly hit rate is describing something other than this signal class.</p>
+        <p>Monthly active returns are drawn as shuffled normal quantiles standardised to exactly the modelled mean and volatility, so the realised annual alpha, tracking error, information ratio and hit rate in the table match the model rather than drifting with sampling noise, while the path, and therefore the max drawdown, stays a genuine random walk from the seed. The hit rate is therefore a <em>consequence</em> of the modelled alpha and tracking error, not an input: at the default net alpha of about 1.5% on 4.5% TE it lands near 53%, which is what a real signal of this strength looks like. Any earnings-sentiment strategy advertising a 60% monthly hit rate is describing something other than this signal class.</p>
       </div>
       <div class="d-help-section">
         <h3>7 &middot; Reading the panels</h3>
@@ -255,7 +255,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
           <dt>Signal toggles</dt><dd>Drop a signal from the composite. At least one must stay on.</dd>
           <dt>Weights</dt><dd>Raw sliders renormalised to sum to 1. They move the composite IC, the composite turnover (and therefore the cost drag), the half-life and every backtest number.</dd>
           <dt>Holding period</dt><dd>Forward horizon in trading days, 5&ndash;63, measured from the entry point. Drives IC decay, breadth, turnover, the constant-TE sizing multiple and cost.</dd>
-          <dt>Entry lag</dt><dd>Trading days between the call and the position going on, 1&ndash;10. <strong>1 = the open of the next session</strong>, the earliest execution that is not look-ahead; the slider does not go below it. Everything above 1 is the cost of a slow pipeline &mdash; batch overnight processing, a human in the loop, a compliance queue.</dd>
+          <dt>Entry lag</dt><dd>Trading days between the call and the position going on, 1&ndash;10. <strong>1 = the open of the next session</strong>, the earliest execution that is not look-ahead; the slider does not go below it. Everything above 1 is the cost of a slow pipeline, batch overnight processing, a human in the loop, a compliance queue.</dd>
           <dt>Capital in strategy</dt><dd>US$50m to US$5bn. Only the cost side moves: bigger clips, more impact, lower net alpha. This is the capacity dimension, and it is the reason a signal that looks good on paper is not a business.</dd>
         </dl>
       </div>
@@ -349,13 +349,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="grid">
   <div class="panel full">
-    <div class="panel-head"><h3><i class="fas fa-highlighter"></i> Lexicon Sentiment Heatmap</h3><span class="tag" id="transcriptTag">&mdash;</span></div>
+    <div class="panel-head"><h3><i class="fas fa-highlighter"></i> Lexicon Sentiment Heatmap</h3><span class="tag" id="transcriptTag">-</span></div>
     <div class="panel-body">
-      <p class="synth-note"><i class="fas fa-triangle-exclamation"></i> <span><b>Synthetic transcript.</b> The issuer, the speakers and the words are invented for this demo &mdash; nothing here is a real earnings call and no real company is described. Shading is the score the lexicon actually computes for that token, after negation and amplification; hover a word for the arithmetic.</span></p>
+      <p class="synth-note"><i class="fas fa-triangle-exclamation"></i> <span><b>Synthetic transcript.</b> The issuer, the speakers and the words are invented for this demo, nothing here is a real earnings call and no real company is described. Shading is the score the lexicon actually computes for that token, after negation and amplification; hover a word for the arithmetic.</span></p>
       <div class="transcript-box" id="transcriptBox"></div>
       <div class="sent-legend">
         Token score: <span class="sl-neg">&minus;3&hellip;&minus;1</span> <span class="sl-neu">not in lexicon</span> <span class="sl-pos">+1&hellip;+3</span>
-        &nbsp;&mdash;&nbsp; <span id="lexStats">&mdash;</span>
+        &nbsp;&middot;&nbsp; <span id="lexStats">-</span>
       </div>
     </div>
   </div>
@@ -385,7 +385,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
 
 <div class="grid">
   <div class="panel full">
-    <div class="panel-head"><h3><i class="fas fa-chart-area"></i> Growth of 1.00 &mdash; Overlay vs Benchmark</h3><span class="tag">60 months, net of costs and impact, universe-level</span></div>
+    <div class="panel-head"><h3><i class="fas fa-chart-area"></i> Growth of 1.00: Overlay vs Benchmark</h3><span class="tag">60 months, net of costs and impact, universe-level</span></div>
     <div class="panel-body">
       <canvas id="cvReturns" role="img" aria-label="Line chart of cumulative growth for the composite overlay, NLP-only overlay, traditional factors and the benchmark" height="220"></canvas>
       <div class="legend">
@@ -430,8 +430,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
         <ul>
           <li><strong>Timestamps.</strong> The call ends after the close of day t; the signal is tradable no earlier than the open of t + 1 (entry lag 1, the slider minimum); the forward-return window runs h trading days from that entry. The announcement-day gap is outside the window and is not scored. IC<sub>i</sub>(1) is therefore defined against the one-day return from the first tradable point, so an entry lag of 1 carries no decay penalty and each further day costs <code>2<sup>&minus;1/HL</sup></code>.</li>
           <li>Signal IC at a one-day horizon and half-life: NLP 0.052 / 28 d, analyst revisions 0.058 / 55 d, options flow 0.049 / 18 d, supply chain 0.031 / 70 d. At the default 21-day horizon and T+1 entry these are 0.032, 0.045, 0.023 and 0.025. These sit in the range published cross-sectional text-tone studies report for a one-month forward return; they are assumed here, not estimated.</li>
-          <li>Assumed signal correlations 0.10&ndash;0.35 (NLP&ndash;analyst 0.35 is the highest). At equal weights the composite IC is about 0.048 against 0.045 for the best single signal &mdash; correlated signals diversify far less than an independence assumption would suggest, and the combination rule accounts for it.</li>
-          <li><strong>Refresh rates (the breadth ceiling):</strong> NLP 4/yr &mdash; one earnings call per name per quarter &mdash; analyst revisions 24, options flow 252, supply chain 12, traditional factors 12. Breadth is <code>N<sub>eff</sub> &middot; min(252/h, refresh)</code>; the composite&rsquo;s refresh is the weighted average of its components.</li>
+          <li>Assumed signal correlations 0.10&ndash;0.35 (NLP&ndash;analyst 0.35 is the highest). At equal weights the composite IC is about 0.048 against 0.045 for the best single signal, correlated signals diversify far less than an independence assumption would suggest, and the combination rule accounts for it.</li>
+          <li><strong>Refresh rates (the breadth ceiling):</strong> NLP 4/yr, one earnings call per name per quarter, analyst revisions 24, options flow 252, supply chain 12, traditional factors 12. Breadth is <code>N<sub>eff</sub> &middot; min(252/h, refresh)</code>; the composite&rsquo;s refresh is the weighted average of its components.</li>
           <li>Overlay sized to <strong>4.5% tracking error</strong>; transfer coefficient 0.45; <strong>N<sub>eff</sub> = 120</strong> effectively independent bets per refresh out of a 500-name universe.</li>
           <li>Two-way annual turnover <code>2&kappa;&middot;252/h</code> with &kappa; of 0.65 / 0.35 / 0.85 / 0.30 by signal (0.25 for the traditional-factor sleeve). Holding for less time than the gap between refreshes requires sizing up by <code>lev = (252/h)/refresh</code> to keep tracking error constant, which multiplies both the clip and the turnover.</li>
           <li><strong>Costs and capacity:</strong> cost per unit of turnover = 5 bp (half-spread plus commission on liquid names) + <code>0.8 &middot; 1.8% &middot; &radic;(clip / ADV)</code>, with clip = <code>&kappa; &middot; AUM &middot; lev / 500</code> executed in one session and a median ADV of US$80m. At the default US$500m the composite pays about 17 bp per unit of turnover; at US$3bn, about 34 bp.</li>
@@ -458,9 +458,9 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
           <li>Signal ICs, correlations, transfer coefficient, refresh rates and breadth are assumed, not estimated. Nothing is fitted to data, so there is no out-of-sample claim to make and none is offered.</li>
           <li><strong>Point-in-time integrity is enforced by convention, not by data.</strong> The synthetic transcripts have no real timestamps, so the T+1 entry rule is an assumption imposed on the model rather than something verified against a vendor feed. A real implementation must also use a point-in-time universe and point-in-time consensus and options data; survivorship and restatement are not simulated here and both flatter results badly.</li>
           <li>The IC decays monotonically in h. Real post-earnings drift is hump-shaped: the IC against a cumulative window typically rises for the first days or weeks before falling, so this model understates short horizons and is only a reasonable shape beyond about two weeks.</li>
-          <li><strong>Capacity is modelled crudely.</strong> One median ADV for all 500 names, one impact coefficient, single-session execution, no borrow cost or short availability, no crowding, and no allowance for the fact that earnings calls cluster into four four-week windows a year &mdash; which concentrates the event trade and would make real impact worse than shown.</li>
+          <li><strong>Capacity is modelled crudely.</strong> One median ADV for all 500 names, one impact coefficient, single-session execution, no borrow cost or short availability, no crowding, and no allowance for the fact that earnings calls cluster into four four-week windows a year, which concentrates the event trade and would make real impact worse than shown.</li>
           <li>The headline uses <code>BR = N<sub>eff</sub>&middot;f</code>, which double-counts overlapping bets when the rebalance interval is short relative to the signal half-life. The overlap-adjusted breadth and the net alpha it implies are shown in the table; at the default settings that convention turns the composite&rsquo;s net alpha negative. Which convention is right is a genuine open question, and the honest reading is that the truth sits between the two rows.</li>
-          <li>The backtest is a single overlay path with Gaussian active returns, no factor risk model, no financing or borrow cost, no crowding, and no decay of the signals themselves over calendar time &mdash; a text signal that is public and cheap to compute should be expected to decay year on year.</li>
+          <li>The backtest is a single overlay path with Gaussian active returns, no factor risk model, no financing or borrow cost, no crowding, and no decay of the signals themselves over calendar time, a text signal that is public and cheap to compute should be expected to decay year on year.</li>
           <li>Backtest results are deliberately independent of the selected transcript: one call cannot re-estimate a universe-level IC.</li>
           <li>Sector read-across uses hand-set linkage betas and is illustrative only.</li>
         </ul>
@@ -468,7 +468,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15);cur
     </div>
     <div class="disclaimer">Educational demonstration built on synthetic (or stylised historical) data generated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="index.html">Home</a><a href="index.html#demos">All demos</a><a href="robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>
@@ -565,12 +565,12 @@ var TRANSCRIPTS=[
 {id:'nvex',ticker:'NVEX',name:'Northvale Semiconductor (fictional)',quarter:'Q3 FY2026',sector:'Technology',
  color:'#10b981',seedOffset:11,z:{analyst:1.40,options:0.90,supply:1.10},
  sections:[
-  {speaker:'CEO \u2014 J. Marlowe (prepared remarks)',weight:0.8,lines:[
+  {speaker:'CEO · J. Marlowe (prepared remarks)',weight:0.8,lines:[
    'Data centre revenue surged to an all-time record driven by insatiable demand for our accelerators from hyperscale and enterprise customers worldwide.',
    'We are at the beginning of a platform shift that will reshape every industry and Northvale is exceptionally well positioned at the centre of it.',
    'Blackline demand is staggering and we are working around the clock to ramp production and meet our customers requirements.'
   ]},
-  {speaker:'CFO \u2014 P. Okafor (prepared remarks)',weight:1.0,lines:[
+  {speaker:'CFO · P. Okafor (prepared remarks)',weight:1.0,lines:[
    'Revenue of thirty five billion represents a one hundred and ninety four percent increase year over year with gross margins holding strong at seventy five percent.',
    'Our supply chain execution has been outstanding with yields improving ahead of schedule on our next generation products.',
    'Demand shows no sign of softening and our backlog extends well into the next fiscal year.'
@@ -583,12 +583,12 @@ var TRANSCRIPTS=[
 {id:'helx',ticker:'HELX',name:'Helix Consumer Devices (fictional)',quarter:'Q4 FY2026',sector:'Consumer',
  color:'#06b6d4',seedOffset:23,z:{analyst:0.60,options:-0.30,supply:0.40},
  sections:[
-  {speaker:'CEO \u2014 T. Bergstrom (prepared remarks)',weight:0.8,lines:[
+  {speaker:'CEO · T. Bergstrom (prepared remarks)',weight:0.8,lines:[
    'We are thrilled to report our strongest quarter ever with record revenue across every product category.',
    'Handset demand has been exceptional particularly in emerging markets where we see tremendous long term growth potential.',
    'Our services ecosystem continues to accelerate with subscription revenue growing at an impressive forty percent year over year.'
   ]},
-  {speaker:'CFO \u2014 L. Marchetti (prepared remarks)',weight:1.0,lines:[
+  {speaker:'CFO · L. Marchetti (prepared remarks)',weight:1.0,lines:[
    'Gross margins expanded by one hundred and fifty basis points driven by favorable product mix and operational efficiency gains.',
    'We returned over twenty five billion dollars to shareholders through dividends and share repurchases this quarter.',
    'However we are closely monitoring potential supply chain disruptions that could present headwinds in the near term.'
@@ -601,12 +601,12 @@ var TRANSCRIPTS=[
 {id:'arcs',ticker:'ARCS',name:'Arcadia Social Networks (fictional)',quarter:'Q3 FY2026',sector:'Comm. Svcs',
  color:'#3b82f6',seedOffset:37,z:{analyst:0.20,options:0.70,supply:-0.10},
  sections:[
-  {speaker:'CEO \u2014 M. Ferreira (prepared remarks)',weight:0.8,lines:[
+  {speaker:'CEO · M. Ferreira (prepared remarks)',weight:0.8,lines:[
    'Our model investments are beginning to show meaningful returns with shortform video engagement up significantly and advertising efficiency improving across the platform.',
    'The immersive division continues to require heavy capital investment though we remain confident in the long term opportunity.',
    'Immersive Labs losses narrowed this quarter which is an encouraging sign of progress toward our efficiency targets.'
   ]},
-  {speaker:'CFO \u2014 S. Adeyemi (prepared remarks)',weight:1.0,lines:[
+  {speaker:'CFO · S. Adeyemi (prepared remarks)',weight:1.0,lines:[
    'Total revenue grew eighteen percent year over year exceeding the high end of our guidance range by a comfortable margin.',
    'Operating expenses remain elevated due to our continued infrastructure buildout but we expect leverage to improve in subsequent quarters.',
    'Headcount reductions from our year of efficiency have driven meaningful operating margin improvement.'
@@ -619,12 +619,12 @@ var TRANSCRIPTS=[
 {id:'volt',ticker:'VOLT',name:'Voltaris Mobility (fictional)',quarter:'Q4 FY2026',sector:'Consumer',
  color:'#ef4444',seedOffset:53,z:{analyst:-0.90,options:-1.30,supply:-0.60},
  sections:[
-  {speaker:'CEO \u2014 R. Calderon (prepared remarks)',weight:0.8,lines:[
+  {speaker:'CEO · R. Calderon (prepared remarks)',weight:0.8,lines:[
    'Vehicle deliveries fell well short of our ambitious targets this quarter as we navigated challenging macroeconomic conditions and intensifying competition.',
    'However our energy storage business achieved record deployments and our autonomy stack continues to advance rapidly.',
    'Price reductions were necessary to maintain volume but they have significantly compressed our automotive margins.'
   ]},
-  {speaker:'CFO \u2014 D. Whitfield (prepared remarks)',weight:1.0,lines:[
+  {speaker:'CFO · D. Whitfield (prepared remarks)',weight:1.0,lines:[
    'Automotive gross margin declined to eighteen percent from twenty five percent a year ago reflecting our strategic pricing decisions.',
    'Free cash flow remains positive but significantly below prior year levels due to elevated capital expenditure on new factory ramps.',
    'We expect margins to stabilize in the coming quarters as our cost reduction initiatives gain traction.'
@@ -888,7 +888,7 @@ function renderTranscript(r){
     html+=' ';
   }
   box.innerHTML=html;
-  document.getElementById('transcriptTag').textContent=r.tr.ticker+' \u2014 '+r.tr.name+' \u2014 '+r.tr.quarter+' (synthetic)';
+  document.getElementById('transcriptTag').textContent=r.tr.ticker+' \u00b7 '+r.tr.name+' \u00b7 '+r.tr.quarter+' (synthetic)';
   document.getElementById('lexStats').textContent=r.toneWords+' of '+r.totalWords+' tokens matched the lexicon \u00b7 '+r.uncCount+' uncertainty terms \u00b7 doc tone '+(r.docSentiment>=0?'+':'')+r.docSentiment.toFixed(3);
 
   box.querySelectorAll('.tw').forEach(function(el){
@@ -953,7 +953,7 @@ function renderSentenceBars(r){
   }
   // X label
   ctx.fillStyle='#64748b';ctx.font='10px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.fillText('Sentences in document order \u2014 CEO, CFO, then Q&A',pad.l+chartW/2,H-pad.b+10);
+  ctx.fillText('Sentences in document order: CEO, CFO, then Q&A',pad.l+chartW/2,H-pad.b+10);
   ctx.save();ctx.translate(10,pad.t+chartH/2);ctx.rotate(-Math.PI/2);ctx.fillText('Tone (\u22121\u20261)',0,0);ctx.restore();
   chartMeta.cvSentence={type:'vbar_sent',hitboxes:hitboxes,midY:midY};
 }
@@ -1120,23 +1120,23 @@ function renderPerfTable(r){
   function teOf(a){return std(a)*Math.sqrt(12)}
   var rows=[
     ['Ann. return (total)',pc(mean(r.compRet)*12),pc(mean(r.nlpRet)*12),pc(mean(r.tradRet)*12),pc(mean(r.bmRet)*12),0],
-    ['Gross alpha (ann.)',pc(r.comp.gross),pc(r.nlpOnly.gross),pc(r.trad.gross),'\u2014',1],
-    ['Transaction costs (ann.)','-'+pc(r.comp.cost),'-'+pc(r.nlpOnly.cost),'-'+pc(r.trad.cost),'\u2014',2],
-    ['Net alpha (ann.)',pc(r.comp.net),pc(r.nlpOnly.net),pc(r.trad.net),'\u2014',1],
-    ['Tracking error',pc(teOf(aC)),pc(teOf(aN)),pc(teOf(aT)),'\u2014',0],
-    ['Information ratio (net)',r.comp.irNet.toFixed(2),r.nlpOnly.irNet.toFixed(2),r.trad.irNet.toFixed(2),'\u2014',1],
+    ['Gross alpha (ann.)',pc(r.comp.gross),pc(r.nlpOnly.gross),pc(r.trad.gross),'-',1],
+    ['Transaction costs (ann.)','-'+pc(r.comp.cost),'-'+pc(r.nlpOnly.cost),'-'+pc(r.trad.cost),'-',2],
+    ['Net alpha (ann.)',pc(r.comp.net),pc(r.nlpOnly.net),pc(r.trad.net),'-',1],
+    ['Tracking error',pc(teOf(aC)),pc(teOf(aN)),pc(teOf(aT)),'-',0],
+    ['Information ratio (net)',r.comp.irNet.toFixed(2),r.nlpOnly.irNet.toFixed(2),r.trad.irNet.toFixed(2),'-',1],
     ['Volatility (total)',pc(std(r.compRet)*Math.sqrt(12)),pc(std(r.nlpRet)*Math.sqrt(12)),pc(std(r.tradRet)*Math.sqrt(12)),pc(std(r.bmRet)*Math.sqrt(12)),0],
     ['Max drawdown','-'+(maxDrawdown(r.compEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.nlpEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.tradEq)*100).toFixed(1)+'%','-'+(maxDrawdown(r.bmEq)*100).toFixed(1)+'%',2],
-    ['Hit rate (monthly active)',(r.comp.hit*100).toFixed(1)+'%',(r.nlpOnly.hit*100).toFixed(1)+'%',(r.trad.hit*100).toFixed(1)+'%','\u2014',0],
-    ['Two-way turnover (ann.)',r.comp.turn.toFixed(1)+'x',r.nlpOnly.turn.toFixed(1)+'x',r.trad.turn.toFixed(1)+'x','\u2014',0],
-    ['Info refreshes / yr (of rebalances)',r.comp.f.toFixed(1)+' of '+r.comp.fNom.toFixed(1),r.nlpOnly.f.toFixed(1)+' of '+r.nlpOnly.fNom.toFixed(1),r.trad.f.toFixed(1)+' of '+r.trad.fNom.toFixed(1),'\u2014',0],
-    ['Sizing multiple for constant TE',r.comp.lev.toFixed(2)+'x',r.nlpOnly.lev.toFixed(2)+'x',r.trad.lev.toFixed(2)+'x','\u2014',0],
-    ['Cost per unit turnover',(r.comp.costRate*1e4).toFixed(1)+' bp',(r.nlpOnly.costRate*1e4).toFixed(1)+' bp',(r.trad.costRate*1e4).toFixed(1)+' bp','\u2014',0],
-    ['Clip / median ADV',(r.comp.part*100).toFixed(2)+'%',(r.nlpOnly.part*100).toFixed(2)+'%',(r.trad.part*100).toFixed(2)+'%','\u2014',0],
-    ['Bets / yr (nominal breadth)',r.comp.brNom.toFixed(0),r.nlpOnly.brNom.toFixed(0),r.trad.brNom.toFixed(0),'\u2014',0],
-    ['Bets / yr (overlap-adjusted)',r.comp.brAdj.toFixed(0),r.nlpOnly.brAdj.toFixed(0),r.trad.brAdj.toFixed(0),'\u2014',0],
-    ['Net alpha on adj. breadth',pc(r.comp.netAdj),pc(r.nlpOnly.netAdj),pc(r.trad.netAdj),'\u2014',1],
-    ['Signal IC @ h='+state.holdDays+'d, lag '+state.entryLag+'d',r.compIC.toFixed(4),icAt(ALT_SIGNALS[0],state.holdDays).toFixed(4),r.tradIC.toFixed(4),'\u2014',0]
+    ['Hit rate (monthly active)',(r.comp.hit*100).toFixed(1)+'%',(r.nlpOnly.hit*100).toFixed(1)+'%',(r.trad.hit*100).toFixed(1)+'%','-',0],
+    ['Two-way turnover (ann.)',r.comp.turn.toFixed(1)+'x',r.nlpOnly.turn.toFixed(1)+'x',r.trad.turn.toFixed(1)+'x','-',0],
+    ['Info refreshes / yr (of rebalances)',r.comp.f.toFixed(1)+' of '+r.comp.fNom.toFixed(1),r.nlpOnly.f.toFixed(1)+' of '+r.nlpOnly.fNom.toFixed(1),r.trad.f.toFixed(1)+' of '+r.trad.fNom.toFixed(1),'-',0],
+    ['Sizing multiple for constant TE',r.comp.lev.toFixed(2)+'x',r.nlpOnly.lev.toFixed(2)+'x',r.trad.lev.toFixed(2)+'x','-',0],
+    ['Cost per unit turnover',(r.comp.costRate*1e4).toFixed(1)+' bp',(r.nlpOnly.costRate*1e4).toFixed(1)+' bp',(r.trad.costRate*1e4).toFixed(1)+' bp','-',0],
+    ['Clip / median ADV',(r.comp.part*100).toFixed(2)+'%',(r.nlpOnly.part*100).toFixed(2)+'%',(r.trad.part*100).toFixed(2)+'%','-',0],
+    ['Bets / yr (nominal breadth)',r.comp.brNom.toFixed(0),r.nlpOnly.brNom.toFixed(0),r.trad.brNom.toFixed(0),'-',0],
+    ['Bets / yr (overlap-adjusted)',r.comp.brAdj.toFixed(0),r.nlpOnly.brAdj.toFixed(0),r.trad.brAdj.toFixed(0),'-',0],
+    ['Net alpha on adj. breadth',pc(r.comp.netAdj),pc(r.nlpOnly.netAdj),pc(r.trad.netAdj),'-',1],
+    ['Signal IC @ h='+state.holdDays+'d, lag '+state.entryLag+'d',r.compIC.toFixed(4),icAt(ALT_SIGNALS[0],state.holdDays).toFixed(4),r.tradIC.toFixed(4),'-',0]
   ];
   var html='',i,j,cls;
   for(i=0;i<rows.length;i++){
@@ -1253,7 +1253,7 @@ function initControls(){
   var tHTML='';
   for(i=0;i<TRANSCRIPTS.length;i++){var t=TRANSCRIPTS[i];
     tHTML+='<button type="button" class="tr-btn'+(t.id===state.transcript?' active':'')+'" data-id="'+t.id+
-      '" title="'+t.name+' \u2014 synthetic"><span class="ticker" style="color:'+t.color+'">'+t.ticker+'</span> '+t.quarter+'</button>'}
+      '" title="'+t.name+', synthetic"><span class="ticker" style="color:'+t.color+'">'+t.ticker+'</span> '+t.quarter+'</button>'}
   tBox.innerHTML=tHTML;
   tBox.querySelectorAll('.tr-btn').forEach(function(btn){
     btn.addEventListener('click',function(){

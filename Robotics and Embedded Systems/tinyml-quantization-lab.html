@@ -20,7 +20,7 @@ a{color:var(--cyan);text-decoration:none}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-/* help modal — shell owns the frame, these are page extras */
+/* help modal, shell owns the frame, these are page extras */
 .d-help-section code{font-family:var(--mono);font-size:.74rem;color:var(--cyan-bright);background:var(--accent-bg);padding:1px 5px;border-radius:4px}
 .d-help-section table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
 .d-help-section th,.d-help-section td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;color:var(--muted)}
@@ -223,19 +223,19 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; TinyML Model Quantization Lab</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: TinyML Model Quantization Lab</h2>
       <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
       <div class="d-help-section">
         <h3>1 &middot; What this lab does</h3>
-        <p>It takes four representative TinyML models, quantises their weights the way TensorFlow Lite Micro does, and then budgets the result against a real microcontroller: <strong>flash</strong> for the weights, <strong>SRAM</strong> for the tensor arena, and <strong>cycles</strong> for the inference. Weights are drawn from a seeded generator with layer-appropriate statistics &mdash; they are not trained weights &mdash; but every number derived from them (scales, quantisation error, SQNR, model size, arena size, latency) is computed live from the same arithmetic a real toolchain uses.</p>
+        <p>It takes four representative TinyML models, quantises their weights the way TensorFlow Lite Micro does, and then budgets the result against a real microcontroller: <strong>flash</strong> for the weights, <strong>SRAM</strong> for the tensor arena, and <strong>cycles</strong> for the inference. Weights are drawn from a seeded generator with layer-appropriate statistics, they are not trained weights, but every number derived from them (scales, quantisation error, SQNR, model size, arena size, latency) is computed live from the same arithmetic a real toolchain uses.</p>
       </div>
       <div class="d-help-section">
         <h3>2 &middot; The quantisation arithmetic</h3>
-        <p><strong>Weights &mdash; symmetric, per output channel.</strong> For each output channel <code>c</code>: <code>s_c = max|w_c| / 127</code> (INT8) or <code>/ 7</code> (INT4), zero-point is exactly <strong>0</strong>. Quantise with <code>q = clamp(round(w / s_c), -127, +127)</code>, dequantise with <code>w&#770; = q &middot; s_c</code>, so dequantisation is the exact inverse of the rounding step. A symmetric zero-point is what lets CMSIS-NN skip the cross-term in the accumulator.</p>
-        <p><strong>Activations &mdash; asymmetric, per tensor.</strong> From a calibration pass: <code>s = (max &minus; min) / 255</code>, <code>z = round(&minus;min / s)</code>. Post-ReLU tensors have <code>min = 0</code>, so <code>z = 0</code>; tensors that can go negative (the input MFCC/image, the logits) get a non-zero zero-point. The lab shows the uint8 convention; int8 kernels use the same scale with the zero-point shifted by &minus;128.</p>
-        <p><strong>Clip percentile.</strong> The slider replaces <code>max|w_c|</code> with the <em>p</em>-th percentile of <code>|w_c|</code>: outliers then saturate at &plusmn;127 while every other weight gets a finer step. Drag it and watch SQNR fall &mdash; for <em>weights</em> that trade almost always loses, which is exactly why TensorFlow Lite calibrates weights with plain max-abs (p = 100%) and reserves percentile and KL calibration for <em>activation</em> ranges, where one outlier frame really can wreck the scale. The reported accuracy drop is clamped to the INT8/INT4 bands, so below roughly 99.4% it stops moving even though the SQNR keeps dropping.</p>
+        <p><strong>Weights, symmetric, per output channel.</strong> For each output channel <code>c</code>: <code>s_c = max|w_c| / 127</code> (INT8) or <code>/ 7</code> (INT4), zero-point is exactly <strong>0</strong>. Quantise with <code>q = clamp(round(w / s_c), -127, +127)</code>, dequantise with <code>w&#770; = q &middot; s_c</code>, so dequantisation is the exact inverse of the rounding step. A symmetric zero-point is what lets CMSIS-NN skip the cross-term in the accumulator.</p>
+        <p><strong>Activations, asymmetric, per tensor.</strong> From a calibration pass: <code>s = (max &minus; min) / 255</code>, <code>z = round(&minus;min / s)</code>. Post-ReLU tensors have <code>min = 0</code>, so <code>z = 0</code>; tensors that can go negative (the input MFCC/image, the logits) get a non-zero zero-point. The lab shows the uint8 convention; int8 kernels use the same scale with the zero-point shifted by &minus;128.</p>
+        <p><strong>Clip percentile.</strong> The slider replaces <code>max|w_c|</code> with the <em>p</em>-th percentile of <code>|w_c|</code>: outliers then saturate at &plusmn;127 while every other weight gets a finer step. Drag it and watch SQNR fall, for <em>weights</em> that trade almost always loses, which is exactly why TensorFlow Lite calibrates weights with plain max-abs (p = 100%) and reserves percentile and KL calibration for <em>activation</em> ranges, where one outlier frame really can wreck the scale. The reported accuracy drop is clamped to the INT8/INT4 bands, so below roughly 99.4% it stops moving even though the SQNR keeps dropping.</p>
       </div>
       <div class="d-help-section">
         <h3>3 &middot; Size, arena and latency</h3>
@@ -243,14 +243,14 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
           <dt>Model size</dt>
           <dd><code>params &times; bytes-per-weight + 8 &times; output-channels + 8 &times; tensors</code>. FP32 is 4 B/weight, INT8 1 B, INT4 0.5 B (two nibbles per byte). The overhead is the int32 multiplier and shift stored per channel plus the scale/zero-point per tensor, which is why the size ratio is a little under 4&times; and 8&times;.</dd>
           <dt>Tensor arena</dt>
-          <dd><code>max over operators of (input tensor + output tensor) + scratch</code>, where scratch is 2 KB of interpreter bookkeeping plus 8% for the CMSIS-NN im2col buffer. Buffers are reused, so the peak activation pair &mdash; not the sum of all activations &mdash; sets the requirement. Under FP32 the arena is 4&times; larger, which is usually what actually blocks deployment.</dd>
+          <dd><code>max over operators of (input tensor + output tensor) + scratch</code>, where scratch is 2 KB of interpreter bookkeeping plus 8% for the CMSIS-NN im2col buffer. Buffers are reused, so the peak activation pair, not the sum of all activations, sets the requirement. Under FP32 the arena is 4&times; larger, which is usually what actually blocks deployment.</dd>
           <dt>Latency</dt>
-          <dd>An explicit MAC-throughput model: <code>cycles = MACs / (r &middot; e)</code> with <code>r</code> = 0.32 MAC/cycle for FP32 (FPU present but load/store bound), 1.55 for INT8 (SMLAD dual-MAC), 0.50 for INT4 (no native kernel &mdash; nibbles are unpacked to int8 first). <code>e</code> is a kernel-efficiency factor: 1.0 for regular and 1&times;1 convolutions, 0.35 for depthwise (one MAC per weight load), 0.80 for fully connected (memory bound). 10&nbsp;&micro;s per operator is added for setup and requantisation.</dd>
+          <dd>An explicit MAC-throughput model: <code>cycles = MACs / (r &middot; e)</code> with <code>r</code> = 0.32 MAC/cycle for FP32 (FPU present but load/store bound), 1.55 for INT8 (SMLAD dual-MAC), 0.50 for INT4 (no native kernel: nibbles are unpacked to int8 first). <code>e</code> is a kernel-efficiency factor: 1.0 for regular and 1&times;1 convolutions, 0.35 for depthwise (one MAC per weight load), 0.80 for fully connected (memory bound). 10&nbsp;&micro;s per operator is added for setup and requantisation.</dd>
         </dl>
       </div>
       <div class="d-help-section">
         <h3>4 &middot; Accuracy degradation</h3>
-        <p>Not a lookup table: the drop is derived from the quantisation noise actually present in the sampled weights. For each layer the relative noise power <code>&Sigma;(w &minus; w&#770;)&sup2; / &Sigma;w&sup2;</code> is weighted by parameter count and by a sensitivity factor &mdash; <strong>2.5&times; for the first convolution</strong> (few parameters, wide dynamic range, every later layer inherits its error), <strong>2.0&times; for the final classifier</strong> (its errors land directly on the logits), 1.5&times; for depthwise layers (per-channel ranges vary by orders of magnitude), 1.0&times; elsewhere. The aggregate maps to a percentage-point drop and is clamped to the empirically observed bands: <strong>0.3&ndash;1.5 pp for INT8</strong>, <strong>3&ndash;10 pp for INT4</strong>.</p>
+        <p>Not a lookup table: the drop is derived from the quantisation noise actually present in the sampled weights. For each layer the relative noise power <code>&Sigma;(w &minus; w&#770;)&sup2; / &Sigma;w&sup2;</code> is weighted by parameter count and by a sensitivity factor, <strong>2.5&times; for the first convolution</strong> (few parameters, wide dynamic range, every later layer inherits its error), <strong>2.0&times; for the final classifier</strong> (its errors land directly on the logits), 1.5&times; for depthwise layers (per-channel ranges vary by orders of magnitude), 1.0&times; elsewhere. The aggregate maps to a percentage-point drop and is clamped to the empirically observed bands: <strong>0.3&ndash;1.5 pp for INT8</strong>, <strong>3&ndash;10 pp for INT4</strong>.</p>
       </div>
       <div class="d-help-section">
         <h3>5 &middot; The models</h3>
@@ -260,7 +260,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
             <tr><td>DS-CNN KWS</td><td>27.4 k</td><td>3.24 M</td><td>94.4% top-1, Speech Commands 12-class</td></tr>
             <tr><td>MobileNetV1 0.25</td><td>210.7 k</td><td>7.16 M</td><td>84.9% top-1, Visual Wake Words 96&times;96</td></tr>
             <tr><td>Anomaly autoencoder</td><td>31.6 k</td><td>31.2 k</td><td>0.889 AUC, MIMII-style machine sound</td></tr>
-            <tr><td>MNIST digit CNN</td><td>25.0 k</td><td>249 k</td><td>99.1% top-1 &mdash; the interactive one</td></tr>
+            <tr><td>MNIST digit CNN</td><td>25.0 k</td><td>249 k</td><td>99.1% top-1, the interactive one</td></tr>
           </tbody>
         </table>
         <p>Shapes, parameter counts and MAC counts are computed from the real layer geometry, so they add up. Only the MNIST CNN accepts drawn input; the other three consume audio features or camera frames that cannot be drawn, so their inference panel reports a seeded example instead.</p>
@@ -268,10 +268,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="d-help-section">
         <h3>6 &middot; Reading the panels</h3>
         <ul>
-          <li><strong>Heatmap</strong> &mdash; one row per sampled output channel, one column per sampled weight in that channel. Because quantisation is per channel, each row has its own scale; hover any cell for the FP32 value, its dequantised value and the error.</li>
-          <li><strong>Histogram</strong> &mdash; the FP32 distribution (outline) against the quantised one (filled). INT8 leaves 254 usable levels and the shape survives; INT4 leaves 14 and the distribution collapses into visible spikes.</li>
-          <li><strong>Trade-off chart</strong> &mdash; accuracy bars against size and latency for all three precisions of the current model on the current target.</li>
-          <li><strong>Target panel</strong> &mdash; flash and SRAM budgets with a pass/fail margin. Change the target to see the same model fit or fail.</li>
+          <li><strong>Heatmap</strong>: one row per sampled output channel, one column per sampled weight in that channel. Because quantisation is per channel, each row has its own scale; hover any cell for the FP32 value, its dequantised value and the error.</li>
+          <li><strong>Histogram</strong>: the FP32 distribution (outline) against the quantised one (filled). INT8 leaves 254 usable levels and the shape survives; INT4 leaves 14 and the distribution collapses into visible spikes.</li>
+          <li><strong>Trade-off chart</strong>: accuracy bars against size and latency for all three precisions of the current model on the current target.</li>
+          <li><strong>Target panel</strong>: flash and SRAM budgets with a pass/fail margin. Change the target to see the same model fit or fail.</li>
         </ul>
       </div>
     </div>
@@ -299,7 +299,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="guide-card">
         <span class="step">STEP 3</span>
         <h3>Check the fit</h3>
-        <p>Flash holds the weights, SRAM holds the tensor arena. The margin bars show pass or fail &mdash; try MobileNet in FP32 on the STM32L4 to see what actually blocks deployment.</p>
+        <p>Flash holds the weights, SRAM holds the tensor arena. The margin bars show pass or fail, try MobileNet in FP32 on the STM32L4 to see what actually blocks deployment.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 4</span>
@@ -315,7 +315,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="kpi-row">
     <div class="kpi-cell" title="Selected model architecture">
       <div class="lbl">Model</div>
-      <div class="val neutral" id="kpiModel">&mdash;</div>
+      <div class="val neutral" id="kpiModel">-</div>
     </div>
     <div class="kpi-cell" title="Weight precision: FP32, symmetric per-channel INT8, or symmetric per-channel INT4">
       <div class="lbl">Precision</div>
@@ -323,19 +323,19 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
     <div class="kpi-cell" title="Weights + per-channel scale/shift overhead, in KB">
       <div class="lbl">Model Size</div>
-      <div class="val pos" id="kpiSize">&mdash;</div>
+      <div class="val pos" id="kpiSize">-</div>
     </div>
     <div class="kpi-cell" title="Baseline accuracy minus the drop implied by the measured quantisation noise">
       <div class="lbl">Accuracy</div>
-      <div class="val pos" id="kpiAccuracy">&mdash;</div>
+      <div class="val pos" id="kpiAccuracy">-</div>
     </div>
     <div class="kpi-cell" title="Latency from the stated MAC-throughput model on the selected target">
       <div class="lbl">Latency</div>
-      <div class="val neutral" id="kpiInference">&mdash;</div>
+      <div class="val neutral" id="kpiInference">-</div>
     </div>
     <div class="kpi-cell" title="Flash used / SRAM used on the selected target">
       <div class="lbl">Flash / SRAM</div>
-      <div class="val" id="kpiFlash">&mdash;</div>
+      <div class="val" id="kpiFlash">-</div>
     </div>
   </div>
 </div>
@@ -348,10 +348,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="ctrl-group">
         <h4>Model</h4>
         <select class="model-select" id="modelSelect" aria-label="Model architecture" onchange="changeModel(this.value)">
-          <option value="kws">DS-CNN &mdash; keyword spotting (27.4k)</option>
-          <option value="person">MobileNetV1 0.25 &mdash; person detect (211k)</option>
-          <option value="ae">Autoencoder &mdash; anomaly detect (31.6k)</option>
-          <option value="mnist">MNIST digit CNN &mdash; interactive (25.0k)</option>
+          <option value="kws">DS-CNN, keyword spotting (27.4k)</option>
+          <option value="person">MobileNetV1 0.25, person detect (211k)</option>
+          <option value="ae">Autoencoder, anomaly detect (31.6k)</option>
+          <option value="mnist">MNIST digit CNN, interactive (25.0k)</option>
         </select>
       </div>
       <div class="ctrl-group">
@@ -367,7 +367,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         </div>
       </div>
       <div class="ctrl-group">
-        <h4>Weight calibration &mdash; clip percentile</h4>
+        <h4>Weight calibration: clip percentile</h4>
         <div class="slider-row">
           <input type="range" id="clipRange" min="99" max="100" step="0.05" value="100" aria-label="Weight clipping percentile">
           <span class="sv" id="clipVal">100.0%</span>
@@ -390,7 +390,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <!-- Panel 1: Weight Heatmap -->
   <div class="panel">
     <div class="panel-head">
-      <h3><i class="fas fa-th"></i> Weight Heatmap &mdash; sampled per channel</h3>
+      <h3><i class="fas fa-th"></i> Weight Heatmap: sampled per channel</h3>
       <select id="layerSelect" aria-label="Layer to inspect" onchange="selectLayerByDropdown(this.value)"></select>
     </div>
     <div class="panel-body">
@@ -425,7 +425,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="panel">
     <div class="panel-head">
       <h3><i class="fas fa-chart-bar"></i> Accuracy vs Size vs Latency</h3>
-      <span class="tag" id="tradeoffTag">&mdash;</span>
+      <span class="tag" id="tradeoffTag">-</span>
     </div>
     <div class="panel-body">
       <canvas id="tradeoffCanvas" height="300" aria-label="Bar and line chart of accuracy, model size and latency across FP32, INT8 and INT4"></canvas>
@@ -434,7 +434,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         <div class="legend-item"><span class="legend-swatch" style="background:var(--green)"></span> Model size (KB)</div>
         <div class="legend-item"><span class="legend-swatch" style="background:var(--orange);height:8px;width:8px;border-radius:50%"></span> Latency (ms)</div>
       </div>
-      <div class="lat-note" id="latNote">&mdash;</div>
+      <div class="lat-note" id="latNote">-</div>
     </div>
   </div>
 
@@ -442,14 +442,14 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="panel">
     <div class="panel-head">
       <h3><i class="fas fa-microchip"></i> Target Deployment &amp; Memory Fit</h3>
-      <span class="tag" id="targetTag">&mdash;</span>
+      <span class="tag" id="targetTag">-</span>
     </div>
     <div class="panel-body">
-      <div class="fit-note" id="targetNote">&mdash;</div>
+      <div class="fit-note" id="targetNote">-</div>
 
       <div class="flash-bar-wrap">
         <div class="flash-bar-label">
-          <span class="fl-name">Flash &mdash; bootloader + app + model</span>
+          <span class="fl-name">Flash, bootloader + app + model</span>
           <span class="fl-pct" id="flashPct">--</span>
         </div>
         <div class="flash-bar" id="flashBar">
@@ -463,7 +463,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
       <div class="flash-bar-wrap">
         <div class="flash-bar-label">
-          <span class="fl-name">SRAM &mdash; tensor arena + static + I/O buffer</span>
+          <span class="fl-name">SRAM, tensor arena + static + I/O buffer</span>
           <span class="fl-pct" id="sramPct">--</span>
         </div>
         <div class="flash-bar" id="sramBar">
@@ -518,8 +518,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <!-- Panel 5: Weight histogram -->
   <div class="panel full">
     <div class="panel-head">
-      <h3><i class="fas fa-chart-area"></i> Weight Histogram &mdash; before vs after quantisation</h3>
-      <span class="tag" id="histTag">&mdash;</span>
+      <h3><i class="fas fa-chart-area"></i> Weight Histogram: before vs after quantisation</h3>
+      <span class="tag" id="histTag">-</span>
     </div>
     <div class="panel-body">
       <canvas id="histCanvas" height="230" aria-label="Histogram of sampled layer weights before and after quantisation"></canvas>
@@ -1134,7 +1134,7 @@ function drawArchitecture(){
   document.getElementById('archModelName').textContent = model.name;
   body.innerHTML = '';
 
-  // Input layer — asymmetric per-tensor activation quantisation
+  // Input layer, asymmetric per-tensor activation quantisation
   const inQ = quantizeAsymTensor(model.inMin, model.inMax, 256);
   addArchBlock(body, {
     name: 'Input tensor',
@@ -1409,7 +1409,7 @@ function updateFlashBar(){
   const model = MODELS[currentModel], tgt = TARGETS[currentTarget];
   const m = modelMetrics(currentQuant);
 
-  document.getElementById('targetTag').textContent = tgt.name + ' \u2014 ' + tgt.core + ' @ ' + tgt.mhz + ' MHz';
+  document.getElementById('targetTag').textContent = tgt.name + ': ' + tgt.core + ' @ ' + tgt.mhz + ' MHz';
   document.getElementById('targetNote').innerHTML =
     '<b>' + tgt.name + '</b> &middot; ' + tgt.core + ' @ ' + tgt.mhz + ' MHz &middot; ' +
     tgt.flashKB + ' KB flash &middot; ' + tgt.sramKB + ' KB SRAM' +
@@ -1478,7 +1478,7 @@ function flashToMCU(){
   if(!m.flashOk || !m.sramOk){
     st.textContent = !m.flashOk
       ? 'LINK ERROR: .rodata overflows FLASH by '+(m.flashKB-tgt.flashKB).toFixed(1)+' KB'
-      : 'RUNTIME ERROR: AllocateTensors() failed \u2014 arena needs '+(m.sramKB-tgt.sramKB).toFixed(1)+' KB more SRAM';
+      : 'RUNTIME ERROR: AllocateTensors() failed, arena needs '+(m.sramKB-tgt.sramKB).toFixed(1)+' KB more SRAM';
     st.style.color = 'var(--red)';
     return;
   }
@@ -1500,7 +1500,7 @@ function flashToMCU(){
     { pct:74,  text:'Writing per-channel scales and zero-points...' },
     { pct:86,  text:'Verifying CRC32...' },
     { pct:94,  text:'AllocateTensors(): arena '+m.arenaKB.toFixed(1)+' KB of '+tgt.sramKB+' KB SRAM...' },
-    { pct:100, text:'Ready \u2014 '+tgt.name+' @ '+tgt.mhz+' MHz' }
+    { pct:100, text:'Ready · '+tgt.name+' @ '+tgt.mhz+' MHz' }
   ];
 
   let stepIdx = 0;
@@ -2082,7 +2082,7 @@ function updateAll(){
     '<b>Latency model (stated, not measured):</b> cycles = MACs / (r &middot; e) + 10 &micro;s per operator. ' +
     'r = <code>' + MACS_PER_CYCLE.fp32.toFixed(2) + '</code> MAC/cycle FP32 (FPU present but load/store bound), ' +
     '<code>' + MACS_PER_CYCLE.int8.toFixed(2) + '</code> INT8 (SMLAD dual-MAC), ' +
-    '<code>' + MACS_PER_CYCLE.int4.toFixed(2) + '</code> INT4 &mdash; there is no native CMSIS-NN INT4 kernel, so nibbles are unpacked to int8 first and INT4 is <b>slower per MAC</b> than INT8. ' +
+    '<code>' + MACS_PER_CYCLE.int4.toFixed(2) + '</code> INT4, there is no native CMSIS-NN INT4 kernel, so nibbles are unpacked to int8 first and INT4 is <b>slower per MAC</b> than INT8. ' +
     'Kernel efficiency e: 1.00 conv and 1&times;1, 0.35 depthwise (one MAC per weight load), 0.80 fully connected. ' +
     'On this model and target INT8 is <b>' + (f32.latMs/i8.latMs).toFixed(1) + '&times;</b> faster than FP32; INT4 only <b>' +
     (f32.latMs/i4.latMs).toFixed(1) + '&times;</b>, while costing ' + i4.drop.toFixed(1) + ' pp of accuracy against ' + i8.drop.toFixed(1) + ' pp.';
@@ -2101,7 +2101,7 @@ function updateInferPanel(){
   if(wrap) wrap.style.display = model.interactive ? 'flex' : 'none';
   document.getElementById('inferHeadTxt').textContent = model.interactive
     ? 'Draw a digit, or load a sample'
-    : 'On-device inference \u2014 ' + model.inputName;
+    : 'On-device inference · ' + model.inputName;
   document.getElementById('inferTargetTxt').textContent =
     'Latency on ' + TARGETS[currentTarget].name + ' (' + currentQuant.toUpperCase() + ')';
 }
@@ -2317,7 +2317,7 @@ document.getElementById('modelSelect').value = currentModel;
   Object.keys(TARGETS).forEach(function(k){
     const o = document.createElement('option');
     o.value = k;
-    o.textContent = TARGETS[k].name + ' \u2014 ' + TARGETS[k].mhz + ' MHz';
+    o.textContent = TARGETS[k].name + ': ' + TARGETS[k].mhz + ' MHz';
     ts.appendChild(o);
   });
   ts.value = currentTarget;
@@ -2353,7 +2353,7 @@ requestAnimationFrame(drawHeatmap);
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li>Quantise <code>q = clamp(round(w / s_c), &minus;q_max, q_max)</code>; dequantise <code>w&#770; = q &middot; s_c</code> &mdash; the exact inverse of the rounding step.</li>
+          <li>Quantise <code>q = clamp(round(w / s_c), &minus;q_max, q_max)</code>; dequantise <code>w&#770; = q &middot; s_c</code>, the exact inverse of the rounding step.</li>
           <li><code>MSE = mean((w &minus; w&#770;)&sup2;)</code>; <code>SQNR = 10&middot;log10(&Sigma;w&sup2; / &Sigma;(w &minus; w&#770;)&sup2;)</code> dB.</li>
           <li>Accuracy drop <code>= 21.5 &middot; N^0.35 &middot; k</code> with <code>N</code> the parameter- and sensitivity-weighted relative noise power (first conv 2.5&times;, final dense 2.0&times;, depthwise 1.5&times;) and <code>k</code> a per-model robustness factor; clamped to 0.3&ndash;1.5 pp (INT8) and 3&ndash;10 pp (INT4).</li>
           <li><code>bytes = params &middot; bpw + 8&middot;channels + 8&middot;tensors</code>; <code>cycles = &Sigma; MACs / (r &middot; e) + 10&micro;s&middot;f</code>.</li>
@@ -2375,7 +2375,7 @@ requestAnimationFrame(drawHeatmap);
     </div>
     <div class="disclaimer">Browser simulation for education. Timings, register values and sensor models are idealised approximations and are not hardware-validated.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>

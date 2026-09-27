@@ -528,7 +528,7 @@ body {
 <div class="d-help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="d-help-modal">
     <div class="d-help-head">
-      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide &mdash; Terminal Heist</h2>
+      <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: Terminal Heist</h2>
       <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="d-help-body">
@@ -550,7 +550,7 @@ body {
       </div>
       <div class="d-help-section">
         <h3>3 &middot; Permissions &amp; processes</h3>
-        <p>Every node carries a 12-bit mode, an owner and a group, and the checks are enforced exactly as on Unix: <strong>read</strong> to open a file or list a directory, <strong>write</strong> to modify it, <strong>execute</strong> on a directory to traverse into it. A directory with <code>r</code> but no <code>x</code> can be listed but not entered &mdash; that distinction is the point of level 3. <code>root</code> bypasses the read and write checks, as it does on a real system.</p>
+        <p>Every node carries a 12-bit mode, an owner and a group, and the checks are enforced exactly as on Unix: <strong>read</strong> to open a file or list a directory, <strong>write</strong> to modify it, <strong>execute</strong> on a directory to traverse into it. A directory with <code>r</code> but no <code>x</code> can be listed but not entered, that distinction is the point of level 3. <code>root</code> bypasses the read and write checks, as it does on a real system.</p>
         <dl>
           <dt>chmod MODE FILE&hellip;</dt><dd>Octal (<code>chmod 644 f</code>, <code>chmod 0700 d</code>) and symbolic (<code>chmod u+r f</code>, <code>chmod a-w,g+X d</code>).</dd>
           <dt>chown [USER][:GROUP] FILE&hellip;</dt><dd>Root only; anyone else gets <code>Operation not permitted</code>.</dd>
@@ -2262,7 +2262,7 @@ initGame();
     <div class="grid">
       <div>
         <h3>What this models</h3>
-        <p>A single-process POSIX shell emulator. The <strong>virtual filesystem</strong> is a tree of typed nodes &mdash; <code>{t:'f'|'d', mode, owner, group, mtime, content|children}</code> &mdash; rooted at <code>/</code> with <code>/bin</code>, <code>/etc</code>, <code>/home</code>, <code>/root</code>, <code>/tmp</code> and <code>/var/log</code> mounted under it and the level's puzzle data grafted into the user's home directory. The <strong>command parser</strong> tokenises the input line (quote-aware), expands <code>~</code>, <code>$VAR</code> and <code>*</code>/<code>?</code> globs, splits the leading option cluster into flags, and dispatches to a handler table. The <strong>permission model</strong> resolves each path component in turn, requiring the execute bit on every directory it traverses and the relevant r/w/x bit on the target, with the owner / group / other triad selected exactly as <code>stat(2)</code> does. The <strong>architecture is event driven</strong>: a single <code>keydown</code> listener on the input owns the line editor (history, Ctrl+L, Ctrl+C), handlers mutate one <code>GAME_STATE</code> object, and every state change re-renders the mission panel, the status strip and the nav pills instead of the DOM being poked from inside command code.</p>
+        <p>A single-process POSIX shell emulator. The <strong>virtual filesystem</strong> is a tree of typed nodes, <code>{t:'f'|'d', mode, owner, group, mtime, content|children}</code>, rooted at <code>/</code> with <code>/bin</code>, <code>/etc</code>, <code>/home</code>, <code>/root</code>, <code>/tmp</code> and <code>/var/log</code> mounted under it and the level's puzzle data grafted into the user's home directory. The <strong>command parser</strong> tokenises the input line (quote-aware), expands <code>~</code>, <code>$VAR</code> and <code>*</code>/<code>?</code> globs, splits the leading option cluster into flags, and dispatches to a handler table. The <strong>permission model</strong> resolves each path component in turn, requiring the execute bit on every directory it traverses and the relevant r/w/x bit on the target, with the owner / group / other triad selected exactly as <code>stat(2)</code> does. The <strong>architecture is event driven</strong>: a single <code>keydown</code> listener on the input owns the line editor (history, Ctrl+L, Ctrl+C), handlers mutate one <code>GAME_STATE</code> object, and every state change re-renders the mission panel, the status strip and the nav pills instead of the DOM being poked from inside command code.</p>
       </div>
       <div>
         <h3>Key assumptions</h3>
@@ -2279,8 +2279,8 @@ initGame();
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li>Access check: <code>bits = owner==user ? mode&gt;&gt;6 : group==usergroup ? mode&gt;&gt;3 : mode</code>, then <code>bits &amp; 4|2|1</code> for r|w|x &mdash; POSIX.1-2017 <em>File Access Permissions</em>; Linux <code>path_resolution(7)</code>, <code>inode(7)</code>.</li>
-          <li>Symbolic mode grammar <code>[ugoa]*[-+=][rwxX]*</code> applied left to right over comma-separated clauses, <code>X</code> setting execute only for directories or files that already have an execute bit &mdash; GNU coreutils <code>chmod(1)</code>.</li>
+          <li>Access check: <code>bits = owner==user ? mode&gt;&gt;6 : group==usergroup ? mode&gt;&gt;3 : mode</code>, then <code>bits &amp; 4|2|1</code> for r|w|x: POSIX.1-2017 <em>File Access Permissions</em>; Linux <code>path_resolution(7)</code>, <code>inode(7)</code>.</li>
+          <li>Symbolic mode grammar <code>[ugoa]*[-+=][rwxX]*</code> applied left to right over comma-separated clauses, <code>X</code> setting execute only for directories or files that already have an execute bit: GNU coreutils <code>chmod(1)</code>.</li>
           <li><code>ls -l</code> block total is <code>&Sigma; 4&times;&lceil;size/4096&rceil;</code> KiB, matching a 4 KiB block filesystem; link count is <code>2 + subdirectories</code> for a directory and 1 for a regular file.</li>
           <li>Diagnostics follow bash and coreutils wording: <code>bash: foo: command not found</code>, <code>cat: x: No such file or directory</code>, <code>ls: cannot open directory 'x': Permission denied</code>, <code>bash: kill: (7) - Operation not permitted</code>.</li>
           <li>Caesar shift of &minus;2 over A&ndash;Z with wraparound for the level-3 tokens.</li>
@@ -2291,17 +2291,17 @@ initGame();
         <h3>Limitations</h3>
         <ul>
           <li>Not a shell: no pipelines, redirection, subshells, globbing beyond <code>*</code> and <code>?</code>, quoting subtleties, exit statuses or signals other than what <code>kill</code> pretends to send.</li>
-          <li>Commands are re-implementations, not the real utilities &mdash; only the flags listed in the guide exist, and <code>grep</code> uses JavaScript regular expressions rather than POSIX BRE.</li>
+          <li>Commands are re-implementations, not the real utilities, only the flags listed in the guide exist, and <code>grep</code> uses JavaScript regular expressions rather than POSIX BRE.</li>
           <li>No inodes, hard links, symlinks, mounts, timestamps that update, or disk quotas; <code>ls -l</code> sizes are string lengths.</li>
           <li>The network in level 4 is a scripted three-step dialogue, not a protocol; nothing is transmitted anywhere.</li>
-          <li>Progress is not persisted &mdash; only the sound preference is stored in <code>localStorage</code>. Reloading restarts at level 1.</li>
+          <li>Progress is not persisted, only the sound preference is stored in <code>localStorage</code>. Reloading restarts at level 1.</li>
           <li>The side panel is hidden below 1024 px, so on a phone the mission checklist lives behind the <code>objective</code> command.</li>
         </ul>
       </div>
     </div>
     <div class="disclaimer">Browser simulation for education. This is a fictional puzzle sandbox: the hosts, files, processes and &ldquo;vault&rdquo; are invented, the emulated commands are approximations of the real utilities, and nothing here connects to or describes a real system.</div>
     <div class="bottom">
-      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Investment &amp; AI Engineering</span>
+      <span>&copy; 2026 Cristian Arenas &middot; Quantitative Research &amp; AI Engineering</span>
       <span><a href="../index.html">Home</a><a href="../index.html#demos">All demos</a><a href="../robotics-embedded.html">Robotics</a><a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener">LinkedIn</a></span>
     </div>
   </div>

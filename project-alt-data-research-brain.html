@@ -242,11 +242,11 @@ table.spec tbody tr:last-child td{border-bottom:none}
           <div class="srcgrid" id="srcgrid"></div>
           <div class="runlog" id="runlog" aria-live="polite"></div>
           <div class="metrics">
-            <div class="metric"><div class="mv" id="mItems">&mdash;</div><div class="ml">items retained</div></div>
-            <div class="metric"><div class="mv" id="mCalls">&mdash;</div><div class="ml">model calls</div></div>
-            <div class="metric"><div class="mv" id="mTok">&mdash;</div><div class="ml">tokens</div></div>
-            <div class="metric"><div class="mv" id="mCost">&mdash;</div><div class="ml">compute cost / name</div></div>
-            <div class="metric"><div class="mv" id="mTime">&mdash;</div><div class="ml">wall clock</div></div>
+            <div class="metric"><div class="mv" id="mItems">-</div><div class="ml">items retained</div></div>
+            <div class="metric"><div class="mv" id="mCalls">-</div><div class="ml">model calls</div></div>
+            <div class="metric"><div class="mv" id="mTok">-</div><div class="ml">tokens</div></div>
+            <div class="metric"><div class="mv" id="mCost">-</div><div class="ml">compute cost / name</div></div>
+            <div class="metric"><div class="mv" id="mTime">-</div><div class="ml">wall clock</div></div>
           </div>
         </div>
       </div>
@@ -408,9 +408,9 @@ table.spec tbody tr:last-child td{border-bottom:none}
         <div class="demo-body">
           <div id="connList"></div>
           <div class="metrics">
-            <div class="metric"><div class="mv" id="cPairs">&mdash;</div><div class="ml">candidates adjudicated</div></div>
-            <div class="metric"><div class="mv" id="cShown">&mdash;</div><div class="ml">surfaced to analyst</div></div>
-            <div class="metric"><div class="mv" id="cSaved">&mdash;</div><div class="ml">evaluations avoided by nomination</div></div>
+            <div class="metric"><div class="mv" id="cPairs">-</div><div class="ml">candidates adjudicated</div></div>
+            <div class="metric"><div class="mv" id="cShown">-</div><div class="ml">surfaced to analyst</div></div>
+            <div class="metric"><div class="mv" id="cSaved">-</div><div class="ml">evaluations avoided by nomination</div></div>
           </div>
         </div>
       </div>
@@ -572,7 +572,7 @@ table.spec tbody tr:last-child td{border-bottom:none}
   <div class="container">
     <div class="footer-content">
       <div class="footer-text">
-        <p>&copy; 2026 Cristian Arenas. Quantitative Investment &amp; AI/ML Engineering.</p>
+        <p>&copy; 2026 Cristian Arenas. Quantitative Research &amp; AI/ML Engineering.</p>
         <p class="footer-subtext"><a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
       </div>
       <div class="footer-links">
@@ -697,8 +697,8 @@ table.spec tbody tr:last-child td{border-bottom:none}
     ['scCold','scWarm','scFail'].forEach(function(id){ $(id).classList.remove('on'); });
     $({cold:'scCold',warm:'scWarm',fail:'scFail'}[k]).classList.add('on');
     paintStages(); paintSources(null); $('runlog').innerHTML='';
-    ['mItems','mCalls','mTok','mCost','mTime'].forEach(function(id){ $(id).textContent='—'; });
-    logLine('cy','scenario: '+SCEN[k].label+' — press Run');
+    ['mItems','mCalls','mTok','mCost','mTime'].forEach(function(id){ $(id).textContent='-'; });
+    logLine('cy','scenario: '+SCEN[k].label+', press Run');
   }
   function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 
@@ -873,7 +873,7 @@ table.spec tbody tr:last-child td{border-bottom:none}
 
   /* ---- init ---- */
   paintStages(); paintSources(null);
-  logLine('cy','ready — press Run to execute the pipeline for one name');
+  logLine('cy','ready, press Run to execute the pipeline for one name');
   $('runBtn').addEventListener('click', run);
   $('scCold').addEventListener('click', function(){ setScenario('cold'); });
   $('scWarm').addEventListener('click', function(){ setScenario('warm'); });
