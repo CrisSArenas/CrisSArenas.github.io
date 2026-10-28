@@ -45,7 +45,7 @@
         <p class="memo-cond">Conditions</p>
         <ul>
           <li>The policy register is updated first with the committee's 17 September changes, so T-1 is checked against the targets in force from 1 October 2026.</li>
-          <li>Staff query the custodian on the $10.0m gap between the printed total and the sum of the lines before the next trade list.</li>
+          <li>Staff query the custodian on the $10.0m gap before the next trade list.</li>
         </ul>
       </div>
     </section>
@@ -61,14 +61,14 @@
     </section>
 
     <section id="manager"><h2>The portfolio</h2>
-      <p>The Fictional Endowment Fund's Investment Policy Statement, adopted in March 2025, sets a target and range for each class. Liquid assets after a severe stress must cover 1.5 times the next 24 months of calls and spending. Breaches are rebalanced to the nearest range edge, private equity, hedge funds and real estate are not traded to rebalance, and no trade list may move more than 10% of the portfolio.</p>
+      <p>The Fictional Endowment Fund's Investment Policy Statement, adopted in March 2025, sets a target and range for each class. Liquid assets after a severe stress must cover 1.5 times the next 24 months of calls and spending. Breaches are rebalanced to the nearest range edge. Private equity, hedge funds and real estate are not traded to rebalance, and no trade list may move more than 10% of the portfolio.</p>
       <p>On 17 September 2026 the committee cut the hedge funds target from 12% to 10% (range 5% to 14%) and raised US Treasuries from 20% to 22% (range 14% to 32%), effective 1 October 2026. Staff will report quarterly against a reference of 70% global equity and 30% bonds, with an active risk budget of 4% a year.</p>
-      <p>The custodian carries private equity and real estate at the latest general partner values and hedge funds at administrator estimates, so private weights after a fall are estimates. Against the updated targets, hedge funds at 13.9% sit just under the new 14% ceiling and private equity is at 19.2% against 16%. The register is in the appendix.</p>
+      <p>The custodian carries private equity and real estate at the latest general partner values and hedge funds at administrator estimates, so private weights after a fall are estimates. Against the updated targets, hedge funds at 13.9% sit just under the new 14% ceiling and private equity is at 19.2% against 16%.</p>
     </section>
 
     <section id="underwriting"><h2>Analysis</h2>
       <h3>Optimal, current and policy</h3>
-      <p>I ran a maximum Sharpe optimization inside the policy ranges, with the liquidity test as a hard constraint.</p>
+      <p>I ran a maximum Sharpe optimization inside the policy ranges, with liquidity as a hard constraint.</p>
       <div class="table-wrap"><table class="memo-table">
         <thead><tr><th>Portfolio</th><th class="n">Exp. return</th><th class="n">Volatility</th><th class="n">Sharpe</th></tr></thead>
         <tbody>
@@ -83,7 +83,7 @@
       <h3>Private asset risk</h3>
       <p>Geltner desmoothing lifts private equity volatility from a reported 14.5% to 23.5%, real estate from 11.5% to 25.0% and hedge funds from 5.5% to 7.5%. The correlation of private equity with US equity rises from 0.45 to 0.72. On desmoothed numbers, private equity contributes 4.01% of the portfolio's 10.58% volatility, the largest share of any class.</p>
       <h3>Total portfolio approach</h3>
-      <p>The 70/30 reference portfolio returns 6.24% at 11.5% volatility. The current portfolio returns 6.36% at 10.6%, so it earns 0.12 pp more with 4.31% of active risk, or 0.03 per unit. US equity contributes 1.69% of active risk, international equity 0.85% and emerging markets 0.27%; private equity adds 1.20% and real estate 0.44%.</p>
+      <p>The 70/30 reference portfolio expects 6.24% at 11.5% volatility. The current portfolio expects 6.36% at 10.6%, so it earns 0.12 pp more with 4.31% of active risk, or 0.03 per unit. US equity contributes 1.69% of active risk, international equity 0.85% and emerging markets 0.27%; private equity adds 1.20% and real estate 0.44%.</p>
       <p>Moving 3% from US Treasuries to US equity cuts active risk by 0.16 pp but adds 0.40 pp of volatility for 0.07 pp of return, below the portfolio's own 0.25 per unit of risk. Moving 2% from US equity into private equity adds 0.25 pp of active risk. T-1 is a smaller move in the first direction, and I support it as a range repair.</p>
       <h3>Attribution</h3>
       <p>Over the last 12 months the portfolio returned -2.00% against -2.94% for policy, an active return of +0.94 pp. Allocation added +1.12 pp, mostly the US equity underweight (56 bps) in a year when US equity fell 9.5%. Selection cost 0.20 pp. The same underweight that helped the return is what now breaks the active risk budget.</p>
@@ -91,7 +91,7 @@
 
     <section id="fit"><h2>Portfolio fit</h2>
       <h3>Stress tests</h3>
-      <p>In a GFC-sized stress the current portfolio loses 24.5%, or $216m, with private assets shocked at economic values. The policy mix would lose 30.9% and the optimal mix 20.8%. The current portfolio loses less than policy in every scenario because it holds less equity and more Treasuries.</p>
+      <p>In a GFC-sized stress the current portfolio loses 24.5%, or $216m, with private assets shocked at economic values. The policy mix would lose 30.9% and the optimal mix 20.8%. The current portfolio loses less than policy in every scenario because it holds less public equity and more Treasuries.</p>
       <h3>Liquidity</h3>
       <p>The requirement is 1.5 times $169m, the $90m of projected calls over 24 months plus two years of spending at 4.5%, or $254m. After a GFC-sized shock the portfolio would hold $416m of liquid assets, 2.5 times calls and spending. The optimal mix keeps 51.0% of assets liquid after the same stress against 28.8% required. T-1 swaps Treasuries and cash for US equity, which trims the post-stress total, but at $7.0m the margin stays wide.</p>
       <h3>Regime view</h3>
@@ -113,7 +113,7 @@
         <tr><td>Another leg down in equities pushes US equity back below its floor and private equity toward its 22% ceiling at the same time.</td><td>Liquidity after a GFC-sized stress is $416m against $254m required. Public classes go back to the range edge; private equity is managed through pacing.</td></tr>
         <tr><td>Private weights rest on lagged general partner marks and administrator estimates.</td><td>Risk uses desmoothed volatility and correlations, and stress tests shock private assets at economic values.</td></tr>
         <tr><td>The $10.0m custodian break changes every weight.</td><td>Weights use the sum of the lines. At 0.8% of assets, T-1 keeps its direction either way.</td></tr>
-        <tr><td>Active risk stays above the 4.0% budget after T-1.</td><td>The hedge fund to international equity move addresses the largest public underweight. Staff report against the reference portfolio each quarter.</td></tr>
+        <tr><td>Active risk stays above the 4.0% budget after T-1.</td><td>The hedge fund to international equity move closes part of the international underweight, 0.85% of active risk. Staff report against the reference portfolio each quarter.</td></tr>
         <tr><td>Optimizer output is sensitive to expected returns.</td><td>I do not trade toward the optimal mix, and I check it against the resampled frontier.</td></tr>
       </tbody></table></div>
     </section>
