@@ -568,7 +568,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     /* watchlist */
     var wl = [];
     S.rows.forEach(function (r) { if (r.stale >= 2) wl.push(['warn', '<b>Stale NAV</b>: ' + UI.esc(r.f.name) + ' last marked ' + qDate(r.navQ) + ' (' + r.stale + ' quarters). Nowcast ' + F.money(r.nowcast, 1) + ' vs reported ' + F.money(r.reported, 1) + '.']); });
-    wl.push(['bad', '<b>Key person event</b>: Hasturn Mid-Market Buyout II. Departure of a named key person flagged by the <a href="/#stack" data-final="manager-selection-copilot.html">Manager Selection Copilot</a> team-changes tracker; confirm whether the key person clause triggers.']);
+    wl.push(['bad', '<b>Key person event</b>: Hasturn Mid-Market Buyout II. Departure of a named key person flagged by the <a href="manager-selection-copilot.html">Manager Selection Copilot</a> team-changes tracker; confirm whether the key person clause triggers.']);
     wl.push(['warn', '<b>Fee break</b>: Ostrel Capital Partners VI. Management fee above the LPA rate after the step-down, raised by the <a href="/#stack" data-final="fund-terms-auditor.html">Fund Terms Auditor</a>; query sent to the GP.']);
     S.rows.forEach(function (r) { if (r.unfunded > 0.45 * r.f.commitment && r.f.vintage <= 2023) wl.push(['warn', '<b>Liquidity pressure</b>: ' + UI.esc(r.f.name) + ' still has ' + F.money(r.unfunded, 1) + ' unfunded (' + F.pct(r.unfunded / r.f.commitment, 0) + ') entering the back half of its investment period.']); });
     var brk = S.pipeline && S.pipeline.breaks.filter(function (b) { return b.state !== 'rejected'; });
@@ -873,7 +873,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     $('#memoChange').innerHTML = '<li>Another 20% fall in public markets before the first close: cut 2027 toward $40m and keep the LP stake sale in the <a href="/#stack" data-final="secondaries-desk.html">Secondaries Desk</a> ready as the release valve.</li>' +
       '<li>Q3 marks arriving more than 5% below the nowcast: re-run the plan on the new marks before committing.</li>' +
       '<li>Distributions below half of the trailing year for two quarters: hold 2028 at the 2027 level.</li>';
-    $('#memoNext').innerHTML = '<p>Spend 2027 on two or three commitments of $20m to $25m: re-ups with the returning buyout and credit managers in the <a href="#program">re-up calendar</a> that pass diligence in the <a href="/#stack" data-final="manager-selection-copilot.html">Manager Selection Copilot</a>, and one secondaries fund to shorten the J-curve. Refresh the nowcast and this plan every quarter.</p>';
+    $('#memoNext').innerHTML = '<p>Spend 2027 on two or three commitments of $20m to $25m: re-ups with the returning buyout and credit managers in the <a href="#program">re-up calendar</a> that pass diligence in the <a href="manager-selection-copilot.html">Manager Selection Copilot</a>, and one secondaries fund to shorten the J-curve. Refresh the nowcast and this plan every quarter.</p>';
     $('#memoBase').textContent = 'Written for the base case, seed 42, default assumptions';
   }
 

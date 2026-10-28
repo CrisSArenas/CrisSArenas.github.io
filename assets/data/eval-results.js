@@ -19,5 +19,15 @@ window.EVAL_RESULTS = [
     "seeded": 3,
     "detected": 3,
     "falseFlagRate": 0
+  },
+  {
+    "demo": "Manager Selection Copilot",
+    "href": "manager-selection-copilot.html#evaluation",
+    "fields": 20,
+    "accuracy": 1,
+    "coverage": 1,
+    "seeded": 5,
+    "detected": 5,
+    "falseFlagRate": 0
   }
 ];

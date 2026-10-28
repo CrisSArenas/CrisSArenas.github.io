@@ -202,6 +202,51 @@
     var t = PM.opt.regimeTilt([0.25, 0.75], [[0.02, -0.02], [-0.04, 0.04]], 0.5);
     near(t[0], 0.5 * (0.25 * 0.02 - 0.75 * 0.04), 1e-12); near(t[0] + t[1], 0, 1e-12);
   }, 'Allocation Lab');
+  /* ---------------- Manager research ---------------- */
+  var DEALS = [{ invested: 10, realized: 30, unrealized: 0 }, { invested: 10, realized: 15, unrealized: 0 }, { invested: 10, realized: 5, unrealized: 0 }, { invested: 20, realized: 10, unrealized: 18 }];
+  T.add('Manager research', 'Concentration metrics match hand calculations', function () {
+    var t = PM.mgr.trackRecord(DEALS);
+    near(t.moic, 78 / 50); near(t.gains, 28); near(t.top1Share, 20 / 28); near(t.top3Share, (20 + 8 + 5) / 28);
+    near(t.lossRatio, 10 / 50); near(t.exBest.moic, 48 / 40); near(t.realizedShare, 60 / 78);
+  }, 'Manager Selection Copilot');
+  T.add('Manager research', 'Value creation bridge adds up to the equity gain', function () {
+    var d = [{ invested: 40, m0: 10, e0: 20, d0: 100, m1: 11, e1: 30, d1: 60 }], b = PM.mgr.valueBridge(d);
+    near(b.ebitda, 10 * 10 * 0.4); near(b.multiple, 1 * 30 * 0.4); near(b.deleveraging, 40 * 0.4); near(b.total, (330 - 60 - 100) * 0.4); near(b.residual, 0, 1e-12);
+  }, 'Manager Selection Copilot');
+  T.add('Manager research', 'Constrained style regression recovers known style weights', function () {
+    var rng = PM.mulberry32(21), z = PM.normalGen(rng), X = [], y = [], w = [0.5, 0.3, 0, 0.2];
+    for (var t = 0; t < 120; t++) { var r = [0.01 + 0.045 * z(), 0.008 + 0.06 * z(), 0.004 + 0.02 * z(), 0.003 + 0.002 * z()]; X.push(r); y.push(PM.dot(w, r) + 0.0005 * z()); }
+    var s = PM.mgr.styleWeights(y, X);
+    s.w.forEach(function (v, i) { near(v, w[i], 0.02, 'style ' + i); }); near(PM.sum(s.w), 1, 1e-9); ok(s.w.every(function (v) { return v >= -1e-12; }), 'non-negative');
+  }, 'Manager Selection Copilot');
+  T.add('Manager research', 'Unsmoothing recovers a known underlying series within tolerance', function () {
+    var rng = PM.mulberry32(5), z = PM.normalGen(rng), tru = [], th = [0.55, 0.3, 0.15];
+    for (var i = 0; i < 240; i++) tru.push(0.006 + 0.03 * z());
+    var obs = PM.glmSmooth(tru, th), est = PM.glmTheta(PM.autocorr(obs, 1), PM.autocorr(obs, 2)), back = PM.glmUnsmooth(obs, est);
+    near(PM.std(back.slice(2)), PM.std(tru.slice(2)), 0.12, 'volatility of the unsmoothed series');
+    ok(PM.corr(back.slice(2), tru.slice(2)) > 0.9, 'correlation with the true series ' + PM.corr(back.slice(2), tru.slice(2)));
+  }, 'Manager Selection Copilot');
+  T.add('Manager research', 'Clustering separates two clearly different groups', function () {
+    var rng = PM.mulberry32(8), z = PM.normalGen(rng), f1 = [], f2 = [], S = [];
+    for (var t = 0; t < 60; t++) { f1.push(z()); f2.push(z()); }
+    for (var k = 0; k < 6; k++) S.push(f1.map(function (v, t) { return (k < 3 ? v : f2[t]) + 0.3 * z(); }));
+    var ids = PM.mgr.cluster(S, 2); ok(ids[0] === ids[1] && ids[1] === ids[2] && ids[3] === ids[4] && ids[4] === ids[5] && ids[0] !== ids[3], 'ids ' + ids);
+  }, 'Manager Selection Copilot');
+  T.add('Manager research', 'Persistence matrix rows sum to one', function () {
+    var m = PM.mgr.persistence([1, 1, 2, 3, 4, 4, 2, 3], [1, 2, 2, 4, 4, 3, 1, 3]);
+    m.forEach(function (r) { near(PM.sum(r), 1, 1e-12); }); near(m[0][0], 0.5);
+  }, 'Manager Selection Copilot');
+  T.add('Fund terms', 'With no subscription line, IRR with and without the line is identical', function () {
+    var d = function (y, m) { return new Date(Date.UTC(y, m, 1)); };
+    var fl = [{ date: d(2020, 0), amount: -40 }, { date: d(2021, 5), amount: -30 }, { date: d(2024, 2), amount: 50 }, { date: d(2025, 11), amount: 60 }];
+    near(PM.xirr(PM.terms.sublineAdjust(fl)), PM.xirr(fl), 1e-12);
+  }, 'Fund Terms Auditor');
+  T.add('Fund terms', 'Subscription line raises IRR and leaves the multiple unchanged', function () {
+    var d = function (y, m) { return new Date(Date.UTC(y, m, 1)); };
+    var fl = [{ date: d(2021, 0), amount: -40, investDate: d(2020, 3) }, { date: d(2021, 9), amount: -30, investDate: d(2021, 0) }, { date: d(2024, 2), amount: 50 }, { date: d(2025, 11), amount: 60 }];
+    ok(PM.xirr(fl) > PM.xirr(PM.terms.sublineAdjust(fl)), 'line should lift IRR');
+    near(PM.multiples(fl.map(function (f) { return f.amount; })).tvpi, PM.multiples(PM.terms.sublineAdjust(fl).map(function (f) { return f.amount; })).tvpi, 1e-12);
+  }, 'Fund Terms Auditor');
   /* ---------------- Multi-strategy ---------------- */
   T.add('Multi-strategy', 'ERC weights give equal risk contributions', function () {
     var w = PM.opt.erc(SIG4), rc = PM.opt.riskContrib(w, SIG4);

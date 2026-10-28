@@ -1224,3 +1224,120 @@
     return t.map(function (x) { return x * (conviction == null ? 1 : conviction); });
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Manager research: deal-level track records, value creation,
+   returns-based style analysis, clustering, bootstrap skill tests,
+   persistence. And fund terms: subscription line adjustment.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, M = PM.mgr = {}, TR = PM.terms = PM.terms || {};
+
+  /** deal value = realized + unrealized; gain = value - invested; MOIC = value / invested */
+  function dv(d) { return d.realized + d.unrealized; }
+  /** trackRecord(deals): {invested, value, moic, gains, lossRatio, dispersion, top1Share, top3Share,
+      realizedShare, exBest: {moic, gains}, deals: [...with moic and gain]}.
+      lossRatio = invested capital in deals with MOIC < 1 / total invested.
+      topNShare = share of total gains from the N largest gains (gains, not value, so losses count).
+      dispersion = standard deviation of deal MOICs (sample). exBest removes the deal with the largest gain. */
+  M.trackRecord = function (deals) {
+    var inv = 0, val = 0, lossInv = 0, real = 0, rows = deals.map(function (d) { var v = dv(d); return Object.assign({}, d, { value: v, moic: v / d.invested, gain: v - d.invested }); });
+    rows.forEach(function (d) { inv += d.invested; val += d.value; real += d.realized; if (d.moic < 1) lossInv += d.invested; });
+    var gains = val - inv, byGain = rows.slice().sort(function (a, b) { return b.gain - a.gain; });
+    var share = function (n) { return gains !== 0 ? PM.sum(byGain.slice(0, n).map(function (d) { return d.gain; })) / gains : NaN; };
+    var best = byGain[0], exInv = inv - best.invested, exVal = val - best.value;
+    return { invested: inv, value: val, moic: val / inv, gains: gains, lossRatio: lossInv / inv, dispersion: PM.std(rows.map(function (d) { return d.moic; })),
+      top1Share: share(1), top3Share: share(3), realizedShare: real / val, best: best, exBest: { moic: exVal / exInv, gains: exVal - exInv, invested: exInv }, deals: rows };
+  };
+  /** dealIrr(d): gross IRR from entry and exit dates (exit = asOf for unrealized), single in/out flow */
+  M.dealIrr = function (d, asOf) {
+    var t = ((d.exit || asOf) - d.entry) / (365 * 86400000);
+    return t > 0 ? Math.pow(dv(d) / d.invested, 1 / t) - 1 : NaN;
+  };
+  /** valueBridge(deals): equity value creation split into EBITDA growth, multiple expansion and
+      deleveraging, summed over deals. For a deal: EV = multiple x EBITDA, equity = EV - net debt.
+        EBITDA growth  = (E1 - E0) x m0
+        multiple       = (m1 - m0) x E1
+        deleveraging   = D0 - D1
+      These add up to equity1 - equity0 exactly. Scaled to the LP's share by invested / equity0. */
+  M.valueBridge = function (deals) {
+    var g = 0, mx = 0, dl = 0, tot = 0;
+    deals.forEach(function (d) {
+      var eq0 = d.m0 * d.e0 - d.d0, eq1 = d.m1 * d.e1 - d.d1, s = eq0 > 0 ? d.invested / eq0 : 0;
+      var a = (d.e1 - d.e0) * d.m0 * s, b = (d.m1 - d.m0) * d.e1 * s, c = (d.d0 - d.d1) * s;
+      g += a; mx += b; dl += c; tot += (eq1 - eq0) * s;
+    });
+    return { ebitda: g, multiple: mx, deleveraging: dl, total: tot, residual: g + mx + dl - tot };
+  };
+
+  /** styleWeights(y, X): returns-based style analysis (Sharpe 1992). Minimise ||y - Xw||^2 subject to
+      w >= 0 and sum w = 1, by projected gradient onto the simplex (exact Euclidean projection) with
+      a fixed step 1 / L (L = largest eigenvalue bound, trace of X'X). Returns {w, r2, residual}. */
+  M.styleWeights = function (y, X, iters) {
+    var n = y.length, k = X[0].length, XtX = [], Xty = [];
+    for (var a = 0; a < k; a++) { XtX.push([]); var s2 = 0; for (var b = 0; b < k; b++) { var s = 0; for (var i = 0; i < n; i++) s += X[i][a] * X[i][b]; XtX[a].push(s); } for (i = 0; i < n; i++) s2 += X[i][a] * y[i]; Xty.push(s2); }
+    var L = 0; for (a = 0; a < k; a++) L += XtX[a][a];
+    var w = new Array(k).fill(1 / k), lo = new Array(k).fill(0), hi = new Array(k).fill(1);
+    for (var it = 0; it < (iters || 4000); it++) {
+      var g = XtX.map(function (r, j) { return PM.dot(r, w) - Xty[j]; });
+      w = PM.opt.projBox(w.map(function (v, j) { return v - g[j] / L; }), lo, hi);
+    }
+    var fit = X.map(function (r) { return PM.dot(r, w); }), res = y.map(function (v, i) { return v - fit[i]; });
+    var my = PM.mean(y), sst = 0, sse = 0; y.forEach(function (v, i) { sst += (v - my) * (v - my); sse += res[i] * res[i]; });
+    return { w: w, r2: sst > 0 ? 1 - sse / sst : 0, residual: res };
+  };
+
+  /** cluster(series, k): average-linkage hierarchical clustering on distance 1 - correlation,
+      cut at k clusters. Returns an array of cluster ids (0..k-1) in input order. */
+  M.cluster = function (series, k) {
+    var n = series.length, D = [];
+    for (var i = 0; i < n; i++) { D.push([]); for (var j = 0; j < n; j++) D[i].push(i === j ? 0 : 1 - PM.corr(series[i], series[j])); }
+    var cl = series.map(function (_, i) { return [i]; });
+    var dist = function (a, b) { var s = 0; a.forEach(function (x) { b.forEach(function (y) { s += D[x][y]; }); }); return s / (a.length * b.length); };
+    while (cl.length > k) {
+      var bi = 0, bj = 1, bd = 1e9;
+      for (i = 0; i < cl.length; i++) for (j = i + 1; j < cl.length; j++) { var d = dist(cl[i], cl[j]); if (d < bd) { bd = d; bi = i; bj = j; } }
+      cl[bi] = cl[bi].concat(cl[bj]); cl.splice(bj, 1);
+    }
+    var ids = new Array(n);
+    cl.sort(function (a, b) { return Math.min.apply(null, a) - Math.min.apply(null, b); }).forEach(function (c, ci) { c.forEach(function (x) { ids[x] = ci; }); });
+    return ids;
+  };
+
+  /** bootstrapAlpha(y, X, o): skill vs luck. OLS alpha and its t-stat, and a stationary block
+      bootstrap of the residuals under the null of zero alpha: share of bootstrap t-stats at or above
+      the observed one (one-sided p-value). o = {n (draws), block (mean block length), seed}. */
+  M.bootstrapAlpha = function (y, X, o) {
+    o = o || {};
+    var fit = PM.ols(y, X), T = y.length, res = fit.resid, rng = PM.mulberry32(o.seed || 1), B = o.n || 500, L = o.block || 6, ge = 0, ts = [];
+    var fitted0 = X.map(function (r) { return PM.dot(r, fit.beta); });
+    for (var b = 0; b < B; b++) {
+      var ys = [], i = Math.floor(rng() * T);
+      for (var t = 0; t < T; t++) { if (rng() < 1 / L) i = Math.floor(rng() * T); ys.push(fitted0[t] + res[i]); i = (i + 1) % T; }
+      var f = PM.ols(ys, X); ts.push(f.t[0]); if (f.t[0] >= fit.t[0]) ge++;
+    }
+    return { alpha: fit.alpha, t: fit.t[0], beta: fit.beta, r2: fit.r2, p: (ge + 1) / (B + 1), tDist: ts };
+  };
+
+  /** quartiles of values (1 = top) */
+  M.quartile = function (values) {
+    var s = values.slice().sort(function (a, b) { return b - a; });
+    return values.map(function (v) { var r = s.indexOf(v) / values.length; return r < 0.25 ? 1 : r < 0.5 ? 2 : r < 0.75 ? 3 : 4; });
+  };
+  /** persistence(q1, q2): 4x4 transition matrix, row = quartile in period 1, share landing in each quartile in period 2 */
+  M.persistence = function (q1, q2) {
+    var m = [0, 0, 0, 0].map(function () { return [0, 0, 0, 0]; }), c = [0, 0, 0, 0];
+    q1.forEach(function (a, i) { m[a - 1][q2[i] - 1]++; c[a - 1]++; });
+    return m.map(function (r, i) { return r.map(function (x) { return c[i] ? x / c[i] : 0; }); });
+  };
+
+  /** sublineAdjust(flows): LP cash flows as if capital had been called on the investment date
+      instead of being bridged by a subscription line. flows: [{date, amount, investDate?}] where a call
+      carries investDate when the GP drew on the line first. Returns the rebuilt flows. The fee for
+      the line is left in the rebuilt calls (it is part of the cost either way). */
+  TR.sublineAdjust = function (flows) {
+    return flows.map(function (f) { return f.amount < 0 && f.investDate ? { date: f.investDate, amount: f.amount } : { date: f.date, amount: f.amount }; })
+      .sort(function (a, b) { return a.date - b.date; });
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

@@ -259,7 +259,7 @@
   /* waterfall: steps [{label, value}] with a total bar at the end */
   UI.chart.waterfall = function (el, o) {
     el = resolve(el);
-    var steps = o.steps, W = o.width || 760, H = o.height || 280, m = { l: 56, r: 12, t: 14, b: 46 };
+    var steps = o.steps, W = o.width || 760, H = o.height || 280, m = { l: 56, r: 12, t: 30, b: 46 };
     var run = o.start || 0, pts = [run];
     steps.forEach(function (s) { run += s.value; pts.push(run); });
     var lo = Math.min.apply(null, pts.concat([0])), hi = Math.max.apply(null, pts);
