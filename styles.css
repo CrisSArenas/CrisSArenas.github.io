@@ -400,11 +400,6 @@ table.data td.neg { color: var(--negative); }
 }
 
 /* AI systems capability lines */
-.cap-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }
-.cap-lines a { display: block; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px 26px; color: var(--text); font-size: 1.12rem; font-weight: 500; line-height: 1.4; transition: transform .2s ease, box-shadow .2s ease; }
-.cap-lines a::after { content: ' \2192'; color: var(--accent-text); }
-.cap-lines a:hover { text-decoration: none; transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-@media (max-width: 680px) { .cap-lines { grid-template-columns: 1fr; } }
 
 /* Investment memo pages */
 .memo-doc { max-width: 720px; margin: 0 auto; padding: 56px 16px 96px; font-size: 1.0625rem; line-height: 1.7; color: var(--text); }
@@ -445,4 +440,41 @@ table.data td.neg { color: var(--negative); }
   .memo-doc h2, .memo-doc h3 { break-after: avoid; }
   .memo-table tr, .memo-rec { break-inside: avoid; }
   @page { margin: 18mm 16mm; }
+}
+
+/* AI systems section */
+.ai-sub { font-size: 1.25rem; margin: 64px 0 20px; }
+.section-head + .ai-sub { margin-top: 8px; }
+.cap-card, a.cap-card { display: flex; flex-direction: column; gap: 10px; padding: 26px; background: var(--wc-bg); border: 1px solid var(--wc-border); border-radius: 18px; box-shadow: var(--shadow); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.cap-card:hover { transform: translateY(-2px); border-color: var(--wc-hover); box-shadow: var(--shadow-hover); }
+@media (prefers-reduced-motion: reduce) { .cap-card { transition: border-color .2s ease, box-shadow .2s ease; } .cap-card:hover { transform: none; } }
+.cap-icon { width: 28px; height: 28px; fill: none; stroke: var(--wc-g); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 4px; }
+.cap-card h3 { margin: 0; color: var(--heading); font-size: 1.12rem; }
+.cap-card p { margin: 0; color: var(--text); font-size: .98rem; }
+.cap-card .cap-see { margin-top: auto; padding-top: 6px; color: var(--muted); font-size: .9rem; }
+.cap-see a { color: var(--wc-link); font-weight: 500; }
+.cap-see a:focus-visible, .ai-results a:focus-visible { outline: 2px solid var(--wc-hover); outline-offset: 3px; border-radius: 4px; }
+.stack-rows { display: flex; flex-direction: column; gap: 14px; }
+.stack-row { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 16px; align-items: start; }
+.stack-label { font-size: .85rem; font-weight: 600; color: var(--muted); padding-top: 4px; }
+.stack-row .chips { margin: 0; }
+.stack-row .chips li { font-size: .82rem; padding: 5px 12px; }
+.ai-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; margin-top: 64px; align-items: start; }
+.ai-two h3 { font-size: 1.25rem; margin: 0 0 14px; }
+.model-pick { background: var(--wc-panel); border-left: 3px solid var(--wc-hover); border-radius: 0 12px 12px 0; padding: 26px 28px; }
+.model-pick p { margin: 0; color: var(--text); line-height: 1.7; }
+.prod-grade { padding: 26px 4px; }
+.prod-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 24px; }
+.prod-list li { position: relative; padding-left: 26px; font-size: .95rem; line-height: 1.45; color: var(--text); }
+.prod-list li::before { content: ''; position: absolute; left: 0; top: .2em; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--wc-g); }
+.prod-list li::after { content: ''; position: absolute; left: 5px; top: calc(.2em + 4px); width: 6px; height: 4px; border-left: 1.5px solid var(--wc-g); border-bottom: 1.5px solid var(--wc-g); transform: rotate(-45deg); }
+.ai-results { margin-top: 8px; }
+@media (max-width: 980px) { .ai-two { grid-template-columns: minmax(0, 1fr); } .prod-grade { padding: 0; } }
+@media (max-width: 680px) {
+  .stack-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .stack-label { padding-top: 0; }
+  .prod-list { grid-template-columns: minmax(0, 1fr); }
+  .ai-sub { margin-top: 48px; }
+  .ai-two { margin-top: 48px; }
+  .model-pick { padding: 22px; }
 }
