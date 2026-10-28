@@ -360,6 +360,17 @@ b,strong{color:var(--text);font-weight:600}
     <span><i class="fas fa-lock"></i>No model is called and no order is placed</span>
     <span><i class="fas fa-building-columns"></i>Synthetic $1.0bn multi-asset book</span>
   </div>
+  <dl class="std-header" style="margin-top:18px">
+    <div><dt>Decision it supports</dt><dd>Approve or reject each proposed fix.</dd></div>
+    <div><dt>The hard problem</dt><dd>Catching breaches, capital call shortfalls and stale prices before they compound.</dd></div>
+    <div><dt>What the system takes off the team</dt><dd>The daily checks on policy ranges, drift, tracking error, liquidity, capital call coverage, issuer look-through and price freshness; sizing each fix; routing it to the right approval.</dd></div>
+    <div class="h-call"><dt>What stays with the team</dt><dd>Approve or reject each proposed fix.</dd></div>
+    <div><dt>Method</dt><dd>Limit and range checks, tracking error from a covariance matrix, a two-week liquidity horizon, capital call coverage, look-through to issuers, a stale-price gate, pre-trade compliance re-checks, a hash-chained audit log.</dd></div>
+    <div><dt>Data</dt><dd>A synthetic $1.0bn multi-asset book with private funds and uncalled commitments; deterministic events.</dd></div>
+    <div class="h-ai"><dt>Where AI is used</dt><dd>Thirteen agent roles with hard gates and an audit trail. The roles are simulated; no model is called.</dd></div>
+    <div><dt>Limitations</dt><dd>One day of events on a stylised book. Trading costs and liquidity are assumptions. No order is placed.</dd></div>
+  </dl>
+  <p class="hero-text" style="margin-top:14px"><b>What it automates.</b> Every cycle, the fleet re-checks the whole rulebook, ranks what it finds, sizes a fix for each finding and re-runs compliance on that fix before proposing it. At the autonomy level you choose, small fixes inside the rules can be released without you. <b>What it leaves to a person.</b> Everything else: any trade above the threshold, anything the committee owns, and any trade while prices are stale, which no setting lets the fleet release on its own. Private assets are never sold to fix a range. Each decision, by the fleet or by you, goes into a log that shows if anyone edits it afterwards.</p>
 </header>
 
 <nav class="stepper" id="stepper" aria-label="Walkthrough steps">
@@ -462,7 +473,7 @@ b,strong{color:var(--text);font-weight:600}
     </div>
     <div class="card">
       <div class="card-head"><h3><i class="fas fa-comments"></i> What each agent reported</h3></div>
-      <div class="feed" id="feed"></div>
+      <div id="feed"></div>
     </div>
   </div>
   <div class="tiles" id="fleetTiles" style="margin-top:16px"></div>
@@ -926,18 +937,8 @@ function sellPro(idx,pts){                         // sell `pts` of NAV pro-rata
   return w;
 }
 const EVENTS={
-  selloff:{icon:'fa-arrow-trend-down',title:'Equity sell-off',
-    desc:'Developed stocks fall 14% and emerging markets 17%; high yield drops 6% and government bonds rally 2.5%. Private-fund valuations lag and barely move.',
-    tests:'drift, the cash floor and the denominator effect',
-    apply(){
-      const shock=[-14,-14,-17,2.5,-6,-2,-3,0];
-      const mv=B.w.map((x,i)=>x*(1+shock[i]/100)),tot=mv.reduce((a,b)=>a+b,0);
-      B.nav=B.nav*tot/100;setWeights(mv);
-      push('market','equity sell-off: developed −14%, EM −17%, HY −6%, government bonds +2.5%, private marks −2 to −3% · NAV $'+B.nav.toFixed(0)+'m','w');
-      return 'Public markets fell hard while private valuations barely moved, so privates are now a bigger slice of a smaller portfolio, the <b>denominator effect</b>. NAV is now <b>$'+B.nav.toFixed(0)+'m</b>.';
-    }},
   call:{icon:'fa-hand-holding-dollar',title:'Capital call',
-    desc:'A private-equity fund the endowment committed to draws $34m. The money must be wired within ten days: from cash first, then by selling.',
+    desc:'A private-equity fund the endowment committed to draws $34m. The money must be wired within ten days: from cash first, then, if cash falls short, by selling. That shortfall is the risk this checks.',
     tests:'forced selling and the cash floor',
     apply(){
       const amt=34,pct=amt/B.nav*100;
@@ -950,6 +951,14 @@ const EVENTS={
       return '$'+amt+'m wired to the private-equity fund. Cash covered only <b>$'+(fromCash/100*B.nav).toFixed(0)+'m</b>, so <b>$'
         +(rest/100*B.nav).toFixed(0)+'m</b> of stocks and bonds had to be sold to meet it, and cash is now empty.';
     }},
+  outage:{icon:'fa-plug-circle-xmark',title:'Pricing outage (stale prices)',
+    desc:'The primary pricing vendor goes down overnight. Three asset classes are now valued on prices 29 to 63 hours old.',
+    tests:'the data-quality gate',
+    apply(){
+      B.staleHrs[1]=29;B.staleHrs[2]=41;B.staleHrs[4]=63;B.incident=true;bookVer++;
+      push('market','pricing vendor outage · Intl equity 29h, EM equity 41h, high yield 63h since last good price','e');
+      return 'Three asset classes are now priced on marks up to <b>63 hours</b> old.';
+    }},
   redemption:{icon:'fa-building-columns',title:'Redemption notice',
     desc:'The endowment will withdraw $60m in 30 days to fund university spending. Nothing is sold yet, but the cash has to be there on the day.',
     tests:'planning ahead for a known outflow',
@@ -958,6 +967,16 @@ const EVENTS={
       push('treasury','redemption notice: $60m payable in 30 days','w');
       return 'A <b>$60m</b> payment is due in 30 days. Cash today is <b>$'+(B.w[CASH]/100*B.nav).toFixed(0)+'m</b>.';
     }},
+  selloff:{icon:'fa-arrow-trend-down',title:'Equity sell-off',
+    desc:'Developed stocks fall 14% and emerging markets 17%; high yield drops 6% and government bonds rally 2.5%. Private-fund valuations are stale quarterly NAVs, so they barely move.',
+    tests:'drift, the cash floor and the denominator effect',
+    apply(){
+      const shock=[-14,-14,-17,2.5,-6,-2,-3,0];
+      const mv=B.w.map((x,i)=>x*(1+shock[i]/100)),tot=mv.reduce((a,b)=>a+b,0);
+      B.nav=B.nav*tot/100;setWeights(mv);
+      push('market','equity sell-off: developed −14%, EM −17%, HY −6%, government bonds +2.5%, private marks −2 to −3% · NAV $'+B.nav.toFixed(0)+'m','w');
+      return 'Public markets fell hard while private valuations barely moved, so privates are now a bigger slice of a smaller portfolio, the <b>denominator effect</b>. NAV is now <b>$'+B.nav.toFixed(0)+'m</b>.';
+    }},
   downgrade:{icon:'fa-ranking-star',title:'Credit downgrade',
     desc:'Issuer 04 is cut from BBB- to BB+, a “fallen angel”. The core bond sleeve may only hold investment-grade debt.',
     tests:'look-through and eligibility rules',
@@ -965,14 +984,6 @@ const EVENTS={
       const x=B.issuers[3];x.rating='BB+';x.downgraded=true;bookVer++;
       push('market',x.n+' downgraded BBB- → BB+ · below investment grade','w');
       return x.n+' is now rated <b>BB+</b>. The portfolio holds <b>'+pp(x.fi)+'%</b> of NAV in its bonds.';
-    }},
-  outage:{icon:'fa-plug-circle-xmark',title:'Pricing feed outage',
-    desc:'The primary pricing vendor goes down overnight. Three asset classes are now valued on prices 29 to 63 hours old.',
-    tests:'the data-quality gate',
-    apply(){
-      B.staleHrs[1]=29;B.staleHrs[2]=41;B.staleHrs[4]=63;B.incident=true;bookVer++;
-      push('market','pricing vendor outage · Intl equity 29h, EM equity 41h, high yield 63h since last good price','e');
-      return 'Three asset classes are now priced on marks up to <b>63 hours</b> old.';
     }}
 };
 
@@ -1257,12 +1268,12 @@ function runCycle(){
     cycleTimers.push(setTimeout(()=>{LANES[a.id]='run';paintLane(a);},SCHED.start[a.id]*SPEED));
     cycleTimers.push(setTimeout(()=>{
       LANES[a.id]=hits[a.id]?'hit':'done';paintLane(a);
-      FEED.unshift({a,hit:!!hits[a.id],msg:rep[a.id]});renderFeed();
+      FEED.unshift({a,hit:!!hits[a.id],msg:rep[a.id],t:new Date().toTimeString().slice(0,8)});renderFeed();
     },(SCHED.start[a.id]+a.ms)*SPEED));
   });
   cycleTimers.push(setTimeout(()=>{
     const n=autoRun();
-    if(n)FEED.unshift({a:AGENTS.find(x=>x.id==='router'),hit:false,msg:'Released <b>'+n+' small trade'+(n>1?'s':'')+'</b> automatically, as allowed. Each one was re-checked first.'});
+    if(n)FEED.unshift({a:AGENTS.find(x=>x.id==='router'),hit:false,t:new Date().toTimeString().slice(0,8),msg:'Released <b>'+n+' small trade'+(n>1?'s':'')+'</b> automatically, as allowed. Each one was re-checked first.'});
     running=false;cycleTimers=[];
     renderFeed();syncRun();updateStepper();refreshStatus();renderFleetTiles();
   },SCHED.span*SPEED+120));
@@ -1361,8 +1372,8 @@ function paintLane(a){
   if(LANES[a.id]==='done'||LANES[a.id]==='hit')el('fill-'+a.id).style.width=(a.ms/SCHED.span*100).toFixed(1)+'%';
 }
 function renderFeed(){
-  el('feed').innerHTML=FEED.length?FEED.map(f=>'<div class="fe'+(f.hit?' hit':'')+'"><i class="fas fa-'+(f.hit?'circle-exclamation':'circle-check')+'"></i>'
-    +'<div><span class="who">'+f.a.n+'</span><br>'+f.msg+'</div></div>').join('')
+  el('feed').innerHTML=FEED.length?'<div class="agent-log">'+FEED.map(f=>'<div class="le"><span class="t">'+(f.t||'')+'</span><span class="a">'+f.a.n+'</span>'
+    +'<span class="st '+(f.hit?'approval':'ok')+'">'+(f.hit?'finding':'ok')+'</span><span class="msg">'+f.msg+'</span></div>').join('')+'</div>'
     :'<div class="empty"><i class="fas fa-comments" style="color:var(--border-strong)"></i>Press <b>Run the monitoring cycle</b> and each agent reports here as it finishes.</div>';
 }
 function renderFleetTiles(){
@@ -1431,16 +1442,16 @@ function renderProposals(){
     if(p.resized&&p.state==='open')checks.push(['y','re-sized after an earlier approval']);
     const open=p.state==='open',canOk=open&&(p.route.mode==='manual'||p.route.mode==='auto');
     const btns=p.kind==='escalate'
-      ?'<button type="button" class="abtn ok" data-ap="'+p.id+'" '+(open&&S.auto!=='observe'?'':'disabled')+'><i class="fas fa-paper-plane"></i> Send to committee</button>'
-      :'<button type="button" class="abtn ok" data-ap="'+p.id+'" '+(canOk?'':'disabled')+'><i class="fas fa-check"></i> Approve</button>'
-       +'<button type="button" class="abtn no" data-rj="'+p.id+'" '+(open?'':'disabled')+'><i class="fas fa-xmark"></i> Reject</button>';
-    return '<div class="prop '+(p.state!=='open'?p.state:p.route.mode==='blocked'?'blocked':'')+'">'
-      +'<div class="ph"><span class="pt">#'+p.id+' &middot; '+p.title+'</span><span><span class="sev '+sevCls(p.sev)+'">'+p.sev.toUpperCase()+'</span> '
-      +'<span class="tagmini '+tag[0]+'">'+tag[1]+'</span></span></div>'
-      +'<div class="legs">'+legs+'</div><div class="why">'+p.why+'</div>'
-      +'<div class="checks">'+checks.map(c=>'<span class="chk '+c[0]+'">'+c[1]+'</span>').join('')+'</div>'
-      +'<div class="acts">'+btns+(p.by?'<span class="hint" style="margin:0">by '+p.by+'</span>':'')+'</div></div>';
+      ?'<button type="button" class="btn btn-primary btn-sm" data-ap="'+p.id+'" '+(open&&S.auto!=='observe'?'':'disabled')+'>Send to committee</button>'
+      :'<button type="button" class="btn btn-primary btn-sm" data-ap="'+p.id+'" '+(canOk?'':'disabled')+'>Approve</button>'
+       +'<button type="button" class="btn btn-ghost btn-sm" data-rj="'+p.id+'" '+(open?'':'disabled')+'>Reject</button>';
+    return '<div class="approval sev-'+(/crit|high/i.test(p.sev)?'high':'med')+(p.state!=='open'?' '+p.state:'')+'">'
+      +'<div class="ap-head"><span class="ap-title">#'+p.id+' &middot; '+p.title+'</span><span class="ap-state">'+p.sev+' &middot; '+tag[1]+'</span></div>'
+      +'<div class="ap-ev"><div class="legs">'+legs+'</div><div class="why">'+p.why+'</div>'
+      +'<div class="checks">'+checks.map(c=>'<span class="chk '+c[0]+'">'+c[1]+'</span>').join('')+'</div></div>'
+      +'<div class="ap-acts">'+btns+(p.by?'<span class="hint" style="margin:0">by '+p.by+'</span>':'')+'</div></div>';
   }).join('');
+    el('proposals').classList.add('approvals');
   el('approveAll').disabled=!proposals.some(p=>p.state==='open'&&(p.route.mode==='manual'||p.route.mode==='auto'));
   el('sleeves3').innerHTML=sleevesHTML(CYCLE0.w,true);
   const c=findings.filter(f=>f.sev==='critical'||f.sev==='high').length;
