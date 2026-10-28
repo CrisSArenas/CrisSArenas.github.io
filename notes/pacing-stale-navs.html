@@ -58,16 +58,20 @@
 <li>I hold that plan fixed and run it through a Monte Carlo with public returns, private returns, calls and distributions drawn together. The bad paths size the cash buffer.</li>
 </ol>
 <pre class="formula">Nowcast, each stale quarter k:
-  NAV_k = (NAV_k-1 + calls_k - dists_k) x (1 + B x r_index,k)
-  B = b0 + b1 + b2
-  from r_fund,t = a + b0 r_index,t + b1 r_index,t-1 + b2 r_index,t-2 + e
+  NAV_k = (NAV_k-1 + calls_k - dists_k)
+          x (1 + B x r_k)
+  r = public index return
+  B = b0 + b1 + b2, fitted from
+  r_fund,t = a + b0 r_t
+           + b1 r_t-1 + b2 r_t-2
 
 Allocation:
-  private % = nowcast NAV / (public assets + nowcast NAV)
+  private % = NAV / (public + NAV)
 
-Pacing, commitment c in year t, horizon h:
-  choose c so that projected private NAV / projected total assets = target
-  at the end of year t + h - 1, committing c in each year t to t + h - 1</pre>
+Pacing, commit c in year t, horizon h:
+  NAV / total assets = target
+  at the end of year t + h - 1,
+  with c in each year t to t + h - 1</pre>
 <h2>Worked example: the lab's base case</h2>
 <h3>The nowcast</h3>
 <p>The lab holds a made-up $1bn endowment with 20 funds, $542m committed and $148m unfunded. The target is 25% with a band of 20% to 30%. GP marks put private NAV at $264.8m, which is 26.5% of total assets. Seventeen funds are marked at 30 June 2026 and three at 31 March. The lab's public proxy returns for the last two quarters are -14.5% and -12.8%, and the median fund beta is 0.80.</p>
