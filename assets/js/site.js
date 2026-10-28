@@ -1,4 +1,4 @@
-/* Site chrome: theme (system setting with a manual toggle), mobile menu,
+/* Site chrome: theme (light by default, dark from the toggle, remembered), mobile menu,
    current-page marker. Loaded in <head> on every page so the saved theme
    applies before first paint. */
 (function () {
@@ -10,7 +10,7 @@
   function isDark() {
     var t = root.getAttribute('data-theme');
     if (t) return t === 'dark';
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return false;  /* light unless the visitor chose dark with the toggle */
   }
   window.siteTheme = { isDark: isDark };
 

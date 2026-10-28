@@ -210,10 +210,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="container">
     <a class="brand" href="/">Cristian Arenas</a>
     <ul class="nav-links">
+      <li><a href="/#about">About</a></li>
       <li><a href="/#work">Work</a></li>
       <li><a href="/#ai">AI</a></li>
       <li><a href="/#memos">Memos</a></li>
-      <li><a href="/#about">About</a></li>
       <li><a href="/#research">Research</a></li>
       <li><a href="/#contact">Contact</a></li>
     </ul>
@@ -513,10 +513,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 // ============================================================
 
 const TASK_COLORS = [
-  '#06b6d4','#10b981','#f97316','#ef4444',
-  '#8b5cf6','#ec4899','#f59e0b','#3b82f6',
-  '#14b8a6','#a855f7','#f43f5e','#22d3ee',
-  '#84cc16','#e879f9','#fb923c','#38bdf8'
+  '#5E7C70','#1F6F4A','#8A5A00','#A3312B',
+  '#13294B','#13294B','#8A5A00','#13294B',
+  '#5E7C70','#13294B','#A3312B','#5E7C70',
+  '#1F6F4A','#13294B','#8A5A00','#38bdf8'
 ];
 
 const STATE = { READY:'Ready', RUNNING:'Running', BLOCKED:'Blocked', SUSPENDED:'Suspended' };
@@ -1286,7 +1286,7 @@ function renderGantt() {
             if (entry.isInversion && !priorityInheritanceEnabled) {
               ctx.fillStyle = 'rgba(239,68,68,0.2)';
               ctx.fillRect(cx - 0.5, cy - 2, cw + 1, ch + 4);
-              ctx.strokeStyle = '#ef4444';
+              ctx.strokeStyle = '#A3312B';
               ctx.lineWidth = 1.5;
               ctx.strokeRect(cx - 0.5, cy - 2, cw + 1, ch + 4);
             }
@@ -1298,7 +1298,7 @@ function renderGantt() {
             ctx.fillRect(cx, cy, cw, 2);
 
             if (slot.holdingMutex) {
-              ctx.fillStyle = '#f59e0b';
+              ctx.fillStyle = '#8A5A00';
               ctx.font = 'bold 7px "JetBrains Mono", monospace';
               ctx.textAlign = 'center';
               ctx.fillText('M', cx + cw / 2, cy + ch / 2 + 2);
@@ -1312,7 +1312,7 @@ function renderGantt() {
             ctx.strokeRect(cx, cy, cw, ch);
             ctx.setLineDash([]);
             if (slot.blockedOn) {
-              ctx.fillStyle = hexToRGBA('#ef4444', 0.6);
+              ctx.fillStyle = hexToRGBA('#A3312B', 0.6);
               ctx.font = '6px "JetBrains Mono", monospace';
               ctx.textAlign = 'center';
               ctx.fillText('B', cx + cw / 2, cy + ch / 2 + 2);
@@ -1341,7 +1341,7 @@ function renderGantt() {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      ctx.fillStyle = '#f97316';
+      ctx.fillStyle = '#8A5A00';
       ctx.beginPath();
       ctx.moveTo(csX - 3, headerH - 1);
       ctx.lineTo(csX + 3, headerH - 1);
@@ -1354,7 +1354,7 @@ function renderGantt() {
   // Current tick marker
   if (ganttHistory.length > 0) {
     var markerX = startX + (ganttHistory.length - 1) * ganttCellWidth + ganttCellWidth / 2;
-    ctx.strokeStyle = '#10b981';
+    ctx.strokeStyle = '#1F6F4A';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([3, 2]);
     ctx.beginPath();
@@ -1363,7 +1363,7 @@ function renderGantt() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = '#10b981';
+    ctx.fillStyle = '#1F6F4A';
     ctx.beginPath();
     ctx.moveTo(markerX - 4, headerH);
     ctx.lineTo(markerX + 4, headerH);
