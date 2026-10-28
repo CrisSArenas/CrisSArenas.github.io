@@ -158,7 +158,7 @@
       var pts = [];
       sr.ys.forEach(function (v, k) { if (v != null && isFinite(v)) pts.push(X(xs[k]).toFixed(1) + ',' + Y(v).toFixed(1)); });
       if (sr.area) s += '<polygon points="' + X(xs[0]) + ',' + Y(Math.max(lo, 0)) + ' ' + pts.join(' ') + ' ' + X(xs[n - 1]) + ',' + Y(Math.max(lo, 0)) + '" style="fill:' + col(sr.color, i) + ';opacity:.14"/>';
-      s += '<polyline points="' + pts.join(' ') + '" style="fill:none;stroke:' + col(sr.color, i) + ';stroke-width:' + (sr.width || 2) + (sr.dash ? ';stroke-dasharray:' + sr.dash : '') + '"/>';
+      s += '<polyline points="' + pts.join(' ') + '" style="fill:none;stroke:' + col(sr.color, i) + ';stroke-width:' + (sr.width || 1.75) + (sr.dash ? ';stroke-dasharray:' + sr.dash : '') + '"/>';
       if (sr.dots) sr.ys.forEach(function (v, k) { if (v != null && isFinite(v)) s += '<circle cx="' + X(xs[k]) + '" cy="' + Y(v) + '" r="3" style="fill:' + col(sr.color, i) + '"/>'; });
     });
     (o.hlines || []).forEach(function (h) {
@@ -373,7 +373,7 @@
     return btn;
   };
   UI.explainBtn = function (specFn, label) {
-    return UI.explain(UI.el('button', { class: 'explain-btn', type: 'button', text: label || 'Explain', 'aria-label': 'Explain this number' }), specFn);
+    return UI.explain(UI.el('button', { class: 'explain-btn', type: 'button', text: label || 'i', 'aria-label': 'How this number is calculated', title: 'How this number is calculated' }), specFn);
   };
 
   /* ---------- KPI tiles ---------- */
@@ -414,7 +414,7 @@
       }).join('') + '</tr></tfoot>';
     }
     el.innerHTML = h + '</table></div>';
-    if (o.foot && o.footExplain) {
+    if (o.foot && o.footExplain && o.explainTotals) {
       Object.keys(o.footExplain).forEach(function (k) {
         var td = el.querySelector('tfoot td[data-k="' + k + '"]');
         if (td) { td.appendChild(document.createTextNode(' ')); td.appendChild(UI.explainBtn(o.footExplain[k])); }
@@ -464,7 +464,7 @@
   UI.exportMenu = function (el, o) {
     el = resolve(el);
     el.classList.add('export');
-    var btn = UI.el('button', { class: 'btn btn-ghost btn-sm', type: 'button', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: 'Export' });
+    var btn = UI.el('button', { class: 'btn btn-ghost btn-sm', type: 'button', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: 'More' });
     var menu = UI.el('div', { class: 'export-menu', role: 'menu' });
     el.innerHTML = ''; el.appendChild(btn); el.appendChild(menu);
     function header(kind) {
@@ -472,10 +472,11 @@
     }
     function build() {
       var ids = o.tables ? o.tables() : Object.keys(UI.tables);
-      var h = '<div class="grp">Tables (CSV)</div>';
+      var h = (o.byod ? '<div class="grp">Data</div><button role="menuitem" data-byod="1">Use your own file</button>' : '') + '<div class="grp">Export tables (CSV)</div>';
       ids.forEach(function (id) { if (UI.tables[id]) h += '<button role="menuitem" data-csv="' + id + '">' + UI.esc(UI.tables[id].name || id) + '</button>'; });
       h += '<button role="menuitem" data-csv="*">All tables in one file</button><div class="grp">Audit</div><button role="menuitem" data-json="1">Audit log (JSON)</button>' +
         '<div class="grp">Report</div><button role="menuitem" data-print="1">' + UI.esc(o.report || 'One-page report (PDF)') + '</button>';
+      h = h.replace('<div class="grp">Audit</div><button role="menuitem" data-json="1">Audit log (JSON)</button>', '') + '<div class="grp">Audit</div><button role="menuitem" data-json="1">Audit log (JSON)</button>';
       menu.innerHTML = h;
     }
     btn.addEventListener('click', function (e) { e.stopPropagation(); build(); var open = el.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
@@ -483,7 +484,9 @@
     menu.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
       el.classList.remove('open');
-      if (b.dataset.csv) {
+      if (b.dataset.byod) {
+        var z = resolve(o.byod); z.hidden = false; z.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (b.dataset.csv) {
         var ids = b.dataset.csv === '*' ? (o.tables ? o.tables() : Object.keys(UI.tables)) : [b.dataset.csv];
         var body = ids.filter(function (id) { return UI.tables[id]; }).map(function (id) {
           var t = UI.tables[id], rows = t.rows.slice(); if (t.foot) rows.push(t.foot);
@@ -498,6 +501,29 @@
         window.print();
       }
     });
+  };
+
+  /* ---------- open the tab and collapsed section that hold the element in the URL hash ---------- */
+  UI.revealHash = function (tabs) {
+    function go() {
+      var id = location.hash.slice(1), el = id && document.getElementById(id); if (!el) return;
+      var moved = false, d = el.closest('details');
+      while (d) { if (!d.open) { d.open = true; moved = true; } d = d.parentElement && d.parentElement.closest('details'); }
+      var p = el.classList.contains('tab-panel') ? el : el.closest('.tab-panel');
+      if (p && p.hidden && tabs) { tabs.show(p.id); moved = true; }
+      if (moved) setTimeout(function () { el.scrollIntoView({ block: 'start' }); }, 40);
+    }
+    go(); window.addEventListener('hashchange', go);
+    document.addEventListener('click', function (e) { var a = e.target.closest('a[href^="#"]'); if (a && a.getAttribute('href') === location.hash) setTimeout(go, 0); });
+  };
+
+  /* ---------- one muted line with a demo's evaluation results ---------- */
+  UI.evalLine = function (ev, el) {
+    el = resolve(el || '#evalLine'); if (!el || !ev) return;
+    var parts = ['Extraction accuracy ' + Math.round(ev.accuracy * 1000) / 10 + '% on ' + ev.fields + ' labeled fields'];
+    if (ev.seeded != null) parts.push(ev.detected + ' of ' + ev.seeded + ' planted issue' + (ev.seeded === 1 ? '' : 's') + ' caught');
+    if (ev.falseFlagRate != null) parts.push(ev.falseFlagRate === 0 ? 'no false flags' : Math.round(ev.falseFlagRate * 100) + '% false flags');
+    el.textContent = parts.join(' · ');
   };
 
   /* ---------- tamper-evident audit log ---------- */

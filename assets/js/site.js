@@ -38,6 +38,14 @@
         a.addEventListener('click', function () { nav.classList.remove('open'); mb.setAttribute('aria-expanded', 'false'); });
       });
     }
+    // subtle fade-in on scroll, only when motion is allowed
+    var rev = document.querySelectorAll('.reveal');
+    if (rev.length && 'IntersectionObserver' in window && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+      root.classList.add('reveal-on');
+      var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -40px 0px' });
+      rev.forEach(function (el) { io.observe(el); });
+      window.addEventListener('beforeprint', function () { rev.forEach(function (el) { el.classList.add('in'); }); });
+    }
     // mark the current page in the nav
     var path = location.pathname.replace(/index\.html$/, '');
     document.querySelectorAll('.nav-links a').forEach(function (a) {

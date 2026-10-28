@@ -16,7 +16,7 @@
     <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="/assets/css/demo-shell.css">
     <script src="/assets/js/site.js"></script>
@@ -39,12 +39,11 @@
   <div class="container">
     <a class="brand" href="/">Cristian Arenas</a>
     <ul class="nav-links">
-      <li><a href="/#stack">Stack</a></li>
-      <li><a href="/#work">Investment work</a></li>
-      <li><a href="/#ai">AI Systems</a></li>
+      <li><a href="/#work">Work</a></li>
+      <li><a href="/#ai">AI</a></li>
+      <li><a href="/#memos">Memos</a></li>
+      <li><a href="/#about">About</a></li>
       <li><a href="/#research">Research</a></li>
-      <li><a href="/notes/">Notes</a></li>
-      <li><a href="/#experience">Experience</a></li>
       <li><a href="/#contact">Contact</a></li>
     </ul>
     <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
@@ -54,42 +53,25 @@
 <!-- site-nav:end -->
 <main id="main" class="container demo-main">
   <header class="demo-hero">
-    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
-    <p class="eyebrow">02 · Private capital program</p>
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pm">Private markets</span>
     <h1>Private Capital Lab</h1>
-    <p class="lede">A fictional $1bn endowment runs a program of twenty private funds. Its NAVs arrive a quarter late, public markets have just fallen, and next year's commitment budget is due. This lab does the gathering, nowcasting, pacing and stress testing. The commitment is the committee's call.</p>
-    <div class="tags"><span class="tag tag-pm">Private markets</span><span class="tag tag-ai">AI</span></div>
-    <dl class="std-header">
-      <div><dt>Decision it supports</dt><dd>How much to commit this year, and to what.</dd></div>
-      <div><dt>The hard problem</dt><dd>Pacing a program across a portfolio of funds on stale NAVs and uncertain calls, without a liquidity squeeze.</dd></div>
-      <div><dt>What the system takes off the team</dt><dd>Reading GP statements into a reconciled, cited ledger; nowcasting stale NAVs; projecting calls, distributions and the allocation under thousands of paths.</dd></div>
-      <div class="h-call"><dt>What stays with the team</dt><dd>How much to commit this year, and to what.</dd></div>
-      <div><dt>Method</dt><dd>Takahashi-Alexander cash flow model, a pacing rule to target, quarterly Monte Carlo, NAV nowcasting on a lagged public proxy, IRR, TVPI, DPI, KS-PME, Direct Alpha, Geltner desmoothing.</dd></div>
-      <div><dt>Data</dt><dd>Synthetic data, fixed seed, fictional funds and GPs. Or your own file, processed locally.</dd></div>
-      <div class="h-ai"><dt>Where AI is used</dt><dd>Document classification, statement extraction with citations, a citation validator and a reconciliation agent, with human approval of every break.</dd></div>
-      <div><dt>Limitations</dt><dd>Model parameters are assumptions, not estimates from real funds. The pipeline is a deterministic simulation; no model is called.</dd></div>
-    </dl>
+    <p class="lede">Plan next year's private markets commitments for a $1bn endowment with 20 funds. Change the inputs and see how the allocation and cash needs move. The NAVs are a quarter old, so the lab nowcasts them first.</p>
+    <p class="eval-line" id="evalLine"></p>
   </header>
 
-  <div class="toolbar" role="region" aria-label="Demo controls">
-    <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
-    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 42. As of 30 Sep 2026.</span>
-    <span class="grow"></span>
-    <span id="testsBadge"></span>
-    <div id="exportMenu"></div>
-  </div>
-
   <div id="tabsRoot">
-    <div class="tabs">
-      <button data-tab="pacing" aria-selected="true">Pacing</button>
-      <button data-tab="nowcast">NAV nowcast</button>
-      <button data-tab="program">Program view</button>
-      <button data-tab="liquidity">Liquidity stress</button>
-      <button data-tab="evergreen">Evergreen funds</button>
-      <button data-tab="performance">Fund performance</button>
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="pacing" aria-selected="true">Pacing</button>
+        <button data-tab="nowcast">NAV nowcast</button>
+        <button data-tab="program">Program</button>
+        <button data-tab="liquidity">Liquidity</button>
+      </div>
+      <div id="exportMenu"></div>
     </div>
+    <section id="byod" hidden><div id="dzProgram"></div><div id="dzFlows"></div></section>
 
-    <!-- ================= PACING ================= -->
     <section id="pacing">
       <div class="kpis" id="pacingKpis"></div>
       <div class="split" style="margin-top:18px">
@@ -105,15 +87,8 @@
           <div class="bars-2"><div><strong style="font-size:.88rem">Private allocation, share of total assets</strong><div id="mcPct"></div></div><div><strong style="font-size:.88rem">Net cash flow to the program, $m per quarter</strong><div id="mcNet"></div></div></div>
         </div>
       </div>
-      <div class="panel"><div class="panel-head"><h3>One fund under the Takahashi-Alexander model</h3><span class="sub">The building block of every projection on this page</span></div>
-        <div class="panel-body split">
-          <div class="controls" id="taControls"></div>
-          <div><div id="taChart"></div><div class="kpis" id="taKpis" style="margin-top:12px"></div></div>
-        </div>
-      </div>
     </section>
 
-    <!-- ================= NOWCAST ================= -->
     <section id="nowcast" hidden>
       <div class="kpis" id="nowKpis"></div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Reported vs nowcast NAV, by fund</h3><span class="sub">Last reported NAV rolled forward with known cash flows and a lagged public proxy</span></div>
@@ -124,7 +99,6 @@
       </div>
     </section>
 
-    <!-- ================= PROGRAM ================= -->
     <section id="program" hidden>
       <div class="kpis" id="progKpis"></div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Twenty funds</h3><span class="sub">NAV shown as reported and as nowcast. Values from cited statements are marked.</span></div>
@@ -137,10 +111,14 @@
         <div class="panel-body"><div id="concChart"></div></div></div>
       <div class="panel"><div class="panel-head"><h3>Look-through exposure, private and public combined</h3><span class="sub">Fund holdings aggregated by NAV share, then added to the public portfolio</span></div>
         <div class="panel-body"><div id="ltSector"></div><div id="ltGeo" style="margin-top:16px"></div></div></div>
-      <div id="dzProgram"></div>
+      <h3 style="margin:28px 0 12px">Fund performance</h3><div class="toolbar"><label for="fundPick">Fund <select class="field fund-pick" id="fundPick"></select></label></div>
+      <div class="kpis" id="perfKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Cash flows and NAV, $m</h3></div><div class="panel-body"><div id="perfFlows"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Reported and desmoothed quarterly returns</h3></div><div class="panel-body"><div id="perfRet"></div><p class="eval-note" id="perfRetNote"></p></div></div>
+      </div>
     </section>
 
-    <!-- ================= LIQUIDITY ================= -->
     <section id="liquidity" hidden>
       <div class="split">
         <div class="panel"><div class="panel-head"><h3>Stress inputs</h3></div><div class="panel-body controls" id="liqControls"></div></div>
@@ -150,11 +128,9 @@
           <div class="panel"><div class="panel-head"><h3>Release valve: sell LP stakes</h3><span class="sub">Priced in the <a href="secondaries-desk.html">Secondaries Desk</a></span></div><div class="panel-body"><div id="valveChart"></div><p class="eval-note" id="valveNote"></p></div></div>
         </div>
       </div>
-    </section>
-
-    <!-- ================= EVERGREEN ================= -->
-    <section id="evergreen" hidden>
-      <p class="notice" style="margin-bottom:14px">Semi-liquid private markets funds promise limited periodic liquidity from a portfolio of illiquid assets. In 2026, reporting described managers gating evergreen funds as withdrawal requests rose (<a href="https://www.privateequitywire.co.uk/partners-group-signals-further-fund-gating-as-evergreen-withdrawal-pressure-spreads/" target="_blank" rel="noopener">Private Equity Wire</a>). This tab models one fictional fund.</p>
+      <div id="evergreen">
+        <h3 style="margin:28px 0 6px">An evergreen fund when redemptions jump</h3>
+        <p class="muted" style="margin-bottom:14px;font-size:.95rem">Semi-liquid funds offer limited liquidity on illiquid assets. This models one made-up fund through a wave of withdrawal requests.</p>
       <div class="split">
         <div class="panel"><div class="panel-head"><h3>Fund and stress</h3></div><div class="panel-body controls" id="evControls"></div></div>
         <div>
@@ -163,106 +139,97 @@
           <div class="panel"><div class="panel-head"><h3>Where the cash came from, $m</h3></div><div class="panel-body"><div id="evSources"></div><div id="evTable" style="margin-top:14px"></div></div></div>
         </div>
       </div>
-    </section>
-
-    <!-- ================= PERFORMANCE ================= -->
-    <section id="performance" hidden>
-      <div class="toolbar" style="position:static;border:0;padding:0 0 12px"><label for="fundPick">Fund <select class="field fund-pick" id="fundPick"></select></label></div>
-      <div class="kpis" id="perfKpis"></div>
-      <div class="split-2" style="margin-top:18px">
-        <div class="panel"><div class="panel-head"><h3>Cash flows and NAV, $m</h3></div><div class="panel-body"><div id="perfFlows"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Reported and desmoothed quarterly returns</h3></div><div class="panel-body"><div id="perfRet"></div><p class="eval-note" id="perfRetNote"></p></div></div>
       </div>
-      <div id="dzFlows"></div>
     </section>
   </div>
 
-  <!-- ================= AI LAYER ================= -->
-  <section class="demo-section" id="ai">
-    <h2>The agents: GP statements to a cited, reconciled ledger</h2>
-    <p class="intro">Six synthetic documents for five fictional funds: four capital account statements on four different templates, a quarterly report and a capital call notice. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called, the control flow is the real one.</span></p>
-    <div class="run-steps" id="runSteps"></div>
-    <div class="counters-wrap"><div id="counters"></div></div>
-    <div class="ai-grid">
-      <div>
-        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Breaks and gaps, with both citations</span></div><div class="panel-body"><div id="approvals"></div></div></div>
-      </div>
-      <div>
-        <div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div>
-      </div>
-    </div>
-    <div class="panel"><div class="panel-head"><h3>Reconciled, cited ledger</h3><span class="sub">Only validated values; funds with an open break are held back</span></div><div class="panel-body"><div id="ledger"></div></div></div>
-    <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/pcl-labels.js</span></div>
-      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were set by reading each document by hand and are stored apart from the documents and the pipeline, so the score is not the pipeline grading itself. Seeded issue: one planted roll-forward break. The rest of the checks are clean and count toward the false-flag rate.</p></div></div>
-    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
-  </section>
-
-  <!-- ================= MEMO ================= -->
-  <section class="demo-section" id="memo">
-    <article class="memo">
-      <div class="memo-head">
-        <div>
-          <div class="memo-kind">Pacing plan</div>
-          <h2>Commitment budget, 2027 to 2029</h2>
-          <div class="memo-meta">Written by Cristian Arenas · As of 30 Sep 2026 · Written for the base case, seed 42 · Fictional endowment</div>
-        </div>
-        <span class="call-badge go">Commit</span>
-      </div>
-      <h3>The call</h3>
-      <p class="the-call" id="memoCall"></p>
-      <h3>Situation</h3>
-      <div id="memoSituation"></div>
-      <h3>Why</h3>
-      <ol id="memoWhy"></ol>
-      <h3>Key risks</h3>
-      <ul id="memoRisks"></ul>
-      <h3>What would change my mind</h3>
-      <ul id="memoChange"></ul>
-      <h3>Sizing and next step</h3>
-      <div id="memoNext"></div>
-      <div class="memo-foot"><span>Fictional endowment and funds. Synthetic data. Not investment advice.</span><span id="memoBase"></span></div>
-    </article>
-  </section>
-
-  <!-- ================= FOOTER ================= -->
-  <footer class="demo-foot">
-    <h2>Methodology, assumptions and limitations</h2>
-    <div class="df-grid">
-      <div>
-        <h3>Method</h3>
-        <ul>
-          <li><strong>Fund model.</strong> Takahashi and Alexander (2002): calls are a fixed share of unfunded commitment during the investment period, NAV compounds at the growth rate, distributions are a rising share of NAV with a bow factor and a yield floor. The extracted code reproduces the original pacing panel exactly (<code>tests/legacy-proof.js</code>).</li>
-          <li><strong>Pacing rule.</strong> Every fund, existing and planned, follows the Takahashi-Alexander rules from its current state. Each year the plan finds, by bisection, the level commitment that puts the projected private share on target <em>h</em> years ahead, given the commitments already planned.</li>
-          <li><strong>Monte Carlo.</strong> The same fund rules at quarterly steps, with lognormal shocks: public returns, private NAV returns (beta to the public shock plus idiosyncratic noise), call rates and distribution rates (higher after good markets) drawn jointly. With every volatility set to zero it tracks the deterministic plan (tested). Spending is paid from public assets.</li>
-          <li><strong>Nowcast.</strong> Reported quarterly NAV returns are regressed on the public proxy at lags 0, 1 and 2. The lagged betas catch up the part of past market moves the mark has not yet absorbed; their sum, the economic beta, rolls the NAV through each stale quarter with the cash flows known since. Alpha is set to zero.</li>
-          <li><strong>Performance.</strong> XIRR on dated quarterly flows, TVPI, DPI, RVPI, Kaplan-Schoar PME and Direct Alpha against the public proxy, Geltner desmoothing at the measured first-order autocorrelation.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Formulas</h3>
-        <div class="formula">C_t = RC x unfunded            (t &lt;= IP)
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>Each fund follows the Takahashi-Alexander model. It calls a share of its unfunded commitment each year of the investment period, grows its NAV and pays out a rising share of NAV as it ages.</li>
+        <li>The pacing rule picks each year's commitment so projected private NAV sits on target four years out.</li>
+        <li>The Monte Carlo draws public returns, private returns, calls and distributions together, quarter by quarter, for ten years.</li>
+        <li>The nowcast regresses each fund's reported NAV returns on a public index at lags of zero to two quarters. It then rolls the last NAV through the stale quarters with the cash flows since.</li>
+        <li>Fund performance uses XIRR, TVPI, DPI, KS-PME and Direct Alpha. Quarterly returns are desmoothed with Geltner's method.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <div class="formula">C_t = RC x unfunded            (t &lt;= IP)
 NAV_t = (NAV_t-1 + C_t)(1 + G)
 D_t = max(Y, (t/L)^B) x NAV_t
 nowcast_k = (nowcast_k-1 + calls_k - dists_k)(1 + B r_proxy,k), B = b0 + b1 + b2
 KS-PME = (sum D I_T/I_t + NAV_T) / sum C I_T/I_t
 r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
-        <h3 style="margin-top:12px">Related notes</h3>
-        <ul><li><a href="/#stack" data-final="notes/pacing-stale-navs.html">Pacing a private program when the NAVs are a quarter old</a></li></ul>
+      <h3>One fund under the model</h3>
+      <div class="panel"><div class="panel-head"><h3>One fund under the Takahashi-Alexander model</h3><span class="sub">The building block of every projection on this page</span></div>
+        <div class="panel-body split">
+          <div class="controls" id="taControls"></div>
+          <div><div id="taChart"></div><div class="kpis" id="taKpis" style="margin-top:12px"></div></div>
+        </div>
+      </div>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The endowment, funds, GPs and documents are made up. You can load your own fund cash flows from the More menu, and the file never leaves your browser.</li>
+        <li>Model parameters are assumptions I picked to be plausible.</li>
+        <li>The nowcast assumes a fund's sensitivity to the index holds steady. That assumption is weakest when marks are most stale, so the band widens with each stale quarter.</li>
+        <li>The agents are a deterministic simulation over text documents. No language model is called.</li>
+      </ul>
+      <p style="margin-top:14px"><a href="/notes/" data-final="notes/pacing-stale-navs.html">Note: pacing a private program when the NAVs are a quarter old</a></p>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Agent log, approvals, source documents, evaluation, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic data, fixed seed 42. As of 30 Sep 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">Six made-up GP documents for five funds: four capital account statements in different formats, a quarterly report and a capital call notice. The agents run as a deterministic simulation, so no model is called.</p>
+    <div class="run-steps" id="runSteps"></div>
+    <div class="counters-wrap"><div id="counters"></div></div>
+    <div class="ai-grid">
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Breaks, with both source lines</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+      </div>
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div>
       </div>
     </div>
-    <h3 style="margin-top:22px">Assumptions register</h3>
-    <div id="assumptions"></div>
-    <h3 style="margin-top:22px">Limitations</h3>
-    <ul>
-      <li>All funds, GPs, documents and the endowment are fictional, and every number is synthetic. Parameters are plausible, not estimated from real funds.</li>
-      <li>The fund model is deterministic per vintage; real programs have fund-specific pacing, recallable capital and extensions.</li>
-      <li>The nowcast assumes the fund's sensitivity to the public proxy is stable. Stale marks in a fast market are exactly when that assumption is weakest, which is why the band widens with every stale quarter.</li>
-      <li>The pipeline is a simulation over text documents. It shows the control flow, citations, validation, approvals and logging, not a language model's accuracy on real PDFs.</li>
-    </ul>
-    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
-    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
-  </footer>
+    <div class="panel"><div class="panel-head"><h3>Reconciled, cited ledger</h3><span class="sub">Validated values only. A fund with an open break is held back.</span></div><div class="panel-body"><div id="ledger"></div></div></div>
+    <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/pcl-labels.js</span></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand and keep the labels in a separate file from the documents and the agents. One roll-forward break is planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
+    </div>
+  </details>
+
+  <section class="demo-section" id="memo">
+    <article class="memo">
+      <div class="memo-head">
+        <div>
+          <div class="memo-kind">Pacing memo</div>
+          <h2>Commitment budget, 2027 to 2029</h2>
+        </div>
+        <span class="call-badge go">Commit</span>
+      </div>
+      <h3>Recommendation</h3>
+      <p class="the-call" id="memoCall"></p>
+      <h3>Why</h3>
+      <ul id="memoWhy"></ul>
+      <h3>Risks</h3>
+      <ul id="memoRisks"></ul>
+      <h3>Next step</h3>
+      <div id="memoNext"></div>
+      <p class="memo-foot" id="memoBase"></p>
+    </article>
+  </section>
+
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
 </main>
 <!-- site-footer:start -->
 <footer class="site-footer">
@@ -275,13 +242,14 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       <ul>
         <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
         <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/notes/">Notes</a></li>
         <li><a href="/data-model.html">Data model</a></li>
         <li><a href="/tests.html">Model tests</a></li>
         <li><a href="/arcade.html">Games</a></li>
-        <li><a href="/robotics-embedded.html">Robotics and embedded</a></li>
+        <li><a href="/robotics-embedded.html">Robotics</a></li>
       </ul>
     </div>
-    <p class="f-copy">&copy; 2026 Cristian Arenas. Demos use synthetic data and fictional entities. Nothing on this site is investment advice.</p>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>
   </div>
 </footer>
 <!-- site-footer:end -->
@@ -849,6 +817,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var fl = UI.evalFlags(raised, seeded, Object.keys(LABELS.issues).length);
     S.eval = { ev: ev, fl: fl, kindOk: kindOk, kinds: kinds.length };
     window.EVAL = { demo: 'Private Capital Lab', href: 'private-capital-lab.html#evaluation', fields: ev.n, accuracy: ev.accuracy, coverage: ev.coverage, seeded: fl.seeded, detected: fl.detected, falseFlagRate: fl.falseFlagRate };
+    UI.evalLine(window.EVAL);
     UI.kpis('#evalKpis', [
       { id: 'evAcc', label: 'Extraction accuracy', value: F.pct(ev.accuracy, 1), sub: ev.correct + ' of ' + ev.n + ' labeled fields', explain: function () { return { title: 'Extraction accuracy', formula: 'labeled fields extracted with the right value / labeled fields', inputs: [{ name: 'Missed or wrong', value: ev.wrong.join(', ') || 'none', src: 'computed' }], result: F.pct(ev.accuracy, 1) }; } },
       { id: 'evCov', label: 'Citation coverage', value: F.pct(ev.coverage, 1), sub: 'fields with a resolving citation' },
@@ -860,21 +829,15 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
 
   /* ---------------- memo (static text, written for the base case) ---------------- */
   function renderMemo() {
-    /* The memo text is fixed. Its numbers were read from this page at seed 42 with the default
-       assumptions; each link jumps to where that number is computed live. */
-    $('#memoCall').innerHTML = 'Commit <a class="cite-num" href="#kpi-commit3">$168m</a> across the 2027 to 2029 vintages, starting with <a class="cite-num" href="#kpi-commit1">$59m</a> in 2027, and hold a liquidity buffer of at least $160m in cash and short Treasuries.';
-    $('#memoSituation').innerHTML = '<p>The fictional endowment has $1.0bn of assets, a 25% private markets target and a 20% to 30% band. Twenty funds hold <a class="cite-num" href="#kpi-pCommit">$542m</a> of commitments, <a class="cite-num" href="#kpi-pUnf">$148m</a> of it unfunded. Public markets fell about a quarter over the last two quarters while private marks still date from June or March, so the reported private allocation of <a class="cite-num" href="#kpi-pctRep">26.5%</a> overstates where the program really sits.</p>';
-    $('#memoWhy').innerHTML = '<li>Rolled forward to today, private NAV is <a class="cite-num" href="#kpi-navNow">$232m</a> and the allocation is <a class="cite-num" href="#kpi-pctNow">24.0%</a>: below target and inside the band. The denominator moved first; the program is not over-allocated.</li>' +
-      '<li>The pacing rule sets 2027 at <a class="cite-num" href="#kpi-commit1">$59m</a>, the level that puts projected private NAV on target four years out while existing vintages distribute. The next two years step down slightly as recent vintages mature.</li>' +
-      '<li>In a stress with a further 25% public drawdown, stressed calls and distributions cut by 60%, liquid public assets still cover the 12-month cash need <a class="cite-num" href="#kpi-cover">4.9x</a>. The budget does not depend on distributions arriving on time.</li>';
-    $('#memoRisks').innerHTML = '<li>Over ten years, <a class="cite-num" href="#kpi-breach">62%</a> of simulated paths cross the 30% upper band in at least one quarter, almost always right after a public drawdown. That is the denominator effect, not overcommitment, but the committee will see it in reported numbers.</li>' +
-      '<li>In <a class="cite-num" href="#kpi-shortfall">17%</a> of paths, liquid public assets fall below unfunded commitments at some point, because spending is paid from the public book. The $160m buffer, about twice the stressed 12-month need of <a class="cite-num" href="#kpi-need">$79m</a>, is sized for that.</li>' +
-      '<li>The nowcast is an estimate with a band, and a fund-specific write-down would not show up in a beta to the market. Brisolt Credit Opportunities III also has an open roll-forward break and stays out of the ledger until the GP answers.</li>';
-    $('#memoChange').innerHTML = '<li>Another 20% fall in public markets before the first close: cut 2027 toward $40m and keep the LP stake sale in the <a href="secondaries-desk.html">Secondaries Desk</a> ready as the release valve.</li>' +
-      '<li>Q3 marks arriving more than 5% below the nowcast: re-run the plan on the new marks before committing.</li>' +
-      '<li>Distributions below half of the trailing year for two quarters: hold 2028 at the 2027 level.</li>';
-    $('#memoNext').innerHTML = '<p>Spend 2027 on two or three commitments of $20m to $25m: re-ups with the returning buyout and credit managers in the <a href="#program">re-up calendar</a> that pass diligence in the <a href="manager-selection-copilot.html">Manager Selection Copilot</a>, and one secondaries fund to shorten the J-curve. Refresh the nowcast and this plan every quarter.</p>';
-    $('#memoBase').textContent = 'Written for the base case, seed 42, default assumptions';
+    /* Fixed text, read from this page at seed 42 with the default inputs. Links jump to the live numbers. */
+    $('#memoCall').innerHTML = 'Commit <a class="cite-num" href="#kpi-commit3">$168m</a> across the 2027 to 2029 vintages, starting with <a class="cite-num" href="#kpi-commit1">$59m</a> in 2027. Keep at least $160m in cash and short Treasuries.';
+    $('#memoWhy').innerHTML = '<li>Rolled forward to today, private NAV is <a class="cite-num" href="#kpi-navNow">$232m</a> and the allocation is <a class="cite-num" href="#kpi-pctNow">24.0%</a>. The reported 26.5% is too high because public markets fell and the private marks have not caught up.</li>' +
+      '<li>$59m in 2027 puts private NAV on the 25% target in four years, after the existing funds distribute.</li>' +
+      '<li>After another 25% fall in public markets, liquid assets still cover the next 12 months of calls <a class="cite-num" href="#kpi-cover">4.9 times</a>.</li>';
+    $('#memoRisks').innerHTML = '<li><a class="cite-num" href="#kpi-breach">62%</a> of simulated paths cross the 30% upper band at some point, almost always right after a public drawdown.</li>' +
+      '<li>In <a class="cite-num" href="#kpi-shortfall">17%</a> of paths, liquid assets drop below unfunded commitments. The $160m buffer is about twice the stressed 12-month need of <a class="cite-num" href="#kpi-need">$79m</a>.</li>';
+    $('#memoNext').innerHTML = '<p>I would make two or three commitments of $20m to $25m in 2027: re-ups from the <a href="#program">re-up calendar</a> and one secondaries fund to shorten the J-curve. I would rerun the plan when the Q3 marks arrive.</p>';
+    $('#memoBase').textContent = 'Numbers are from the base case (seed 42, default inputs). The endowment and funds are made up.';
   }
 
   /* ---------------- render orchestration ---------------- */
@@ -938,15 +901,14 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       columns: [{ name: 'fund' }, { name: 'date', desc: 'YYYY-MM-DD' }, { name: 'type', desc: 'contribution, distribution or nav' }, { name: 'amount', desc: '$m, positive' }],
       parse: parseFlows, onData: function (funds) { S.user = funds; $('#dataSrc').textContent = 'Your file, processed locally. Synthetic public proxy, seed ' + S.seed + '.'; buildProgram(); renderAll(); },
       onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '. As of 30 Sep 2026.'; buildProgram(); renderAll(); } });
-    UI.exportMenu('#exportMenu', { demo: 'Private Capital Lab', slug: 'private-capital-lab', report: 'Liquidity and pacing report (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
+    UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Private Capital Lab', slug: 'private-capital-lab', report: 'Liquidity and pacing report (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Private Capital Lab');
     UI.testsBadge('.tests-badge-slot', 'Private Capital Lab');
     renderMemo();
     renderAll();
     runPipeline();
     /* deep links to a tab */
-    var h = location.hash.slice(1); if (['pacing', 'nowcast', 'program', 'liquidity', 'evergreen', 'performance'].indexOf(h) !== -1) tabs.show(h);
-    window.addEventListener('hashchange', function () { var k = location.hash.slice(1); if (['pacing', 'nowcast', 'program', 'liquidity', 'evergreen', 'performance'].indexOf(k) !== -1) tabs.show(k); });
+    UI.revealHash(tabs);
   }
 
   /* ---------------- dropped files: validation and mapping (local only) ---------------- */
