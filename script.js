@@ -1,4 +1,4 @@
-/* Homepage behaviour: research figure, latest practitioner notes. */
+/* Homepage behaviour: research figure and the AI systems results row. */
 (function () {
   'use strict';
 
@@ -50,13 +50,15 @@
     });
   }
 
-  /* latest three practitioner notes, from the single list in assets/data/notes.js */
-  var box = document.getElementById('latestNotes');
-  if (box && window.NOTES) {
-    var live = window.NOTES.filter(function (n) { return n.live; }).slice(0, 3);
-    var tag = { pm: '<span class="tag tag-pm">Private markets</span>', pf: '<span class="tag tag-pf">Portfolio</span>' };
-    box.innerHTML = live.length ? live.map(function (n) {
-      return '<a class="card note-card" href="/notes/' + n.slug + '.html"><h3>' + n.title + '</h3><p>' + n.summary + '</p><div class="nc-foot"><span class="muted">Test it in the ' + n.demoName + '</span>' + tag[n.side] + '</div></a>';
-    }).join('') : '<p class="muted">The first notes are being written.</p>';
+  /* AI systems results, from the evaluation panels of every demo (assets/data/eval-results.js) */
+  var box = document.getElementById('aiResults');
+  if (box && window.EVAL_RESULTS && window.EVAL_RESULTS.length) {
+    var R = window.EVAL_RESULTS, n = 0, acc = 0, cov = 0, seeded = 0, caught = 0, ff = 0;
+    R.forEach(function (r) { n += r.fields; acc += r.accuracy * r.fields; cov += r.coverage * r.fields; seeded += r.seeded; caught += r.detected; ff += r.falseFlagRate; });
+    var pct = function (x) { return (Math.round(x * 1000) / 10) + '%'; };
+    var tiles = [[pct(acc / n), 'Extraction accuracy'], [pct(cov / n), 'Citation coverage'], [caught + ' of ' + seeded, 'Planted issues caught'], [pct(ff / R.length), 'False-flag rate']];
+    box.innerHTML = tiles.map(function (t) { return '<div class="r"><div class="v">' + t[0] + '</div><div class="l">' + t[1] + '</div></div>'; }).join('');
+    var note = document.getElementById('aiResultsNote');
+    if (note) note.textContent = 'Across ' + R.length + ' demos and ' + n + ' hand-labeled fields. Each demo recomputes its own numbers when it loads.';
   }
 })();
