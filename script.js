@@ -55,7 +55,14 @@
   if (ai) {
     var setMode = function (m) {
       ai.setAttribute('data-mode', m);
-      ai.querySelectorAll('.seg2 button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m ? 'true' : 'false'); });
+      var all = ai.querySelector('.fold-all'), folds = ai.querySelectorAll('details.ai-fold');
+    var syncAll = function () { var open = Array.prototype.every.call(folds, function (d) { return d.open; }); all.textContent = open ? 'Close all sections' : 'Open all sections'; all.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+    if (all) {
+      all.addEventListener('click', function () { var open = all.getAttribute('aria-expanded') !== 'true'; folds.forEach(function (d) { d.open = open; }); syncAll(); });
+      folds.forEach(function (d) { d.addEventListener('toggle', syncAll); });
+      syncAll();
+    }
+    ai.querySelectorAll('.seg2 button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m ? 'true' : 'false'); });
     };
     var saved = null; try { saved = localStorage.getItem('aiMode'); } catch (e) { /* storage blocked */ }
     setMode(saved === 'tech' ? 'tech' : 'plain');
