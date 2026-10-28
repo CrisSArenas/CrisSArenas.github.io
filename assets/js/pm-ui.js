@@ -119,6 +119,7 @@
     var st = niceStep(hi - lo, n || 5), a = Math.floor(lo / st) * st, out = [];
     for (var v = a; v <= hi + st * 1e-9; v += st) out.push(+v.toFixed(12));
     if (out[0] > lo) out.unshift(out[0] - st);
+    if (out[out.length - 1] < hi - st * 1e-9) out.push(+(out[out.length - 1] + st).toFixed(12));
     return out;
   }
   function col(c, i) { return 'var(--' + (c || ('s' + ((i % 6) + 1))) + ')'; }
@@ -158,7 +159,7 @@
       sr.ys.forEach(function (v, k) { if (v != null && isFinite(v)) pts.push(X(xs[k]).toFixed(1) + ',' + Y(v).toFixed(1)); });
       if (sr.area) s += '<polygon points="' + X(xs[0]) + ',' + Y(Math.max(lo, 0)) + ' ' + pts.join(' ') + ' ' + X(xs[n - 1]) + ',' + Y(Math.max(lo, 0)) + '" style="fill:' + col(sr.color, i) + ';opacity:.14"/>';
       s += '<polyline points="' + pts.join(' ') + '" style="fill:none;stroke:' + col(sr.color, i) + ';stroke-width:' + (sr.width || 2) + (sr.dash ? ';stroke-dasharray:' + sr.dash : '') + '"/>';
-      if (sr.dots) sr.ys.forEach(function (v, k) { if (isFinite(v)) s += '<circle cx="' + X(xs[k]) + '" cy="' + Y(v) + '" r="3" style="fill:' + col(sr.color, i) + '"/>'; });
+      if (sr.dots) sr.ys.forEach(function (v, k) { if (v != null && isFinite(v)) s += '<circle cx="' + X(xs[k]) + '" cy="' + Y(v) + '" r="3" style="fill:' + col(sr.color, i) + '"/>'; });
     });
     (o.hlines || []).forEach(function (h) {
       s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(h.y) + '" y2="' + Y(h.y) + '" style="stroke:var(--' + (h.color || 'negative') + ');stroke-dasharray:5 4"/>';

@@ -1688,3 +1688,65 @@
     return (lo + hi) / 2;
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Co-investment: a compact LBO, the equity value bridge, probability-weighted
+   value creation initiatives, and blending fee-free co-investment with a fund.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, L = PM.lbo = {};
+  /** model(o): annual LBO from entry to exit.
+      o = {revenue (entry year), margin (entry EBITDA margin), growth (a year, or array by year), exitMargin
+      (reached linearly by exit), capex (% of revenue), da (% of revenue), nwc (% of incremental revenue),
+      tax, entryMultiple, exitMultiple, leverage (net debt / EBITDA at entry), rate (interest on debt),
+      fees (transaction costs, % of entry EV, paid with equity), sweep (share of free cash flow repaying debt),
+      hold (years), initiatives: [{cost, uplift (run-rate EBITDA), prob, start (year), ramp (years)}]}
+      Initiatives enter probability-weighted: expected EBITDA uplift ramps in from its start year, and
+      expected cost is paid in the start year.
+      Each year: revenue grows; EBITDA = revenue x margin + uplift; tax on EBITDA - D&A - interest (floored at 0);
+      FCF = EBITDA - capex - nwc x revenue change - interest - tax - initiative cost; debt falls by sweep x FCF,
+      the rest builds cash. Exit equity = exit multiple x EBITDA - (debt - cash).
+      Returns {years: [...], ev0, debt0, equity0, ebitda0, ebitdaH, evH, netDebtH, equityH, moic, irr}. */
+  L.model = function (o) {
+    var e0 = o.revenue * o.margin, ev0 = o.entryMultiple * e0, debt = o.leverage * e0, cash = 0, rev = o.revenue, rows = [];
+    var equity0 = ev0 - debt + (o.fees || 0) * ev0, inits = o.initiatives || [];
+    for (var t = 1; t <= o.hold; t++) {
+      var g = Array.isArray(o.growth) ? o.growth[Math.min(t - 1, o.growth.length - 1)] : o.growth, prev = rev;
+      rev = rev * (1 + g);
+      var margin = o.margin + (o.exitMargin - o.margin) * t / o.hold, up = 0, cost = 0;
+      inits.forEach(function (x) { var k = t < x.start ? 0 : Math.min(1, (t - x.start + 1) / Math.max(1, x.ramp)); up += x.prob * x.uplift * k; if (t === x.start) cost += x.prob * x.cost; });
+      var ebitda = rev * margin + up, interest = o.rate * debt, da = o.da * rev, tax = Math.max(0, (ebitda - da - interest) * o.tax);
+      var fcf = ebitda - o.capex * rev - o.nwc * (rev - prev) - interest - tax - cost, pay = Math.min(debt, Math.max(0, o.sweep * fcf));
+      debt -= pay; cash += fcf - pay;
+      rows.push({ year: t, revenue: rev, margin: margin, uplift: up, ebitda: ebitda, interest: interest, tax: tax, cost: cost, fcf: fcf, debt: debt, cash: cash, netDebt: debt - cash });
+    }
+    var last = rows[rows.length - 1], evH = o.exitMultiple * last.ebitda, equityH = evH - last.netDebt, moic = equityH / equity0;
+    return { years: rows, ev0: ev0, debt0: o.leverage * e0, equity0: equity0, ebitda0: e0, ebitdaH: last.ebitda, upliftH: last.uplift, evH: evH, netDebtH: last.netDebt, equityH: equityH, moic: moic, irr: moic > 0 ? Math.pow(moic, 1 / o.hold) - 1 : -1 };
+  };
+  /** bridge(r, o): equity value creation from entry to exit, split so the parts add up exactly to
+      exit equity - equity invested:
+        EBITDA growth (organic) = (E_H - uplift - E_0) x m_0
+        initiatives             = uplift x m_0
+        multiple                = (m_H - m_0) x E_H
+        deleveraging            = net debt_0 - net debt_H
+        fees and costs          = -(fees x EV_0) */
+  L.bridge = function (r, o) {
+    var parts = { growth: (r.ebitdaH - r.upliftH - r.ebitda0) * o.entryMultiple, initiatives: r.upliftH * o.entryMultiple, multiple: (o.exitMultiple - o.entryMultiple) * r.ebitdaH, deleveraging: r.debt0 - r.netDebtH, fees: -(o.fees || 0) * r.ev0 };
+    parts.total = r.equityH - r.equity0; parts.residual = parts.growth + parts.initiatives + parts.multiple + parts.deleveraging + parts.fees - parts.total;
+    return parts;
+  };
+  /** blend(o): net multiple and IRR of a fund commitment alone and blended with fee-free co-investment.
+      o = {fundGross (gross multiple), fundHold, fee (a year on commitment), carry, pref, coGross (deal
+      multiple), coHold, coFee, coCarry, ratio (co-invest dollars per fund dollar)}.
+      Fund net = gross - fee x hold - carry on profit above the preferred return (full catch-up);
+      the blend's IRR treats both as invested at the start and returned at the end of their holds. */
+  L.blend = function (o) {
+    var net = function (g, h, fee, carry, pref) { var p = g - 1 - fee * h, hur = Math.pow(1 + (pref || 0), h) - 1, c = p > hur ? Math.min(carry * p, p - hur) : 0; return g - fee * h - c; };
+    var fN = net(o.fundGross, o.fundHold, o.fee, o.carry, o.pref), cN = net(o.coGross, o.coHold, o.coFee || 0, o.coCarry || 0, o.pref);
+    var flows = [{ t: 0, a: -(1 + o.ratio) }, { t: o.fundHold, a: fN }, { t: o.coHold, a: o.ratio * cN }];
+    var npv = function (r) { return flows.reduce(function (s, f) { return s + f.a / Math.pow(1 + r, f.t); }, 0); }, lo = -0.99, hi = 2;
+    for (var i = 0; i < 200; i++) { var mid = (lo + hi) / 2; if (npv(lo) * npv(mid) <= 0) hi = mid; else lo = mid; }
+    return { fundNet: fN, coNet: cN, fundIrr: Math.pow(fN, 1 / o.fundHold) - 1, coIrr: Math.pow(cN, 1 / o.coHold) - 1, blendMultiple: (fN + o.ratio * cN) / (1 + o.ratio), blendIrr: (lo + hi) / 2 };
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

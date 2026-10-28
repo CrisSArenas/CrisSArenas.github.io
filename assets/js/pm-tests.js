@@ -325,6 +325,20 @@
     var r = PM.sec.rollValue(2, { hold: 4, fee: 0.01, pref: 0.08, carry: 0.125, carry2: 0.2, tier2: 2.5 });
     near(r.fees, 0.04, 1e-12); near(r.carry, 0.125 * 0.96, 1e-12); near(r.net, 2 - 0.04 - 0.12, 1e-12);
   }, 'Secondaries Desk');
+  /* ---------------- Co-investment ---------------- */
+  var LBO = { revenue: 300, margin: 0.22, growth: 0.07, exitMargin: 0.24, capex: 0.04, da: 0.035, nwc: 0.10, tax: 0.25, entryMultiple: 12, exitMultiple: 11, leverage: 5.5, rate: 0.085, fees: 0.02, sweep: 0.75, hold: 5, initiatives: [{ cost: 6, uplift: 5, prob: 0.6, start: 2, ramp: 2 }] };
+  T.add('Co-investment', 'Value creation bridge components sum to the total equity gain', function () {
+    var r = PM.lbo.model(LBO), b = PM.lbo.bridge(r, LBO);
+    near(b.growth + b.initiatives + b.multiple + b.deleveraging + b.fees, b.total, 1e-9); near(b.residual, 0, 1e-9);
+  }, 'Co-Investment Underwriter');
+  T.add('Co-investment', 'LBO with no growth, no leverage and flat multiples returns the fee drag only', function () {
+    var o = Object.assign({}, LBO, { growth: 0, exitMargin: LBO.margin, leverage: 0, exitMultiple: 12, capex: 0, da: 0, nwc: 0, tax: 0, sweep: 0, initiatives: [], hold: 1 });
+    var r = PM.lbo.model(o); near(r.equityH, r.ev0 + r.years[0].fcf, 1e-9); near(r.moic, (r.ev0 + 66) / (r.ev0 * 1.02), 1e-9);
+  }, 'Co-Investment Underwriter');
+  T.add('Co-investment', 'Fee-free co-investment lifts the blended net IRR', function () {
+    var a = PM.lbo.blend({ fundGross: 2, fundHold: 5, fee: 0.015, carry: 0.2, pref: 0.08, coGross: 2, coHold: 5, ratio: 0 }), b = PM.lbo.blend({ fundGross: 2, fundHold: 5, fee: 0.015, carry: 0.2, pref: 0.08, coGross: 2, coHold: 5, ratio: 0.5 });
+    near(a.blendIrr, a.fundIrr, 1e-9); ok(b.blendIrr > a.blendIrr, 'blend higher'); near(b.coNet, 2, 1e-12);
+  }, 'Co-Investment Underwriter');
 
   if (typeof module !== 'undefined' && module.exports) module.exports = T;
 })(typeof window !== 'undefined' ? window : globalThis);

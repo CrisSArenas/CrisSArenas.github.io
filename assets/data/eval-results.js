@@ -59,5 +59,15 @@ window.EVAL_RESULTS = [
     "seeded": 4,
     "detected": 4,
     "falseFlagRate": 0
+  },
+  {
+    "demo": "Co-Investment Underwriter",
+    "href": "co-invest-underwriter.html#evaluation",
+    "fields": 21,
+    "accuracy": 1,
+    "coverage": 1,
+    "seeded": 3,
+    "detected": 3,
+    "falseFlagRate": 0
   }
 ];
