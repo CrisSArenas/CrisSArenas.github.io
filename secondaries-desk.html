@@ -148,25 +148,8 @@ sell = (1 + opp)^hold</div>
     </div>
   </details>
 
-  <section class="demo-section" id="memo">
-    <article class="memo">
-      <div class="memo-head">
-        <div>
-          <div class="memo-kind">Secondary bid and CV election</div>
-          <h2>Six-fund LP portfolio, and Fenmoor Capital Partners IV</h2>
-        </div>
-        <span class="call-badge">Bid 88% · Sell the CV</span>
-      </div>
-      <h3>Recommendation</h3>
-      <p class="the-call" id="memoCall"></p>
-      <h3>Why</h3>
-      <ul id="memoWhy"></ul>
-      <h3>Risks</h3>
-      <ul id="memoRisks"></ul>
-      <h3>Next step</h3>
-      <div id="memoNext"></div>
-      <p class="memo-foot" id="memoBase"></p>
-    </article>
+  <section class="demo-section memo-link-sec" id="memo">
+    <a class="card memo-card" href="/memos/secondary-lp-portfolio.html"><span class="memo-no">Memo 04</span><span class="kind">Secondary purchase</span><h3>Six-fund LP portfolio</h3><p>Six fund interests offered for sale, plus a GP-led continuation vehicle vote on one of the funds.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
   </section>
 
   <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
@@ -395,15 +378,6 @@ sell = (1 + opp)^hold</div>
         .concat(ids.map(function (id) { var s = LABELS.checklist[id].concern, r = raised.indexOf(id) !== -1; return { k: 'checklist: ' + id, t: s ? 'raise' : 'pass', e: r ? 'raise' : 'pass', ok: s === r ? 'yes' : 'no' }; })) });
   }
 
-  /* ---------------- memo ---------------- */
-  function renderMemo() {
-    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
-    $('#memoCall').innerHTML = "Bid 88% of 31 March NAV, $150m, for the six interests. In the Fenmoor continuation vehicle, elect to sell.";
-    $('#memoWhy').innerHTML = "<li>Rolled forward on public markets, the NAVs are worth <a class=\"cite-num\" href=\"#kpi-rolledNav\">$162.8m</a> today, 4.8% below reported. A bid of <a class=\"cite-num\" href=\"#kpi-bidPct\">87.9%</a> of reported NAV is 92% of that.</li><li>At this price the cash flows return 15%. Across 1,000 paths the IRR runs from <a class=\"cite-num\" href=\"#kpi-irrRange\">12.6% to 17.8%</a>.</li><li>Rolling into the CV needs <a class=\"cite-num\" href=\"#kpi-breakEven\">1.57x</a> gross in four years to match selling. My house case of 1.70x clears it by <a class=\"cite-num\" href=\"#kpi-rollEdge\">$1.32m</a>, and loses if the GP uses both extensions.</li>";
-    $('#memoRisks').innerHTML = "<li>We take on <a class=\"cite-num\" href=\"#kpi-unfunded\">$29.0m</a> of unfunded commitments, $14m of it in Tamsin Buyout IX.</li><li>Selling gives up the GP case. At 2.3x, rolling would be worth 0.64x more per dollar.</li>";
-    $('#memoNext').innerHTML = "<p>Submit prices fund by fund, conditional on Q2 NAVs within 5% of the roll-forward. Return the Fenmoor form as a sale and ask the advisory committee for the 20 business days the LPA requires.</p>";
-    $('#memoBase').textContent = "Numbers are from the base case (seed 21, default inputs). The funds and GP are made up.";
-  }
 
   /* ---------------- dropped file ---------------- */
   function parsePortfolio(rows) {
@@ -422,7 +396,7 @@ sell = (1 + opp)^hold</div>
     return { errors: errs, data: out, summary: out.length + ' fund interests, ' + F.money(PM.sum(out.map(function (f) { return f.nav || 0; })), 1) + ' of NAV' };
   }
 
-  function renderAll() { renderPricing(); renderSensitivity(); renderCV(); renderMemo(); }
+  function renderAll() { renderPricing(); renderSensitivity(); renderCV(); }
   function init() {
     reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); });
     UI.table('#modelTable', { id: 'models', name: 'Projection model by strategy', columns: [{ key: 'label', label: 'Strategy' }, { key: 'rc', label: 'Call rate', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'ip', label: 'Investment period', num: 1 }, { key: 'life', label: 'Life', num: 1 }, { key: 'growth', label: 'NAV growth', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'bow', label: 'Bow', num: 1 }, { key: 'yieldFloor', label: 'Yield floor', num: 1, fmt: function (v) { return v ? F.pct(v, 0) : '–'; } }, { key: 'beta', label: 'Beta to public equity', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'vol', label: 'Growth shock vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }], rows: Object.keys(MODELS).map(function (k) { return MODELS[k]; }) });
@@ -440,6 +414,13 @@ sell = (1 + opp)^hold</div>
     UI.revealHash(tabs);
   }
   init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!S.book) return null;
+    var xs = []; for (var i = 10; i <= 22; i++) xs.push(i / 100);
+    return { value: F.pct(S.book.pct, 1), label: 'Bid as a share of NAV', chart: { type: 'curve', xs: xs, ys: xs.map(function (t) { return +priceBook(t, A.haircut).pct.toFixed(4); }), mark: { x: A.target, y: +S.book.pct.toFixed(4) } } };
+  };
 })();
 </script>
 </body>

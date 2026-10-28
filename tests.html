@@ -56,6 +56,7 @@
   </header>
   <div class="t-sum"><span id="tSum" class="tests-badge"><span class="dot"></span><span>Running</span></span><button class="btn btn-ghost btn-sm" id="rerun" type="button">Run again</button><span class="muted" id="tTime"></span></div>
   <div id="tOut"></div>
+  <div id="tCards"></div>
 </main>
 <!-- site-footer:start -->
 <footer class="site-footer">
@@ -84,19 +85,63 @@
 (function () {
   function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
   function run() {
-    var t0 = performance.now(), r = PMTests.run(), groups = {};
+    var t0 = performance.now(), r = lastRun = PMTests.run(), groups = {};
     r.results.forEach(function (x) { (groups[x.group] = groups[x.group] || []).push(x); });
     var b = document.getElementById('tSum');
     b.className = 'tests-badge ' + (r.failed ? 'fail' : 'pass');
     b.lastChild.textContent = r.passed + ' of ' + r.total + ' tests passed';
     document.getElementById('tTime').textContent = 'in ' + (performance.now() - t0).toFixed(0) + ' ms';
+    badge();
     document.getElementById('tOut').innerHTML = Object.keys(groups).map(function (g) {
       return '<h2 class="t-group">' + esc(g) + ' <span class="muted" style="font-weight:500;font-size:.85rem">(' + groups[g].filter(function (x) { return x.ok; }).length + ' of ' + groups[g].length + ')</span></h2><div class="table-wrap"><table class="data"><thead><tr><th>Test</th><th>Demo</th><th>Result</th></tr></thead><tbody>' +
         groups[g].map(function (x) { return '<tr><td class="nm">' + esc(x.name) + (x.ok ? '' : '<div class="err">' + esc(x.error) + '</div>') + '</td><td>' + esc(x.demo === 'Core' ? 'All demos' : x.demo) + '</td><td class="' + (x.ok ? 'res-pass">Pass' : 'res-fail">Fail') + '</td></tr>'; }).join('') + '</tbody></table></div>';
     }).join('');
   }
-  document.getElementById('rerun').addEventListener('click', run);
-  run();
+  /* homepage cards: the number on each Work card (index.html and assets/data/card-stats.json) must equal
+     what its demo computes now at its base case (window.cardStat in the demo page) */
+  function liveStat(page) {
+    return new Promise(function (res) {
+      var f = document.createElement('iframe'), n = 0;
+      f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+      f.style.cssText = 'position:absolute;left:-10000px;top:0;width:1200px;height:800px;border:0;visibility:hidden';
+      f.src = '/' + page; document.body.appendChild(f);
+      var t = setInterval(function () {
+        var s = null; try { s = f.contentWindow.cardStat && f.contentWindow.cardStat(); } catch (e) { s = null; }
+        if (s || ++n > 200) { clearInterval(t); f.remove(); res(s || null); }
+      }, 150);
+    });
+  }
+  var cardRes = null;
+  async function cards() {
+    var out = document.getElementById('tCards'), rows = [];
+    out.innerHTML = '<h2 class="t-group">Homepage cards <span class="muted" style="font-weight:500;font-size:.85rem">(checking each demo)</span></h2>';
+    try {
+      var stats = (await (await fetch('/assets/data/card-stats.json', { cache: 'no-store' })).json()).cards;
+      var home = await (await fetch('/', { cache: 'no-store' })).text();
+      for (var id in stats) {
+        var c = stats[id], m = home.match(new RegExp('<!-- card:' + id + ':start --><div class="wc-kpi"><span class="wc-num">([^<]*)</span>'));
+        var live = await liveStat(c.demo), shown = m ? m[1] : null;
+        var ok = !!live && live.value === c.value && shown === c.value;
+        rows.push({ ok: ok, name: c.label + ': card ' + (shown || 'missing') + ', demo ' + (live ? live.value : 'did not load'), demo: c.demo });
+      }
+    } catch (e) { rows.push({ ok: false, name: 'Could not load card data: ' + e.message, demo: '' }); }
+    cardRes = rows;
+    var pass = rows.filter(function (x) { return x.ok; }).length;
+    out.innerHTML = '<h2 class="t-group">Homepage cards <span class="muted" style="font-weight:500;font-size:.85rem">(' + pass + ' of ' + rows.length + ')</span></h2><div class="table-wrap"><table class="data"><thead><tr><th>Test</th><th>Demo</th><th>Result</th></tr></thead><tbody>' +
+      rows.map(function (x) { return '<tr><td class="nm">' + esc(x.name) + '</td><td>' + esc(x.demo) + '</td><td class="' + (x.ok ? 'res-pass">Pass' : 'res-fail">Fail') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    badge();
+  }
+  var lastRun = null;
+  function badge() {
+    if (!lastRun) return;
+    var p = lastRun.passed, t = lastRun.total;
+    if (cardRes) { p += cardRes.filter(function (x) { return x.ok; }).length; t += cardRes.length; }
+    var b = document.getElementById('tSum');
+    b.className = 'tests-badge ' + (p < t ? 'fail' : cardRes ? 'pass' : '');
+    b.lastChild.textContent = p + ' of ' + t + ' tests passed' + (cardRes ? '' : ', checking homepage cards');
+  }
+  document.getElementById('rerun').addEventListener('click', function () { cardRes = null; run(); cards(); });
+  run(); cards();
 })();
 </script>
 </body>

@@ -207,25 +207,8 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     </div>
   </details>
 
-  <section class="demo-section" id="memo">
-    <article class="memo">
-      <div class="memo-head">
-        <div>
-          <div class="memo-kind">Pacing memo</div>
-          <h2>Commitment budget, 2027 to 2029</h2>
-        </div>
-        <span class="call-badge go">Commit</span>
-      </div>
-      <h3>Recommendation</h3>
-      <p class="the-call" id="memoCall"></p>
-      <h3>Why</h3>
-      <ul id="memoWhy"></ul>
-      <h3>Risks</h3>
-      <ul id="memoRisks"></ul>
-      <h3>Next step</h3>
-      <div id="memoNext"></div>
-      <p class="memo-foot" id="memoBase"></p>
-    </article>
+  <section class="demo-section memo-link-sec" id="memo">
+    <a class="card memo-card" href="/memos/private-markets-pacing.html"><span class="memo-no">Memo 01</span><span class="kind">Commitment pacing</span><h3>Private markets commitment plan</h3><p>An endowment sets its next three vintages while its private NAVs are a quarter old.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
   </section>
 
   <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
@@ -825,18 +808,6 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       rows: Object.keys(truth).map(function (k) { var id = k.split('.')[0], fk = k.split('.')[1]; return { k: k, t: truth[k].value, e: ext[k] ? ext[k].value : null, ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no', how: LABELS.fields[id][fk].how }; }) });
   }
 
-  /* ---------------- memo (static text, written for the base case) ---------------- */
-  function renderMemo() {
-    /* Fixed text, read from this page at seed 42 with the default inputs. Links jump to the live numbers. */
-    $('#memoCall').innerHTML = 'Commit <a class="cite-num" href="#kpi-commit3">$168m</a> across the 2027 to 2029 vintages, starting with <a class="cite-num" href="#kpi-commit1">$59m</a> in 2027. Keep at least $160m in cash and short Treasuries.';
-    $('#memoWhy').innerHTML = '<li>Rolled forward to today, private NAV is <a class="cite-num" href="#kpi-navNow">$232m</a> and the allocation is <a class="cite-num" href="#kpi-pctNow">24.0%</a>. The reported 26.5% is too high because public markets fell and the private marks have not caught up.</li>' +
-      '<li>$59m in 2027 puts private NAV on the 25% target in four years, after the existing funds distribute.</li>' +
-      '<li>After another 25% fall in public markets, liquid assets still cover the next 12 months of calls <a class="cite-num" href="#kpi-cover">4.9 times</a>.</li>';
-    $('#memoRisks').innerHTML = '<li><a class="cite-num" href="#kpi-breach">62%</a> of simulated paths cross the 30% upper band at some point, almost always right after a public drawdown.</li>' +
-      '<li>In <a class="cite-num" href="#kpi-shortfall">17%</a> of paths, liquid assets drop below unfunded commitments. The $160m buffer is about twice the stressed 12-month need of <a class="cite-num" href="#kpi-need">$79m</a>.</li>';
-    $('#memoNext').innerHTML = '<p>I would make two or three commitments of $20m to $25m in 2027: re-ups from the <a href="#program">re-up calendar</a> and one secondaries fund to shorten the J-curve. I would rerun the plan when the Q3 marks arrive.</p>';
-    $('#memoBase').textContent = 'Numbers are from the base case (seed 42, default inputs). The endowment and funds are made up.';
-  }
 
   /* ---------------- render ---------------- */
   var tabs;
@@ -902,7 +873,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Private Capital Lab', slug: 'private-capital-lab', report: 'Liquidity and pacing report (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Private Capital Lab');
     UI.testsBadge('.tests-badge-slot', 'Private Capital Lab');
-    renderMemo();
+   
     renderAll();
     runReview();
     /* deep links to a tab */
@@ -955,6 +926,13 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
   }
 
   init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!S.mc) return null;
+    var q = S.mc.pctQ, r = function (a) { return a.map(function (v) { return +v.toFixed(4); }); };
+    return { value: F.pct(q.p50[11], 1), label: 'Projected private allocation in 3 years', chart: { type: 'fan', p10: r(q.p10), p50: r(q.p50), p90: r(q.p90), target: A.target } };
+  };
 })();
 </script>
 </body>

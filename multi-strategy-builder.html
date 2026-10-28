@@ -191,25 +191,8 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     </div>
   </details>
 
-  <section class="demo-section" id="memo">
-    <article class="memo">
-      <div class="memo-head">
-        <div>
-          <div class="memo-kind">Sleeve sizing</div>
-          <h2>Hedge fund book</h2>
-        </div>
-        <span class="call-badge stop">Cut quant</span>
-      </div>
-      <h3>Recommendation</h3>
-      <p class="the-call" id="memoCall"></p>
-      <h3>Why</h3>
-      <ul id="memoWhy"></ul>
-      <h3>Risks</h3>
-      <ul id="memoRisks"></ul>
-      <h3>Next step</h3>
-      <div id="memoNext"></div>
-      <p class="memo-foot" id="memoBase"></p>
-    </article>
+  <section class="demo-section memo-link-sec" id="memo">
+    <a class="card memo-card" href="/memos/multi-strategy-book.html"><span class="memo-no">Memo 06</span><span class="kind">Hedge fund portfolio</span><h3>Five-sleeve multi-strategy book</h3><p>Five hedge fund sleeves sized by risk, reviewed after a year of live data.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
   </section>
 
   <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
@@ -344,7 +327,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     var best = null, t = 0;
     while (t < D.R.length) { if (!B.calm[t]) { var s = t; while (t < D.R.length && !B.calm[t]) t++; var g = 1; for (var k = s; k < t; k++) g *= 1 + B.cur.r[k]; if (!best || g - 1 < best.loss) best = { from: s, to: t, loss: g - 1 }; } else t++; }
     var contrib = best ? B.net.map(function (sr2, i) { var c = 0; for (var k = best.from; k < best.to; k++) c += B.w[i] * sr2[k]; return c; }) : B.w.map(function () { return 0; });
-    S.crowd = { calmAvg: avgOff(Rc), stressAvg: avgOff(Rs), volCalm: pv(Cc), volStress: pv(Cs), drCalm: dr(Cc), drStress: dr(Cs), episode: best, stressN: sr.length };
+    S.crowd = { calmAvg: avgOff(Rc), stressAvg: avgOff(Rs), volCalm: pv(Cc), volStress: pv(Cs), drCalm: dr(Cc), drStress: dr(Cs), episode: best, stressN: sr.length, Rs: Rs };
     UI.kpis('#crKpis', [
       { id: 'corrCalm', label: 'Average correlation between sleeves, calm', value: F.num(S.crowd.calmAvg, 2) },
       { id: 'corrStress', label: 'Average correlation, stress', value: F.num(S.crowd.stressAvg, 2), sub: sr.length + ' stress months', tone: S.crowd.stressAvg - S.crowd.calmAvg > 0.2 ? 'bad' : null },
@@ -535,15 +518,6 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
         .concat(all.map(function (id) { var s = seeded.indexOf(id) !== -1, r = raised.indexOf(id) !== -1; return { k: id, t: s ? 'event' : 'clean', e: r ? 'flagged' : 'quiet', ok: s === r ? 'yes' : 'no' }; })) });
   }
 
-  /* ---------------- memo ---------------- */
-  function renderMemo() {
-    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
-    $('#memoCall').innerHTML = "Cut quant from 15% to 5% and move the ten points to credit. Hold relative value flat until its duration is back inside the mandate.";
-    $('#memoWhy').innerHTML = "<li>Quant and equity long/short run the same momentum bet, and macro has added a momentum overlay too. Macro and quant now correlate 0.68 in calm months.</li><li>Quant is the weakest sleeve: 3.1% gross and 0.6% net a year on average, with a 36.7% drawdown.</li><li>Correlation between sleeves goes from 0.10 in calm months to <a class=\"cite-num\" href=\"#kpi-corrStress\">0.47</a> in stress. The worst stress episode costs <a class=\"cite-num\" href=\"#kpi-episodeLoss\">17.0%</a> on today's weights.</li>";
-    $('#memoRisks').innerHTML = "<li>Relative value carries a 0.80 rates loading against a 0.1 limit. Its 3.5% pass-through takes it from 5.2% gross to 1.4% net.</li><li>Fees take <a class=\"cite-num\" href=\"#kpi-feeShare\">46%</a> of the gross return.</li>";
-    $('#memoNext').innerHTML = "<p>Redeem quant at its next monthly window and turn on volatility targeting and drawdown stops. With both on, the book returns 4.8% a year with a 10.2% drawdown, against 17.0% today.</p>";
-    $('#memoBase').textContent = "Numbers are from the base case (seed 42, default inputs). The managers are made up.";
-  }
 
   /* ---------------- dropped file ---------------- */
   function parseSleeves(rows, header) {
@@ -562,7 +536,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     return { data: { R: R, F: hasF ? Fx : null, regimes: reg, dates: dates, T: R.length }, summary: rows.length + ' months' + (hasF ? ' with factors' : ', no factor columns') };
   }
 
-  function renderAll() { renderSleeves(); renderCrowding(); renderFees(); renderMemo(); }
+  function renderAll() { renderSleeves(); renderCrowding(); renderFees(); }
   function init() {
     reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); runReview(); });
     var tabs = UI.tabs('#tabsRoot');
@@ -586,6 +560,13 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     UI.revealHash(tabs);
   }
   init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!S.overlap || !S.crowd || !S.crowd.Rs) return null;
+    var hit = {}, pairs = S.overlap.filter(function (o) { return o.flag; }).map(function (o) { hit[o.a] = 1; hit[o.b] = 1; return [o.a, o.b]; });
+    return { value: Object.keys(hit).length + ' of ' + SN.length, label: 'Sleeves running the same bet', chart: { type: 'heat', names: SN, m: S.crowd.Rs.map(function (row) { return row.map(function (v) { return +v.toFixed(3); }); }), pairs: pairs } };
+  };
 })();
 </script>
 </body>

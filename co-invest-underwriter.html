@@ -161,25 +161,8 @@ uplift_t = p x run-rate x ramp(t)</div>
     </div>
   </details>
 
-  <section class="demo-section" id="memo">
-    <article class="memo">
-      <div class="memo-head">
-        <div>
-          <div class="memo-kind">Co-invest screening</div>
-          <h2>Valebrook Lab Services</h2>
-        </div>
-        <span class="call-badge go">Commit $15m</span>
-      </div>
-      <h3>Recommendation</h3>
-      <p class="the-call" id="memoCall"></p>
-      <h3>Why</h3>
-      <ul id="memoWhy"></ul>
-      <h3>Risks</h3>
-      <ul id="memoRisks"></ul>
-      <h3>Next step</h3>
-      <div id="memoNext"></div>
-      <p class="memo-foot" id="memoBase"></p>
-    </article>
+  <section class="demo-section memo-link-sec" id="memo">
+    <a class="card memo-card" href="/memos/co-investment-valebrook.html"><span class="memo-no">Memo 03</span><span class="kind">Co-investment</span><h3>Valebrook Lab Services</h3><p>A co-investment offered alongside a buyout fund already in the portfolio, with a short window to answer.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
   </section>
 
   <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
@@ -412,15 +395,6 @@ uplift_t = p x run-rate x ramp(t)</div>
         .concat(ids.map(function (id) { var s = LABELS.checks[id].flag, r = raised.indexOf(id) !== -1; return { k: 'check: ' + id, t: s ? 'flag' : 'pass', e: r ? 'flag' : 'pass', ok: s === r ? 'yes' : 'no' }; })) });
   }
 
-  /* ---------------- memo ---------------- */
-  function renderMemo() {
-    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
-    $('#memoCall').innerHTML = "Commit $15m of the $40m offered, subject to a quality of earnings report that backs at least half the add-backs.";
-    $('#memoWhy').innerHTML = "<li>On my house case the deal returns <a class=\"cite-num\" href=\"#kpi-houseMoic\">1.84x and 13.0%</a> gross. With no fee or carry that is also the net, against <a class=\"cite-num\" href=\"#kpi-fundNet\">11.7%</a> expected from the fund.</li><li>$15m next to our $40m fund commitment lifts the blended net IRR to <a class=\"cite-num\" href=\"#kpi-blendIrr\">12.1%</a>.</li><li>The value comes from EBITDA growth and debt paydown. The house case already assumes a turn lower on the exit multiple.</li>";
-    $('#memoRisks').innerHTML = "<li>The GP case assumes 12% growth and a 4.8 point margin gain. The company's history supports neither.</li><li>Without the add-backs, leverage is 6.2x and the downside returns <a class=\"cite-num\" href=\"#kpi-downMoic\">0.76x</a>, a $3.6m loss on $15m.</li>";
-    $('#memoNext').innerHTML = "<p>Confirm $15m by 14 July and send the GP the three flags from the CIM review: the growth step-up, the margin path and the add-backs.</p>";
-    $('#memoBase').textContent = "Numbers are from the base case (seed 5, default inputs). The company and GP are made up.";
-  }
 
   /* ---------------- dropped file ---------------- */
   function parseFin(rows) {
@@ -439,7 +413,7 @@ uplift_t = p x run-rate x ramp(t)</div>
     return { data: { years: act.map(function (a) { return a.y; }), revenue: act.map(function (a) { return a.rev; }), ebitda: act.map(function (a) { return a.e; }), capex: act.map(function (a) { return a.capex; }), projRevenue: proj.map(function (a) { return a.rev; }), projEbitda: proj.map(function (a) { return a.e; }) }, summary: act.length + ' actual and ' + proj.length + ' projected years' };
   }
 
-  function renderAll() { renderLBO(); renderBridge(); renderBlend(); renderTriage(); renderMemo(); }
+  function renderAll() { renderLBO(); renderBridge(); renderBlend(); renderTriage(); }
   function init() {
     reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); });
     var tabs = UI.tabs('#tabsRoot');
@@ -459,6 +433,13 @@ uplift_t = p x run-rate x ramp(t)</div>
     UI.revealHash(tabs);
   }
   init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!S.cases) return null;
+    var x = S.cases.house, b = x.b, r = function (v) { return +v.toFixed(2); };
+    return { value: F.mult(x.r.moic), label: 'Gross MOIC, base case', chart: { type: 'bridge', start: r(x.r.equity0), end: r(x.r.equityH), steps: [['Growth', r(b.growth)], ['Initiatives', r(b.initiatives)], ['Multiple', r(b.multiple)], ['Deleveraging', r(b.deleveraging)], ['Costs', r(b.fees)]] } };
+  };
 })();
 </script>
 </body>

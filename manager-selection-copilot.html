@@ -162,25 +162,8 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     </div>
   </details>
 
-  <section class="demo-section" id="memo">
-    <article class="memo">
-      <div class="memo-head">
-        <div>
-          <div class="memo-kind">Fund diligence</div>
-          <h2>Hasturn Mid-Market Buyout III</h2>
-        </div>
-        <span class="call-badge stop">Pass</span>
-      </div>
-      <h3>Recommendation</h3>
-      <p class="the-call" id="memoCall"></p>
-      <h3>Why</h3>
-      <ul id="memoWhy"></ul>
-      <h3>Risks</h3>
-      <ul id="memoRisks"></ul>
-      <h3>Next step</h3>
-      <div id="memoNext"></div>
-      <p class="memo-foot" id="memoBase"></p>
-    </article>
+  <section class="demo-section memo-link-sec" id="memo">
+    <a class="card memo-card" href="/memos/buyout-fund-diligence.html"><span class="memo-no">Memo 07</span><span class="kind">Fund commitment</span><h3>Hasturn Mid-Market Buyout III</h3><p>A mid-market buyout manager raising its third fund on the record of the first two.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
   </section>
 
   <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
@@ -495,15 +478,6 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
       rows: Object.keys(truth).map(function (k) { return { k: k, t: String(truth[k].value), e: ext[k] ? String(ext[k].value) : 'missing', ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no' }; }) });
   }
 
-  /* ---------------- memo ---------------- */
-  function renderMemo() {
-    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
-    $('#memoCall').innerHTML = "Pass on Fund III. Look again at Fund IV if Fund II matures well outside healthcare.";
-    $('#memoWhy').innerHTML = "<li>Brightmere Dental made <a class=\"cite-num\" href=\"#kpi-top1\">42.5%</a> of Fund I's gains. Without it, Fund I is <a class=\"cite-num\" href=\"#kpi-exBest\">1.65x</a> gross.</li><li>The 2025 letter claims 2.1x net TVPI for Fund I. Rebuilt from the deals and terms it is <a class=\"cite-num\" href=\"#kpi-f1net\">1.62x</a>. The DDQ says Fund II has no realized losses, yet Pell Industrial Coatings sold at 0.55x.</li><li>Fund II's net IRR is <a class=\"cite-num\" href=\"#kpi-f2irrAdj\">3.4%</a> once the subscription line comes out.</li>";
-    $('#memoRisks').innerHTML = "<li>One of three key persons left in March. One more departure suspends the investment period.</li><li>Fund I was top quartile when Fund II was raised and is <a class=\"cite-num\" href=\"#kpi-qNow\">second quartile</a> now.</li>";
-    $('#memoNext').innerHTML = "<p>Decline the first close and send the GP the three questions: Fund I net TVPI, Fund II losses and the key person departure. Move the $25m to the secondaries commitment in the pacing plan.</p>";
-    $('#memoBase').textContent = "Numbers are from the base case (seed 7, default inputs). The manager and companies are made up.";
-  }
 
   /* ---------------- dropped files ---------------- */
   function parseDeals(rows) {
@@ -532,7 +506,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     return { data: { X: X, obs: y, tru: y, aum: y.map(function (_, i) { return 300 + 2100 * i / (y.length - 1); }), peers: base.peers.map(function (p) { return p.slice(0, y.length); }), cats: base.cats }, summary: rows.length + ' months' };
   }
 
-  function renderAll() { renderTrack(); renderSubline(); renderDrift(); renderPublic(); renderMemo(); }
+  function renderAll() { renderTrack(); renderSubline(); renderDrift(); renderPublic(); }
   function init() {
     reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); });
     var tabs = UI.tabs('#tabsRoot');
@@ -552,6 +526,13 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     UI.revealHash(tabs);
   }
   init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!S.tr) return null;
+    var t = S.tr, d = t.deals.slice().sort(function (a, b) { return b.gain - a.gain; });
+    return { value: F.pct(t.top1Share, 1), label: 'Share of gains from the top deal', chart: { type: 'bars', values: d.map(function (x) { return +(x.gain / t.gains).toFixed(4); }) } };
+  };
 })();
 </script>
 </body>

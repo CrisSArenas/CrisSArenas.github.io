@@ -189,25 +189,8 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
     </div>
   </details>
 
-  <section class="demo-section" id="memo">
-    <article class="memo">
-      <div class="memo-head">
-        <div>
-          <div class="memo-kind">Total portfolio recommendation</div>
-          <h2>Endowment policy review</h2>
-        </div>
-        <span class="call-badge">Rebalance</span>
-      </div>
-      <h3>Recommendation</h3>
-      <p class="the-call" id="memoCall"></p>
-      <h3>Why</h3>
-      <ul id="memoWhy"></ul>
-      <h3>Risks</h3>
-      <ul id="memoRisks"></ul>
-      <h3>Next step</h3>
-      <div id="memoNext"></div>
-      <p class="memo-foot" id="memoBase"></p>
-    </article>
+  <section class="demo-section memo-link-sec" id="memo">
+    <a class="card memo-card" href="/memos/policy-portfolio-review.html"><span class="memo-no">Memo 05</span><span class="kind">Policy portfolio</span><h3>Endowment policy review</h3><p>The annual review of an endowment&#39;s asset mix, with private assets in the portfolio.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
   </section>
 
   <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
@@ -649,15 +632,6 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
       rows: Object.keys(truth).map(function (k) { var id = k.split('.')[0], fk = k.slice(id.length + 1); return { k: k, t: truth[k].value, e: ext[k] ? ext[k].value : null, ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no', how: LABELS.fields[id][fk].how }; }) });
   }
 
-  /* ---------------- memo ---------------- */
-  function renderMemo() {
-    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
-    $('#memoCall').innerHTML = "Rebalance now. Buy $7.0m of US equity with Treasuries and cash, and move the hedge fund overweight into international equity over the next two redemption windows.";
-    $('#memoWhy').innerHTML = "<li>Active risk against the 70/30 reference is <a class=\"cite-num\" href=\"#kpi-activeRisk\">4.31%</a>, over the 4% budget. Most of it is the public equity underweight after the fall.</li><li>Reoptimizing barely helps. The best Sharpe ratio is <a class=\"cite-num\" href=\"#kpi-optSharpe\">0.26</a> against 0.25 today.</li><li>After a GFC-sized stress the portfolio still has <a class=\"cite-num\" href=\"#kpi-liqCover\">$416m</a> of liquid assets against <a class=\"cite-num\" href=\"#kpi-liqReq\">$254m</a> needed.</li>";
-    $('#memoRisks').innerHTML = "<li>Another leg down in equities pushes US equity below its floor and private equity over its ceiling at the same time.</li><li>The custodian total is off by $10.0m. Weights use the sum of the lines until that is fixed.</li>";
-    $('#memoNext').innerHTML = "<p>Release trade <a class=\"cite-num\" href=\"#trades\">T-1</a> today. T-2 stays blocked because it trades private assets. Report against the reference portfolio from Q4.</p>";
-    $('#memoBase').textContent = "Numbers are from the base case (seed 100, default inputs). The endowment is made up.";
-  }
 
   /* ---------------- data drop ---------------- */
   function parseReturns(rows, header) {
@@ -699,11 +673,18 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
       parse: parseReturns, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your return file, processed locally.'; renderAll(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '. As of 30 Sep 2026.'; renderAll(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Allocation Lab', slug: 'allocation-lab', report: 'Total portfolio recommendation (PDF)', source: function () { return S.user ? 'user return file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Allocation Lab'); UI.testsBadge('.tests-badge-slot', 'Allocation Lab');
-    renderMemo(); renderAll(); runReview();
+    renderAll(); runReview();
     var h = location.hash.slice(1), T = ['optimize', 'views', 'tpa', 'stress', 'regimes', 'attribution'];
     var tabs = UI.tabs('#tabsRoot'); if (T.indexOf(h) !== -1) tabs.show(h);
   }
   init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!S.opt) return null;
+    var o = S.opt, so = stats(o.w, o.I, o.mu);
+    return { value: F.num(so.sh, 2), label: 'Sharpe ratio of the chosen total portfolio', chart: { type: 'frontier', curve: o.fr.curve.map(function (p) { return [+p.v.toFixed(3), +(p.r * 100).toFixed(3)]; }), mark: [+(so.v * 100).toFixed(3), +(so.r * 100).toFixed(3)] } };
+  };
 })();
 </script>
 </body>

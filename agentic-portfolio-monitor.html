@@ -1410,6 +1410,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')helpOverlay.classLis
 let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{measureNav();if(!running)renderStep(S.step);},160);});
 
 /* -------------------------------- BOOT ---------------------------------- */
+// Homepage card: rule breaches the first cycle catches on the opening book, and when each alert and fix lands in the cycle.
+window.cardStat=function(){
+  const B0=B,f0=fid;B=clone(START);
+  const fs=detect(),ps=fs.map(f=>{const p=planFor(f);if(p)p.pre=precheck(p);return p;}).filter(Boolean);
+  B=B0;fid=f0;
+  return{value:String(fs.length),label:'Rule breaches caught on the opening book',chart:{type:'timeline',span:SCHED.span,
+    alerts:fs.map(f=>({t:SCHED.end[STEP_OF[f.check]],sev:f.sev})),fixes:ps.map(p=>({t:SCHED.end.precheck,ok:!!(p.pre&&p.pre.ok),kind:p.kind}))}};
+};
 resetAll();
 measureNav();
 goStep(1,true);

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{TITLE}} · Investment memo · Cristian Arenas</title>
+    <meta name="description" content="{{SITUATION}}">
+    <link rel="canonical" href="https://crissarenas.github.io/memos/{{SLUG}}.html">
+    <meta property="og:title" content="{{TITLE}} · Investment memo · Cristian Arenas">
+    <meta property="og:description" content="{{SITUATION}}">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#FFFFFF">
+    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/assets/js/site.js"></script>
+</head>
+<body>
+<!-- site-nav:start -->
+<!-- site-nav:end -->
+<main id="main">
+  <article class="memo-doc">
+    <div class="memo-top">
+      <a class="back-link" href="/{{DEMO}}">&larr; Back to the {{DEMO_NAME}}</a>
+      <button class="btn btn-ghost btn-sm memo-print" type="button" onclick="window.print()">Save as PDF</button>
+    </div>
+    <p class="memo-fiction">Every fund, manager, company and portfolio in this memo is fictional. The numbers are the base case of the <a href="/{{DEMO}}">{{DEMO_NAME}}</a> demo.</p>
+    <header class="memo-header">
+      <p class="memo-no">Investment memo {{NN}} · {{TYPE}}</p>
+      <h1>{{TITLE}}</h1>
+      <dl class="memo-meta">
+        <div><dt>Date</dt><dd>{{DATE}}</dd></div>
+        <div><dt>{{SUBJECT_LABEL}}</dt><dd>{{SUBJECT}}</dd></div>
+        <div><dt>Strategy</dt><dd>{{STRATEGY}}</dd></div>
+        <div><dt>{{SIZE_LABEL}}</dt><dd>{{SIZE}}</dd></div>
+        <div><dt>Prepared by</dt><dd>Cristian Arenas</dd></div>
+      </dl>
+    </header>
+
+    <section id="recommendation">
+      <h2>Recommendation</h2>
+      <div class="memo-rec">
+        <p>{{DECISION, TWO OR THREE SENTENCES}}</p>
+        <!-- optional: <p class="memo-cond">Conditions</p><ul>...</ul> -->
+      </div>
+    </section>
+
+    <section id="summary"><h2>Summary</h2>{{BODY}}</section>
+    <section id="manager"><h2>{{The manager | The asset | The portfolio}}</h2>{{BODY}}</section>
+    <section id="underwriting"><h2>{{Track record | Underwriting | Pricing}}</h2>{{BODY with <div class="table-wrap"><table class="memo-table">}}</section>
+    <section id="fit"><h2>Portfolio fit</h2>{{BODY}}</section>
+    <section id="diligence"><h2>Diligence findings</h2>{{BODY}}</section>
+    <section id="risks"><h2>Key risks and mitigants</h2>
+      <div class="table-wrap"><table class="memo-table memo-risks"><thead><tr><th>Risk</th><th>How it is handled</th></tr></thead><tbody>{{4 TO 6 ROWS}}</tbody></table></div>
+    </section>
+    <section id="triggers"><h2>What would change the view</h2><ul>{{TRIGGERS}}</ul></section>
+    <section id="next"><h2>Next steps</h2><ol>{{STEPS}}</ol></section>
+    <section id="appendix" class="memo-appendix"><h2>Appendix</h2>{{h3 + tables}}</section>
+
+    <p class="memo-end"><a href="/{{DEMO}}">Open the {{DEMO_NAME}}</a> to change the inputs behind these numbers.</p>
+  </article>
+</main>
+<!-- site-footer:start -->
+<!-- site-footer:end -->
+</body>
+</html>

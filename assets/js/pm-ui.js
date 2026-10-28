@@ -593,7 +593,7 @@
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var d = reduce ? 0 : (delay == null ? 140 : delay), i = 0;
     function next() {
-      if (i >= steps.length) { if (done) done(); return; }
+      if (i >= steps.length) { if (done) done(); UI.runsDone = (UI.runsDone || 0) + 1; return; }
       var st = steps[i++], out = st.run();
       (Array.isArray(out) ? out : [out]).forEach(function (r) { if (r) log.add(st.agent, r.status || 'ok', r.msg, r.details); });
       if (d) setTimeout(next, d); else next();
