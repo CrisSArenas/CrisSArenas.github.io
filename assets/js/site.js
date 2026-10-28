@@ -46,7 +46,7 @@
       window.addEventListener('beforeprint', function () { rev.forEach(function (el) { el.classList.add('in'); }); });
     }
     // pointer light: cards, tiles, panels and buttons track the pointer for their spotlight
-    var SPOT = '.card, .work-card, .memo-card, .cap-card, .results-row .r, .kpi, .panel, .note-card, .btn';
+    var SPOT = '.card, .work-card, .memo-card, .cap-card, .results-row .r, .note-card, .btn';
     if (window.matchMedia && window.matchMedia('(hover: hover)').matches) {
       var raf = 0, last = null;
       document.addEventListener('pointermove', function (e) {

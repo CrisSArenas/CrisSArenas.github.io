@@ -170,6 +170,7 @@
       if (v.label) s += '<text x="' + (X(v.x) + 4) + '" y="' + (m.t + 10) + '">' + UI.esc(v.label) + '</text>';
     });
     s += '<line class="cursor" x1="0" x2="0" y1="' + m.t + '" y2="' + (H - m.b) + '" style="stroke:var(--border-strong);display:none"/>';
+    s += '<g class="cur-dots" style="display:none">' + (o.series || []).map(function (sr, i) { return '<circle r="4.5" style="fill:' + col(sr.color, i) + ';stroke:var(--surface);stroke-width:2"/>'; }).join('') + '</g>';
     s += '<rect class="hit" x="' + m.l + '" y="' + m.t + '" width="' + (W - m.l - m.r) + '" height="' + (H - m.t - m.b) + '" style="fill:transparent"/></svg>';
     el.classList.add('chart');
     el.innerHTML = s + legend(o) + '<div class="chart-tip"></div>';
@@ -178,6 +179,8 @@
       var r = svg.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * W, k = 0, best = 1e9;
       xs.forEach(function (x, i) { var d = Math.abs(X(x) - px); if (d < best) { best = d; k = i; } });
       cur.setAttribute('x1', X(xs[k])); cur.setAttribute('x2', X(xs[k])); cur.style.display = '';
+      var dots = svg.querySelector('.cur-dots'); dots.style.display = '';
+      (o.series || []).forEach(function (sr, i) { var c = dots.children[i], v = sr.ys[k]; if (!c) return; if (v == null || !isFinite(v)) { c.style.display = 'none'; return; } c.style.display = ''; c.setAttribute('cx', X(xs[k])); c.setAttribute('cy', Y(v)); });
       var rows = (o.series || []).map(function (sr, i) { return '<div class="row"><span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;background:' + col(sr.color, i) + '"></i>' + UI.esc(sr.name) + '</span><b>' + UI.esc((o.tipFmt || yf)(sr.ys[k])) + '</b></div>'; });
       (o.bands || []).forEach(function (b) { if (b.name) rows.push('<div class="row"><span>' + UI.esc(b.name) + '</span><b>' + UI.esc((o.tipFmt || yf)(b.lo[k])) + ' to ' + UI.esc((o.tipFmt || yf)(b.hi[k])) + '</b></div>'); });
       tip.innerHTML = '<b>' + UI.esc(xf(xs[k])) + '</b>' + rows.join('');
@@ -186,8 +189,32 @@
       if (left > r.width - 190) left -= 210;
       tip.style.left = left + 'px'; tip.style.top = '8px';
     });
-    svg.querySelector('.hit').addEventListener('mouseleave', function () { tip.style.display = 'none'; cur.style.display = 'none'; });
+    svg.querySelector('.hit').addEventListener('mouseleave', function () { tip.style.display = 'none'; cur.style.display = 'none'; svg.querySelector('.cur-dots').style.display = 'none'; });
   };
+
+  /* rich hover for marks that carry a <title>: the title becomes a tooltip, the mark lights up, the rest dims */
+  function tipify(el) {
+    var svg = el.querySelector('svg'); if (!svg) return;
+    UI.$$('title', svg).forEach(function (t) { var p = t.parentNode; if (p === svg) return; p.setAttribute('data-tip', t.textContent); p.classList.add('mk'); t.remove(); });
+    if (!svg.querySelector('[data-tip]')) return;
+    var tip = UI.el('div', { class: 'chart-tip' }); el.appendChild(tip);
+    var on = null;
+    function show(e) {
+      var mk = e.target.closest && e.target.closest('[data-tip]');
+      if (!mk || !svg.contains(mk)) { hide(); return; }
+      if (on !== mk) { if (on) on.classList.remove('on'); on = mk; mk.classList.add('on'); svg.classList.add('hovering'); }
+      var txt = mk.getAttribute('data-tip'), i = txt.lastIndexOf(': ');
+      tip.innerHTML = i > 0 ? '<b>' + UI.esc(txt.slice(0, i)) + '</b><div class="row"><span>Value</span><b>' + UI.esc(txt.slice(i + 2)) + '</b></div>' : '<b>' + UI.esc(txt) + '</b>';
+      tip.style.display = 'block';
+      var r = el.getBoundingClientRect(), x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
+      if (x + tip.offsetWidth > r.width) x = e.clientX - r.left - tip.offsetWidth - 14;
+      if (y + tip.offsetHeight > r.height) y = Math.max(0, e.clientY - r.top - tip.offsetHeight - 14);
+      tip.style.left = Math.max(0, x) + 'px'; tip.style.top = y + 'px';
+    }
+    function hide() { tip.style.display = 'none'; if (on) on.classList.remove('on'); on = null; svg.classList.remove('hovering'); }
+    svg.addEventListener('pointermove', show); svg.addEventListener('pointerleave', hide);
+  }
+  UI.tipify = tipify;
 
   function legend(o) {
     if (o.legend === false) return '';
@@ -256,7 +283,7 @@
       : '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + (H - m.b - z) + '" y2="' + (H - m.b - z) + '" style="stroke:var(--muted)"/>';
     s += '</svg>';
     el.classList.add('chart');
-    el.innerHTML = s + legend(o);
+    el.innerHTML = s + legend(o); tipify(el);
   };
 
   /* waterfall: steps [{label, value}] with a total bar at the end */
@@ -287,7 +314,7 @@
     if (o.total) bar(o.totalLabel || 'Total', 0, acc, 'var(--s2)', acc);
     s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" style="stroke:var(--muted)"/></svg>';
     el.classList.add('chart');
-    el.innerHTML = s;
+    el.innerHTML = s; tipify(el);
   };
 
   /* scatter: points [{x, y, label, color, r}] */
@@ -313,7 +340,7 @@
     });
     s += '</svg>';
     el.classList.add('chart');
-    el.innerHTML = s;
+    el.innerHTML = s; tipify(el);
   };
 
   /* heatmap: rows x cols matrix */
@@ -334,7 +361,7 @@
       });
     });
     el.classList.add('chart');
-    el.innerHTML = s + '</svg>';
+    el.innerHTML = s + '</svg>'; tipify(el);
   };
 
   /* ---------- Explain this number ---------- */

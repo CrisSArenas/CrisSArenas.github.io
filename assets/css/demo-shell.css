@@ -334,3 +334,14 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .notice b { font-weight: 600; }
 .wl .notice { display: block; }
 .sub-h { font-size: 1.3rem; margin: 40px 0 16px; }
+
+/* chart hover: the mark under the pointer lights up, the rest steps back */
+.chart .mk { cursor: crosshair; transition: opacity .15s ease, filter .15s ease, stroke-width .15s ease; }
+.chart svg.hovering .mk:not(.on) { opacity: .35 !important; }
+.chart .mk.on { stroke: var(--text); stroke-width: 1.5; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .25)); }
+.chart .cur-dots circle { transition: cx .08s linear, cy .08s linear; }
+.chart-tip { min-width: 140px; padding: 9px 12px; font-size: .8rem; line-height: 1.45; box-shadow: var(--shadow-hover); }
+.chart-tip b:first-child { color: var(--heading); font-size: .82rem; }
+.chart-tip .row b { display: inline; margin: 0; }
+@media (prefers-reduced-motion: reduce) { .chart .mk, .chart .cur-dots circle { transition: none; } }
+.chart svg text { pointer-events: none; }
