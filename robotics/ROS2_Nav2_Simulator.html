@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/assets/css/demo-shell.css"><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="stylesheet" href="/assets/css/demo-shell.css">
     <style>
 
         * {
@@ -127,7 +127,7 @@
         }
 
         .tool-item.active {
-            background: rgba(6, 182, 212, 0.18);
+            background: color-mix(in srgb, var(--ai) 18%, transparent);
             border-color: var(--cyan);
         }
 
@@ -205,9 +205,9 @@
         }
 
         .viewport-btn.active {
-            background: rgba(6, 182, 212, 0.18);
+            background: color-mix(in srgb, var(--ai) 18%, transparent);
             border-color: var(--cyan);
-            color: #ffffff;
+            color: var(--text);
         }
 
         .canvas-wrapper {
@@ -229,13 +229,13 @@
             position: absolute;
             bottom: 12px;
             left: 12px;
-            background: rgba(15, 22, 41, 0.95);
+            background: var(--surface);
             border: 1px solid var(--border);
             padding: 12px 16px;
             border-radius: 4px;
             font-family: var(--mono);
             font-size: 11px;
-            backdrop-filter: blur(8px);
+            
         }
 
         .overlay-row {
@@ -258,12 +258,12 @@
             position: absolute;
             top: 12px;
             right: 12px;
-            background: rgba(15, 22, 41, 0.95);
+            background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 4px;
             font-family: var(--sans);
             font-size: 11px;
-            backdrop-filter: blur(8px);
+            
         }
 
         .legend-header {
@@ -276,7 +276,7 @@
         }
 
         .legend-header:hover {
-            background: rgba(255, 255, 255, 0.03);
+            background: color-mix(in srgb, var(--text) 3%, transparent);
         }
 
         .legend-title {
@@ -321,7 +321,7 @@
             width: 16px;
             height: 16px;
             border-radius: 2px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid color-mix(in srgb, var(--text) 20%, transparent);
         }
 
         /* Sidebar */
@@ -641,7 +641,7 @@
             align-items: center;
             gap: 8px;
             padding: 2px 4px 2px 10px;
-            border: 1px solid rgba(6, 182, 212, 0.35);
+            border: 1px solid color-mix(in srgb, var(--ai) 35%, transparent);
             background: var(--accent-bg);
             border-radius: 999px;
             font-size: 10.5px;
@@ -678,8 +678,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(6, 182, 212, 0.95);
-            color: #ffffff;
+            background: color-mix(in srgb, var(--ai) 95%, transparent);
+            color: var(--text);
             padding: 16px 32px;
             border-radius: 4px;
             font-size: 14px;
@@ -702,7 +702,7 @@
             padding: 12px 16px;
             border-radius: 4px;
             font-size: 11px;
-            backdrop-filter: blur(8px);
+            
             display: none;
             z-index: 1500;
             min-width: 200px;
@@ -746,7 +746,7 @@
         }
 
         .obstacle-type-option.selected {
-            background: rgba(6, 182, 212, 0.18);
+            background: color-mix(in srgb, var(--ai) 18%, transparent);
             border-color: var(--cyan);
         }
 
@@ -837,7 +837,7 @@
         }
 
         .environment-option.selected {
-            background: rgba(6, 182, 212, 0.18);
+            background: color-mix(in srgb, var(--ai) 18%, transparent);
             border-color: var(--cyan);
         }
 
@@ -883,7 +883,7 @@
     
 /* dismiss controls need a real hit target */
 .hint-bar .close,#hintClose{min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;font-size:15px;line-height:1}
-.hint-bar .close:hover,#hintClose:hover{background:rgba(0,247,255,.12)}
+.hint-bar .close:hover,#hintClose:hover{background:color-mix(in srgb, var(--accent) 12%, transparent)}
 </style>
 <script src="/assets/js/site.js"></script>
 </head>
@@ -1073,15 +1073,15 @@
                     </div>
                     <div class="legend-body">
                         <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, #06b6d4, #0e7490); box-shadow: 0 0 8px #06b6d4;"></div>
+                        <div class="legend-color" style="background: linear-gradient(135deg, var(--ai), #0e7490); box-shadow: 0 0 8px var(--ai);"></div>
                         <span>Robot</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 0 8px #f59e0b;"></div>
+                        <div class="legend-color" style="background: linear-gradient(135deg, var(--warning), var(--warning)); box-shadow: 0 0 8px var(--warning);"></div>
                         <span>Goal</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, #3b82f6, #2563eb);"></div>
+                        <div class="legend-color" style="background: linear-gradient(135deg, var(--s1), #2563eb);"></div>
                         <span>Path</span>
                     </div>
                     <div class="legend-item">
@@ -1089,7 +1089,7 @@
                         <span>Furniture</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, #60a5fa, #1e40af); border-radius: 50%;"></div>
+                        <div class="legend-color" style="background: linear-gradient(135deg, var(--s1), #1e40af); border-radius: 50%;"></div>
                         <span>Person</span>
                     </div>
                     <div class="legend-item">
@@ -1097,7 +1097,7 @@
                         <span>Walls</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: #8b5cf6; border-radius: 50%;"></div>
+                        <div class="legend-color" style="background: var(--s5); border-radius: 50%;"></div>
                         <span>AMCL particles</span>
                     </div>
                     </div>

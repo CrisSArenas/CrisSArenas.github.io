@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/assets/css/demo-shell.css"><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-size:14px;line-height:1.6}
@@ -181,7 +181,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
   </div>
 
-  <div class="d-panel full">
+  <div class="d-panel full" id="pacing">
     <div class="panel-head">
       <h3><i class="fas fa-signal"></i> Cross-Asset Macro Factor Scores</h3>
       <span class="tag">Two-factor score over 1/2/4/8 quarters &middot; standardised against each proxy's own history &middot; &gt;&nbsp;+0.5&sigma; BUY, &lt;&nbsp;&minus;0.5&sigma; SELL, else HOLD &middot; not price momentum</span>
@@ -421,6 +421,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 </footer>
 <!-- site-footer:end -->
 
+<script src="/assets/js/pm-math.js"></script>
 <script>
 window.onerror=function(msg,url,line){
   var s=document.getElementById('statusBar');
@@ -1333,23 +1334,7 @@ document.getElementById('corrCanvas')?.addEventListener('mouseleave',()=>{docume
 // forecast, which is why the panel reports NET IRR after a 2 & 20 / 8% pref
 // European waterfall instead.  Beyond that the model earns its keep on
 // liquidity - pacing, peak outlay, break-even, steady-state commitment.
-function solveIRR(cfs){
-  let r=0.10;
-  for(let iter=0;iter<200;iter++){
-    let npv=0,dnpv=0;
-    for(let t=0;t<cfs.length;t++){
-      const df=Math.pow(1+r,-t);
-      npv+=cfs[t]*df;
-      dnpv-=t*cfs[t]*df/(1+r);
-    }
-    if(Math.abs(dnpv)<1e-12)break;
-    const nr=r-npv/dnpv;
-    if(!isFinite(nr))break;
-    if(Math.abs(nr-r)<1e-9){r=nr;break;}
-    r=Math.max(-0.9,Math.min(5,nr));
-  }
-  return r;
-}
+function solveIRR(cfs){return PM.irrLegacy(cfs);}
 
 function drawJCurve(){
   const commit=+document.getElementById('slCommit').value;
@@ -1368,49 +1353,12 @@ function drawJCurve(){
   document.getElementById('pcBow').textContent=B.toFixed(1);
   document.getElementById('pcYield').textContent=(Y*100).toFixed(0)+'%';
 
-  const data=[{y:0,cal:0,dist:0,nav:0,cf:0}],cfs=new Array(L+1).fill(0);
-  const yrC=new Array(L+1).fill(0),yrD=new Array(L+1).fill(0),navPrev=new Array(L+1).fill(0);
-  let uncalled=commit,calC=0,distC=0,nav=0,navYears=0;
-  for(let y=1;y<=L;y++){
-    navPrev[y]=nav;
-    const C=(y<=IP)?RC*uncalled:0;uncalled-=C;calC+=C;cfs[y-1]-=C;yrC[y]=C;
-    nav=(nav+C)*(1+G);
-    const D=Math.max(Y,Math.pow(y/L,B))*nav;
-    nav-=D;distC+=D;cfs[y]+=D;navYears+=nav;yrD[y]=D;
-    data.push({y,cal:calC,dist:distC,nav,cf:distC-calC});
-  }
-  const yrs=L;
-
-  // NET OF FEES.  Gross IRR here is identically G - NAV compounds at (1+G)
-  // and every dollar is eventually distributed out of it - so reporting it
-  // told the reader nothing they had not just typed in.  Market-standard
-  // terms are applied instead: a 2.0% annual management fee, charged on
-  // COMMITTED capital through the investment period and on prior year-end NAV
-  // after it, drawn on top of the commitment; and 20% carried interest over
-  // an 8% compounded preferred return, run as a European (whole-fund)
-  // waterfall with a full GP catch-up.  Unlike the gross number this one
-  // responds to the bow factor, the yield floor, the call rate and fund life,
-  // because all of those move WHEN capital comes back and therefore how much
-  // preferred return accrues before the GP is in the money.
-  const MGMT=0.020,CARRY=0.20,PREF=0.08;
-  const lpCf=new Array(L+1).fill(0);
-  let unreturned=0,prefOwed=0,lpPref=0,gpCarry=0,lpDist=0,lpOut=0,feeTot=0;
-  for(let y=1;y<=L;y++){
-    const fee=MGMT*(y<=IP?commit:navPrev[y]);feeTot+=fee;
-    const contrib=yrC[y]+fee;
-    lpCf[y-1]-=contrib;lpOut+=contrib;
-    prefOwed+=PREF*unreturned;                                       // on capital still out
-    unreturned+=contrib;
-    let d=yrD[y];
-    const t1=Math.min(d,unreturned);unreturned-=t1;d-=t1;            // 1. return of capital
-    const t2=Math.min(d,Math.max(0,prefOwed-lpPref));lpPref+=t2;d-=t2; // 2. preferred return
-    const catchUp=lpPref*CARRY/(1-CARRY);                            // 3. GP catch-up to 20%
-    const t3=Math.min(d,Math.max(0,catchUp-gpCarry));gpCarry+=t3;d-=t3;
-    gpCarry+=CARRY*d;                                                // 4. 80/20 thereafter
-    const lpGet=t1+t2+(1-CARRY)*d;
-    lpCf[y]+=lpGet;lpDist+=lpGet;
-  }
-  const netIrr=solveIRR(lpCf),netTvpi=lpOut>0?lpDist/lpOut:0;
+  // Model and net-of-fee waterfall from the shared library (assets/js/pm-math.js), proven
+  // identical to the code that used to live here by tests/legacy-proof.js.
+  const _f=PM.taFund({commit:commit,rc:RC,ip:IP,life:L,growth:G,bow:B,yieldFloor:Y});
+  const data=_f.data,cfs=_f.cfs,calC=_f.called,navYears=_f.navYears,yrs=L;
+  const _n=PM.taNetOfFees(_f,{commit:commit,mgmt:0.020,carry:0.20,pref:0.08});
+  const feeTot=_n.feeTot,netIrr=_n.netIrr,netTvpi=_n.netTvpi;
 
   const c=document.getElementById('jcurveCanvas');
   const{ctx,W,H}=setup(c,300);

@@ -398,3 +398,760 @@
     return { tvpi: tvpi, peakOutlay: peak, breakEvenYear: be, irr: PM.irrLegacy(f.cfs), navPerCommit: navPerCommit, ssPct: navPerCommit > 0 ? targetPct / navPerCommit : 0 };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Portable alpha engine. Copied verbatim from the original Portable
+   Alpha Simulator (commit bbdb266, lines 381-585) so the Multi-Strategy
+   Builder's portable alpha tab reproduces it exactly. See
+   tests/legacy-proof.js for the line-by-line comparison.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM;
+  /* ---------- seeded PRNG ---------- */
+  function mulberry32(seed){
+    return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+  }
+  function makeNormal(rng){
+    var spare=null;
+    return function(){if(spare!==null){var v=spare;spare=null;return v;}
+    var u1=Math.max(rng(),1e-15),u2=rng(),r=Math.sqrt(-2*Math.log(u1));
+    spare=r*Math.sin(2*Math.PI*u2);return r*Math.cos(2*Math.PI*u2);};
+  }
+
+  /* ---------- regimes (monthly parameters, stylised on 2008 / 2022) ----------
+     aDrift : multiplier on the calm expected alpha (IR x vol / 12)
+     aShock : additional alpha drift in units of the monthly alpha sigma
+     aVol   : multiplier on alpha volatility      aBeta : multiplier on alpha beta
+     imMult : multiplier on exchange initial margin (clearing houses raise performance bonds
+              in stress: CME lifted E-mini requirements by roughly 60% between Feb and Mar 2020)
+     sprMult: multiplier on the implied futures financing spread (roll richness widens in stress)
+     basMult: multiplier on the futures-versus-index basis noise
+     exit   : monthly probability of returning to calm (1 / mean duration)      */
+  var REG={
+    calm:  {label:'Calm',      eqMu: 0.0110,eqSig:0.037,bdMu: 0.0045,bdSig:0.013,corr: 0.10,aDrift:1.00,aShock: 0.0,aVol:1.0,aBeta:1.0,imMult:1.0,sprMult:1.0,basMult:1.0,exit:0},
+    crisis:{label:'Crisis',    eqMu:-0.0300,eqSig:0.070,bdMu: 0.0060,bdSig:0.018,corr:-0.35,aDrift:0.00,aShock:-0.4,aVol:2.0,aBeta:1.5,imMult:1.6,sprMult:2.5,basMult:3.0,exit:1/12},
+    rate:  {label:'Rate shock',eqMu:-0.0100,eqSig:0.050,bdMu:-0.0120,bdSig:0.018,corr: 0.60,aDrift:0.25,aShock: 0.0,aVol:1.3,aBeta:1.5,imMult:1.25,sprMult:1.5,basMult:1.8,exit:1/9}
+  };
+  var CRISIS_SHARE=0.55;   /* share of stress months that are crises; the rest are rate shocks */
+  var MONTHS=180;
+  /* futures execution cost per unit of notional traded (calendar spread + impact), by regime */
+  var TRADE_COST={calm:0.0005,crisis:0.0020,rate:0.0010};
+
+  /* target capital structure at a rebalance date: initial margin grossed up for the haircut */
+  function structure(p){
+    var N=p.betaNotional,A=p.alphaAlloc;
+    var im=p.marginReq*N/Math.max(1-p.haircut,0.01);
+    var free=(1-A)-im;
+    return{N:N,A:A,im:im,free:free,freePos:Math.max(0,free),structShort:Math.max(0,-free)};
+  }
+  /* largest futures notional a given pool of haircut T-bill collateral can margin */
+  function supportable(cashAvail,imRate,haircut){
+    if(imRate<=0)return Math.max(0,cashAvail)*1e6;
+    return Math.max(0,cashAvail)*Math.max(1-haircut,0.01)/imRate;
+  }
+
+  /* Stateful simulation. The collateral account is a real balance: variation margin is paid out of
+     it every month, it is not topped up from the alpha sleeve until the sleeve's redemption window
+     opens, and when the balance can no longer margin the position the programme is forced to cut
+     futures notional. That forced de-leveraging - selling beta at the low and re-buying it later -
+     is the failure mode that closed most 2008-vintage portable-alpha programmes. */
+  function simulate(p){
+    var M=MONTHS,rng=mulberry32(p.seed),norm=makeNormal(rng),st=structure(p);
+    var sf=Math.min(Math.max(p.stressFreq,0),0.6);
+    var pCr=sf>0?CRISIS_SHARE*sf*REG.crisis.exit/(1-sf):0;
+    var pRt=sf>0?(1-CRISIS_SHARE)*sf*REG.rate.exit/(1-sf):0;
+    var reg='calm',regimes=[],baseRet=[],paRet=[],eqRets=[],benchRets=[],sleeveRets=[],calls=[],delevs=[],notl=[],cushion=[];
+    var comp={cash:[],betaEx:[],fin:[],roll:[],basis:[],alphaGross:[],fees:[],liq:[]};
+    var rfMo=p.cashRate/12,rollMo=p.rollCost/12,dragMo=p.drag/12,mgmtMo=p.mgmtFee/12;
+    var sigMo=p.alphaVol/Math.sqrt(12),muMo=p.alphaIR*p.alphaVol/12;
+    var N=st.N,A=st.A,hc=Math.max(1-p.haircut,0.01),liqEvery=Math.max(1,Math.round(p.sleeveLiq));
+    /* dollar balances, NAV starts at 1. Futures carry no book value: their P&L settles into cash. */
+    var nav=1,sleeve=A,cash=1-A,sleeveUnit=1,hwmUnit=1;
+    var notional=Math.min(N,supportable(cash,p.marginReq,p.haircut));
+    for(var m=0;m<M;m++){
+      var u=rng();
+      if(reg==='calm'){if(u<pCr)reg='crisis';else if(u<pCr+pRt)reg='rate';}
+      else if(u<REG[reg].exit)reg='calm';
+      regimes.push(reg);
+      var rg=REG[reg],navPrev=nav,nOld=notional,tcost=TRADE_COST[reg]||0.0005;
+      var sprMo=p.finSpread*rg.sprMult/12;
+      var z1=norm(),z2=norm(),z3=norm(),z4=norm();
+      var eqR=rg.eqMu+rg.eqSig*z1;
+      var bdR=rg.bdMu+rg.bdSig*(rg.corr*z1+Math.sqrt(1-rg.corr*rg.corr)*z2);
+      var benchR=p.eqWeight*eqR+(1-p.eqWeight)*bdR;
+      eqRets.push(eqR);benchRets.push(benchR);baseRet.push(benchR);
+
+      /* futures prices embed financing at Rf, so the mark-to-market driver is bench - Rf */
+      var futExc=benchR-rfMo,basisR=p.basisSig*rg.basMult*z3;
+
+      /* Variation margin settles daily, not monthly. Sample the intra-month low of the futures
+         P&L exactly from the Brownian bridge that ends at futExc:
+         min = (R - sqrt(R^2 - 2*sig^2*ln U))/2,  U ~ U(0,1)  (standard bridge-minimum sampler). */
+      var w=p.eqWeight;
+      var vB=w*w*rg.eqSig*rg.eqSig+(1-w)*(1-w)*rg.bdSig*rg.bdSig+2*w*(1-w)*rg.corr*rg.eqSig*rg.bdSig;
+      vB=Math.max(vB,1e-12);
+      var u5=Math.min(Math.max(rng(),1e-12),1-1e-12);
+      var trough=(futExc-Math.sqrt(futExc*futExc-2*vB*Math.log(u5)))/2;
+
+      /* margin test at the intra-month low, with the clearing house raising margin in stress */
+      var imRate=Math.min(p.marginReq*rg.imMult,0.5);
+      var facility=Math.max(0,p.buffer*navPrev);   /* committed one-month credit line, sized to the buffer */
+      var cashLow=cash+nOld*trough,draw=0,tradeCost=0,cut=0,forced=false,call=false;
+      if(cashLow<imRate*nOld/hc-1e-12){
+        call=true;
+        draw=Math.min(imRate*nOld/hc-cashLow,facility);
+        if(cashLow+draw<imRate*nOld/hc-1e-12){
+          forced=true;
+          var maxN=supportable(cashLow+draw,imRate,p.haircut);
+          cut=Math.max(0,nOld-maxN);notional=Math.max(0,nOld-cut);tradeCost+=cut*tcost;
+        }
+      }
+      var nNew=notional,nAvg=(nOld+nNew)/2;
+      /* full notional into the trough, the surviving notional on the way back out */
+      var betaEx=nOld*trough+nNew*(futExc-trough);
+      var fin=-nAvg*sprMo,roll=-nAvg*rollMo,basis=nAvg*basisR;
+
+      /* collateral account: T-bill yield; a negative balance is funded at Rf + spread + 100 bp */
+      var cashInt=cash*rfMo;
+      var liq=(cash<0?cash*(sprMo+0.01/12):0)-draw*(rfMo+sprMo+0.01/12)-tradeCost;
+
+      /* alpha sleeve: hedge-fund style stream, gross of fees, then mgmt + perf fee above HWM */
+      var decay=Math.max(0,1-p.alphaDecay*(m/12));
+      var aMu=muMo*decay*rg.aDrift+rg.aShock*sigMo;
+      var aEx=aMu+sigMo*rg.aVol*z4;
+      var aBeta=p.alphaBeta*rg.aBeta;
+      var gross=rfMo+aEx+aBeta*(eqR-rfMo);
+      var unitPre=sleeveUnit*(1+gross-mgmtMo),perfRet=0,unitPost=unitPre;
+      if(unitPre>hwmUnit){var fee=p.perfFee*(unitPre-hwmUnit);perfRet=fee/sleeveUnit;unitPost=unitPre-fee;hwmUnit=unitPost;}
+      var netSleeve=unitPost/sleeveUnit-1;sleeveUnit=unitPost;
+      sleeveRets.push(netSleeve);
+      var alphaGross=sleeve*gross,fees=-sleeve*(mgmtMo+perfRet+dragMo);
+
+      cash=cash+cashInt+betaEx+fin+roll+basis+liq;
+      sleeve=sleeve*(1+netSleeve-dragMo);
+
+      /* month-end re-test: spread, roll and basis bite after the trough */
+      var maxN2=supportable(cash+draw,imRate,p.haircut);
+      if(maxN2<notional-1e-12){
+        call=true;forced=true;
+        var cut2=notional-maxN2;notional=maxN2;
+        var tc2=cut2*tcost;cash-=tc2;liq-=tc2;tradeCost+=tc2;cut+=cut2;
+      }
+      nav=cash+sleeve;
+
+      /* rebalance to target weights only when the sleeve's redemption window opens */
+      if((m+1)%liqEvery===0&&nav>0){
+        var tSleeve=A*nav,tCash=nav-tSleeve;
+        var tN=Math.min(N*nav,supportable(tCash,imRate,p.haircut));
+        var rc=Math.abs(tN-notional)*tcost;
+        notional=tN;sleeve=tSleeve;cash=tCash-rc;liq-=rc;nav=cash+sleeve;
+      }
+      if(nav<1e-6)nav=1e-6;
+
+      paRet.push(nav/navPrev-1);
+      calls.push(call);delevs.push(cut>1e-9);
+      notl.push(navPrev>0?nOld/navPrev:0);
+      cushion.push(nav>0?(cash-imRate*notional/hc)/nav:0);
+      comp.cash.push(cashInt/navPrev);comp.betaEx.push(betaEx/navPrev);comp.fin.push(fin/navPrev);
+      comp.roll.push(roll/navPrev);comp.basis.push(basis/navPrev);
+      comp.alphaGross.push(alphaGross/navPrev);comp.fees.push(fees/navPrev);comp.liq.push(liq/navPrev);
+    }
+    return{baseRet:baseRet,paRet:paRet,benchRets:benchRets,eqRets:eqRets,sleeveRets:sleeveRets,regimes:regimes,
+      calls:calls,delevs:delevs,notl:notl,cushion:cushion,comp:comp,months:M,st:st};
+  }
+
+  function cumulative(rets){var c=[1];for(var i=0;i<rets.length;i++)c.push(c[c.length-1]*(1+rets[i]));return c;}
+
+  function calcStats(rets,bench,rf){
+    var n=rets.length,yrs=n/12,cum=cumulative(rets),fv=cum[cum.length-1];
+    var cagr=Math.pow(fv,1/yrs)-1;
+    var mean=0;for(var i=0;i<n;i++)mean+=rets[i];mean/=n;
+    var vari=0;for(i=0;i<n;i++)vari+=(rets[i]-mean)*(rets[i]-mean);vari/=(n-1);
+    var vol=Math.sqrt(vari)*Math.sqrt(12);
+    var sharpe=vol>0?(mean*12-rf)/vol:0;
+    var peak=cum[0],maxDD=0,ddSeries=[0];
+    for(i=1;i<cum.length;i++){peak=Math.max(peak,cum[i]);var dd=(cum[i]-peak)/peak;ddSeries.push(dd);maxDD=Math.min(maxDD,dd);}
+    var te=null,ir=null,beta=null,active=null;
+    if(bench){
+      var ex=[];for(i=0;i<n;i++)ex.push(rets[i]-bench[i]);
+      var exMean=0;for(i=0;i<n;i++)exMean+=ex[i];exMean/=n;
+      var exVar=0;for(i=0;i<n;i++)exVar+=(ex[i]-exMean)*(ex[i]-exMean);exVar/=(n-1);
+      te=Math.sqrt(exVar)*Math.sqrt(12);active=exMean*12;ir=te>0?active/te:0;
+      var bMean=0;for(i=0;i<n;i++)bMean+=bench[i];bMean/=n;
+      var cov=0,bVar=0;
+      for(i=0;i<n;i++){cov+=(rets[i]-mean)*(bench[i]-bMean);bVar+=(bench[i]-bMean)*(bench[i]-bMean);}
+      beta=bVar>0?cov/bVar:1;
+    }
+    var worst12=Infinity;
+    for(i=0;i<=n-12;i++){var c12=1;for(var j=0;j<12;j++)c12*=(1+rets[i+j]);worst12=Math.min(worst12,c12-1);}
+    return{cagr:cagr,mean:mean,vol:vol,sharpe:sharpe,maxDD:maxDD,te:te,ir:ir,beta:beta,active:active,worst12:worst12,cum:cum,ddSeries:ddSeries};
+  }
+
+  function annComp(arr){var s=0;for(var i=0;i<arr.length;i++)s+=arr[i];return s/(arr.length/12);}
+
+  /* Path uncertainty. The headline chart is ONE draw of a 15-year path; on a 3.3% tracking error
+     the standard error of a 15-year active return is close to 0.9%/y, so a single path says very
+     little. Re-run the same programme on a fixed block of alternative seeds and report the spread.
+     The block is independent of the user's seed, so it does not move when the shown path changes. */
+  var SWEEP_N=96,sweepCache={key:null,res:null};
+  function seedSweep(p){
+    var key='',k;for(k in p){if(k!=='seed')key+=k+':'+p[k]+';';}
+    if(sweepCache.key===key)return sweepCache.res;
+    var act=[],i,j;
+    for(i=0;i<SWEEP_N;i++){
+      var pp={};for(k in p)pp[k]=p[k];pp.seed=1000+i;
+      var sm=simulate(pp),ex=0,n=sm.months;
+      for(j=0;j<n;j++)ex+=sm.paRet[j]-sm.benchRets[j];
+      act.push(ex/n*12);
+    }
+    act.sort(function(a,b){return a-b;});
+    var win=0;for(i=0;i<act.length;i++)if(act[i]>0)win++;
+    function qt(f){return act[Math.min(act.length-1,Math.max(0,Math.round(f*(act.length-1))))];}
+    var res={n:SWEEP_N,p10:qt(0.10),med:qt(0.50),p90:qt(0.90),win:win/act.length};
+    sweepCache.key=key;sweepCache.res=res;return res;
+  }
+
+  PM.pa = { mulberry32: mulberry32, makeNormal: makeNormal, REG: REG, CRISIS_SHARE: CRISIS_SHARE, MONTHS: MONTHS, TRADE_COST: TRADE_COST,
+    structure: structure, supportable: supportable, simulate: simulate, cumulative: cumulative, calcStats: calcStats, annComp: annComp, seedSweep: seedSweep, SWEEP_N: SWEEP_N,
+    /* the original page's default inputs, already converted to decimals the way its getParams did */
+    DEFAULT_PARAMS: { seed: 42, cashRate: 0.04, stressFreq: 0.15, eqWeight: 0.60, betaNotional: 1.00, finSpread: 0.0035, rollCost: 0.0005, basisSig: 0.0010,
+      alphaAlloc: 0.50, alphaVol: 0.06, alphaIR: 1.00, alphaBeta: 0.15, mgmtFee: 0.015, perfFee: 0.20, alphaDecay: 0.01, drag: 0.0015, marginReq: 0.06, haircut: 0.02, buffer: 0.05, sleeveLiq: 3 } };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Portfolio construction: projections, mean-variance, maximum Sharpe,
+   frontier, Monte Carlo panel and path statistics. Generic over N
+   assets; the algorithms are those of the original Multi-Asset
+   Portfolio Optimizer (commit bbdb266), proven equal on its own inputs
+   in tests/legacy-proof.js.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, O = PM.opt = {};
+
+  /** rng32Legacy(seed): the optimizer demo's PRNG. It is a truncated mulberry32 (the second
+      mixing step and the final xor-shift are missing), so it is statistically weaker than
+      PM.mulberry32. It is kept, unchanged, only so the extracted optimizer reproduces the old
+      page's numbers exactly; new code uses PM.mulberry32. */
+  O.rng32Legacy = function (s) {
+    return function () { s |= 0; s = s + 0x6D2B79F5 | 0; var t = Math.imul(s ^ s >>> 15, 1 | s); return ((t += t < 0 ? 0x100000000 : 0) >>> 0) / 4294967296; };
+  };
+  function dot(a, w) { var t = 0; for (var i = 0; i < a.length; i++) t += a[i] * w[i]; return t; }
+
+  /** exact Euclidean projection of x onto {lo <= w <= hi, sum w = 1}, by bisection on the shift */
+  O.projBox = function (x, lo, hi) {
+    var n = x.length, a = Math.min.apply(null, x) - 2, b = Math.max.apply(null, x) + 2;
+    var f = function (th) { var s = 0; for (var i = 0; i < n; i++) s += Math.min(hi[i], Math.max(lo[i], x[i] - th)); return s; };
+    for (var k = 0; k < 80; k++) { var m = (a + b) / 2; if (f(m) > 1) a = m; else b = m; }
+    var th = (a + b) / 2;
+    return x.map(function (v, i) { return Math.min(hi[i], Math.max(lo[i], v - th)); });
+  };
+  /** projection onto the halfspace a'w <= b (projLE) or a'w >= b (projGE) */
+  O.projLE = function (w, a, b) { var s = dot(a, w); if (s <= b + 1e-12) return w; var nn = dot(a, a) || 1, k = (s - b) / nn; return w.map(function (v, i) { return v - k * a[i]; }); };
+  O.projGE = function (w, a, b) { var s = dot(a, w); if (s >= b - 1e-12) return w; var nn = dot(a, a) || 1, k = (b - s) / nn; return w.map(function (v, i) { return v + k * a[i]; }); };
+
+  /** makeProjector({lo, hi, le:[{a, b}], ge:[{a, b}], iters}) -> function(w) projecting onto
+      box + budget + linear constraints by alternating projections (all sets convex). */
+  O.makeProjector = function (c) {
+    var le = c.le || [], ge = c.ge || [], iters = c.iters || 80;
+    function feasible(w) {
+      for (var i = 0; i < w.length; i++) if (w[i] < c.lo[i] - 1e-7 || w[i] > c.hi[i] + 1e-7) return false;
+      if (Math.abs(PM.sum(w) - 1) > 1e-6) return false;
+      for (i = 0; i < le.length; i++) if (dot(le[i].a, w) > le[i].b + 1e-6) return false;
+      for (i = 0; i < ge.length; i++) if (dot(ge[i].a, w) < ge[i].b - 1e-6) return false;
+      return true;
+    }
+    var proj = function (w) {
+      var x = O.projBox(w, c.lo, c.hi);
+      for (var it = 0; it < iters; it++) {
+        if (feasible(x)) break;
+        le.forEach(function (k) { x = O.projLE(x, k.a, k.b); });
+        ge.forEach(function (k) { x = O.projGE(x, k.a, k.b); });
+        x = O.projBox(x, c.lo, c.hi);
+      }
+      return x;
+    };
+    proj.feasible = feasible;
+    return proj;
+  };
+
+  O.portMu = function (w, mu) { return w.reduce(function (s, v, i) { return s + v * mu[i]; }, 0); };
+  O.portVol = function (w, S) { var v = 0, n = w.length; for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) v += w[i] * S[i][j] * w[j]; return Math.sqrt(Math.max(0, v)); };
+  O.sharpe = function (w, mu, S, rf) { var v = O.portVol(w, S); return v > 1e-8 ? (O.portMu(w, mu) - rf) / v : 0; };
+  /** risk contribution of each asset, in percent of portfolio variance (Euler allocation) */
+  O.riskContrib = function (w, S) {
+    var n = w.length, sw = [];
+    for (var i = 0; i < n; i++) { var s = 0; for (var j = 0; j < n; j++) s += S[i][j] * w[j]; sw[i] = s; }
+    var t = w.reduce(function (s, v, i) { return s + v * sw[i]; }, 0) || 1;
+    return w.map(function (v, i) { return v * sw[i] / t * 100; });
+  };
+
+  /** mvSolve: maximise lam * mu'w - w'Sigma w over the projector's set, projected gradient,
+      step 1 / (2 trace Sigma). lam = 0 gives minimum variance. */
+  O.mvSolve = function (mu, S, lam, proj, w0, iters) {
+    var n = mu.length, w = proj(w0), L = 0;
+    for (var i = 0; i < n; i++) L += S[i][i];
+    var eta = 1 / (2 * L);
+    for (var it = 0; it < iters; it++) {
+      var g = [];
+      for (i = 0; i < n; i++) { var s = 0; for (var j = 0; j < n; j++) s += S[i][j] * w[j]; g[i] = lam * mu[i] - 2 * s; }
+      w = proj(w.map(function (v, k) { return v + eta * g[k]; }));
+    }
+    return w;
+  };
+  /** maxSharpeSolve: projected ascent on the Sharpe gradient mu/sigma - (mu'w - rf) Sigma w / sigma^3,
+      with a linearly decaying step; returns the best point visited. */
+  O.maxSharpeSolve = function (mu, S, rf, proj, w0, iters) {
+    var n = mu.length, w = proj(w0), bw = w, bs = O.sharpe(w, mu, S, rf), sc = 0;
+    for (var i = 0; i < n; i++) sc += S[i][i];
+    var eta0 = 0.5 * Math.sqrt(sc);
+    for (var it = 0; it < iters; it++) {
+      var sg = [], v = 0;
+      for (i = 0; i < n; i++) { var s = 0; for (var j = 0; j < n; j++) s += S[i][j] * w[j]; sg[i] = s; v += w[i] * s; }
+      var sd = Math.sqrt(Math.max(1e-12, v)), ex = O.portMu(w, mu) - rf, g = [];
+      for (i = 0; i < n; i++) g[i] = mu[i] / sd - ex * sg[i] / (sd * sd * sd);
+      var step = eta0 * (1 - it / iters);
+      w = proj(w.map(function (x, k) { return x + step * g[k]; }));
+      var s2 = O.sharpe(w, mu, S, rf); if (s2 > bs) { bs = s2; bw = w; }
+    }
+    return bw;
+  };
+  /** random feasible portfolios (normalised exponential draws, projected) */
+  O.randomCloud = function (mu, S, proj, seed, n) {
+    var sr = O.rng32Legacy(seed), pts = [], N = mu.length;
+    for (var k = 0; k < n; k++) {
+      var u = [], t = 0;
+      for (var i = 0; i < N; i++) { u[i] = -Math.log(Math.max(1e-10, sr())); t += u[i]; }
+      var w = proj(u.map(function (x) { return x / t; }));
+      pts.push({ w: w, r: O.portMu(w, mu), v: O.portVol(w, S) * 100 });
+    }
+    return pts;
+  };
+  /** efficient frontier: a 48-point lambda sweep (warm-started), plus the minimum-variance and
+      maximum-Sharpe points seeded from a random cloud; returns the upper envelope sorted by risk.
+      Volatility v is in percent. */
+  O.frontier = function (mu, S, rf, proj, seed, opts) {
+    opts = opts || {};
+    var N = mu.length, pts = O.randomCloud(mu, S, proj, seed + 888, opts.cloud || 1400);
+    var K = opts.K || 48, LAM_MAX = opts.lamMax || 9, cand = [], warm = new Array(N).fill(1 / N);
+    for (var k = 0; k < K; k++) { var u = k / (K - 1); warm = O.mvSolve(mu, S, LAM_MAX * u * u, proj, warm, 160); cand.push(warm); }
+    var cl = null, cv = 1e9, cs = null, cbs = -1e9;
+    pts.forEach(function (p) { if (p.v < cv) { cv = p.v; cl = p.w; } var sh = (p.r - rf) / (p.v / 100 || 1e-6); if (sh > cbs) { cbs = sh; cs = p.w; } });
+    cand.push(O.mvSolve(mu, S, 0, proj, cl, 400));
+    cand.push(O.maxSharpeSolve(mu, S, rf, proj, cs, 400));
+    var all = cand.map(function (w) { return { w: w, r: O.portMu(w, mu), v: O.portVol(w, S) * 100 }; });
+    all.sort(function (a, b) { return a.v - b.v || b.r - a.r; });
+    var curve = [], best = -1e9;
+    all.forEach(function (p) { if (p.r > best + 1e-9) { best = p.r; curve.push(p); } });
+    return { pts: pts, curve: curve };
+  };
+  /** covariance from vols and a correlation matrix: Sigma_ij = C_ij sigma_i sigma_j */
+  O.covFromCorr = function (vol, C) { return vol.map(function (vi, i) { return vol.map(function (vj, j) { return C[i][j] * vi * vj; }); }); };
+
+  /** Monte Carlo panel: paths x T months x N assets of log-normal monthly returns with
+      E[r_month] = mu/12 exactly, correlated through the Cholesky factor of C (the optimizer
+      demo's generator, same draw order). Returns {panel (Float64Array), returns (path 1), Sigma}. */
+  O.genPanel = function (o) {
+    var N = o.mu.length, T = o.T, P = o.paths, rng = O.rng32Legacy(o.seed);
+    var bm = function () { var u = Math.max(1e-10, rng()), v = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    var C = o.corr, vol = o.vol, L = [];
+    for (var i = 0; i < N; i++) { L[i] = []; for (var j = 0; j <= i; j++) { var s = 0; for (var k = 0; k < j; k++) s += L[i][k] * L[j][k]; L[i][j] = i === j ? Math.sqrt(Math.max(1e-12, C[i][i] - s)) : (C[i][j] - s) / (L[j][j] || 1e-12); } for (j = i + 1; j < N; j++) L[i][j] = 0; }
+    var mu_m = o.mu.map(function (m) { return Math.log(1 + m / 12); }), vol_m = vol.map(function (v) { return v / Math.sqrt(12); });
+    var panel = new Float64Array(P * T * N);
+    for (var p = 0; p < P; p++) for (var t = 0; t < T; t++) {
+      var z = []; for (i = 0; i < N; i++) z[i] = bm();
+      var off = (p * T + t) * N;
+      for (i = 0; i < N; i++) { var e = 0; for (j = 0; j <= i; j++) e += L[i][j] * z[j]; panel[off + i] = Math.exp(mu_m[i] - 0.5 * vol_m[i] * vol_m[i] + vol_m[i] * e) - 1; }
+    }
+    var rets = [];
+    for (t = 0; t < T; t++) { var r = []; for (i = 0; i < N; i++) r.push(panel[t * N + i]); rets.push(r); }
+    return { panel: panel, returns: rets, Sigma: O.covFromCorr(vol, C), N: N, T: T, paths: P };
+  };
+  /** path statistics of weights w over every path-month of a panel: monthly VaR and CVaR
+      (95, 99, in percent, positive = loss), median and 95th percentile max drawdown, worst
+      12 months (5th percentile), annualised downside deviation, terminal wealth percentiles. */
+  O.pathStats = function (w, D, rf) {
+    var pan = D.panel, N = D.N, T = D.T, P = D.paths;
+    var rp = new Float64Array(P * T), mdds = [], w12s = [], terms = [], hist = new Float64Array(T + 1);
+    for (var p = 0; p < P; p++) {
+      var wl = 1, pk = 1, mdd = 0, base = p * T; hist[0] = 1;
+      for (var t = 0; t < T; t++) {
+        var r = 0, o = (base + t) * N; for (var i = 0; i < N; i++) r += w[i] * pan[o + i];
+        rp[base + t] = r; wl *= (1 + r); hist[t + 1] = wl;
+        if (wl > pk) pk = wl;
+        var d = (pk - wl) / pk; if (d > mdd) mdd = d;
+      }
+      mdds.push(mdd * 100); terms.push(wl);
+      var w12 = 0; for (t = 12; t <= T; t++) { var x = hist[t] / hist[t - 12] - 1; if (x < w12) w12 = x; }
+      w12s.push(w12 * 100);
+    }
+    var srt = Float64Array.from(rp).sort();
+    var q = function (a) { return srt[Math.max(0, Math.min(srt.length - 1, Math.floor(a * srt.length)))]; };
+    var es = function (a) { var k = Math.max(1, Math.floor(a * srt.length)), s = 0; for (var i = 0; i < k; i++) s += srt[i]; return s / k; };
+    var rfm = Math.pow(1 + rf, 1 / 12) - 1, ds = 0;
+    for (i = 0; i < rp.length; i++) { var dd = Math.min(0, rp[i] - rfm); ds += dd * dd; }
+    var pc = function (a, x) { a.sort(function (u, v) { return u - v; }); return a[Math.max(0, Math.min(a.length - 1, Math.floor(x * a.length)))]; };
+    return { var95: -q(0.05) * 100, var99: -q(0.01) * 100, cvar95: -es(0.05) * 100, cvar99: -es(0.01) * 100,
+      mddMed: pc(mdds, 0.5), mddP95: pc(mdds, 0.95), worst12: pc(w12s, 0.05),
+      downDev: Math.sqrt(ds / rp.length * 12), termMed: pc(terms, 0.5), termP5: pc(terms, 0.05), termP95: pc(terms, 0.95) };
+  };
+  /** equal risk contribution across the first m assets (damped fixed point, as the optimizer's
+      risk parity preset; assets from index m on get zero) */
+  O.riskParity = function (S, m) {
+    var N = S.length, M = m == null ? N : m, w = new Array(N).fill(0);
+    for (var i = 0; i < M; i++) w[i] = 1 / M;
+    for (var it = 0; it < 400; it++) {
+      var sw = [], tot = 0;
+      for (i = 0; i < M; i++) { var s = 0; for (var j = 0; j < M; j++) s += S[i][j] * w[j]; sw[i] = s; tot += w[i] * s; }
+      if (tot < 1e-14) break;
+      var t = tot / M, sum = 0;
+      for (i = 0; i < M; i++) { w[i] = Math.max(1e-6, w[i] * Math.pow(t / Math.max(1e-14, w[i] * sw[i]), 0.15)); sum += w[i]; }
+      for (i = 0; i < M; i++) w[i] /= sum;
+    }
+    return w;
+  };
+  /** equal risk contribution, solved to tight tolerance (Newton-free multiplicative updates
+      with step 0.5 until every risk share is within tol of 1/N) */
+  O.erc = function (S, tol) {
+    tol = tol || 1e-10;
+    var N = S.length, w = S.map(function (r, i) { return 1 / Math.sqrt(S[i][i]); }), s0 = PM.sum(w);
+    w = w.map(function (x) { return x / s0; });
+    for (var it = 0; it < 5000; it++) {
+      var rc = O.riskContrib(w, S).map(function (x) { return x / 100; }), err = 0;
+      rc.forEach(function (x) { err = Math.max(err, Math.abs(x - 1 / N)); });
+      if (err < tol) break;
+      w = w.map(function (x, i) { return x * Math.pow((1 / N) / rc[i], 0.5); });
+      var s = PM.sum(w); w = w.map(function (x) { return x / s; });
+    }
+    return w;
+  };
+
+  /** Black-Litterman posterior expected returns.
+      pi = delta Sigma w_mkt;  mu = [(tau Sigma)^-1 + P' Omega^-1 P]^-1 [(tau Sigma)^-1 pi + P' Omega^-1 Q].
+      If omega is omitted, Omega = diag(P tau Sigma P') (He and Litterman). Returns {pi, mu, omega}. */
+  O.blackLitterman = function (S, wMkt, delta, tau, P, Q, omega) {
+    var pi = PM.matVec(S, wMkt).map(function (x) { return delta * x; });
+    if (!P || !P.length) return { pi: pi, mu: pi.slice(), omega: [] };
+    var tS = S.map(function (r) { return r.map(function (v) { return v * tau; }); });
+    var Om = omega || P.map(function (p) { return PM.dot(p, PM.matVec(tS, p)); });
+    var tSi = PM.inverse(tS), Pt = PM.transpose(P);
+    var OmiP = P.map(function (p, k) { return p.map(function (v) { return v / Om[k]; }); });
+    var A = tSi.map(function (r, i) { return r.map(function (v, j) { var s = v; for (var k = 0; k < P.length; k++) s += Pt[i][k] * OmiP[k][j]; return s; }); });
+    var b = PM.matVec(tSi, pi).map(function (v, i) { var s = v; for (var k = 0; k < P.length; k++) s += Pt[i][k] * Q[k] / Om[k]; return s; });
+    return { pi: pi, mu: PM.solve(A, b), omega: Om };
+  };
+
+  /** resampled efficient frontier (Michaud): draw nSim samples of T months from N(mu/12, S/12),
+      re-estimate mu and Sigma, solve the frontier at the same return ranks, average the weights.
+      Returns {weights: [K x N], points: [{r, v}] on the true inputs}. */
+  O.resampledFrontier = function (mu, S, proj, o) {
+    o = o || {};
+    var N = mu.length, K = o.K || 12, nSim = o.nSim || 40, T = o.T || 120, rng = PM.mulberry32(o.seed || 1), z = PM.normalGen(rng);
+    var L = PM.cholesky(S.map(function (r) { return r.map(function (v) { return v / 12; }); }));
+    var acc = []; for (var k = 0; k < K; k++) acc.push(new Array(N).fill(0));
+    for (var s = 0; s < nSim; s++) {
+      var rows = [];
+      for (var t = 0; t < T; t++) {
+        var e = []; for (var i = 0; i < N; i++) e[i] = z();
+        rows.push(mu.map(function (m, i) { var v = m / 12; for (var j = 0; j <= i; j++) v += L[i][j] * e[j]; return v; }));
+      }
+      var mh = mu.map(function (_, i) { return PM.mean(rows.map(function (r) { return r[i]; })) * 12; });
+      var Sh = PM.covMatrix(rows).map(function (r) { return r.map(function (v) { return v * 12; }); });
+      var warm = new Array(N).fill(1 / N);
+      for (k = 0; k < K; k++) {
+        var u = k / (K - 1);
+        warm = O.mvSolve(mh, Sh, 9 * u * u, proj, warm, 120);
+        for (i = 0; i < N; i++) acc[k][i] += warm[i] / nSim;
+      }
+    }
+    var weights = acc.map(function (w) { return proj(w); });
+    return { weights: weights, points: weights.map(function (w) { return { w: w, r: O.portMu(w, mu), v: O.portVol(w, S) }; }) };
+  };
+
+  /** Brinson-Hood-Beebower attribution. alloc = sum (wp - wb) rb, selection = sum wb (rp - rb),
+      interaction = sum (wp - wb)(rp - rb). total is computed independently as rp_tot - rb_tot,
+      so alloc + sel + inter = total is a real check (as in the original macro dashboard). */
+  PM.brinson = function (wp, wb, rp, rb) {
+    var alloc = 0, sel = 0, inter = 0, rpTot = 0, rbTot = 0, rows = [];
+    for (var i = 0; i < wb.length; i++) {
+      var a = (wp[i] - wb[i]) * rb[i], s = wb[i] * (rp[i] - rb[i]), x = (wp[i] - wb[i]) * (rp[i] - rb[i]);
+      alloc += a; sel += s; inter += x; rpTot += wp[i] * rp[i]; rbTot += wb[i] * rb[i];
+      rows.push({ alloc: a, sel: s, inter: x });
+    }
+    var total = rpTot - rbTot;
+    return { alloc: alloc, sel: sel, inter: inter, total: total, resid: (alloc + sel + inter) - total, rpTot: rpTot, rbTot: rbTot, rows: rows };
+  };
+
+  /** total portfolio approach: marginal contribution of a candidate to total risk and to
+      active risk against a reference portfolio. Returns {vol, activeVol, mctr[], ctrActive[]} where
+      ctrActive_i = (w - wRef)_i (Sigma (w - wRef))_i / activeVol. */
+  O.tpa = function (w, wRef, S) {
+    var a = w.map(function (v, i) { return v - wRef[i]; });
+    var Sa = PM.matVec(S, a), Sw = PM.matVec(S, w), vol = O.portVol(w, S), av = O.portVol(a, S);
+    return { vol: vol, activeVol: av, mctr: Sw.map(function (x) { return vol > 0 ? x / vol : 0; }), ctrActive: a.map(function (x, i) { return av > 0 ? x * Sa[i] / av : 0; }) };
+  };
+  /** trades back to target within a tolerance band: assets outside [target - band, target + band]
+      are traded back to the band edge (or to target if toTarget), funded pro rata from the rest. */
+  O.rebalance = function (w, target, band, toTarget) {
+    var n = w.length, trade = new Array(n).fill(0), net = 0;
+    for (var i = 0; i < n; i++) {
+      var lo = target[i] - band[i], hi = target[i] + band[i];
+      if (w[i] > hi) trade[i] = (toTarget ? target[i] : hi) - w[i];
+      else if (w[i] < lo) trade[i] = (toTarget ? target[i] : lo) - w[i];
+      net += trade[i];
+    }
+    if (Math.abs(net) > 1e-12) {
+      var free = []; for (i = 0; i < n; i++) if (trade[i] === 0) free.push(i);
+      var tot = free.reduce(function (s, k) { return s + w[k]; }, 0) || 1;
+      free.forEach(function (k) { trade[k] = -net * w[k] / tot; });
+    }
+    return { trade: trade, after: w.map(function (v, i) { return v + trade[i]; }), turnover: trade.reduce(function (s, t) { return s + Math.abs(t); }, 0) / 2 };
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Inference helpers, copied verbatim from the Alpha Signal Discovery
+   Engine (commit bbdb266, lines 549-580): Newey-West HAC standard
+   error, normal CDF (Abramowitz and Stegun 7.1.26) and inverse normal
+   CDF (Acklam). Used by the manager research tools.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, mean = PM.mean;
+  function hacLag(n,h){var b=Math.floor(4*Math.pow(n/100,2/9));return Math.max(0,Math.max(h-1,b))}
+  function hacSE(a,lag){
+    var n=a.length;if(n<3)return 0;
+    var m=mean(a),i,l,g0=0;
+    for(i=0;i<n;i++){var d=a[i]-m;g0+=d*d}g0/=n;
+    var v=g0;
+    for(l=1;l<=lag&&l<n;l++){
+      var gl=0;for(i=l;i<n;i++)gl+=(a[i]-m)*(a[i-l]-m);gl/=n;
+      v+=2*(1-l/(lag+1))*gl;
+    }
+    if(v<g0*.05)v=g0*.05;   // guard against a degenerate HAC estimate
+    return Math.sqrt(v/n);
+  }
+  // Normal CDF (Abramowitz & Stegun 7.1.26) and inverse CDF (Acklam's rational fit)
+  function normCdf(x){
+    var sg=x<0?-1:1,z=Math.abs(x)/Math.SQRT2,tt=1/(1+.3275911*z);
+    var y=1-(((((1.061405429*tt-1.453152027)*tt)+1.421413741)*tt-.284496736)*tt+.254829592)*tt*Math.exp(-z*z);
+    return .5*(1+sg*y);
+  }
+  function normInv(p){
+    if(p<=0)return -8;if(p>=1)return 8;
+    var A=[-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239],
+        B=[-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1],
+        C=[-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],
+        D=[7.784695709041462e-3,3.224671290700398e-1,2.445134137142996,3.754408661907416],q,r;
+    if(p<.02425){q=Math.sqrt(-2*Math.log(p));
+      return(((((C[0]*q+C[1])*q+C[2])*q+C[3])*q+C[4])*q+C[5])/((((D[0]*q+D[1])*q+D[2])*q+D[3])*q+1)}
+    if(p>1-.02425){q=Math.sqrt(-2*Math.log(1-p));
+      return -(((((C[0]*q+C[1])*q+C[2])*q+C[3])*q+C[4])*q+C[5])/((((D[0]*q+D[1])*q+D[2])*q+D[3])*q+1)}
+    q=p-.5;r=q*q;
+    return(((((A[0]*r+A[1])*r+A[2])*r+A[3])*r+A[4])*r+A[5])*q/(((((B[0]*r+B[1])*r+B[2])*r+B[3])*r+B[4])*r+1);
+  }
+  /** hacLag(n, h): Newey-West lag, at least h - 1 for overlapping h-period returns.
+      hacSE(a, lag): HAC standard error of the mean of a.  normCdf(x), normInv(p). */
+  PM.hacLag = hacLag; PM.hacSE = hacSE; PM.normCdf = normCdf; PM.normInv = normInv;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Liquidity and capital call coverage (used by Agentic Portfolio
+   Monitoring and the Private Capital Lab).
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM;
+  /** share of the portfolio (same units as weights) sellable within d days */
+  PM.liquidWithin = function (weights, liqDays, d) { return weights.reduce(function (a, w, i) { return a + (liqDays[i] <= d ? w : 0); }, 0); };
+  /** capital call coverage = liquid assets / (unfunded commitments + calls already noticed).
+      Infinity when nothing is owed. */
+  PM.callCoverage = function (liquidValue, unfunded, pending) { var c = unfunded + (pending || 0); return c > 0 ? liquidValue / c : Infinity; };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Private markets program: pacing to a target, pacing under
+   uncertainty, NAV nowcasting, roll-forward reconciliation,
+   semi-liquid (evergreen) fund redemptions.
+   All amounts in $m; quarterly steps where noted.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, P = PM.priv = {};
+
+  /** navPerDollar(model, ages): NAV per $1 committed at each age (years) under the
+      Takahashi-Alexander model, e.g. [0, nav(age1), ...]; the curve every plan builds on. */
+  P.navCurve = function (m) {
+    var f = PM.taFund({ commit: 1, rc: m.rc, ip: m.ip, life: m.life, growth: m.growth, bow: m.bow, yieldFloor: m.yieldFloor || 0 });
+    return { nav: f.nav, calls: f.calls, dists: f.dists };
+  };
+
+  /** pacingPlan(o): annual commitments that reach and hold a target private allocation.
+      o = {assets0, privateNav0, existing: [{vintage, commit}], model, targetPct, years, publicReturn,
+           horizon (years ahead the plan aims at, default 4), maxStep (cap on the change in commitments)}
+      Each year t the plan picks a level commitment c_t (assumed repeated until t + horizon) so that
+      projected private NAV at t + horizon equals targetPct x projected total assets then.
+      Total assets grow at publicReturn on the public part and at the model growth net of flows on the
+      private part. Returns per-year arrays: commit, calls, dists, nav, assets, pct. */
+  P.pacingPlan = function (o) {
+    var m = o.model, cur = P.navCurve(m), L = m.life, H = o.horizon || 4, Y = o.years;
+    var vint = (o.existing || []).map(function (v) { return { age0: v.age, c: v.commit }; });
+    var plan = [], commits = [];
+    var navAt = function (vs, k) { var s = 0; vs.forEach(function (v) { var a = v.age0 + k; if (a >= 1 && a <= L) s += v.c * cur.nav[a]; }); return s; };
+    var flowAt = function (vs, k) { var c = 0, d = 0; vs.forEach(function (v) { var a = v.age0 + k; if (a >= 1 && a <= L) { c += v.c * cur.calls[a]; d += v.c * cur.dists[a]; } }); return { calls: c, dists: d }; };
+    var assets = o.assets0, pub = o.assets0 - o.privateNav0;
+    for (var t = 1; t <= Y; t++) {
+      // projected total assets at t + H: public compounding plus private NAV is circular, so use
+      // the target identity: assets_{t+H} = pub growth + private NAV, approximated with assets growth at publicReturn
+      var aH = assets * Math.pow(1 + o.publicReturn, H);
+      var base = navAt(vint, t - 1 + H);
+      var perC = 0; for (var k = 0; k < H; k++) { var age = H - k; if (age >= 1 && age <= L) perC += cur.nav[age]; }
+      var c = Math.max(0, (o.targetPct * aH - base) / (perC || 1));
+      if (o.maxStep && commits.length) c = Math.min(commits[commits.length - 1] * (1 + o.maxStep), Math.max(commits[commits.length - 1] * (1 - o.maxStep), c));
+      commits.push(c);
+      vint.push({ age0: -(t - 1), c: c });
+      var f = flowAt(vint, t), nav = navAt(vint, t);
+      pub = pub * (1 + o.publicReturn) - f.calls + f.dists;
+      assets = pub + nav;
+      plan.push({ year: t, commit: c, calls: f.calls, dists: f.dists, net: f.dists - f.calls, nav: nav, assets: assets, pct: nav / assets });
+    }
+    return plan;
+  };
+
+  /** pacingMC(o): quarterly Monte Carlo of a program with stochastic calls, distributions, private
+      NAV growth and public market returns.
+      o = {assets0, pub0, funds: [{commit, unfunded, nav}] (existing), plan: [annual commitments],
+           quarters, seed, paths, pubMu, pubVol, privAlpha, privBeta, privVol, callRate (annual, of
+           unfunded), callVol, distRate (annual, of NAV), distBeta (sensitivity to public return),
+           ip (years a new commitment can be called), band: [lo, hi], liquidBufferPct, spendPct}
+      Returns {pct: [paths][q], net: [paths][q], breachProb, shortfallProb, quantiles} */
+  P.pacingMC = function (o) {
+    var rng = PM.mulberry32(o.seed), z = PM.normalGen(rng), Q = o.quarters, out = { pct: [], net: [], liquid: [] };
+    var breach = 0, short = 0;
+    for (var p = 0; p < o.paths; p++) {
+      var pub = o.pub0, unfunded = 0, nav = 0, pct = [], net = [], liq = [], br = false, sf = false;
+      var pool = o.funds.map(function (f) { return { unf: f.unfunded, nav: f.nav, age: f.age || 3 }; });
+      for (var q = 1; q <= Q; q++) {
+        if ((q - 1) % 4 === 0) { var yr = (q - 1) / 4; if (o.plan[yr]) pool.push({ unf: o.plan[yr], nav: 0, age: 0 }); }
+        var zp = z(), zi = z(), zc = z();
+        var rPub = o.pubMu / 4 + o.pubVol / 2 * zp;
+        var rPriv = o.privAlpha / 4 + o.privBeta * rPub + o.privVol / 2 * zi;
+        var calls = 0, dists = 0; nav = 0; unfunded = 0;
+        pool.forEach(function (f) {
+          f.age += 0.25;
+          var cr = f.age <= o.ip + 0.01 ? Math.max(0, Math.min(1, (o.callRate / 4) * Math.exp(o.callVol * zc - 0.5 * o.callVol * o.callVol))) : 0;
+          var c = f.unf * cr; f.unf -= c; calls += c;
+          f.nav = (f.nav + c) * (1 + rPriv);
+          var dr = Math.max(0, Math.min(0.5, (o.distRate / 4) * (1 + o.distBeta * rPub * 4) * Math.min(1, f.age / 4)));
+          var d = f.nav * dr; f.nav -= d; dists += d;
+          nav += f.nav; unfunded += f.unf;
+        });
+        var spend = (pub + nav) * o.spendPct / 4;
+        pub = pub * (1 + rPub) - calls + dists - spend;
+        var pctv = nav / (pub + nav);
+        pct.push(pctv); net.push(dists - calls);
+        liq.push(pub * o.liquidPctOfPublic / Math.max(1e-9, unfunded));
+        if (pctv > o.band[1]) br = true;
+        if (pub * o.liquidPctOfPublic < unfunded * o.coverageMin) sf = true;
+      }
+      out.pct.push(pct); out.net.push(net); out.liquid.push(liq);
+      if (br) breach++; if (sf) short++;
+    }
+    var qs = function (arr) {
+      var res = { p10: [], p25: [], p50: [], p75: [], p90: [] };
+      for (var q = 0; q < Q; q++) {
+        var col = arr.map(function (r) { return r[q]; });
+        res.p10.push(PM.quantile(col, 0.1)); res.p25.push(PM.quantile(col, 0.25)); res.p50.push(PM.quantile(col, 0.5)); res.p75.push(PM.quantile(col, 0.75)); res.p90.push(PM.quantile(col, 0.9));
+      }
+      return res;
+    };
+    out.breachProb = breach / o.paths; out.shortfallProb = short / o.paths;
+    out.pctQ = qs(out.pct); out.netQ = qs(out.net);
+    return out;
+  };
+
+  /** nowcastFit(navRet, proxyRet, maxLag): regress reported quarterly NAV returns on current and
+      lagged public proxy returns, picking the lag (0..maxLag) with the highest R squared.
+      Model: r_nav_t = a + beta * r_proxy_{t-lag} + e. Returns {alpha, beta, lag, r2, sigma} */
+  P.nowcastFit = function (navRet, proxyRet, maxLag) {
+    var best = null;
+    for (var lag = 0; lag <= (maxLag || 2); lag++) {
+      var y = [], X = [];
+      for (var t = lag; t < navRet.length; t++) { y.push(navRet[t]); X.push([proxyRet[t - lag]]); }
+      if (y.length < 4) continue;
+      var f = PM.ols(y, X), s = PM.std(f.resid);
+      if (!best || f.r2 > best.r2) best = { alpha: f.alpha, beta: f.beta[0], lag: lag, r2: f.r2, sigma: s, n: y.length };
+    }
+    return best;
+  };
+  /** nowcast(o): roll the last reported NAV forward to today.
+      o = {nav, flows: [{q, amount}] (calls positive into the fund, distributions negative, in each
+      quarter since the NAV date), proxy: [quarterly proxy returns since the NAV date], beta, alpha, sigma}
+      NAV_k = (NAV_{k-1} + calls_k - dists_k) x (1 + alpha + beta r_proxy_k), band +/- 1.645 sigma sqrt(k).
+      With zero proxy returns, zero alpha and no flows, the nowcast equals the reported NAV. */
+  P.nowcast = function (o) {
+    var nav = o.nav, k = o.proxy.length, path = [nav];
+    for (var i = 0; i < k; i++) {
+      var fl = 0; (o.flows || []).forEach(function (f) { if (f.q === i + 1) fl += f.amount; });
+      nav = (nav + fl) * (1 + (o.alpha || 0) + o.beta * o.proxy[i]);
+      path.push(nav);
+    }
+    var band = 1.645 * (o.sigma || 0) * Math.sqrt(Math.max(1, k));
+    return { nav: nav, lo: nav * (1 - band), hi: nav * (1 + band), path: path, quarters: k };
+  };
+
+  /** rollForward(s): capital account identity. opening + contributions - distributions + gains
+      (net of fees, income and expenses) = closing. Returns {expected, break} with break = closing - expected. */
+  P.rollForward = function (s) {
+    var exp = s.opening + s.contributions - s.distributions + s.gains;
+    return { expected: exp, break: s.closing - exp };
+  };
+
+  /** evergreen(o): quarterly simulation of a semi-liquid private markets fund.
+      o = {nav0, sleevePct (liquid sleeve share of NAV), facility (credit line, $m), limitPct (quarterly
+      redemption limit, share of NAV), requests: [share of NAV requested each quarter], returns: [private
+      asset return each quarter], sleeveReturn, saleDiscount (haircut on forced private sales),
+      subscriptions: [share of NAV], facilityRate (annual)}
+      Each quarter: new requests join the queue; paid = min(queue, limitPct x NAV); paid from the
+      sleeve, then the facility, then forced sales of private assets at the discount. Unpaid requests
+      stay queued (the fund is gated). Returns per-quarter rows and totals. */
+  P.evergreen = function (o) {
+    var priv = o.nav0 * (1 - o.sleevePct), sleeve = o.nav0 * o.sleevePct, drawn = 0, queue = 0, rows = [], forcedTot = 0, lossTot = 0;
+    for (var q = 0; q < o.requests.length; q++) {
+      priv *= 1 + o.returns[q]; sleeve *= 1 + (o.sleeveReturn || 0) / 4;
+      var interest = drawn * (o.facilityRate || 0) / 4; sleeve -= interest;
+      var nav = priv + sleeve - drawn;
+      var subs = (o.subscriptions ? o.subscriptions[q] || 0 : 0) * nav; sleeve += subs; nav += subs;
+      var req = o.requests[q] * nav; queue += req;
+      var cap = o.limitPct * nav, pay = Math.min(queue, cap), need = pay;
+      var fromSleeve = Math.min(sleeve, need); sleeve -= fromSleeve; need -= fromSleeve;
+      var fromFac = Math.min(Math.max(0, o.facility - drawn), need); drawn += fromFac; need -= fromFac;
+      var sold = need / (1 - o.saleDiscount); var loss = sold - need;
+      if (sold > priv) { sold = priv; need = sold * (1 - o.saleDiscount); pay = fromSleeve + fromFac + need; loss = sold - need; }
+      priv -= sold; forcedTot += sold; lossTot += loss;
+      queue -= pay;
+      var navAfter = priv + sleeve - drawn;
+      rows.push({ q: q + 1, nav: nav, requested: req, cap: cap, paid: pay, queue: queue, fromSleeve: fromSleeve, fromFacility: fromFac, forcedSale: sold, saleLoss: loss, drawn: drawn, sleeve: sleeve, navAfter: navAfter, gated: queue > 1e-9, paidPctOfNav: nav > 0 ? pay / nav : 0 });
+    }
+    return { rows: rows, forcedSales: forcedTot, saleLoss: lossTot, finalNav: rows.length ? rows[rows.length - 1].navAfter : o.nav0, maxQueue: Math.max.apply(null, rows.map(function (r) { return r.queue; }).concat([0])) };
+  };
+
+  /** quarterly dated cash flows -> {irr (annual, XIRR), tvpi, dpi, rvpi, ksPme, directAlpha (annualised)}.
+      flows: [{q, amount}] LP view (calls negative), nav at the last quarter, index: proxy level per quarter. */
+  P.fundMetrics = function (flows, nav, index, startDate) {
+    var d0 = startDate || Date.UTC(2015, 0, 1), Q = index ? index.length - 1 : Math.max.apply(null, flows.map(function (f) { return f.q; }));
+    var dated = flows.map(function (f) { return { date: new Date(d0 + f.q * 91.3125 * 86400000), amount: f.amount }; });
+    dated.push({ date: new Date(d0 + Q * 91.3125 * 86400000), amount: nav });
+    var m = PM.multiples(flows.map(function (f) { return f.amount; }), nav);
+    var res = { irr: PM.xirr(dated), tvpi: m.tvpi, dpi: m.dpi, rvpi: m.rvpi, paidIn: m.paidIn, distributed: m.distributed };
+    if (index) {
+      var fl = flows.map(function (f) { return { t: f.q, amount: f.amount }; });
+      res.ksPme = PM.ksPME(fl, index, nav);
+      var da = PM.directAlpha(fl, index, nav);
+      res.directAlpha = isFinite(da) ? Math.pow(1 + da, 4) - 1 : NaN;
+    }
+    return res;
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

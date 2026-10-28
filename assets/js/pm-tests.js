@@ -87,6 +87,18 @@
     for (var i = 0; i < 20; i++) { var a = Math.sin(i), b = Math.cos(i * 1.3); X.push([a, b]); y.push(0.5 + 2 * a - 1.5 * b); }
     var f = PM.ols(y, X); near(f.alpha, 0.5, 1e-10); near(f.beta[0], 2, 1e-10); near(f.beta[1], -1.5, 1e-10);
   });
+  T.add('Core', 'Normal CDF and inverse at known points', function () {
+    near(PM.normCdf(0), 0.5, 1e-9); near(PM.normCdf(1.959964), 0.975, 2e-7); near(PM.normInv(0.975), 1.959964, 1e-6); near(PM.normInv(0.5), 0, 1e-12);
+  });
+  T.add('Core', 'HAC standard error equals the plain one with zero lags', function () {
+    var a = [0.01, -0.02, 0.03, 0.015, -0.005, 0.02, 0.01], n = a.length, m = PM.mean(a), g = 0;
+    a.forEach(function (x) { g += (x - m) * (x - m); });
+    near(PM.hacSE(a, 0), Math.sqrt(g / n / n), 1e-12);
+  });
+  T.add('Core', 'Capital call coverage and liquidity on a hand example', function () {
+    near(PM.callCoverage(700, 300, 50), 2); ok(PM.callCoverage(10, 0, 0) === Infinity, 'no calls -> infinite');
+    near(PM.liquidWithin([40, 30, 20, 10], [2, 5, 90, 365], 10), 70);
+  });
   /* ---------------- Pacing ---------------- */
   T.add('Pacing', 'Takahashi-Alexander gross IRR equals NAV growth (identity)', function () {
     [0.05, 0.13, 0.3].forEach(function (g) { near(PM.irrLegacy(PM.taFund({ commit: 100, rc: 0.35, ip: 5, life: 12, growth: g, bow: 2.5, yieldFloor: 0 }).cfs), g, 1e-7, 'G=' + g); });
@@ -101,6 +113,55 @@
     var program = function (year) { var s = 0; for (var v = 0; v <= year; v++) { var age = year - v; if (age >= 1 && age <= 10) s += f.nav[age]; } return s; };
     near(program(15), program(25), 1e-12, 'program NAV in two steady-state years'); near(program(20), f.navYears, 1e-12, 'equals the sum of one vintage NAVs');
   }, 'Private Capital Lab');
+
+  /* ---------------- Allocation ---------------- */
+  var SIG4 = [[0.0256, 0.0112, 0.0048, 0.0010], [0.0112, 0.0324, 0.0060, 0.0015], [0.0048, 0.0060, 0.0225, 0.0020], [0.0010, 0.0015, 0.0020, 0.0036]];
+  var MU4 = [0.07, 0.08, 0.075, 0.04];
+  T.add('Allocation', 'Optimizer weights sum to 1 and respect bounds', function () {
+    var lo = [0.05, 0, 0.1, 0], hi = [0.5, 0.4, 0.45, 0.3], proj = PM.opt.makeProjector({ lo: lo, hi: hi, le: [{ a: [0, 1, 1, 0], b: 0.55 }] });
+    [0, 2, 6].forEach(function (lam) {
+      var w = PM.opt.mvSolve(MU4, SIG4, lam, proj, [0.25, 0.25, 0.25, 0.25], 300);
+      near(PM.sum(w), 1, 1e-9, 'sum');
+      w.forEach(function (v, i) { ok(v >= lo[i] - 1e-9 && v <= hi[i] + 1e-9, 'bound ' + i + ': ' + v); });
+      ok(w[1] + w[2] <= 0.55 + 1e-6, 'group limit');
+    });
+    var ms = PM.opt.maxSharpeSolve(MU4, SIG4, 0.03, proj, [0.25, 0.25, 0.25, 0.25], 400);
+    near(PM.sum(ms), 1, 1e-9, 'max Sharpe sum');
+  }, 'Allocation Lab');
+  T.add('Allocation', 'Box projection is exact on a hand example', function () {
+    var w = PM.opt.projBox([0.7, 0.5, -0.2], [0, 0, 0], [0.6, 0.6, 0.6]);
+    near(w[0], 0.6, 1e-9); near(w[1], 0.4, 1e-9); near(w[2], 0, 1e-9);
+  }, 'Allocation Lab');
+  T.add('Allocation', 'Brinson components sum to the active return', function () {
+    var b = PM.brinson([0.5, 0.3, 0.2], [0.4, 0.4, 0.2], [0.10, 0.02, 0.05], [0.08, 0.03, 0.04]);
+    near(b.alloc + b.sel + b.inter, 0.5 * 0.10 + 0.3 * 0.02 + 0.2 * 0.05 - (0.4 * 0.08 + 0.4 * 0.03 + 0.2 * 0.04), 1e-12);
+    near(b.alloc, 0.1 * 0.08 - 0.1 * 0.03, 1e-12); near(b.sel, 0.4 * 0.02 + 0.4 * -0.01 + 0.2 * 0.01, 1e-12);
+  }, 'Allocation Lab');
+  T.add('Allocation', 'Black-Litterman with no views returns the equilibrium', function () {
+    var w = [0.4, 0.3, 0.2, 0.1], bl = PM.opt.blackLitterman(SIG4, w, 2.5, 0.05, [], []);
+    bl.mu.forEach(function (v, i) { near(v, 2.5 * PM.dot(SIG4[i], w), 1e-12); });
+  }, 'Allocation Lab');
+  T.add('Allocation', 'Black-Litterman with a near-certain view moves the view portfolio to the view', function () {
+    var w = [0.4, 0.3, 0.2, 0.1], P = [[1, -1, 0, 0]], bl = PM.opt.blackLitterman(SIG4, w, 2.5, 0.05, P, [0.03], [1e-10]);
+    near(bl.mu[0] - bl.mu[1], 0.03, 1e-6);
+  }, 'Allocation Lab');
+  T.add('Allocation', 'Total portfolio: active risk contributions sum to active volatility', function () {
+    var t = PM.opt.tpa([0.5, 0.2, 0.2, 0.1], [0.6, 0, 0, 0.4], SIG4);
+    near(PM.sum(t.ctrActive), t.activeVol, 1e-12);
+  }, 'Allocation Lab');
+  T.add('Allocation', 'Rebalancing trades net to zero and land inside the bands', function () {
+    var r = PM.opt.rebalance([0.50, 0.20, 0.18, 0.12], [0.45, 0.25, 0.20, 0.10], [0.02, 0.02, 0.03, 0.02]);
+    near(PM.sum(r.trade), 0, 1e-12); near(r.after[0], 0.47, 1e-12); near(r.after[1], 0.23, 1e-12);
+  }, 'Allocation Lab');
+  /* ---------------- Multi-strategy ---------------- */
+  T.add('Multi-strategy', 'ERC weights give equal risk contributions', function () {
+    var w = PM.opt.erc(SIG4), rc = PM.opt.riskContrib(w, SIG4);
+    rc.forEach(function (x) { near(x, 25, 1e-6); }); near(PM.sum(w), 1, 1e-12);
+  }, 'Multi-Strategy Builder');
+  T.add('Multi-strategy', 'Portable alpha engine is deterministic for a seed', function () {
+    var a = PM.pa.simulate(PM.pa.DEFAULT_PARAMS), b = PM.pa.simulate(PM.pa.DEFAULT_PARAMS);
+    a.paRet.forEach(function (v, i) { near(v, b.paRet[i], 0); }); ok(a.paRet.length === 180, '180 months');
+  }, 'Multi-Strategy Builder');
 
   if (typeof module !== 'undefined' && module.exports) module.exports = T;
 })(typeof window !== 'undefined' ? window : globalThis);

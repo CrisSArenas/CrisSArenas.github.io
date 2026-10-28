@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/assets/css/demo-shell.css"><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-size:14px;line-height:1.6}
@@ -34,7 +34,7 @@ a{color:var(--cyan);text-decoration:none}
 .guide-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;border-top:1px solid var(--border)}
 .guide-grid.hide{display:none}
 .guide-card{background:var(--card2);border-radius:8px;padding:12px 14px}
-.guide-card .step{display:inline-block;background:rgba(6,182,212,.15);color:var(--cyan);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;font-family:var(--mono)}
+.guide-card .step{display:inline-block;background:color-mix(in srgb, var(--ai) 15%, transparent);color:var(--cyan);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;font-family:var(--mono)}
 .guide-card h3{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
 .guide-card p{font-size:11.5px;color:var(--dim);line-height:1.5}
 .guide-card strong{color:var(--text)}
@@ -55,7 +55,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .periph-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .periph-tab{padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--dim);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--mono);user-select:none;display:flex;align-items:center;gap:6px;line-height:1.2;text-align:left}
 .periph-tab:hover{border-color:var(--cyan);color:var(--text)}
-.periph-tab.active{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1)}
+.periph-tab.active{border-color:var(--cyan);color:var(--cyan);background:color-mix(in srgb, var(--ai) 10%, transparent)}
 .periph-tab .pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .periph-info{margin-top:12px;padding:10px 14px;background:var(--card2);border-radius:8px;font-size:11px;color:var(--dim);line-height:1.6}
 .periph-info strong{color:var(--text)}
@@ -77,8 +77,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .bit-row{display:flex;gap:1px;min-width:fit-content}
 .bit-cell{width:20px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--mono);font-weight:700;cursor:pointer;border-radius:2px;transition:all .15s;flex-shrink:0;user-select:none}
 .bit-cell.b0{background:var(--card2);color:var(--dim);border:1px solid var(--border)}
-.bit-cell.b1{background:rgba(16,185,129,.2);color:var(--green);border:1px solid rgba(16,185,129,.4)}
-.bit-cell:hover{transform:scale(1.15);z-index:2;box-shadow:0 0 8px rgba(6,182,212,.4)}
+.bit-cell.b1{background:color-mix(in srgb, var(--positive) 20%, transparent);color:var(--green);border:1px solid color-mix(in srgb, var(--positive) 40%, transparent)}
+.bit-cell:hover{transform:scale(1.15);z-index:2;box-shadow:none}
 .bit-cell.reserved{background:rgba(30,41,59,.3);color:rgba(148,163,184,.25);cursor:default;border:1px solid rgba(30,41,59,.5)}
 .bit-cell.reserved:hover{transform:none;box-shadow:none}
 .field-bar{display:flex;gap:1px;margin-top:2px;min-width:fit-content}
@@ -113,12 +113,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .pin-legend-sw{width:10px;height:10px;border-radius:2px}
 
 /* Tooltip */
-.tt{position:fixed;pointer-events:none;background:rgba(10,14,39,.94);border:1px solid rgba(6,182,212,.35);border-radius:8px;padding:9px 13px;font-size:12px;color:#f1f5f9;z-index:820;opacity:0;transition:opacity .12s;backdrop-filter:blur(12px);max-width:280px;box-shadow:0 8px 30px rgba(0,0,0,.6);line-height:1.5}
+.tt{position:fixed;pointer-events:none;background:var(--bg);border:1px solid color-mix(in srgb, var(--ai) 35%, transparent);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--text);z-index:820;opacity:0;transition:opacity .12s;max-width:280px;box-shadow:0 8px 30px rgba(0,0,0,.6);line-height:1.5}
 .tt.show{opacity:1}
-.tt-title{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-weight:600}
+.tt-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-weight:600}
 .tt-row{display:flex;justify-content:space-between;gap:14px;align-items:center}
 .tt-row+.tt-row{margin-top:2px}
-.tt-lbl{color:#94a3b8;font-size:11px}
+.tt-lbl{color:var(--muted);font-size:11px}
 .tt-val{font-family:var(--mono);font-weight:700;font-size:12px}
 .tt-divider{height:1px;background:var(--border);margin:5px 0}
 
@@ -1017,7 +1017,7 @@ function drawWaveform(){
       ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.cen?'Timer running (configure OC1M=110, CC1E=1 for PWM)':'Timer disabled (CEN=0)',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#f59e0b"></span>TIM2 CH1</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--warning)"></span>TIM2 CH1</div>';
     document.getElementById('wfTag').textContent=cfg.isPWM?'PWM: '+fStr+', '+(cfg.duty*100).toFixed(1)+'% duty':'Timer';
   }
   else if(cfg.type==='uart'){
@@ -1067,7 +1067,7 @@ function drawWaveform(){
       ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.ue?'Set TE=1 and BRR for TX waveform':'USART disabled (UE=0)',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#3b82f6"></span>USART1 TX</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--s1)"></span>USART1 TX</div>';
     document.getElementById('wfTag').textContent=cfg.ue&&cfg.te?'UART '+bStr+' baud '+cfgStr:'USART1';
   }
   else if(cfg.type==='adc'){
@@ -1105,7 +1105,7 @@ function drawWaveform(){
       ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText('ADC disabled (ADON=0)',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#8b5cf6"></span>ADC1</div><div class="wf-legend-item"><span class="wf-legend-sw" style="background:rgba(139,92,246,0.3)"></span>Analog In</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--s5)"></span>ADC1</div><div class="wf-legend-item"><span class="wf-legend-sw" style="background:color-mix(in srgb, var(--ai) 30%, transparent)"></span>Analog In</div>';
     document.getElementById('wfTag').textContent=cfg.adon?cfg.resBits+'-bit '+(cfg.cont?'Continuous':'Single'):'ADC1';
   }
   else if(cfg.type==='spi'){
@@ -1148,9 +1148,9 @@ function drawWaveform(){
       ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.spe?'Set MSTR=1 (CR1 bit 2) for a master transfer':'SPI disabled, set MSTR, BR, then SPE (CR1 bit 6)',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#94a3b8"></span>NSS</div>'+
-      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#06b6d4"></span>SCK</div>'+
-      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#ec4899"></span>MOSI</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--muted)"></span>NSS</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--ai)"></span>SCK</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--s5)"></span>MOSI</div>';
     document.getElementById('wfTag').textContent=cfg.spe&&cfg.mstr?('SPI master '+fsStr+' mode '+(cfg.cpol*2+cfg.cpha)):'SPI1';
   }
   else if(cfg.type==='rcc'){
@@ -1177,7 +1177,7 @@ function drawWaveform(){
     ctx.fillStyle=cfg.on.length?'#10b981':'#f59e0b';
     ctx.font='11px JetBrains Mono,Courier New,monospace';
     ctx.fillText(txt.length>92?txt.slice(0,89)+'\u2026':txt,ml+8,by+bh2+48);
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#06b6d4"></span>Fixed 168 MHz clock tree (PLL settings are not editable here)</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--ai)"></span>Fixed 168 MHz clock tree (PLL settings are not editable here)</div>';
     document.getElementById('wfTag').textContent='Clock tree \u2022 '+cfg.on.length+' enabled';
   }
   else if(cfg.type==='core'){
@@ -1209,12 +1209,12 @@ function drawWaveform(){
       ctx.fillText(cfg.reload>0?'SysTick stopped, set SYST_CSR ENABLE (bit 0)':'Load SYST_RVR with a non-zero RELOAD first',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#a855f7"></span>SYST_CVR counts down to 0</div>'+
-      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#10b981"></span>Exception on underflow when TICKINT=1</div>';
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--positive)"></span>Exception on underflow when TICKINT=1</div>';
     document.getElementById('wfTag').textContent=cfg.en&&cfg.reload>0?'SysTick '+pStr:'SysTick / NVIC';
   }
 
   if(PERIPHS[curPeriph].clk&&!clkOn(curPeriph)){
-    infoEl.innerHTML='<span class="wf-chip" style="color:var(--amber);border-color:rgba(245,158,11,.5)"><i class="fas fa-triangle-exclamation"></i> RCC clock gated OFF, on hardware these registers read 0</span>'+infoEl.innerHTML;
+    infoEl.innerHTML='<span class="wf-chip" style="color:var(--amber);border-color:color-mix(in srgb, var(--warning) 50%, transparent)"><i class="fas fa-triangle-exclamation"></i> RCC clock gated OFF, on hardware these registers read 0</span>'+infoEl.innerHTML;
   }
 
   // Scope border

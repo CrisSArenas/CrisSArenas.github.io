@@ -1,0 +1,23 @@
+
+1. Takahashi-Alexander pacing, net-of-fee waterfall and IRR vs the original pacing panel
+  commit/rc/ip/L  net IRR old     net IRR new     TVPI old        TVPI new        
+  50/0.2/3/8      0.078439%       0.078439%       1.144633        1.144633        
+  50/0.6/5/12     2.873109%       2.873109%       1.511344        1.511344        
+  100/0.35/7/15   9.247846%       9.247846%       2.566989        2.566989        
+  250/0.35/5/8    17.794534%      17.794534%      1.881166        1.881166        
+  1458 input combinations compared, every output identical (tolerance 0)
+
+2. Brinson attribution vs the original computeBrinson
+  500 random portfolios: allocation, selection, interaction, total and residual identical
+
+3. Optimizer vs the original Multi-Asset Portfolio Optimizer
+  Monte Carlo panel: 288,000 simulated monthly returns, bit-for-bit identical
+  150 feasible-set projections, 6 mean-variance solves, 6 maximum-Sharpe solves and 6 full frontiers identical
+  path statistics identical (VaR95 4.9322%, CVaR95 6.2589%, median max drawdown 23.1805%), risk parity and de-smoothed vols identical
+
+4. Portable alpha engine vs the original Portable Alpha Simulator
+  81 parameter sets: every monthly return, margin call, de-leveraging event and statistic identical; 96-seed sweep identical
+  default programme: CAGR 3.9693%, IR -0.4514, tracking error 3.3278%
+
+2298 of 2298 comparisons identical
+exit 0

@@ -625,6 +625,59 @@
     }
   });
 
+
+  /* ---------- citation validator ----------
+     Generalised from the alternative-data platform's validator: a citation must resolve to a
+     document, page and line, the cited line must contain the value, and a drafted claim must
+     carry at least one resolving citation or it is blocked. */
+  UI.numbersIn = function (line) {
+    var out = [], re = /(\(?)-?\$?\s?(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?\)?\s?(%|bps|x|m\b|mm\b|million|bn|billion|k\b)?/gi, m;
+    while ((m = re.exec(line))) {
+      var v = parseFloat((m[2] + (m[3] || '')).replace(/,/g, ''));
+      if (m[1] === '(' && /\)/.test(m[0])) v = -v;
+      if (/^-/.test(m[0].replace('(', '').trim())) v = -Math.abs(v);
+      out.push({ v: v, unit: (m[4] || '').toLowerCase() });
+    }
+    return out;
+  };
+  /* does the cited line contain value? unit: 'pct' (0.0175 matches 1.75%), 'money' (in millions:
+     1.25 matches $1,250,000 or 1.25m), 'num', 'mult', 'bps', 'text' */
+  UI.lineHas = function (line, value, unit, tol) {
+    if (line == null) return false;
+    if (unit === 'text') return String(line).toLowerCase().indexOf(String(value).toLowerCase()) !== -1;
+    tol = tol == null ? 0.0051 : tol;
+    var nums = UI.numbersIn(line);
+    return nums.some(function (n) {
+      var c = [n.v];
+      if (unit === 'pct') c = n.unit === 'bps' ? [n.v / 1e4] : [n.v / 100];
+      else if (unit === 'bps') c = n.unit === '%' ? [n.v * 100] : [n.v];
+      else if (unit === 'money') c = (n.unit === 'm' || n.unit === 'mm' || n.unit === 'million') ? [n.v] : (n.unit === 'bn' || n.unit === 'billion') ? [n.v * 1000] : n.unit === 'k' ? [n.v / 1000] : [n.v / 1e6, n.v];
+      return c.some(function (x) { return Math.abs(x - value) <= tol * Math.max(1, Math.abs(value)) * (unit === 'pct' ? 0.01 : 1); });
+    });
+  };
+  /* field: {value, unit, cite:{doc,page,line}} -> {ok, reason} */
+  UI.validateField = function (docs, f) {
+    if (!f.cite) return { ok: false, reason: 'no citation' };
+    var d = docs[f.cite.doc];
+    if (!d) return { ok: false, reason: 'cited document ' + f.cite.doc + ' does not exist' };
+    var pg = d.pages[f.cite.page - 1];
+    if (!pg) return { ok: false, reason: 'page ' + f.cite.page + ' does not exist' };
+    var ln = pg[f.cite.line - 1];
+    if (ln == null) return { ok: false, reason: 'line ' + f.cite.line + ' does not exist' };
+    if (f.value != null && !UI.lineHas(ln, f.value, f.unit || 'num')) return { ok: false, reason: 'cited line does not contain ' + f.value };
+    return { ok: true, reason: 'resolves' };
+  };
+  /* claims: [{id, text, cites:[{doc,page,line}]}] -> {passed:[], blocked:[{claim, reason}]} */
+  UI.validateClaims = function (docs, claims) {
+    var passed = [], blocked = [];
+    claims.forEach(function (c) {
+      if (!c.cites || !c.cites.length) { blocked.push({ claim: c, reason: 'uncited claim' }); return; }
+      var bad = c.cites.map(function (ct) { return UI.validateField(docs, { cite: ct }); }).filter(function (r) { return !r.ok; });
+      if (bad.length) blocked.push({ claim: c, reason: bad[0].reason }); else passed.push(c);
+    });
+    return { passed: passed, blocked: blocked };
+  };
+
   /* ---------- approval cards ---------- */
   /* items: [{id, title, severity:'high'|'med'|'low', evidence (html), cites:[], state}] */
   UI.approvals = function (el, items, opts) {

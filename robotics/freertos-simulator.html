@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/assets/css/demo-shell.css"><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-size:14px;line-height:1.6}
@@ -39,7 +39,7 @@ a{color:var(--cyan);text-decoration:none}
 .guide-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;border-top:1px solid var(--border)}
 .guide-grid.hide{display:none}
 .guide-card{background:var(--card2);border-radius:8px;padding:12px 14px}
-.guide-card .step{display:inline-block;background:rgba(6,182,212,.15);color:var(--cyan);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;font-family:var(--mono)}
+.guide-card .step{display:inline-block;background:color-mix(in srgb, var(--ai) 15%, transparent);color:var(--cyan);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;font-family:var(--mono)}
 .guide-card h3{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
 .guide-card p{font-size:11.5px;color:var(--dim);line-height:1.5}
 .guide-card strong{color:var(--text)}
@@ -48,7 +48,7 @@ a{color:var(--cyan);text-decoration:none}
 .kpi-strip{max-width:1440px;margin:16px auto 0;padding:0 16px}
 .kpi-row{display:grid;grid-template-columns:repeat(8,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden}
 .kpi-cell{padding:14px 10px;background:var(--card);text-align:center;cursor:help;transition:background .2s}
-.kpi-cell:hover{background:rgba(6,182,212,.05)}
+.kpi-cell:hover{background:color-mix(in srgb, var(--ai) 5%, transparent)}
 .kpi-cell .lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:600}
 .kpi-cell .val{font-size:1.1rem;font-weight:700;font-family:var(--mono)}
 .kpi-cell .val.pos{color:var(--green)}
@@ -69,18 +69,18 @@ a{color:var(--cyan);text-decoration:none}
 .ctrl-group h4{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-right:4px;white-space:nowrap}
 .sim-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:6px;font-size:14px;transition:all .15s}
 .sim-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.sim-btn.active{background:rgba(6,182,212,.15);border-color:var(--cyan);color:var(--cyan)}
+.sim-btn.active{background:color-mix(in srgb, var(--ai) 15%, transparent);border-color:var(--cyan);color:var(--cyan)}
 .sim-btn.reset:hover{border-color:var(--red);color:var(--red)}
 .slider-ctrl{display:flex;align-items:center;gap:8px}
 .slider-ctrl input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:22px;background:transparent;outline:none;min-width:80px;cursor:pointer;vertical-align:middle}input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:var(--border)}input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:var(--border)}
-.slider-ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 0 3px rgba(6,182,212,.15);margin-top:-6px}
+.slider-ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:none;margin-top:-6px}
 .slider-ctrl .sval{color:var(--cyan);font-family:var(--mono);font-size:12px;font-weight:700;min-width:45px;text-align:right}
 .toggle-wrap{display:flex;align-items:center;gap:8px}
 .toggle-sw{position:relative;width:36px;height:18px;cursor:pointer;display:inline-block}
 .toggle-sw input{display:none}
 .toggle-track{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--card2);border:1px solid var(--border);border-radius:9px;transition:all .3s}
 .toggle-track::before{content:'';position:absolute;width:12px;height:12px;left:2px;top:2px;background:var(--dim);border-radius:50%;transition:all .3s}
-.toggle-sw input:checked+.toggle-track{border-color:var(--green);background:rgba(16,185,129,.15)}
+.toggle-sw input:checked+.toggle-track{border-color:var(--green);background:color-mix(in srgb, var(--positive) 15%, transparent)}
 .toggle-sw input:checked+.toggle-track::before{transform:translateX(18px);background:var(--green)}
 .toggle-lbl{font-size:11px;color:var(--dim);font-weight:500}
 .toggle-lbl.on{color:var(--green)}
@@ -111,8 +111,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 /* TASK STATE CARDS */
 .task-cards{display:flex;gap:12px;flex-wrap:wrap}
 .task-scard{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;flex:1;min-width:200px;max-width:320px;transition:border-color .3s,box-shadow .3s}
-.task-scard.is-running{border-color:rgba(16,185,129,.5);box-shadow:0 0 12px rgba(16,185,129,.1)}
-.task-scard.is-blocked{border-color:rgba(239,68,68,.4)}
+.task-scard.is-running{border-color:color-mix(in srgb, var(--positive) 50%, transparent);box-shadow:none}
+.task-scard.is-blocked{border-color:color-mix(in srgb, var(--negative) 40%, transparent)}
 .task-scard.is-suspended{opacity:.5}
 .task-scard .tc-name{font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
 .task-scard .tc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -120,9 +120,9 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .task-scard .tc-boost{font-size:8px;color:var(--purple);font-weight:700;margin-left:4px}
 .state-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:4px}
 .st-node{padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;border:1px solid transparent;transition:all .3s;font-family:var(--mono)}
-.st-node.st-ready{background:rgba(6,182,212,.1);color:var(--cyan);border-color:rgba(6,182,212,.25)}
-.st-node.st-running{background:rgba(16,185,129,.12);color:var(--green);border-color:rgba(16,185,129,.35)}
-.st-node.st-blocked{background:rgba(239,68,68,.1);color:var(--red);border-color:rgba(239,68,68,.25)}
+.st-node.st-ready{background:color-mix(in srgb, var(--ai) 10%, transparent);color:var(--cyan);border-color:color-mix(in srgb, var(--ai) 25%, transparent)}
+.st-node.st-running{background:color-mix(in srgb, var(--positive) 12%, transparent);color:var(--green);border-color:color-mix(in srgb, var(--positive) 35%, transparent)}
+.st-node.st-blocked{background:color-mix(in srgb, var(--negative) 10%, transparent);color:var(--red);border-color:color-mix(in srgb, var(--negative) 25%, transparent)}
 .st-node.st-suspended{background:rgba(148,163,184,.1);color:var(--dim);border-color:rgba(148,163,184,.25)}
 .st-node.st-active{box-shadow:0 0 10px currentColor;transform:scale(1.1);animation:stPulse 1.5s ease-in-out infinite}
 @keyframes stPulse{0%,100%{box-shadow:0 0 8px currentColor}50%{box-shadow:0 0 16px currentColor}}
@@ -146,7 +146,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .stat-table th:first-child{text-align:left}
 .stat-table td{padding:8px 10px;text-align:right;font-family:var(--mono);font-size:12px;border-bottom:1px solid rgba(30,41,59,.4)}
 .stat-table td:first-child{text-align:left;font-family:inherit;font-weight:500}
-.stat-table tr:hover{background:rgba(6,182,212,.03)}
+.stat-table tr:hover{background:color-mix(in srgb, var(--ai) 3%, transparent)}
 .tpos{color:var(--green);font-weight:600}
 .tneg{color:var(--red);font-weight:600}
 .twarn{color:var(--orange);font-weight:600}
@@ -167,12 +167,12 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .log-clear-btn:hover{border-color:var(--red);color:var(--red)}
 
 /* PI INDICATOR */
-.pi-banner{display:none;padding:6px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:var(--red);font-size:11px;font-weight:700;text-align:center;animation:piFlash 1s ease-in-out infinite;margin-left:auto}
+.pi-banner{display:none;padding:6px 14px;background:color-mix(in srgb, var(--negative) 8%, transparent);border:1px solid color-mix(in srgb, var(--negative) 30%, transparent);border-radius:6px;color:var(--red);font-size:11px;font-weight:700;text-align:center;animation:piFlash 1s ease-in-out infinite;margin-left:auto}
 .pi-banner.show{display:flex;align-items:center;gap:6px}
 @keyframes piFlash{0%,100%{opacity:1}50%{opacity:.5}}
 
 /* ADD MODALS */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;}
 .modal-overlay.show{display:flex}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:340px;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
 .modal h3{font-size:14px;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;font-weight:700}
@@ -184,7 +184,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .form-actions{display:flex;gap:8px;margin-top:16px}
 .form-actions button{flex:1;padding:8px;font-family:var(--sans);font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);transition:all .2s;font-weight:600}
 .btn-confirm{background:var(--cyan);color:var(--bg);border-color:var(--cyan) !important;font-weight:700}
-.btn-confirm:hover{background:#22d3ee}
+.btn-confirm:hover{background:var(--ai)}
 .btn-cancel{background:var(--card2);color:var(--dim)}
 .btn-cancel:hover{border-color:var(--red);color:var(--red)}
 
@@ -198,7 +198,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 /* Per-task icon controls were rendering ~12x11px, too small to hit reliably. */
 .task-row button, .tk-btn, .task-actions button{min-width:22px;min-height:22px;padding:2px 5px;
   display:inline-flex;align-items:center;justify-content:center;border-radius:4px}
-.task-row button:hover, .tk-btn:hover, .task-actions button:hover{background:rgba(0,247,255,.1)}
+.task-row button:hover, .tk-btn:hover, .task-actions button:hover{background:color-mix(in srgb, var(--accent) 10%, transparent)}
 </style>
 <script src="/assets/js/site.js"></script>
 </head>
@@ -389,11 +389,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="d-tooltip" id="ganttTip"></div>
       <div class="legend" style="margin-top:12px">
         <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan)"></span> Running</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:rgba(6,182,212,.15);border:1px dashed rgba(6,182,212,.4)"></span> Blocked</div>
-        <div class="legend-item"><span class="legend-swatch" style="border:1px solid rgba(6,182,212,.35);background:transparent"></span> Ready</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:color-mix(in srgb, var(--ai) 15%, transparent);border:1px dashed color-mix(in srgb, var(--ai) 40%, transparent)"></span> Blocked</div>
+        <div class="legend-item"><span class="legend-swatch" style="border:1px solid color-mix(in srgb, var(--ai) 35%, transparent);background:transparent"></span> Ready</div>
         <div class="legend-item"><span class="legend-swatch" style="background:var(--yellow)"></span> Mutex Hold</div>
         <div class="legend-item"><span class="legend-swatch" style="background:var(--orange)"></span> Ctx Switch (84 cyc &asymp; 0.5 &micro;s)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,.3);border:1px solid var(--red)"></span> Unbounded inversion</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:color-mix(in srgb, var(--negative) 30%, transparent);border:1px solid var(--red)"></span> Unbounded inversion</div>
       </div>
     </div>
   </div>

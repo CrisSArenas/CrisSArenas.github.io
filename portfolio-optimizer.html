@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/assets/css/demo-shell.css"><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 /* palette, typography, nav, status strip, buttons, panels and help modal come
@@ -490,6 +490,7 @@ body{line-height:1.5}
 </footer>
 <!-- site-footer:end -->
 
+<script src="/assets/js/pm-math.js"></script>
 <script>
 'use strict';
 window.onerror=function(msg,url,line){
@@ -538,7 +539,7 @@ const APP={
 };
 
 // --- PRNG ---
-function rng32(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);return((t+=t<0?0x100000000:0)>>>0)/4294967296}}
+const rng32=PM.opt.rng32Legacy;   // shared library; see its note on why this PRNG is kept
 
 // --- DATA GENERATION ---
 // 2026 long-horizon capital market assumptions: arithmetic, nominal, USD.
@@ -659,13 +660,7 @@ function boxVec(mxW,pol){
 }
 
 // exact Euclidean projection onto {lo_i <= w_i <= hi_i, sum w = 1}: bisection on the shift
-function projBox(x,lo,hi){
-  let a=Math.min.apply(null,x)-2,b=Math.max.apply(null,x)+2;
-  const f=th=>{let s=0;for(let i=0;i<N;i++)s+=Math.min(hi[i],Math.max(lo[i],x[i]-th));return s};
-  for(let k=0;k<80;k++){const m=(a+b)/2;if(f(m)>1)a=m;else b=m}
-  const th=(a+b)/2;
-  return x.map((v,i)=>Math.min(hi[i],Math.max(lo[i],v-th)));
-}
+function projBox(x,lo,hi){return PM.opt.projBox(x,lo,hi)}
 // projection onto a group budget constraint (sum over idx >= / <= target), sum-preserving
 function projGroup(w,idx,target,dir){
   const s=idx.reduce((a,i)=>a+w[i],0);
@@ -714,7 +709,7 @@ function projW(w,mxW,pol){const B=boxVec(mxW,pol);return projBox(w,B.lo,B.hi)}
 function portMu(w,mu){return w.reduce((s,v,i)=>s+v*mu[i],0)}
 function portVol(w,S){let v=0;for(let i=0;i<N;i++)for(let j=0;j<N;j++)v+=w[i]*S[i][j]*w[j];return Math.sqrt(Math.max(0,v))}
 function sharpe(w,mu,S,rf){const v=portVol(w,S);return v>1e-8?(portMu(w,mu)-rf)/v:0}
-function riskContrib(w,S){const sw=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=S[i][j]*w[j];sw[i]=s}const t=w.reduce((s,v,i)=>s+v*sw[i],0)||1;return w.map((v,i)=>v*sw[i]/t*100)}
+function riskContrib(w,S){return PM.opt.riskContrib(w,S)}
 function growthPath(w,rets){const p=[1];for(let t=0;t<rets.length;t++){const r=w.reduce((s,v,i)=>s+v*rets[t][i],0);p.push(p[p.length-1]*(1+r))}return p}
 function maxDD(p){if(!p||!p.length)return 0;let pk=p[0],dd=0;for(let i=0;i<p.length;i++){pk=Math.max(pk,p[i]);dd=Math.max(dd,pk>0?(pk-p[i])/pk:0)}return dd*100}
 
@@ -729,33 +724,7 @@ function trackingError(w,wb,rets){
 function activeShare(w,wb){return w.reduce((s,v,i)=>s+Math.abs(v-wb[i]),0)*50}
 
 // --- MONTE-CARLO STATISTICS over all PATHS x T months ---
-function pathStats(w){
-  const pan=APP.data.panel,rf=APP.state.rf;
-  const rp=new Float64Array(PATHS*T),mdds=[],w12s=[],terms=[];
-  const hist=new Float64Array(T+1);
-  for(let p=0;p<PATHS;p++){
-    let wl=1,pk=1,mdd=0;const base=p*T;hist[0]=1;
-    for(let t=0;t<T;t++){
-      let r=0;const o=(base+t)*N;for(let i=0;i<N;i++)r+=w[i]*pan[o+i];
-      rp[base+t]=r;
-      wl*=(1+r);hist[t+1]=wl;                       // log-normal compounding
-      if(wl>pk)pk=wl;
-      const d=(pk-wl)/pk;if(d>mdd)mdd=d;
-    }
-    mdds.push(mdd*100);terms.push(wl);
-    let w12=0;for(let t=12;t<=T;t++){const r=hist[t]/hist[t-12]-1;if(r<w12)w12=r}
-    w12s.push(w12*100);
-  }
-  const srt=Float64Array.from(rp).sort();
-  const q=a=>srt[Math.max(0,Math.min(srt.length-1,Math.floor(a*srt.length)))];
-  const es=a=>{const k=Math.max(1,Math.floor(a*srt.length));let t=0;for(let i=0;i<k;i++)t+=srt[i];return t/k};
-  const rfm=Math.pow(1+rf,1/12)-1;let ds=0;
-  for(let i=0;i<rp.length;i++){const d=Math.min(0,rp[i]-rfm);ds+=d*d}
-  const pc=(a,x)=>{a.sort((u,v)=>u-v);return a[Math.max(0,Math.min(a.length-1,Math.floor(x*a.length)))]};
-  return{var95:-q(.05)*100,var99:-q(.01)*100,cvar95:-es(.05)*100,cvar99:-es(.01)*100,
-    mddMed:pc(mdds,.5),mddP95:pc(mdds,.95),worst12:pc(w12s,.05),
-    downDev:Math.sqrt(ds/rp.length*12),termMed:pc(terms,.5),termP5:pc(terms,.05),termP95:pc(terms,.95)};
-}
+function pathStats(w){return PM.opt.pathStats(w,{panel:APP.data.panel,N:N,T:T,paths:PATHS},APP.state.rf)}
 
 function sortinoRatio(w,st,rf){const dd=Math.max(st.downDev,1e-4);return Math.max(-9.99,Math.min(9.99,(portMu(w,APP.data.mu)-rf)/dd))}
 function infoRatio(w,wb,rets){
@@ -806,32 +775,9 @@ const PRESETS={
 // --- OPTIMIZE: constrained mean-variance by projected gradient ---
 // each solve maximises  lambda*mu'w - w'Sigma w  over the feasible set;
 // sweeping lambda from 0 upward traces the frontier (lambda = 0 is minimum variance).
-function mvSolve(mu,S,lam,mxW,pol,w0,iters){
-  let w=projOpt(w0,mxW,pol);
-  let L=0;for(let i=0;i<N;i++)L+=S[i][i];
-  const eta=1/(2*L);
-  for(let it=0;it<iters;it++){
-    const g=[];for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=S[i][j]*w[j];g[i]=lam*mu[i]-2*s}
-    w=projOpt(w.map((v,i)=>v+eta*g[i]),mxW,pol);
-  }
-  return w;
-}
+function mvSolve(mu,S,lam,mxW,pol,w0,iters){return PM.opt.mvSolve(mu,S,lam,function(w){return projOpt(w,mxW,pol)},w0,iters)}
 // direct ascent on the Sharpe gradient  mu/sigma - (mu'w-rf)*Sigma w / sigma^3
-function maxSharpeSolve(mu,S,rf,mxW,pol,w0,iters){
-  let w=projOpt(w0,mxW,pol),bw=w,bs=sharpe(w,mu,S,rf);
-  let sc=0;for(let i=0;i<N;i++)sc+=S[i][i];
-  const eta0=.5*Math.sqrt(sc);
-  for(let it=0;it<iters;it++){
-    const sg=[];let v=0;
-    for(let i=0;i<N;i++){let s=0;for(let j=0;j<N;j++)s+=S[i][j]*w[j];sg[i]=s;v+=w[i]*s}
-    const sd=Math.sqrt(Math.max(1e-12,v)),ex=portMu(w,mu)-rf;
-    const g=[];for(let i=0;i<N;i++)g[i]=mu[i]/sd-ex*sg[i]/(sd*sd*sd);
-    const step=eta0*(1-it/iters);
-    w=projOpt(w.map((x,i)=>x+step*g[i]),mxW,pol);
-    const s2=sharpe(w,mu,S,rf);if(s2>bs){bs=s2;bw=w}
-  }
-  return bw;
-}
+function maxSharpeSolve(mu,S,rf,mxW,pol,w0,iters){return PM.opt.maxSharpeSolve(mu,S,rf,function(w){return projOpt(w,mxW,pol)},w0,iters)}
 function randomCloud(mu,S,mxW,pol,seed,n){
   const sr=rng32(seed),pts=[];
   for(let k=0;k<n;k++){
