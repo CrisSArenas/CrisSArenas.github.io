@@ -74,12 +74,12 @@
   /* AI systems results, from the evaluation panels of every demo (assets/data/eval-results.js) */
   var box = document.getElementById('aiResults');
   if (box && window.EVAL_RESULTS && window.EVAL_RESULTS.length) {
-    var R = window.EVAL_RESULTS, n = 0, acc = 0, cov = 0, seeded = 0, caught = 0, ff = 0;
-    R.forEach(function (r) { n += r.fields; acc += r.accuracy * r.fields; cov += r.coverage * r.fields; seeded += r.seeded; caught += r.detected; ff += r.falseFlagRate; });
+    var EV = window.EVAL_RESULTS, n = 0, acc = 0, cov = 0, seeded = 0, caught = 0, ff = 0;
+    EV.forEach(function (r) { n += r.fields; acc += r.accuracy * r.fields; cov += r.coverage * r.fields; seeded += r.seeded; caught += r.detected; ff += r.falseFlagRate; });
     var pct = function (x) { return (Math.round(x * 1000) / 10) + '%'; };
-    var tiles = [[pct(acc / n), 'Extraction accuracy'], [pct(cov / n), 'Citation coverage'], [caught + ' of ' + seeded, 'Planted issues caught'], [pct(ff / R.length), 'False-flag rate']];
+    var tiles = [[pct(acc / n), 'Extraction accuracy'], [pct(cov / n), 'Citation coverage'], [caught + ' of ' + seeded, 'Planted issues caught'], [pct(ff / EV.length), 'False-flag rate']];
     box.innerHTML = tiles.map(function (t) { return '<div class="r"><div class="v">' + t[0] + '</div><div class="l">' + t[1] + '</div></div>'; }).join('');
     var note = document.getElementById('aiResultsNote');
-    if (note) note.textContent = 'Across ' + R.length + ' demos and ' + n + ' verified fields. Each demo recomputes its own numbers when it loads.';
+    if (note) note.textContent = 'Across ' + EV.length + ' demos and ' + n + ' verified fields. Each demo recomputes its own numbers when it loads.';
   }
 })();
