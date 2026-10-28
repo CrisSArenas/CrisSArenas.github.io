@@ -190,6 +190,18 @@
     var r = PM.opt.rebalance([0.50, 0.20, 0.18, 0.12], [0.45, 0.25, 0.20, 0.10], [0.02, 0.02, 0.03, 0.02]);
     near(PM.sum(r.trade), 0, 1e-12); near(r.after[0], 0.47, 1e-12); near(r.after[1], 0.23, 1e-12);
   }, 'Allocation Lab');
+  T.add('Allocation', 'Liquidity after stress is linear and matches a hand example', function () {
+    var l = PM.opt.liquidAfterStress([0.5, 0.3, 0.2], [1, 0, 1], [-0.4, -0.2, 0.05]);
+    near(l.value, 0.5 * 0.6 + 0.2 * 1.05, 1e-12); near(PM.dot(l.coeffs, [0.5, 0.3, 0.2]), l.value, 1e-12);
+  }, 'Allocation Lab');
+  T.add('Allocation', 'Candidate change that cuts risk and adds return dominates', function () {
+    var c = PM.opt.candidate([0.6, 0.4], [-0.1, 0.1], [0.05, 0.06], [[0.04, 0], [0, 0.01]], [0.6, 0.4]);
+    ok(c.dRet > 0 && c.dVol < 0 && c.ratio === Infinity, 'expected dominance');
+  }, 'Allocation Lab');
+  T.add('Allocation', 'Regime tilt is the probability-weighted tilt', function () {
+    var t = PM.opt.regimeTilt([0.25, 0.75], [[0.02, -0.02], [-0.04, 0.04]], 0.5);
+    near(t[0], 0.5 * (0.25 * 0.02 - 0.75 * 0.04), 1e-12); near(t[0] + t[1], 0, 1e-12);
+  }, 'Allocation Lab');
   /* ---------------- Multi-strategy ---------------- */
   T.add('Multi-strategy', 'ERC weights give equal risk contributions', function () {
     var w = PM.opt.erc(SIG4), rc = PM.opt.riskContrib(w, SIG4);

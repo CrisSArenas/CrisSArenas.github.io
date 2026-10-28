@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Allocation Lab · Cristian Arenas</title>
+    <meta name="description" content="Total portfolio and asset allocation across liquid and illiquid assets: desmoothed private risk, liquidity-aware and Black-Litterman optimization, a resampled frontier, a total portfolio mode against a reference portfolio, regime tilts, Brinson attribution and a rebalancing agent behind a compliance gate.">
+    <link rel="canonical" href="https://crissarenas.github.io/allocation-lab.html">
+    <meta property="og:title" content="Allocation Lab · Cristian Arenas">
+    <meta property="og:description" content="Allocating across liquid and illiquid assets when private risk is smoothed and cash flows are uncertain.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0E1522" media="(prefers-color-scheme: dark)">
+    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/assets/css/demo-shell.css">
+    <script src="/assets/js/site.js"></script>
+    <style>
+      .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+      @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
+      .views td input { width: 80px; }
+      .views td select { max-width: 170px; }
+      .verdict-ok { color: var(--positive); font-weight: 600; }
+      .verdict-no { color: var(--negative); font-weight: 600; }
+      .mode-note { margin-bottom: 14px; }
+      .controls select.field { width: 100%; max-width: 100%; }
+    </style>
+</head>
+<body>
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
+  <div class="container">
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#stack">Stack</a></li>
+      <li><a href="/#work">Investment work</a></li>
+      <li><a href="/#ai">AI Systems</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/notes/">Notes</a></li>
+      <li><a href="/#experience">Experience</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</nav>
+<!-- site-nav:end -->
+<main id="main" class="container demo-main">
+  <header class="demo-hero">
+    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
+    <p class="eyebrow">01 · Total portfolio and asset allocation</p>
+    <h1>Allocation Lab</h1>
+    <p class="lede">A fictional endowment of about $880m holds public and private assets after a sharp fall in equities. Its committee has just changed two policy targets and asked staff to report against a reference portfolio. This lab reads the policy, optimizes with private risk desmoothed and liquidity kept, compares a classic policy mix with a total portfolio approach, and proposes trades behind a compliance gate. The policy mix and the rebalancing call stay with the committee.</p>
+    <div class="tags"><span class="tag tag-pf">Portfolio</span><span class="tag tag-ai">AI</span></div>
+    <dl class="std-header">
+      <div><dt>Decision it supports</dt><dd>Policy mix and when to rebalance.</dd></div>
+      <div><dt>The hard problem</dt><dd>Allocating across liquid and illiquid assets when private risk is smoothed and cash flows are uncertain.</dd></div>
+      <div><dt>What the system takes off the team</dt><dd>Reading the policy, the minutes and the custodian report into one cited register; optimizing under the real constraints; stress testing; drafting trades that pass the policy.</dd></div>
+      <div class="h-call"><dt>What stays with the team</dt><dd>Policy mix and when to rebalance.</dd></div>
+      <div><dt>Method</dt><dd>Constrained mean-variance, maximum Sharpe, Black-Litterman, a resampled frontier, Geltner desmoothing, a liquidity-after-stress constraint, total portfolio risk contributions against a reference portfolio, Brinson attribution.</dd></div>
+      <div><dt>Data</dt><dd>Synthetic data, fixed seed, fictional endowment. Capital market assumptions are illustrative. Or your own return file, processed locally.</dd></div>
+      <div class="h-ai"><dt>Where AI is used</dt><dd>Policy, minutes and holdings extraction with citations, a consistency checker, a rebalancing agent, and a compliance gate, with human approval.</dd></div>
+      <div><dt>Limitations</dt><dd>Mean-variance is sensitive to expected returns; regime probabilities here are synthetic and illustrative. The pipeline is a deterministic simulation; no model is called.</dd></div>
+    </dl>
+  </header>
+
+  <div class="toolbar" role="region" aria-label="Demo controls">
+    <label for="seed">Seed <input class="field" id="seed" type="number" value="100" min="1" max="999999"></label>
+    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 100. As of 30 Sep 2026.</span>
+    <span class="grow"></span>
+    <span id="testsBadge"></span>
+    <div id="exportMenu"></div>
+  </div>
+
+  <div id="tabsRoot">
+    <div class="tabs">
+      <button data-tab="optimize" aria-selected="true">Optimize</button>
+      <button data-tab="views">Black-Litterman views</button>
+      <button data-tab="tpa">Total portfolio</button>
+      <button data-tab="stress">Stress and liquidity</button>
+      <button data-tab="regimes">Regime tilts</button>
+      <button data-tab="attribution">Attribution</button>
+    </div>
+
+    <section id="optimize">
+      <div class="kpis" id="optKpis"></div>
+      <div class="split" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Method and constraints</h3></div>
+          <div class="panel-body controls">
+            <div class="control"><label for="method">Objective</label>
+              <select class="field" id="method"><option value="sharpe">Maximum Sharpe</option><option value="minvar">Minimum variance</option><option value="target">Target volatility</option><option value="hurdle">Lowest risk clearing spending plus inflation</option></select></div>
+            <div class="control"><label for="inputs">Expected returns</label>
+              <select class="field" id="inputs"><option value="cma">Capital market assumptions</option><option value="bl">Black-Litterman posterior</option></select></div>
+            <div class="control"><label><span><input type="checkbox" id="desmooth" checked> Desmooth private risk (Geltner)</span></label><div class="hint">Off uses the smoothed, reported volatility and correlations of appraisal-based series.</div></div>
+            <div class="control"><label><span><input type="checkbox" id="policyOn" checked> Policy ranges as bounds</span></label></div>
+            <div class="control"><label><span><input type="checkbox" id="liqOn" checked> Liquidity after stress</span></label><div class="hint">Liquid assets after a GFC-sized shock must cover the policy multiple of 24 months of calls and spending.</div></div>
+            <div id="optControls" class="controls"></div>
+          </div></div>
+        <div>
+          <div class="panel"><div class="panel-head"><h3>Efficient frontier</h3><span class="sub">Feasible portfolios, the mean-variance frontier and the resampled frontier</span></div><div class="panel-body"><div id="frontier"></div></div></div>
+          <div class="panel"><div class="panel-head"><h3>Weights</h3></div><div class="panel-body"><div id="wTable"></div></div></div>
+          <div class="split-2">
+            <div class="panel"><div class="panel-head"><h3>Risk contribution, optimal</h3></div><div class="panel-body"><div id="rcChart"></div></div></div>
+            <div class="panel"><div class="panel-head"><h3>Correlation, desmoothed vs reported</h3></div><div class="panel-body"><div id="corrHeat"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="views" hidden>
+      <p class="mode-note">Black-Litterman starts from the returns implied by a market portfolio (reverse optimization, as excess returns over cash), then blends in views with stated confidence. Views that are not certain move expected returns part of the way. Returns below are total returns, cash added back.</p>
+      <div class="split">
+        <div class="panel"><div class="panel-head"><h3>Equilibrium</h3></div><div class="panel-body controls" id="blControls"></div></div>
+        <div>
+          <div class="panel"><div class="panel-head"><h3>Views</h3><span class="sub">Edit and the posterior updates</span></div><div class="panel-body"><div id="viewsTable" class="views"></div></div></div>
+          <div class="panel"><div class="panel-head"><h3>Expected returns: equilibrium, posterior and capital market assumptions</h3></div><div class="panel-body"><div id="blChart"></div><div id="blTable" style="margin-top:12px"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tpa" hidden>
+      <p class="notice mode-note">CalPERS's board adopted a total portfolio approach in November 2025, moving away from fixed asset class targets toward judging the whole portfolio against a reference (<a href="https://www.calpers.ca.gov/newsroom/calpers-news/2025/calpers-board-adopts-streamlined-investment-approach-to-seize-market-opportunities" target="_blank" rel="noopener">CalPERS</a>). This tab runs the same portfolio both ways.</p>
+      <div class="toolbar" style="position:static;border:0;padding:0 0 12px"><div class="seg" id="modeSeg" role="tablist" aria-label="Allocation mode"><button class="active" data-m="tpa" type="button">Total portfolio approach</button><button data-m="saa" type="button">Classic SAA</button></div><span class="muted" id="modeHint" style="font-size:.85rem"></span></div>
+      <div class="kpis" id="tpaKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Where the risk comes from</h3><span class="sub">Contribution to total and to active risk vs the reference</span></div><div class="panel-body"><div id="tpaChart"></div><div id="tpaTable" style="margin-top:12px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Candidate changes, judged both ways</h3></div><div class="panel-body"><div id="candTable"></div><p class="eval-note" id="candNote"></p></div></div>
+      </div>
+    </section>
+
+    <section id="stress" hidden>
+      <div class="kpis" id="stressKpis"></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Historical-style stress tests</h3><span class="sub">Peak-to-trough shocks per asset class; private assets shocked at economic, not reported, values</span></div><div class="panel-body"><div id="stressChart"></div><div id="stressTable" style="margin-top:12px"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Liquidity after a GFC-sized stress</h3></div><div class="panel-body"><div id="liqBox"></div></div></div>
+    </section>
+
+    <section id="regimes" hidden>
+      <p class="notice mode-note"><b>Illustrative, synthetic regime probabilities.</b> Soft regime assignments, in the spirit of the cross-attention regime discovery in my <a href="research-regime-aware-transformer.html">working paper</a>, are generated here from a seeded process. They are not outputs of the trained model.</p>
+      <div class="split">
+        <div class="panel"><div class="panel-head"><h3>Tilt settings</h3></div><div class="panel-body controls" id="regControls"></div></div>
+        <div>
+          <div class="panel"><div class="panel-head"><h3>Regime probabilities, last 24 months</h3></div><div class="panel-body"><div id="regChart"></div></div></div>
+          <div class="panel"><div class="panel-head"><h3>Tactical weights: policy plus the probability-weighted tilt</h3></div><div class="panel-body"><div id="tiltTable"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="attribution" hidden>
+      <div class="kpis" id="attKpis"></div>
+      <div style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Active return, last 12 months</h3></div><div class="panel-body"><div id="attWaterfall" style="max-width:760px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>By asset class</h3></div><div class="panel-body"><div id="attTable"></div></div></div>
+      </div>
+      <div id="dzReturns"></div>
+    </section>
+  </div>
+
+  <section class="demo-section" id="ai">
+    <h2>The agents: policy, minutes and holdings to a trade list</h2>
+    <p class="intro">Three synthetic documents: the investment policy statement, the latest committee minutes and the custodian's holdings summary. The agents build one cited policy register, check it, then a rebalancing agent drafts trades and a compliance gate tests them before anyone sees them. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
+    <div class="run-steps" id="runSteps"></div>
+    <div class="counters-wrap"><div id="counters"></div></div>
+    <div class="ai-grid">
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3></div><div class="panel-body"><div id="approvals"></div></div></div>
+      </div>
+      <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Policy register and trade list</h3><span class="sub">Cited values only</span></div><div class="panel-body"><div id="register"></div><div id="trades" style="margin-top:14px"></div></div></div>
+    <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/alloc-labels.js</span></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were read by hand from the documents and are stored apart from them and from the pipeline. Seeded issues: two policy changes in the minutes and a custodian total that does not add up. The other checks are clean and count toward the false-flag rate.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
+  </section>
+
+  <section class="demo-section" id="memo">
+    <article class="memo">
+      <div class="memo-head">
+        <div>
+          <div class="memo-kind">Total portfolio recommendation</div>
+          <h2>Policy and rebalancing, Q4 2026</h2>
+          <div class="memo-meta">Written by Cristian Arenas · As of 30 Sep 2026 · Written for the base case, seed 100 · Fictional endowment</div>
+        </div>
+        <span class="call-badge go">Rebalance</span>
+      </div>
+      <h3>The call</h3><p class="the-call" id="memoCall"></p>
+      <h3>Situation</h3><div id="memoSituation"></div>
+      <h3>Why</h3><ol id="memoWhy"></ol>
+      <h3>Key risks</h3><ul id="memoRisks"></ul>
+      <h3>What would change my mind</h3><ul id="memoChange"></ul>
+      <h3>Sizing and next step</h3><div id="memoNext"></div>
+      <div class="memo-foot"><span>Fictional endowment. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 100, default assumptions</span></div>
+    </article>
+  </section>
+
+  <footer class="demo-foot">
+    <h2>Methodology, assumptions and limitations</h2>
+    <div class="df-grid">
+      <div>
+        <h3>Method</h3>
+        <ul>
+          <li><strong>Desmoothing.</strong> Reported volatility of appraisal-based series is scaled by sqrt((1 + rho)/(1 - rho)) at each asset's first-order autocorrelation, and private-public correlations are restored from their damped reported values.</li>
+          <li><strong>Optimization.</strong> Projected gradient on lambda mu'w - w'Sigma w (frontier), and projected ascent on the Sharpe ratio, onto box, budget and linear constraints by alternating projections. The solvers reproduce the original optimizer page exactly (<code>tests/legacy-proof.js</code>).</li>
+          <li><strong>Liquidity constraint.</strong> sum over liquid assets of w_i (1 + GFC shock_i) x assets &ge; multiple x (24-month calls + spending): linear in w, so it is enforced exactly as a halfspace.</li>
+          <li><strong>Black-Litterman.</strong> pi = delta Sigma w_mkt; posterior mu = [(tau Sigma)^-1 + P' Omega^-1 P]^-1 [(tau Sigma)^-1 pi + P' Omega^-1 Q], with Omega from each view's confidence.</li>
+          <li><strong>Resampling.</strong> 40 samples of 120 months from the assumed distribution; each re-estimated frontier is solved at the same risk-aversion grid and the weights averaged.</li>
+          <li><strong>Total portfolio.</strong> Contribution to active risk = (w - w_ref)_i (Sigma (w - w_ref))_i / active volatility; candidates are judged on return added per unit of total risk and on the active risk budget.</li>
+          <li><strong>Attribution.</strong> Brinson-Hood-Beebower: allocation, selection and interaction against the policy weights, with the total computed independently.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas</h3>
+        <div class="formula">sigma_true = sigma_rep sqrt((1+rho)/(1-rho))
+max  lambda mu'w - w'Sigma w   s.t. lo &lt;= w &lt;= hi, sum w = 1, a'w &gt;= b
+pi = delta Sigma w_mkt
+CTR_active,i = a_i (Sigma a)_i / sqrt(a'Sigma a),  a = w - w_ref
+alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
+        <h3 style="margin-top:12px">Related notes</h3>
+        <ul><li><a href="/notes/" data-final="notes/saa-or-tpa.html">SAA or total portfolio approach, what actually changes</a></li></ul>
+      </div>
+    </div>
+    <h3 style="margin-top:22px">Assumptions register</h3>
+    <div id="assumptions"></div>
+    <h3 style="margin-top:22px">Limitations</h3>
+    <ul>
+      <li>Capital market assumptions are illustrative long-horizon numbers, not forecasts. Optimal weights move a lot with expected returns; the resampled frontier and Black-Litterman exist to tame that.</li>
+      <li>Stress shocks are stylised peak-to-trough moves; real crises also change correlations and liquidity at the same time.</li>
+      <li>Regime probabilities are synthetic and illustrative.</li>
+      <li>The endowment, its documents and its holdings are fictional; the pipeline is a simulation over text documents.</li>
+    </ul>
+    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
+    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
+  </footer>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
+      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/data-model.html">Data model</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics and embedded</a></li>
+      </ul>
+    </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. Demos use synthetic data and fictional entities. Nothing on this site is investment advice.</p>
+  </div>
+</footer>
+<!-- site-footer:end -->
+<script src="/assets/js/pm-math.js"></script>
+<script src="/assets/js/pm-ui.js"></script>
+<script src="/assets/data/alloc-docs.js"></script>
+<script src="/assets/data/alloc-labels.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = UI.fmt, $ = UI.$, O = PM.opt;
+  var ASSETS = ['US equity', 'International equity', 'Emerging markets equity', 'Private equity', 'Hedge funds', 'Real estate', 'US Treasuries', 'Cash'];
+  var SHORT = ['US eq', 'Intl eq', 'EM eq', 'PE', 'HF', 'RE', 'UST', 'Cash'];
+  var N = 8;
+  /* capital market assumptions and reported risk, as in the original optimizer page */
+  var MU_CMA = [0.068, 0.072, 0.079, 0.094, 0.056, 0.066, 0.044, null];
+  var VOL_REPORTED = [0.160, 0.175, 0.215, 0.145, 0.055, 0.115, 0.055, 0.008];
+  var AUTOCORR = [0, 0, 0, 0.45, 0.30, 0.65, 0, 0];
+  var CORR = [[1.00, 0.85, 0.74, 0.72, 0.72, 0.60, 0.05, 0.00], [0.85, 1.00, 0.80, 0.68, 0.72, 0.58, 0.05, 0.00], [0.74, 0.80, 1.00, 0.60, 0.68, 0.50, 0.00, 0.00], [0.72, 0.68, 0.60, 1.00, 0.60, 0.55, 0.00, -0.05],
+    [0.72, 0.72, 0.68, 0.60, 1.00, 0.48, 0.05, 0.05], [0.60, 0.58, 0.50, 0.55, 0.48, 1.00, 0.20, 0.00], [0.05, 0.05, 0.00, 0.00, 0.05, 0.20, 1.00, 0.25], [0.00, 0.00, 0.00, -0.05, 0.05, 0.00, 0.25, 1.00]];
+  var PRIV_I = [3, 4, 5], PUB_I = [0, 1, 2, 6];
+  var LIQUID = [1, 1, 1, 0, 0, 0, 1, 1], TRADABLE = [1, 1, 1, 0, 0, 0, 1, 1];
+  var STRESS = [
+    { name: 'GFC', win: 'Oct 2007 to Mar 2009', s: [-0.50, -0.55, -0.60, -0.30, -0.20, -0.60, 0.10, 0.03] },
+    { name: 'COVID crash', win: 'Feb to Mar 2020', s: [-0.34, -0.33, -0.32, -0.20, -0.11, -0.40, 0.08, 0.002] },
+    { name: '2022 rate shock', win: 'Jan to Oct 2022', s: [-0.25, -0.25, -0.29, -0.20, -0.06, -0.28, -0.13, 0.015] },
+    { name: 'Stagflation', win: 'stylised, 12 months', s: [-0.20, -0.18, -0.22, -0.15, -0.05, -0.08, -0.08, 0.06] }
+  ];
+  /* reference portfolio for the total portfolio approach: 70% global equity (60/30/10), 30% bonds */
+  function refPortfolio() { var e = A.refEq; return [0.6 * e, 0.3 * e, 0.1 * e, 0, 0, 0, 1 - e, 0]; }
+
+  var AROWS = [
+    { id: 'rf', label: 'Cash rate', value: 0.0375, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.08, step: 0.05 },
+    { id: 'targetVol', label: 'Target volatility', value: 0.11, unit: '% a year', scale: 100, source: 'Assumption', min: 0.04, max: 0.2, step: 0.5 },
+    { id: 'spend', label: 'Spending rate', value: 0.045, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.08, step: 0.1 },
+    { id: 'inflation', label: 'Inflation', value: 0.023, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.06, step: 0.1 },
+    { id: 'calls24', label: 'Projected capital calls, next 24 months', value: 90, unit: '$m', source: 'Pacing input, see the Private Capital Lab', min: 0, max: 400, step: 5 },
+    { id: 'liqMult', label: 'Liquidity multiple', value: 1.5, unit: 'x', source: 'IPS section 5 (extracted)', min: 0.5, max: 4, step: 0.1 },
+    { id: 'maxW', label: 'Maximum weight in any asset', value: 0.35, unit: '%', scale: 100, source: 'Assumption', min: 0.15, max: 1, step: 1 },
+    { id: 'delta', label: 'Black-Litterman risk aversion', value: 2.5, unit: '', source: 'Common choice', min: 0.5, max: 6, step: 0.1 },
+    { id: 'tau', label: 'Black-Litterman tau', value: 0.05, unit: '', source: 'Common choice', min: 0.01, max: 0.5, step: 0.01 },
+    { id: 'refEq', label: 'Reference portfolio equity share', value: 0.70, unit: '%', scale: 100, source: 'Committee minutes, item 4 (extracted)', min: 0.3, max: 0.9, step: 1 },
+    { id: 'activeBudget', label: 'Active risk budget', value: 0.04, unit: '% a year', scale: 100, source: 'Committee minutes, item 4 (extracted)', min: 0.01, max: 0.1, step: 0.25 },
+    { id: 'conviction', label: 'Regime tilt conviction', value: 0.5, unit: '0 to 1', source: 'Assumption', min: 0, max: 1, step: 0.05 }
+  ];
+  var A = UI.A(AROWS), reg, syncers = {};
+  function setA(id, v) { A[id] = v; AROWS.filter(function (x) { return x.id === id; })[0].value = v; if (reg) reg.set(id, v); (syncers[id] || []).forEach(function (f) { f(v); }); }
+  function control(box, id, label, fmt, hint) {
+    var r = AROWS.filter(function (x) { return x.id === id; })[0], sc = r.scale || 1, wrap = UI.el('div', { class: 'control' }), inId = 'c-' + id + '-' + box.id;
+    wrap.innerHTML = '<label for="' + inId + '">' + UI.esc(label) + ' <output for="' + inId + '"></output></label><input type="range" id="' + inId + '" min="' + r.min * sc + '" max="' + r.max * sc + '" step="' + (r.step || 1) + '" value="' + r.value * sc + '">' + (hint ? '<div class="hint">' + UI.esc(hint) + '</div>' : '');
+    box.appendChild(wrap);
+    var inp = wrap.querySelector('input'), out = wrap.querySelector('output'), show = function () { out.textContent = fmt(+inp.value / sc); };
+    show();
+    inp.addEventListener('input', UI.debounce(function () { show(); setA(id, +inp.value / sc); renderAll(); }, 60));
+    inp.addEventListener('input', show);
+    (syncers[id] = syncers[id] || []).push(function (v) { inp.value = v * sc; show(); });
+  }
+
+  /* ---------------- state ---------------- */
+  var S = { seed: 100, user: null, mode: 'tpa', policyApproved: 'pending', trades: null };
+  window.ALAB = S;
+  /* custodian holdings, $m (the agents extract these from the custodian report) */
+  var MV = [125.0, 69.5, 27.3, 169.0, 122.3, 81.0, 237.6, 48.4];
+  function current() { var t = PM.sum(MV); return MV.map(function (v) { return v / t; }); }
+  /* policy: IPS, with the committee's changes once they are in the register (the agent proposes them; reject to undo) */
+  var IPS = { target: [0.24, 0.12, 0.05, 0.16, 0.12, 0.08, 0.20, 0.03], lo: [0.15, 0.06, 0, 0.10, 0.06, 0.04, 0.12, 0], hi: [0.35, 0.18, 0.10, 0.22, 0.16, 0.12, 0.30, 0.06] };
+  function policy() {
+    var p = { target: IPS.target.slice(), lo: IPS.lo.slice(), hi: IPS.hi.slice() };
+    if (S.policyApproved !== 'rejected') { p.target[4] = 0.10; p.lo[4] = 0.05; p.hi[4] = 0.14; p.target[6] = 0.22; p.lo[6] = 0.14; p.hi[6] = 0.32; }
+    return p;
+  }
+  function vols(desmooth) { return VOL_REPORTED.map(function (v, i) { return desmooth ? PM.desmoothedVol(v, AUTOCORR[i]) : v; }); }
+  function corr(desmooth) {
+    if (desmooth) return CORR;
+    var C = CORR.map(function (r) { return r.slice(); });
+    PRIV_I.forEach(function (i) { PUB_I.forEach(function (j) { C[i][j] = C[j][i] = CORR[i][j] * 0.62; }); });
+    return C;
+  }
+  function inputs() {
+    var d = $('#desmooth').checked, vol = S.user ? S.user.vol : vols(d), C = S.user ? S.user.corr : corr(d);
+    var mu = S.user ? S.user.mu : MU_CMA.map(function (m) { return m == null ? A.rf : m; });
+    return { mu: mu, vol: vol, C: C, Sigma: O.covFromCorr(vol, C) };
+  }
+  function projector(opts) {
+    var pol = policy(), on = $('#policyOn').checked;
+    var lo = on ? pol.lo.map(function (x) { return Math.min(x, A.maxW); }) : new Array(N).fill(0);
+    var hi = on ? pol.hi.map(function (x) { return Math.min(x, A.maxW); }) : new Array(N).fill(A.maxW);
+    hi = hi.map(function (h, i) { return Math.max(h, lo[i]); });
+    var ge = [];
+    if ($('#liqOn').checked) { var req = liquidityRequired(); ge.push({ a: O.liquidAfterStress(new Array(N).fill(0), LIQUID, STRESS[0].s).coeffs, b: req }); }
+    return O.makeProjector({ lo: lo, hi: hi, ge: ge, iters: 120 });
+  }
+  function assets() { return PM.sum(MV); }
+  function liquidityRequired() { return A.liqMult * (A.calls24 + 2 * A.spend * assets()) / assets(); }
+
+  /* ---------------- black-litterman views ---------------- */
+  var VIEWS = [
+    { on: true, type: 'rel', a: 2, b: 0, q: 0.02, conf: 0.5, text: 'EM equity outperforms US equity' },
+    { on: true, type: 'abs', a: 3, b: -1, q: 0.075, conf: 0.6, text: 'Private equity returns 7.5% after fees' },
+    { on: true, type: 'abs', a: 6, b: -1, q: 0.047, conf: 0.8, text: 'US Treasuries return 4.7%' }
+  ];
+  function mktWeights() { return [0.36, 0.20, 0.06, 0.08, 0.05, 0.05, 0.18, 0.02]; }
+  function bl(I) {
+    var P = [], Q = [], Om = [], tS = I.Sigma.map(function (r) { return r.map(function (v) { return v * A.tau; }); });
+    VIEWS.forEach(function (v) {
+      if (!v.on) return;
+      var p = new Array(N).fill(0); p[v.a] = 1; if (v.type === 'rel') p[v.b] = -1;
+      var base = PM.dot(p, PM.matVec(tS, p));
+      /* the model works in excess returns: absolute views are stated as total returns, so subtract cash */
+      P.push(p); Q.push(v.type === 'abs' ? v.q - A.rf : v.q); Om.push(base * (1 - v.conf) / Math.max(1e-6, v.conf));
+    });
+    var r = O.blackLitterman(I.Sigma, mktWeights(), A.delta, A.tau, P, Q, Om);
+    return { pi: r.pi.map(function (x) { return x + A.rf; }), mu: r.mu.map(function (x) { return x + A.rf; }), omega: r.omega };
+  }
+
+  /* ---------------- optimize ---------------- */
+  function solve() {
+    var I = inputs(), B = bl(I), mu = $('#inputs').value === 'bl' ? B.mu : I.mu, proj = projector();
+    var fr = O.frontier(mu, I.Sigma, A.rf, proj, S.seed, { cloud: 700 });
+    var curve = fr.curve, m = $('#method').value, pick = curve[0];
+    if (m === 'sharpe') { var bs = -1e9; curve.forEach(function (p) { var sh = (p.r - A.rf) / (p.v / 100); if (sh > bs) { bs = sh; pick = p; } }); }
+    else if (m === 'target') { var bd = 1e9; curve.forEach(function (p) { var d = Math.abs(p.v / 100 - A.targetVol); if (d < bd) { bd = d; pick = p; } }); }
+    else if (m === 'hurdle') { var req = A.spend + A.inflation, best = null; curve.forEach(function (p) { if (p.r >= req - 1e-9 && (!best || p.v < best.v)) best = p; }); pick = best || curve[curve.length - 1]; }
+    var rs = O.resampledFrontier(mu, I.Sigma, proj, { K: 10, nSim: 30, T: 120, seed: S.seed });
+    S.opt = { I: I, B: B, mu: mu, fr: fr, w: pick.w, rs: rs, proj: proj };
+    return S.opt;
+  }
+  function stats(w, I, mu) { var r = O.portMu(w, mu), v = O.portVol(w, I.Sigma); return { r: r, v: v, sh: v > 0 ? (r - A.rf) / v : 0 }; }
+  function renderOptimize() {
+    var o = solve(), I = o.I, cur = current(), pol = policy().target, w = o.w;
+    var sc = stats(cur, I, o.mu), sp = stats(pol, I, o.mu), so = stats(w, I, o.mu);
+    var D = S.panel || (S.panel = O.genPanel({ mu: I.mu, vol: I.vol, corr: I.C, T: 120, paths: 120, seed: S.seed }));
+    var ps = O.pathStats(w, D, A.rf);
+    UI.kpis('#optKpis', [
+      { id: 'optRet', label: 'Optimal expected return', value: F.pct(so.r, 2), sub: 'current ' + F.pct(sc.r, 2) + ', policy ' + F.pct(sp.r, 2), explain: function () { return { title: 'Expected return of the optimal portfolio', formula: "mu'w", inputs: ASSETS.map(function (a, i) { return { name: a, value: F.pct(w[i], 1) + ' x ' + F.pct(o.mu[i], 2), src: $('#inputs').value === 'bl' ? 'computed' : 'assumption', note: $('#inputs').value === 'bl' ? 'Black-Litterman posterior' : 'capital market assumption' }; }), result: F.pct(so.r, 3) }; } },
+      { id: 'optVol', label: 'Optimal volatility', value: F.pct(so.v, 2), sub: 'current ' + F.pct(sc.v, 2) + ', policy ' + F.pct(sp.v, 2) },
+      { id: 'optSharpe', label: 'Sharpe ratio', value: F.num(so.sh, 2), sub: 'current ' + F.num(sc.sh, 2) + ', policy ' + F.num(sp.sh, 2) },
+      { id: 'optVar', label: 'Monthly VaR 95 / CVaR 95', value: F.num(ps.var95, 1) + '% / ' + F.num(ps.cvar95, 1) + '%', sub: 'simulated, 120 paths x 120 months' },
+      { id: 'optLiq', label: 'Liquid after GFC stress', value: F.pct(O.liquidAfterStress(w, LIQUID, STRESS[0].s).value, 1), sub: 'required ' + F.pct(liquidityRequired(), 1) + ' of assets', explain: function () { return { title: 'Liquidity after a GFC-sized stress', formula: 'sum over liquid assets of w_i (1 + shock_i) >= multiple x (calls_24m + 2 x spending x assets) / assets', inputs: [{ name: 'Multiple', value: F.num(A.liqMult, 1) + 'x', src: 'document', note: 'IPS section 5', cite: { doc: 'ips', page: 1, line: 16, short: 'ips' } }, { name: 'Calls, 24 months', value: F.money(A.calls24, 0), src: 'assumption' }, { name: 'Spending, 24 months', value: F.money(2 * A.spend * assets(), 0), src: 'computed' }, { name: 'Assets', value: F.money(assets(), 1), src: 'document', cite: { doc: 'custody', page: 1, line: 5, short: 'custody' } }], result: F.pct(liquidityRequired(), 2) + ' required' }; } }
+    ]);
+    /* frontier chart: cloud, MV frontier, resampled points, markers */
+    var pts = o.fr.pts.map(function (p) { return { x: p.v, y: p.r * 100, color: 's4', r: 2 }; })
+      .concat(o.rs.points.map(function (p) { return { x: p.v * 100, y: p.r * 100, color: 's3', r: 4, label: '' }; }))
+      .concat([{ x: sc.v * 100, y: sc.r * 100, color: 's5', r: 7, label: 'Current' }, { x: sp.v * 100, y: sp.r * 100, color: 's2', r: 7, label: 'Policy' }, { x: so.v * 100, y: so.r * 100, color: 's1', r: 8, label: 'Optimal' }]);
+    UI.chart.scatter('#frontier', { points: pts, line: o.fr.curve.map(function (p) { return { x: p.v, y: p.r * 100 }; }), labels: true, xFmt: function (v) { return F.num(v, 0) + '%'; }, yFmt: function (v) { return F.num(v, 1) + '%'; }, xLabel: 'Volatility', height: 300, label: 'Efficient frontier' });
+    UI.table('#wTable', { id: 'weights', name: 'Weights', columns: [{ key: 'a', label: 'Asset class' }, { key: 'cur', label: 'Current', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'pol', label: 'Policy', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rng', label: 'Range' }, { key: 'opt', label: 'Optimal', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'res', label: 'Resampled (same risk)', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'mu', label: 'Exp. return', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'vol', label: 'Volatility', num: 1, fmt: function (v) { return F.pct(v, 1); } }],
+      rows: ASSETS.map(function (a, i) { var near = o.rs.points.reduce(function (b, p) { return Math.abs(p.v - so.v) < Math.abs(b.v - so.v) ? p : b; }); return { a: a, cur: cur[i], pol: pol[i], rng: F.pct(policy().lo[i], 0) + ' to ' + F.pct(policy().hi[i], 0), opt: w[i], res: near.w[i], mu: o.mu[i], vol: I.vol[i] }; }),
+      foot: { a: 'Total', cur: 1, pol: 1, opt: PM.sum(w), res: 1 } });
+    UI.chart.bar('#rcChart', { categories: SHORT, series: [{ name: 'Share of risk', values: O.riskContrib(w, I.Sigma).map(function (x) { return x / 100; }) }, { name: 'Weight', values: w, color: 's4' }], yFmt: function (v) { return F.pct(v, 0); }, height: 230, label: 'Risk contribution of the optimal portfolio' });
+    var Cd = corr(true), Cr = corr(false);
+    UI.chart.heat('#corrHeat', { rows: SHORT.slice(0, 7), cols: SHORT.slice(0, 7), matrix: SHORT.slice(0, 7).map(function (_, i) { return SHORT.slice(0, 7).map(function (_, j) { return i >= j ? Cd[i][j] : Cr[i][j]; }); }), cell: 50, labelWidth: 60, label: 'Correlation matrix: lower triangle desmoothed, upper triangle reported' });
+  }
+
+  /* ---------------- views ---------------- */
+  function renderViews() {
+    var I = inputs(), B = bl(I);
+    var h = '<div class="table-wrap"><table class="data"><thead><tr><th>On</th><th>View</th><th>Asset</th><th>Versus</th><th class="n">Return</th><th class="n">Confidence</th></tr></thead><tbody>';
+    VIEWS.forEach(function (v, k) {
+      var sel = function (val, nm) { return '<select class="field" data-k="' + k + '" data-f="' + nm + '">' + (nm === 'b' ? '<option value="-1"' + (val === -1 ? ' selected' : '') + '>absolute</option>' : '') + ASSETS.map(function (a, i) { return '<option value="' + i + '"' + (val === i ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>'; };
+      h += '<tr><td><input type="checkbox" data-k="' + k + '" data-f="on"' + (v.on ? ' checked' : '') + ' aria-label="View ' + (k + 1) + ' on"></td><td>' + UI.esc(v.text) + '</td><td>' + sel(v.a, 'a') + '</td><td>' + sel(v.type === 'rel' ? v.b : -1, 'b') + '</td><td class="n"><input class="field" type="number" step="0.1" data-k="' + k + '" data-f="q" value="' + +(v.q * 100).toFixed(2) + '" aria-label="View return %"></td><td class="n"><input class="field" type="number" step="5" min="5" max="99" data-k="' + k + '" data-f="conf" value="' + Math.round(v.conf * 100) + '" aria-label="Confidence %"></td></tr>';
+    });
+    $('#viewsTable').innerHTML = h + '</tbody></table></div><p class="eval-note">Return in % a year (relative views: outperformance). Confidence 5 to 99%; it sets each view\'s uncertainty relative to the prior.</p>';
+    UI.$$('#viewsTable [data-k]').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var v = VIEWS[+inp.dataset.k], f = inp.dataset.f;
+        if (f === 'on') v.on = inp.checked;
+        else if (f === 'a') v.a = +inp.value;
+        else if (f === 'b') { if (+inp.value === -1) v.type = 'abs'; else { v.type = 'rel'; v.b = +inp.value; } }
+        else if (f === 'q') v.q = +inp.value / 100;
+        else if (f === 'conf') v.conf = Math.max(0.05, Math.min(0.99, +inp.value / 100));
+        v.text = v.type === 'rel' ? ASSETS[v.a] + ' outperforms ' + ASSETS[v.b] : ASSETS[v.a] + ' returns ' + F.pct(v.q, 1);
+        renderAll();
+      });
+    });
+    UI.chart.bar('#blChart', { categories: SHORT, series: [{ name: 'Equilibrium (implied)', values: B.pi, color: 's4' }, { name: 'Posterior', values: B.mu, color: 's1' }, { name: 'CMA', values: I.mu, color: 's2' }], yFmt: function (v) { return F.pct(v, 1); }, height: 240, label: 'Expected returns' });
+    UI.table('#blTable', { id: 'bl', name: 'Black-Litterman', columns: [{ key: 'a', label: 'Asset class' }, { key: 'w', label: 'Market weight', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'pi', label: 'Implied', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'mu', label: 'Posterior', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'cma', label: 'CMA', num: 1, fmt: function (v) { return F.pct(v, 2); } }],
+      rows: ASSETS.map(function (a, i) { return { a: a, w: mktWeights()[i], pi: B.pi[i], mu: B.mu[i], cma: I.mu[i] }; }) });
+  }
+
+  /* ---------------- total portfolio ---------------- */
+  var CANDS = [
+    { name: '+3% EM equity, from US equity', dw: [-0.03, 0, 0.03, 0, 0, 0, 0, 0] },
+    { name: '+3% hedge funds, from US Treasuries', dw: [0, 0, 0, 0, 0.03, 0, -0.03, 0] },
+    { name: '+2% private equity, from US equity', dw: [-0.02, 0, 0, 0.02, 0, 0, 0, 0] },
+    { name: '+3% US Treasuries, from cash', dw: [0, 0, 0, 0, 0, 0, 0.03, -0.03] },
+    { name: '+2% real estate, from international equity', dw: [0, -0.02, 0, 0, 0, 0.02, 0, 0] },
+    { name: '+3% US equity, from US Treasuries', dw: [0.03, 0, 0, 0, 0, 0, -0.03, 0] }
+  ];
+  function renderTPA() {
+    var I = inputs(), mu = I.mu, w = current(), ref = refPortfolio(), pol = policy(), t = O.tpa(w, ref, I.Sigma);
+    var sr = stats(ref, I, mu), sw = stats(w, I, mu);
+    $('#modeHint').textContent = S.mode === 'tpa' ? 'Judged by contribution to total risk and return, against the reference portfolio and the active risk budget.' : 'Judged by whether each asset class stays inside its policy range.';
+    UI.kpis('#tpaKpis', [
+      { id: 'refRet', label: 'Reference portfolio, ' + F.pct(A.refEq, 0) + ' / ' + F.pct(1 - A.refEq, 0), value: F.pct(sr.r, 2) + ' at ' + F.pct(sr.v, 1), sub: 'expected return at volatility' },
+      { id: 'curRet', label: 'Current portfolio', value: F.pct(sw.r, 2) + ' at ' + F.pct(sw.v, 1), sub: 'expected return at volatility' },
+      { id: 'activeRisk', label: 'Active risk vs reference', value: F.pct(t.activeVol, 2), sub: 'budget ' + F.pct(A.activeBudget, 1), tone: t.activeVol > A.activeBudget ? 'bad' : 'good', explain: function () { return { title: 'Active risk against the reference portfolio', formula: 'sqrt(a\'Sigma a), a = w - w_ref', inputs: [{ name: 'Reference', value: F.pct(A.refEq, 0) + ' equity / ' + F.pct(1 - A.refEq, 0) + ' bonds', src: 'document', note: 'committee minutes item 4', cite: { doc: 'minutes', page: 1, line: 12, short: 'minutes' } }, { name: 'Budget', value: F.pct(A.activeBudget, 1), src: 'document', cite: { doc: 'minutes', page: 1, line: 13, short: 'minutes' } }], result: F.pct(t.activeVol, 3) }; } },
+      { id: 'excessRef', label: 'Return over the reference', value: F.pp(sw.r - sr.r, 2), sub: 'per unit of active risk ' + F.num((sw.r - sr.r) / Math.max(1e-9, t.activeVol), 2) }
+    ]);
+    var vTot = O.portVol(w, I.Sigma), ctrT = PM.matVec(I.Sigma, w).map(function (x, i) { return w[i] * x / vTot; });
+    UI.chart.bar('#tpaChart', { categories: SHORT, series: [{ name: 'Contribution to total volatility', values: ctrT, color: 's1' }, { name: 'Contribution to active risk', values: t.ctrActive, color: 's2' }], yFmt: function (v) { return F.pct(v, 1); }, height: 230, label: 'Risk contributions' });
+    UI.table('#tpaTable', { id: 'tpa', name: 'Total portfolio risk', columns: [{ key: 'a', label: 'Asset class' }, { key: 'w', label: 'Weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ref', label: 'Reference', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ct', label: 'To total vol', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'ca', label: 'To active risk', num: 1, fmt: function (v) { return F.pct(v, 2); } }],
+      rows: ASSETS.map(function (a, i) { return { a: a, w: w[i], ref: ref[i], ct: ctrT[i], ca: t.ctrActive[i] }; }), foot: { a: 'Total', w: 1, ref: 1, ct: vTot, ca: t.activeVol },
+      footExplain: { ca: function () { return { title: 'Active risk adds up', formula: 'sum of contributions = active volatility (Euler)', inputs: [{ name: 'Sum of contributions', value: F.pct(PM.sum(t.ctrActive), 3), src: 'computed' }], result: F.pct(t.activeVol, 3) }; } } });
+    var hurdle = sw.sh;
+    var rows = CANDS.map(function (c) {
+      var r = O.candidate(w, c.dw, mu, I.Sigma, ref), w2 = r.w;
+      var inRange = w2.every(function (x, i) { return x >= pol.lo[i] - 1e-9 && x <= pol.hi[i] + 1e-9; });
+      var budgetOk = O.tpa(w2, ref, I.Sigma).activeVol <= A.activeBudget + 1e-9 || r.dActive < -1e-6;   // inside the budget, or moving back toward it
+      var addsValue = r.ratio === Infinity || (r.dVol > 0 && r.ratio > hurdle) || (r.dVol < 0 && r.dRet > -1e-9);
+      var tpa = addsValue && budgetOk, saa = inRange;
+      return { name: c.name, dRet: r.dRet, dVol: r.dVol, dActive: r.dActive, ratio: r.ratio, saa: saa ? 'Fits ranges' : 'Breaks a range', tpa: tpa ? 'Improves the total portfolio' : (budgetOk ? 'Adds risk for too little return' : 'Breaks the active risk budget'), saaOk: saa, tpaOk: tpa };
+    });
+    S.cands = rows;
+    var verdictCol = S.mode === 'tpa' ? { key: 'tpa', label: 'Total portfolio verdict', html: 1, fmt: function (v, r) { return '<span class="' + (r.tpaOk ? 'verdict-ok' : 'verdict-no') + '">' + v + '</span>'; } } : { key: 'saa', label: 'SAA verdict', html: 1, fmt: function (v, r) { return '<span class="' + (r.saaOk ? 'verdict-ok' : 'verdict-no') + '">' + v + '</span>'; } };
+    UI.table('#candTable', { id: 'candidates', name: 'Candidate changes', columns: [{ key: 'name', label: 'Change' }, { key: 'dRet', label: 'Return', num: 1, fmt: function (v) { return F.pp(v, 2); } }, { key: 'dVol', label: 'Total vol', num: 1, fmt: function (v) { return F.pp(v, 2); } }, { key: 'dActive', label: 'Active risk', num: 1, fmt: function (v) { return F.pp(v, 2); } }, verdictCol], rows: rows });
+    var disagree = rows.filter(function (r) { return r.saaOk !== r.tpaOk; }).length;
+    $('#candNote').textContent = 'The two approaches disagree on ' + disagree + ' of ' + rows.length + ' changes. A total portfolio approach asks whether a change earns more than the portfolio\'s own return per unit of risk (' + F.num(hurdle, 2) + ' here) and stays inside the active risk budget; a classic SAA asks only whether each bucket stays in range.';
+  }
+
+  /* ---------------- stress and liquidity ---------------- */
+  function renderStress() {
+    var I = inputs(), cur = current(), pol = policy().target, w = S.opt ? S.opt.w : pol;
+    var rows = STRESS.map(function (s) { return { name: s.name, win: s.win, cur: O.stress(cur, s.s), pol: O.stress(pol, s.s), opt: O.stress(w, s.s), dollars: O.stress(cur, s.s) * assets() }; });
+    var liqCur = O.liquidAfterStress(cur, LIQUID, STRESS[0].s).value, req = liquidityRequired();
+    UI.kpis('#stressKpis', [
+      { id: 'gfc', label: 'Current portfolio in a GFC-sized stress', value: F.spct(rows[0].cur, 1), sub: F.money(rows[0].dollars, 0), tone: 'bad' },
+      { id: 'liqCover', label: 'Liquid assets after that stress', value: F.money(liqCur * assets(), 0), sub: 'covers ' + F.mult(liqCur * assets() / ((A.calls24 + 2 * A.spend * assets())), 1) + ' of 24-month calls plus spending', explain: function () { return { title: 'Liquidity after a GFC-sized stress', formula: 'sum over liquid assets of value_i (1 + shock_i)', inputs: ASSETS.filter(function (_, i) { return LIQUID[i]; }).map(function (a) { var i = ASSETS.indexOf(a); return { name: a, value: F.money(MV[i], 1) + ' x ' + F.pct(1 + STRESS[0].s[i], 0), src: 'document', cite: { doc: 'custody', page: 1, line: 5 + i, short: 'custody' } }; }), result: F.money(liqCur * assets(), 1) }; } },
+      { id: 'liqReq', label: 'Policy requirement', value: F.money(req * assets(), 0), sub: F.num(A.liqMult, 1) + 'x of ' + F.money(A.calls24 + 2 * A.spend * assets(), 0) }
+    ]);
+    UI.chart.bar('#stressChart', { categories: STRESS.map(function (s) { return s.name; }), series: [{ name: 'Current', values: rows.map(function (r) { return r.cur; }), color: 's5' }, { name: 'Policy', values: rows.map(function (r) { return r.pol; }), color: 's2' }, { name: 'Optimal', values: rows.map(function (r) { return r.opt; }), color: 's1' }], yFmt: function (v) { return F.pct(v, 0); }, height: 230, label: 'Stress losses' });
+    UI.table('#stressTable', { id: 'stress', name: 'Stress tests', columns: [{ key: 'name', label: 'Scenario' }, { key: 'win', label: 'Window' }, { key: 'cur', label: 'Current', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'pol', label: 'Policy', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'opt', label: 'Optimal', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'dollars', label: 'Current, $m', num: 1, fmt: function (v) { return F.money(v, 0); } }], rows: rows });
+    $('#liqBox').innerHTML = '<p>The IPS requires liquid assets after a severe stress to cover ' + F.num(A.liqMult, 1) + ' times the next 24 months of calls and spending. After a GFC-sized shock the current portfolio would hold ' + F.money(liqCur * assets(), 0) + ' of liquid assets against a requirement of ' + F.money(req * assets(), 0) + '. The optimizer enforces the same test as a hard constraint when <em>Liquidity after stress</em> is on.</p>';
+  }
+
+  /* ---------------- regime tilts ---------------- */
+  var REG_NAMES = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflationary bust'];
+  var TILTS = [[0.02, 0.01, 0.01, 0, 0, 0, -0.03, -0.01], [0.01, 0.01, 0.02, 0, 0, 0.01, -0.04, -0.01], [-0.02, -0.01, -0.01, 0, 0.01, 0.01, -0.01, 0.03], [-0.03, -0.01, -0.01, 0, 0, -0.01, 0.05, 0.01]];
+  function regimeProbs() {
+    var rng = PM.mulberry32(S.seed * 7 + 3), z = PM.normalGen(rng), x = [0.5, 0.2, -0.3, -0.4], out = [];
+    for (var t = 0; t < 24; t++) {
+      x = x.map(function (v, k) { return 0.85 * v + 0.35 * z() + (t > 17 && k === 2 ? 0.25 : 0) + (t > 17 && k === 3 ? 0.15 : 0); });
+      var e = x.map(function (v) { return Math.exp(2 * v); }), s = PM.sum(e);
+      out.push(e.map(function (v) { return v / s; }));
+    }
+    return out;
+  }
+  function renderRegimes() {
+    var P = regimeProbs(), now = P[P.length - 1], pol = policy(), tilt = O.regimeTilt(now, TILTS, A.conviction);
+    var proj = O.makeProjector({ lo: pol.lo, hi: pol.hi });
+    var taa = proj(pol.target.map(function (x, i) { return x + tilt[i]; }));
+    S.regime = { now: now, tilt: tilt, taa: taa };
+    var xs = P.map(function (_, i) { return i - 23; });
+    UI.chart.line('#regChart', { xs: xs, series: REG_NAMES.map(function (n, k) { return { name: n, ys: P.map(function (p) { return p[k]; }), color: 's' + (k + 1) }; }), yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return v === 0 ? 'now' : v + 'm'; }, height: 230, yMin: 0, yMax: 1, label: 'Synthetic regime probabilities' });
+    UI.table('#tiltTable', { id: 'tilts', name: 'Regime tilts', columns: [{ key: 'a', label: 'Asset class' }, { key: 'pol', label: 'Policy', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'tilt', label: 'Tilt', num: 1, fmt: function (v) { return F.pp(v, 1); } }, { key: 'taa', label: 'Tactical (within ranges)', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'trade', label: 'Tradable now', }],
+      rows: ASSETS.map(function (a, i) { return { a: a, pol: pol.target[i], tilt: tilt[i], taa: taa[i], trade: TRADABLE[i] ? 'yes' : 'no, through commitments' }; }), foot: { a: 'Most likely regime now: ' + REG_NAMES[now.indexOf(Math.max.apply(null, now))] + ' (' + F.pct(Math.max.apply(null, now), 0) + ')' } });
+  }
+
+  /* ---------------- attribution ---------------- */
+  function renderAttribution() {
+    var rng = PM.mulberry32(S.seed * 13 + 5), z = PM.normalGen(rng);
+    var rb = [-0.084, -0.102, -0.121, 0.021, 0.031, -0.012, 0.038, 0.048].map(function (r) { return r + 0.01 * z(); });
+    var rp = rb.map(function (r, i) { return r + (TRADABLE[i] ? 0.004 : 0.012) * z() + (i === 4 ? 0.006 : 0); });
+    var wb = IPS.target, wp = current().map(function (x, i) { return 0.5 * x + 0.5 * IPS.target[i] + (i === 6 ? 0.01 : i === 0 ? -0.01 : 0); });
+    var s = PM.sum(wp); wp = wp.map(function (x) { return x / s; });
+    var b = PM.brinson(wp, wb, rp, rb);
+    S.att = b;
+    UI.kpis('#attKpis', [
+      { id: 'attTotal', label: 'Active return, 12 months', value: F.pp(b.total, 2), sub: 'portfolio ' + F.pct(b.rpTot, 2) + ' vs policy ' + F.pct(b.rbTot, 2), explain: function () { return { title: 'Active return', formula: 'sum wp rp - sum wb rb, computed directly; then split into allocation, selection and interaction', inputs: [{ name: 'Allocation', value: F.pp(b.alloc, 3), src: 'computed' }, { name: 'Selection', value: F.pp(b.sel, 3), src: 'computed' }, { name: 'Interaction', value: F.pp(b.inter, 3), src: 'computed' }, { name: 'Residual (should be 0)', value: b.resid.toExponential(1), src: 'computed' }], result: F.pp(b.total, 3) }; } },
+      { id: 'attAlloc', label: 'Allocation', value: F.pp(b.alloc, 2) }, { id: 'attSel', label: 'Selection', value: F.pp(b.sel, 2) }, { id: 'attInter', label: 'Interaction', value: F.pp(b.inter, 2) }
+    ]);
+    UI.chart.waterfall('#attWaterfall', { steps: [{ label: 'Allocation', value: b.alloc * 100 }, { label: 'Selection', value: b.sel * 100 }, { label: 'Interaction', value: b.inter * 100 }], total: true, totalLabel: 'Active', yFmt: function (v) { return F.num(v, 2) + '%'; }, height: 240, label: 'Attribution waterfall' });
+    UI.table('#attTable', { id: 'attribution', name: 'Brinson attribution', columns: [{ key: 'a', label: 'Asset class' }, { key: 'wp', label: 'Portfolio wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'wb', label: 'Policy wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rp', label: 'Portfolio ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rb', label: 'Benchmark ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'al', label: 'Alloc', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'se', label: 'Select', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'in', label: 'Inter', num: 1, fmt: function (v) { return F.bps(v); } }],
+      rows: ASSETS.map(function (a, i) { return { a: a, wp: wp[i], wb: wb[i], rp: rp[i], rb: rb[i], al: b.rows[i].alloc, se: b.rows[i].sel, in: b.rows[i].inter }; }), foot: { a: 'Total', al: b.alloc, se: b.sel, in: b.inter } });
+  }
+
+  /* ---------------- AI pipeline ---------------- */
+  var DOCS = window.ALLOC_DOCS, LABELS = window.ALLOC_LABELS, log, audit, apps;
+  var pctRe = /(\d+(?:\.\d+)?)%/g;
+  function extractIPS(id) {
+    var out = {}, d = DOCS[id];
+    d.pages[0].forEach(function (line, li) {
+      var c = { doc: id, page: 1, line: li + 1, short: id };
+      if (line.charAt(0) === '|') {
+        var name = ASSETS.filter(function (a) { return line.toLowerCase().indexOf(a.toLowerCase().replace('emerging markets equity', 'emerging markets')) !== -1; })[0];
+        var nums = (line.match(pctRe) || []).map(function (x) { return +x.replace('%', '') / 100; });
+        if (name && nums.length === 3) { out['target.' + name] = { value: nums[0], unit: 'pct', cites: [c] }; out['lo.' + name] = { value: nums[1], unit: 'pct', cites: [c] }; out['hi.' + name] = { value: nums[2], unit: 'pct', cites: [c] }; }
+      }
+      var m;
+      if ((m = /at least ([\d.]+) times/i.exec(line))) out.liquidityMultiple = { value: +m[1], unit: 'num', cites: [c] };
+      if ((m = /more than (\d+)% of the portfolio/i.exec(line))) out.maxTrade = { value: +m[1] / 100, unit: 'pct', cites: [c] };
+    });
+    return out;
+  }
+  function extractMinutes(id) {
+    var out = {}, d = DOCS[id];
+    d.pages[0].forEach(function (line, li) {
+      var c = { doc: id, page: 1, line: li + 1, short: id }, m;
+      ASSETS.forEach(function (a) {
+        var re = new RegExp(a + ' target of (\\d+)% \\(range (\\d+)% to (\\d+)%\\)', 'i');
+        if ((m = re.exec(line))) { out['target.' + a] = { value: +m[1] / 100, unit: 'pct', cites: [c] }; out['lo.' + a] = { value: +m[2] / 100, unit: 'pct', cites: [c] }; out['hi.' + a] = { value: +m[3] / 100, unit: 'pct', cites: [c] }; }
+      });
+      if ((m = /(\d+)% global equity and (\d+)% bonds/i.exec(line))) { out.refEquity = { value: +m[1] / 100, unit: 'pct', cites: [c] }; out.refBonds = { value: +m[2] / 100, unit: 'pct', cites: [c] }; }
+      if ((m = /active risk budget of ([\d.]+)%/i.exec(line))) out.activeRisk = { value: +m[1] / 100, unit: 'pct', cites: [c] };
+    });
+    return out;
+  }
+  function extractCustody(id) {
+    var out = {}, d = DOCS[id];
+    d.pages[0].forEach(function (line, li) {
+      if (line.charAt(0) !== '|') return;
+      var c = { doc: id, page: 1, line: li + 1, short: id }, m = /^\|\s*(.*?)\s+([\d,]+\.\d+)\s*$/.exec(line); if (!m) return;
+      var label = m[1].replace(/\(.*\)/, '').trim(), v = +m[2].replace(/,/g, '');
+      if (/^total$/i.test(label)) out.total = { value: v, unit: 'num', cites: [c] };
+      else { var a = ASSETS.filter(function (x) { return x.toLowerCase() === label.toLowerCase(); })[0]; if (a) out['mv.' + a] = { value: v, unit: 'num', cites: [c] }; }
+    });
+    return out;
+  }
+  function runPipeline() {
+    log.clear(); audit.clear();
+    var P = S.pipe = { ex: {}, checks: [], items: [], fieldsN: 0 };
+    audit.push('planner', 'run started', 'seed ' + S.seed);
+    UI.runSteps(log, [
+      { agent: 'planner', run: function () { return { msg: 'Plan: read the IPS, the latest minutes and the custodian report; build one policy register; check targets, ranges and totals; draft trades under the IPS; gate them; ask for approval' }; } },
+      { agent: 'policy-reader', run: function () { P.ex.ips = extractIPS('ips'); P.ex.minutes = extractMinutes('minutes'); var n = Object.keys(P.ex.ips).length + Object.keys(P.ex.minutes).length; P.fieldsN += n; audit.push('policy-reader', 'extracted', n + ' policy fields'); return [{ msg: 'IPS: ' + Object.keys(P.ex.ips).length + ' fields (targets, ranges, liquidity multiple, trade limit)' }, { msg: 'Minutes: ' + Object.keys(P.ex.minutes).length + ' fields (two target changes, reference portfolio, active risk budget)' }]; } },
+      { agent: 'holdings-extractor', run: function () { P.ex.custody = extractCustody('custody'); var n = Object.keys(P.ex.custody).length; P.fieldsN += n; audit.push('holdings-extractor', 'extracted', n + ' holdings fields'); return { msg: 'Custodian report: ' + n + ' values in $ millions', details: Object.keys(P.ex.custody).reduce(function (o, k) { o[k] = P.ex.custody[k].value; return o; }, {}) }; } },
+      { agent: 'citation-validator', run: function () {
+        var bad = 0, ok = 0;
+        ['ips', 'minutes', 'custody'].forEach(function (id) { Object.keys(P.ex[id]).forEach(function (k) { var f = P.ex[id][k]; var r = UI.validateField(DOCS, { cite: f.cites[0], value: f.unit === 'pct' ? f.value : f.value, unit: f.unit === 'pct' ? 'pct' : 'num' }); f.valid = r.ok; if (r.ok) ok++; else bad++; }); });
+        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve, ' + bad + ' blocked');
+        return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve to a line containing the value' + (bad ? ', ' + bad + ' blocked' : '') };
+      } },
+      { agent: 'consistency-checker', run: function () {
+        var res = [], ips = P.ex.ips, mi = P.ex.minutes, cu = P.ex.custody;
+        var tsum = PM.sum(ASSETS.map(function (a) { return ips['target.' + a] ? ips['target.' + a].value : 0; }));
+        P.checks.push({ id: 'targets-sum:ips', flag: Math.abs(tsum - 1) > 1e-9 }); res.push({ msg: 'IPS targets sum to ' + F.pct(tsum, 1) });
+        var changed = ASSETS.filter(function (a) { return mi['target.' + a] && ips['target.' + a] && Math.abs(mi['target.' + a].value - ips['target.' + a].value) > 1e-9; });
+        ASSETS.forEach(function (a) { if (mi['target.' + a]) P.checks.push({ id: 'policy:' + a, flag: changed.indexOf(a) !== -1 }); });
+        if (changed.length) {
+          res.push({ status: 'approval', msg: 'Minutes of 17 Sep change ' + changed.join(' and ') + '; the IPS register is out of date', details: changed.map(function (a) { return a + ': ' + F.pct(ips['target.' + a].value, 0) + ' -> ' + F.pct(mi['target.' + a].value, 0); }) });
+          P.items.push({ id: 'P-1', title: 'Update the policy register with the committee\'s 17 September changes', severity: 'med', evidence: changed.map(function (a) { return a + ': target ' + F.pct(ips['target.' + a].value, 0) + ' to ' + F.pct(mi['target.' + a].value, 0) + ', range ' + F.pct(mi['lo.' + a].value, 0) + ' to ' + F.pct(mi['hi.' + a].value, 0); }).join('; ') + '. Effective 1 October 2026. Approve to adopt; reject to keep the IPS figures.', cites: [{ doc: 'minutes', page: 1, line: 7, short: 'minutes' }, { doc: 'minutes', page: 1, line: 8, short: 'minutes' }, { doc: 'ips', page: 1, line: 10, short: 'ips' }, { doc: 'ips', page: 1, line: 12, short: 'ips' }], state: 'pending', kind: 'policy' });
+        }
+        var t2 = PM.sum(ASSETS.map(function (a) { var m2 = mi['target.' + a] || ips['target.' + a]; return m2 ? m2.value : 0; }));
+        P.checks.push({ id: 'targets-sum:policy', flag: Math.abs(t2 - 1) > 1e-9 }); res.push({ msg: 'Updated targets sum to ' + F.pct(t2, 1) });
+        var inRange = ASSETS.every(function (a) { var t = (mi['target.' + a] || ips['target.' + a]).value, lo = (mi['lo.' + a] || ips['lo.' + a]).value, hi = (mi['hi.' + a] || ips['hi.' + a]).value; return t >= lo && t <= hi; });
+        P.checks.push({ id: 'ranges:policy', flag: !inRange }); res.push({ status: inRange ? 'ok' : 'approval', msg: 'Every target inside its range: ' + (inRange ? 'yes' : 'no') });
+        var lineSum = PM.sum(ASSETS.map(function (a) { return cu['mv.' + a] ? cu['mv.' + a].value : 0; })), brk = cu.total ? cu.total.value - lineSum : 0, fl = Math.abs(brk) > 0.05;
+        P.checks.push({ id: 'total:custody', flag: fl });
+        if (fl) {
+          res.push({ status: 'approval', msg: 'Custodian total ' + F.money(cu.total.value, 1) + ' does not equal the sum of lines ' + F.money(lineSum, 1) + ' (' + F.money(brk, 1) + ')' });
+          P.items.push({ id: 'H-1', title: 'Custodian total does not add up (' + F.money(brk, 1) + ')', severity: 'high', evidence: 'The eight lines sum to ' + F.money(lineSum, 1) + '; the printed total is ' + F.money(cu.total.value, 1) + '. Weights are computed on the sum of lines. Approve to query the custodian.', cites: [cu.total.cites[0], { doc: 'custody', page: 1, line: 5, short: 'custody' }], state: 'pending', kind: 'custody' });
+        }
+        audit.push('consistency-checker', 'checks run', P.checks.length + ' checks');
+        return res;
+      } },
+      { agent: 'rebalancing-agent', run: function () {
+        var w = current(), pol = policy(), res = [];
+        var outside = ASSETS.filter(function (_, i) { return w[i] < pol.lo[i] - 1e-9 || w[i] > pol.hi[i] + 1e-9; });
+        /* proposal A: IPS rule, breaching classes to the nearest edge, funded from the most overweight liquid classes */
+        var trade = new Array(N).fill(0); outside.forEach(function (a) { var i = ASSETS.indexOf(a); trade[i] = (w[i] < pol.lo[i] ? pol.lo[i] : pol.hi[i]) - w[i]; });
+        var need = PM.sum(trade), over = ASSETS.map(function (_, i) { return TRADABLE[i] && trade[i] === 0 ? Math.max(0, w[i] - pol.target[i]) : 0; }), ot = PM.sum(over);
+        over.forEach(function (o, i) { if (ot > 0) trade[i] -= need * o / ot; });
+        var B = { trade: trade.map(function (t, i) { return pol.target[i] - w[i]; }) };
+        P.proposals = [{ id: 'T-1', name: 'Rebalance breaches to the range edge (IPS section 6)', trade: trade }, { id: 'T-2', name: 'Rebalance every class to target', trade: B.trade }];
+        P.proposals.forEach(function (p) { res.push({ status: 'ok', msg: p.id + ' drafted: ' + p.name, details: ASSETS.reduce(function (o, a, i) { if (Math.abs(p.trade[i]) > 1e-6) o[a] = F.spct(p.trade[i], 2) + ' (' + F.money(p.trade[i] * assets(), 1) + ')'; return o; }, {}) }); });
+        audit.push('rebalancing-agent', 'drafted', P.proposals.length + ' proposals');
+        return res;
+      } },
+      { agent: 'compliance-gate', run: function () {
+        var res = [], w = current(), pol = policy(), maxT = P.ex.ips.maxTrade ? P.ex.ips.maxTrade.value : 0.1;
+        P.proposals.forEach(function (p) {
+          var after = w.map(function (x, i) { return x + p.trade[i]; }), why = [];
+          ASSETS.forEach(function (a, i) { if (!TRADABLE[i] && Math.abs(p.trade[i]) > 1e-9) why.push('trades ' + a + ', which the IPS says is not traded to rebalance'); });
+          var turnover = PM.sum(p.trade.map(Math.abs)) / 2; if (turnover > maxT + 1e-9) why.push('moves ' + F.pct(turnover, 1) + ' of the portfolio, above the ' + F.pct(maxT, 0) + ' limit');
+          ASSETS.forEach(function (a, i) { if (after[i] < pol.lo[i] - 1e-6 || after[i] > pol.hi[i] + 1e-6) why.push(a + ' ends outside its range'); });
+          if (O.liquidAfterStress(after, LIQUID, STRESS[0].s).value < liquidityRequired() - 1e-9) why.push('fails the liquidity-after-stress test');
+          p.blocked = why;
+          audit.push('compliance-gate', why.length ? 'blocked' : 'passed', p.id + (why.length ? ': ' + why.join('; ') : ''));
+          if (why.length) res.push({ status: 'blocked', msg: p.id + ' blocked: ' + why.join('; ') });
+          else {
+            res.push({ status: 'approval', msg: p.id + ' passes the gate (turnover ' + F.pct(turnover, 1) + '), sent for approval' });
+            P.items.push({ id: p.id, title: p.name + ': ' + ASSETS.filter(function (_, i) { return Math.abs(p.trade[i]) > 1e-6; }).map(function (a) { var i = ASSETS.indexOf(a); return (p.trade[i] > 0 ? 'buy ' : 'sell ') + F.money(Math.abs(p.trade[i]) * assets(), 1) + ' ' + a; }).join(', '), severity: 'med', evidence: 'Post-trade weights stay inside every range, turnover is ' + F.pct(turnover, 1) + ' (limit ' + F.pct(maxT, 0) + '), and liquid assets after a GFC-sized stress stay above the requirement. Approve to release the trade list.', cites: [{ doc: 'ips', page: 1, line: 20, short: 'ips' }, { doc: 'ips', page: 1, line: 23, short: 'ips' }], state: 'pending', kind: 'trade' });
+          }
+        });
+        return res;
+      } }
+    ], afterPipeline);
+  }
+  function afterPipeline() {
+    var P = S.pipe;
+    apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: function (items, it) {
+      if (it.kind === 'policy') { S.policyApproved = it.state; renderAll(); }
+      renderRegister();
+    } });
+    UI.counters('#counters', { docs: 3, fields: P.fieldsN, checks: P.checks.length + P.fieldsN + P.proposals.length * 4, flags: P.checks.filter(function (c) { return c.flag; }).length + P.proposals.filter(function (p) { return p.blocked.length; }).length, review: P.items.length });
+    renderRegister(); renderEval();
+    UI.$$('#runSteps span').forEach(function (s) { s.className = 'done'; });
+  }
+  function renderRegister() {
+    var P = S.pipe, pol = policy(), ex = P.ex;
+    UI.table('#register', { id: 'register', name: 'Policy register', columns: [{ key: 'a', label: 'Asset class' }, { key: 't', label: 'Target', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'r', label: 'Range' }, { key: 'w', label: 'Current', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'st', label: 'Status' }, { key: 'c', label: 'Source', html: 1 }],
+      rows: ASSETS.map(function (a, i) { var w = current()[i], src = (S.policyApproved !== 'rejected' && ex.minutes['target.' + a]) ? ex.minutes['target.' + a] : ex.ips['target.' + a];
+        return { a: a, t: pol.target[i], r: F.pct(pol.lo[i], 0) + ' to ' + F.pct(pol.hi[i], 0), w: w, st: w < pol.lo[i] ? 'below range' : w > pol.hi[i] ? 'above range' : 'in range', c: src ? UI.citeHTML(src.cites[0]) + UI.citeHTML(ex.custody['mv.' + a].cites[0]) : '' }; }) });
+    var appr = P.items.filter(function (it) { return it.kind === 'trade' && it.state === 'approved'; });
+    var rows = [];
+    P.proposals.forEach(function (p) { ASSETS.forEach(function (a, i) { if (Math.abs(p.trade[i]) > 1e-6) rows.push({ p: p.id, a: a, t: p.trade[i], m: p.trade[i] * assets(), s: p.blocked.length ? 'blocked by gate' : (appr.some(function (x) { return x.id === p.id; }) ? 'approved, released' : 'awaiting approval') }); }); });
+    UI.table('#trades', { id: 'trades', name: 'Trade proposals', columns: [{ key: 'p', label: 'Proposal' }, { key: 'a', label: 'Asset class' }, { key: 't', label: 'Change', num: 1, fmt: function (v) { return F.pp(v, 2); } }, { key: 'm', label: '$m', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 's', label: 'Status' }], rows: rows });
+  }
+  function renderEval() {
+    var P = S.pipe, ext = {}, truth = {};
+    Object.keys(LABELS.fields).forEach(function (id) { Object.keys(LABELS.fields[id]).forEach(function (k) { truth[id + '.' + k] = { value: LABELS.fields[id][k].value }; var f = P.ex[id] && P.ex[id][k]; if (f) ext[id + '.' + k] = { value: f.value, cite: f.valid ? f.cites[0] : null }; }); });
+    var ev = UI.evaluate(ext, truth, 1e-9), seeded = Object.keys(LABELS.issues).filter(function (k) { return LABELS.issues[k].seeded; }), raised = P.checks.filter(function (c) { return c.flag; }).map(function (c) { return c.id; });
+    var fl = UI.evalFlags(raised, seeded, Object.keys(LABELS.issues).length);
+    window.EVAL = { demo: 'Allocation Lab', href: 'allocation-lab.html#evaluation', fields: ev.n, accuracy: ev.accuracy, coverage: ev.coverage, seeded: fl.seeded, detected: fl.detected, falseFlagRate: fl.falseFlagRate };
+    UI.kpis('#evalKpis', [{ id: 'evAcc', label: 'Extraction accuracy', value: F.pct(ev.accuracy, 1), sub: ev.correct + ' of ' + ev.n + ' labeled fields' }, { id: 'evCov', label: 'Citation coverage', value: F.pct(ev.coverage, 1) }, { id: 'evFlag', label: 'Seeded issues caught / false-flag rate', value: fl.detected + ' of ' + fl.seeded + ' / ' + F.pct(fl.falseFlagRate, 0), sub: (fl.candidates - fl.seeded) + ' clean checks' }]);
+    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field' }, { key: 't', label: 'Label', num: 1, fmt: function (v) { return F.num(v, 3); } }, { key: 'e', label: 'Extracted', num: 1, fmt: function (v) { return v == null ? 'missing' : F.num(v, 3); } }, { key: 'ok', label: 'Match' }, { key: 'how', label: 'How the label was set' }],
+      rows: Object.keys(truth).map(function (k) { var id = k.split('.')[0], fk = k.slice(id.length + 1); return { k: k, t: truth[k].value, e: ext[k] ? ext[k].value : null, ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no', how: LABELS.fields[id][fk].how }; }) });
+  }
+
+  /* ---------------- memo ---------------- */
+  function renderMemo() {
+    /* Fixed text, written for the base case (seed 100, default assumptions); links jump to the live numbers. */
+    $('#memoCall').innerHTML = 'Rebalance now under the IPS rule: release <a class="cite-num" href="#trades">T-1</a>, buying $7.0m of US equity with Treasuries and cash. Adopt the 70/30 reference with the 4% active risk budget from Q4, and bring active risk back inside that budget over the next two redemption windows by moving the hedge funds overweight into international equity.';
+    $('#memoSituation').innerHTML = '<p>The fictional endowment holds about $880m after a sharp fall in equities. US equity has slipped below its 15% floor while Treasuries and cash sit above target, and private equity is near the top of its range on marks that lag the market. On 17 September the committee cut the hedge funds target to 10%, raised Treasuries to 22%, and asked staff to report against a 70/30 reference portfolio.</p>';
+    $('#memoWhy').innerHTML = '<li>Active risk against the reference is <a class="cite-num" href="#kpi-activeRisk">4.31%</a>, over the 4% budget. The largest contributions are the public equity underweights, US equity at <a class="cite-num" href="#tpaTable">1.69 pp</a> and international at 0.85 pp, ahead of private equity at 1.20 pp. The gap is in public equity after the fall, which is the part we can trade.</li>' +
+      '<li>Re-optimizing does not justify a new policy: under the same ranges and liquidity test the best Sharpe ratio is <a class="cite-num" href="#kpi-optSharpe">0.26</a> against 0.25 today, and the gain rests on the private equity return assumption.</li>' +
+      '<li>Liquidity is not the constraint. After a GFC-sized stress the portfolio keeps <a class="cite-num" href="#kpi-liqCover">$416m</a> of liquid assets against a requirement of <a class="cite-num" href="#kpi-liqReq">$254m</a>, so selling Treasuries to buy equity does not put the rule at risk.</li>';
+    $('#memoRisks').innerHTML = '<li>A further leg down in equities pushes US equity back below its floor and private equity above its ceiling at once, with private marks still catching up.</li><li>Expected returns drive the optimizer; with the Black-Litterman views (private equity at 7.5%), the case for holding private equity at the top of its range weakens.</li><li>The custodian total is off by $10.0m; weights use the sum of lines until the custodian answers.</li>';
+    $('#memoChange').innerHTML = '<li>Active risk still above 4% after the hedge fund redemptions: cut further through the private equity pacing plan, not through the trade list.</li><li>Private equity marks more than 10% below the latest values: private equity drops to the middle of its range and the equity rebalance should be sized again.</li><li>A real regime signal pointing hard to a deflationary bust: hold Treasuries above the edge rule.</li>';
+    $('#memoNext').innerHTML = '<p>Release T-1 today. Do not release T-2: the compliance gate blocks it because it trades private assets and moves 15.8% of the portfolio. Submit hedge fund redemptions for the next two windows to reach the 10% target and direct the proceeds to international equity. Report against the reference portfolio from Q4.</p>';
+  }
+
+  /* ---------------- data drop ---------------- */
+  function parseReturns(rows, header) {
+    var errs = [], cols = header.filter(function (h) { return h !== 'date'; });
+    var idx = cols.map(function (c) { return ASSETS.map(function (a) { return a.toLowerCase(); }).indexOf(c.toLowerCase()); });
+    if (cols.length !== N || idx.some(function (i) { return i === -1; })) errs.push('Need a date column and one column for each of: ' + ASSETS.join(', ') + '. Found: ' + cols.join(', ') + '.');
+    var data = [];
+    rows.forEach(function (r, k) {
+      var d = UI.parse.date(r.date); if (!d) errs.push('Row ' + (k + 2) + ': date "' + r.date + '" is not YYYY-MM-DD.');
+      var v = ASSETS.map(function (a) { var key = cols.filter(function (c) { return c.toLowerCase() === a.toLowerCase(); })[0]; return UI.parse.num(r[key]); });
+      if (v.some(function (x) { return !isFinite(x); })) errs.push('Row ' + (k + 2) + ': every return must be a number (monthly, decimal).');
+      else if (v.some(function (x) { return Math.abs(x) > 1; })) errs.push('Row ' + (k + 2) + ': a return above 100% in a month; are these percentages? Use decimals.');
+      data.push(v);
+    });
+    if (data.length < 24) errs.push('Need at least 24 monthly rows; found ' + data.length + '.');
+    if (errs.length) return { errors: errs };
+    var mu = ASSETS.map(function (_, i) { return PM.mean(data.map(function (r) { return r[i]; })) * 12; });
+    var C = PM.corrFromCov(PM.covMatrix(data)), vol = ASSETS.map(function (_, i) { var s = data.map(function (r) { return r[i]; }); var rho = PM.autocorr(s, 1); return PM.std(s) * Math.sqrt(12) * ($('#desmooth').checked && PRIV_I.indexOf(i) !== -1 && rho > 0 ? Math.sqrt((1 + rho) / (1 - rho)) : 1); });
+    return { data: { mu: mu, vol: vol, corr: C }, summary: data.length + ' months, ' + N + ' asset classes' };
+  }
+
+  function renderAll() { S.panel = null; renderOptimize(); renderViews(); renderTPA(); renderStress(); renderRegimes(); renderAttribution(); if (S.pipe && S.pipe.items) renderRegister(); }
+  function init() {
+    control($('#optControls'), 'targetVol', 'Target volatility', function (v) { return F.pct(v, 1); });
+    control($('#optControls'), 'calls24', 'Capital calls, next 24 months', function (v) { return '$' + v + 'm'; }, 'From a pacing plan, such as the Private Capital Lab.');
+    control($('#optControls'), 'maxW', 'Maximum weight', function (v) { return F.pct(v, 0); });
+    control($('#blControls'), 'delta', 'Risk aversion (delta)', function (v) { return F.num(v, 1); });
+    control($('#blControls'), 'tau', 'Uncertainty in the prior (tau)', function (v) { return F.num(v, 2); });
+    control($('#regControls'), 'conviction', 'Conviction in the regime signal', function (v) { return F.num(v, 2); });
+    reg = UI.assumptions('#assumptions', AROWS, function (id, v) { setA(id, v); renderAll(); });
+    ['method', 'inputs', 'desmooth', 'policyOn', 'liqOn'].forEach(function (id) { $('#' + id).addEventListener('change', renderAll); });
+    $('#modeSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S.mode = b.dataset.m; UI.$$('#modeSeg button').forEach(function (x) { x.classList.toggle('active', x === b); }); renderTPA(); });
+    UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. As of 30 Sep 2026.'; renderAll(); });
+    new UI.DocViewer(document.getElementById('docViewer'), DOCS);
+    log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
+    $('#runSteps').innerHTML = ['Plan', 'Read policy', 'Read holdings', 'Validate citations', 'Check consistency', 'Draft trades', 'Compliance gate', 'Human approval', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
+    $('#runBtn').addEventListener('click', function () { S.policyApproved = 'pending'; runPipeline(); renderAll(); });
+    $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
+    UI.dropZone('#dzReturns', { title: 'Use your own asset returns', template: '/assets/templates/asset-returns.csv', columns: [{ name: 'date', desc: 'month end, YYYY-MM-DD' }].concat(ASSETS.map(function (a) { return { name: a, desc: 'monthly return, decimal' }; })),
+      parse: parseReturns, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your return file, processed locally.'; renderAll(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '. As of 30 Sep 2026.'; renderAll(); } });
+    UI.exportMenu('#exportMenu', { demo: 'Allocation Lab', slug: 'allocation-lab', report: 'Total portfolio recommendation (PDF)', source: function () { return S.user ? 'user return file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
+    UI.testsBadge('#testsBadge', 'Allocation Lab'); UI.testsBadge('.tests-badge-slot', 'Allocation Lab');
+    renderMemo(); renderAll(); runPipeline();
+    var h = location.hash.slice(1), T = ['optimize', 'views', 'tpa', 'stress', 'regimes', 'attribution'];
+    var tabs = UI.tabs('#tabsRoot'); if (T.indexOf(h) !== -1) tabs.show(h);
+  }
+  init();
+})();
+</script>
+</body>
+</html>

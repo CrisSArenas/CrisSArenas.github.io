@@ -1188,3 +1188,39 @@
     return res;
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Allocation helpers: stress, liquidity after stress, candidate
+   investments under a total portfolio approach, regime tilts.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, O = PM.opt;
+  /** stressReturn(w, shocks): portfolio return under per-asset shocks (sum w_i s_i) */
+  O.stress = function (w, shocks) { return PM.dot(w, shocks); };
+  /** liquidAfterStress(w, liquid, shocks): value of the liquid sleeve after a stress, per $1 of
+      starting portfolio: sum over liquid assets of w_i (1 + s_i). Linear in w, so it can be a
+      constraint: liquidAfterStress(w) >= required. Returns {value, coeffs} (coeffs = the linear form). */
+  O.liquidAfterStress = function (w, liquid, shocks) {
+    var a = w.map(function (_, i) { return liquid[i] ? 1 + shocks[i] : 0; });
+    return { value: PM.dot(a, w), coeffs: a };
+  };
+  /** candidate(w, dw, mu, S, wRef): judge a change dw (sums to zero) by its effect on the total
+      portfolio and on active risk against a reference portfolio.
+      Returns {dRet, dVol, dActive, ratio}: ratio = dRet / dVol when risk rises (return earned per
+      unit of added risk); when risk falls and return rises the change dominates (ratio = Infinity). */
+  O.candidate = function (w, dw, mu, S, wRef) {
+    var w2 = w.map(function (v, i) { return v + dw[i]; });
+    var r1 = O.portMu(w, mu), r2 = O.portMu(w2, mu), v1 = O.portVol(w, S), v2 = O.portVol(w2, S);
+    var a1 = O.tpa(w, wRef, S).activeVol, a2 = O.tpa(w2, wRef, S).activeVol;
+    var dRet = r2 - r1, dVol = v2 - v1;
+    return { w: w2, dRet: dRet, dVol: dVol, dActive: a2 - a1, ratio: dVol > 1e-12 ? dRet / dVol : (dRet >= 0 ? Infinity : -Infinity) };
+  };
+  /** regimeTilt(probs, tilts, conviction): tactical tilt as the probability-weighted sum of
+      per-regime tilt vectors, scaled by conviction in [0, 1]. Tilts should each sum to zero. */
+  O.regimeTilt = function (probs, tilts, conviction) {
+    var n = tilts[0].length, t = new Array(n).fill(0);
+    probs.forEach(function (p, k) { for (var i = 0; i < n; i++) t[i] += p * tilts[k][i]; });
+    return t.map(function (x) { return x * (conviction == null ? 1 : conviction); });
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
