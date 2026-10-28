@@ -49,5 +49,15 @@ window.EVAL_RESULTS = [
     "seeded": 4,
     "detected": 4,
     "falseFlagRate": 0
+  },
+  {
+    "demo": "Secondaries Desk",
+    "href": "secondaries-desk.html#evaluation",
+    "fields": 20,
+    "accuracy": 1,
+    "coverage": 1,
+    "seeded": 4,
+    "detected": 4,
+    "falseFlagRate": 0
   }
 ];

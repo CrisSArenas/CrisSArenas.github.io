@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Secondaries Desk · Cristian Arenas</title>
+    <meta name="description" content="Pricing LP stakes and deciding whether to roll or sell in a continuation vehicle: projected cash flows, the NAV discount that delivers a buyer's target IRR, stale NAV roll-forward, sensitivities, roll vs sell break-even, and agents that build a conflicts checklist from the CV documents.">
+    <link rel="canonical" href="https://crissarenas.github.io/secondaries-desk.html">
+    <meta property="og:title" content="Secondaries Desk · Cristian Arenas">
+    <meta property="og:description" content="Pricing LP stakes and deciding to roll or sell in a continuation vehicle.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0E1522" media="(prefers-color-scheme: dark)">
+    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/assets/css/demo-shell.css">
+    <script src="/assets/js/site.js"></script>
+    <style>
+      .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+      @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
+      .memo-inputs li { font-family: var(--sans); font-size: .9rem; }
+    </style>
+</head>
+<body>
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
+  <div class="container">
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#stack">Stack</a></li>
+      <li><a href="/#work">Investment work</a></li>
+      <li><a href="/#ai">AI Systems</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/notes/">Notes</a></li>
+      <li><a href="/#experience">Experience</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</nav>
+<!-- site-nav:end -->
+<main id="main" class="container demo-main">
+  <header class="demo-hero">
+    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
+    <p class="eyebrow">06 · Secondaries and GP-leds</p>
+    <h1>Secondaries Desk</h1>
+    <p class="lede">Two decisions from the same desk. A fictional LP is selling six fund interests on NAVs dated 31 March; what should a buyer bid, as a share of NAV? And a fictional GP is moving two companies from its fourth fund into a continuation vehicle; should an LP in that fund roll or sell? The desk projects the cash flows, solves for the price, and reads the CV documents for the conflicts. The bid and the election are the team's call.</p>
+    <div class="tags"><span class="tag tag-pm">Private markets</span><span class="tag tag-ai">AI</span></div>
+    <dl class="std-header">
+      <div><dt>Decision it supports</dt><dd>Bid price, or roll vs sell.</dd></div>
+      <div><dt>The hard problem</dt><dd>Pricing LP stakes on stale NAVs, and deciding to roll or sell in a continuation vehicle.</dd></div>
+      <div><dt>What the system takes off the team</dt><dd>Projecting calls, distributions and NAV for every interest, solving the price, rolling stale marks forward, the roll vs sell arithmetic, and reading the CV documents into a conflicts checklist.</dd></div>
+      <div class="h-call"><dt>What stays with the team</dt><dd>Bid price, or roll vs sell.</dd></div>
+      <div><dt>Method</dt><dd>Takahashi-Alexander projection by strategy, present value at the buyer's target IRR, beta roll-forward of stale NAVs, seeded growth shocks for the outcome range, continuation vehicle fees and tiered carry, break-even exit multiple.</dd></div>
+      <div><dt>Data</dt><dd>Synthetic LP portfolio and CV documents, fixed seed, fictional funds and companies. Or your own fund interests, processed locally.</dd></div>
+      <div class="h-ai"><dt>Where AI is used</dt><dd>A terms extractor, a conflicts checklist builder and a memo drafter, with every checklist item approved by a person before it reaches the memo.</dd></div>
+      <div><dt>Limitations</dt><dd>Cash flows come from a model, not from the underlying companies. The CV is a single exit at a gross multiple. The pipeline is a simulation; no model is called.</dd></div>
+    </dl>
+  </header>
+
+  <div class="toolbar" role="region" aria-label="Demo controls">
+    <label for="seed">Seed <input class="field" id="seed" type="number" value="21" min="1" max="999999"></label>
+    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 21. NAVs at 31 Mar 2026, priced at 30 Jun 2026.</span>
+    <span class="grow"></span>
+    <span id="testsBadge"></span>
+    <div id="exportMenu"></div>
+  </div>
+
+  <div id="tabsRoot">
+    <div class="tabs">
+      <button data-tab="pricing" aria-selected="true">LP stake pricing</button>
+      <button data-tab="sensitivity">Sensitivity</button>
+      <button data-tab="cv">Continuation vehicle: roll or sell</button>
+    </div>
+
+    <section id="pricing">
+      <div class="kpis" id="prKpis"></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Price by fund interest</h3><span class="sub">$ millions; price at the target IRR</span></div><div class="panel-body"><div id="fundTable"></div></div></div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Projected net cash flows to the buyer</h3><span class="sub">Distributions less calls, $m, years from 30 June 2026</span></div><div class="panel-body"><div id="cfChart"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Range of outcomes at the bid</h3><span class="sub">Seeded growth shocks by fund</span></div><div class="panel-body"><div id="mcChart"></div><p class="eval-note" id="mcNote"></p></div></div>
+      </div>
+      <div id="dzPortfolio"></div>
+    </section>
+
+    <section id="sensitivity" hidden>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Portfolio price, % of 31 March NAV</h3><span class="sub">Target IRR by NAV haircut</span></div><div class="panel-body"><div id="sensHeat" style="max-width:520px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Price by fund age</h3><span class="sub">A buyout interest, 10% unfunded, at the target IRR</span></div><div class="panel-body"><div id="ageChart"></div><p class="eval-note" id="ageNote"></p></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Price by unfunded commitment</h3><span class="sub">A three-year-old buyout interest, at the target IRR</span></div><div class="panel-body"><div id="unfChart" style="max-width:900px"></div><p class="eval-note" id="unfNote"></p></div></div>
+    </section>
+
+    <section id="cv" hidden>
+      <div class="kpis" id="cvKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Value at the end of the hold, per $1 of sale price</h3><span class="sub">Rolling vs selling and reinvesting</span></div><div class="panel-body"><div id="rollChart"></div><p class="eval-note" id="rollNote"></p></div></div>
+        <div class="panel"><div class="panel-head"><h3>Scenarios</h3></div><div class="panel-body"><div id="scenTable"></div><p class="eval-note">Context: Houlihan Lokey's 2025 continuation fund study reports record GP-led continuation vehicle volume above $100 billion, a median price of 97% of NAV, and LP rollover of roughly 15% (<a href="https://cdn.hl.com/pdf/2026/2025-continuation-fund-study-hl.pdf" target="_blank" rel="noopener">Houlihan Lokey</a>).</p></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Hold and multiple: rolling minus selling</h3><span class="sub">Per $1 of sale price, at the end of each hold</span></div><div class="panel-body"><div id="holdHeat" style="max-width:620px"></div></div></div>
+    </section>
+  </div>
+
+  <section class="demo-section" id="ai">
+    <h2>The agents: the CV documents, read into a conflicts checklist</h2>
+    <p class="intro">Three synthetic documents: the election notice, the fairness opinion summary and the LPA amendment. The checklist covers price discovery, the fee and carry reset, the GP's commitment, the timeline and the status quo option, each with its citations. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
+    <div class="run-steps" id="runSteps"></div>
+    <div class="counters-wrap"><div id="counters"></div></div>
+    <div class="ai-grid">
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Conflicts checklist for your approval</h3><span class="sub">Approved items go to the memo drafter</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+      </div>
+      <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
+    </div>
+    <div class="split-2">
+      <div class="panel"><div class="panel-head"><h3>Checklist</h3></div><div class="panel-body"><div id="checkTable"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Memo inputs from approved items</h3></div><div class="panel-body"><ul class="memo-inputs" id="memoInputs"></ul></div></div>
+    </div>
+    <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/sec-labels.js</span></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field and checklist item</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were read by hand and the checklist judged by hand, both stored apart from the documents and the pipeline. Four items should be raised; two should pass and count toward the false-flag rate.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
+  </section>
+
+  <section class="demo-section" id="memo">
+    <article class="memo">
+      <div class="memo-head">
+        <div>
+          <div class="memo-kind">Secondary bid memo and CV election</div>
+          <h2>Six-fund LP portfolio, and Fenmoor Capital Partners IV (fictional)</h2>
+          <div class="memo-meta">Written by Cristian Arenas · As of 30 Jun 2026 · Written for the base case, seed 21 · Fictional funds</div>
+        </div>
+        <span class="call-badge" id="memoBadge"></span>
+      </div>
+      <h3>The call</h3><p class="the-call" id="memoCall"></p>
+      <h3>Situation</h3><div id="memoSituation"></div>
+      <h3>Why</h3><ol id="memoWhy"></ol>
+      <h3>Key risks</h3><ul id="memoRisks"></ul>
+      <h3>What would change my mind</h3><ul id="memoChange"></ul>
+      <h3>Sizing and next step</h3><div id="memoNext"></div>
+      <div class="memo-foot"><span>Fictional funds, GP, companies and documents. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 21, default assumptions</span></div>
+    </article>
+  </section>
+
+  <footer class="demo-foot">
+    <h2>Methodology, assumptions and limitations</h2>
+    <div class="df-grid">
+      <div>
+        <h3>Method</h3>
+        <ul>
+          <li><strong>Projection.</strong> Each interest is projected quarterly from its NAV, unfunded commitment and age with Takahashi-Alexander rules: calls at a rate of the unfunded during the investment period, NAV growth, and a distribution rate that rises with age until the fund's life ends.</li>
+          <li><strong>Stale NAVs.</strong> The 31 March NAV is moved to 30 June by the strategy's beta times the public proxy's return over the quarter, plus calls and less distributions paid since.</li>
+          <li><strong>Price.</strong> The price is the present value of the projected net cash flows at the buyer's target IRR, so buying at that price earns exactly the target if the projection holds. Discount = 1 - price / NAV.</li>
+          <li><strong>Outcome range.</strong> Each path draws one growth shock per fund and reprojects the stakes; the chart shows the buyer's IRR at the bid across paths.</li>
+          <li><strong>Roll vs sell.</strong> Rolling invests the sale price in the CV, which grows to a gross multiple over the hold, less the management fee and tiered carry over the preferred return. Selling reinvests the cash at the LP's opportunity cost. The break-even multiple sets the two equal.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas</h3>
+        <div class="formula">call_q = (1 - (1 - rc)^(1/4)) x unfunded
+NAV_q = (NAV + call)(1 + g)^(1/4)
+RD(age) = (age / life)^bow
+price = sum (D_t - C_t) / (1 + r)^t
+NAV_today = NAV_ref (1 + beta x R_pub) + calls - dists
+roll = m - fee x hold - carry
+sell = (1 + opp)^hold</div>
+        <h3 style="margin-top:12px">Related notes</h3>
+        <ul><li><a href="/notes/" data-final="notes/roll-or-sell-cv.html">Roll or sell, an LP's math on a continuation vehicle</a></li></ul>
+      </div>
+    </div>
+    <h3 style="margin-top:22px">Assumptions register</h3>
+    <div id="assumptions"></div>
+    <h3 style="margin-top:22px">Projection model by strategy</h3>
+    <div id="modelTable"></div>
+    <h3 style="margin-top:22px">Limitations</h3>
+    <ul>
+      <li>Every fund, GP, company and number is fictional. Cash flows come from a fund-level model; a real bid would underwrite the largest companies one by one.</li>
+      <li>The public proxy return for the quarter is an assumption on this page, not market data.</li>
+      <li>The CV is modelled as a single exit after the hold, with fees paid at exit; extensions are shown as longer holds at the same multiple.</li>
+    </ul>
+    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
+    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
+  </footer>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
+      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/data-model.html">Data model</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics and embedded</a></li>
+      </ul>
+    </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. Demos use synthetic data and fictional entities. Nothing on this site is investment advice.</p>
+  </div>
+</footer>
+<!-- site-footer:end -->
+<script src="/assets/js/pm-math.js"></script>
+<script src="/assets/js/pm-ui.js"></script>
+<script src="/assets/data/sec-docs.js"></script>
+<script src="/assets/data/sec-labels.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = UI.fmt, $ = UI.$, SEC = PM.sec, DOCS = window.SEC_DOCS, LABELS = window.SEC_LABELS;
+  var MODELS = {
+    buyout: { label: 'Buyout', rc: 0.30, ip: 5, life: 15, growth: 0.11, bow: 2.2, beta: 0.9, vol: 0.04 },
+    growth: { label: 'Growth', rc: 0.30, ip: 4, life: 15, growth: 0.13, bow: 2.5, beta: 1.2, vol: 0.05 },
+    venture: { label: 'Venture', rc: 0.25, ip: 5, life: 16, growth: 0.14, bow: 2.8, beta: 1.5, vol: 0.07 },
+    credit: { label: 'Credit', rc: 0.40, ip: 3, life: 10, growth: 0.08, bow: 1.5, yieldFloor: 0.08, beta: 0.3, vol: 0.02 },
+    infrastructure: { label: 'Infrastructure', rc: 0.30, ip: 4, life: 18, growth: 0.08, bow: 1.8, yieldFloor: 0.05, beta: 0.4, vol: 0.025 }
+  };
+  var PORTFOLIO = [
+    { fund: 'Arvane Buyout VII', strategy: 'buyout', vintage: 2016, nav: 42, unfunded: 3, calls: 0.2, dists: 2.6 },
+    { fund: 'Kelmont Growth III', strategy: 'growth', vintage: 2018, nav: 28, unfunded: 4, calls: 0.5, dists: 0.8 },
+    { fund: 'Sorrel Ventures IV', strategy: 'venture', vintage: 2019, nav: 15, unfunded: 2, calls: 0.3, dists: 0 },
+    { fund: 'Draycott Infrastructure II', strategy: 'infrastructure', vintage: 2017, nav: 33, unfunded: 1, calls: 0, dists: 0.9 },
+    { fund: 'Hollin Credit Opportunities III', strategy: 'credit', vintage: 2020, nav: 18, unfunded: 5, calls: 0.6, dists: 1.1 },
+    { fund: 'Tamsin Buyout IX', strategy: 'buyout', vintage: 2021, nav: 35, unfunded: 14, calls: 1.4, dists: 0 }
+  ];
+  var AROWS = [
+    { id: 'target', label: 'Buyer target IRR', value: 0.15, unit: '% a year', scale: 100, source: 'Assumption (the buying desk\'s hurdle)', min: 0.05, max: 0.3, step: 0.5 },
+    { id: 'haircut', label: 'NAV haircut on top of the roll-forward', value: 0, unit: '%', scale: 100, source: 'Assumption', min: 0, max: 0.4, step: 1 },
+    { id: 'pub', label: 'Public equity return, 31 Mar to 30 Jun 2026', value: -0.04, unit: '%', scale: 100, source: 'Assumption, not market data', min: -0.3, max: 0.3, step: 0.5 },
+    { id: 'mcN', label: 'Simulated paths', value: 1000, unit: '', source: 'Setting', min: 200, max: 5000, step: 100 },
+    { id: 'opp', label: 'LP opportunity cost for sale proceeds', value: 0.10, unit: '% a year', scale: 100, source: 'Assumption (the LP\'s expected return on reinvested cash)', min: 0, max: 0.25, step: 0.5 },
+    { id: 'mGP', label: 'CV gross multiple, GP case', value: 2.3, unit: 'x', source: 'Assumption (GP materials, fictional)', min: 0.5, max: 5, step: 0.05 },
+    { id: 'mBase', label: 'CV gross multiple, house case', value: 1.7, unit: 'x', source: 'Assumption', min: 0.5, max: 5, step: 0.05 },
+    { id: 'mDown', label: 'CV gross multiple, downside', value: 1.2, unit: 'x', source: 'Assumption', min: 0.3, max: 5, step: 0.05 }
+  ];
+  var A = UI.A(AROWS), reg;
+  var S = { seed: 21, user: null };
+  window.SECS = S;
+  var AS_OF = 2026.5;
+
+  /* ---------------- documents (shared by the CV tab and the agents) ---------------- */
+  function find(id, re) { var out = null; DOCS[id].pages.forEach(function (pg, pi) { pg.forEach(function (l, li) { var m = re.exec(l); if (m && !out) out = { m: m, cite: { doc: id, page: pi + 1, line: li + 1, short: id } }; }); }); return out; }
+  function money(s) { return +String(s).replace(/[$,]/g, '') / 1e6; }
+  function readDocs() {
+    var o = { 'cv-notice': {}, 'fairness': {}, 'lpa-amend': {} }, h;
+    var put = function (d, k, hit, v, unit, ev) { if (hit) o[d][k] = { value: v, unit: unit, cite: hit.cite, evidence: ev }; };
+    h = find('cv-notice', /Transaction price: ([\d.]+)% of .*?\(\$([\d,]+) million\)/); put('cv-notice', 'pricePct', h, h && +h.m[1] / 100, 'pct'); put('cv-notice', 'assetNav', h, h && +h.m[2].replace(/,/g, ''), 'money');
+    h = find('cv-notice', /Your share of that net asset value: (\$[\d,]+)\. Cash proceeds if you sell: (\$[\d,]+)/); put('cv-notice', 'lpNav', h, h && money(h.m[1]), 'money'); put('cv-notice', 'saleProceeds', h, h && money(h.m[2]), 'money');
+    h = find('cv-notice', /Election deadline: (\d+) business days/); put('cv-notice', 'deadlineDays', h, h && +h.m[1], 'num');
+    h = find('cv-notice', /(No status quo option is offered)/); put('cv-notice', 'statusQuo', h, h && 'none', 'text', h && h.m[1]);
+    h = find('cv-notice', /deemed to have elected to (sell|roll)/); put('cv-notice', 'defaultElection', h, h && h.m[1], 'text');
+    h = find('cv-notice', /management fee ([\d.]+)% a year on net asset value; carried interest ([\d.]+)%/); put('cv-notice', 'fee', h, h && +h.m[1] / 100, 'pct'); put('cv-notice', 'carry', h, h && +h.m[2] / 100, 'pct');
+    h = find('cv-notice', /over an? ([\d.]+)% preferred return, rising to ([\d.]+)% on gains above a ([\d.]+)x/); put('cv-notice', 'pref', h, h && +h.m[1] / 100, 'pct'); put('cv-notice', 'carry2', h, h && +h.m[2] / 100, 'pct'); put('cv-notice', 'tier2', h, h && +h.m[3], 'num');
+    h = find('cv-notice', /Expected hold: (\d+) years/); put('cv-notice', 'hold', h, h && +h.m[1], 'num');
+    h = find('cv-notice', /plus \$([\d.]+) million in cash/); put('cv-notice', 'gpCash', h, h && +h.m[1], 'money');
+    h = find('fairness', /contacted (\d+) potential.*?(\d+) submitted bids/); put('fairness', 'contacted', h, h && +h.m[1], 'num'); put('fairness', 'bids', h, h && +h.m[2], 'num');
+    h = find('fairness', /range of fair value .*?: (\d+)% to (\d+)%/); put('fairness', 'rangeLow', h, h && +h.m[1] / 100, 'pct'); put('fairness', 'rangeHigh', h, h && +h.m[2] / 100, 'pct');
+    h = find('lpa-amend', /no less than (\d+) business days/); put('lpa-amend', 'consentDays', h, h && +h.m[1], 'num');
+    h = find('lpa-amend', /carried interest of \$([\d.]+) million/); put('lpa-amend', 'crystallizedCarry', h, h && +h.m[1], 'money');
+    return o;
+  }
+  var EX = readDocs();
+  function cvTerms() { var n = EX['cv-notice']; return { hold: n.hold.value, fee: n.fee.value, pref: n.pref.value, carry: n.carry.value, carry2: n.carry2.value, tier2: n.tier2.value }; }
+
+  /* ---------------- LP stake pricing ---------------- */
+  function portfolio() { return S.user || PORTFOLIO; }
+  function stake(f, haircut) {
+    var m = MODELS[f.strategy], rolled = SEC.rollForward(f.nav, m.beta, A.pub, f.calls, f.dists);
+    return { f: f, m: m, rolled: rolled, age: AS_OF - f.vintage - 0.5, flows: SEC.stakeFlows({ nav: rolled, unfunded: f.unfunded, age: AS_OF - f.vintage - 0.5, model: m }, { haircut: haircut }) };
+  }
+  function priceBook(target, haircut) {
+    var rows = portfolio().map(function (f) { var s = stake(f, haircut), p = SEC.price(s.flows, target, f.nav); var dsum = PM.sum(s.flows.map(function (x) { return x.dist; })); return Object.assign(s, { price: p.price, pctNav: p.pctNav, dur: dsum ? PM.sum(s.flows.map(function (x) { return x.t * x.dist; })) / dsum : 0 }); });
+    var nav = PM.sum(rows.map(function (r) { return r.f.nav; })), price = PM.sum(rows.map(function (r) { return r.price; }));
+    return { rows: rows, nav: nav, price: price, pct: price / nav };
+  }
+  function renderPricing() {
+    var B = S.book = priceBook(A.target, A.haircut), rows = B.rows;
+    var unf = PM.sum(rows.map(function (r) { return r.f.unfunded; })), rolled = PM.sum(rows.map(function (r) { return r.rolled; })), dur = PM.sum(rows.map(function (r) { return r.dur * r.price; })) / B.price;
+    var mcFunds = rows.map(function (r) { return { nav: r.rolled, unfunded: r.f.unfunded, age: r.age, model: r.m, vol: r.m.vol }; });
+    var irrs = SEC.outcomes(mcFunds, B.price, { n: Math.round(A.mcN), seed: S.seed, haircut: A.haircut });
+    S.mc = { p10: PM.quantile(irrs, 0.1), p50: PM.quantile(irrs, 0.5), p90: PM.quantile(irrs, 0.9), below10: irrs.filter(function (x) { return x < 0.10; }).length / irrs.length };
+    UI.kpis('#prKpis', [
+      { id: 'bidPct', label: 'Bid, % of 31 March NAV', value: F.pct(B.pct, 1), sub: 'discount ' + F.pct(1 - B.pct, 1), explain: function () { return { title: 'Portfolio price', formula: 'sum over interests of the present value of projected distributions less calls at the target IRR, over the sum of reported NAVs', inputs: [{ name: 'Target IRR', value: F.pct(A.target, 1), src: 'assumption' }, { name: 'Reported NAV', value: F.money(B.nav, 1), src: 'data' }, { name: 'NAV rolled to 30 June', value: F.money(rolled, 1), src: 'computed' }], result: F.money(B.price, 2) + ' = ' + F.pct(B.pct, 2) }; } },
+      { id: 'bidTotal', label: 'Bid', value: F.money(B.price, 1), sub: 'on ' + F.money(B.nav, 1) + ' of reported NAV' },
+      { id: 'rolledNav', label: 'NAV rolled to 30 June', value: F.money(rolled, 1), sub: F.spct(rolled / B.nav - 1, 1) + ' vs reported', tone: rolled < B.nav ? 'bad' : null },
+      { id: 'unfunded', label: 'Unfunded the buyer takes on', value: F.money(unf, 1), sub: F.pct(unf / B.nav, 0) + ' of NAV' },
+      { id: 'duration', label: 'Cash-weighted duration', value: F.num(dur, 1) + ' years' },
+      { id: 'irrRange', label: 'Buyer IRR at the bid, 10th to 90th', value: F.pct(S.mc.p10, 1) + ' to ' + F.pct(S.mc.p90, 1), sub: F.pct(S.mc.below10, 0) + ' of paths below 10%' }
+    ]);
+    UI.table('#fundTable', { id: 'interests', name: 'Price by fund interest', columns: [{ key: 'fund', label: 'Fund (fictional)' }, { key: 'st', label: 'Strategy' }, { key: 'vintage', label: 'Vintage', num: 1 }, { key: 'nav', label: 'NAV 31 Mar', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'rolled', label: 'NAV 30 Jun', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'price', label: 'Price', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'pct', label: '% of NAV', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0.85 ? 'neg' : ''; } }, { key: 'dur', label: 'Duration', num: 1, fmt: function (v) { return F.num(v, 1); } }],
+      rows: rows.map(function (r) { return { fund: r.f.fund, st: r.m.label, vintage: r.f.vintage, nav: r.f.nav, rolled: r.rolled, unfunded: r.f.unfunded, price: r.price, pct: r.pctNav, dur: r.dur }; }), foot: { fund: 'Portfolio', nav: B.nav, rolled: rolled, unfunded: unf, price: B.price, pct: B.pct, dur: dur },
+      footExplain: { pct: function () { return { title: 'Portfolio % of NAV', formula: 'total price / total reported NAV', inputs: [{ name: 'Price', value: F.money(B.price, 2), src: 'computed' }, { name: 'NAV', value: F.money(B.nav, 2), src: 'data' }], result: F.pct(B.pct, 2) }; } } });
+    var byYear = {}; rows.forEach(function (r) { r.flows.forEach(function (x) { var y = Math.ceil(x.t - 1e-9); byYear[y] = (byYear[y] || 0) + x.dist - x.call; }); });
+    var ys = Object.keys(byYear).map(Number).sort(function (a, b) { return a - b; }).filter(function (y) { return y <= 12; });
+    UI.chart.bar('#cfChart', { categories: ys.map(function (y) { return 'Yr ' + y; }), series: [{ name: 'Net cash flow', values: ys.map(function (y) { return byYear[y]; }), signColors: true }], yFmt: function (v) { return F.num(v, 0); }, height: 220, label: 'Projected net cash flows' });
+    var lo = Math.min.apply(null, irrs), hi = Math.max.apply(null, irrs), bins = 24, w = (hi - lo) / bins || 0.01, h = new Array(bins).fill(0);
+    irrs.forEach(function (v) { h[Math.min(bins - 1, Math.floor((v - lo) / w))]++; });
+    UI.chart.bar('#mcChart', { categories: h.map(function (_, i) { return F.pct(lo + (i + 0.5) * w, 0); }), series: [{ name: 'Paths', values: h.map(function (x) { return x / irrs.length; }), colors: h.map(function (_, i) { return lo + (i + 1) * w <= 0.10 ? 's5' : 's1'; }) }], yFmt: function (v) { return F.pct(v, 0); }, height: 220, label: 'Distribution of buyer IRR' });
+    $('#mcNote').textContent = irrs.length + ' paths, seed ' + S.seed + '. The median path earns ' + F.pct(S.mc.p50, 1) + ' at the bid; ' + F.pct(S.mc.below10, 0) + ' of paths earn less than 10% (highlighted).';
+  }
+
+  /* ---------------- sensitivity ---------------- */
+  function renderSensitivity() {
+    var irrs = [0.10, 0.12, 0.14, 0.15, 0.16, 0.18, 0.20], hcs = [0, 0.05, 0.10, 0.15];
+    $('#sensHeat').innerHTML = '';
+    UI.chart.heat('#sensHeat', { rows: irrs.map(function (r) { return F.pct(r, 0) + ' IRR'; }), cols: hcs.map(function (x) { return F.pct(x, 0) + ' cut'; }), matrix: irrs.map(function (r) { return hcs.map(function (h) { return priceBook(r, h).pct; }); }), min: 0.6, max: 1.05, fmt: function (x) { return F.pct(x, 0); }, cell: 80, labelWidth: 90, label: 'Price sensitivity' });
+    var m = MODELS.buyout, ages = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], pr = ages.map(function (a) { return SEC.price(SEC.stakeFlows({ nav: 100, unfunded: 10, age: a, model: m }, { haircut: A.haircut }), A.target, 100).pctNav; });
+    UI.chart.line('#ageChart', { xs: ages, series: [{ name: '% of NAV', ys: pr, dots: true }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return v + 'y'; }, height: 220, zero: false, label: 'Price by fund age' });
+    $('#ageNote').textContent = 'Younger interests wait longer for distributions and carry more calls, so the same target IRR buys them at a deeper discount: ' + F.pct(pr[0], 0) + ' of NAV at two years against ' + F.pct(pr[pr.length - 1], 0) + ' at twelve, on this model.';
+    var us = [0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40], pu = us.map(function (u) { return SEC.price(SEC.stakeFlows({ nav: 100, unfunded: 100 * u, age: 3, model: m }, { haircut: A.haircut }), A.target, 100).pctNav; });
+    UI.chart.bar('#unfChart', { categories: us.map(function (u) { return F.pct(u, 0) + ' of NAV'; }), series: [{ name: '% of NAV', values: pu }], yFmt: function (v) { return F.pct(v, 0); }, height: 200, values: true, label: 'Price by unfunded commitment' });
+    $('#unfNote').textContent = 'Unfunded commitment is money the buyer must still pay in, at par, for assets that earn the fund\'s growth rate. When that growth is below the target IRR, every dollar of unfunded costs the buyer price. Here the price moves from ' + F.pct(pu[0], 1) + ' of NAV with no unfunded to ' + F.pct(pu[pu.length - 1], 1) + ' at 40% unfunded.';
+  }
+
+  /* ---------------- CV: roll or sell ---------------- */
+  function renderCV() {
+    var t = cvTerms(), n = EX['cv-notice'], be = SEC.breakEven(t, A.opp), sell = SEC.sellValue(t, A.opp), base = SEC.rollValue(A.mBase, t);
+    S.cv = { be: be, sell: sell, base: base, beIrr: Math.pow(be, 1 / t.hold) - 1 };
+    UI.kpis('#cvKpis', [
+      { id: 'cvPrice', label: 'CV price, % of NAV', value: F.pct(n.pricePct.value, 1), sub: 'sale proceeds ' + F.money(n.saleProceeds.value, 2) + ' on ' + F.money(n.lpNav.value, 1) },
+      { id: 'breakEven', label: 'Break-even gross multiple on the CV', value: F.mult(be), sub: F.pct(S.cv.beIrr, 1) + ' a year gross over ' + t.hold + ' years', explain: function () { return { title: 'Break-even exit multiple', formula: 'gross multiple m where m - fees - carry(m) = (1 + opportunity cost)^hold', inputs: [{ name: 'Hold', value: t.hold + ' years', src: 'document', cite: n.hold.cite }, { name: 'Fee', value: F.pct(t.fee, 1), src: 'document', cite: n.fee.cite }, { name: 'Carry', value: F.pct(t.carry, 1) + ' over ' + F.pct(t.pref, 0) + ', ' + F.pct(t.carry2, 0) + ' above ' + F.mult(t.tier2, 1), src: 'document', cite: n.pref.cite }, { name: 'Opportunity cost', value: F.pct(A.opp, 1), src: 'assumption' }], result: F.mult(be, 3) }; } },
+      { id: 'rollBase', label: 'Roll, house case (' + F.mult(A.mBase, 2) + ')', value: F.mult(base.net) + ' net', sub: F.pct(base.irr, 1) + ' a year vs ' + F.pct(A.opp, 0) + ' from selling', tone: base.net < sell ? 'bad' : 'good' },
+      { id: 'rollEdge', label: 'Rolling minus selling, house case', value: F.money((base.net - sell) * n.saleProceeds.value, 2), sub: 'at the end of the hold, on our stake' }
+    ]);
+    var ms = []; for (var m = 0.8; m <= 3.001; m += 0.05) ms.push(+m.toFixed(2));
+    UI.chart.line('#rollChart', { xs: ms, series: [{ name: 'Roll, net to LP', ys: ms.map(function (x) { return SEC.rollValue(x, t).net; }), color: 's1' }, { name: 'Sell and reinvest', ys: ms.map(function () { return sell; }), color: 's4', dash: '5 4' }], vlines: [{ x: be, label: 'break-even ' + F.mult(be) }], xFmt: function (v) { return F.num(v, 1) + 'x'; }, yFmt: function (v) { return F.num(v, 1) + 'x'; }, xTicks: 6, height: 240, label: 'Roll vs sell' });
+    $('#rollNote').textContent = 'Selling turns $1 into ' + F.mult(sell) + ' over ' + t.hold + ' years at ' + F.pct(A.opp, 0) + '. Rolling beats that only if the CV\'s companies return more than ' + F.mult(be) + ' gross, after the ' + F.pct(t.fee, 1) + ' fee and the carry that restarts at the transaction price.';
+    var sc = [['GP case', A.mGP, t.hold], ['House case', A.mBase, t.hold], ['Downside', A.mDown, t.hold], ['House case, both extensions', A.mBase, t.hold + 2]].map(function (r) { var tt = Object.assign({}, t, { hold: r[2] }), v = SEC.rollValue(r[1], tt), sv = SEC.sellValue(tt, A.opp); return { s: r[0], m: r[1], h: r[2], net: v.net, irr: v.irr, carry: v.carry, sell: sv, d: v.net - sv }; });
+    S.scen = sc;
+    UI.table('#scenTable', { id: 'scenarios', name: 'Roll or sell scenarios', columns: [{ key: 's', label: 'Scenario' }, { key: 'm', label: 'Gross', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'h', label: 'Years', num: 1 }, { key: 'net', label: 'Roll, net', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'irr', label: 'Roll IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sell', label: 'Sell', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'd', label: 'Roll minus sell', num: 1, fmt: function (v) { return (v >= 0 ? '+' : '') + F.num(v, 2) + 'x'; }, cls: function (v) { return v < 0 ? 'neg' : ''; } }], rows: sc });
+    var mults = [1.2, 1.5, 1.7, 2.0, 2.3], holds = [3, 4, 5, 6];
+    $('#holdHeat').innerHTML = '';
+    UI.chart.heat('#holdHeat', { rows: holds.map(function (hh) { return hh + ' years'; }), cols: mults.map(function (x) { return F.mult(x, 1); }), matrix: holds.map(function (hh) { var tt = Object.assign({}, t, { hold: hh }); return mults.map(function (x) { return SEC.rollValue(x, tt).net - SEC.sellValue(tt, A.opp); }); }), min: -0.8, max: 0.8, fmt: function (x) { return (x >= 0 ? '+' : '') + F.num(x, 2); }, cell: 80, labelWidth: 80, label: 'Roll minus sell' });
+  }
+
+  /* ---------------- AI pipeline ---------------- */
+  var log, audit, apps;
+  function runPipeline() {
+    log.clear(); audit.clear();
+    var P = S.pipe = { ex: {}, items: [], checks: [], fieldsN: 0 };
+    audit.push('planner', 'run started', 'seed ' + S.seed);
+    UI.runSteps(log, [
+      { agent: 'planner', run: function () { return { msg: 'Plan: extract the CV terms, the process facts and the LPA requirements, validate every citation, build the conflicts checklist, wait for approval, pass approved items to the memo drafter' }; } },
+      { agent: 'terms-extractor', run: function () { P.ex = readDocs(); Object.keys(P.ex).forEach(function (d) { P.fieldsN += Object.keys(P.ex[d]).length; }); audit.push('terms-extractor', 'extracted', P.fieldsN + ' fields'); return { msg: P.fieldsN + ' fields extracted with citations', details: Object.keys(P.ex['cv-notice']).reduce(function (o, k) { o[k] = P.ex['cv-notice'][k].value; return o; }, {}) }; } },
+      { agent: 'citation-validator', run: function () {
+        var ok = 0, bad = 0;
+        Object.keys(P.ex).forEach(function (d) { Object.keys(P.ex[d]).forEach(function (k) { var f = P.ex[d][k], ln = UI.DocViewer.active.line(f.cite.doc, f.cite.page, f.cite.line); f.valid = f.unit === 'text' ? UI.lineHas(ln, f.evidence || f.value, 'text') : UI.lineHas(ln, f.value, f.unit); if (f.valid) ok++; else bad++; }); });
+        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve');
+        return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve' + (bad ? ', ' + bad + ' blocked' : '') };
+      } },
+      { agent: 'conflicts-checklist-builder', run: function () {
+        var n = P.ex['cv-notice'], fo = P.ex['fairness'], la = P.ex['lpa-amend'], res = [];
+        var mid = (fo.rangeLow.value + fo.rangeHigh.value) / 2, adv = find('fairness', /also acted as financial adviser to the General Partner/);
+        var add = function (id, title, concern, evidence, cites, memo) {
+          P.checks.push({ id: id, title: title, flag: concern, cites: cites });
+          if (concern) { P.items.push({ id: 'K-' + (P.items.length + 1), check: id, title: title, severity: 'high', evidence: evidence, cites: cites, state: 'pending', memo: memo }); res.push({ status: 'approval', msg: title }); }
+          else res.push({ msg: title + ': passes' });
+        };
+        add('price-discovery', 'Price discovery: ' + fo.bids.value + ' bids from ' + fo.contacted.value + ' contacted, adviser on both sides', fo.bids.value < 3 || !!adv || n.pricePct.value < mid,
+          fo.bids.value + ' of ' + fo.contacted.value + ' potential buyers bid. The fairness adviser also advised the GP, with part of its fee payable only on completion. The price, ' + F.pct(n.pricePct.value, 1) + ' of NAV, sits below the middle of the adviser\'s own range (' + F.pct(mid, 0) + ') and below the 97% median that Houlihan Lokey reports for 2025.',
+          [fo.contacted.cite, fo.rangeLow.cite, adv && adv.cite, n.pricePct.cite].filter(Boolean), 'Price discovery was thin: two bids, an adviser paid on completion, and a price below the middle of its own fairness range.');
+        add('fee-carry-reset', 'Carry reset: the GP is paid ' + F.money(la.crystallizedCarry.value, 1) + ' at the transaction price and restarts carry from it', la.crystallizedCarry.value > 0,
+          'On completion the GP takes ' + F.money(la.crystallizedCarry.value, 1) + ' of carried interest from Fund IV as if both companies were sold at the transaction price, and CV carry (' + F.pct(n.carry.value, 1) + ', then ' + F.pct(n.carry2.value, 0) + ') is measured from that same price. Selling LPs fund the first; rolling LPs pay the second.',
+          [la.crystallizedCarry.cite, find('lpa-amend', /calculated from the transaction price/).cite, n.carry.cite], 'The GP is paid carry at the transaction price and again on gains above it.');
+        add('gp-commitment', 'GP commitment: rolls 100% of crystallized carry plus ' + F.money(n.gpCash.value, 0) + ' cash', !(n.gpCash.value > 0),
+          '', [n.gpCash.cite], 'The GP rolls all of its crystallized carry and adds cash.');
+        add('timeline', 'Timeline: ' + n.deadlineDays.value + ' business days to elect against the ' + la.consentDays.value + ' the LPA requires', n.deadlineDays.value < la.consentDays.value,
+          'The notice gives ' + n.deadlineDays.value + ' business days. Section 6.3 of the LPA requires at least ' + la.consentDays.value + ' business days for any consent of Limited Partners.',
+          [n.deadlineDays.cite, la.consentDays.cite], 'The election window is shorter than the LPA allows.');
+        add('status-quo', 'No status quo option, and silence counts as a sale', n.statusQuo.value === 'none' || n.defaultElection.value === 'sell',
+          'LPs can only sell or roll; keeping the exposure on the existing fund terms is not offered. An LP that misses the ' + n.deadlineDays.value + '-day deadline is deemed to sell at ' + F.pct(n.pricePct.value, 1) + ' of NAV.',
+          [n.statusQuo.cite, n.defaultElection.cite], 'No status quo option, and the default is a sale at the transaction price.');
+        var lpac = find('lpa-amend', /Advisory Committee approves the transfer and waives the conflict/);
+        add('lpac-consent', 'LPAC consent and conflict waiver obtained', !lpac, '', lpac ? [lpac.cite] : [], 'The LPAC approved the transfer.');
+        audit.push('conflicts-checklist-builder', 'built', P.checks.length + ' items, ' + P.items.length + ' to raise');
+        return res;
+      } },
+      { agent: 'memo-drafter', run: function () { audit.push('memo-drafter', 'waiting', 'drafts from approved items only'); return { status: 'approval', msg: 'Waiting for approvals; only approved items become memo inputs' }; } }
+    ], afterPipeline);
+  }
+  function afterPipeline() {
+    var P = S.pipe;
+    apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderMemoInputs });
+    UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.items.length, review: P.items.length });
+    UI.table('#checkTable', { id: 'checklist', name: 'Conflicts checklist', columns: [{ key: 'title', label: 'Item' }, { key: 'st', label: 'Result', cls: function (v) { return v === 'raise' ? 'neg' : ''; } }, { key: 'c', label: 'Sources', html: 1 }], rows: P.checks.map(function (c) { return { title: c.title, st: c.flag ? 'raise' : 'passes', c: c.cites.map(function (x) { return UI.citeHTML(x); }).join('') }; }) });
+    renderMemoInputs(); renderEval();
+    UI.$$('#runSteps span').forEach(function (s) { s.className = 'done'; });
+  }
+  function renderMemoInputs() {
+    var ap = S.pipe.items.filter(function (it) { return it.state === 'approved'; });
+    $('#memoInputs').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.memo) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a checklist item to send it to the memo drafter.</li>';
+    if (ap.length) audit.push('memo-drafter', 'inputs updated', ap.map(function (a) { return a.id; }).join(', '));
+  }
+  function renderEval() {
+    var P = S.pipe, ext = {}, truth = {};
+    Object.keys(LABELS.fields).forEach(function (d) { Object.keys(LABELS.fields[d]).forEach(function (k) { truth[d + '.' + k] = { value: LABELS.fields[d][k].value }; var f = P.ex[d] && P.ex[d][k]; if (f) ext[d + '.' + k] = { value: f.value, cite: f.valid ? f.cite : null }; }); });
+    var ev = UI.evaluate(ext, truth, 1e-9), ids = Object.keys(LABELS.checklist), seeded = ids.filter(function (k) { return LABELS.checklist[k].concern; }), raised = P.checks.filter(function (c) { return c.flag; }).map(function (c) { return c.id; });
+    var fl = UI.evalFlags(raised, seeded, ids.length);
+    window.EVAL = { demo: 'Secondaries Desk', href: 'secondaries-desk.html#evaluation', fields: ev.n, accuracy: ev.accuracy, coverage: ev.coverage, seeded: fl.seeded, detected: fl.detected, falseFlagRate: fl.falseFlagRate };
+    UI.kpis('#evalKpis', [{ id: 'evAcc', label: 'Extraction accuracy', value: F.pct(ev.accuracy, 1), sub: ev.correct + ' of ' + ev.n + ' labeled fields' }, { id: 'evCov', label: 'Citation coverage', value: F.pct(ev.coverage, 1) }, { id: 'evFlag', label: 'Concerns caught / false-flag rate', value: fl.detected + ' of ' + fl.seeded + ' / ' + F.pct(fl.falseFlagRate, 0), sub: (fl.candidates - fl.seeded) + ' items that should pass' }]);
+    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field or item' }, { key: 't', label: 'Label' }, { key: 'e', label: 'Pipeline' }, { key: 'ok', label: 'Match' }],
+      rows: Object.keys(truth).map(function (k) { return { k: k, t: String(truth[k].value), e: ext[k] ? String(ext[k].value) : 'missing', ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no' }; })
+        .concat(ids.map(function (id) { var s = LABELS.checklist[id].concern, r = raised.indexOf(id) !== -1; return { k: 'checklist: ' + id, t: s ? 'raise' : 'pass', e: r ? 'raise' : 'pass', ok: s === r ? 'yes' : 'no' }; })) });
+  }
+
+  /* ---------------- memo ---------------- */
+  var MEMO = {
+    badge: 'Bid 88% · Sell the CV',
+    call: 'Bid 88% of 31 March NAV, $150m, for the six fund interests. In the Fenmoor continuation vehicle, elect to sell, and ask the advisory committee to give LPs the 20 business days the LPA requires and a status quo option.',
+    situation: '<p>A fictional LP is selling six interests with $171.0m of NAV reported at 31 March and $29.0m of unfunded commitments. Separately, the endowment holds $12.4m of NAV in Fenmoor Capital Partners IV, whose GP is moving two companies into a continuation vehicle at 94.0% of NAV. Its election deadline is 15 business days from 2 June.</p>',
+    why: '<li>The NAVs are a quarter old. Rolled forward on the public proxy, they are worth <a class="cite-num" href="#kpi-rolledNav">$162.8m</a>, 4.8% less than reported. A bid of <a class="cite-num" href="#kpi-bidPct">87.9%</a> of reported NAV is 92.3% of today\'s estimate.</li>' +
+      '<li>At that price the projected cash flows return the 15% target. Across 1,000 seeded paths the buyer\'s IRR runs from <a class="cite-num" href="#kpi-irrRange">12.6% to 17.8%</a>, and no path falls below 10%. The price differs by fund: Draycott Infrastructure II at 84.3% (long-dated, low growth) and Arvane Buyout VII at 86.3% (a stale buyout mark) pull it down; Sorrel Ventures IV at 93.1% holds it up.</li>' +
+      '<li>Rolling into the CV needs the two companies to return <a class="cite-num" href="#kpi-breakEven">1.57x</a> gross in four years just to match selling and reinvesting at 10%. The house case of 1.70x clears that by <a class="cite-num" href="#kpi-rollEdge">$1.32m</a> on our stake. With both one-year extensions, which are the GP\'s choice, the same multiple loses 0.19x per dollar against selling, and the downside of 1.2x loses 0.30x.</li>' +
+      '<li>The process does not earn the benefit of the doubt: two bids from nine contacted, a fairness adviser paid on completion, $18.4m of carry crystallized at the transaction price, and no status quo option (see the <a href="#ai">checklist</a>).</li>',
+    risks: '<li>The bid takes on $29.0m of unfunded commitments; Tamsin Buyout IX alone has $14m to call over the next few years.</li><li>Selling the CV gives up the GP case: at 2.3x, rolling would have been worth 0.64x more per dollar than selling.</li><li>The CV price is 94.0% of NAV, below the 97% median Houlihan Lokey reports for 2025. Selling LPs carry that discount.</li>',
+    change: '<li>On the bid: second-quarter NAVs that come in above the rolled-forward estimates, or a seller willing to take part of the price deferred.</li><li>On the CV: a status quo option, a price at or above the middle of the fairness range (95%), or CV carry measured without the extension years counting toward the hurdle.</li>',
+    next: '<p>Submit the bid fund by fund at the prices in the <a href="#pricing">pricing table</a>, conditional on second-quarter NAVs within 5% of the roll-forward. Return the Fenmoor election form as a sale before the deadline, with a letter to the advisory committee on the timeline and the missing status quo option. Recycle the $11.66m of sale proceeds into the secondaries allocation in the pacing plan.</p>'
+  };
+  function renderMemo() {
+    /* Fixed text, written for the base case (seed 21, default assumptions); links jump to the live numbers. */
+    $('#memoBadge').textContent = MEMO.badge; $('#memoCall').innerHTML = MEMO.call; $('#memoSituation').innerHTML = MEMO.situation; $('#memoWhy').innerHTML = MEMO.why; $('#memoRisks').innerHTML = MEMO.risks; $('#memoChange').innerHTML = MEMO.change; $('#memoNext').innerHTML = MEMO.next;
+  }
+
+  /* ---------------- dropped file ---------------- */
+  function parsePortfolio(rows) {
+    var errs = [], out = [];
+    rows.forEach(function (r, i) {
+      var n = i + 2, st = String(r.strategy || '').trim().toLowerCase(), nav = UI.parse.num(r.nav), unf = UI.parse.num(r.unfunded), v = UI.parse.num(r.vintage);
+      if (!MODELS[st]) errs.push('Row ' + n + ': strategy must be one of ' + Object.keys(MODELS).join(', ') + '.');
+      if (!isFinite(nav) || nav <= 0) errs.push('Row ' + n + ': nav must be a positive number ($m).');
+      if (!isFinite(unf) || unf < 0) errs.push('Row ' + n + ': unfunded must be a non-negative number ($m).');
+      if (!isFinite(v) || v < 1990 || v > 2026) errs.push('Row ' + n + ': vintage must be a year between 1990 and 2026.');
+      if (r.nav_date && !UI.parse.date(r.nav_date)) errs.push('Row ' + n + ': nav_date is not YYYY-MM-DD.');
+      var c = r.calls_since ? UI.parse.num(r.calls_since) : 0, d = r.dists_since ? UI.parse.num(r.dists_since) : 0;
+      if (!isFinite(c) || !isFinite(d)) errs.push('Row ' + n + ': calls_since and dists_since must be numbers when given.');
+      out.push({ fund: r.fund || 'Fund ' + (i + 1), strategy: st, vintage: v, nav: nav, unfunded: unf, calls: c || 0, dists: d || 0 });
+    });
+    return { errors: errs, data: out, summary: out.length + ' fund interests, ' + F.money(PM.sum(out.map(function (f) { return f.nav || 0; })), 1) + ' of NAV' };
+  }
+
+  function renderAll() { renderPricing(); renderSensitivity(); renderCV(); renderMemo(); }
+  function init() {
+    reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); });
+    UI.table('#modelTable', { id: 'models', name: 'Projection model by strategy', columns: [{ key: 'label', label: 'Strategy' }, { key: 'rc', label: 'Call rate', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'ip', label: 'Investment period', num: 1 }, { key: 'life', label: 'Life', num: 1 }, { key: 'growth', label: 'NAV growth', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'bow', label: 'Bow', num: 1 }, { key: 'yieldFloor', label: 'Yield floor', num: 1, fmt: function (v) { return v ? F.pct(v, 0) : '–'; } }, { key: 'beta', label: 'Beta to public equity', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'vol', label: 'Growth shock vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }], rows: Object.keys(MODELS).map(function (k) { return MODELS[k]; }) });
+    var tabs = UI.tabs('#tabsRoot');
+    UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. NAVs at 31 Mar 2026, priced at 30 Jun 2026.'; renderPricing(); });
+    new UI.DocViewer(document.getElementById('docViewer'), DOCS);
+    log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
+    $('#runSteps').innerHTML = ['Plan', 'Extract terms', 'Validate citations', 'Build checklist', 'Human approval', 'Draft memo inputs', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
+    $('#runBtn').addEventListener('click', runPipeline);
+    $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
+    UI.dropZone('#dzPortfolio', { title: 'Use your own fund interests', template: '/assets/templates/lp-portfolio.csv', columns: [{ name: 'fund' }, { name: 'strategy', desc: 'buyout, growth, venture, credit or infrastructure' }, { name: 'vintage' }, { name: 'nav', desc: '$m at nav_date' }, { name: 'nav_date', required: false }, { name: 'unfunded', desc: '$m' }, { name: 'calls_since', required: false }, { name: 'dists_since', required: false }],
+      parse: parsePortfolio, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your fund interests, processed locally.'; renderPricing(); renderSensitivity(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderPricing(); renderSensitivity(); } });
+    UI.exportMenu('#exportMenu', { demo: 'Secondaries Desk', slug: 'secondaries-desk', report: 'Bid memo and CV election memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
+    UI.testsBadge('#testsBadge', 'Secondaries Desk'); UI.testsBadge('.tests-badge-slot', 'Secondaries Desk');
+    renderAll(); runPipeline();
+    var h = location.hash.slice(1); if (['pricing', 'sensitivity', 'cv'].indexOf(h) !== -1) tabs.show(h);
+  }
+  init();
+})();
+</script>
+</body>
+</html>

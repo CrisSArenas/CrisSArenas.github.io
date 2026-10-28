@@ -307,5 +307,24 @@
     a.paRet.forEach(function (v, i) { near(v, b.paRet[i], 0); }); ok(a.paRet.length === 180, '180 months');
   }, 'Multi-Strategy Builder');
 
+  /* ---------------- Secondaries ---------------- */
+  T.add('Secondaries', 'Discount solver: buying at the solved price earns exactly the target IRR', function () {
+    var f = { nav: 40, unfunded: 6, age: 7, model: { rc: 0.35, ip: 5, life: 12, growth: 0.10, bow: 2.5 } };
+    [0.10, 0.15, 0.20].forEach(function (r) { var fl = PM.sec.stakeFlows(f), p = PM.sec.price(fl, r, f.nav); near(PM.sec.irr(p.price, fl), r, 1e-9); near(p.discount, 1 - p.price / f.nav, 1e-12); });
+  }, 'Secondaries Desk');
+  T.add('Secondaries', 'Stake projection conserves value: distributions = NAV + calls + growth', function () {
+    var f = { nav: 10, unfunded: 0, age: 9, model: { rc: 0.3, ip: 5, life: 12, growth: 0, bow: 2 } }, fl = PM.sec.stakeFlows(f);
+    near(PM.sum(fl.map(function (x) { return x.dist; })), 10, 1e-9);
+  }, 'Secondaries Desk');
+  T.add('Secondaries', 'Roll and sell are equal at the computed break-even', function () {
+    var t = { hold: 4, fee: 0.01, pref: 0.08, carry: 0.125, carry2: 0.2, tier2: 2.5 }, opp = 0.10, m = PM.sec.breakEven(t, opp);
+    near(PM.sec.rollValue(m, t).net, PM.sec.sellValue(t, opp), 1e-9);
+    ok(PM.sec.rollValue(m + 0.05, t).net > PM.sec.sellValue(t, opp) && PM.sec.rollValue(m - 0.05, t).net < PM.sec.sellValue(t, opp), 'roll wins above, loses below');
+  }, 'Secondaries Desk');
+  T.add('Secondaries', 'Continuation vehicle carry on a hand example', function () {
+    var r = PM.sec.rollValue(2, { hold: 4, fee: 0.01, pref: 0.08, carry: 0.125, carry2: 0.2, tier2: 2.5 });
+    near(r.fees, 0.04, 1e-12); near(r.carry, 0.125 * 0.96, 1e-12); near(r.net, 2 - 0.04 - 0.12, 1e-12);
+  }, 'Secondaries Desk');
+
   if (typeof module !== 'undefined' && module.exports) module.exports = T;
 })(typeof window !== 'undefined' ? window : globalThis);

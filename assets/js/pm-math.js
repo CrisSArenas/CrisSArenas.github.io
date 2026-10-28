@@ -1602,3 +1602,89 @@
     ];
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Secondaries: LP stake projection and pricing at a buyer's target IRR,
+   NAV roll-forward for stale marks, and an LP's roll or sell decision in a
+   GP-led continuation vehicle.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, SEC = PM.sec = {};
+  /** stakeFlows(f, o): quarterly projection of one fund interest from its current state under the
+      Takahashi-Alexander rules, annual rates converted to quarterly ones.
+      f = {nav, unfunded, age (years), model: {rc, ip, life, growth, bow, yieldFloor}}
+      o = {haircut (cut to starting NAV, buyer's view), years (max horizon, default 15)}
+      Each quarter: call = (1 - (1 - rc)^(1/4)) x unfunded while age <= ip;
+      NAV = (NAV + call)(1 + growth)^(1/4); dist = (1 - (1 - RD(age))^(1/4)) x NAV.
+      Anything left at the horizon is distributed then. Returns [{t, call, dist, nav}]. */
+  SEC.stakeFlows = function (f, o) {
+    o = o || {}; var m = f.model, nav = f.nav * (1 - (o.haircut || 0)), unf = f.unfunded, age = f.age, out = [], Q = Math.round((o.years || 15) * 4);
+    for (var q = 1; q <= Q; q++) {
+      age += 0.25;
+      var call = age <= m.ip ? (1 - Math.pow(1 - m.rc, 0.25)) * unf : 0; unf -= call;
+      nav = (nav + call) * Math.pow(1 + m.growth, 0.25);
+      var rdA = PM.priv.distRate(m, age), d = (rdA >= 1 ? 1 : 1 - Math.pow(1 - rdA, 0.25)) * nav;
+      if (q === Q) d = nav;
+      nav -= d; out.push({ t: q / 4, call: call, dist: d, nav: nav });
+      if (nav < 1e-9 && (age > m.ip || unf < 1e-9)) break;
+    }
+    return out;
+  };
+  /** pv(flows, r): present value at annual rate r of distributions less calls, t in years */
+  SEC.pv = function (flows, r) { return flows.reduce(function (s, x) { return s + (x.dist - x.call) / Math.pow(1 + r, x.t); }, 0); };
+  /** price(flows, r): the price that gives a buyer exactly IRR r: the present value of the stake's
+      future net cash flows at r. discount = 1 - price / NAV. */
+  SEC.price = function (flows, r, nav) { var p = SEC.pv(flows, r); return { price: p, pctNav: nav ? p / nav : NaN, discount: nav ? 1 - p / nav : NaN }; };
+  /** irr(price, flows): the buyer's IRR at a given price (annual, by bisection on the PV) */
+  SEC.irr = function (price, flows) {
+    var lo = -0.9, hi = 3, f = function (r) { return SEC.pv(flows, r) - price; };
+    if (f(lo) * f(hi) > 0) return NaN;
+    for (var i = 0; i < 200; i++) { var mid = (lo + hi) / 2; if (f(lo) * f(mid) <= 0) hi = mid; else lo = mid; }
+    return (lo + hi) / 2;
+  };
+  /** rollForward(nav, beta, publicReturn, calls, dists): a stale NAV carried to today: the reported NAV
+      moved by beta x the public proxy's return since the reference date, plus calls less
+      distributions paid since. */
+  SEC.rollForward = function (nav, beta, pub, calls, dists) { return nav * (1 + beta * pub) + (calls || 0) - (dists || 0); };
+  /** rollValue(m, t): an LP's net proceeds per $1 rolled into a continuation vehicle at the CV price,
+      if the CV's assets reach a gross multiple m after t years. t = {hold, fee (a year, on the rolled
+      value, paid at exit), pref (a year, compounded), carry, carry2, tier2 (net multiple above which
+      gains carry the higher rate carry2), catchUp (false = no catch-up)}. European, single exit:
+        fees = fee x hold; profit = m - 1 - fees; hurdle = (1 + pref)^hold - 1
+        carry = 0 if profit <= hurdle; otherwise, with full catch-up,
+        min(carry x min(profit, tier2 - 1), profit - hurdle) + carry2 x max(0, profit - (tier2 - 1)) */
+  SEC.rollValue = function (m, t) {
+    var fees = t.fee * t.hold, profit = m - 1 - fees, hurdle = Math.pow(1 + t.pref, t.hold) - 1, carry = 0;
+    if (profit > hurdle) {
+      var cap = t.tier2 ? t.tier2 - 1 : Infinity, low = Math.min(profit, cap), high = Math.max(0, profit - cap);
+      carry = (t.catchUp === false ? t.carry * Math.max(0, low - hurdle) : Math.min(t.carry * low, profit - hurdle)) + (t.carry2 || t.carry) * high;
+    }
+    return { gross: m, fees: fees, carry: carry, net: m - fees - carry, irr: Math.pow(Math.max(1e-9, m - fees - carry), 1 / t.hold) - 1 };
+  };
+  /** outcomes(funds, price, o): seeded range of the buyer's IRR at a given price. Each path draws one
+      growth shock per fund, growth = model growth + vol x z (vol by fund), and reprojects every stake.
+      o = {n, seed, haircut}. Returns sorted IRRs. */
+  SEC.outcomes = function (funds, price, o) {
+    var rng = PM.mulberry32(o.seed || 1), z = PM.normalGen(rng), out = [];
+    for (var k = 0; k < (o.n || 1000); k++) {
+      var tot = {};
+      funds.forEach(function (f) {
+        var g = f.model.growth + (f.vol || 0) * z(), fl = SEC.stakeFlows({ nav: f.nav, unfunded: f.unfunded, age: f.age, model: Object.assign({}, f.model, { growth: g }) }, { haircut: o.haircut });
+        fl.forEach(function (x) { tot[x.t] = (tot[x.t] || 0) + x.dist - x.call; });
+      });
+      var flows = Object.keys(tot).map(function (t) { return { t: +t, dist: Math.max(0, tot[t]), call: Math.max(0, -tot[t]) }; });
+      out.push(SEC.irr(price, flows));
+    }
+    return out.sort(function (a, b) { return a - b; });
+  };
+  /** sellValue(t, opp): $1 of sale proceeds reinvested at the LP's opportunity cost for the same hold */
+  SEC.sellValue = function (t, opp) { return Math.pow(1 + opp, t.hold); };
+  /** breakEven(t, opp): the gross multiple on the CV's assets at which rolling and selling leave the
+      LP with the same value at the end of the hold (bisection; net roll value rises with m). */
+  SEC.breakEven = function (t, opp) {
+    var target = SEC.sellValue(t, opp), lo = 0, hi = 20;
+    for (var i = 0; i < 200; i++) { var mid = (lo + hi) / 2; if (SEC.rollValue(mid, t).net < target) lo = mid; else hi = mid; }
+    return (lo + hi) / 2;
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
