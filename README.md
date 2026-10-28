@@ -1,6 +1,6 @@
 # crissarenas.github.io
 
-Personal site of **Cristian Arenas**, Quantitative Investment Professional and AI Engineer. Private markets and multi-asset portfolios. I build the models and AI tools investment teams use.
+Personal site of **Cristian Arenas**, Quantitative Investment Professional and AI Engineer. I build agentic AI systems and quantitative models for private markets and multi-asset portfolios, from first idea to production, with people in the loop.
 
 Live at https://crissarenas.github.io
 

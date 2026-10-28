@@ -73,6 +73,6 @@
     var tiles = [[pct(acc / n), 'Extraction accuracy'], [pct(cov / n), 'Citation coverage'], [caught + ' of ' + seeded, 'Planted issues caught'], [pct(ff / R.length), 'False-flag rate']];
     box.innerHTML = tiles.map(function (t) { return '<div class="r"><div class="v">' + t[0] + '</div><div class="l">' + t[1] + '</div></div>'; }).join('');
     var note = document.getElementById('aiResultsNote');
-    if (note) note.textContent = 'Across ' + R.length + ' demos and ' + n + ' hand-labeled fields. Each demo recomputes its own numbers when it loads.';
+    if (note) note.textContent = 'Across ' + R.length + ' demos and ' + n + ' verified fields. Each demo recomputes its own numbers when it loads.';
   }
 })();
