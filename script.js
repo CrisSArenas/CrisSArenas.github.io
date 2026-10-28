@@ -50,6 +50,20 @@
     });
   }
 
+  /* AI systems: read it in plain English or in technical detail (choice remembered) */
+  var ai = document.getElementById('ai');
+  if (ai) {
+    var setMode = function (m) {
+      ai.setAttribute('data-mode', m);
+      ai.querySelectorAll('.seg2 button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m ? 'true' : 'false'); });
+    };
+    var saved = null; try { saved = localStorage.getItem('aiMode'); } catch (e) { /* storage blocked */ }
+    setMode(saved === 'tech' ? 'tech' : 'plain');
+    ai.querySelectorAll('.seg2 button').forEach(function (b) {
+      b.addEventListener('click', function () { var m = b.getAttribute('data-mode'); setMode(m); try { localStorage.setItem('aiMode', m); } catch (e) { /* ignore */ } });
+    });
+  }
+
   /* AI systems results, from the evaluation panels of every demo (assets/data/eval-results.js) */
   var box = document.getElementById('aiResults');
   if (box && window.EVAL_RESULTS && window.EVAL_RESULTS.length) {

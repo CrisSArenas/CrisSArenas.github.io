@@ -10,9 +10,9 @@
     <meta property="og:description" content="Reported NAVs lag public markets. Nowcast them before you size next year&#x27;s commitments.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="theme-color" content="#FFFFFF">
-    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <meta name="theme-color" content="#0B1A15">
+    <link rel="icon" href="/assets/images/favicon.svg?v=3" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=3" type="image/png" sizes="64x64">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -46,16 +46,77 @@
     <p class="dek">Reported NAVs lag public markets. Nowcast them before you size next year&#x27;s commitments.</p>
     <div class="meta"><span>Cristian Arenas</span><span>28 October 2026</span><span>Test it in the <a href="/private-capital-lab.html">Private Capital Lab</a></span></div>
     <p>Private fund NAVs arrive about a quarter late. When public markets fall, the public side of the portfolio reprices the same day and the private marks don't. The private allocation looks high, and a pacing model run on those numbers says commit less.</p>
-<p>That answer is usually too cautious. The allocation is high because the denominator fell, and the private marks will follow it down over the next two quarters.</p>
-<h2>Nowcast first</h2>
-<p>I roll each fund's last reported NAV forward to today. I add the calls and take off the distributions since the statement date, then apply the fund's sensitivity to a public index. I estimate that sensitivity by regressing reported NAV returns on the index at lags of zero, one and two quarters. The lags matter because appraisal marks catch up slowly.</p>
-<p>In the Private Capital Lab base case, the reported allocation is 26.5% against a 25% target. Rolled forward, private NAV is $232m and the allocation is 24.0%. The program sits below target.</p>
-<h2>Then pace</h2>
-<p>The pacing rule picks each year's commitment so projected private NAV hits the target four years out, after the existing funds call and distribute. On the nowcast it gives $59m for 2027. On the reported numbers it gives less, and the program drifts under target once the marks catch up.</p>
-<h2>Size the buffer for the bad path</h2>
-<p>One plan hides the spread. I run the same fund rules through a Monte Carlo with public returns, private returns, calls and distributions drawn together. In the base case, 62% of paths touch the 30% upper band at some point, almost always right after a drawdown. In 17% of paths liquid assets fall below unfunded commitments. That second number sets the cash buffer.</p>
-<h2>What to watch</h2>
-<ul><li>The nowcast assumes a fund's sensitivity to the index holds. It is weakest right after a big move, so the band around it should widen with each stale quarter.</li><li>A write-down at one company won't show up in an index beta. Read the statements when they arrive and rerun the plan.</li></ul>
+<p>That answer is usually too cautious. The allocation is high because the denominator fell, and the private marks will follow it down over the next two quarters. A committee that trims a vintage on stale marks gives up a vintage year it cannot get back.</p>
+<h2>The method</h2>
+<p>The nowcast comes first, because every later number divides by total assets.</p>
+<ol>
+<li>I take each fund's last reported NAV and count how many quarters stale it is.</li>
+<li>I regress the fund's reported quarterly returns on a public index at lags of zero, one and two quarters. The sum of the slopes is the fund's economic beta. The lags matter because appraisal marks catch up slowly. A fund with too short a history gets a prior for its strategy.</li>
+<li>I roll the NAV forward through each stale quarter. I add the calls, take off the distributions and apply beta times the index return. A stale mark gets no credit for manager skill, so alpha is zero. The band around the nowcast widens with each stale quarter.</li>
+<li>I compute the allocation on nowcast NAV and hand that total to the pacing rule.</li>
+<li>The pacing rule picks the commitment that puts projected private NAV on target at the end of the horizon, after the existing funds call and distribute. Each fund follows the Takahashi-Alexander model.</li>
+<li>I hold that plan fixed and run it through a Monte Carlo with public returns, private returns, calls and distributions drawn together. The bad paths size the cash buffer.</li>
+</ol>
+<pre class="formula">Nowcast, each stale quarter k:
+  NAV_k = (NAV_k-1 + calls_k - dists_k) x (1 + B x r_index,k)
+  B = b0 + b1 + b2
+  from r_fund,t = a + b0 r_index,t + b1 r_index,t-1 + b2 r_index,t-2 + e
+
+Allocation:
+  private % = nowcast NAV / (public assets + nowcast NAV)
+
+Pacing, commitment c in year t, horizon h:
+  choose c so that projected private NAV / projected total assets = target
+  at the end of year t + h - 1, committing c in each year t to t + h - 1</pre>
+<h2>Worked example: the lab's base case</h2>
+<h3>The nowcast</h3>
+<p>The lab holds a made-up $1bn endowment with 20 funds, $542m committed and $148m unfunded. The target is 25% with a band of 20% to 30%. GP marks put private NAV at $264.8m, which is 26.5% of total assets. Seventeen funds are marked at 30 June 2026 and three at 31 March. The lab's public proxy returns for the last two quarters are -14.5% and -12.8%, and the median fund beta is 0.80.</p>
+<p>Rolled forward, program NAV falls 12.2% to $232.4m, with a 90% band of $214m to $250m. Public assets are $735m, so total assets come to about $968m and the allocation is 24.0%. That is a little under target. Even the top of the band, $250m, is below the reported $265m.</p>
+<div class="table-wrap"><table class="memo-table">
+<thead><tr><th></th><th class="n">Reported marks</th><th class="n">Nowcast</th></tr></thead>
+<tbody>
+<tr><td>Private NAV</td><td class="n">$265m</td><td class="n">$232m</td></tr>
+<tr><td>Public assets</td><td class="n">$735m</td><td class="n">$735m</td></tr>
+<tr><td>Total assets</td><td class="n">$1,000m</td><td class="n">$968m</td></tr>
+<tr><td>Private allocation</td><td class="n">26.5%</td><td class="n">24.0%</td></tr>
+<tr><td>Room below the 30% band</td><td class="n">$35m</td><td class="n">$58m</td></tr>
+</tbody></table></div>
+<p>Ostrel Capital Partners VI is two quarters stale with a beta of 0.86, and its nowcast is $10.0m against $14.1m reported, down 28.8%. Telmira Growth II has a beta of 0.90 and falls 19.8% to $15.5m. Caldrin Infrastructure II has a beta of 0.12 and rises 7.9% to $24.8m, because calls since June, net of distributions, outweigh a small index haircut. Five funds, Ostrel Capital Partners VII the largest, rest on a strategy prior and carry the softest estimates.</p>
+<h3>The pace</h3>
+<p>On nowcast total assets the pacing rule sets the 2027 commitment at $59.2m, then $55.7m in 2028 and $53.1m in 2029, $168m over three vintages. Existing funds distribute more than they call in 2027, $56.4m against $37.2m, so the near-term budget runs above the steady-state need of 3.98% of total assets a year. The plan path stays between 24.2% and 25.6% for ten years.</p>
+<p>On the reported marks the program looks 1.5 points over target, and the rule gives less. The program then drifts under target once the marks catch up.</p>
+<h3>The buffer</h3>
+<p>The Monte Carlo runs the fixed plan over 600 paths and 40 quarters. The median allocation in three years is 24.7%, with a 10th to 90th range of 19% to 31%. In 62% of paths the allocation crosses 30% in some quarter, almost always right after a public drawdown. In 17% of paths liquid public assets fall below unfunded commitments. That second number sets the cash buffer.</p>
+<p>The liquidity stress cuts public assets 25%, calls 35% of unfunded in 12 months and cuts distributions 60%. Calls come to $51.7m (35% of $147.6m), distributions to $16m and spending to $43.5m (4.5% of $968m). The net cash need is $79m, and liquid public assets cover it 4.9 times. I hold at least $160m in cash and short Treasuries, about twice that need.</p>
+<div class="callout"><p>After a public sell-off, a private allocation above target is mostly a denominator effect. I nowcast the marks before I let that number cut a vintage, and I size the cash buffer from the shortfall paths.</p></div>
+<h2>What changes the answer</h2>
+<h3>Expected public return</h3>
+<p>The pacing rule targets a share of total assets, so the budget depends on how fast the public side grows. Lower the expected public return in the lab and the 2027 budget falls. Raise it and the budget rises. I set it to the policy return the board already uses.</p>
+<h3>Public volatility</h3>
+<p>The plan does not change with volatility, because the rule is deterministic. The fan does. Raise public volatility and the chance of a liquidity shortfall climbs quickly, while the odds of a band breach rise more slowly. I stress this input before I agree to a cash floor.</p>
+<h3>Pacing horizon</h3>
+<p>A shorter horizon asks the rule to close the gap sooner, so the 2027 budget rises a little. A longer one eases it. The default is four years because new commitments reach peak NAV about then.</p>
+<h2>Pitfalls</h2>
+<ul>
+<li>Pacing on reported marks right after a sell-off. The budget gets cut on a share that is about to fall.</li>
+<li>Treating the nowcast as a point estimate. Its band is widest when the marks are most stale.</li>
+<li>Feeding reported volatility into the Monte Carlo. For Quorvane Buyout III the first-order autocorrelation is 0.42, and desmoothing lifts volatility from 11.1% to 17.2%. Smoothed inputs make the fan too narrow.</li>
+<li>Expecting an index beta to catch a write-down at one company. I read each statement when it arrives and rerun the plan.</li>
+<li>Pacing on positions that do not tie. Brisolt Credit Opportunities III has an open roll-forward break of $0.70m, and the program table carries it at $15.3m of NAV against $23.05m on the statement. I fix the ledger before I size a Brisolt re-up.</li>
+<li>Selling into a breach the marks will fix. In the stress the allocation jumps to 30.2% on lagged marks and settles at 27.5% once marked down. Selling 10% of the book at a 12% discount raises $21m and costs $3m against NAV. I would pay that only if the breach outlasted the next two sets of marks.</li>
+</ul>
+<h2>What I check</h2>
+<ol>
+<li>The NAV date of every fund, with anything two or more quarters stale flagged.</li>
+<li>The calls and distributions since each NAV date, from notices and the cash ledger. For a fund still investing, like Caldrin Infrastructure II, they can outweigh the market.</li>
+<li>Each fund's beta, its R squared and how many quarters of history it rests on. A strategy prior means a soft estimate.</li>
+<li>The program nowcast and its band against reported NAV. If the top of the band is still below reported NAV, the direction is settled.</li>
+<li>The allocation, the room below the upper band and the pacing budget, all on nowcast NAV.</li>
+<li>The shortfall probability at base and at higher public volatility, and the cash floor against the stressed 12-month need.</li>
+<li>Every statement roll-forward. A fund with an open break stays out of the ledger until the GP answers.</li>
+<li>A rerun date for when the next quarter's marks arrive.</li>
+</ol>
+<p>The <a href="/private-capital-lab.html">Private Capital Lab</a> runs all of this on a made-up endowment. Start on the NAV nowcast tab, then move the expected public return and public volatility on the pacing tab and watch the budget and the fan. The <a href="/memos/private-markets-pacing.html">pacing memo</a> writes up the same base case as a commitment recommendation.</p>
     <p class="fine">The numbers come from the base case of the linked demo. The funds and managers are made up.</p>
   </article>
 </main>

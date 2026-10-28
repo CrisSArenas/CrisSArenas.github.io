@@ -10,9 +10,9 @@
     <meta property="og:description" content="A total portfolio approach swaps fixed asset class targets for a reference portfolio and a risk budget. Here is what that changes day to day.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="theme-color" content="#FFFFFF">
-    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <meta name="theme-color" content="#0B1A15">
+    <link rel="icon" href="/assets/images/favicon.svg?v=3" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=3" type="image/png" sizes="64x64">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -45,14 +45,88 @@
     <h1>SAA or total portfolio approach, what actually changes</h1>
     <p class="dek">A total portfolio approach swaps fixed asset class targets for a reference portfolio and a risk budget. Here is what that changes day to day.</p>
     <div class="meta"><span>Cristian Arenas</span><span>28 October 2026</span><span>Test it in the <a href="/allocation-lab.html">Allocation Lab</a></span></div>
-    <p>A strategic asset allocation sets a target and a range for each asset class. A total portfolio approach replaces those targets with a simple reference portfolio, usually stocks and bonds, and a risk budget around it.</p>
-<h2>What changes in practice</h2>
-<ul><li>Every investment competes against the reference portfolio. A private equity fund gets judged by what it adds to total risk and return.</li><li>Rebalancing follows the risk budget. You trade when active risk gets too high.</li><li>Private assets enter through their exposures, so stale marks need explicit handling.</li></ul>
-<p>In the Allocation Lab, the endowment measures active risk against a 70/30 reference. After an equity fall it runs at 4.31% against a 4% budget. Most of it is the public equity underweight, which is the part you can trade.</p>
-<h2>What stays the same</h2>
-<p>Expected returns still drive the answer. The optimizer's best Sharpe ratio in the demo is 0.26 against 0.25 for the current policy, and the gain depends on the private equity return assumption. Liquidity rules still bind. After a GFC-sized stress the portfolio needs $254m of liquid assets and has $416m.</p>
-<h2>How I'd run it</h2>
-<p>Keep the policy ranges as guardrails and report against the reference portfolio. Desmooth private risk before it enters the risk budget. Use the budget to decide which trades go first.</p>
+    <p>A strategic asset allocation gives each asset class a target and a range. Staff rebalance when a class leaves its range, and the committee revisits the targets once a year. A total portfolio approach replaces those targets with a simple reference portfolio of listed stocks and bonds, plus a budget for how far the real portfolio may drift from it in risk terms.</p>
+<p>The switch looks like a reporting change. In practice it changes which trades get approved. Under fixed targets the committee asks whether each bucket stays in range. Under a reference portfolio it asks what a trade does to the risk and return of the whole fund. On the six trades I test below, the two questions disagree half the time. A committee should know which question it is asking before it adopts the framework.</p>
+<h2>How I run it</h2>
+<ol>
+<li>I write down the reference portfolio in full. In the Allocation Lab the committee's 70/30 reference holds 42% US equity, 21% international equity, 7% emerging markets equity and 30% US Treasuries. Private equity, hedge funds, real estate and cash have a reference weight of zero.</li>
+<li>I desmooth the private assets before they enter the covariance matrix. Appraisal marks lag listed markets, so reported volatility and reported correlation with equity both come out too low.</li>
+<li>I compute active weights against the reference, then active risk. I split active risk into each class's contribution so the parts add up to the total.</li>
+<li>I compare active risk with the budget. When it is over, I look first at trades that cut active risk in classes I can trade today.</li>
+<li>I test each candidate change on two counts. It has to earn more return per unit of added volatility than the portfolio earns today, and it has to stay inside the budget or move back toward it.</li>
+<li>I keep the IPS ranges and the liquidity test as hard guardrails on top.</li>
+</ol>
+<pre class="formula">a            = w - w_ref
+active risk  = sqrt(a' Sigma a)
+CTR_i        = a_i (Sigma a)_i / sqrt(a' Sigma a)
+sum of CTR_i = active risk
+
+sigma_true   = sigma_rep sqrt((1 + rho) / (1 - rho))
+
+a change passes if
+  d(return) / d(vol) &gt; (mu_p - r_f) / sigma_p
+  and active risk stays within budget, or falls</pre>
+<p>The first block is tracking error and its Euler split. The second is the Geltner adjustment, with rho the autocorrelation of the reported series. The last is the test I care about. A change has to beat the fund's own Sharpe ratio, 0.25 in the base case, or it dilutes the fund.</p>
+<h2>The base case</h2>
+<p>The endowment holds $880.1m by the sum of the custodian's lines. The printed total is $890.1m, a $10.0m break, so I compute weights on the sum of the lines until the custodian confirms. After the fall in listed equity, US equity sits at 14.2%, below its 15% floor. Private equity is at 19.2% and hedge funds at 13.9% on their latest marks.</p>
+<div class="table-wrap"><table class="memo-table">
+<thead><tr><th>Asset class</th><th class="n">Weight</th><th class="n">Reference</th><th class="n">To total vol</th><th class="n">To active risk</th></tr></thead>
+<tbody>
+<tr><td>US equity</td><td class="n">14.2%</td><td class="n">42.0%</td><td class="n">2.02%</td><td class="n">1.69%</td></tr>
+<tr><td>International equity</td><td class="n">7.9%</td><td class="n">21.0%</td><td class="n">1.19%</td><td class="n">0.85%</td></tr>
+<tr><td>Emerging markets equity</td><td class="n">3.1%</td><td class="n">7.0%</td><td class="n">0.51%</td><td class="n">0.27%</td></tr>
+<tr><td>Private equity</td><td class="n">19.2%</td><td class="n">0.0%</td><td class="n">4.01%</td><td class="n">1.20%</td></tr>
+<tr><td>Hedge funds</td><td class="n">13.9%</td><td class="n">0.0%</td><td class="n">0.79%</td><td class="n">-0.14%</td></tr>
+<tr><td>Real estate</td><td class="n">9.2%</td><td class="n">0.0%</td><td class="n">1.76%</td><td class="n">0.44%</td></tr>
+<tr><td>US Treasuries</td><td class="n">27.0%</td><td class="n">30.0%</td><td class="n">0.31%</td><td class="n">0.00%</td></tr>
+<tr><td>Cash</td><td class="n">5.5%</td><td class="n">0.0%</td><td class="n">0.00%</td><td class="n">0.00%</td></tr>
+<tr><td>Total</td><td class="n">100.0%</td><td class="n">100.0%</td><td class="n">10.58%</td><td class="n">4.31%</td></tr>
+</tbody></table></div>
+<p>Active risk is 4.31% against a 4% budget. The three listed equity lines add 2.81% of it, about two thirds, and that is the part I can trade. Private equity adds 1.20% because the reference holds none of it. Its desmoothed correlation with US equity is 0.72, so it offsets some of the listed equity underweight, but it cannot be traded to close the gap. Hedge funds reduce active risk slightly. Treasuries sit close to their reference weight and add nothing.</p>
+<p>The fund expects 6.36% at 10.6% volatility. The reference expects 6.24% at 11.5%. So the fund earns 0.12 pp more for 4.31% of active risk, or 0.03 per unit. That is thin pay for the risk the committee is carrying.</p>
+<p>The demo judges six candidate changes both ways.</p>
+<div class="table-wrap"><table class="memo-table">
+<thead><tr><th>Change</th><th class="n">Return</th><th class="n">Total vol</th><th class="n">Active risk</th><th>SAA verdict</th><th>Total portfolio verdict</th></tr></thead>
+<tbody>
+<tr><td>+3% EM equity, from US equity</td><td class="n">+0.03 pp</td><td class="n">+0.07 pp</td><td class="n">0.00 pp</td><td>Breaks a range</td><td>Improves the total portfolio</td></tr>
+<tr><td>+3% hedge funds, from US Treasuries</td><td class="n">+0.04 pp</td><td class="n">+0.14 pp</td><td class="n">-0.02 pp</td><td>Breaks a range</td><td>Improves the total portfolio</td></tr>
+<tr><td>+2% private equity, from US equity</td><td class="n">+0.05 pp</td><td class="n">+0.14 pp</td><td class="n">+0.25 pp</td><td>Breaks a range</td><td>Breaks the active risk budget</td></tr>
+<tr><td>+3% US Treasuries, from cash</td><td class="n">+0.02 pp</td><td class="n">+0.03 pp</td><td class="n">+0.00 pp</td><td>Breaks a range</td><td>Breaks the active risk budget</td></tr>
+<tr><td>+2% real estate, from international equity</td><td class="n">-0.01 pp</td><td class="n">+0.09 pp</td><td class="n">+0.24 pp</td><td>Breaks a range</td><td>Breaks the active risk budget</td></tr>
+<tr><td>+3% US equity, from US Treasuries</td><td class="n">+0.07 pp</td><td class="n">+0.40 pp</td><td class="n">-0.16 pp</td><td>Fits ranges</td><td>Adds risk for too little return</td></tr>
+</tbody></table></div>
+<p>The approaches disagree on 3 of 6. Five changes break a range because US equity already sits below its floor, and any change that leaves it there fails the SAA test. The only change that fits every range is the move from Treasuries into US equity, and that is the one the total portfolio test rejects. It cuts active risk by 0.16 pp but adds 0.40 pp of volatility for 0.07 pp of return, well under the 0.25 hurdle.</p>
+<p>Two rows show active risk at zero after rounding. One edges it down and passes. The other edges it up and fails, because a fund already over budget gets no credit for a trade that does not bring it back.</p>
+<div class="callout"><p>T-1, the $7.0m trade list I support, is a small move in the direction the total portfolio test rejects. I release it because the IPS requires the range repair. That is why I keep the ranges as guardrails and use the reference portfolio and the budget to decide which trades go first.</p></div>
+<p>Reoptimizing does little. The best Sharpe ratio is 0.26 against 0.25 today, reached by filling private equity and hedge funds to their ceilings, classes staff cannot trade to rebalance. Liquidity does not bind. After a GFC-sized stress the fund holds $416m of liquid assets against $254m required.</p>
+<h2>What changes the answer</h2>
+<h3>The reference equity share</h3>
+<p>Lower it and the reference moves toward the fund's actual mix. Active risk falls, and trades that add equity start to fail the budget. Raise it and active risk climbs while the return over the reference turns negative. The reference is a policy choice, and the committee should make it deliberately.</p>
+<h3>Desmoothing private risk</h3>
+<p>Switch desmoothing off and total volatility falls, as you would expect. Active risk rises. On reported correlations the private book stops offsetting the listed equity underweight. Smoothing flatters the total risk number and distorts the active one.</p>
+<h3>The size of the budget</h3>
+<p>Raise the budget above 4.31% and the changes that only nudge active risk up start to pass. The move from US equity into private equity still fails a modest increase, because it adds 0.25 pp of active risk on its own.</p>
+<h2>Pitfalls</h2>
+<ul>
+<li>Treating the reference portfolio as a return target. I use it to measure risk. The return test is the Sharpe hurdle.</li>
+<li>Feeding reported private marks into the risk model. Desmoothing lifts private equity volatility from 14.5% to 23.5% and its correlation with US equity from 0.45 to 0.72.</li>
+<li>Dropping the ranges once the budget exists. The total portfolio test passes the hedge fund trade, yet it would breach the new 14% ceiling in a class the IPS says is not traded to rebalance.</li>
+<li>Trading toward the optimizer. A Sharpe gain of 0.01 is inside the error of the return assumptions, and the Black-Litterman posterior cuts private equity from 9.40% to 8.42%.</li>
+<li>Computing weights on a custodian total that does not add up.</li>
+</ul>
+<h2>What I check</h2>
+<ol>
+<li>The reference weights sum to 100%, and every class maps to a reference line or explicitly to zero.</li>
+<li>The contributions to active risk add up to the active risk total.</li>
+<li>Private volatility and correlations are desmoothed, and I compare them with the reported figures.</li>
+<li>The custodian lines sum to the printed total.</li>
+<li>The policy register reflects the latest minutes. Here the hedge funds target fell from 12% to 10%.</li>
+<li>Each proposed change beats the portfolio's Sharpe ratio per unit of added volatility, and I note its sign on active risk.</li>
+<li>Post-trade weights stay inside every range, with untradable classes left alone.</li>
+<li>Turnover stays under the 10% limit.</li>
+<li>Liquid assets after a GFC-sized stress still cover 1.5 times the next 24 months of calls and spending.</li>
+</ol>
+<p>The <a href="/allocation-lab.html">Allocation Lab</a> runs this portfolio both ways on its Total portfolio tab. Move the reference equity share or switch off desmoothing and watch the verdicts change. The <a href="/memos/policy-portfolio-review.html">endowment policy review</a> sets out the trade list I would release.</p>
     <p class="fine">The numbers come from the base case of the linked demo. The funds and managers are made up.</p>
   </article>
 </main>

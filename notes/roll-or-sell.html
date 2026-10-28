@@ -10,9 +10,9 @@
     <meta property="og:description" content="How to compare the CV price with rolling, once the new fees, the carry reset and the longer hold are priced in.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="theme-color" content="#FFFFFF">
-    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <meta name="theme-color" content="#0B1A15">
+    <link rel="icon" href="/assets/images/favicon.svg?v=3" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=3" type="image/png" sizes="64x64">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -45,15 +45,73 @@
     <h1>Roll or sell, an LP&#x27;s math on a continuation vehicle</h1>
     <p class="dek">How to compare the CV price with rolling, once the new fees, the carry reset and the longer hold are priced in.</p>
     <div class="meta"><span>Cristian Arenas</span><span>28 October 2026</span><span>Test it in the <a href="/secondaries-desk.html">Secondaries Desk</a></span></div>
-    <p>In a GP-led continuation vehicle, an LP in the old fund can sell at the CV price or roll into the new vehicle. Rolling brings new fees, carry that restarts at the transaction price and a longer hold.</p>
+    <p>In a GP-led continuation vehicle, an LP in the old fund can sell at the CV price or roll into the new vehicle. Rolling brings new fees, carry that restarts at the transaction price and a longer hold. The GP tends to present the roll as the patient choice. I put both options on the same basis first.</p>
+<p>An investment committee needs one comparable number from me. The question is whether the companies can grow fast enough to beat what we would earn on the cash, after the new fees and carry. The election window is short, so the analysis has to be quick and easy to defend.</p>
 <h2>Set up the comparison</h2>
-<p>Take $1 of sale proceeds. If you sell, you reinvest it at your own expected return for the same period. If you roll, the $1 grows with the CV's assets, less the management fee and the carry.</p>
-<p>The useful number is the gross multiple the assets need for rolling to match selling. In the Secondaries Desk, the Fenmoor CV charges 1.0% a year and 12.5% carry over an 8% preferred return, rising to 20% above 2.5x. Over four years at a 10% opportunity cost, the break-even is 1.57x gross.</p>
-<h2>Stress the hold</h2>
-<p>CVs usually come with extension options at the GP's discretion. A house case of 1.70x over four years clears the break-even by about 0.11x per dollar. Stretch the same multiple over six years and rolling loses 0.19x per dollar against selling.</p>
-<h2>Read the process</h2>
-<ul><li>How many buyers bid, and was the fairness adviser paid on completion?</li><li>Does the GP take carry at the transaction price on the way in?</li><li>Is there a status quo option, and what happens if you don't reply?</li><li>Does the election window match the notice period in the LPA?</li></ul>
-<p>A low price hurts sellers and helps rollers. A weak process is a reason to push back on the terms whichever way you elect.</p>
+<p>I take $1 of sale proceeds. If we sell, we reinvest it at our own expected return for the same period. If we roll, the $1 grows with the CV's assets, less the management fee and the carry. Both legs end on the same date, so I compare them as multiples per dollar of sale price.</p>
+<ol>
+<li>I read the hold, the extension terms, the fee, the preferred return, each carry tier and the catch-up from the election notice.</li>
+<li>I set the opportunity cost as the return we expect on cash put back to work in the program.</li>
+<li>I solve for the gross multiple on the CV's assets at which the two legs match. That break-even is the number I bring to the committee.</li>
+<li>I put my house case, the GP's case and a downside against it, at the base hold and with the extensions.</li>
+</ol>
+<pre class="formula">fees   = fee x hold
+profit = m - 1 - fees
+hurdle = (1 + pref)^hold - 1
+carry  = 0 if profit &lt;= hurdle, else
+carry  = min(c x min(profit, 1.5),
+             profit - hurdle)
+         + c2 x max(0, profit - 1.5)
+roll   = m - fees - carry
+sell   = (1 + opp)^hold
+break-even: the m where roll = sell</pre>
+<p>Here c is the first carry rate, c2 the rate on profit above the 2.5x tier and opp the opportunity cost. The gross multiple m runs from the transaction price. The carry is European, on one exit at the end of the hold. With full catch-up, once profit clears the hurdle the GP takes everything above it until it has its full share of the whole profit. Extensions show up as a longer hold at the same multiple.</p>
+<h2>Worked example on the Fenmoor CV</h2>
+<p>In the Secondaries Desk, Fenmoor Capital Partners IV proposes to move two companies into a CV at 94.0% of their 31 December 2025 NAV of $612 million. Our share of that NAV is $12.4m, so selling pays $11.66m. The CV charges 1.0% a year and 12.5% carry over an 8% preferred return, rising to 20% on gains above a 2.5x net multiple, with full catch-up. The expected hold is four years, with two one-year extensions at the GP's discretion. I use a 10% opportunity cost.</p>
+<p>Selling turns $1 into 1.46x over four years at 10%. Rolling matches that at 1.57x gross, which is 11.9% a year on the assets. The table splits each scenario into fees and carry, per $1 of sale price.</p>
+<div class="table-wrap"><table class="memo-table">
+<thead><tr><th>Scenario</th><th class="n">Gross</th><th class="n">Years</th><th class="n">Fees</th><th class="n">Carry</th><th class="n">Roll, net</th><th class="n">Roll IRR</th><th class="n">Sell</th><th class="n">Roll minus sell</th></tr></thead>
+<tbody>
+<tr><td>GP case</td><td class="n">2.30x</td><td class="n">4</td><td class="n">0.04</td><td class="n">0.16</td><td class="n">2.10x</td><td class="n">20.4%</td><td class="n">1.46x</td><td class="n">+0.64x</td></tr>
+<tr><td>House case</td><td class="n">1.70x</td><td class="n">4</td><td class="n">0.04</td><td class="n">0.08</td><td class="n">1.58x</td><td class="n">12.1%</td><td class="n">1.46x</td><td class="n">+0.11x</td></tr>
+<tr><td>Downside</td><td class="n">1.20x</td><td class="n">4</td><td class="n">0.04</td><td class="n">0.00</td><td class="n">1.16x</td><td class="n">3.8%</td><td class="n">1.46x</td><td class="n">-0.30x</td></tr>
+<tr><td>House case, both extensions</td><td class="n">1.70x</td><td class="n">6</td><td class="n">0.06</td><td class="n">0.05</td><td class="n">1.59x</td><td class="n">8.0%</td><td class="n">1.77x</td><td class="n">-0.18x</td></tr>
+</tbody>
+</table></div>
+<p>Fees and carry make up the gap between gross and net. On the house case the fee costs 0.04 per dollar, 1.0% for four years, and the carry costs 0.08, which is 12.5% of the 0.66 of profit left after fees (1.70 - 1 - 0.04). The net 1.58x beats selling by 0.11x per dollar, or $1.32m on our stake at the end of the hold.</p>
+<p>The downside pays no carry and still loses 0.30x to selling. The GP case shows what the GP is pitching, 2.10x net and 0.64x ahead per dollar. None of the four scenarios reaches the 20% tier, so on these numbers the second carry rate plays no part.</p>
+<div class="callout"><p>The house case clears the break-even by 0.13x gross, and the GP decides whether the hold runs to six years. On Fenmoor I elect to sell and take $11.66m now.</p></div>
+<h2>What changes the answer</h2>
+<h3>The hold</h3>
+<p>This is the input I stress first. In the demo's hold and multiple grid, the house case of 1.70x is +0.26 per dollar over three years, +0.11 over four, -0.04 over five and -0.18 over six. One extension at the same multiple is enough to make rolling lose. Net value from rolling barely moves as the hold stretches, from 1.58x at four years to 1.59x at six, because the pref absorbs part of the carry. Selling keeps compounding at 10%, from 1.46x to 1.77x. Most of the loss comes from those extra years of compounding on the sell side.</p>
+<p>The six-year roll IRR is 8.0%, exactly the preferred return. At that multiple and hold the profit sits inside the catch-up band, where the GP takes everything above the hurdle. A rolling LP in that band earns the pref and nothing more.</p>
+<h3>The gross multiple</h3>
+<p>Small moves in the multiple matter. Along the four-year row, rolling is 0.06 behind selling at 1.5x and 0.38 ahead at 2.0x. A house case of 2.0x would change my view. At that multiple rolling stays ahead at every hold from three to six years, with +0.05 per dollar even after both extensions.</p>
+<h3>The opportunity cost</h3>
+<p>The sell leg is the opportunity cost compounded over the hold. A lower rate lowers the break-even and a higher rate raises it. I set it from what we would actually do with the cash.</p>
+<h2>Pitfalls</h2>
+<ul>
+<li>Mixing bases. A GP case quoted on NAV and a house case built from the transaction price are different multiples. I put both on the price before I compare them.</li>
+<li>Taking the base hold as given. The four years are the GP's expectation, and the GP holds the option to extend.</li>
+<li>Reading the pref as protection. With full catch-up it only changes the carry inside a narrow band of outcomes. Above that band the LP pays 12.5% of the whole profit.</li>
+<li>Comparing IRRs across holds. I compare end values on the same date against the matching sell leg.</li>
+<li>Leaving the GP's own payment out. Fenmoor's GP takes $18.4m of carry at the transaction price and restarts carry from it. Selling LPs fund the first and rolling LPs pay the second.</li>
+<li>Missing the default. An LP that does not return the Fenmoor form within 15 business days is deemed to sell at 94.0% of NAV.</li>
+</ul>
+<h2>What I check</h2>
+<ol>
+<li>Pull every CV term from the notice and tie each one to its source line.</li>
+<li>Confirm the date of the NAV behind the price. Fenmoor prices on 31 December 2025 NAV, two quarters before our pricing date.</li>
+<li>Set the opportunity cost before looking at the GP's case.</li>
+<li>Solve the break-even at the base hold and at each extension.</li>
+<li>Build a house case multiple from the transaction price, and put the GP case and a downside beside it.</li>
+<li>Count the bidders and check how the fairness adviser is paid. At Fenmoor 2 of 9 potential buyers bid, the adviser also advised the GP, and part of its fee is payable only on completion. The 94.0% price sits below the middle of its own 91% to 99% range.</li>
+<li>Check whether the GP takes carry at the transaction price on the way in, and how much of it rolls. Fenmoor's GP rolls 100% of its crystallized carry plus $10 million in cash.</li>
+<li>Ask whether there is a status quo option and what happens if you don't reply.</li>
+<li>Check that the election window matches the notice period in the LPA. Fenmoor gives 15 business days against the 20 that Section 6.3 of the LPA requires.</li>
+</ol>
+<p>A low price hurts sellers and helps rollers. A weak process is a reason to push back on the terms whichever way you elect. On Fenmoor I return the form as a sale and ask the advisory committee for the 20 business days the LPA requires.</p>
+<p>To run this on other inputs, open the <a href="/secondaries-desk.html">Secondaries Desk</a> and go to the continuation vehicle tab. Move the opportunity cost and the three gross multiples, then read the hold and multiple grid. The full case, with the portfolio bid and the conflicts checklist, is in the <a href="/memos/secondary-lp-portfolio.html">investment memo</a>.</p>
     <p class="fine">The numbers come from the base case of the linked demo. The funds and managers are made up.</p>
   </article>
 </main>

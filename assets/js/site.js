@@ -5,12 +5,11 @@
   var root = document.documentElement;
   var saved = null;
   try { saved = localStorage.getItem('theme'); } catch (e) { /* storage blocked */ }
-  if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+  root.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');  /* dark unless the visitor chose light */
 
   function isDark() {
     var t = root.getAttribute('data-theme');
-    if (t) return t === 'dark';
-    return false;  /* light unless the visitor chose dark with the toggle */
+    return t !== 'light';
   }
   window.siteTheme = { isDark: isDark };
 
@@ -54,8 +53,6 @@
         last = e; if (raf) return;
         raf = requestAnimationFrame(function () {
           raf = 0;
-          document.body.style.setProperty('--cx', last.clientX + 'px');
-          document.body.style.setProperty('--cy', last.clientY + 'px');
           var el = last.target && last.target.closest && last.target.closest(SPOT);
           while (el) {
             var r = el.getBoundingClientRect();
@@ -65,9 +62,6 @@
           }
         });
       }, { passive: true });
-      document.documentElement.addEventListener('pointerenter', function () { document.body.classList.add('pointer-in'); });
-      document.documentElement.addEventListener('pointerleave', function () { document.body.classList.remove('pointer-in'); });
-      document.body.classList.add('pointer-in');
     }
     // mark the current page in the nav
     var path = location.pathname.replace(/index\.html$/, '');

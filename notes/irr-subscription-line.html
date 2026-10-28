@@ -10,9 +10,9 @@
     <meta property="og:description" content="A subscription line lifts IRR and leaves the multiple alone. Rebuild the cash flows to see the return underneath.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="theme-color" content="#FFFFFF">
-    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <meta name="theme-color" content="#0B1A15">
+    <link rel="icon" href="/assets/images/favicon.svg?v=3" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=3" type="image/png" sizes="64x64">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -45,15 +45,75 @@
     <h1>Your IRR with and without the subscription line</h1>
     <p class="dek">A subscription line lifts IRR and leaves the multiple alone. Rebuild the cash flows to see the return underneath.</p>
     <div class="meta"><span>Cristian Arenas</span><span>28 October 2026</span><span>Test it in the <a href="/fund-terms-auditor.html">Fund Terms Auditor</a></span></div>
-    <p>A subscription line lets a fund buy a company before it calls capital from LPs. The fund borrows against LP commitments, invests, and calls the money months later. LP capital is at work for less time, so IRR goes up. The multiple stays the same.</p>
+    <p>A subscription line lets a fund buy a company before it calls capital from LPs. The fund borrows against LP commitments, closes the deal, and calls the money months later. LP capital is at work for fewer days, so IRR goes up. The multiple stays the same, because the same dollars go in and the same dollars come out.</p>
+<p>This matters most when funds get ranked. Investment committees screen on net IRR and quartile, and half a point can move a fund across a quartile line. A GP that runs a longer line can look better than a peer with the same deals and the same TVPI. I want the return underneath before I compare anyone.</p>
 <h2>Rebuild the cash flows</h2>
-<p>To see the return without the line, move every capital call back to the date of the investment it paid for. Keep distributions and NAV where they are. Interest on the line stays in, since the fund paid it either way.</p>
-<p>In the Fund Terms Auditor, Ostrel Capital Partners VI calls capital about six months after each investment. Restated for fees and carry, its net IRR is 4.1% with the line and 3.6% without it. TVPI is 1.14x in both cases.</p>
-<h2>Why it matters in manager selection</h2>
-<p>Half a point matters when funds get ranked by IRR. Two funds with the same multiple can land in different quartiles because one runs a longer line. In the Manager Selection Copilot, the line adds 1.0 point to Hasturn Fund II's net IRR, and the 3.4% underneath looks a lot weaker.</p>
-<p>Ask the GP for both numbers. When they don't have them, the capital call dates and the investment dates in the capital account history are enough to rebuild it.</p>
-<h2>A quick check</h2>
-<ul><li>Compare call dates with deal close dates. A gap of three months or more means the line is doing real work.</li><li>Look at DPI and TVPI first. Neither moves with the line.</li></ul>
+<p>The fix is mechanical. I take the LP cash flows as the fund reports them and redate each call that paid for an investment. Everything else stays where it is.</p>
+<ol>
+<li>Pull the capital account history with each call's date and amount, plus the close date of every deal.</li>
+<li>Match each investment call to the deal it paid for. The gap between close and call is the time the line carried that deal.</li>
+<li>Move each investment call back to its deal's close date and keep the amount unchanged.</li>
+<li>Leave management fees, partnership expenses, distributions and ending NAV on their own dates. A fee has no deal date to move to.</li>
+<li>Keep interest on the line inside the rebuilt flows. The fund paid it either way, and dropping it would flatter the result.</li>
+<li>Solve for IRR again on the same daily convention.</li>
+</ol>
+<pre class="formula">With the line:
+  sum CF_t / (1 + r)^((t - t0)/365) = 0
+  investment call dated close + lag
+
+Without the line:
+  same flows and amounts
+  investment call dated close
+  fees, distributions, NAV unchanged
+
+uplift = IRR(with) - IRR(without)
+TVPI   = (distributions + NAV)
+         / contributions
+       = same in both</pre>
+<p>TVPI and DPI are ratios of sums, so moving a date cannot change them. If either one moves after the rebuild, I have changed an amount by mistake. I use that as my first test of the work.</p>
+<h2>Worked example on Ostrel Capital Partners VI</h2>
+<p>In the Fund Terms Auditor, Ostrel Capital Partners VI is a $1,200m fund with an initial close on 15 October 2019. The LP in the demo holds 3.75%, a $45m commitment that is almost fully called. Its cash flow ledger shows calls lagging investments by about six months, so the base case sets the line at 180 days. Ostrel VI does not report IRR without the line, so I rebuild it.</p>
+<p>Before I touch the line I fix the inputs. The auditor finds a Q3 2025 fee charged on the wrong base, a Q1 2026 offset at half the LPA rate, and a carry accrual of $1,236,187 with no preferred return behind it. Under the whole-fund waterfall no carry is due. Restating fees and carry to the LPA moves net IRR from the reported 3.3% to 4.1%. That restated figure is my starting point with the line in place.</p>
+<div class="table-wrap"><table class="memo-table">
+<thead><tr><th>Basis</th><th class="n">IRR</th><th class="n">TVPI</th><th class="n">DPI</th></tr></thead>
+<tbody>
+<tr><td>Gross, deal level</td><td class="n">6.9%</td><td class="n">1.29x</td><td class="n">n/a</td></tr>
+<tr><td>Net, as reported by the GP</td><td class="n">3.3%</td><td class="n">1.11x</td><td class="n">0.58x</td></tr>
+<tr><td>Net, restated, with line</td><td class="n">4.1%</td><td class="n">1.14x</td><td class="n">0.58x</td></tr>
+<tr><td>Net, restated, without line</td><td class="n">3.6%</td><td class="n">1.14x</td><td class="n">0.58x</td></tr>
+</tbody>
+</table></div>
+<p>The line adds 0.5 pp of net IRR. TVPI is 1.14x and DPI is 0.58x in both restated rows, which is the check I want to see. With DPI at 0.58x, most of the value still sits in NAV, so the 3.6% leans on marks that have yet to be realized.</p>
+<p>Order matters here. The fee and carry restatement is worth 0.8 pp (4.1% less 3.3%), more than the line. Had I stripped the line from the GP's own 3.3%, I would have removed it from a number that was already wrong.</p>
+<div class="callout"><p>I rank and underwrite Ostrel VI on 3.6%, the restated net IRR without the line. The 4.1% is the same fund with a lender carrying each deal for its first six months.</p></div>
+<h3>A second fund with a longer line</h3>
+<p>The <a href="/manager-selection-copilot.html">Manager Selection Copilot</a> shows the same effect on Hasturn Fund II, which calls capital about nine months after each investment. Its net IRR is 4.4% with the line and 3.4% without it, a gain of 1.0 pp, with TVPI at 1.10x in both. A longer lag gave a bigger lift. In that memo I underwrite Fund II on 3.4%, and at that level it looks a lot weaker than the headline.</p>
+<h2>What changes the answer</h2>
+<h3>The length of the line</h3>
+<p>The input is "Subscription line, days from investment to LP call", set to 180 in the base case. Raise it and the with-line IRR rises. The without-line IRR holds at 3.6%, since the rebuild puts every investment call on its close date whatever the lag. Set the lag to zero and the two figures meet. TVPI stays at 1.14x throughout. When a GP quotes a longer line in its next fund, I expect the reported IRR to rise with no change in the deals.</p>
+<h3>Fees and carry</h3>
+<p>Both restated rows sit on fees recomputed from the LPA and carry from the whole-fund waterfall. Change the fee rates or the carry terms in the assumptions and both rows move. The reported 3.3% carries the wrong accrual, so I always restate the economics first and measure the line second. The two adjustments answer different questions, and I keep them apart in the write-up.</p>
+<h2>Pitfalls</h2>
+<ul>
+<li>Moving distributions or the NAV date along with investment calls. Only those calls move.</li>
+<li>Moving fee and expense calls to deal dates. They never paid for a deal.</li>
+<li>Dropping line interest from the rebuilt flows, which makes the no-line IRR look better than it was.</li>
+<li>Stripping the line from a reported IRR that still has fee or carry errors in it.</li>
+<li>Comparing one GP's with-line IRR against a peer or a benchmark on the other basis. Both sides need the same treatment.</li>
+<li>Reading a steady TVPI as proof the line is harmless. TVPI cannot see the line at all.</li>
+<li>Treating the uplift as permanent. A fixed lag weighs less as hold periods lengthen, so the gap is widest early in a fund's life, when IRR is least reliable anyway.</li>
+</ul>
+<h2>What I check</h2>
+<ol>
+<li>Get the capital account history with call dates and the close date of every deal.</li>
+<li>Compute the lag for each deal. A gap of three months or more means the line is doing real work.</li>
+<li>Recompute fees and carry against the LPA and restate the with-line IRR before anything else.</li>
+<li>Rebuild the flows by moving investment calls to close dates and leaving everything else in place, line interest included.</li>
+<li>Recompute IRR and confirm TVPI and DPI match the with-line figures exactly.</li>
+<li>Ask the GP for net IRR with and without the line. If its figure differs from mine, ask how it was built.</li>
+<li>Rank and compare funds on the without-line IRR, with DPI next to it so I can see how much rests on NAV.</li>
+</ol>
+<p>Open the Returns and the line tab of the <a href="/fund-terms-auditor.html">Fund Terms Auditor</a> to run this rebuild on Ostrel VI. Change the line days and watch which IRR moves and which one holds. The <a href="/memos/fund-terms-review.html">Ostrel VI fee and terms review</a> puts the 3.6% next to the fee and carry breaks behind the restatement.</p>
     <p class="fine">The numbers come from the base case of the linked demo. The funds and managers are made up.</p>
   </article>
 </main>

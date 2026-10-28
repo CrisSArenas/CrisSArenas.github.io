@@ -427,7 +427,145 @@
   UI.toCSV = function (columns, rows) {
     return [columns.map(function (c) { return csvCell(c.label); }).join(',')].concat(rows.map(function (r) {
       return columns.map(function (c) { var v = r[c.key]; return csvCell(typeof v === 'number' ? +v.toPrecision(12) : v); }).join(',');
-    })).join('\n');
+    })).join('\r\n');
+  };
+
+  /* ---------- Excel workbook (.xlsx) written in the browser: one sheet per table plus a cover sheet ---------- */
+  var CRC = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function zip(files) {  /* files: [{name, data: Uint8Array}], stored without compression */
+    var enc = new TextEncoder(), parts = [], cen = [], off = 0;
+    function u16(v) { return [v & 255, (v >>> 8) & 255]; }
+    function u32(v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; }
+    files.forEach(function (f) {
+      var nm = enc.encode(f.name), d = f.data, crc = crc32(d);
+      var loc = [].concat([0x50, 0x4b, 3, 4], u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(d.length), u32(d.length), u16(nm.length), u16(0));
+      parts.push(new Uint8Array(loc), nm, d);
+      cen.push(new Uint8Array([].concat([0x50, 0x4b, 1, 2], u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(d.length), u32(d.length), u16(nm.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(off))), nm);
+      off += loc.length + nm.length + d.length;
+    });
+    var cenLen = cen.reduce(function (a, x) { return a + x.length; }, 0);
+    var end = new Uint8Array([].concat([0x50, 0x4b, 5, 6], u16(0), u16(0), u16(files.length), u16(files.length), u32(cenLen), u32(off), u16(0)));
+    return new Blob(parts.concat(cen, [end]), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  function xesc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); }
+  function colName(i) { var s = ''; i++; while (i > 0) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+  /* number format for a column, read from how the page displays it (12.3% -> 0.0%, $59m -> $#,##0"m", 1.84x -> 0.00"x") */
+  function numFmt(sample) {
+    sample = String(sample == null ? '' : sample).trim();
+    var dec = (sample.match(/\.(\d+)/) || [, ''])[1].length, d = dec ? '.' + new Array(dec + 1).join('0') : '';
+    if (/%$/.test(sample)) return '0' + d + '%';
+    if (/^-?\$.*m$/.test(sample)) return '"$"#,##0' + d + '"m";-"$"#,##0' + d + '"m"';
+    if (/^-?\$.*k$/.test(sample)) return '"$"#,##0' + d + '"k"';
+    if (/^-?\$/.test(sample)) return '"$"#,##0' + d;
+    if (/x$/.test(sample)) return '0' + d + '"x"';
+    if (/bps$/.test(sample)) return '0' + d + '" bps"';
+    if (/pp$/.test(sample)) return '0' + d + '" pp"';
+    return '#,##0' + d;
+  }
+  UI.xlsx = function (name, meta, tables) {
+    var enc = new TextEncoder(), fmts = [], used = {};
+    function fmtId(code) { var i = fmts.indexOf(code); if (i < 0) { fmts.push(code); i = fmts.length - 1; } return 3 + i; }  /* style index; 0 text, 1 header, 2 title */
+    function sheetName(n) { n = String(n || 'Sheet').replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31).trim() || 'Sheet'; var b = n, k = 2; while (used[n.toLowerCase()]) n = b.slice(0, 28) + ' ' + k++; used[n.toLowerCase()] = 1; return n; }
+    function cell(ref, v, style) {
+      if (typeof v === 'number' && isFinite(v)) return '<c r="' + ref + '"' + (style ? ' s="' + style + '"' : '') + '><v>' + (+v.toPrecision(15)) + '</v></c>';
+      if (v == null || v === '') return '';
+      return '<c r="' + ref + '" t="inlineStr"' + (style ? ' s="' + style + '"' : '') + '><is><t xml:space="preserve">' + xesc(v) + '</t></is></c>';
+    }
+    function sheet(rows, widths, freeze) {
+      return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+        (freeze ? '<sheetViews><sheetView workbookViewId="0"><pane ySplit="' + freeze + '" topLeftCell="A' + (freeze + 1) + '" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' : '') +
+        '<cols>' + widths.map(function (w, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols><sheetData>' +
+        rows.map(function (r, i) { return '<row r="' + (i + 1) + '">' + r.map(function (c, j) { return c ? cell(colName(j) + (i + 1), c.v, c.s) : ''; }).join('') + '</row>'; }).join('') + '</sheetData></worksheet>';
+    }
+    var sheets = [], cover = [[{ v: meta.title, s: 2 }], []];
+    meta.rows.forEach(function (r) { cover.push([{ v: r[0], s: 1 }, { v: r[1] }]); });
+    sheets.push({ name: sheetName('About'), xml: sheet(cover, [26, 90]) });
+    tables.forEach(function (t) {
+      var rows = t.rows.slice(); if (t.foot) rows.push(t.foot);
+      var styles = t.columns.map(function (c) {
+        if (!c.num) return 0;
+        var r0 = rows.filter(function (r) { return typeof r[c.key] === 'number'; })[0];
+        if (!r0) return 0;
+        var shown = c.fmt ? c.fmt(r0[c.key], r0) : String(r0[c.key]);
+        var code = numFmt(String(shown).replace(/<[^>]+>/g, ''));
+        /* percent formats need the stored value as a fraction; most tables already hold fractions */
+        return fmtId(code);
+      });
+      var out = [t.columns.map(function (c) { return { v: c.label, s: 1 }; })];
+      rows.forEach(function (r) { out.push(t.columns.map(function (c, j) { var v = r[c.key]; if (typeof v !== 'number' && c.fmt && v != null && typeof v === 'object') v = String(c.fmt(v, r)).replace(/<[^>]+>/g, ''); return { v: v, s: typeof v === 'number' ? styles[j] : 0 }; })); });
+      var widths = t.columns.map(function (c) { var m = String(c.label).length; rows.forEach(function (r) { var v = r[c.key]; m = Math.max(m, String(v == null ? '' : typeof v === 'number' ? v.toFixed(2) : v).length); }); return Math.min(60, Math.max(10, m + 2)); });
+      sheets.push({ name: sheetName(t.name || t.id), xml: sheet(out, widths, 1) });
+    });
+    var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      (fmts.length ? '<numFmts count="' + fmts.length + '">' + fmts.map(function (f, i) { return '<numFmt numFmtId="' + (164 + i) + '" formatCode="' + xesc(f) + '"/>'; }).join('') + '</numFmts>' : '') +
+      '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF0E3B2E"/><name val="Calibri"/></font></fonts>' +
+      '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0E3B2E"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+      '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+      '<cellXfs count="' + (3 + fmts.length) + '"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+      fmts.map(function (f, i) { return '<xf numFmtId="' + (164 + i) + '" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'; }).join('') + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+    var files = [
+      { name: '[Content_Types].xml', xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' + sheets.map(function (_, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join('') + '</Types>' },
+      { name: '_rels/.rels', xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+      { name: 'xl/workbook.xml', xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + sheets.map(function (sh, i) { return '<sheet name="' + xesc(sh.name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') + '</sheets></workbook>' },
+      { name: 'xl/_rels/workbook.xml.rels', xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + sheets.map(function (_, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join('') + '<Relationship Id="rId' + (sheets.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+      { name: 'xl/styles.xml', xml: styles }
+    ].concat(sheets.map(function (sh, i) { return { name: 'xl/worksheets/sheet' + (i + 1) + '.xml', xml: sh.xml }; }));
+    var blob = zip(files.map(function (f) { return { name: f.name, data: enc.encode(f.xml) }; }));
+    var a = UI.el('a', { href: URL.createObjectURL(blob), download: name });
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    return blob;
+  };
+
+  /* ---------- formatted report: every tab's key numbers, charts and tables, laid out for print ---------- */
+  UI.report = function (o) {
+    var w = window.open('', '_blank');
+    if (!w) { window.print(); return; }
+    var txt = function (n) { if (!n) return ''; var c = n.cloneNode(true); UI.$$('button', c).forEach(function (b) { b.remove(); }); return UI.esc(c.textContent.replace(/\s+/g, ' ').trim()); };
+    var clean = function (n) { var c = n.cloneNode(true); UI.$$('button, input, select, .explain-btn', c).forEach(function (b) { b.remove(); }); UI.$$('[id]', c).forEach(function (e) { e.removeAttribute('id'); }); c.removeAttribute && c.removeAttribute('id'); return c.outerHTML; };
+    var tabs = UI.$$('.tab-panel').map(function (p) {
+      var b = document.querySelector('.tabs > button[data-tab="' + p.id + '"]'), name = b ? b.textContent.trim() : '';
+      var k = UI.$$('.kpi', p).map(function (x) { return '<div class="rk' + (x.classList.contains('bad') ? ' bad' : x.classList.contains('good') ? ' good' : '') + '"><div class="l">' + txt(x.querySelector('.k-label')) + '</div><div class="v">' + txt(x.querySelector('.k-val')) + '</div>' + (x.querySelector('.k-sub') ? '<div class="s">' + txt(x.querySelector('.k-sub')) + '</div>' : '') + '</div>'; }).join('');
+      var blocks = UI.$$('.panel', p).map(function (pn) {
+        if (pn.closest('.kpis')) return '';
+        var svgs = UI.$$('svg[role="img"]', pn).filter(function (s) { return !s.closest('.kpi'); }), tbl = UI.$$('table.data', pn), notes = UI.$$('.panel-body > p, .eval-note, .notice', pn);
+        if (!svgs.length && !tbl.length) return '';
+        var h = pn.querySelector('.panel-head h3'), sub = pn.querySelector('.panel-head .sub');
+        return '<section class="blk"><h3>' + txt(h) + (sub ? ' <span>' + txt(sub) + '</span>' : '') + '</h3>' + svgs.map(function (s) { return '<div class="fig">' + clean(s.closest('.legend-wrap') || s) + '</div>'; }).join('') +
+          tbl.map(function (t) { return clean(t); }).join('') + notes.map(function (n) { return '<p class="note">' + txt(n) + '</p>'; }).join('') + '</section>';
+      }).join('');
+      return (k || blocks) ? '<section class="tab"><h2>' + UI.esc(name) + '</h2>' + (k ? '<div class="rks">' + k + '</div>' : '') + blocks + '</section>' : '';
+    }).join('');
+    var how = document.getElementById('how'), howBody = '';
+    if (how) { var hb = how.querySelector('.fold-body'); howBody = hb ? '<section class="tab how"><h2>How it works</h2>' + clean(hb) + '</section>' : ''; }
+    var lede = document.querySelector('.demo-hero .lede'), ev = document.getElementById('evalLine'), memo = document.querySelector('#memo a.memo-card');
+    var when = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    var html = '<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><title>' + UI.esc(o.demo) + ' report</title>' +
+      '<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/css/demo-shell.css"><style>' + UI.reportCSS(o.demo) + '</style></head><body class="report">' +
+      '<div class="bar"><button onclick="window.print()">Save as PDF</button></div>' +
+      '<header class="cover"><div class="brand">Cristian Arenas</div><h1>' + UI.esc(o.demo) + '</h1><p class="lede">' + txt(lede) + '</p>' +
+      '<dl><div><dt>Report</dt><dd>' + UI.esc((o.report || 'Report').replace(/\s*\(PDF\)\s*/, '')) + '</dd></div><div><dt>Generated</dt><dd>' + when + '</dd></div><div><dt>Data</dt><dd>' + UI.esc(o.source ? o.source() : '') + '</dd></div>' +
+      (ev && ev.textContent ? '<div><dt>Document review</dt><dd>' + txt(ev) + '</dd></div>' : '') + (memo ? '<div><dt>Memo</dt><dd>' + UI.esc(memo.href) + '</dd></div>' : '') + '</dl>' +
+      '<p class="fict">Synthetic data. Every fund, company and portfolio is fictional. Live version: ' + UI.esc(location.origin + location.pathname) + '</p></header>' + tabs + howBody + '</body></html>';
+    w.document.open(); w.document.write(html); w.document.close();
+    var go = function () { setTimeout(function () { try { w.focus(); w.print(); } catch (e) { /* the bar button still works */ } }, 350); };
+    if (w.document.readyState === 'complete') go(); else w.addEventListener('load', go);
+  };
+  UI.reportCSS = function (demo) {
+    return '@page { size: A4; margin: 16mm 14mm 18mm; @bottom-left { content: "Cristian Arenas \\00B7  ' + String(demo).replace(/"/g, '') + '"; font: 8pt -apple-system, Segoe UI, sans-serif; color: #5B6676; } @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt -apple-system, Segoe UI, sans-serif; color: #5B6676; } }' +
+      'html, body.report { background: #fff !important; color: #1A2433; -webkit-print-color-adjust: exact; print-color-adjust: exact; } body.report::before { display: none; } body.report { max-width: 182mm; margin: 0 auto; padding: 24px 16px 60px; font-size: 10pt; line-height: 1.45; }' +
+      '.report .bar { position: sticky; top: 0; text-align: right; padding: 8px 0; } .report .bar button { font: 600 13px -apple-system, sans-serif; background: #0E3B2E; color: #fff; border: 0; border-radius: 999px; padding: 9px 18px; cursor: pointer; }' +
+      '.report .cover { border-top: 6px solid #0E3B2E; padding-top: 18px; margin-bottom: 18px; } .report .brand { font-size: 9pt; font-weight: 600; color: #13294B; letter-spacing: .04em; text-transform: uppercase; }' +
+      '.report h1 { font-size: 24pt; color: #0E3B2E; margin: 6px 0 8px; } .report .lede { font-size: 11pt; color: #1A2433; margin: 0 0 14px; }' +
+      '.report dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; margin: 0 0 12px; padding: 12px 14px; background: #F3F6F4; border-radius: 8px; } .report dt { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .05em; color: #5B6676; } .report dd { margin: 1px 0 0; font-size: 9.5pt; word-break: break-word; }' +
+      '.report .fict { font-size: 8pt; color: #5B6676; } .report h2 { font-size: 15pt; color: #0E3B2E; border-bottom: 1.5px solid #0E3B2E; padding-bottom: 4px; margin: 26px 0 12px; break-after: avoid; }' +
+      '.report .tab + .tab { break-before: page; } .report .rks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; } .report .rk { border: 1px solid #DFE5E2; border-radius: 8px; padding: 8px 10px; break-inside: avoid; }' +
+      '.report .rk .l { font-size: 7.5pt; color: #5B6676; } .report .rk .v { font-size: 14pt; font-weight: 600; color: #0E3B2E; font-variant-numeric: tabular-nums; } .report .rk.bad .v { color: #A3312B; } .report .rk .s { font-size: 7.5pt; color: #5B6676; }' +
+      '.report .blk { margin: 0 0 16px; break-inside: avoid; } .report h3 { font-size: 10.5pt; margin: 0 0 6px; color: #1A2433; } .report h3 span { font-weight: 400; color: #5B6676; font-size: 8.5pt; }' +
+      '.report .fig svg { width: 100%; height: auto; max-height: 82mm; } .report table.data { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 6px 0; } .report table.data th { background: #0E3B2E; color: #fff; font-weight: 600; text-align: left; padding: 4px 6px; }' +
+      '.report table.data td { padding: 3px 6px; border-bottom: 1px solid #E6ECE9; } .report table.data tbody tr:nth-child(even) td { background: #F7F9F8; } .report table.data .n { text-align: right; font-variant-numeric: tabular-nums; }' +
+      '.report .note { font-size: 8.5pt; color: #5B6676; margin: 4px 0 0; } .report .how ul { padding-left: 18px; } .report .how li { margin-bottom: 4px; } .report .formula { white-space: pre-wrap; font-size: 8pt; background: #F3F6F4; padding: 8px 10px; border-radius: 6px; }' +
+      '.report a { color: inherit; text-decoration: none; } @media print { .report .bar { display: none; } body.report { padding: 0; max-width: none; } }';
   };
   UI.parseCSV = function (text) {
     var rows = [], row = [], cell = '', q = false, i = 0, c;
@@ -467,16 +605,14 @@
     var btn = UI.el('button', { class: 'btn btn-ghost btn-sm', type: 'button', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: 'More' });
     var menu = UI.el('div', { class: 'export-menu', role: 'menu' });
     el.innerHTML = ''; el.appendChild(btn); el.appendChild(menu);
-    function header(kind) {
-      return ['# ' + o.demo + ' (' + kind + ')', '# Data: ' + o.source(), '# Generated: ' + new Date().toISOString(), '# Not investment advice. Fictional entities.'];
-    }
     function build() {
       var ids = o.tables ? o.tables() : Object.keys(UI.tables);
-      var h = (o.byod ? '<div class="grp">Data</div><button role="menuitem" data-byod="1">Use your own file</button>' : '') + '<div class="grp">Export tables (CSV)</div>';
-      ids.forEach(function (id) { if (UI.tables[id]) h += '<button role="menuitem" data-csv="' + id + '">' + UI.esc(UI.tables[id].name || id) + '</button>'; });
-      h += '<button role="menuitem" data-csv="*">All tables in one file</button><div class="grp">Audit</div><button role="menuitem" data-json="1">Audit log (JSON)</button>' +
-        '<div class="grp">Report</div><button role="menuitem" data-print="1">' + UI.esc(o.report || 'One-page report (PDF)') + '</button>';
-      h = h.replace('<div class="grp">Audit</div><button role="menuitem" data-json="1">Audit log (JSON)</button>', '') + '<div class="grp">Audit</div><button role="menuitem" data-json="1">Audit log (JSON)</button>';
+      var h = '<div class="grp">Report</div><button role="menuitem" data-print="1">' + UI.esc((o.report || 'Report').replace(/\s*\(PDF\)\s*/, '')) + ' <span class="fx">PDF</span></button>' +
+        '<button role="menuitem" data-xlsx="1">All tables, formatted <span class="fx">Excel</span></button>' +
+        '<div class="grp">Single tables</div>';
+      ids.forEach(function (id) { if (UI.tables[id]) h += '<button role="menuitem" data-csv="' + id + '">' + UI.esc(UI.tables[id].name || id) + ' <span class="fx">CSV</span></button>'; });
+      h += '<div class="grp">Audit</div><button role="menuitem" data-json="1">Audit log <span class="fx">JSON</span></button>' +
+        (o.byod ? '<div class="grp">Data</div><button role="menuitem" data-byod="1">Use your own file</button>' : '');
       menu.innerHTML = h;
     }
     btn.addEventListener('click', function (e) { e.stopPropagation(); build(); var open = el.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
@@ -487,18 +623,17 @@
       if (b.dataset.byod) {
         var z = resolve(o.byod); z.hidden = false; z.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else if (b.dataset.csv) {
-        var ids = b.dataset.csv === '*' ? (o.tables ? o.tables() : Object.keys(UI.tables)) : [b.dataset.csv];
-        var body = ids.filter(function (id) { return UI.tables[id]; }).map(function (id) {
-          var t = UI.tables[id], rows = t.rows.slice(); if (t.foot) rows.push(t.foot);
-          return (ids.length > 1 ? '# Table: ' + (t.name || id) + '\n' : '') + UI.toCSV(t.columns, rows);
-        }).join('\n\n');
-        UI.download(o.slug + '-' + (b.dataset.csv === '*' ? 'tables' : b.dataset.csv) + '.csv', header('CSV').join('\n') + '\n' + body);
+        var t = UI.tables[b.dataset.csv], rows = t.rows.slice(); if (t.foot) rows.push(t.foot);
+        UI.download(o.slug + '-' + b.dataset.csv + '.csv', '\ufeff' + UI.toCSV(t.columns, rows) + '\r\n');
+      } else if (b.dataset.xlsx) {
+        var tids = (o.tables ? o.tables() : Object.keys(UI.tables)).filter(function (id) { return UI.tables[id]; });
+        UI.xlsx(o.slug + '.xlsx', { title: o.demo, rows: [['Demo', o.demo], ['Data', o.source()], ['Generated', new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC'], ['Live version', location.origin + location.pathname], ['Note', 'Synthetic data. Every fund, company and portfolio is fictional.'], ['Sheets', tids.map(function (id) { return UI.tables[id].name || id; }).join(', ')]] }, tids.map(function (id) { return UI.tables[id]; }));
       } else if (b.dataset.json) {
         var payload = { demo: o.demo, data: o.source(), generated: new Date().toISOString(), note: 'Simulated review over synthetic documents. Not investment advice.', audit: o.audit ? o.audit() : [] };
         UI.download(o.slug + '-audit-log.json', JSON.stringify(payload, null, 2), 'application/json');
       } else if (b.dataset.print) {
         if (o.beforePrint) o.beforePrint();
-        window.print();
+        UI.report(o);
       }
     });
   };

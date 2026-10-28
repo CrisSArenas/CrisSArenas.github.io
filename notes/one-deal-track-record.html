@@ -10,9 +10,9 @@
     <meta property="og:description" content="A strong record often rests on one exit. A few numbers tell you how much of it the GP can repeat.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="theme-color" content="#FFFFFF">
-    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <meta name="theme-color" content="#0B1A15">
+    <link rel="icon" href="/assets/images/favicon.svg?v=3" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=3" type="image/png" sizes="64x64">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -46,14 +46,83 @@
     <p class="dek">A strong record often rests on one exit. A few numbers tell you how much of it the GP can repeat.</p>
     <div class="meta"><span>Cristian Arenas</span><span>28 October 2026</span><span>Test it in the <a href="/manager-selection-copilot.html">Manager Selection Copilot</a></span></div>
     <p>A strong fund track record often rests on one or two deals. Before I back a re-up, I want to know how much of the record the GP can repeat.</p>
-<h2>The numbers I start with</h2>
-<ul><li>The share of total gains from the best deal and from the best three. I use gains so that losses count.</li><li>The loss ratio, meaning the share of invested capital in deals below 1.0x.</li><li>The fund's multiple with the best deal taken out.</li></ul>
-<p>In the Manager Selection Copilot, Hasturn Fund I shows 2.03x gross across 13 deals. Brightmere Dental made 42.5% of the gains. Without it the fund is 1.65x gross, which is ordinary once fees and carry come off.</p>
-<h2>Where the value came from</h2>
-<p>A value bridge splits each deal's equity gain into EBITDA growth, multiple change and debt paydown. EBITDA growth is the part a GP can call skill. Multiple expansion in a rising market is mostly the market.</p>
-<h2>Check the interim numbers</h2>
-<p>Re-ups get decided on interim marks. Hasturn Fund I was top quartile when Fund II was raised and is second quartile now. Among the synthetic 2016 peers in the demo, only 55% of top-quartile funds stayed there once their portfolios matured.</p>
-<p>The record can still hide real skill. Hasturn's healthcare deals look like it, and I'd want two more realizations outside healthcare before committing.</p>
+<p>A GP raising its next fund leads with the gross multiple of the last one. That number is a sum over a dozen or so deals, and in mid-market buyout a single exit can carry a whole fund. If the best deal came from a rare entry price or a sector that rerated, the next fund will probably not get it again.</p>
+<p>This matters to an investment committee because a re-up is a bet on the team's next ten years of deals. I want the committee to see the record with and without its outlier. The discussion then turns to the part of the record the GP can repeat, and the headline multiple in the fundraising deck gets the weight it deserves.</p>
+<h2>The method</h2>
+<p>I work from the deal-level schedule, which most GPs put in the data room. For each deal I need the amount invested, realized and unrealized value, entry and exit dates and the sector. For the value bridge I also need EBITDA, the valuation multiple and net debt at entry and at exit. Then I go through the same steps every time.</p>
+<ol>
+<li>I compute each deal's gain as value minus invested. I divide by the net gain of the whole fund, so losses reduce the total and a fund with write-offs looks more concentrated.</li>
+<li>I rank the gains and take the share from the best deal and from the best three.</li>
+<li>I take the best deal out and recompute the gross MOIC on what is left.</li>
+<li>I measure the loss ratio, which is the share of invested capital in deals below 1.0x.</li>
+<li>I split each deal's equity gain into EBITDA growth, multiple change and net debt change, and I look at which part drove the winners.</li>
+</ol>
+<pre class="formula">gain(i) = value(i) - invested(i)
+
+top-N share =
+  sum of the N largest gains
+  / sum of all gains
+
+MOIC ex-best =
+  (total value - best value)
+  / (total invested - best invested)
+
+loss ratio =
+  invested in deals with MOIC &lt; 1
+  / total invested
+
+EBITDA growth = (E1 - E0) x m0
+multiple      = (m1 - m0) x E1
+net debt      = D0 - D1</pre>
+<p>E is EBITDA, m is the EV/EBITDA multiple and D is net debt, with 0 at entry and 1 at exit. The three bridge terms add up to the change in equity value.</p>
+<h2>Worked example: Hasturn Fund I</h2>
+<p>The demo's base case is Hasturn Partners, a fictional mid-market buyout manager raising Fund III. Fund I (2016) made $844m on $416m across 13 deals, a 2.03x gross MOIC and a net gain of $428m.</p>
+<p>Brightmere Dental Group went in at $38m and came out at $220m, a 5.79x multiple and a $182m gain. On its own that is 42.5% of the fund's net gain. Take it out and the other 12 deals made $624m on $378m, which is 1.65x gross. The top three deals made 64% of the gains.</p>
+<div class="table-wrap"><table class="memo-table">
+<thead><tr><th>Measure</th><th class="n">Fund I</th><th class="n">Fund II</th><th class="n">Both funds</th></tr></thead>
+<tbody>
+<tr><td>Gross MOIC</td><td class="n">2.03x</td><td class="n">1.24x</td><td class="n">1.62x</td></tr>
+<tr><td>Gains from the best deal</td><td class="n">42.5%</td><td class="n">43.8%</td><td class="n">34.1%</td></tr>
+<tr><td>Gains from the top three</td><td class="n">64%</td><td class="n">89%</td><td class="n">53%</td></tr>
+<tr><td>Gross MOIC without the best deal</td><td class="n">1.65x</td><td class="n">1.15x</td><td class="n">1.43x</td></tr>
+<tr><td>Loss ratio</td><td class="n">14.7%</td><td class="n">17.5%</td><td class="n">16.1%</td></tr>
+<tr><td>Dispersion of deal MOICs (std dev)</td><td class="n">1.28</td><td class="n">0.41</td><td class="n">1.05</td></tr>
+</tbody>
+</table></div>
+<p>Fund II is worse on every line. Rowan Veterinary made 43.8% of its gains and the top three made 89%. Without Rowan, Fund II is 1.15x gross. Brightmere and Rowan are the best deal in each fund, and both are healthcare. In Fund I the two healthcare deals, Brightmere and Fallon Labs, made $217m of the $428m gain.</p>
+<p>The loss ratio is 14.7% in Fund I. Eskel Home Brands (0.54x, realized) and Kestle Specialty Chemicals (0.88x, unrealized) hold $61m of the $416m invested. I can live with that. The problem in this record sits at the top of the distribution. The dispersion of 1.28 is mostly Brightmere, and Fund II's 0.41 is low because its marks are young and still close to cost.</p>
+<p>The value bridge asks where Fund I's gain came from. EBITDA growth added $385m and multiple change added $158m. Net debt rose by $115m, which took value away from equity. EBITDA growth explains 90% of the $428m equity gain, and that is the part I credit to the GP. In Fund II a $134m rise in net debt absorbed most of the $234m from EBITDA growth and left a $105m equity gain. Rowan's EBITDA in the deal data is slightly lower at exit than at entry, so its gain came from a higher multiple and lower net debt.</p>
+<div class="callout"><p>The Fund I record I underwrite is 1.65x gross without Brightmere. Once fees and carry come off, that is an ordinary fund.</p></div>
+<p>The net numbers point the same way. Rebuilt from the deals with the DDQ fees and carry, Fund I nets to 1.62x TVPI and an 11.1% IRR, against the 2.1x the 2025 letter claims. Fund I was top quartile in 2021, when Fund II was raised, on a net TVPI of 1.78x that was mostly unrealized. It is second quartile today. Among the synthetic 2016 peers in the demo, only 55% of top-quartile funds stayed there once their portfolios matured.</p>
+<h2>What changes the answer</h2>
+<p>A few inputs in the demo move these numbers, and each one teaches something about the test.</p>
+<ul>
+<li>Switching the fund selector from Fund I to Fund II makes every concentration measure worse. Choosing both funds pulls the best-deal share down to 34.1%, because Brightmere's gain is now set against the gains of both funds. The pooled record looks more diversified than either fund is on its own.</li>
+<li>Changing the subscription line days in the assumptions table moves Fund II's net IRR and leaves every multiple alone. Concentration is a test on multiples, so the line cannot flatter it. It does flatter the IRR next to it: 4.4% as reported against 3.4% with each call moved back to its investment date.</li>
+<li>Raising the management fee or carry in the assumptions lowers the rebuilt net TVPI. The gross concentration numbers stay the same, but the gap between a 1.65x gross record and a fund worth backing gets wider.</li>
+</ul>
+<h2>Pitfalls</h2>
+<ul>
+<li>Dividing by the sum of positive gains. Losses drop out of the denominator and the best deal looks smaller than it is.</li>
+<li>Testing pooled funds. Both Hasturn funds together show 34.1% from the best deal, while each fund on its own is above 40%.</li>
+<li>Treating a realized outlier as repeatable. Brightmere is a cash result, which makes the number reliable. It says nothing about whether the team can find another one.</li>
+<li>Crediting multiple expansion to the GP. In a rising market most of Fund I's $158m of multiple change belongs to the market.</li>
+<li>Reading an interim quartile as final. Fund I's top-quartile rank in 2021 rested on unrealized marks.</li>
+<li>Stopping once the outlier is gone. One great deal can be skill, and the useful question is whether the GP has done something like it in another company or sector.</li>
+</ul>
+<h2>What I check</h2>
+<ol>
+<li>Get the deal-level schedule for every prior fund, with invested, realized and unrealized value, dates and sector for each deal.</li>
+<li>Tie the deal totals to the GP's headline gross MOIC. Hasturn's DDQ shows 2.0x for Fund I, which matches the deals.</li>
+<li>Compute the top one and top three share of net gain for each fund on its own.</li>
+<li>Recompute gross MOIC without the best deal, then rebuild it net of fees and carry.</li>
+<li>Compute the loss ratio and mark which losses are realized and which are still held at a mark.</li>
+<li>Run the value bridge on the best deals and see how much of their gain is EBITDA growth.</li>
+<li>Group the best deals by sector and ask whether the GP's results hold up outside that group.</li>
+<li>Compare each prior fund's quartile at fundraising with its quartile today.</li>
+<li>Ask the GP to walk through the best deal and name the decisions the team made that a peer would likely have missed.</li>
+</ol>
+<p>The record can still hide real skill. Hasturn's healthcare deals look like it, and I'd want two more realizations outside healthcare before committing. You can run these numbers yourself in the <a href="/manager-selection-copilot.html">Manager Selection Copilot</a>, switch between the funds or load your own deal file, and read how they feed the Fund III decision in the <a href="/memos/buyout-fund-diligence.html">Hasturn Mid-Market Buyout III memo</a>.</p>
     <p class="fine">The numbers come from the base case of the linked demo. The funds and managers are made up.</p>
   </article>
 </main>
