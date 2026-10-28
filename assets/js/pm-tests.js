@@ -272,6 +272,36 @@
     var w = PM.opt.erc(SIG4), rc = PM.opt.riskContrib(w, SIG4);
     rc.forEach(function (x) { near(x, 25, 1e-6); }); near(PM.sum(w), 1, 1e-12);
   }, 'Multi-Strategy Builder');
+  T.add('Multi-strategy', 'Fee netting: a winner and a loser still pay the winner\'s fee', function () {
+    var R = []; for (var t = 0; t < 12; t++) R.push([Math.pow(1.2, 1 / 12) - 1, Math.pow(0.8, 1 / 12) - 1]);
+    var n = PM.ms.netting(R, [0.5, 0.5], [{ perf: 0.2 }, { perf: 0.2 }]);
+    near(n.paid, 0.5 * 0.2 * 0.2, 1e-9); near(n.aggregate, 0, 1e-12); near(n.cost, 0.02, 1e-9);
+  }, 'Multi-Strategy Builder');
+  T.add('Multi-strategy', 'Fees: management and performance fee on a hand example', function () {
+    var r = []; for (var t = 0; t < 12; t++) r.push(0.01);
+    var f = PM.ms.fees(r, { mgmt: 0.012, perf: 0.2 }), nav = 1;
+    for (t = 0; t < 12; t++) nav *= 1 + 0.01 - 0.001;
+    var after = nav - 0.2 * (nav - 1), got = 1; f.net.forEach(function (v) { got *= 1 + v; });
+    near(got, after, 1e-12); near(f.mgmt, 0.012, 1e-12);
+  }, 'Multi-Strategy Builder');
+  T.add('Multi-strategy', 'Volatility targeting brings realised vol to the target', function () {
+    var z = PM.normalGen(PM.mulberry32(5)), r = []; for (var t = 0; t < 600; t++) r.push(0.03 * z());
+    var v = PM.ms.volTarget(r, 0.06, 36, 3), vol = PM.std(v.r.slice(36)) * Math.sqrt(12);
+    ok(Math.abs(vol - 0.06) < 0.006, 'vol ' + vol);
+  }, 'Multi-Strategy Builder');
+  T.add('Multi-strategy', 'Drawdown stop cuts the sleeve for the stated months', function () {
+    var r = [-0.06, -0.06, 0.01, 0.01, 0.01, 0.01];
+    var d = PM.ms.drawdownStop(r, 0.10, 0.5, 2);
+    ok(d.fired[0] === 1, 'fires after month 2'); near(d.r[2], 0.005, 1e-12); near(d.r[3], 0.005, 1e-12); near(d.r[4], 0.01, 1e-12);
+  }, 'Multi-Strategy Builder');
+  T.add('Multi-strategy', 'Exposure drift and correlation shift tests find a planted change', function () {
+    var z = PM.normalGen(PM.mulberry32(9)), X = [], y = [], u = [], v = [];
+    for (var t = 0; t < 120; t++) { var f = [z(), z()]; X.push(f); y.push((t < 80 ? 0 : 0.8) * f[0] + 0.3 * z()); var c = z(); u.push(z() + (t >= 80 ? 2 * c : 0)); v.push(z() + (t >= 80 ? 2 * c : 0)); }
+    var sh = PM.ms.exposureShift(y, X, [0, 80], [80, 120]);
+    ok(sh[0].z > 5 && Math.abs(sh[1].z) < 3, 'drift on factor 1 only');
+    ok(PM.ms.corrShift(u, v, [0, 80], [80, 120]).z > 3, 'correlation rise');
+    near(PM.ms.factorCorr([1, 2], [1, 2], [[1, 0], [0, 1]]), 1, 1e-12);
+  }, 'Multi-Strategy Builder');
   T.add('Multi-strategy', 'Portable alpha engine is deterministic for a seed', function () {
     var a = PM.pa.simulate(PM.pa.DEFAULT_PARAMS), b = PM.pa.simulate(PM.pa.DEFAULT_PARAMS);
     a.paRet.forEach(function (v, i) { near(v, b.paRet[i], 0); }); ok(a.paRet.length === 180, '180 months');

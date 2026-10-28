@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Multi-Strategy Builder · Cristian Arenas</title>
+    <meta name="description" content="Building a multi-strategy book from five sleeves: equal risk contribution, volatility targeting and drawdown stops, crowding and correlation spikes in stress, hidden factor overlap, fee netting and pass-through fees, a portable alpha overlay, and agents that watch for style drift and correlation shifts.">
+    <link rel="canonical" href="https://crissarenas.github.io/multi-strategy-builder.html">
+    <meta property="og:title" content="Multi-Strategy Builder · Cristian Arenas">
+    <meta property="og:description" content="Hidden correlation and crowding across sleeves, and fee netting.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0E1522" media="(prefers-color-scheme: dark)">
+    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/assets/css/demo-shell.css">
+    <script src="/assets/js/site.js"></script>
+    <style>
+      .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+      @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
+      .controls select.field { width: 100%; }
+      .pa-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px 14px; }
+      .pa-inputs label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--muted); }
+      .pa-inputs .field { width: 100%; }
+      .pa-inputs h4 { grid-column: 1 / -1; margin: 6px 0 0; font: 600 .82rem/1.3 var(--sans); color: var(--text); }
+      .health { display: grid; gap: 6px; }
+      .health-row { display: grid; grid-template-columns: 14px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); gap: 8px; align-items: baseline; font-size: .86rem; }
+      .health-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--positive); display: inline-block; }
+      .health-dot.warn { background: var(--negative); }
+      .health-val { font-family: var(--mono); font-size: .8rem; }
+      .health-tgt { color: var(--muted); font-size: .78rem; }
+      @media (max-width: 560px) { .health-row { grid-template-columns: 14px minmax(0, 1fr); } .health-val, .health-tgt { grid-column: 2; } }
+      .memo-inputs li { font-family: var(--sans); font-size: .9rem; }
+    </style>
+</head>
+<body>
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
+  <div class="container">
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#stack">Stack</a></li>
+      <li><a href="/#work">Investment work</a></li>
+      <li><a href="/#ai">AI Systems</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/notes/">Notes</a></li>
+      <li><a href="/#experience">Experience</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</nav>
+<!-- site-nav:end -->
+<main id="main" class="container demo-main">
+  <header class="demo-hero">
+    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
+    <p class="eyebrow">07 · Multi-strategy</p>
+    <h1>Multi-Strategy Builder</h1>
+    <p class="lede">A fictional endowment runs a hedge fund book of five sleeves: equity long/short, global macro, relative value, credit and quant. On paper they are diversifiers. This builder sizes them by risk, tests what happens when crowded trades unwind together, finds the sleeves that are running the same factor bet, nets the fees, and watches every month for style drift and correlation shifts. Which sleeve to cut or add is the team's call.</p>
+    <div class="tags"><span class="tag tag-pf">Portfolio</span><span class="tag tag-pub">Public markets</span><span class="tag tag-ai">AI</span></div>
+    <dl class="std-header">
+      <div><dt>Decision it supports</dt><dd>Which sleeve to cut or add.</dd></div>
+      <div><dt>The hard problem</dt><dd>Hidden correlation and crowding across sleeves, and fee netting.</dd></div>
+      <div><dt>What the system takes off the team</dt><dd>Risk budgeting and risk controls across sleeves, calm and stress correlation, factor overlap, fee and netting arithmetic, and a monthly read of every sleeve against its mandate.</dd></div>
+      <div class="h-call"><dt>What stays with the team</dt><dd>Which sleeve to cut or add.</dd></div>
+      <div><dt>Method</dt><dd>Equal risk contribution, volatility targeting, drawdown stops, regime-split correlation, factor regressions with drift tests, Fisher tests on correlation, factor-implied overlap, fee netting with high-water marks and hurdles, a portable alpha overlay.</dd></div>
+      <div><dt>Data</dt><dd>Ten years of synthetic monthly sleeve and factor returns with stress regimes, fixed seed, fictional managers. Or your own sleeve returns, processed locally.</dd></div>
+      <div class="h-ai"><dt>Where AI is used</dt><dd>A mandate extractor, a drift monitor, a correlation regime monitor, a factor overlap checker and a risk note drafter, with every flag approved by a person.</dd></div>
+      <div><dt>Limitations</dt><dd>Five factors stand in for a full risk model. Weights are set on the full sample, so the backtest is in-sample. The pipeline is a simulation; no model is called.</dd></div>
+    </dl>
+  </header>
+
+  <div class="toolbar" role="region" aria-label="Demo controls">
+    <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
+    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 42. Jul 2016 to Jun 2026.</span>
+    <span class="grow"></span>
+    <span id="testsBadge"></span>
+    <div id="exportMenu"></div>
+  </div>
+
+  <div id="tabsRoot">
+    <div class="tabs">
+      <button data-tab="sleeves" aria-selected="true">Sleeves and risk budget</button>
+      <button data-tab="crowding">Crowding and overlap</button>
+      <button data-tab="fees">Fees and netting</button>
+      <button data-tab="pa">Portable alpha</button>
+    </div>
+
+    <section id="sleeves">
+      <div class="controls" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:14px">
+        <label>Weighting <select class="field" id="scheme"><option value="erc" selected>Equal risk contribution</option><option value="equal">Equal weight</option><option value="invvol">Inverse volatility</option></select></label>
+        <label><span><input type="checkbox" id="vtOn"> Volatility targeting per sleeve</span></label>
+        <label><span><input type="checkbox" id="ddOn"> Drawdown stops</span></label>
+      </div>
+      <div class="kpis" id="slKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Growth of $100, net of fees</h3><span class="sub">Shaded: stress months</span></div><div class="panel-body"><div id="growthChart"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Weight vs share of risk</h3></div><div class="panel-body"><div id="rcChart"></div><p class="eval-note" id="rcNote"></p></div></div>
+      </div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Sleeves, net of fees</h3></div><div class="panel-body"><div id="sleeveTable"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Risk controls compared</h3></div><div class="panel-body"><div id="ctrlTable"></div><p class="eval-note" id="ctrlNote"></p></div></div>
+      </div>
+      <div id="dzSleeves"></div>
+    </section>
+
+    <section id="crowding" hidden>
+      <div class="kpis" id="crKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Correlation, calm months</h3></div><div class="panel-body"><div id="corrCalm"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Correlation, stress months</h3></div><div class="panel-body"><div id="corrStress"></div></div></div>
+      </div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Worst stress episode, replayed on today's weights</h3></div><div class="panel-body"><div id="episodeChart"></div><p class="eval-note" id="episodeNote"></p></div></div>
+        <div class="panel"><div class="panel-head"><h3>Factor loadings, first seven years</h3></div><div class="panel-body"><div id="loadHeat"></div></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Factor overlap between sleeves</h3><span class="sub">Shared factor bets and the correlation they explain</span></div><div class="panel-body"><div id="overlapTable"></div></div></div>
+    </section>
+
+    <section id="fees" hidden>
+      <div class="kpis" id="feeKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Gross to net by sleeve</h3><span class="sub">A year, average over the period</span></div><div class="panel-body"><div id="feeTable"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Performance fees: paid by sleeves vs owed on the combined book</h3><span class="sub">% of portfolio NAV</span></div><div class="panel-body"><div id="nettingChart"></div><p class="eval-note" id="nettingNote"></p></div></div>
+      </div>
+    </section>
+
+    <section id="pa" hidden>
+      <p class="intro">The overlay keeps a 60/40 benchmark exposure through futures and puts part of the collateral into an alpha sleeve. The engine is the original Portable Alpha Simulator's, unchanged and moved into the shared library; it is checked against the old page number by number (<a href="/tests.html">model tests</a>). Use the button to plug in the multi-strategy book built above as the alpha sleeve.</p>
+      <div class="panel"><div class="panel-head"><h3>Parameters</h3><span><button class="btn btn-ghost btn-sm" id="paBook" type="button">Use this book as the alpha sleeve</button> <button class="btn btn-ghost btn-sm" id="paReset" type="button">Reset to defaults</button></span></div><div class="panel-body"><div class="pa-inputs" id="paInputs"></div><p class="eval-note" id="paSrc"></p></div></div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Growth of $100</h3><span class="sub">Shaded: crisis and rate-shock months</span></div><div class="panel-body"><div id="paGrowth"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Drawdown</h3></div><div class="panel-body"><div id="paDD"></div></div></div>
+      </div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Performance comparison</h3><span class="sub">Benchmark vs portable alpha, 180 months</span></div><div class="panel-body"><div id="paKpis"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Return decomposition</h3><span class="sub">Arithmetic annualised contributions, % of NAV</span></div><div class="panel-body"><div id="paDecomp"></div></div></div>
+      </div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Simulation health</h3></div><div class="panel-body"><div class="health" id="paHealth"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Stress scenarios</h3><span class="sub">One-month stylised shocks</span></div><div class="panel-body"><div id="paStress"></div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="demo-section" id="ai">
+    <h2>The agents: every sleeve against its mandate, every month</h2>
+    <p class="intro">Five synthetic mandate excerpts and ten years of monthly returns. The monitors compare the last 30 months with the first seven years, on calm months only, so a crowded stress episode is not mistaken for a lasting change. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
+    <div class="run-steps" id="runSteps"></div>
+    <div class="counters-wrap"><div id="counters"></div></div>
+    <div class="ai-grid">
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Approved flags go to the risk note</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+      </div>
+      <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
+    </div>
+    <div class="split-2">
+      <div class="panel"><div class="panel-head"><h3>Rolling 24-month exposures behind the drift flags</h3></div><div class="panel-body"><div id="driftChart"></div><p class="eval-note" id="driftNote"></p></div></div>
+      <div class="panel" id="riskNote"><div class="panel-head"><h3>Risk note, drafted from approved flags</h3><span class="sub">Draft for review</span></div><div class="panel-body"><ul class="memo-inputs" id="noteBody"></ul></div></div>
+    </div>
+    <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against injected drift events</h3><span class="sub">Computed in this page from assets/data/msb-labels.js</span></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field and check</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were set by hand and are stored apart from the documents and the monitors: mandate fields read from the text, and the planted drift events with their correlation and overlap consequences. Four seeded events; forty-one clean checks count toward the false-flag rate. Results are for the seed shown; the injected events are the same at every seed, the noise is not.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
+  </section>
+
+  <section class="demo-section" id="memo">
+    <article class="memo">
+      <div class="memo-head">
+        <div>
+          <div class="memo-kind">Sleeve sizing memo</div>
+          <h2>Hedge fund book of a fictional endowment</h2>
+          <div class="memo-meta">Written by Cristian Arenas · As of 30 Jun 2026 · Written for the base case, seed 42 · Fictional managers</div>
+        </div>
+        <span class="call-badge stop">Cut quant</span>
+      </div>
+      <h3>The call</h3><p class="the-call" id="memoCall"></p>
+      <h3>Situation</h3><div id="memoSituation"></div>
+      <h3>Why</h3><ol id="memoWhy"></ol>
+      <h3>Key risks</h3><ul id="memoRisks"></ul>
+      <h3>What would change my mind</h3><ul id="memoChange"></ul>
+      <h3>Sizing and next step</h3><div id="memoNext"></div>
+      <div class="memo-foot"><span>Fictional managers and sleeves. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 42, default assumptions</span></div>
+    </article>
+  </section>
+
+  <footer class="demo-foot">
+    <h2>Methodology, assumptions and limitations</h2>
+    <div class="df-grid">
+      <div>
+        <h3>Method</h3>
+        <ul>
+          <li><strong>Data.</strong> Five factors (equity, momentum, value, credit spread, rates) with a calm and a stress regime. In stress months factor returns turn, volatility rises 1.8 times and a common crowding shock hits each sleeve in proportion to how crowded its trades are.</li>
+          <li><strong>Risk budget.</strong> Equal risk contribution solves for weights where each sleeve adds the same share of portfolio variance. Volatility targeting scales each sleeve to its mandate's target using the trailing 12 months, capped at 2x. A drawdown stop halves a sleeve for six months after a 10% fall from its peak.</li>
+          <li><strong>Drift and correlation.</strong> Factor regressions on calm months, first seven years against the last 30 months; a drift is flagged when the loading moves by more than 0.15 with a z-score above 3. Correlation shifts use a Fisher test (z above 2.5 and a rise above 0.3).</li>
+          <li><strong>Overlap.</strong> Two sleeves overlap when both load at least 0.2 on the same factor with t-statistics of 3 or more over the first seven years, stress months included; the factor-implied correlation shows how much of their co-movement that explains.</li>
+          <li><strong>Fees.</strong> Management and pass-through fees monthly; performance fees crystallise yearly above the high-water mark and any hurdle. Netting cost compares fees paid sleeve by sleeve with one average fee on the combined book.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas</h3>
+        <div class="formula">ERC: w_i (S w)_i = w_j (S w)_j for all i, j
+vol target: scale_t = min(cap, target / vol_12m)
+drift z = (b_recent - b_base) / sqrt(se_r^2 + se_b^2)
+Fisher z = (atanh r1 - atanh r0) / sqrt(1/(n0-3) + 1/(n1-3))
+overlap = b_A' S_f b_B / (vol_A vol_B)
+netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
+        <h3 style="margin-top:12px">Related notes</h3>
+        <ul><li><a href="/notes/" data-final="notes/same-bet-two-sleeves.html">When two sleeves are running the same bet</a></li></ul>
+      </div>
+    </div>
+    <h3 style="margin-top:22px">Assumptions register</h3>
+    <div id="assumptions"></div>
+    <h3 style="margin-top:22px">Limitations</h3>
+    <ul>
+      <li>Every manager and number is fictional. Five factors stand in for a full risk model, and a real book would have more sleeves and managers within each.</li>
+      <li>Weights use the full ten-year covariance, so the backtest is in-sample; the risk controls do not look ahead.</li>
+      <li>The portable alpha engine is the original simulator's: a 15-year regime-switching path for a 60/40 benchmark, with the alpha sleeve described by its volatility, information ratio and equity beta rather than by the sleeve returns month by month.</li>
+    </ul>
+    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
+    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
+  </footer>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
+      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/data-model.html">Data model</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics and embedded</a></li>
+      </ul>
+    </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. Demos use synthetic data and fictional entities. Nothing on this site is investment advice.</p>
+  </div>
+</footer>
+<!-- site-footer:end -->
+<script src="/assets/js/pm-math.js"></script>
+<script src="/assets/js/pm-ui.js"></script>
+<script src="/assets/data/msb-docs.js"></script>
+<script src="/assets/data/msb-labels.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = UI.fmt, $ = UI.$, MS = PM.ms, PA = PM.pa;
+  var DOCS = window.MSB_DOCS, LABELS = window.MSB_LABELS, NAMES = MS.SLEEVES, SN = ['Eq L/S', 'Macro', 'RV', 'Credit', 'Quant'], SH = MS.SHORT, FN = MS.FACTORS, FS = ['equity', 'momentum', 'value', 'credit', 'rates'];
+  var AROWS = [
+    { id: 'rf', label: 'Cash rate for Sharpe ratios', value: 0.02, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.06, step: 0.25 },
+    { id: 'vtLook', label: 'Volatility targeting lookback', value: 12, unit: 'months', source: 'Setting', min: 6, max: 36, step: 1 },
+    { id: 'vtCap', label: 'Volatility targeting scale cap', value: 2, unit: 'x', source: 'Setting', min: 1, max: 4, step: 0.1 },
+    { id: 'ddStop', label: 'Drawdown stop trigger', value: 0.10, unit: '% from peak', scale: 100, source: 'Setting', min: 0.02, max: 0.4, step: 1 },
+    { id: 'ddCut', label: 'Allocation after a stop', value: 0.5, unit: '% of normal', scale: 100, source: 'Setting', min: 0, max: 1, step: 5 },
+    { id: 'ddWait', label: 'Months at reduced allocation', value: 6, unit: 'months', source: 'Setting', min: 1, max: 24, step: 1 },
+    { id: 'zDrift', label: 'Drift monitor z threshold', value: 3, unit: '', source: 'Setting', min: 1.5, max: 6, step: 0.1 },
+    { id: 'zCorr', label: 'Correlation monitor z threshold', value: 2.5, unit: '', source: 'Setting', min: 1.5, max: 6, step: 0.1 },
+    { id: 'stdFee', label: 'Standard fee used for comparison', value: 0.015, unit: '% management, with 20% performance', scale: 100, source: 'Assumption', min: 0, max: 0.03, step: 0.25 }
+  ];
+  var A = UI.A(AROWS), reg;
+  var S = { seed: 42, scheme: 'erc', vt: false, dd: false, user: null, pa: Object.assign({}, PA.DEFAULT_PARAMS), paSrc: 'defaults' };
+  window.MSBS = S;
+  function col(M, i) { return M.map(function (r) { return r[i]; }); }
+  function ann(r) { return PM.mean(r) * 12; }
+  function vol(r) { return PM.std(r) * Math.sqrt(12); }
+  function cagr(r) { var g = 1; r.forEach(function (v) { g *= 1 + v; }); return Math.pow(g, 12 / r.length) - 1; }
+
+  /* ---------------- mandates (shared by the tabs and the agents) ---------------- */
+  function find(id, re) { var out = null; DOCS[id].pages.forEach(function (pg, pi) { pg.forEach(function (l, li) { var m = re.exec(l); if (m && !out) out = { m: m, cite: { doc: id, page: pi + 1, line: li + 1, short: id.replace('mandate-', '') } }; }); }); return out; }
+  function readMandate(id) {
+    var o = {}, h, put = function (k, hit, v, unit, ev) { if (hit) o[k] = { value: v, unit: unit, cite: hit.cite, evidence: ev }; };
+    h = find(id, /Target volatility: ([\d.]+)%/); put('targetVol', h, h && +h.m[1] / 100, 'pct');
+    h = find(id, /management fee ([\d.]+)% a year; performance fee ([\d.]+)%(?: over a hurdle of ([\d.]+)%| over a high-water mark, (no hurdle))/);
+    put('mgmt', h, h && +h.m[1] / 100, 'pct'); put('perf', h, h && +h.m[2] / 100, 'pct'); put('hurdle', h, h && (h.m[3] ? +h.m[3] / 100 : 0), h && h.m[3] ? 'pct' : 'text', h && (h.m[3] ? null : 'no hurdle'));
+    h = find(id, /Expenses: pass-through, estimated at ([\d.]+)% of NAV/) || find(id, /Expenses: borne by the manager, (no pass-through)/);
+    put('pass', h, h && (h.m[1] && /^[\d.]+$/.test(h.m[1]) ? +h.m[1] / 100 : 0), h && /^[\d.]+$/.test(h.m[1]) ? 'pct' : 'text', h && (/^[\d.]+$/.test(h.m[1]) ? null : 'no pass-through'));
+    h = find(id, /Rates beta \(duration\): neutral, between -(\d+(?:\.\d+)?) and (\d+(?:\.\d+)?)/); put('ratesMax', h, h && +h.m[2], 'num');
+    return o;
+  }
+  var MAND = {}; SH.forEach(function (s) { MAND[s] = readMandate('mandate-' + s); });
+  function terms() { return SH.map(function (s) { var m = MAND[s]; return { mgmt: m.mgmt.value, perf: m.perf.value, hurdle: m.hurdle.value, pass: m.pass.value, targetVol: m.targetVol.value }; }); }
+
+  /* ---------------- data and portfolio ---------------- */
+  function data() {
+    if (S.user) return S.user;
+    var sim = MS.simulate(S.seed, 120); sim.dates = sim.R.map(function (_, t) { return new Date(Date.UTC(2016, 7 + t, 0)).getTime(); }); return sim;
+  }
+  function windows(T) { var rl = Math.max(18, Math.round(T * 0.25)); return { base: [0, T - rl - 6], recent: [T - rl, T] }; }
+  function weights(C) {
+    var n = C.length;
+    if (S.scheme === 'equal') return new Array(n).fill(1 / n);
+    if (S.scheme === 'invvol') { var iv = C.map(function (r, i) { return 1 / Math.sqrt(C[i][i]); }), t = PM.sum(iv); return iv.map(function (x) { return x / t; }); }
+    return PM.opt.erc(C);
+  }
+  function build() {
+    var D = S.D = data(), T = D.R.length, tm = terms();
+    var fees = tm.map(function (t, i) { return MS.fees(col(D.R, i), t); }), net = fees.map(function (f) { return f.net; });
+    var C = PM.covMatrix(D.R.map(function (_, t) { return net.map(function (s) { return s[t]; }); })), w = weights(C);
+    function variant(vt, dd) {
+      var stops = 0, cols = net.map(function (s, i) { var x = s; if (vt) x = MS.volTarget(x, tm[i].targetVol, A.vtLook, A.vtCap).r; if (dd) { var d = MS.drawdownStop(x, A.ddStop, A.ddCut, A.ddWait); stops += d.fired.length; x = d.r; } return x; });
+      var p = D.R.map(function (_, t) { return PM.sum(cols.map(function (s, i) { return w[i] * s[t]; })); });
+      return { r: p, cols: cols, stops: stops };
+    }
+    var V = { none: variant(false, false), vt: variant(true, false), dd: variant(false, true), both: variant(true, true) };
+    var cur = V[S.vt ? (S.dd ? 'both' : 'vt') : (S.dd ? 'dd' : 'none')];
+    var rc = PM.opt.riskContrib(w, C).map(function (x) { return x / 100; });
+    var calm = D.regimes.map(function (x) { return x === 'calm'; });
+    S.B = { D: D, T: T, tm: tm, fees: fees, net: net, C: C, w: w, V: V, cur: cur, rc: rc, calm: calm };
+    return S.B;
+  }
+  function stats(r) { var v = vol(r); return { ret: cagr(r), vol: v, sharpe: v > 0 ? (ann(r) - A.rf) / v : 0, dd: MS.maxDD(r) }; }
+
+  /* ---------------- tab 1: sleeves ---------------- */
+  function renderSleeves() {
+    var B = build(), p = B.cur.r, st = stats(p), top = B.rc.indexOf(Math.max.apply(null, B.rc));
+    S.port = st;
+    UI.kpis('#slKpis', [
+      { id: 'portRet', label: 'Portfolio return, net', value: F.pct(st.ret, 1), sub: 'a year, compound' },
+      { id: 'portVol', label: 'Volatility', value: F.pct(st.vol, 1) },
+      { id: 'portSharpe', label: 'Sharpe ratio', value: F.num(st.sharpe, 2), sub: 'cash at ' + F.pct(A.rf, 1) },
+      { id: 'portDD', label: 'Maximum drawdown', value: F.pct(st.dd, 1), tone: st.dd < -0.15 ? 'bad' : null },
+      { id: 'topRisk', label: 'Largest share of risk', value: F.pct(B.rc[top], 0), sub: NAMES[top] + ' at ' + F.pct(B.w[top], 0) + ' weight', explain: function () { return { title: 'Risk contribution', formula: 'w_i (S w)_i / (w\' S w), covariance of net monthly returns over the full period', inputs: NAMES.map(function (n, i) { return { name: n, value: F.pct(B.w[i], 1) + ' weight', src: 'computed' }; }), result: F.pct(B.rc[top], 1) }; } }
+    ]);
+    var g = function (r) { var x = 100; return [100].concat(r.map(function (v) { x *= 1 + v; return x; })); };
+    var xs = [B.D.dates[0] - 31 * 864e5].concat(B.D.dates), shade = [false].concat(B.D.regimes.map(function (x) { return x === 'stress' ? 's5' : false; }));
+    UI.chart.line('#growthChart', { xs: xs, series: [{ name: 'Book, as set', ys: g(p), color: 's1' }].concat(S.vt || S.dd ? [{ name: 'No risk controls', ys: g(B.V.none.r), color: 's4', dash: '4 3' }] : []), shade: shade, yFmt: function (v) { return F.num(v, 0); }, xFmt: function (v) { return new Date(v).getUTCFullYear(); }, xTicks: 6, height: 240, label: 'Growth of 100 dollars' });
+    UI.chart.bar('#rcChart', { categories: SN, series: [{ name: 'Weight', values: B.w }, { name: 'Share of risk', values: B.rc }], yFmt: function (v) { return F.pct(v, 0); }, height: 240, label: 'Weights and risk contributions' });
+    $('#rcNote').textContent = S.scheme === 'erc' ? 'Equal risk contribution: each sleeve adds a fifth of the variance, so the low-volatility sleeves get the larger weights.' : 'Weights and risk shares differ: the most volatile and most correlated sleeves take more of the risk than their weight suggests.';
+    UI.table('#sleeveTable', { id: 'sleeves', name: 'Sleeves', columns: [{ key: 'n', label: 'Sleeve' }, { key: 'ret', label: 'Return', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'vol', label: 'Vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sharpe', label: 'Sharpe', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'dd', label: 'Max DD', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < -0.2 ? 'neg' : ''; } }, { key: 'w', label: 'Weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rc', label: 'Risk share', num: 1, fmt: function (v) { return F.pct(v, 1); } }],
+      rows: NAMES.map(function (n, i) { var s = stats(B.net[i]); return { n: n, ret: s.ret, vol: s.vol, sharpe: s.sharpe, dd: s.dd, w: B.w[i], rc: B.rc[i] }; }), foot: { n: 'Book', ret: st.ret, vol: st.vol, sharpe: st.sharpe, dd: st.dd, w: 1, rc: 1 } });
+    var rows = [['No risk controls', 'none'], ['Volatility targeting', 'vt'], ['Drawdown stops', 'dd'], ['Both', 'both']].map(function (r) { var v = B.V[r[1]], s = stats(v.r); return { n: r[0], ret: s.ret, vol: s.vol, sharpe: s.sharpe, dd: s.dd, stops: r[1] === 'dd' || r[1] === 'both' ? v.stops : '' }; });
+    S.ctrl = rows;
+    UI.table('#ctrlTable', { id: 'controls', name: 'Risk controls compared', columns: [{ key: 'n', label: 'Controls' }, { key: 'ret', label: 'Return', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'vol', label: 'Vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sharpe', label: 'Sharpe', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'dd', label: 'Max DD', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'stops', label: 'Stops fired', num: 1 }], rows: rows });
+    $('#ctrlNote').textContent = 'Stops act after the loss, so they cut the drawdown only when a fall keeps going; in a sharp crowded unwind that reverses, they sell near the low. Volatility targeting reacts to the trailing 12 months, so it is late into the first stress month and early out of the last.';
+  }
+
+  /* ---------------- tab 2: crowding and overlap ---------------- */
+  function corrOf(rows) { var C = PM.covMatrix(rows); return PM.corrFromCov(C); }
+  function avgOff(M) { var s = 0, n = 0; M.forEach(function (r, i) { r.forEach(function (v, j) { if (j > i) { s += v; n++; } }); }); return n ? s / n : 0; }
+  function renderCrowding() {
+    var B = S.B, D = B.D, rows = D.R.map(function (_, t) { return B.net.map(function (s) { return s[t]; }); });
+    var cr = rows.filter(function (_, t) { return B.calm[t]; }), sr = rows.filter(function (_, t) { return !B.calm[t]; });
+    var Cc = PM.covMatrix(cr), Cs = sr.length > 6 ? PM.covMatrix(sr) : Cc, Rc = PM.corrFromCov(Cc), Rs = PM.corrFromCov(Cs);
+    var pv = function (C) { return Math.sqrt(PM.dot(B.w, PM.matVec(C, B.w)) * 12); }, dr = function (C) { return PM.sum(B.w.map(function (w, i) { return w * Math.sqrt(C[i][i] * 12); })) / pv(C); };
+    /* worst stress episode: contiguous stress months with the worst cumulative book return */
+    var best = null, t = 0;
+    while (t < D.R.length) { if (!B.calm[t]) { var s = t; while (t < D.R.length && !B.calm[t]) t++; var g = 1; for (var k = s; k < t; k++) g *= 1 + B.cur.r[k]; if (!best || g - 1 < best.loss) best = { from: s, to: t, loss: g - 1 }; } else t++; }
+    var contrib = best ? B.net.map(function (sr2, i) { var c = 0; for (var k = best.from; k < best.to; k++) c += B.w[i] * sr2[k]; return c; }) : B.w.map(function () { return 0; });
+    S.crowd = { calmAvg: avgOff(Rc), stressAvg: avgOff(Rs), volCalm: pv(Cc), volStress: pv(Cs), drCalm: dr(Cc), drStress: dr(Cs), episode: best, stressN: sr.length };
+    UI.kpis('#crKpis', [
+      { id: 'corrCalm', label: 'Average correlation between sleeves, calm', value: F.num(S.crowd.calmAvg, 2) },
+      { id: 'corrStress', label: 'Average correlation, stress', value: F.num(S.crowd.stressAvg, 2), sub: sr.length + ' stress months', tone: S.crowd.stressAvg - S.crowd.calmAvg > 0.2 ? 'bad' : null },
+      { id: 'volStress', label: 'Book volatility, calm vs stress covariance', value: F.pct(S.crowd.volCalm, 1) + ' / ' + F.pct(S.crowd.volStress, 1), sub: 'same weights', explain: function () { return { title: 'Book volatility under each regime', formula: 'sqrt(12 w\' S w) with S estimated on calm months, then on stress months', inputs: [{ name: 'Calm months', value: cr.length, src: 'computed' }, { name: 'Stress months', value: sr.length, src: 'computed' }], result: F.pct(S.crowd.volStress, 2) }; } },
+      { id: 'divRatio', label: 'Diversification ratio, calm vs stress', value: F.num(S.crowd.drCalm, 2) + ' / ' + F.num(S.crowd.drStress, 2), sub: 'sum of weighted vols / book vol' },
+      { id: 'episodeLoss', label: 'Worst stress episode on today\'s weights', value: best ? F.pct(best.loss, 1) : 'n/a', sub: best ? (best.to - best.from) + ' months from ' + new Date(D.dates[best.from]).toISOString().slice(0, 7) : '', tone: 'bad' }
+    ]);
+    var short = SN;
+    $('#corrCalm').innerHTML = ''; $('#corrStress').innerHTML = '';
+    UI.chart.heat('#corrCalm', { rows: short, cols: short, matrix: Rc, fmt: function (x) { return F.num(x, 2); }, cell: 64, labelWidth: 90, label: 'Calm correlation' });
+    UI.chart.heat('#corrStress', { rows: short, cols: short, matrix: Rs, fmt: function (x) { return F.num(x, 2); }, cell: 64, labelWidth: 90, label: 'Stress correlation' });
+    UI.chart.bar('#episodeChart', { categories: short, series: [{ name: 'Contribution', values: contrib, signColors: true }], yFmt: function (v) { return F.pct(v, 1); }, height: 220, label: 'Sleeve contributions in the worst stress episode', values: true });
+    var worst = contrib.indexOf(Math.min.apply(null, contrib));
+    $('#episodeNote').textContent = best ? 'The book lost ' + F.pct(-best.loss, 1) + ' over ' + (best.to - best.from) + ' stress months. ' + NAMES[worst] + ' contributed most of it. The sleeves that look uncorrelated in calm months fell together: that is the crowding the calm-month correlation hides.' : 'No stress months in this data.';
+    var W = windows(D.R.length);
+    if (!D.F) { $('#loadHeat').innerHTML = '<p class="muted">Add factor columns to your file to see loadings and overlap.</p>'; $('#overlapTable').innerHTML = ''; S.overlap = []; return; }
+    var fit = B.net.map(function (s) { return PM.ols(s.slice(W.base[0], W.base[1]), D.F.slice(W.base[0], W.base[1])); });
+    $('#loadHeat').innerHTML = '';
+    UI.chart.heat('#loadHeat', { rows: short, cols: ['Equity', 'Mom', 'Value', 'Credit', 'Rates'], matrix: fit.map(function (f) { return f.beta; }), fmt: function (x) { return F.num(x, 2); }, cell: 64, labelWidth: 90, label: 'Factor loadings' });
+    var Sf = PM.covMatrix(D.F.slice(W.base[0], W.base[1])), ov = [];
+    for (var a = 0; a < 5; a++) for (var b = a + 1; b < 5; b++) {
+      var shared = FN.map(function (_, k) { return Math.abs(fit[a].beta[k]) >= 0.2 && Math.abs(fit[b].beta[k]) >= 0.2 && Math.abs(fit[a].t[k + 1]) >= 3 && Math.abs(fit[b].t[k + 1]) >= 3 ? k : -1; }).filter(function (k) { return k >= 0; });
+      var va = PM.std(B.net[a].slice(W.base[0], W.base[1])), vb = PM.std(B.net[b].slice(W.base[0], W.base[1]));
+      ov.push({ id: 'overlap:' + SH[a] + '/' + SH[b], a: a, b: b, pair: short[a] + ' / ' + short[b], shared: shared.map(function (k) { return FN[k] + ' (' + F.num(fit[a].beta[k], 2) + ', ' + F.num(fit[b].beta[k], 2) + ')'; }).join('; ') || 'none', fc: MS.factorCorr(fit[a].beta, fit[b].beta, Sf, va, vb), flag: shared.length > 0, k: shared[0] });
+    }
+    S.overlap = ov; S.fit = fit;
+    UI.table('#overlapTable', { id: 'overlap', name: 'Factor overlap', columns: [{ key: 'pair', label: 'Sleeves' }, { key: 'shared', label: 'Shared factor bet (loadings)' }, { key: 'fc', label: 'Correlation explained by factors', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'st', label: 'Overlap', cls: function (v) { return v === 'yes' ? 'neg' : ''; } }], rows: ov.map(function (o) { return Object.assign({}, o, { st: o.flag ? 'yes' : 'no' }); }) });
+  }
+
+  /* ---------------- tab 3: fees ---------------- */
+  function renderFees() {
+    var B = S.B, yrs = B.T / 12, rows = NAMES.map(function (n, i) {
+      var t = B.tm[i], f = B.fees[i], g = ann(col(B.D.R, i)), nt = ann(B.net[i]);
+      var std = MS.fees(col(B.D.R, i), { mgmt: A.stdFee, perf: 0.2 });
+      return { n: n, terms: F.pct(t.mgmt, 2) + ' / ' + F.pct(t.perf, 0) + (t.hurdle ? ' over ' + F.pct(t.hurdle, 0) : '') + (t.pass ? ' + ' + F.pct(t.pass, 1) + ' pass-through' : ''), gross: g, mgmt: f.mgmt / yrs, pass: f.pass / yrs, perf: f.perf / yrs, net: nt, drag: g - nt, std: g - ann(std.net), pt: t.pass > 0 };
+    });
+    var pg = ann(B.D.R.map(function (r) { return PM.dot(r, B.w); })), pn = ann(B.V.none.r), nett = MS.netting(B.D.R, B.w, B.tm);
+    var ptRows = rows.filter(function (r) { return r.pt; }), ptExtra = PM.sum(ptRows.map(function (r) { var i = NAMES.indexOf(r.n); return B.w[i] * (r.drag - r.std); }));
+    S.feeSum = { gross: pg, net: pn, drag: pg - pn, netting: nett.cost, rows: rows, ptExtra: ptExtra, share: pg > 0 ? (pg - pn) / pg : NaN };
+    UI.kpis('#feeKpis', [
+      { id: 'feeDrag', label: 'Total fee drag', value: F.bps(pg - pn) + ' a year', sub: 'gross ' + F.pct(pg, 1) + ', net ' + F.pct(pn, 1), tone: 'bad' },
+      { id: 'feeShare', label: 'Share of gross return paid in fees', value: F.pct(S.feeSum.share, 0) },
+      { id: 'nettingCost', label: 'Netting cost', value: F.bps(nett.cost) + ' a year', sub: 'fees on winners while losers lose', explain: function () { return { title: 'Netting cost', formula: 'performance fees paid sleeve by sleeve - one weighted-average fee on the combined book\'s yearly gain', inputs: [{ name: 'Paid by sleeves', value: F.bps(nett.paid), src: 'computed' }, { name: 'Owed on the combined book', value: F.bps(nett.aggregate), src: 'computed' }], result: F.bps(nett.cost) }; } },
+      { id: 'passThrough', label: 'Extra cost of pass-through vs standard fees', value: F.bps(ptExtra) + ' a year', sub: 'pass-through sleeves vs ' + F.pct(A.stdFee, 1) + ' and 20%' }
+    ]);
+    UI.table('#feeTable', { id: 'fees', name: 'Gross to net by sleeve', columns: [{ key: 'n', label: 'Sleeve' }, { key: 'terms', label: 'Terms (from mandate)' }, { key: 'gross', label: 'Gross (average)', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'mgmt', label: 'Mgmt', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'pass', label: 'Pass-through', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'perf', label: 'Perf', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'net', label: 'Net (average)', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'std', label: 'Drag at standard fees', num: 1, fmt: function (v) { return F.pct(v, 2); } }], rows: rows });
+    UI.chart.bar('#nettingChart', { categories: nett.rows.map(function (r) { return 'Y' + r.year; }), series: [{ name: 'Paid by sleeves', values: nett.rows.map(function (r) { return r.paid; }) }, { name: 'Owed on combined book', values: nett.rows.map(function (r) { return r.aggregate; }) }], yFmt: function (v) { return F.pct(v, 1); }, height: 220, label: 'Performance fees by year' });
+    $('#nettingNote').textContent = 'Each sleeve charges on its own gains. In years when some sleeves win and others lose, the book pays fees on the winners even if the whole book barely moves. Over the period that costs ' + F.bps(nett.cost) + ' a year.';
+  }
+
+  /* ---------------- tab 4: portable alpha (engine unchanged, in PM.pa) ---------------- */
+  var PA_IN = [
+    ['Market', [['seed', 'Seed', 1, 0, 1, 999999], ['cashRate', 'Cash rate (%)', 100, 2, 0, 10], ['stressFreq', 'Stress share of months (%)', 100, 0, 0, 50]]],
+    ['Beta sleeve', [['eqWeight', 'Equity weight of benchmark (%)', 100, 0, 0, 100], ['betaNotional', 'Futures notional (% NAV)', 100, 0, 50, 200], ['finSpread', 'Financing spread (bp)', 1e4, 0, 0, 150], ['rollCost', 'Roll cost (bp a year)', 1e4, 1, 0, 30], ['basisSig', 'Basis noise (bp a month)', 1e4, 1, 0, 50]]],
+    ['Alpha sleeve', [['alphaAlloc', 'Alpha allocation (% NAV)', 100, 0, 0, 90], ['alphaVol', 'Alpha volatility (%)', 100, 1, 0, 20], ['alphaIR', 'Gross information ratio', 1, 2, -1, 3], ['alphaBeta', 'Equity beta', 1, 2, -0.5, 1]]],
+    ['Fees', [['mgmtFee', 'Management fee (%)', 100, 2, 0, 3], ['perfFee', 'Performance fee (%)', 100, 0, 0, 30], ['alphaDecay', 'Alpha decay (% a year)', 100, 1, 0, 10], ['drag', 'Implementation drag (bp)', 1e4, 0, 0, 100]]],
+    ['Collateral', [['marginReq', 'Initial margin (% notional)', 100, 1, 1, 25], ['haircut', 'Collateral haircut (%)', 100, 1, 0, 10], ['buffer', 'Liquidity buffer and credit line (% NAV)', 100, 1, 0, 30], ['sleeveLiq', 'Months between sleeve redemptions', 1, 0, 1, 12]]]
+  ];
+  function paForm() {
+    var h = ''; PA_IN.forEach(function (g) { h += '<h4>' + g[0] + '</h4>'; g[1].forEach(function (x) { var v = x[0] === 'seed' ? S.seed : S.pa[x[0]] * x[2]; h += '<label for="pa-' + x[0] + '">' + x[1] + '<input class="field" type="number" id="pa-' + x[0] + '" data-k="' + x[0] + '" data-s="' + x[2] + '" value="' + (+v.toFixed(x[3] + 2)) + '" min="' + x[4] + '" max="' + x[5] + '" step="any"></label>'; }); });
+    $('#paInputs').innerHTML = h;
+  }
+  function paRead() {
+    UI.$$('#paInputs input').forEach(function (el) { var k = el.dataset.k, v = parseFloat(el.value), lo = parseFloat(el.min), hi = parseFloat(el.max); if (isNaN(v)) return; v = Math.min(hi, Math.max(lo, v)); if (k === 'seed') S.pa.seed = Math.round(v); else if (k === 'sleeveLiq') S.pa.sleeveLiq = v; else S.pa[k] = v / +el.dataset.s; });
+  }
+  function renderPA() {
+    var p = S.pa; p.seed = p.seed || S.seed;
+    var sim = PA.simulate(p), rf = p.cashRate, baseS = PA.calcStats(sim.baseRet, null, rf), paS = PA.calcStats(sim.paRet, sim.benchRets, rf);
+    S.paOut = { baseS: baseS, paS: paS, sim: sim };
+    var xs = baseS.cum.map(function (_, i) { return i; }), shade = sim.regimes.map(function (r) { return r === 'crisis' ? 's5' : r === 'rate' ? 's3' : false; });
+    var lbl = 'Benchmark ' + Math.round(p.eqWeight * 100) + '/' + Math.round((1 - p.eqWeight) * 100);
+    UI.chart.line('#paGrowth', { xs: xs, series: [{ name: lbl, ys: baseS.cum.map(function (v) { return v * 100; }), color: 's4' }, { name: 'Portable alpha', ys: paS.cum.map(function (v) { return v * 100; }), color: 's1' }], shade: shade, yFmt: function (v) { return '$' + F.num(v, 0); }, xFmt: function (v) { return 'yr ' + Math.round(v / 12); }, xTicks: 6, height: 240, label: 'Growth of 100 dollars' });
+    UI.chart.line('#paDD', { xs: baseS.ddSeries.map(function (_, i) { return i; }), series: [{ name: lbl, ys: baseS.ddSeries, color: 's4', area: true }, { name: 'Portable alpha', ys: paS.ddSeries, color: 's1', area: true }], shade: shade, yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return 'yr ' + Math.round(v / 12); }, xTicks: 6, height: 240, label: 'Drawdown' });
+    var pct = function (v, d) { d = d != null ? d : 2; return (v * 100).toFixed(d) + '%'; }, spct = function (v, d) { d = d != null ? d : 2; return (v >= 0 ? '+' : '') + (v * 100).toFixed(d) + '%'; };
+    var kr = [['Ann. return (CAGR)', pct(baseS.cagr), pct(paS.cagr), spct(paS.cagr - baseS.cagr)], ['Volatility', pct(baseS.vol), pct(paS.vol), spct(paS.vol - baseS.vol)], ['Sharpe ratio', baseS.sharpe.toFixed(2), paS.sharpe.toFixed(2), (paS.sharpe - baseS.sharpe >= 0 ? '+' : '') + (paS.sharpe - baseS.sharpe).toFixed(2)], ['Max drawdown', pct(baseS.maxDD), pct(paS.maxDD), spct(paS.maxDD - baseS.maxDD)], ['Worst 12 months', pct(baseS.worst12), pct(paS.worst12), spct(paS.worst12 - baseS.worst12)], ['Active return', '-', spct(paS.active), '-'], ['Tracking error', '-', pct(paS.te), '-'], ['Information ratio', '-', (paS.ir >= 0 ? '+' : '') + paS.ir.toFixed(2), '-'], ['Beta to benchmark', '1.00', paS.beta.toFixed(2), '-']];
+    UI.table('#paKpis', { id: 'pa-performance', name: 'Portable alpha performance', columns: [{ key: 'm', label: 'Metric' }, { key: 'b', label: 'Benchmark', num: 1 }, { key: 'p', label: 'Port. alpha', num: 1 }, { key: 'd', label: 'Delta', num: 1 }], rows: kr.map(function (r) { return { m: r[0], b: r[1], p: r[2], d: r[3] }; }) });
+    var c = sim.comp, items = [['Collateral yield', c.cash], ['Beta (index - Rf)', c.betaEx], ['Financing spread', c.fin], ['Roll cost', c.roll], ['Basis noise', c.basis], ['Alpha sleeve gross', c.alphaGross], ['Fees and drag', c.fees], ['Liquidity cost', c.liq]];
+    var dv = items.map(function (x) { return PA.annComp(x[1]); }); dv.push(PM.sum(dv));
+    UI.chart.bar('#paDecomp', { categories: items.map(function (x) { return x[0]; }).concat(['Net return']), series: [{ name: 'Contribution', values: dv, signColors: true }], horizontal: true, labelWidth: 130, values: true, height: 320, yFmt: function (v) { return F.spct(v, 2); }, label: 'Return decomposition' });
+    var hl = PA.health(sim, p, paS.active);
+    $('#paHealth').innerHTML = hl.map(function (it) { return '<div class="health-row"><span class="health-dot ' + (it.ok ? '' : 'warn') + '" aria-label="' + (it.ok ? 'within range' : 'outside range') + '"></span><span>' + UI.esc(it.label) + '</span><span class="health-val">' + UI.esc(it.val) + '</span><span class="health-tgt">' + UI.esc(it.tgt) + '</span></div>'; }).join('');
+    var sr = PA.stress(p);
+    UI.table('#paStress', { id: 'pa-stress', name: 'Portable alpha stress', columns: [{ key: 'name', label: 'Scenario' }, { key: 'b', label: 'Bench', num: 1 }, { key: 'p', label: 'PA', num: 1 }, { key: 'd', label: 'Delta', num: 1, cls: function (v) { return v.charAt(0) === '-' ? 'neg' : ''; } }, { key: 'note', label: 'Variation margin and liquidity' }],
+      rows: sr.map(function (s) { var note = s.vm >= 0 ? 'No variation margin due' : s.forced ? 'VM ' + pct(-s.vm, 1) + ' and margin raised to ' + pct(s.imRate, 1) + ': notional cut to ' + pct(s.nNew, 0) + ' NAV (beta sold at the low)' : s.call ? 'VM ' + pct(-s.vm, 1) + ' takes cash below margin; ' + pct(s.draw, 1) + ' drawn on the credit line' : 'VM ' + pct(-s.vm, 1) + ' of NAV met from cash; cushion left ' + pct(s.cashLow - s.reqIM, 1); return { name: s.name, b: pct(s.bench, 1), p: pct(s.pa, 1), d: spct(s.delta, 1), note: note }; }) });
+    $('#paSrc').textContent = S.paSrc === 'book' ? 'Alpha sleeve set from the book above (net of fees, so manager fees are set to zero here). Every other input is the original default.' : 'Original simulator defaults.';
+  }
+  function bookToPA() {
+    var B = S.B, r = B.cur.r, D = B.D, eq = D.F ? col(D.F, 0) : null, f = eq ? PM.ols(r, eq.map(function (v) { return [v]; })) : null;
+    var beta = f ? f.beta[0] : 0, resid = f ? f.resid : r, rv = PM.std(resid) * Math.sqrt(12), alpha = f ? f.alpha * 12 - S.pa.cashRate * (1 - beta) : ann(r) - S.pa.cashRate;
+    S.pa.alphaVol = Math.max(0, Math.min(0.2, vol(r))); S.pa.alphaBeta = Math.max(-0.5, Math.min(1, beta)); S.pa.alphaIR = Math.max(-1, Math.min(3, rv > 0 ? alpha / rv : 0)); S.pa.mgmtFee = 0; S.pa.perfFee = 0;
+    S.paSrc = 'book'; paForm(); renderPA();
+  }
+
+  /* ---------------- AI pipeline ---------------- */
+  var log, audit, apps;
+  var FACTOR_LINE = { equity: /Net equity beta/, momentum: /trend|momentum|style tilts/i, value: /style tilts|value/i, credit: /Credit spread beta/, rates: /Rates beta/ };
+  function runPipeline() {
+    log.clear(); audit.clear();
+    var P = S.pipe = { ex: {}, checks: [], items: [], fieldsN: 0, drift: [] }, B = S.B, D = B.D, W = windows(D.R.length);
+    audit.push('planner', 'run started', 'seed ' + S.seed);
+    UI.runSteps(log, [
+      { agent: 'planner', run: function () { return { msg: 'Plan: extract each mandate, test every sleeve and factor for drift, every pair for a correlation shift and a shared factor bet, send flags with citations for approval, draft the risk note from what is approved' }; } },
+      { agent: 'mandate-extractor', run: function () { SH.forEach(function (s) { P.ex['mandate-' + s] = readMandate('mandate-' + s); P.fieldsN += Object.keys(P.ex['mandate-' + s]).length; }); audit.push('mandate-extractor', 'extracted', P.fieldsN + ' fields'); return { msg: P.fieldsN + ' mandate fields extracted with citations (target vol, fees, hurdles, pass-through, limits)' }; } },
+      { agent: 'citation-validator', run: function () {
+        var ok = 0, bad = 0;
+        Object.keys(P.ex).forEach(function (id) { Object.keys(P.ex[id]).forEach(function (k) { var f = P.ex[id][k], ln = UI.DocViewer.active.line(f.cite.doc, f.cite.page, f.cite.line); f.valid = f.unit === 'text' ? UI.lineHas(ln, f.evidence, 'text') : UI.lineHas(ln, f.value, f.unit); if (f.valid) ok++; else bad++; }); });
+        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve');
+        return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve' + (bad ? ', ' + bad + ' blocked' : '') };
+      } },
+      { agent: 'drift-monitor', run: function () {
+        if (!D.F) return { status: 'blocked', msg: 'No factor columns in the data: drift checks skipped' };
+        var res = [];
+        SH.forEach(function (s, i) {
+          var sh = MS.exposureShift(B.net[i], D.F, W.base, W.recent, B.calm);
+          sh.forEach(function (x, k) {
+            var flag = Math.abs(x.z) > A.zDrift && Math.abs(x.recent - x.base) > 0.15, id = 'drift:' + s + ':' + FS[k];
+            P.checks.push({ id: id, flag: flag });
+            if (flag) {
+              var lim = find('mandate-' + s, FACTOR_LINE[FS[k]]), ex = P.ex['mandate-' + s];
+              var breach = FS[k] === 'rates' && ex.ratesMax ? ' The mandate caps rates beta at ' + F.num(ex.ratesMax.value, 1) + '.' : '';
+              P.drift.push({ i: i, k: k, x: x });
+              P.items.push({ id: 'D-' + (P.items.length + 1), check: id, title: NAMES[i] + ': ' + FN[k].toLowerCase() + ' loading ' + F.num(x.base, 2) + ' to ' + F.num(x.recent, 2), severity: 'high', evidence: 'Calm-month factor regression: ' + FN[k].toLowerCase() + ' loading ' + F.num(x.base, 2) + ' in the first seven years, ' + F.num(x.recent, 2) + ' in the last 30 months (z = ' + F.num(x.z, 1) + ').' + breach + (lim ? ' The cited mandate line says otherwise.' : ''), cites: lim ? [lim.cite] : [{ doc: 'mandate-' + s, page: 1, line: 2, short: s }], state: 'pending',
+                note: NAMES[i] + ' has moved its ' + FN[k].toLowerCase() + ' exposure from ' + F.num(x.base, 2) + ' to ' + F.num(x.recent, 2) + (breach ? ', outside its mandate limit of ' + F.num(ex.ratesMax.value, 1) : ', against what its mandate describes') + '. Ask the manager to explain and to confirm the position will come back inside the mandate.' });
+              res.push({ status: 'approval', msg: NAMES[i] + ': ' + FN[k].toLowerCase() + ' loading ' + F.num(x.base, 2) + ' to ' + F.num(x.recent, 2) + ' (z ' + F.num(x.z, 1) + ')' });
+            }
+          });
+        });
+        res.push({ msg: P.checks.filter(function (c) { return !c.flag; }).length + ' sleeve and factor pairs stable' });
+        audit.push('drift-monitor', 'checked', P.drift.length + ' drifts in ' + SH.length * FS.length + ' pairs');
+        return res;
+      } },
+      { agent: 'correlation-regime-monitor', run: function () {
+        var res = [], n = 0;
+        for (var a = 0; a < 5; a++) for (var b = a + 1; b < 5; b++) {
+          var c = MS.corrShift(B.net[a], B.net[b], W.base, W.recent, B.calm), flag = c.z > A.zCorr && c.rRecent - c.rBase > 0.3, id = 'corr:' + SH[a] + '/' + SH[b];
+          P.checks.push({ id: id, flag: flag });
+          if (flag) { n++; P.items.push({ id: 'C-' + (P.items.length + 1), check: id, title: NAMES[a] + ' and ' + NAMES[b] + ': correlation ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2), severity: 'med', evidence: 'Calm-month correlation rose from ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2) + ' (Fisher z = ' + F.num(c.z, 1) + '). Stress months are excluded, so this is not a crowding episode: the two sleeves now move together in ordinary months.', cites: [{ doc: 'mandate-' + SH[a], page: 1, line: 2, short: SH[a] }, { doc: 'mandate-' + SH[b], page: 1, line: 2, short: SH[b] }], state: 'pending', note: NAMES[a] + ' and ' + NAMES[b] + ' now move together in calm months (correlation ' + F.num(c.rRecent, 2) + ', from ' + F.num(c.rBase, 2) + '). The diversification the book was sized on is smaller than it was.' }); res.push({ status: 'approval', msg: NAMES[a] + ' / ' + NAMES[b] + ': ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2) }); }
+        }
+        res.push({ msg: (10 - n) + ' of 10 sleeve pairs stable in calm months' });
+        audit.push('correlation-regime-monitor', 'checked', n + ' shifts in 10 pairs');
+        return res;
+      } },
+      { agent: 'factor-overlap-checker', run: function () {
+        var res = [];
+        (S.overlap || []).forEach(function (o) {
+          P.checks.push({ id: o.id, flag: o.flag });
+          if (o.flag) {
+            var la = find('mandate-' + SH[o.a], /style tilts|Factor exposures/), lb = find('mandate-' + SH[o.b], /Factor exposures|style tilts/);
+            P.items.push({ id: 'O-' + (P.items.length + 1), check: o.id, title: NAMES[o.a] + ' and ' + NAMES[o.b] + ': the same ' + FN[o.k].toLowerCase() + ' bet', severity: 'high', evidence: 'Both sleeves load on ' + FN[o.k].toLowerCase() + ': ' + o.shared + '. Shared factors explain a correlation of ' + F.num(o.fc, 2) + ' between them. One mandate describes this exposure; the other says it has none.', cites: [la && la.cite, lb && lb.cite].filter(Boolean), state: 'pending', note: NAMES[o.a] + ' and ' + NAMES[o.b] + ' are running the same ' + FN[o.k].toLowerCase() + ' bet (' + o.shared + '); together they are one position, sized as two.' });
+            res.push({ status: 'approval', msg: 'Overlap: ' + o.pair + ' on ' + FN[o.k].toLowerCase() });
+          }
+        });
+        res.push({ msg: (S.overlap || []).filter(function (o) { return !o.flag; }).length + ' sleeve pairs with no shared factor bet' });
+        audit.push('factor-overlap-checker', 'checked', (S.overlap || []).filter(function (o) { return o.flag; }).length + ' overlaps');
+        return res;
+      } },
+      { agent: 'risk-note-drafter', run: function () { audit.push('risk-note-drafter', 'waiting', 'drafts from approved flags only'); return { status: 'approval', msg: 'Waiting for approvals; only approved flags go into the risk note' }; } }
+    ], afterPipeline);
+  }
+  function afterPipeline() {
+    var P = S.pipe, B = S.B, D = B.D;
+    apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderNote });
+    UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.checks.filter(function (c) { return c.flag; }).length, review: P.items.length });
+    if (P.drift.length && D.F) {
+      var xs = [], series = P.drift.map(function (d) { return { name: NAMES[d.i].split(' ')[0] + ': ' + FN[d.k].toLowerCase(), ys: [] }; });
+      for (var t = 24; t <= D.R.length; t++) { xs.push(D.dates[t - 1]); P.drift.forEach(function (d, j) { series[j].ys.push(PM.ols(B.net[d.i].slice(t - 24, t), D.F.slice(t - 24, t)).beta[d.k]); }); }
+      UI.chart.line('#driftChart', { xs: xs, series: series, hlines: P.ex['mandate-rv'] && P.ex['mandate-rv'].ratesMax ? [{ y: P.ex['mandate-rv'].ratesMax.value, label: 'RV rates limit' }] : [], yFmt: function (v) { return F.num(v, 1); }, xFmt: function (v) { return new Date(v).getUTCFullYear(); }, xTicks: 6, height: 240, label: 'Rolling exposures' });
+      $('#driftNote').textContent = 'Rolling 24-month regressions on all months, for context. The flags themselves compare calm months only.';
+    } else { $('#driftChart').innerHTML = '<p class="muted">No drift flagged.</p>'; $('#driftNote').textContent = ''; }
+    renderNote(); renderEval();
+    UI.$$('#runSteps span').forEach(function (s) { s.className = 'done'; });
+  }
+  function renderNote() {
+    var ap = S.pipe.items.filter(function (it) { return it.state === 'approved'; });
+    $('#noteBody').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.note) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a flag to add it to the risk note.</li>';
+    if (ap.length) audit.push('risk-note-drafter', 'note updated', ap.map(function (a) { return a.id; }).join(', '));
+  }
+  function renderEval() {
+    var P = S.pipe, ext = {}, truth = {};
+    Object.keys(LABELS.fields).forEach(function (id) { Object.keys(LABELS.fields[id]).forEach(function (k) { truth[id + '.' + k] = { value: LABELS.fields[id][k].value }; var f = P.ex[id] && P.ex[id][k]; if (f) ext[id + '.' + k] = { value: f.value, cite: f.valid ? f.cite : null }; }); });
+    var ev = UI.evaluate(ext, truth, 1e-9), seeded = Object.keys(LABELS.issues.seeded), all = seeded.concat(LABELS.issues.clean), raised = P.checks.filter(function (c) { return c.flag; }).map(function (c) { return c.id; });
+    var fl = UI.evalFlags(raised, seeded, all.length), unknown = P.checks.filter(function (c) { return all.indexOf(c.id) === -1; }).length;
+    window.EVAL = { demo: 'Multi-Strategy Builder', href: 'multi-strategy-builder.html#evaluation', fields: ev.n, accuracy: ev.accuracy, coverage: ev.coverage, seeded: fl.seeded, detected: fl.detected, falseFlagRate: fl.falseFlagRate };
+    UI.kpis('#evalKpis', [{ id: 'evAcc', label: 'Mandate extraction accuracy', value: F.pct(ev.accuracy, 1), sub: ev.correct + ' of ' + ev.n + ' labeled fields' }, { id: 'evCov', label: 'Citation coverage', value: F.pct(ev.coverage, 1) }, { id: 'evFlag', label: 'Injected events caught / false-flag rate', value: fl.detected + ' of ' + fl.seeded + ' / ' + F.pct(fl.falseFlagRate, 1), sub: (fl.candidates - fl.seeded) + ' clean checks, seed ' + S.seed + (unknown ? '; ' + unknown + ' unlabeled' : '') }]);
+    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field or check' }, { key: 't', label: 'Label' }, { key: 'e', label: 'Pipeline' }, { key: 'ok', label: 'Match' }],
+      rows: Object.keys(truth).map(function (k) { return { k: k, t: String(truth[k].value), e: ext[k] ? String(ext[k].value) : 'missing', ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no' }; })
+        .concat(all.map(function (id) { var s = seeded.indexOf(id) !== -1, r = raised.indexOf(id) !== -1; return { k: id, t: s ? 'event' : 'clean', e: r ? 'flagged' : 'quiet', ok: s === r ? 'yes' : 'no' }; })) });
+  }
+
+  /* ---------------- memo ---------------- */
+  function renderMemo() {
+    /* Fixed text, written for the base case (seed 42, default assumptions); links jump to the live numbers. */
+    $('#memoCall').innerHTML = MEMO.call;
+    $('#memoSituation').innerHTML = MEMO.situation; $('#memoWhy').innerHTML = MEMO.why; $('#memoRisks').innerHTML = MEMO.risks; $('#memoChange').innerHTML = MEMO.change; $('#memoNext').innerHTML = MEMO.next;
+  }
+  var MEMO = {
+    call: 'Cut the quant sleeve from 15% to 5% of the book and move the ten points to credit. Add nothing to relative value until its duration is back inside its mandate. Turn on volatility targeting and drawdown stops for every sleeve.',
+    situation: '<p>The book holds five sleeves sized for equal risk. Over ten synthetic years it returned <a class="cite-num" href="#kpi-portRet">3.4%</a> a year net, with <a class="cite-num" href="#kpi-portVol">4.8%</a> volatility and a <a class="cite-num" href="#kpi-portDD">17.0%</a> drawdown. In calm months the sleeves barely move together; in stress months they do. The monitors raised four flags this month, all four confirmed against the mandates.</p>',
+    why: '<li>Quant is not a separate bet. It shares the equity long/short sleeve\'s momentum exposure (loadings 0.32 and 0.62; see the <a href="#crowding">overlap table</a>), and the macro manager has now added a momentum overlay of its own, taking its correlation with quant from 0.14 to 0.68 in calm months. Three sleeves are carrying one factor, and quant carries the most of it.</li>' +
+      '<li>Quant is the weakest sleeve on its own numbers: 3.1% gross and 0.6% net a year on average (<a href="#fees">fee table</a>) after a 1.0% fee and 1.5% of pass-through expenses, with the deepest drawdown in the book, 36.7%, taken in crowded unwinds.</li>' +
+      '<li>Crowding is the risk the calm-month numbers hide. Average correlation between sleeves rises from 0.10 to <a class="cite-num" href="#kpi-corrStress">0.47</a> in stress months, and the worst stress episode, replayed on today\'s weights, costs <a class="cite-num" href="#kpi-episodeLoss">17.0%</a>. Cutting the most crowded sleeve is the most direct fix.</li>',
+    risks: '<li>Momentum has paid in calm years. Cutting quant gives some of that up, and equity long/short and macro still carry the factor.</li><li>Relative value holds the largest weight, 29.5%, because its volatility is low, but it now carries a rates loading of 0.80 against a mandate limit of 0.1, and its 3.5% pass-through takes it from 5.2% gross to 1.4% net on average. Its low volatility is not the low risk it looks like.</li><li>Fees take <a class="cite-num" href="#kpi-feeShare">46%</a> of the gross return. Pass-through sleeves cost <a class="cite-num" href="#kpi-passThrough">60 bps</a> a year more than standard terms would.</li>',
+    change: '<li>Evidence that quant\'s momentum exposure is a different signal from the equity sleeve\'s, for example a low correlation of their momentum returns in a holdings-based review.</li><li>The macro manager removing the momentum overlay, which would take the overlap back to two sleeves.</li><li>Relative value back inside its duration limit for two quarters, with pass-through expenses capped near 2%.</li>',
+    next: '<p>Redeem down to 5% at quant\'s next monthly window and add the ten points to credit, the sleeve with the least factor overlap and a hurdle on its fee. Send the risk note in the <a href="#riskNote">agents section</a> to the macro and relative value managers. With both risk controls on, the current book returns 4.8% a year with a 10.2% drawdown instead of 17.0% (<a href="#sleeves">risk controls table</a>); switch them on with the reallocation.</p>'
+  };
+
+  /* ---------------- dropped file ---------------- */
+  function parseSleeves(rows, header) {
+    var errs = [], R = [], Fx = [], reg = [], dates = [], fcols = ['equity', 'momentum', 'value', 'credit_spread', 'rates'], hasF = fcols.every(function (c) { return header.indexOf(c) !== -1; });
+    rows.forEach(function (r, i) {
+      var n = i + 2, d = UI.parse.date(r.date), v = SH.map(function (s) { return UI.parse.num(r[s]); });
+      if (!d) errs.push('Row ' + n + ': date is not YYYY-MM-DD.');
+      if (v.some(function (x) { return !isFinite(x) || Math.abs(x) > 1; })) errs.push('Row ' + n + ': sleeve returns must be decimals between -1 and 1.');
+      if (hasF) { var f = fcols.map(function (c) { return UI.parse.num(r[c]); }); if (f.some(function (x) { return !isFinite(x) || Math.abs(x) > 1; })) errs.push('Row ' + n + ': factor returns must be decimals between -1 and 1.'); Fx.push(f); }
+      if (r.regime && ['calm', 'stress'].indexOf(String(r.regime).trim()) === -1) errs.push('Row ' + n + ': regime must be calm or stress.');
+      R.push(v); reg.push(r.regime ? String(r.regime).trim() : null); dates.push(d ? d.getTime() : 0);
+    });
+    if (rows.length < 48) errs.push('Need at least 48 monthly rows; found ' + rows.length + '.');
+    if (errs.length) return { errors: errs };
+    if (reg.some(function (x) { return !x; })) { var eq = hasF ? Fx.map(function (f) { return f[0]; }) : R.map(function (r) { return PM.mean(r); }), cut = PM.quantile(eq, 0.1); reg = eq.map(function (v) { return v <= cut ? 'stress' : 'calm'; }); }
+    return { data: { R: R, F: hasF ? Fx : null, regimes: reg, dates: dates, T: R.length }, summary: rows.length + ' months' + (hasF ? ' with factors' : ', no factor columns') };
+  }
+
+  function renderAll() { renderSleeves(); renderCrowding(); renderFees(); renderMemo(); }
+  function init() {
+    reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); runPipeline(); });
+    var tabs = UI.tabs('#tabsRoot');
+    $('#scheme').addEventListener('change', function () { S.scheme = this.value; renderAll(); });
+    $('#vtOn').addEventListener('change', function () { S.vt = this.checked; renderSleeves(); });
+    $('#ddOn').addEventListener('change', function () { S.dd = this.checked; renderSleeves(); });
+    UI.seed('#seed', function (v) { S.seed = v; S.pa.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. Jul 2016 to Jun 2026.'; paForm(); renderAll(); renderPA(); runPipeline(); });
+    paForm();
+    var tmr; $('#paInputs').addEventListener('input', function () { clearTimeout(tmr); tmr = setTimeout(function () { paRead(); renderPA(); }, 150); });
+    $('#paReset').addEventListener('click', function () { S.pa = Object.assign({}, PA.DEFAULT_PARAMS, { seed: S.seed }); S.paSrc = 'defaults'; paForm(); renderPA(); });
+    $('#paBook').addEventListener('click', bookToPA);
+    new UI.DocViewer(document.getElementById('docViewer'), DOCS);
+    log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
+    $('#runSteps').innerHTML = ['Plan', 'Extract mandates', 'Validate citations', 'Drift', 'Correlation', 'Overlap', 'Human approval', 'Risk note', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
+    $('#runBtn').addEventListener('click', runPipeline);
+    $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
+    UI.dropZone('#dzSleeves', { title: 'Use your own sleeve returns', template: '/assets/templates/sleeve-returns.csv', columns: [{ name: 'date' }].concat(SH.map(function (s) { return { name: s, desc: s === 'els' ? 'monthly return, decimal, gross of fees' : null }; })).concat(['equity', 'momentum', 'value', 'credit_spread', 'rates'].map(function (c) { return { name: c, required: false }; })).concat([{ name: 'regime', required: false, desc: 'calm or stress' }]),
+      parse: parseSleeves, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your sleeve returns, processed locally. Fees from the mandates.'; renderAll(); runPipeline(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderAll(); runPipeline(); } });
+    UI.exportMenu('#exportMenu', { demo: 'Multi-Strategy Builder', slug: 'multi-strategy-builder', report: 'Risk note and sleeve sizing memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
+    UI.testsBadge('#testsBadge', 'Multi-Strategy Builder'); UI.testsBadge('.tests-badge-slot', 'Multi-Strategy Builder');
+    renderAll(); renderPA(); runPipeline();
+    var h = location.hash.slice(1); if (['sleeves', 'crowding', 'fees', 'pa'].indexOf(h) !== -1) tabs.show(h);
+  }
+  init();
+})();
+</script>
+</body>
+</html>

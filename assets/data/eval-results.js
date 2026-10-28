@@ -39,5 +39,15 @@ window.EVAL_RESULTS = [
     "seeded": 3,
     "detected": 3,
     "falseFlagRate": 0
+  },
+  {
+    "demo": "Multi-Strategy Builder",
+    "href": "multi-strategy-builder.html#evaluation",
+    "fields": 26,
+    "accuracy": 1,
+    "coverage": 1,
+    "seeded": 4,
+    "detected": 4,
+    "falseFlagRate": 0
   }
 ];

@@ -1397,3 +1397,208 @@
     return { gp: gp, lp: lp, byDeal: by };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Multi-strategy: synthetic sleeves on a factor model with stress regimes
+   and crowding, exposure drift and correlation shift tests, factor overlap,
+   volatility targeting, drawdown stops and fee netting.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, MS = PM.ms = {};
+  MS.SLEEVES = ['Equity long/short', 'Global macro', 'Relative value', 'Credit', 'Quant'];
+  MS.SHORT = ['els', 'macro', 'rv', 'credit', 'quant'];
+  MS.FACTORS = ['Equity', 'Momentum', 'Value', 'Credit spread', 'Rates'];
+  /* true factor loadings by sleeve (rows) and factor (columns), before any injected drift */
+  MS.BASE = [[0.35, 0.30, 0.00, 0.00, 0.00], [0.10, 0.05, 0.00, 0.00, 0.25], [0.00, 0.00, 0.00, 0.10, 0.00], [0.00, 0.00, 0.00, 0.60, 0.05], [0.05, 0.50, 0.25, 0.00, 0.00]];
+  MS.ALPHA = [0.0060, 0.0050, 0.0060, 0.0035, 0.0050];
+  MS.IDIO = [0.018, 0.015, 0.010, 0.010, 0.010];
+  MS.CROWD = [0.6, 0.1, 0.5, 0.3, 0.8];
+  /* drift injected into the synthetic data: loading ramps to `to` over six months from `start` */
+  MS.INJECT = [{ sleeve: 2, factor: 4, start: 92, to: 0.80 }, { sleeve: 1, factor: 1, start: 88, to: 0.80 }];
+  var FMU = [0.007, 0.004, 0.002, 0.003, 0.002], FVOL = [0.045, 0.040, 0.030, 0.020, 0.022];
+  var FC = [[1, -0.1, 0.1, 0.6, -0.2], [-0.1, 1, -0.3, -0.1, 0], [0.1, -0.3, 1, 0.1, 0], [0.6, -0.1, 0.1, 1, 0.1], [-0.2, 0, 0, 0.1, 1]];
+  MS.factorCov = function () { return FC.map(function (r, i) { return r.map(function (c, j) { return c * FVOL[i] * FVOL[j]; }); }); };
+  /** simulate(seed, T): monthly factor returns F, gross sleeve returns R, regimes and the true loadings
+      used each month. Regimes follow a two-state Markov chain (calm to stress 3% a month, stress
+      persists 75%). In stress months factor means turn (equity -3%, momentum and value -1.5%, credit
+      -1.5%), factor vol rises 1.8x, and a common crowding shock (mean -2%, vol 2%) hits each sleeve
+      in proportion to MS.CROWD: the crowded unwind that makes sleeves fall together. */
+  MS.simulate = function (seed, T) {
+    T = T || 120;
+    var rng = PM.mulberry32(seed), z = PM.normalGen(rng), L = PM.cholesky(FC), F = [], R = [], reg = [], load = [], s = 'calm';
+    for (var t = 0; t < T; t++) {
+      if (t > 0) s = s === 'calm' ? (rng() < 0.03 ? 'stress' : 'calm') : (rng() < 0.75 ? 'stress' : 'calm');
+      var st = s === 'stress', e = FMU.map(function () { return z(); }), f = [];
+      for (var i = 0; i < 5; i++) { var c = 0; for (var j = 0; j <= i; j++) c += L[i][j] * e[j]; var mu = st ? [-0.03, -0.015, -0.015, -0.015, 0.004][i] : FMU[i]; f.push(mu + FVOL[i] * (st ? 1.8 : 1) * c); }
+      var crowd = st ? -0.02 + 0.02 * z() : 0, lt = MS.BASE.map(function (r) { return r.slice(); });
+      MS.INJECT.forEach(function (d) { if (t >= d.start) { var k = Math.min(1, (t - d.start + 1) / 6); lt[d.sleeve][d.factor] = MS.BASE[d.sleeve][d.factor] + k * (d.to - MS.BASE[d.sleeve][d.factor]); } });
+      R.push(lt.map(function (b, k) { return MS.ALPHA[k] + PM.dot(b, f) + MS.CROWD[k] * crowd + MS.IDIO[k] * z(); }));
+      F.push(f); reg.push(s); load.push(lt);
+    }
+    return { T: T, F: F, R: R, regimes: reg, load: load };
+  };
+  /** exposureShift(y, X, base, recent, keep): factor regression on two windows ([from, to) month
+      indexes), optionally on the months where keep[t] is true. z = (b_recent - b_base) /
+      sqrt(se_recent^2 + se_base^2) per factor. */
+  MS.exposureShift = function (y, X, base, recent, keep) {
+    var win = function (w) { var yy = [], xx = []; for (var t = w[0]; t < w[1]; t++) if (!keep || keep[t]) { yy.push(y[t]); xx.push(X[t]); } return PM.ols(yy, xx); };
+    var b = win(base), r = win(recent);
+    return b.beta.map(function (v, k) { var se = Math.sqrt(b.se[k + 1] * b.se[k + 1] + r.se[k + 1] * r.se[k + 1]); return { base: v, recent: r.beta[k], seBase: b.se[k + 1], seRecent: r.se[k + 1], z: se > 0 ? (r.beta[k] - v) / se : 0 }; });
+  };
+  /** corrShift(a, b, base, recent, keep): Fisher z test of a rise in correlation between two windows.
+      keep (optional, boolean per month) restricts both windows to those months, e.g. calm months only,
+      so a crowded stress episode is not mistaken for a lasting change. */
+  MS.corrShift = function (a, b, base, recent, keep) {
+    var pick = function (x, w) { var o = []; for (var t = w[0]; t < w[1]; t++) if (!keep || keep[t]) o.push(x[t]); return o; };
+    var a0 = pick(a, base), b0 = pick(b, base), a1 = pick(a, recent), b1 = pick(b, recent);
+    var r0 = PM.corr(a0, b0), r1 = PM.corr(a1, b1), n0 = a0.length, n1 = a1.length, at = function (r) { return 0.5 * Math.log((1 + r) / (1 - r)); };
+    return { rBase: r0, rRecent: r1, z: (at(r1) - at(r0)) / Math.sqrt(1 / (n0 - 3) + 1 / (n1 - 3)) };
+  };
+  /** factorCorr(bA, bB, S, volA, volB): the part of two sleeves' correlation that comes from shared
+      factor exposure, b_A' S b_B / (vol_A x vol_B) with the sleeves' total monthly vols. Without vols it
+      is the correlation of the systematic parts alone, b_A' S b_B / sqrt(b_A' S b_A x b_B' S b_B). */
+  MS.factorCorr = function (bA, bB, S, volA, volB) {
+    var q = function (x, y) { return PM.dot(x, PM.matVec(S, y)); }, d = volA && volB ? volA * volB : Math.sqrt(q(bA, bA) * q(bB, bB));
+    return d > 0 ? q(bA, bB) / d : 0;
+  };
+  /** volTarget(r, target, look, cap): scale each month by target / trailing annualised vol of the
+      previous `look` months (no look-ahead), capped at `cap`; scale 1 until enough history. */
+  MS.volTarget = function (r, target, look, cap) {
+    var scale = [], out = r.map(function (v, t) { var s = 1; if (t >= look) { var vol = PM.std(r.slice(t - look, t)) * Math.sqrt(12); s = vol > 0 ? Math.min(cap, target / vol) : 1; } scale.push(s); return v * s; });
+    return { r: out, scale: scale };
+  };
+  /** drawdownStop(r, stop, cut, wait): when the sleeve's drawdown from its peak (unmanaged) passes
+      `stop`, its allocation is multiplied by `cut` for the next `wait` months. Returns managed
+      returns, the multiplier path and the months a stop fired. */
+  MS.drawdownStop = function (r, stop, cut, wait) {
+    var nav = 1, peak = 1, left = 0, mult = [], fired = [], out = [];
+    r.forEach(function (v, t) {
+      var m = left > 0 ? cut : 1; mult.push(m); out.push(v * m); if (left > 0) left--;
+      nav *= 1 + v; peak = Math.max(peak, nav);
+      if (left === 0 && nav / peak - 1 < -stop) { left = wait; fired.push(t); peak = nav; }
+    });
+    return { r: out, mult: mult, fired: fired };
+  };
+  /** fees(r, f): gross monthly returns to net. f = {mgmt, pass (pass-through expenses, a year, on NAV),
+      perf, hurdle (a year)}. Management and pass-through charged monthly; performance fee crystallises
+      every 12 months on gains above the high-water mark and the hurdle. Returns {net, mgmt, pass, perf}
+      with fee totals as sums of monthly fractions of NAV. */
+  MS.fees = function (r, f) {
+    var nav = 1, hwm = 1, start = 1, net = [], tm = 0, tp = 0, tf = 0, prev = 1;
+    r.forEach(function (v, t) {
+      var m = (f.mgmt || 0) / 12, p = (f.pass || 0) / 12, after = prev * (1 + v - m - p), perf = 0;
+      tm += m; tp += p;
+      if ((t + 1) % 12 === 0) { var hurdleNav = Math.max(hwm, start) * (1 + (f.hurdle || 0)); if (after > hurdleNav) { perf = (f.perf || 0) * (after - Math.max(hwm, start)); after -= perf; } hwm = Math.max(hwm, after); start = after; tf += perf / prev; }
+      net.push(after / prev - 1); prev = after;
+    });
+    return { net: net, mgmt: tm, pass: tp, perf: tf };
+  };
+  /** netting(R, w, terms): fee netting risk. Each sleeve pays its own performance fee on its own gains,
+      so a year where winners and losers offset still pays fees on the winners. Compares performance
+      fees paid by sleeves with those owed on the combined book under one average fee.
+      Returns per-year {paid, aggregate, cost} in fractions of portfolio NAV, and totals. */
+  MS.netting = function (R, w, terms) {
+    var years = Math.floor(R.length / 12), rows = [], paid = 0, agg = 0;
+    var avgPerf = PM.sum(terms.map(function (t, i) { return (t.perf || 0) * w[i]; }));
+    for (var y = 0; y < years; y++) {
+      var p = 0, gains = 0;
+      w.forEach(function (wi, i) {
+        var g = 1; for (var t = y * 12; t < y * 12 + 12; t++) g *= 1 + R[t][i] - ((terms[i].mgmt || 0) + (terms[i].pass || 0)) / 12;
+        var hur = terms[i].hurdle || 0; if (g - 1 > hur) p += wi * (terms[i].perf || 0) * (g - 1); gains += wi * (g - 1);
+      });
+      var a = gains > 0 ? avgPerf * gains : 0; rows.push({ year: y + 1, paid: p, aggregate: a, cost: p - a }); paid += p; agg += a;
+    }
+    return { rows: rows, paid: paid / Math.max(1, years), aggregate: agg / Math.max(1, years), cost: (paid - agg) / Math.max(1, years) };
+  };
+  /** portfolio(R, w): weighted monthly returns (weights fixed, rebalanced monthly) */
+  MS.portfolio = function (R, w) { return R.map(function (r) { return PM.dot(r, w); }); };
+  /** maxDrawdown of a return series */
+  MS.maxDD = function (r) { var nav = 1, pk = 1, dd = 0; r.forEach(function (v) { nav *= 1 + v; pk = Math.max(pk, nav); dd = Math.min(dd, nav / pk - 1); }); return dd; };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Portable alpha: the stress scenarios and simulation health checks that
+   lived in the page script of the original simulator, moved here unchanged
+   (only the HTML building was removed). tests/pa-page-proof.mjs compares the
+   new page with the old one, number by number, at the original defaults.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PA = root.PM.pa, REG = PA.REG, TRADE_COST = PA.TRADE_COST, structure = PA.structure, supportable = PA.supportable, seedSweep = PA.seedSweep;
+  PA.SCEN = [
+    { name: 'Equity crash (Oct-2008 type)', eq: -0.170, bd: 0.015, aShock: -0.045, aBetaX: 1.5, reg: 'crisis', tip: 'S&P 500 -17%, Treasuries +1.5% (flight to quality). Idiosyncratic alpha shock -4.5% plus 1.5x beta: hedge-fund composites lost about 7% in October 2008.' },
+    { name: 'Pandemic shock (Mar-2020 type)', eq: -0.125, bd: -0.005, aShock: -0.060, aBetaX: 1.5, reg: 'crisis', tip: 'S&P 500 -12.5%, Aggregate -0.5% (dash for cash). Alpha shock -6%: composites lost 8-9% in March 2020; futures basis dislocated.' },
+    { name: 'Rate shock (Sep-2022 type)', eq: -0.090, bd: -0.045, aShock: -0.010, aBetaX: 1.5, reg: 'rate', tip: 'S&P 500 -9%, Aggregate -4.5%. Both legs of 60/40 fall; alpha shock -1%.' },
+    { name: 'Correlation spike', eq: -0.050, bd: -0.020, aShock: -0.015, aBetaX: 1.5, reg: 'rate', tip: 'Stocks -5% and bonds -2% together; crowded trades unwind, alpha -1.5%.' },
+    { name: 'Mild correction', eq: -0.050, bd: 0.010, aShock: -0.003, aBetaX: 1.0, reg: 'calm', tip: 'Ordinary -5% equity pullback with bonds +1%; alpha barely affected.' }
+  ];
+  /** stress(p): one-month shock applied to the target structure, using the same collateral machinery as
+      the path simulation: stressed exchange margin, stressed financing, the credit line, then forced
+      de-leveraging when cash plus the line can no longer margin the position. */
+  PA.stress = function (p) {
+    var st = structure(p), N = st.N, A = st.A, rfMo = p.cashRate / 12, hc = Math.max(1 - p.haircut, 0.01), out = [];
+    for (var i = 0; i < PA.SCEN.length; i++) {
+      var s = PA.SCEN[i], rg = REG[s.reg], tcost = TRADE_COST[s.reg] || 0.0005;
+      var bench = p.eqWeight * s.eq + (1 - p.eqWeight) * s.bd;
+      var sprMo = p.finSpread * rg.sprMult / 12, imRate = Math.min(p.marginReq * rg.imMult, 0.5);
+      var cash0 = 1 - A, vm = N * (bench - rfMo), reqIM = imRate * N / hc;
+      var cashLow = cash0 + vm, draw = 0, cut = 0, nNew = N, forced = false, call = false;
+      if (cashLow < reqIM - 1e-12) {
+        call = true; draw = Math.min(reqIM - cashLow, p.buffer);
+        if (cashLow + draw < reqIM - 1e-12) { forced = true; nNew = supportable(cashLow + draw, imRate, p.haircut); cut = Math.max(0, N - nNew); }
+      }
+      var nAvg = (N + nNew) / 2;
+      var cash = cash0 * rfMo, betaEx = N * (bench - rfMo);
+      var fin = -nAvg * sprMo, roll = -nAvg * p.rollCost / 12, basis = -nAvg * p.basisSig * rg.basMult;
+      var gross = rfMo + s.aShock + p.alphaBeta * s.aBetaX * (s.eq - rfMo);
+      var sleeveNet = gross - p.mgmtFee / 12;
+      var drag = -A * p.drag / 12;
+      var liq = -(st.structShort * (rfMo + sprMo) + draw * (rfMo + sprMo + 0.01 / 12) + cut * tcost);
+      var pa = cash + betaEx + fin + roll + basis + A * sleeveNet + drag + liq;
+      out.push({ name: s.name, tip: s.tip, bench: bench, pa: pa, delta: pa - bench, vm: vm, imRate: imRate, reqIM: reqIM, cashLow: cashLow, draw: draw, nNew: nNew, forced: forced, call: call });
+    }
+    return out;
+  };
+  /** health(sim, p, paActive): the calibration and liquidity checks, each {label, val, tgt, ok} with
+      the same formatting as the original page */
+  PA.health = function (sim, p, paActive) {
+    function pct(v, d) { d = d != null ? d : 2; return (v * 100).toFixed(d) + '%'; }
+    function spct(v, d) { d = d != null ? d : 2; return (v >= 0 ? '+' : '') + (v * 100).toFixed(d) + '%'; }
+    function f2(v) { return v.toFixed(2); }
+    var n = sim.months, a = sim.sleeveRets, st = sim.st, i, sw = seedSweep(p);
+    var aMean = 0; for (i = 0; i < n; i++) aMean += a[i]; aMean /= n;
+    var aVar = 0; for (i = 0; i < n; i++) aVar += (a[i] - aMean) * (a[i] - aMean); aVar /= (n - 1);
+    var realVol = Math.sqrt(aVar) * Math.sqrt(12);
+    var e = sim.eqRets, eMean = 0; for (i = 0; i < n; i++) eMean += e[i]; eMean /= n;
+    var cov = 0, eVar = 0; for (i = 0; i < n; i++) { cov += (a[i] - aMean) * (e[i] - eMean); eVar += (e[i] - eMean) * (e[i] - eMean); }
+    var realBeta = eVar > 0 ? cov / eVar : 0;
+    var sleeveSharpe = realVol > 0 ? (aMean * 12 - p.cashRate) / realVol : 0;
+    var basisSum = 0; for (i = 0; i < n; i++) basisSum += sim.comp.basis[i] * sim.comp.basis[i];
+    var realBasis = Math.sqrt(basisSum / n) * 1e4, tgtBasis = p.basisSig * st.N * 1e4;
+    var cr = 0, rt = 0, mc = 0, neg = 0, dl = 0, nSum = 0, minCush = Infinity;
+    for (i = 0; i < n; i++) {
+      if (sim.regimes[i] === 'crisis') cr++; else if (sim.regimes[i] === 'rate') rt++;
+      if (sim.calls[i]) mc++; if (sim.delevs[i]) dl++; if (a[i] < 0) neg++;
+      nSum += sim.notl[i]; if (sim.cushion[i] < minCush) minCush = sim.cushion[i];
+    }
+    var stressShare = (cr + rt) / n, avgN = nSum / n;
+    if (!isFinite(minCush)) minCush = 0;
+    return [
+      { label: 'Alpha sleeve vol (net)', val: pct(realVol, 1), tgt: 'tgt ' + pct(p.alphaVol, 1), ok: p.alphaVol <= 0 || Math.abs(realVol - p.alphaVol) / p.alphaVol < 0.35 },
+      { label: 'Alpha beta to equities', val: f2(realBeta), tgt: 'tgt ' + f2(p.alphaBeta), ok: Math.abs(realBeta - p.alphaBeta) < 0.15 },
+      { label: 'Alpha sleeve net Sharpe', val: f2(sleeveSharpe), tgt: '', ok: sleeveSharpe > 0.3 },
+      { label: 'Initial margin posted', val: pct(st.im, 1) + ' NAV', tgt: 'cash ' + pct(1 - st.A, 0), ok: st.im <= 0.8 * (1 - st.A) },
+      { label: 'Free cash after margin', val: pct(st.free, 1), tgt: 'buffer ' + pct(p.buffer, 0), ok: st.free >= p.buffer },
+      { label: 'Margin-call months', val: mc + ' / ' + n, tgt: '', ok: mc === 0 },
+      { label: 'Forced de-leveraging months', val: dl + ' / ' + n, tgt: '', ok: dl === 0 },
+      { label: 'Min collateral cushion', val: pct(minCush, 1) + ' NAV', tgt: 'buffer ' + pct(p.buffer, 0), ok: minCush >= p.buffer },
+      { label: 'Average futures notional', val: pct(avgN, 0) + ' NAV', tgt: 'tgt ' + pct(p.betaNotional, 0), ok: avgN >= 0.98 * p.betaNotional },
+      { label: 'Regime months', val: 'crisis ' + cr + ' · rate ' + rt + ' (' + pct(stressShare, 0) + ')', tgt: 'tgt ' + pct(p.stressFreq, 0), ok: Math.abs(stressShare - p.stressFreq) < 0.10 },
+      { label: 'Realised basis noise', val: realBasis.toFixed(1) + ' bp/mo', tgt: tgtBasis > 0 ? 'calm tgt ' + tgtBasis.toFixed(0) + ' bp/mo' : '', ok: tgtBasis <= 0 || (realBasis > 0.7 * tgtBasis && realBasis < 2.2 * tgtBasis) },
+      { label: 'Negative alpha months', val: pct(neg / n, 0), tgt: '', ok: neg / n < 0.55 },
+      { label: 'Active return across ' + sw.n + ' seeds', val: 'p10 ' + spct(sw.p10, 1) + ' · med ' + spct(sw.med, 1) + ' · p90 ' + spct(sw.p90, 1), tgt: 'this path ' + spct(paActive, 1), ok: sw.med > 0 },
+      { label: 'Paths beating the benchmark', val: pct(sw.win, 0) + ' of ' + sw.n, tgt: '', ok: sw.win >= 0.5 }
+    ];
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

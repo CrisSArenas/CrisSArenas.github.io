@@ -126,7 +126,8 @@
 
   /* line / area / band chart
      opts: { xs:[], series:[{name, ys:[], color:'s1', dash, width, area}], bands:[{name, lo:[], hi:[], color}],
-             xFmt, yFmt, height, yMin, yMax, hlines:[{y, label}], vlines:[{x, label}], legend } */
+             xFmt, yFmt, height, yMin, yMax, hlines:[{y, label}], vlines:[{x, label}], legend,
+             shade: [false|'s3'|... per point] shades the interval from each point to the next } */
   UI.chart.line = function (el, o) {
     el = resolve(el);
     var W = o.width || 760, H = o.height || 280, m = { l: 56, r: 16, t: 14, b: 30 };
@@ -146,6 +147,7 @@
     s += '<g>' + yt.map(function (v) { return '<text x="' + (m.l - 8) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + UI.esc(yf(v)) + '</text>'; }).join('') + '</g>';
     var every = Math.max(1, Math.ceil(n / (o.xTicks || 8)));
     s += '<g>' + xs.map(function (x, i) { return (i % every && i !== n - 1) ? '' : '<text x="' + X(x) + '" y="' + (H - 8) + '" text-anchor="middle">' + UI.esc(xf(x)) + '</text>'; }).join('') + '</g>';
+    if (o.shade) o.shade.forEach(function (c, k) { if (!c || k >= n - 1) return; s += '<rect x="' + X(xs[k]).toFixed(1) + '" y="' + m.t + '" width="' + Math.max(1, X(xs[k + 1]) - X(xs[k])).toFixed(1) + '" height="' + (H - m.t - m.b) + '" style="fill:' + col(c === true ? 's5' : c, 0) + ';opacity:.12"/>'; });
     if (lo < 0 && hi > 0) s += '<line class="zero" x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(0) + '" y2="' + Y(0) + '"/>';
     (o.bands || []).forEach(function (b, i) {
       var p = xs.map(function (x, k) { return X(x) + ',' + Y(b.hi[k]); }).concat(xs.slice().reverse().map(function (x, k) { return X(x) + ',' + Y(b.lo[n - 1 - k]); }));
