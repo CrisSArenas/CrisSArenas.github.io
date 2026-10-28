@@ -569,7 +569,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var wl = [];
     S.rows.forEach(function (r) { if (r.stale >= 2) wl.push(['warn', '<b>Stale NAV</b>: ' + UI.esc(r.f.name) + ' last marked ' + qDate(r.navQ) + ' (' + r.stale + ' quarters). Nowcast ' + F.money(r.nowcast, 1) + ' vs reported ' + F.money(r.reported, 1) + '.']); });
     wl.push(['bad', '<b>Key person event</b>: Hasturn Mid-Market Buyout II. Departure of a named key person flagged by the <a href="manager-selection-copilot.html">Manager Selection Copilot</a> team-changes tracker; confirm whether the key person clause triggers.']);
-    wl.push(['warn', '<b>Fee break</b>: Ostrel Capital Partners VI. Management fee above the LPA rate after the step-down, raised by the <a href="/#stack" data-final="fund-terms-auditor.html">Fund Terms Auditor</a>; query sent to the GP.']);
+    wl.push(['warn', '<b>Fee break</b>: Ostrel Capital Partners VI. Management fee above the LPA rate after the step-down, raised by the <a href="fund-terms-auditor.html">Fund Terms Auditor</a>; query sent to the GP.']);
     S.rows.forEach(function (r) { if (r.unfunded > 0.45 * r.f.commitment && r.f.vintage <= 2023) wl.push(['warn', '<b>Liquidity pressure</b>: ' + UI.esc(r.f.name) + ' still has ' + F.money(r.unfunded, 1) + ' unfunded (' + F.pct(r.unfunded / r.f.commitment, 0) + ') entering the back half of its investment period.']); });
     var brk = S.pipeline && S.pipeline.breaks.filter(function (b) { return b.state !== 'rejected'; });
     if (brk && brk.length) brk.forEach(function (b) { wl.push(['bad', '<b>Statement break</b>: ' + UI.esc(b.title) + '. See the <a href="#ai">agent ledger</a>.']); });

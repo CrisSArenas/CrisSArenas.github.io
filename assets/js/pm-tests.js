@@ -247,6 +247,26 @@
     ok(PM.xirr(fl) > PM.xirr(PM.terms.sublineAdjust(fl)), 'line should lift IRR');
     near(PM.multiples(fl.map(function (f) { return f.amount; })).tvpi, PM.multiples(PM.terms.sublineAdjust(fl).map(function (f) { return f.amount; })).tvpi, 1e-12);
   }, 'Fund Terms Auditor');
+  T.add('Fund terms', 'European waterfall matches a hand-worked example', function () {
+    var y = 365 * 86400000, r = PM.terms.european([{ date: 0, contribution: 100 }, { date: y, distribution: 150 }], { pref: 0.08, carry: 0.2, catchUp: 1 });
+    near(r.rows[0].tiers.capital, 100); near(r.rows[0].tiers.pref, 8, 1e-9); near(r.rows[0].tiers.catchUp, 2, 1e-9); near(r.rows[0].tiers.split, 8, 1e-9);
+    near(r.gp, 10, 1e-9); near(r.lp, 140, 1e-9);
+  }, 'Fund Terms Auditor');
+  T.add('Fund terms', 'European waterfall inside the catch-up zone', function () {
+    var y = 365 * 86400000, r = PM.terms.european([{ date: 0, contribution: 100 }, { date: y, distribution: 110 }], { pref: 0.08, carry: 0.2, catchUp: 1 });
+    near(r.lp, 108, 1e-9); near(r.gp, 2, 1e-9);
+  }, 'Fund Terms Auditor');
+  T.add('Fund terms', 'American waterfall pays carry on winners without netting losers', function () {
+    var a = PM.terms.american([{ invested: 50, proceeds: 100, years: 1 }, { invested: 50, proceeds: 30, years: 2 }], { pref: 0.08, carry: 0.2, catchUp: 1 });
+    near(a.gp, 10, 1e-9);
+    var y = 365 * 86400000, e = PM.terms.european([{ date: 0, contribution: 50 }, { date: 0, contribution: 50 }, { date: y, distribution: 100 }, { date: 2 * y, distribution: 30 }], { pref: 0.08, carry: 0.2, catchUp: 1 });
+    near(e.gp, 6, 1e-9); near(e.gp, 0.2 * 30, 1e-9); ok(a.gp > e.gp, 'deal-by-deal pays more than whole-fund');
+  }, 'Fund Terms Auditor');
+  T.add('Fund terms', 'Management fee recomputation on a hand example', function () {
+    var f = PM.terms.mgmtFee({ inIP: false, commitment: 1200, netInvested: 840, rateIP: 0.02, ratePost: 0.015, lpShare: 0.0375, portfolioFees: 2.4, offsetPct: 1 });
+    near(f.gross, 840 * 0.015 / 4 * 0.0375, 1e-12); near(f.offset, 2.4 * 0.0375, 1e-12); near(f.net, f.gross - f.offset, 1e-12);
+    near(PM.terms.mgmtFee({ inIP: true, commitment: 1200, netInvested: 0, rateIP: 0.02, ratePost: 0.015, lpShare: 0.0375 }).gross, 0.225, 1e-12);
+  }, 'Fund Terms Auditor');
   /* ---------------- Multi-strategy ---------------- */
   T.add('Multi-strategy', 'ERC weights give equal risk contributions', function () {
     var w = PM.opt.erc(SIG4), rc = PM.opt.riskContrib(w, SIG4);

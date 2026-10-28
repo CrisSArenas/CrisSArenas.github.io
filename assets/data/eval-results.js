@@ -29,5 +29,15 @@ window.EVAL_RESULTS = [
     "seeded": 5,
     "detected": 5,
     "falseFlagRate": 0
+  },
+  {
+    "demo": "Fund Terms Auditor",
+    "href": "fund-terms-auditor.html#evaluation",
+    "fields": 37,
+    "accuracy": 1,
+    "coverage": 1,
+    "seeded": 3,
+    "detected": 3,
+    "falseFlagRate": 0
   }
 ];

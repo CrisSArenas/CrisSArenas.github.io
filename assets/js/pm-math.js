@@ -1341,3 +1341,59 @@
       .sort(function (a, b) { return a.date - b.date; });
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Fund terms: management fee recomputation and carry waterfalls.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, TR = PM.terms = PM.terms || {};
+  /** mgmtFee(q): one quarter's management fee for an LP.
+      q = {inIP (bool), commitment (fund), netInvested (fund, at quarter start), rateIP, ratePost,
+           lpShare, portfolioFees (fund-level transaction, monitoring and directors' fees in the quarter),
+           offsetPct}
+      gross = (inIP ? rateIP x commitment : ratePost x netInvested) / 4 x lpShare
+      offset = offsetPct x portfolioFees x lpShare (never more than gross); net = gross - offset */
+  TR.mgmtFee = function (q) {
+    var gross = (q.inIP ? q.rateIP * q.commitment : q.ratePost * q.netInvested) / 4 * q.lpShare;
+    var offset = Math.min(gross, (q.offsetPct || 0) * (q.portfolioFees || 0) * q.lpShare);
+    return { gross: gross, offset: offset, net: gross - offset };
+  };
+  function yrs(a, b) { return (b - a) / (365 * 86400000); }
+  /** european(events, t): whole-fund waterfall over dated LP contributions and gross distributions.
+      events: [{date, contribution} | {date, distribution}] (positive amounts). t = {pref, carry, catchUp}
+      Tiers on each distribution: (1) return of contributed capital; (2) preferred return, compounding
+      annually on unreturned capital and unpaid pref; (3) GP catch-up at rate catchUp (1 = full) until the
+      GP holds carry x (pref paid + catch-up); (4) split (1 - carry) / carry.
+      Returns {lp, gp, rows: [{date, amount, lp, gp, tiers}], unreturned, prefOwed}. */
+  TR.european = function (events, t) {
+    var ev = events.slice().sort(function (a, b) { return a.date - b.date; });
+    var unret = 0, prefDue = 0, prefPaid = 0, gpCU = 0, lp = 0, gp = 0, last = ev.length ? ev[0].date : 0, rows = [];
+    ev.forEach(function (e) {
+      var g = Math.pow(1 + t.pref, yrs(last, e.date)) - 1;
+      prefDue += (unret + prefDue) * g; last = e.date;
+      if (e.contribution) { unret += e.contribution; return; }
+      var d = e.distribution, a = Math.min(d, unret); unret -= a; d -= a;
+      var b = Math.min(d, prefDue); prefDue -= b; prefPaid += b; d -= b;
+      /* catch-up: GP receives catchUp of each dollar until gp = carry x (prefPaid + gp) */
+      var target = t.carry * prefPaid / (1 - t.carry), need = Math.max(0, target - gpCU), c = 0;
+      if (need > 0 && d > 0) { var take = Math.min(d, need / (t.catchUp || 1)); c = take * (t.catchUp || 1); var lpc = take - c; gpCU += c; lp += lpc; d -= take; }
+      var split = d * t.carry, lpLast = d - split;
+      var lpRow = a + b + lpLast + (rows.length ? 0 : 0), gpRow = c + split;
+      lp += a + b + lpLast; gp += gpRow;
+      rows.push({ date: e.date, amount: e.distribution, lp: e.distribution - gpRow, gp: gpRow, tiers: { capital: a, pref: b, catchUp: c, split: split } });
+    });
+    return { lp: lp, gp: gp, rows: rows, unreturned: unret, prefOwed: prefDue };
+  };
+  /** american(deals, t): deal-by-deal waterfall. deals: [{invested, proceeds, years}] with years
+      the holding period. Each realized deal returns its own capital and a pref compounded over its own
+      hold, then catch-up and split, with no netting of losses on other deals (hence clawback risk).
+      Returns {gp, lp, byDeal}. */
+  TR.american = function (deals, t) {
+    var gp = 0, lp = 0, by = deals.map(function (d) {
+      var r = TR.european([{ date: 0, contribution: d.invested }, { date: d.years * 365 * 86400000, distribution: d.proceeds }], t);
+      gp += r.gp; lp += r.lp; return { gp: r.gp, lp: r.lp };
+    });
+    return { gp: gp, lp: lp, byDeal: by };
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
