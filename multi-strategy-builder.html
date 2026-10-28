@@ -59,38 +59,24 @@
 <!-- site-nav:end -->
 <main id="main" class="container demo-main">
   <header class="demo-hero">
-    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
-    <p class="eyebrow">07 · Multi-strategy</p>
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pf">Portfolio construction and multi-strategy</span>
     <h1>Multi-Strategy Builder</h1>
-    <p class="lede">A fictional endowment runs a hedge fund book of five sleeves: equity long/short, global macro, relative value, credit and quant. On paper they are diversifiers. This builder sizes them by risk, tests what happens when crowded trades unwind together, finds the sleeves that are running the same factor bet, nets the fees, and watches every month for style drift and correlation shifts. Which sleeve to cut or add is the team's call.</p>
-    <div class="tags"><span class="tag tag-pf">Portfolio</span><span class="tag tag-pub">Public markets</span><span class="tag tag-ai">AI</span></div>
-    <dl class="std-header">
-      <div><dt>Decision it supports</dt><dd>Which sleeve to cut or add.</dd></div>
-      <div><dt>The hard problem</dt><dd>Hidden correlation and crowding across sleeves, and fee netting.</dd></div>
-      <div><dt>What the system takes off the team</dt><dd>Risk budgeting and risk controls across sleeves, calm and stress correlation, factor overlap, fee and netting arithmetic, and a monthly read of every sleeve against its mandate.</dd></div>
-      <div class="h-call"><dt>What stays with the team</dt><dd>Which sleeve to cut or add.</dd></div>
-      <div><dt>Method</dt><dd>Equal risk contribution, volatility targeting, drawdown stops, regime-split correlation, factor regressions with drift tests, Fisher tests on correlation, factor-implied overlap, fee netting with high-water marks and hurdles, a portable alpha overlay.</dd></div>
-      <div><dt>Data</dt><dd>Ten years of synthetic monthly sleeve and factor returns with stress regimes, fixed seed, fictional managers. Or your own sleeve returns, processed locally.</dd></div>
-      <div class="h-ai"><dt>Where AI is used</dt><dd>A mandate extractor, a drift monitor, a correlation regime monitor, a factor overlap checker and a risk note drafter, with every flag approved by a person.</dd></div>
-      <div><dt>Limitations</dt><dd>Five factors stand in for a full risk model. Weights are set on the full sample, so the backtest is in-sample. The pipeline is a simulation; no model is called.</dd></div>
-    </dl>
+    <p class="lede">Build a five-sleeve hedge fund book sized by risk. See where the sleeves overlap and what happens when crowded trades unwind.</p>
+    <p class="eval-line" id="evalLine"></p>
   </header>
 
-  <div class="toolbar" role="region" aria-label="Demo controls">
-    <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
-    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 42. Jul 2016 to Jun 2026.</span>
-    <span class="grow"></span>
-    <span id="testsBadge"></span>
-    <div id="exportMenu"></div>
-  </div>
-
   <div id="tabsRoot">
-    <div class="tabs">
-      <button data-tab="sleeves" aria-selected="true">Sleeves and risk budget</button>
-      <button data-tab="crowding">Crowding and overlap</button>
-      <button data-tab="fees">Fees and netting</button>
-      <button data-tab="pa">Portable alpha</button>
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="sleeves" aria-selected="true">Sleeves</button>
+        <button data-tab="crowding">Crowding and overlap</button>
+        <button data-tab="fees">Fees</button>
+        <button data-tab="pa">Portable alpha</button>
+      </div>
+      <div id="exportMenu"></div>
     </div>
+    <section id="byod" hidden><div id="dzSleeves"></div></section>
 
     <section id="sleeves">
       <div class="controls" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:14px">
@@ -107,7 +93,6 @@
         <div class="panel"><div class="panel-head"><h3>Sleeves, net of fees</h3></div><div class="panel-body"><div id="sleeveTable"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Risk controls compared</h3></div><div class="panel-body"><div id="ctrlTable"></div><p class="eval-note" id="ctrlNote"></p></div></div>
       </div>
-      <div id="dzSleeves"></div>
     </section>
 
     <section id="crowding" hidden>
@@ -149,10 +134,46 @@
     </section>
   </div>
 
-  <section class="demo-section" id="ai">
-    <h2>The agents: every sleeve against its mandate, every month</h2>
-    <p class="intro">Five synthetic mandate excerpts and ten years of monthly returns. The monitors compare the last 30 months with the first seven years, on calm months only, so a crowded stress episode is not mistaken for a lasting change. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
-    <div class="run-steps" id="runSteps"></div>
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>Sleeve and factor returns are simulated over ten years with calm and stress regimes. In stress months crowded trades fall together.</li>
+        <li>Equal risk contribution sets weights so each sleeve adds the same share of variance. Volatility targeting scales each sleeve to its mandate's target. A drawdown stop halves a sleeve for six months after a 10% fall.</li>
+        <li>Style drift is a change in a sleeve's factor loadings between the first seven years and the last 30 months. Correlation shifts are tested on calm months only.</li>
+        <li>Fees are charged monthly and performance fees crystallise once a year above the high-water mark. Netting cost is what sleeves pay in performance fees minus what one fee on the whole book would cost.</li>
+        <li>The portable alpha tab runs the original simulator's engine unchanged.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <div class="formula">ERC: w_i (S w)_i = w_j (S w)_j for all i, j
+vol target: scale_t = min(cap, target / vol_12m)
+drift z = (b_recent - b_base) / sqrt(se_r^2 + se_b^2)
+Fisher z = (atanh r1 - atanh r0) / sqrt(1/(n0-3) + 1/(n1-3))
+overlap = b_A' S_f b_B / (vol_A vol_B)
+netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The managers are made up. Five factors stand in for a full risk model.</li>
+        <li>Weights use the full ten-year covariance, so the backtest is in-sample. The risk controls do not look ahead.</li>
+      </ul>
+      <p style="margin-top:14px"><a href="/notes/" data-final="notes/same-bet-two-sleeves.html">Note: when two sleeves are running the same bet</a></p>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Source documents, flags for review, evaluation, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic data, fixed seed 42. Jul 2016 to Jun 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">Five sleeve mandates, made up, and ten years of monthly returns. Click any citation to see its source line. Approve or reject each flag, then try the tamper test on the audit log.</p>
+
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
@@ -166,66 +187,33 @@
       <div class="panel" id="riskNote"><div class="panel-head"><h3>Risk note, drafted from approved flags</h3><span class="sub">Draft for review</span></div><div class="panel-body"><ul class="memo-inputs" id="noteBody"></ul></div></div>
     </div>
     <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against injected drift events</h3><span class="sub">Computed in this page from assets/data/msb-labels.js</span></div>
-      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field and check</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were set by hand and are stored apart from the documents and the monitors: mandate fields read from the text, and the planted drift events with their correlation and overlap consequences. Four seeded events; forty-one clean checks count toward the false-flag rate. Results are for the seed shown; the injected events are the same at every seed, the noise is not.</p></div></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field and check</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand, in a file kept apart from the documents. Some issues are planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
     <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
-  </section>
+    </div>
+  </details>
 
   <section class="demo-section" id="memo">
     <article class="memo">
       <div class="memo-head">
         <div>
-          <div class="memo-kind">Sleeve sizing memo</div>
-          <h2>Hedge fund book of a fictional endowment</h2>
-          <div class="memo-meta">Written by Cristian Arenas · As of 30 Jun 2026 · Written for the base case, seed 42 · Fictional managers</div>
+          <div class="memo-kind">Sleeve sizing</div>
+          <h2>Hedge fund book</h2>
         </div>
         <span class="call-badge stop">Cut quant</span>
       </div>
-      <h3>The call</h3><p class="the-call" id="memoCall"></p>
-      <h3>Situation</h3><div id="memoSituation"></div>
-      <h3>Why</h3><ol id="memoWhy"></ol>
-      <h3>Key risks</h3><ul id="memoRisks"></ul>
-      <h3>What would change my mind</h3><ul id="memoChange"></ul>
-      <h3>Sizing and next step</h3><div id="memoNext"></div>
-      <div class="memo-foot"><span>Fictional managers and sleeves. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 42, default assumptions</span></div>
+      <h3>Recommendation</h3>
+      <p class="the-call" id="memoCall"></p>
+      <h3>Why</h3>
+      <ul id="memoWhy"></ul>
+      <h3>Risks</h3>
+      <ul id="memoRisks"></ul>
+      <h3>Next step</h3>
+      <div id="memoNext"></div>
+      <p class="memo-foot" id="memoBase"></p>
     </article>
   </section>
 
-  <footer class="demo-foot">
-    <h2>Methodology, assumptions and limitations</h2>
-    <div class="df-grid">
-      <div>
-        <h3>Method</h3>
-        <ul>
-          <li><strong>Data.</strong> Five factors (equity, momentum, value, credit spread, rates) with a calm and a stress regime. In stress months factor returns turn, volatility rises 1.8 times and a common crowding shock hits each sleeve in proportion to how crowded its trades are.</li>
-          <li><strong>Risk budget.</strong> Equal risk contribution solves for weights where each sleeve adds the same share of portfolio variance. Volatility targeting scales each sleeve to its mandate's target using the trailing 12 months, capped at 2x. A drawdown stop halves a sleeve for six months after a 10% fall from its peak.</li>
-          <li><strong>Drift and correlation.</strong> Factor regressions on calm months, first seven years against the last 30 months; a drift is flagged when the loading moves by more than 0.15 with a z-score above 3. Correlation shifts use a Fisher test (z above 2.5 and a rise above 0.3).</li>
-          <li><strong>Overlap.</strong> Two sleeves overlap when both load at least 0.2 on the same factor with t-statistics of 3 or more over the first seven years, stress months included; the factor-implied correlation shows how much of their co-movement that explains.</li>
-          <li><strong>Fees.</strong> Management and pass-through fees monthly; performance fees crystallise yearly above the high-water mark and any hurdle. Netting cost compares fees paid sleeve by sleeve with one average fee on the combined book.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Formulas</h3>
-        <div class="formula">ERC: w_i (S w)_i = w_j (S w)_j for all i, j
-vol target: scale_t = min(cap, target / vol_12m)
-drift z = (b_recent - b_base) / sqrt(se_r^2 + se_b^2)
-Fisher z = (atanh r1 - atanh r0) / sqrt(1/(n0-3) + 1/(n1-3))
-overlap = b_A' S_f b_B / (vol_A vol_B)
-netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
-        <h3 style="margin-top:12px">Related notes</h3>
-        <ul><li><a href="/notes/" data-final="notes/same-bet-two-sleeves.html">When two sleeves are running the same bet</a></li></ul>
-      </div>
-    </div>
-    <h3 style="margin-top:22px">Assumptions register</h3>
-    <div id="assumptions"></div>
-    <h3 style="margin-top:22px">Limitations</h3>
-    <ul>
-      <li>Every manager and number is fictional. Five factors stand in for a full risk model, and a real book would have more sleeves and managers within each.</li>
-      <li>Weights use the full ten-year covariance, so the backtest is in-sample; the risk controls do not look ahead.</li>
-      <li>The portable alpha engine is the original simulator's: a 15-year regime-switching path for a 60/40 benchmark, with the alpha sleeve described by its volatility, information ratio and equity beta rather than by the sleeve returns month by month.</li>
-    </ul>
-    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
-    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
-  </footer>
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
 </main>
 <!-- site-footer:start -->
 <footer class="site-footer">
@@ -550,20 +538,13 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
 
   /* ---------------- memo ---------------- */
   function renderMemo() {
-    /* Fixed text, written for the base case (seed 42, default assumptions); links jump to the live numbers. */
-    $('#memoCall').innerHTML = MEMO.call;
-    $('#memoSituation').innerHTML = MEMO.situation; $('#memoWhy').innerHTML = MEMO.why; $('#memoRisks').innerHTML = MEMO.risks; $('#memoChange').innerHTML = MEMO.change; $('#memoNext').innerHTML = MEMO.next;
+    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
+    $('#memoCall').innerHTML = "Cut quant from 15% to 5% and move the ten points to credit. Hold relative value flat until its duration is back inside the mandate.";
+    $('#memoWhy').innerHTML = "<li>Quant and equity long/short run the same momentum bet, and macro has added a momentum overlay too. Macro and quant now correlate 0.68 in calm months.</li><li>Quant is the weakest sleeve: 3.1% gross and 0.6% net a year on average, with a 36.7% drawdown.</li><li>Correlation between sleeves goes from 0.10 in calm months to <a class=\"cite-num\" href=\"#kpi-corrStress\">0.47</a> in stress. The worst stress episode costs <a class=\"cite-num\" href=\"#kpi-episodeLoss\">17.0%</a> on today's weights.</li>";
+    $('#memoRisks').innerHTML = "<li>Relative value carries a 0.80 rates loading against a 0.1 limit. Its 3.5% pass-through takes it from 5.2% gross to 1.4% net.</li><li>Fees take <a class=\"cite-num\" href=\"#kpi-feeShare\">46%</a> of the gross return.</li>";
+    $('#memoNext').innerHTML = "<p>Redeem quant at its next monthly window and turn on volatility targeting and drawdown stops. With both on, the book returns 4.8% a year with a 10.2% drawdown, against 17.0% today.</p>";
+    $('#memoBase').textContent = "Numbers are from the base case (seed 42, default inputs). The managers are made up.";
   }
-  var MEMO = {
-    call: 'Cut the quant sleeve from 15% to 5% of the book and move the ten points to credit. Add nothing to relative value until its duration is back inside its mandate. Turn on volatility targeting and drawdown stops for every sleeve.',
-    situation: '<p>The book holds five sleeves sized for equal risk. Over ten synthetic years it returned <a class="cite-num" href="#kpi-portRet">3.4%</a> a year net, with <a class="cite-num" href="#kpi-portVol">4.8%</a> volatility and a <a class="cite-num" href="#kpi-portDD">17.0%</a> drawdown. In calm months the sleeves barely move together; in stress months they do. The monitors raised four flags this month, all four confirmed against the mandates.</p>',
-    why: '<li>Quant is not a separate bet. It shares the equity long/short sleeve\'s momentum exposure (loadings 0.32 and 0.62; see the <a href="#crowding">overlap table</a>), and the macro manager has now added a momentum overlay of its own, taking its correlation with quant from 0.14 to 0.68 in calm months. Three sleeves are carrying one factor, and quant carries the most of it.</li>' +
-      '<li>Quant is the weakest sleeve on its own numbers: 3.1% gross and 0.6% net a year on average (<a href="#fees">fee table</a>) after a 1.0% fee and 1.5% of pass-through expenses, with the deepest drawdown in the book, 36.7%, taken in crowded unwinds.</li>' +
-      '<li>Crowding is the risk the calm-month numbers hide. Average correlation between sleeves rises from 0.10 to <a class="cite-num" href="#kpi-corrStress">0.47</a> in stress months, and the worst stress episode, replayed on today\'s weights, costs <a class="cite-num" href="#kpi-episodeLoss">17.0%</a>. Cutting the most crowded sleeve is the most direct fix.</li>',
-    risks: '<li>Momentum has paid in calm years. Cutting quant gives some of that up, and equity long/short and macro still carry the factor.</li><li>Relative value holds the largest weight, 29.5%, because its volatility is low, but it now carries a rates loading of 0.80 against a mandate limit of 0.1, and its 3.5% pass-through takes it from 5.2% gross to 1.4% net on average. Its low volatility is not the low risk it looks like.</li><li>Fees take <a class="cite-num" href="#kpi-feeShare">46%</a> of the gross return. Pass-through sleeves cost <a class="cite-num" href="#kpi-passThrough">60 bps</a> a year more than standard terms would.</li>',
-    change: '<li>Evidence that quant\'s momentum exposure is a different signal from the equity sleeve\'s, for example a low correlation of their momentum returns in a holdings-based review.</li><li>The macro manager removing the momentum overlay, which would take the overlap back to two sleeves.</li><li>Relative value back inside its duration limit for two quarters, with pass-through expenses capped near 2%.</li>',
-    next: '<p>Redeem down to 5% at quant\'s next monthly window and add the ten points to credit, the sleeve with the least factor overlap and a hurdle on its fee. Send the risk note in the <a href="#riskNote">agents section</a> to the macro and relative value managers. With both risk controls on, the current book returns 4.8% a year with a 10.2% drawdown instead of 17.0% (<a href="#sleeves">risk controls table</a>); switch them on with the reallocation.</p>'
-  };
 
   /* ---------------- dropped file ---------------- */
   function parseSleeves(rows, header) {
@@ -596,7 +577,6 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     $('#paBook').addEventListener('click', bookToPA);
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runSteps').innerHTML = ['Plan', 'Extract mandates', 'Validate citations', 'Drift', 'Correlation', 'Overlap', 'Human approval', 'Risk note', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
     $('#runBtn').addEventListener('click', runPipeline);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzSleeves', { title: 'Use your own sleeve returns', template: '/assets/templates/sleeve-returns.csv', columns: [{ name: 'date' }].concat(SH.map(function (s) { return { name: s, desc: s === 'els' ? 'monthly return, decimal, gross of fees' : null }; })).concat(['equity', 'momentum', 'value', 'credit_spread', 'rates'].map(function (c) { return { name: c, required: false }; })).concat([{ name: 'regime', required: false, desc: 'calm or stress' }]),
@@ -604,7 +584,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Multi-Strategy Builder', slug: 'multi-strategy-builder', report: 'Risk note and sleeve sizing memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Multi-Strategy Builder'); UI.testsBadge('.tests-badge-slot', 'Multi-Strategy Builder');
     renderAll(); renderPA(); runPipeline();
-    var h = location.hash.slice(1); if (['sleeves', 'crowding', 'fees', 'pa'].indexOf(h) !== -1) tabs.show(h);
+    UI.revealHash(tabs);
   }
   init();
 })();

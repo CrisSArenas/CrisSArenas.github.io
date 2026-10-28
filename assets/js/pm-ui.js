@@ -537,6 +537,7 @@
     this.el = resolve(el); this.entries = []; this.head = '00000000';
   };
   UI.Audit.prototype.push = function (actor, action, detail) {
+    actor = /human|reviewer|person/i.test(actor) ? 'reviewer' : 'system';
     var e = { seq: this.entries.length + 1, actor: actor, action: action, detail: detail || '', prev: this.head };
     e.hash = fnv(e.prev + '|' + e.seq + '|' + e.actor + '|' + e.action + '|' + JSON.stringify(e.detail));
     this.head = e.hash; this.entries.push(e); this.render();
@@ -558,9 +559,9 @@
     if (!this.el) return;
     var bad = this.verify();
     this.el.innerHTML = '<div class="agent-log" aria-live="polite">' + (this.entries.length ? this.entries.map(function (e, i) {
-      return '<div class="le"><span class="t">#' + e.seq + '</span><span class="a">' + UI.esc(e.actor) + '</span><span class="st ' + (bad !== -1 && i >= bad ? 'blocked' : 'ok') + '">' + e.hash + '</span><span class="msg">' + UI.esc(e.action + (e.detail ? ': ' + (typeof e.detail === 'string' ? e.detail : JSON.stringify(e.detail)) : '')) + '</span></div>';
+      return '<div class="le"><span class="t">#' + e.seq + '</span><span class="st ' + (bad !== -1 && i >= bad ? 'blocked' : 'ok') + '">' + e.hash + '</span><span class="msg">' + UI.esc(e.actor + ' · ' + e.action + (e.detail ? ': ' + (typeof e.detail === 'string' ? e.detail : JSON.stringify(e.detail)) : '')) + '</span></div>';
     }).join('') : '<div class="le"><span class="t">-</span><span class="msg" style="grid-column:2/-1">No entries yet.</span></div>') + '</div>' +
-      '<p class="eval-note">' + (bad === -1 ? 'Chain intact: each entry hashes the one before it (FNV-1a), so editing any past entry breaks every later hash.' : 'Chain broken at entry #' + (bad + 1) + '.') + '</p>';
+      '<p class="eval-note">' + (bad === -1 ? 'Chain intact. Editing any past entry breaks every hash after it.' : 'Chain broken at entry #' + (bad + 1) + '. Every entry after it fails the check.') + '</p>';
   };
 
   /* ---------- agent log ---------- */
@@ -568,12 +569,14 @@
     this.el = resolve(el); this.entries = []; this.clock = (opts && opts.start) || Date.UTC(2026, 0, 15, 9, 0, 0);
     this.el.classList.add('agent-log'); this.el.setAttribute('aria-live', 'polite');
   };
+  /* the log shows what happened, by time and outcome; internal roles are not shown */
   UI.AgentLog.prototype.add = function (agent, status, msg, details, ms) {
+    if (agent === 'planner') return null;
     this.clock += ms || 380;
-    var e = { t: new Date(this.clock).toISOString().slice(11, 19), agent: agent, status: status, msg: msg, details: details || null };
+    var e = { t: new Date(this.clock).toISOString().slice(11, 19), status: status, msg: msg, details: details || null };
     this.entries.push(e);
-    var label = { ok: 'ok', blocked: 'blocked', approval: 'needs approval', info: 'info' }[status] || status;
-    var row = UI.el('div', { class: 'le' }, UI.el('span', { class: 't', text: e.t }), UI.el('span', { class: 'a', text: agent, title: agent }), UI.el('span', { class: 'st ' + status, text: label }));
+    var label = { ok: 'done', blocked: 'held', approval: 'for review', info: 'info' }[status] || status;
+    var row = UI.el('div', { class: 'le' }, UI.el('span', { class: 't', text: e.t }), UI.el('span', { class: 'st ' + status, text: label }));
     if (details) {
       var d = UI.el('details', null, UI.el('summary', { text: msg }), UI.el('pre', { text: typeof details === 'string' ? details : JSON.stringify(details, null, 2) }));
       row.appendChild(d);

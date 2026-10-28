@@ -50,38 +50,24 @@
 <!-- site-nav:end -->
 <main id="main" class="container demo-main">
   <header class="demo-hero">
-    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
-    <p class="eyebrow">05 · Direct and co-investment</p>
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pm">Private markets</span>
     <h1>Co-Investment Underwriter</h1>
-    <p class="lede">A fictional GP the endowment already backs offers up to $40m of fee-free co-investment in Valebrook Lab Services, a fictional clinical lab business, with commitments due in two weeks. This underwriter builds the LBO in three cases, splits the value creation, prices the AI initiatives by their odds, shows what fee-free co-investment does to the program's net return, and checks the CIM's projections against the company's own history. Commit or pass, and the check size, are the team's call.</p>
-    <div class="tags"><span class="tag tag-pm">Private markets</span><span class="tag tag-ai">AI</span></div>
-    <dl class="std-header">
-      <div><dt>Decision it supports</dt><dd>Commit or pass, and check size.</dd></div>
-      <div><dt>The hard problem</dt><dd>Underwriting a deal in days, not weeks, on the GP's numbers.</dd></div>
-      <div><dt>What the system takes off the team</dt><dd>The LBO in GP, house and downside cases, the value bridge, the co-invest blend, a first-pass triage of the queue, and reading the CIM for projections that the history does not support.</dd></div>
-      <div class="h-call"><dt>What stays with the team</dt><dd>Commit or pass, and check size.</dd></div>
-      <div><dt>Method</dt><dd>Annual LBO with cash sweep, equity bridge (EBITDA growth, initiatives, multiple, deleveraging, fees), probability-weighted initiatives, fund vs co-invest net returns, seeded outcome range, checklist triage.</dd></div>
-      <div><dt>Data</dt><dd>Synthetic CIM excerpt and deal queue, fixed seed, fictional companies and GP. Or your own company financials, processed locally.</dd></div>
-      <div class="h-ai"><dt>Where AI is used</dt><dd>A KPI extractor with citations, a consistency checker that tests the projections against the company's history, and a memo drafter working from approved flags.</dd></div>
-      <div><dt>Limitations</dt><dd>One company, five years, one exit. No debt schedule detail beyond a cash sweep. The pipeline is a simulation; no model is called.</dd></div>
-    </dl>
+    <p class="lede">Underwrite a co-invest in a clinical lab buyout in GP, house and downside cases. See what it does to the program's net return and decide the check size.</p>
+    <p class="eval-line" id="evalLine"></p>
   </header>
 
-  <div class="toolbar" role="region" aria-label="Demo controls">
-    <label for="seed">Seed <input class="field" id="seed" type="number" value="5" min="1" max="999999"></label>
-    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 5. CIM dated May 2026.</span>
-    <span class="grow"></span>
-    <span id="testsBadge"></span>
-    <div id="exportMenu"></div>
-  </div>
-
   <div id="tabsRoot">
-    <div class="tabs">
-      <button data-tab="lbo" aria-selected="true">LBO and cases</button>
-      <button data-tab="bridge">Value bridge and AI initiatives</button>
-      <button data-tab="blend">Co-invest economics</button>
-      <button data-tab="triage">Triage</button>
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="lbo" aria-selected="true">Cases</button>
+        <button data-tab="bridge">Value bridge</button>
+        <button data-tab="blend">Fund vs co-invest</button>
+        <button data-tab="triage">Triage</button>
+      </div>
+      <div id="exportMenu"></div>
     </div>
+    <section id="byod" hidden><div id="dzFin"></div></section>
 
     <section id="lbo">
       <div class="kpis" id="lboKpis"></div>
@@ -93,7 +79,6 @@
         <div class="panel"><div class="panel-head"><h3>House case, year by year</h3><span class="sub">$ millions</span></div><div class="panel-body"><div id="yearTable"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Range of outcomes around the house case</h3><span class="sub">Seeded shocks to growth, margin and exit multiple</span></div><div class="panel-body"><div id="mcChart"></div><p class="eval-note" id="mcNote"></p></div></div>
       </div>
-      <div id="dzFin"></div>
     </section>
 
     <section id="bridge" hidden>
@@ -118,10 +103,47 @@
     </section>
   </div>
 
-  <section class="demo-section" id="ai">
-    <h2>The agents: the CIM, checked against the company's own history</h2>
-    <p class="intro">A synthetic two-page CIM excerpt. The KPI extractor reads every figure with its citation; the consistency checker tests the GP's projections, the add-backs and the deal arithmetic. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
-    <div class="run-steps" id="runSteps"></div>
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>The LBO runs year by year. Revenue grows, the margin moves in a straight line to its exit level, and free cash flow after interest, tax and capex pays down debt.</li>
+        <li>Exit equity is the exit multiple times final EBITDA, less net debt. The price is fixed at $840m, and each case decides how much of the add-backs to believe.</li>
+        <li>The bridge splits the equity gain into EBITDA growth, AI initiatives, the change in multiple, debt paydown and costs. The pieces add up to the total.</li>
+        <li>AI initiatives enter at the CIM's cost and run-rate uplift, times the odds I give them.</li>
+        <li>The blend compares the fund after a 1.5% fee and 20% carry over an 8% hurdle with a co-invest that pays neither.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <div class="formula">FCF = EBITDA - capex - nwc x dRev - interest - tax - cost
+debt_t = debt_t-1 - sweep x FCF
+equity_H = m_H x EBITDA_H - net debt_H
+MOIC = equity_H / equity_0;  IRR = MOIC^(1/H) - 1
+growth = (E_H - u - E_0) m_0;  initiatives = u m_0
+multiple = (m_H - m_0) E_H;  deleveraging = ND_0 - ND_H
+uplift_t = p x run-rate x ramp(t)</div>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The company and GP are made up. A real underwrite would rebuild the plan from customer and site data.</li>
+        <li>The model has one debt tranche, a fixed rate and a single exit.</li>
+      </ul>
+      
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Source documents, flags for review, evaluation, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="5" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic data, fixed seed 5. CIM dated May 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">A two-page CIM excerpt, made up. Click any citation to see its source line. Approve or reject each flag, then try the tamper test on the audit log.</p>
+
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
@@ -135,67 +157,33 @@
       <div class="panel"><div class="panel-head"><h3>Memo inputs from approved flags</h3></div><div class="panel-body"><ul class="memo-inputs" id="memoInputs"></ul></div></div>
     </div>
     <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/coi-labels.js</span></div>
-      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field and check</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were read by hand and the checks worked by hand, both stored apart from the document and the pipeline. Three checks should flag; three should pass and count toward the false-flag rate.</p></div></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field and check</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand, in a file kept apart from the documents. Some issues are planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
     <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
-  </section>
+    </div>
+  </details>
 
   <section class="demo-section" id="memo">
     <article class="memo">
       <div class="memo-head">
         <div>
-          <div class="memo-kind">Co-investment screening memo</div>
-          <h2>Valebrook Lab Services (fictional)</h2>
-          <div class="memo-meta">Written by Cristian Arenas · As of 30 Jun 2026 · Written for the base case, seed 5 · Fictional company</div>
+          <div class="memo-kind">Co-invest screening</div>
+          <h2>Valebrook Lab Services</h2>
         </div>
         <span class="call-badge go">Commit $15m</span>
       </div>
-      <h3>The call</h3><p class="the-call" id="memoCall"></p>
-      <h3>Situation</h3><div id="memoSituation"></div>
-      <h3>Why</h3><ol id="memoWhy"></ol>
-      <h3>Key risks</h3><ul id="memoRisks"></ul>
-      <h3>What would change my mind</h3><ul id="memoChange"></ul>
-      <h3>Sizing and next step</h3><div id="memoNext"></div>
-      <div class="memo-foot"><span>Fictional company, GP and documents. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 5, default assumptions</span></div>
+      <h3>Recommendation</h3>
+      <p class="the-call" id="memoCall"></p>
+      <h3>Why</h3>
+      <ul id="memoWhy"></ul>
+      <h3>Risks</h3>
+      <ul id="memoRisks"></ul>
+      <h3>Next step</h3>
+      <div id="memoNext"></div>
+      <p class="memo-foot" id="memoBase"></p>
     </article>
   </section>
 
-  <footer class="demo-foot">
-    <h2>Methodology, assumptions and limitations</h2>
-    <div class="df-grid">
-      <div>
-        <h3>Method</h3>
-        <ul>
-          <li><strong>LBO.</strong> Revenue grows each year, the margin moves in a straight line to its exit level, and free cash flow after interest, tax, capex, working capital and initiative costs repays debt through a cash sweep. Exit equity is the exit multiple times final EBITDA, less net debt. The price is fixed at the CIM's $840m; each case decides how much of the add-backs it believes, which sets entry EBITDA, entry multiple and leverage.</li>
-          <li><strong>Bridge.</strong> EBITDA growth at the entry multiple, initiatives at the entry multiple, the change in multiple on exit EBITDA, the fall in net debt, and transaction costs. The parts add up exactly to the equity gain (tested).</li>
-          <li><strong>Initiatives.</strong> Each enters at its CIM cost and run-rate uplift, times the house probability, ramping in from its start year.</li>
-          <li><strong>Co-invest blend.</strong> The fund pays fees and carry over an 8% preferred return; the co-investment pays neither. The blend's IRR comes from the combined cash flows.</li>
-          <li><strong>Consistency.</strong> Projected growth and margin against the five-year history, leverage and price with and without add-backs, and the deal arithmetic.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Formulas</h3>
-        <div class="formula">FCF = EBITDA - capex - nwc x dRev - interest - tax - cost
-debt_t = debt_t-1 - sweep x FCF
-equity_H = m_H x EBITDA_H - net debt_H
-MOIC = equity_H / equity_0;  IRR = MOIC^(1/H) - 1
-growth = (E_H - u - E_0) m_0;  initiatives = u m_0
-multiple = (m_H - m_0) E_H;  deleveraging = ND_0 - ND_H
-uplift_t = p x run-rate x ramp(t)</div>
-        <h3 style="margin-top:12px">Related notes</h3>
-        <ul><li><a href="/notes/">Practitioner notes</a></li></ul>
-      </div>
-    </div>
-    <h3 style="margin-top:22px">Assumptions register</h3>
-    <div id="assumptions"></div>
-    <h3 style="margin-top:22px">Limitations</h3>
-    <ul>
-      <li>Every company, GP and number is fictional. A real underwrite would rebuild the projections from customer, payer and site data, not from the CIM summary.</li>
-      <li>The model has one debt tranche, a constant rate and a single exit; it ignores refinancing, dividends and management equity.</li>
-      <li>Initiative probabilities are a judgment, shown as inputs so they can be argued with.</li>
-    </ul>
-    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
-    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
-  </footer>
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
 </main>
 <!-- site-footer:start -->
 <footer class="site-footer">
@@ -426,20 +414,13 @@ uplift_t = p x run-rate x ramp(t)</div>
   }
 
   /* ---------------- memo ---------------- */
-  var MEMO = {
-    call: 'Commit $15m of the $40m offered, on the house case, subject to a quality of earnings report that supports at least half of the add-backs.',
-    situation: '<p>Quorvane Partners, a GP the endowment backs with a $40m commitment to Quorvane Buyout IV, is buying Valebrook Lab Services for $840m: 12.1x 2025 adjusted EBITDA with 5.5x net debt, on the CIM\'s numbers. It offers co-investors up to $40m with no fee and no carry. Commitments are due on 14 July, ten business days away.</p>',
-    why: '<li>The house case works without the GP\'s plan. At the historical growth rate, a one-point margin gain, half the add-backs and an exit one turn below entry, the deal returns <a class="cite-num" href="#kpi-houseMoic">1.84x and 13.0%</a> gross. With no fee or carry, that is also the net return, against <a class="cite-num" href="#kpi-fundNet">11.7%</a> net expected from the fund itself.</li>' +
-      '<li>At $15m alongside the $40m commitment, the blended net IRR of our Quorvane exposure rises to <a class="cite-num" href="#kpi-blendIrr">12.1%</a>, 0.4 points above the fund alone.</li>' +
-      '<li>The house case value comes from EBITDA growth ($395m) and debt paydown ($133m), not from the multiple, which costs $190m. The AI initiatives add $80m at the house odds (<a href="#bridge">bridge</a>). Across 2,000 seeded paths around the house case, 1% lose money.</li>' +
-      '<li>It is the only opportunity in the queue that passes all four triage checks (<a href="#triage">triage</a>).</li>',
-    risks: '<li>The GP case (3.75x) rests on 12.0% growth and a 4.8-point margin gain that the company\'s history does not support. The checker flagged both; the GP case is not the underwriting basis.</li><li>The add-backs matter: without them leverage is 6.2x and the price 13.7x. The downside, with none of the add-backs, 3% growth and a 9.5x exit, returns <a class="cite-num" href="#kpi-downMoic">0.76x</a>, a loss of $3.6m on a $15m check.</li><li>Healthcare rises in the private portfolio; the full $40m would take it from 14% to 18% of private NAV.</li>',
-    change: '<li>A quality of earnings report that supports all of the add-backs, which would justify $25m.</li><li>Year-to-date 2026 revenue growth near 10%, evidence that the step-up has started.</li><li>A finding that the add-backs do not hold up, or covenants set on adjusted EBITDA with little headroom: then pass.</li>',
-    next: '<p>Confirm $15m to Quorvane by 14 July, conditional on the quality of earnings report. Send the GP the three flags from the <a href="#ai">consistency checker</a>: the growth step-up, the margin path and the add-backs. $15m is 0.375 dollars of co-investment per dollar of fund commitment and caps the downside loss near $3.6m.</p>'
-  };
   function renderMemo() {
-    /* Fixed text, written for the base case (seed 5, default assumptions); links jump to the live numbers. */
-    $('#memoCall').innerHTML = MEMO.call; $('#memoSituation').innerHTML = MEMO.situation; $('#memoWhy').innerHTML = MEMO.why; $('#memoRisks').innerHTML = MEMO.risks; $('#memoChange').innerHTML = MEMO.change; $('#memoNext').innerHTML = MEMO.next;
+    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
+    $('#memoCall').innerHTML = "Commit $15m of the $40m offered, subject to a quality of earnings report that backs at least half the add-backs.";
+    $('#memoWhy').innerHTML = "<li>On my house case the deal returns <a class=\"cite-num\" href=\"#kpi-houseMoic\">1.84x and 13.0%</a> gross. With no fee or carry that is also the net, against <a class=\"cite-num\" href=\"#kpi-fundNet\">11.7%</a> expected from the fund.</li><li>$15m next to our $40m fund commitment lifts the blended net IRR to <a class=\"cite-num\" href=\"#kpi-blendIrr\">12.1%</a>.</li><li>The value comes from EBITDA growth and debt paydown. The house case already assumes a turn lower on the exit multiple.</li>";
+    $('#memoRisks').innerHTML = "<li>The GP case assumes 12% growth and a 4.8 point margin gain. The company's history supports neither.</li><li>Without the add-backs, leverage is 6.2x and the downside returns <a class=\"cite-num\" href=\"#kpi-downMoic\">0.76x</a>, a $3.6m loss on $15m.</li>";
+    $('#memoNext').innerHTML = "<p>Confirm $15m by 14 July and send the GP the three flags from the CIM review: the growth step-up, the margin path and the add-backs.</p>";
+    $('#memoBase').textContent = "Numbers are from the base case (seed 5, default inputs). The company and GP are made up.";
   }
 
   /* ---------------- dropped file ---------------- */
@@ -469,7 +450,6 @@ uplift_t = p x run-rate x ramp(t)</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. CIM dated May 2026.'; renderLBO(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runSteps').innerHTML = ['Plan', 'Extract KPIs', 'Validate citations', 'Check consistency', 'Human approval', 'Draft memo inputs', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
     $('#runBtn').addEventListener('click', runPipeline);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzFin', { title: 'Use your own company financials', template: '/assets/templates/company-financials.csv', columns: [{ name: 'year' }, { name: 'kind', desc: 'actual or projection' }, { name: 'revenue', desc: '$m' }, { name: 'ebitda', desc: '$m' }, { name: 'capex', required: false }],
@@ -477,7 +457,7 @@ uplift_t = p x run-rate x ramp(t)</div>
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Co-Investment Underwriter', slug: 'co-invest-underwriter', report: 'Co-invest screening memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Co-Investment Underwriter'); UI.testsBadge('.tests-badge-slot', 'Co-Investment Underwriter');
     renderAll(); runPipeline();
-    var h = location.hash.slice(1); if (['lbo', 'bridge', 'blend', 'triage'].indexOf(h) !== -1) tabs.show(h);
+    UI.revealHash(tabs);
   }
   init();
 })();

@@ -48,38 +48,23 @@
 <!-- site-nav:end -->
 <main id="main" class="container demo-main">
   <header class="demo-hero">
-    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
-    <p class="eyebrow">03 · Manager selection, private and public</p>
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pf">Portfolio construction and multi-strategy</span>
     <h1>Manager Selection Copilot</h1>
-    <p class="lede">A fictional mid-market buyout manager, Hasturn Partners, is raising its third fund on a track record that looks strong. A fictional hedge fund, Corvane Capital, calls itself market neutral. This copilot takes the track record apart deal by deal, checks the returns against the story, and reads the DDQs and letters for anything that contradicts the numbers. Commit, re-up or pass is the committee's call.</p>
-    <div class="tags"><span class="tag tag-pm">Private markets</span><span class="tag tag-pub">Public markets</span><span class="tag tag-ai">AI</span></div>
-    <dl class="std-header">
-      <div><dt>Decision it supports</dt><dd>Commit, re-up or pass.</dd></div>
-      <div><dt>The hard problem</dt><dd>Telling skill from luck, one big deal and smoothed returns.</dd></div>
-      <div><dt>What the system takes off the team</dt><dd>Deal-level attribution, bridges and peer comparisons; style, smoothing and skill tests on monthly returns; reading every DDQ and letter and flagging what contradicts the data.</dd></div>
-      <div class="h-call"><dt>What stays with the team</dt><dd>Commit, re-up or pass.</dd></div>
-      <div><dt>Method</dt><dd>Concentration and loss ratios, value creation bridge, IRR with and without the subscription line, quartile drift, constrained style regression, clustering, GLM unsmoothing, block-bootstrapped alpha, persistence matrices.</dd></div>
-      <div><dt>Data</dt><dd>Synthetic data, fixed seed, fictional managers and companies. Or your own track record or return file, processed locally.</dd></div>
-      <div class="h-ai"><dt>Where AI is used</dt><dd>A terms extractor, a team-changes tracker, a consistency checker and a memo drafter, with every flag approved by a person.</dd></div>
-      <div><dt>Limitations</dt><dd>Deal values and peer universes are synthetic. Net returns are approximated from gross deals and stated terms. The pipeline is a simulation; no model is called.</dd></div>
-    </dl>
+    <p class="lede">Take a buyout manager's track record apart deal by deal, and check whether a hedge fund that calls itself market neutral really is.</p>
+    <p class="eval-line" id="evalLine"></p>
   </header>
 
-  <div class="toolbar" role="region" aria-label="Demo controls">
-    <label for="seed">Seed <input class="field" id="seed" type="number" value="7" min="1" max="999999"></label>
-    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 7. As of 30 Jun 2026.</span>
-    <span class="grow"></span>
-    <span id="testsBadge"></span>
-    <div id="exportMenu"></div>
-  </div>
-
   <div id="tabsRoot">
-    <div class="tabs">
-      <button data-tab="track" aria-selected="true">Private: track record</button>
-      <button data-tab="subline">Private: net returns and the line</button>
-      <button data-tab="drift">Private: quartile drift</button>
-      <button data-tab="public">Hedge funds and public managers</button>
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="track" aria-selected="true">Track record</button>
+        <button data-tab="subline">Net returns and drift</button>
+        <button data-tab="public">Hedge funds</button>
+      </div>
+      <div id="exportMenu"></div>
     </div>
+    <section id="byod" hidden><div id="dzDeals"></div><div id="dzReturns"></div></section>
 
     <section id="track">
       <div class="toolbar" style="position:static;border:0;padding:0 0 12px"><div class="seg" id="fundSeg" role="tablist" aria-label="Fund"><button class="active" data-f="Fund I" type="button">Fund I (2016)</button><button data-f="Fund II" type="button">Fund II (2022)</button><button data-f="all" type="button">Both funds</button></div></div>
@@ -90,7 +75,6 @@
       </div>
       <div class="panel"><div class="panel-head"><h3>Value creation bridge, LP share of equity value</h3></div><div class="panel-body"><div id="bridgeChart" style="max-width:760px"></div><p class="eval-note" id="bridgeNote"></p></div></div>
       <div class="panel"><div class="panel-head"><h3>Deal-level track record</h3></div><div class="panel-body"><div id="dealTable"></div></div></div>
-      <div id="dzDeals"></div>
     </section>
 
     <section id="subline" hidden>
@@ -99,9 +83,7 @@
         <div class="panel"><div class="panel-head"><h3>Fund II: LP capital out, with and without the line</h3></div><div class="panel-body"><div id="slChart"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Gross to net, both funds</h3></div><div class="panel-body"><div id="netTable"></div><p class="eval-note">Net figures rebuild LP cash flows from the deals: management fees as stated in the DDQ, carry at 20% of gains after fees once the 8% preferred return is met, taken from the latest distributions and NAV. An approximation, labeled as such; the <a href="fund-terms-auditor.html">Fund Terms Auditor</a> runs the full waterfall.</p></div></div>
       </div>
-    </section>
-
-    <section id="drift" hidden>
+      <h3 class="sub-h">Quartile drift</h3>
       <div class="kpis" id="drKpis"></div>
       <div class="split-2" style="margin-top:18px">
         <div class="panel"><div class="panel-head"><h3>2016 buyout peers: TVPI when Fund II was raised vs now</h3></div><div class="panel-body"><div id="drChart"></div></div></div>
@@ -120,14 +102,49 @@
         <div class="panel"><div class="panel-head"><h3>Capacity: alpha as assets grew</h3></div><div class="panel-body"><div id="capChart"></div><p class="eval-note" id="capNote"></p></div></div>
       </div>
       <div class="panel"><div class="panel-head"><h3>Does top-quartile performance persist? 200 synthetic managers, two 3-year periods</h3></div><div class="panel-body"><div id="persist"></div></div></div>
-      <div id="dzReturns"></div>
     </section>
   </div>
 
-  <section class="demo-section" id="ai">
-    <h2>The agents: DDQs and letters, checked against the numbers</h2>
-    <p class="intro">Six synthetic documents: Hasturn's DDQ and three letters, Corvane's DDQ and operational due diligence notes. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
-    <div class="run-steps" id="runSteps"></div>
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>Concentration is the share of total gains from the best one and three deals. The loss ratio is the capital in deals below 1.0x.</li>
+        <li>The value bridge splits each deal's equity gain into EBITDA growth, the change in multiple and debt paydown.</li>
+        <li>IRR without the subscription line moves each call back to its investment date. Net returns are rebuilt from the deals and the stated fees and carry.</li>
+        <li>Style analysis is a constrained regression of the fund's returns on style indices. Smoothed returns are unwound with an MA(2) model before computing the Sharpe ratio.</li>
+        <li>Skill is tested with a block bootstrap of the alpha t-stat under zero alpha.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <div class="formula">top-N share = sum of N largest gains / total gains
+loss ratio = invested in deals with MOIC &lt; 1 / invested
+EBITDA growth = (E1 - E0) m0   multiple = (m1 - m0) E1
+deleveraging = D0 - D1
+style: min ||r - Xw||^2,  w &gt;= 0, sum w = 1
+R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      
+      <h3>Data and limits</h3>
+      <ul>
+        <li>Managers, companies and peers are made up.</li>
+        <li>A bootstrap p-value on one manager is weak evidence. Screening many managers at once turns up false positives.</li>
+      </ul>
+      <p style="margin-top:14px"><a href="/notes/" data-final="notes/one-deal-track-record.html">Note: is this track record one deal?</a></p>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Source documents, flags for review, evaluation, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="7" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic data, fixed seed 7. As of 30 Jun 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">A DDQ and three letters from a buyout manager, plus a hedge fund DDQ and due diligence notes. All made up. Click any citation to see its source line. Approve or reject each flag, then try the tamper test on the audit log.</p>
+
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
@@ -141,67 +158,33 @@
       <div class="panel"><div class="panel-head"><h3>Memo inputs from approved flags</h3></div><div class="panel-body"><ul class="memo-inputs" id="memoInputs"></ul></div></div>
     </div>
     <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/msc-labels.js</span></div>
-      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were read by hand and are stored apart from the documents and the pipeline. Five seeded issues; three clean checks count toward the false-flag rate.</p></div></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand, in a file kept apart from the documents. Some issues are planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
     <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
-  </section>
+    </div>
+  </details>
 
   <section class="demo-section" id="memo">
     <article class="memo">
       <div class="memo-head">
         <div>
-          <div class="memo-kind">Fund diligence memo</div>
-          <h2>Hasturn Mid-Market Buyout III (fictional)</h2>
-          <div class="memo-meta">Written by Cristian Arenas · As of 30 Jun 2026 · Written for the base case, seed 7 · Fictional fund</div>
+          <div class="memo-kind">Fund diligence</div>
+          <h2>Hasturn Mid-Market Buyout III</h2>
         </div>
         <span class="call-badge stop">Pass</span>
       </div>
-      <h3>The call</h3><p class="the-call" id="memoCall"></p>
-      <h3>Situation</h3><div id="memoSituation"></div>
-      <h3>Why</h3><ol id="memoWhy"></ol>
-      <h3>Key risks</h3><ul id="memoRisks"></ul>
-      <h3>What would change my mind</h3><ul id="memoChange"></ul>
-      <h3>Sizing and next step</h3><div id="memoNext"></div>
-      <div class="memo-foot"><span>Fictional manager, funds and companies. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 7, default assumptions</span></div>
+      <h3>Recommendation</h3>
+      <p class="the-call" id="memoCall"></p>
+      <h3>Why</h3>
+      <ul id="memoWhy"></ul>
+      <h3>Risks</h3>
+      <ul id="memoRisks"></ul>
+      <h3>Next step</h3>
+      <div id="memoNext"></div>
+      <p class="memo-foot" id="memoBase"></p>
     </article>
   </section>
 
-  <footer class="demo-foot">
-    <h2>Methodology, assumptions and limitations</h2>
-    <div class="df-grid">
-      <div>
-        <h3>Method</h3>
-        <ul>
-          <li><strong>Track record.</strong> Concentration is the share of total gains (not value) from the largest one and three deals; the loss ratio is capital in deals below 1.0x over total invested; the record is recomputed without the largest gain.</li>
-          <li><strong>Value creation.</strong> Each deal's equity change splits exactly into EBITDA growth at the entry multiple, multiple change on exit EBITDA, and the change in net debt.</li>
-          <li><strong>Subscription line.</strong> LP flows are rebuilt as if capital had been called on each investment date, which removes the IRR the line adds without changing the multiple.</li>
-          <li><strong>Style analysis.</strong> Sharpe (1992) constrained regression on style indices, full period and rolling 36 months.</li>
-          <li><strong>Smoothing.</strong> Getmansky, Lo and Makarov (2004): an MA(2) smoothing profile fitted to the first two autocorrelations, then inverted.</li>
-          <li><strong>Skill vs luck.</strong> Alpha t-statistic from a regression on the styles; p-value from a stationary block bootstrap of residuals under zero alpha.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Formulas</h3>
-        <div class="formula">top-N share = sum of N largest gains / total gains
-loss ratio = invested in deals with MOIC &lt; 1 / invested
-EBITDA growth = (E1 - E0) m0   multiple = (m1 - m0) E1
-deleveraging = D0 - D1
-style: min ||r - Xw||^2,  w &gt;= 0, sum w = 1
-R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
-        <h3 style="margin-top:12px">Related notes</h3>
-        <ul><li><a href="/notes/" data-final="notes/one-deal-track-record.html">Is this track record one deal?</a></li></ul>
-      </div>
-    </div>
-    <h3 style="margin-top:22px">Assumptions register</h3>
-    <div id="assumptions"></div>
-    <h3 style="margin-top:22px">Limitations</h3>
-    <ul>
-      <li>Every manager, company, person and number is fictional. Peer universes are simulated, not drawn from a commercial database.</li>
-      <li>Net returns are rebuilt from gross deal values and stated terms; a real diligence would use the GP's capital account history.</li>
-      <li>A bootstrap p-value on one manager is not a verdict on skill; testing many managers at once inflates false positives.</li>
-    </ul>
-    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
-    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
-  </footer>
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
 </main>
 <!-- site-footer:start -->
 <footer class="site-footer">
@@ -261,8 +244,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
       { id: 'top1', label: 'Gains from the best deal', value: F.pct(t.top1Share, 1), sub: 'top three: ' + F.pct(t.top3Share, 0), tone: t.top1Share > 0.3 ? 'bad' : null, explain: function () { return { title: 'Share of gains from the largest deal', formula: 'gain of the largest deal / total gains', inputs: [{ name: t.best.name + ' gain', value: F.money(t.best.gain, 1), src: 'computed' }, { name: 'Total gains', value: F.money(t.gains, 1), src: 'computed' }], result: F.pct(t.top1Share, 2) }; } },
       { id: 'exBest', label: 'Gross MOIC without it', value: F.mult(t.exBest.moic), sub: 'removes ' + t.best.name, tone: 'bad', explain: function () { return { title: 'Track record without the best deal', formula: '(total value - best deal value) / (total invested - best deal invested)', inputs: [{ name: 'Total value', value: F.money(t.value, 1), src: 'computed' }, { name: t.best.name, value: F.money(t.best.value, 1) + ' on ' + F.money(t.best.invested, 1), src: 'computed' }], result: F.mult(t.exBest.moic, 3) }; } },
       { id: 'lossRatio', label: 'Loss ratio', value: F.pct(t.lossRatio, 1), sub: 'capital in deals below 1.0x' },
-      { id: 'dispersion', label: 'Dispersion of deal MOICs', value: F.num(t.dispersion, 2), sub: 'standard deviation' },
-      { id: 'realized', label: 'Realized share of value', value: F.pct(t.realizedShare, 0) }
+      { id: 'dispersion', label: 'Dispersion of deal MOICs', value: F.num(t.dispersion, 2), sub: 'standard deviation' }
     ]);
     var sorted = t.deals.slice().sort(function (a, b) { return b.moic - a.moic; });
     UI.chart.bar('#dealChart', { categories: sorted.map(function (x) { return x.name.split(' ')[0]; }), series: [{ name: 'Gross MOIC', values: sorted.map(function (x) { return x.moic; }), colors: sorted.map(function (x) { return x.realized > 0 ? 's1' : 's4'; }) }], horizontal: true, labelWidth: 90, yFmt: function (v) { return F.num(v, 1) + 'x'; }, label: 'Deal multiples', values: true });
@@ -516,15 +498,12 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
 
   /* ---------------- memo ---------------- */
   function renderMemo() {
-    /* Fixed text, written for the base case (seed 7, default assumptions); links jump to the live numbers. */
-    $('#memoCall').innerHTML = 'Pass on Fund III for this vintage. Revisit at Fund IV if Fund II matures on more than its healthcare deals and the partnership is stable.';
-    $('#memoSituation').innerHTML = '<p>Hasturn Partners is raising a $900m third fund for control buyouts of North American mid-market companies, with a first close targeted for Q4 2026. Fund I (2016) shows a gross <a class="cite-num" href="#kpi-grossMoic">2.03x</a> across 13 deals; Fund II (2022) is 1.24x gross and mostly unrealized. One of the three named key persons left in March.</p>';
-    $('#memoWhy').innerHTML = '<li>Fund I is one deal deep. Brightmere Dental produced <a class="cite-num" href="#kpi-top1">42.5%</a> of all gains; without it the fund is <a class="cite-num" href="#kpi-exBest">1.65x</a> gross, an ordinary result once fees and carry come off.</li>' +
-      '<li>The materials do not reconcile. The 2025 letter claims a 2.1x net TVPI for Fund I; rebuilt from its deals and stated terms it is <a class="cite-num" href="#kpi-f1net">1.62x</a>. The DDQ says Fund II has no realized losses when Pell Industrial Coatings was sold at 0.55x.</li>' +
-      '<li>Fund II is not yet evidence of skill: 1.24x gross, a realized loss, and a net IRR of <a class="cite-num" href="#kpi-f2irrAdj">3.4%</a> once the subscription line is taken out, <a class="cite-num" href="#kpi-lineUplift">1.0 pp</a> below the reported figure.</li>';
-    $('#memoRisks').innerHTML = '<li>Key person: one of three named partners has left; one more departure suspends the investment period of a fund we would hold for ten years or more.</li><li>Quartile drift: Fund I was top quartile when Fund II was raised and is <a class="cite-num" href="#kpi-qNow">second quartile</a> now. Among the synthetic 2016 peers only <a class="cite-num" href="#kpi-qStay">55%</a> of top-quartile funds stayed there.</li><li>Passing has a cost: Hasturn is in the re-up calendar, and the healthcare deals (Brightmere, Rowan, Norland) suggest real sector skill.</li>';
-    $('#memoChange').innerHTML = '<li>Capital account statements for Fund I that support a net TVPI above 1.9x, and a corrected DDQ.</li><li>Two more Fund II realizations at 2.0x or better outside healthcare.</li><li>A new partner of equal standing added to the key person clause before the final close.</li>';
-    $('#memoNext').innerHTML = '<p>Decline the first close. Send the GP the three reconciliation questions (Fund I net TVPI, Fund II losses, the key person departure) and stay close through a healthcare co-investment if one comes. Move the $25m earmarked for this re-up to the secondaries commitment in the pacing plan.</p>';
+    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
+    $('#memoCall').innerHTML = "Pass on Fund III. Look again at Fund IV if Fund II matures well outside healthcare.";
+    $('#memoWhy').innerHTML = "<li>Brightmere Dental made <a class=\"cite-num\" href=\"#kpi-top1\">42.5%</a> of Fund I's gains. Without it, Fund I is <a class=\"cite-num\" href=\"#kpi-exBest\">1.65x</a> gross.</li><li>The 2025 letter claims 2.1x net TVPI for Fund I. Rebuilt from the deals and terms it is <a class=\"cite-num\" href=\"#kpi-f1net\">1.62x</a>. The DDQ says Fund II has no realized losses, yet Pell Industrial Coatings sold at 0.55x.</li><li>Fund II's net IRR is <a class=\"cite-num\" href=\"#kpi-f2irrAdj\">3.4%</a> once the subscription line comes out.</li>";
+    $('#memoRisks').innerHTML = "<li>One of three key persons left in March. One more departure suspends the investment period.</li><li>Fund I was top quartile when Fund II was raised and is <a class=\"cite-num\" href=\"#kpi-qNow\">second quartile</a> now.</li>";
+    $('#memoNext').innerHTML = "<p>Decline the first close and send the GP the three questions: Fund I net TVPI, Fund II losses and the key person departure. Move the $25m to the secondaries commitment in the pacing plan.</p>";
+    $('#memoBase').textContent = "Numbers are from the base case (seed 7, default inputs). The manager and companies are made up.";
   }
 
   /* ---------------- dropped files ---------------- */
@@ -562,7 +541,6 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. As of 30 Jun 2026.'; renderAll(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runSteps').innerHTML = ['Plan', 'Extract terms', 'Validate citations', 'Track team', 'Check consistency', 'Human approval', 'Draft memo inputs', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
     $('#runBtn').addEventListener('click', runPipeline);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzDeals', { title: 'Use your own deal-level track record', template: '/assets/templates/deal-track-record.csv', columns: ['fund', 'deal', 'sector', 'entry_date', 'exit_date', 'invested', 'realized', 'unrealized', 'entry_ebitda', 'entry_ev_multiple', 'entry_net_debt', 'exit_ebitda', 'exit_ev_multiple', 'exit_net_debt'].map(function (c) { return { name: c, required: c !== 'sector' && c !== 'exit_date' }; }),
@@ -572,7 +550,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Manager Selection Copilot', slug: 'manager-selection-copilot', report: 'IC memo (PDF)', source: function () { return S.userDeals || S.userRet ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Manager Selection Copilot'); UI.testsBadge('.tests-badge-slot', 'Manager Selection Copilot');
     renderAll(); runPipeline();
-    var h = location.hash.slice(1); if (['track', 'subline', 'drift', 'public'].indexOf(h) !== -1) tabs.show(h);
+    UI.revealHash(tabs);
   }
   init();
 })();

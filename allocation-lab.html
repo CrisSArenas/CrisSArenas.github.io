@@ -52,40 +52,23 @@
 <!-- site-nav:end -->
 <main id="main" class="container demo-main">
   <header class="demo-hero">
-    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
-    <p class="eyebrow">01 · Total portfolio and asset allocation</p>
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pf">Portfolio construction and multi-strategy</span>
     <h1>Allocation Lab</h1>
-    <p class="lede">A fictional endowment of about $880m holds public and private assets after a sharp fall in equities. Its committee has just changed two policy targets and asked staff to report against a reference portfolio. This lab reads the policy, optimizes with private risk desmoothed and liquidity kept, compares a classic policy mix with a total portfolio approach, and proposes trades behind a compliance gate. The policy mix and the rebalancing call stay with the committee.</p>
-    <div class="tags"><span class="tag tag-pf">Portfolio</span><span class="tag tag-ai">AI</span></div>
-    <dl class="std-header">
-      <div><dt>Decision it supports</dt><dd>Policy mix and when to rebalance.</dd></div>
-      <div><dt>The hard problem</dt><dd>Allocating across liquid and illiquid assets when private risk is smoothed and cash flows are uncertain.</dd></div>
-      <div><dt>What the system takes off the team</dt><dd>Reading the policy, the minutes and the custodian report into one cited register; optimizing under the real constraints; stress testing; drafting trades that pass the policy.</dd></div>
-      <div class="h-call"><dt>What stays with the team</dt><dd>Policy mix and when to rebalance.</dd></div>
-      <div><dt>Method</dt><dd>Constrained mean-variance, maximum Sharpe, Black-Litterman, a resampled frontier, Geltner desmoothing, a liquidity-after-stress constraint, total portfolio risk contributions against a reference portfolio, Brinson attribution.</dd></div>
-      <div><dt>Data</dt><dd>Synthetic data, fixed seed, fictional endowment. Capital market assumptions are illustrative. Or your own return file, processed locally.</dd></div>
-      <div class="h-ai"><dt>Where AI is used</dt><dd>Policy, minutes and holdings extraction with citations, a consistency checker, a rebalancing agent, and a compliance gate, with human approval.</dd></div>
-      <div><dt>Limitations</dt><dd>Mean-variance is sensitive to expected returns; regime probabilities here are synthetic and illustrative. The pipeline is a deterministic simulation; no model is called.</dd></div>
-    </dl>
+    <p class="lede">Set the policy portfolio for an $880m endowment with private assets in it. Compare fixed targets with a total portfolio approach, and check the trades before you release them.</p>
+    <p class="eval-line" id="evalLine"></p>
   </header>
 
-  <div class="toolbar" role="region" aria-label="Demo controls">
-    <label for="seed">Seed <input class="field" id="seed" type="number" value="100" min="1" max="999999"></label>
-    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 100. As of 30 Sep 2026.</span>
-    <span class="grow"></span>
-    <span id="testsBadge"></span>
-    <div id="exportMenu"></div>
-  </div>
-
   <div id="tabsRoot">
-    <div class="tabs">
-      <button data-tab="optimize" aria-selected="true">Optimize</button>
-      <button data-tab="views">Black-Litterman views</button>
-      <button data-tab="tpa">Total portfolio</button>
-      <button data-tab="stress">Stress and liquidity</button>
-      <button data-tab="regimes">Regime tilts</button>
-      <button data-tab="attribution">Attribution</button>
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="optimize" aria-selected="true">Optimize</button>
+        <button data-tab="tpa">Total portfolio</button>
+        <button data-tab="stress">Stress and liquidity</button>
+      </div>
+      <div id="exportMenu"></div>
     </div>
+    <section id="byod" hidden><div id="dzReturns"></div></section>
 
     <section id="optimize">
       <div class="kpis" id="optKpis"></div>
@@ -110,9 +93,7 @@
           </div>
         </div>
       </div>
-    </section>
-
-    <section id="views" hidden>
+      <h3 class="sub-h">Black-Litterman views</h3>
       <p class="mode-note">Black-Litterman starts from the returns implied by a market portfolio (reverse optimization, as excess returns over cash), then blends in views with stated confidence. Views that are not certain move expected returns part of the way. Returns below are total returns, cash added back.</p>
       <div class="split">
         <div class="panel"><div class="panel-head"><h3>Equilibrium</h3></div><div class="panel-body controls" id="blControls"></div></div>
@@ -131,15 +112,19 @@
         <div class="panel"><div class="panel-head"><h3>Where the risk comes from</h3><span class="sub">Contribution to total and to active risk vs the reference</span></div><div class="panel-body"><div id="tpaChart"></div><div id="tpaTable" style="margin-top:12px"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Candidate changes, judged both ways</h3></div><div class="panel-body"><div id="candTable"></div><p class="eval-note" id="candNote"></p></div></div>
       </div>
+      <h3 class="sub-h">Attribution</h3>
+      <div class="kpis" id="attKpis"></div>
+      <div style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Active return, last 12 months</h3></div><div class="panel-body"><div id="attWaterfall" style="max-width:760px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>By asset class</h3></div><div class="panel-body"><div id="attTable"></div></div></div>
+      </div>
     </section>
 
     <section id="stress" hidden>
       <div class="kpis" id="stressKpis"></div>
       <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Historical-style stress tests</h3><span class="sub">Peak-to-trough shocks per asset class; private assets shocked at economic, not reported, values</span></div><div class="panel-body"><div id="stressChart"></div><div id="stressTable" style="margin-top:12px"></div></div></div>
       <div class="panel"><div class="panel-head"><h3>Liquidity after a GFC-sized stress</h3></div><div class="panel-body"><div id="liqBox"></div></div></div>
-    </section>
-
-    <section id="regimes" hidden>
+      <h3 class="sub-h">Regime tilts</h3>
       <p class="notice mode-note"><b>Illustrative, synthetic regime probabilities.</b> Soft regime assignments, in the spirit of the cross-attention regime discovery in my <a href="research-regime-aware-transformer.html">working paper</a>, are generated here from a seeded process. They are not outputs of the trained model.</p>
       <div class="split">
         <div class="panel"><div class="panel-head"><h3>Tilt settings</h3></div><div class="panel-body controls" id="regControls"></div></div>
@@ -149,21 +134,47 @@
         </div>
       </div>
     </section>
-
-    <section id="attribution" hidden>
-      <div class="kpis" id="attKpis"></div>
-      <div style="margin-top:18px">
-        <div class="panel"><div class="panel-head"><h3>Active return, last 12 months</h3></div><div class="panel-body"><div id="attWaterfall" style="max-width:760px"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>By asset class</h3></div><div class="panel-body"><div id="attTable"></div></div></div>
-      </div>
-      <div id="dzReturns"></div>
-    </section>
   </div>
 
-  <section class="demo-section" id="ai">
-    <h2>The agents: policy, minutes and holdings to a trade list</h2>
-    <p class="intro">Three synthetic documents: the investment policy statement, the latest committee minutes and the custodian's holdings summary. The agents build one cited policy register, check it, then a rebalancing agent drafts trades and a compliance gate tests them before anyone sees them. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
-    <div class="run-steps" id="runSteps"></div>
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>Private assets enter the optimizer with Geltner-desmoothed volatility and correlations.</li>
+        <li>The optimizer maximizes the Sharpe ratio inside the policy ranges. It only accepts portfolios that still cover projected capital calls with liquid assets after a stress.</li>
+        <li>Black-Litterman blends equilibrium returns with views. The resampled frontier averages many optimizations on simulated returns.</li>
+        <li>Total portfolio mode measures active risk against a 70/30 reference portfolio and judges each candidate by what it adds to total risk and return.</li>
+        <li>Stress tests replay GFC, 2022 rate shock and COVID-style moves. Attribution uses the Brinson model.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <div class="formula">sigma_true = sigma_rep sqrt((1+rho)/(1-rho))
+max  lambda mu'w - w'Sigma w   s.t. lo &lt;= w &lt;= hi, sum w = 1, a'w &gt;= b
+pi = delta Sigma w_mkt
+CTR_active,i = a_i (Sigma a)_i / sqrt(a'Sigma a),  a = w - w_ref
+alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The endowment and its documents are made up. Expected returns are assumptions, and the optimizer is sensitive to them.</li>
+        <li>Private marks lag public markets, so private weights after a fall are estimates.</li>
+      </ul>
+      <p style="margin-top:14px"><a href="/notes/" data-final="notes/saa-or-tpa.html">Note: SAA or total portfolio approach, what actually changes</a></p>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Source documents, flags for review, evaluation, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="100" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic data, fixed seed 100. As of 30 Sep 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">An investment policy statement, committee minutes and a custodian holdings summary, all made up. Click any citation to see its source line. Approve or reject each flag, then try the tamper test on the audit log.</p>
+
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
@@ -174,68 +185,33 @@
     </div>
     <div class="panel"><div class="panel-head"><h3>Policy register and trade list</h3><span class="sub">Cited values only</span></div><div class="panel-body"><div id="register"></div><div id="trades" style="margin-top:14px"></div></div></div>
     <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/alloc-labels.js</span></div>
-      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were read by hand from the documents and are stored apart from them and from the pipeline. Seeded issues: two policy changes in the minutes and a custodian total that does not add up. The other checks are clean and count toward the false-flag rate.</p></div></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand, in a file kept apart from the documents. Some issues are planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
     <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
-  </section>
+    </div>
+  </details>
 
   <section class="demo-section" id="memo">
     <article class="memo">
       <div class="memo-head">
         <div>
           <div class="memo-kind">Total portfolio recommendation</div>
-          <h2>Policy and rebalancing, Q4 2026</h2>
-          <div class="memo-meta">Written by Cristian Arenas · As of 30 Sep 2026 · Written for the base case, seed 100 · Fictional endowment</div>
+          <h2>Endowment policy review</h2>
         </div>
-        <span class="call-badge go">Rebalance</span>
+        <span class="call-badge">Rebalance</span>
       </div>
-      <h3>The call</h3><p class="the-call" id="memoCall"></p>
-      <h3>Situation</h3><div id="memoSituation"></div>
-      <h3>Why</h3><ol id="memoWhy"></ol>
-      <h3>Key risks</h3><ul id="memoRisks"></ul>
-      <h3>What would change my mind</h3><ul id="memoChange"></ul>
-      <h3>Sizing and next step</h3><div id="memoNext"></div>
-      <div class="memo-foot"><span>Fictional endowment. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 100, default assumptions</span></div>
+      <h3>Recommendation</h3>
+      <p class="the-call" id="memoCall"></p>
+      <h3>Why</h3>
+      <ul id="memoWhy"></ul>
+      <h3>Risks</h3>
+      <ul id="memoRisks"></ul>
+      <h3>Next step</h3>
+      <div id="memoNext"></div>
+      <p class="memo-foot" id="memoBase"></p>
     </article>
   </section>
 
-  <footer class="demo-foot">
-    <h2>Methodology, assumptions and limitations</h2>
-    <div class="df-grid">
-      <div>
-        <h3>Method</h3>
-        <ul>
-          <li><strong>Desmoothing.</strong> Reported volatility of appraisal-based series is scaled by sqrt((1 + rho)/(1 - rho)) at each asset's first-order autocorrelation, and private-public correlations are restored from their damped reported values.</li>
-          <li><strong>Optimization.</strong> Projected gradient on lambda mu'w - w'Sigma w (frontier), and projected ascent on the Sharpe ratio, onto box, budget and linear constraints by alternating projections. The solvers reproduce the original optimizer page exactly (<code>tests/legacy-proof.js</code>).</li>
-          <li><strong>Liquidity constraint.</strong> sum over liquid assets of w_i (1 + GFC shock_i) x assets &ge; multiple x (24-month calls + spending): linear in w, so it is enforced exactly as a halfspace.</li>
-          <li><strong>Black-Litterman.</strong> pi = delta Sigma w_mkt; posterior mu = [(tau Sigma)^-1 + P' Omega^-1 P]^-1 [(tau Sigma)^-1 pi + P' Omega^-1 Q], with Omega from each view's confidence.</li>
-          <li><strong>Resampling.</strong> 40 samples of 120 months from the assumed distribution; each re-estimated frontier is solved at the same risk-aversion grid and the weights averaged.</li>
-          <li><strong>Total portfolio.</strong> Contribution to active risk = (w - w_ref)_i (Sigma (w - w_ref))_i / active volatility; candidates are judged on return added per unit of total risk and on the active risk budget.</li>
-          <li><strong>Attribution.</strong> Brinson-Hood-Beebower: allocation, selection and interaction against the policy weights, with the total computed independently.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Formulas</h3>
-        <div class="formula">sigma_true = sigma_rep sqrt((1+rho)/(1-rho))
-max  lambda mu'w - w'Sigma w   s.t. lo &lt;= w &lt;= hi, sum w = 1, a'w &gt;= b
-pi = delta Sigma w_mkt
-CTR_active,i = a_i (Sigma a)_i / sqrt(a'Sigma a),  a = w - w_ref
-alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
-        <h3 style="margin-top:12px">Related notes</h3>
-        <ul><li><a href="/notes/" data-final="notes/saa-or-tpa.html">SAA or total portfolio approach, what actually changes</a></li></ul>
-      </div>
-    </div>
-    <h3 style="margin-top:22px">Assumptions register</h3>
-    <div id="assumptions"></div>
-    <h3 style="margin-top:22px">Limitations</h3>
-    <ul>
-      <li>Capital market assumptions are illustrative long-horizon numbers, not forecasts. Optimal weights move a lot with expected returns; the resampled frontier and Black-Litterman exist to tame that.</li>
-      <li>Stress shocks are stylised peak-to-trough moves; real crises also change correlations and liquidity at the same time.</li>
-      <li>Regime probabilities are synthetic and illustrative.</li>
-      <li>The endowment, its documents and its holdings are fictional; the pipeline is a simulation over text documents.</li>
-    </ul>
-    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
-    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
-  </footer>
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
 </main>
 <!-- site-footer:start -->
 <footer class="site-footer">
@@ -676,15 +652,12 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
 
   /* ---------------- memo ---------------- */
   function renderMemo() {
-    /* Fixed text, written for the base case (seed 100, default assumptions); links jump to the live numbers. */
-    $('#memoCall').innerHTML = 'Rebalance now under the IPS rule: release <a class="cite-num" href="#trades">T-1</a>, buying $7.0m of US equity with Treasuries and cash. Adopt the 70/30 reference with the 4% active risk budget from Q4, and bring active risk back inside that budget over the next two redemption windows by moving the hedge funds overweight into international equity.';
-    $('#memoSituation').innerHTML = '<p>The fictional endowment holds about $880m after a sharp fall in equities. US equity has slipped below its 15% floor while Treasuries and cash sit above target, and private equity is near the top of its range on marks that lag the market. On 17 September the committee cut the hedge funds target to 10%, raised Treasuries to 22%, and asked staff to report against a 70/30 reference portfolio.</p>';
-    $('#memoWhy').innerHTML = '<li>Active risk against the reference is <a class="cite-num" href="#kpi-activeRisk">4.31%</a>, over the 4% budget. The largest contributions are the public equity underweights, US equity at <a class="cite-num" href="#tpaTable">1.69 pp</a> and international at 0.85 pp, ahead of private equity at 1.20 pp. The gap is in public equity after the fall, which is the part we can trade.</li>' +
-      '<li>Re-optimizing does not justify a new policy: under the same ranges and liquidity test the best Sharpe ratio is <a class="cite-num" href="#kpi-optSharpe">0.26</a> against 0.25 today, and the gain rests on the private equity return assumption.</li>' +
-      '<li>Liquidity is not the constraint. After a GFC-sized stress the portfolio keeps <a class="cite-num" href="#kpi-liqCover">$416m</a> of liquid assets against a requirement of <a class="cite-num" href="#kpi-liqReq">$254m</a>, so selling Treasuries to buy equity does not put the rule at risk.</li>';
-    $('#memoRisks').innerHTML = '<li>A further leg down in equities pushes US equity back below its floor and private equity above its ceiling at once, with private marks still catching up.</li><li>Expected returns drive the optimizer; with the Black-Litterman views (private equity at 7.5%), the case for holding private equity at the top of its range weakens.</li><li>The custodian total is off by $10.0m; weights use the sum of lines until the custodian answers.</li>';
-    $('#memoChange').innerHTML = '<li>Active risk still above 4% after the hedge fund redemptions: cut further through the private equity pacing plan, not through the trade list.</li><li>Private equity marks more than 10% below the latest values: private equity drops to the middle of its range and the equity rebalance should be sized again.</li><li>A real regime signal pointing hard to a deflationary bust: hold Treasuries above the edge rule.</li>';
-    $('#memoNext').innerHTML = '<p>Release T-1 today. Do not release T-2: the compliance gate blocks it because it trades private assets and moves 15.8% of the portfolio. Submit hedge fund redemptions for the next two windows to reach the 10% target and direct the proceeds to international equity. Report against the reference portfolio from Q4.</p>';
+    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
+    $('#memoCall').innerHTML = "Rebalance now. Buy $7.0m of US equity with Treasuries and cash, and move the hedge fund overweight into international equity over the next two redemption windows.";
+    $('#memoWhy').innerHTML = "<li>Active risk against the 70/30 reference is <a class=\"cite-num\" href=\"#kpi-activeRisk\">4.31%</a>, over the 4% budget. Most of it is the public equity underweight after the fall.</li><li>Reoptimizing barely helps. The best Sharpe ratio is <a class=\"cite-num\" href=\"#kpi-optSharpe\">0.26</a> against 0.25 today.</li><li>After a GFC-sized stress the portfolio still has <a class=\"cite-num\" href=\"#kpi-liqCover\">$416m</a> of liquid assets against <a class=\"cite-num\" href=\"#kpi-liqReq\">$254m</a> needed.</li>";
+    $('#memoRisks').innerHTML = "<li>Another leg down in equities pushes US equity below its floor and private equity over its ceiling at the same time.</li><li>The custodian total is off by $10.0m. Weights use the sum of the lines until that is fixed.</li>";
+    $('#memoNext').innerHTML = "<p>Release trade <a class=\"cite-num\" href=\"#trades\">T-1</a> today. T-2 stays blocked because it trades private assets. Report against the reference portfolio from Q4.</p>";
+    $('#memoBase').textContent = "Numbers are from the base case (seed 100, default inputs). The endowment is made up.";
   }
 
   /* ---------------- data drop ---------------- */
@@ -721,7 +694,6 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. As of 30 Sep 2026.'; renderAll(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runSteps').innerHTML = ['Plan', 'Read policy', 'Read holdings', 'Validate citations', 'Check consistency', 'Draft trades', 'Compliance gate', 'Human approval', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
     $('#runBtn').addEventListener('click', function () { S.policyApproved = 'pending'; runPipeline(); renderAll(); });
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzReturns', { title: 'Use your own asset returns', template: '/assets/templates/asset-returns.csv', columns: [{ name: 'date', desc: 'month end, YYYY-MM-DD' }].concat(ASSETS.map(function (a) { return { name: a, desc: 'monthly return, decimal' }; })),

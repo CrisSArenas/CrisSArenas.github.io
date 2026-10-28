@@ -27,7 +27,7 @@ b,strong{color:var(--text);font-weight:600}
 .pill-idle{color:var(--dim);border-color:rgba(148,163,184,.25);background:rgba(148,163,184,.07)}
 
 /* ---------------------------------------------------------------- hero */
-.hero{max-width:1180px;margin:26px auto 0;padding:0 18px}
+.hero{max-width:1128px;margin:26px auto 0;padding:0 18px}
 .hero-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);display:flex;gap:8px;align-items:center}
 .hero-title{font-size:clamp(1.3rem,3.2vw,1.9rem);line-height:1.25;letter-spacing:-.01em;margin:10px 0 10px;color:var(--text);max-width:900px}
 .hero-text{color:var(--muted);font-size:.95rem;line-height:1.75;max-width:900px}
@@ -35,7 +35,7 @@ b,strong{color:var(--text);font-weight:600}
 .hero-meta i{color:var(--cyan);margin-right:6px}
 
 /* ------------------------------------------------------------- stepper */
-.stepper{position:sticky;top:var(--navh,56px);z-index:40;max-width:1180px;margin:22px auto 0;padding:10px 18px;
+.stepper{position:sticky;top:var(--navh,56px);z-index:40;max-width:1128px;margin:22px auto 0;padding:10px 18px;
   display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);
   border-bottom:1px solid var(--border)}
 .stepper::-webkit-scrollbar{display:none}
@@ -51,7 +51,7 @@ b,strong{color:var(--text);font-weight:600}
 .st:disabled{opacity:.42;cursor:not-allowed}
 
 /* --------------------------------------------------------------- steps */
-.steps{max-width:1180px;margin:0 auto;padding:6px 18px 10px}
+.steps{max-width:1128px;margin:0 auto;padding:6px 18px 10px}
 .step{display:none;animation:stepIn .28s ease}
 .step.active{display:block}
 @keyframes stepIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -338,38 +338,16 @@ b,strong{color:var(--text);font-weight:600}
   </div>
 </nav>
 <!-- site-nav:end -->
-<div class="demo-bar"><div class="container"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><h1 class="demo-title"><i class="fas fa-robot"></i> Agentic Portfolio Monitoring</h1><div class="demo-actions"><span class="d-pill pill-watch" id="stateBadge">NOT CHECKED</span>
-    <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
-    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button></div></div></div>
-<div class="demo-status">
-  <span id="statusBar">initialising&hellip;</span>
-  <span><b>Simulated fleet on a synthetic book, no model is called and no order is placed</b> &middot; $1.0bn notional &middot; deterministic &middot; not investment advice</span>
-</div>
-
-<header class="hero">
-  <div class="hero-kicker"><i class="fas fa-robot"></i> Agentic AI &middot; institutional investing</div>
-  <h2 class="hero-title">Thirteen AI agents watching a $1bn portfolio, and a human who still signs off.</h2>
-  <p class="hero-text">A large endowment or pension fund must keep its portfolio inside a rulebook: how much in each asset class, how much
-  risk, how much it can sell in a hurry, how much in any one company. Checking that every day is slow, repetitive and unforgiving
-  work, a good fit for agents. This page runs a fleet of specialised agents over a synthetic portfolio, shows what they find
-  when markets move, and lets you decide what they are allowed to do about it. Most of the engineering is about <b>controls</b>:
-  what the agents may do alone, what stops them, and how every action can be proven afterwards.</p>
-  <div class="hero-meta">
-    <span><i class="far fa-clock"></i>Six short steps, about three minutes</span>
-    <span><i class="fas fa-lock"></i>No model is called and no order is placed</span>
-    <span><i class="fas fa-building-columns"></i>Synthetic $1.0bn multi-asset book</span>
+<header class="container demo-hero" style="padding-bottom:12px">
+  <a class="back-link" href="/#work">&larr; All work</a>
+  <span class="group-label pf">Portfolio construction and multi-strategy</span>
+  <h1>Agentic Portfolio Monitoring</h1>
+  <p class="lede">Run a $1bn multi-asset book through one day of market events. The system checks every rule, proposes fixes and waits for your approval before anything trades.</p>
+  <div class="toolbar" style="margin-top:22px"><span class="d-pill pill-watch" id="stateBadge">NOT CHECKED</span>
+    <button type="button" class="d-btn sm" id="resetBtn">Reset</button>
+    <button type="button" class="d-btn sm" id="helpBtn" aria-label="Open the guide">Guide</button>
+    <span class="muted" id="statusBar" style="font-size:.82rem">initialising&hellip;</span>
   </div>
-  <dl class="std-header" style="margin-top:18px">
-    <div><dt>Decision it supports</dt><dd>Approve or reject each proposed fix.</dd></div>
-    <div><dt>The hard problem</dt><dd>Catching breaches, capital call shortfalls and stale prices before they compound.</dd></div>
-    <div><dt>What the system takes off the team</dt><dd>The daily checks on policy ranges, drift, tracking error, liquidity, capital call coverage, issuer look-through and price freshness; sizing each fix; routing it to the right approval.</dd></div>
-    <div class="h-call"><dt>What stays with the team</dt><dd>Approve or reject each proposed fix.</dd></div>
-    <div><dt>Method</dt><dd>Limit and range checks, tracking error from a covariance matrix, a two-week liquidity horizon, capital call coverage, look-through to issuers, a stale-price gate, pre-trade compliance re-checks, a hash-chained audit log.</dd></div>
-    <div><dt>Data</dt><dd>A synthetic $1.0bn multi-asset book with private funds and uncalled commitments; deterministic events.</dd></div>
-    <div class="h-ai"><dt>Where AI is used</dt><dd>Thirteen agent roles with hard gates and an audit trail. The roles are simulated; no model is called.</dd></div>
-    <div><dt>Limitations</dt><dd>One day of events on a stylised book. Trading costs and liquidity are assumptions. No order is placed.</dd></div>
-  </dl>
-  <p class="hero-text" style="margin-top:14px"><b>What it automates.</b> Every cycle, the fleet re-checks the whole rulebook, ranks what it finds, sizes a fix for each finding and re-runs compliance on that fix before proposing it. At the autonomy level you choose, small fixes inside the rules can be released without you. <b>What it leaves to a person.</b> Everything else: any trade above the threshold, anything the committee owns, and any trade while prices are stale, which no setting lets the fleet release on its own. Private assets are never sold to fix a range. Each decision, by the fleet or by you, goes into a log that shows if anyone edits it afterwards.</p>
 </header>
 
 <nav class="stepper" id="stepper" aria-label="Walkthrough steps">
@@ -451,9 +429,7 @@ b,strong{color:var(--text);font-weight:600}
   <div class="step-head">
     <span class="step-badge">Step 3 of 6</span>
     <h2 id="h3">Run the agents</h2>
-    <p>Thirteen agents, each with one narrow job. The six checkers don&rsquo;t depend on each other, so they run at the same time;
-    then triage, planning, costing and a compliance re-check run in order, each using the last one&rsquo;s output. First decide how
-    much the fleet may do on its own.</p>
+    <p>Choose how much the system may do on its own, then run the checks.</p>
   </div>
   <div class="card">
     <h3><i class="fas fa-user-shield"></i> How much can the agents do without you?</h3>
@@ -464,18 +440,18 @@ b,strong{color:var(--text);font-weight:600}
     <button type="button" class="d-btn primary big" id="runBtn"><i class="fas fa-play"></i> Run the monitoring cycle</button>
   </div>
   <div class="grid2">
-    <div class="card">
+    <div class="card" hidden>
       <div class="card-head"><h3><i class="fas fa-diagram-project"></i> The fleet at work</h3><span class="tag">bar = when each agent runs</span></div>
       <div id="fleet"></div>
       <p class="hint">An agent can only start once everything it depends on has finished, so the six checkers overlap and the cycle
       takes as long as its <b>longest chain</b>, not the sum of all the work. Tier labels show which size of model each role uses.</p>
     </div>
     <div class="card">
-      <div class="card-head"><h3><i class="fas fa-comments"></i> What each agent reported</h3></div>
+      <div class="card-head"><h3><i class="fas fa-comments"></i> What the checks found</h3></div>
       <div id="feed"></div>
     </div>
   </div>
-  <div class="tiles" id="fleetTiles" style="margin-top:16px"></div>
+  <div class="tiles" id="fleetTiles" hidden></div>
   <div class="step-nav">
     <button type="button" class="d-btn" data-go="2"><i class="fas fa-arrow-left"></i> Back</button>
     <button type="button" class="d-btn primary big" data-go="4" id="toFindings">Next: what they found <i class="fas fa-arrow-right"></i></button>
@@ -576,7 +552,7 @@ b,strong{color:var(--text);font-weight:600}
       <div class="verdict" id="verdict"></div>
     </div>
     <div class="stack">
-      <div class="card">
+      <div class="card" hidden>
         <h3><i class="fas fa-coins"></i> What a cycle costs</h3>
         <div class="bigrow" id="econTiles"></div>
         <div class="tscroll"><table class="mtable econ" id="econTable" style="min-width:360px"></table></div>
@@ -615,7 +591,7 @@ b,strong{color:var(--text);font-weight:600}
         approve or reject the fixes, and finally check that the record of everything that happened cannot be quietly changed.</p>
       </div>
 
-      <div class="d-help-section">
+      <div class="d-help-section" hidden>
         <h3>2 &middot; The fleet</h3>
         <table>
           <tr><th>Agent</th><th>Model</th><th>Job</th></tr>
@@ -683,64 +659,26 @@ b,strong{color:var(--text);font-weight:600}
   </div>
 </div>
 
-<footer class="demo-footer">
-  <div class="inner">
-    <h2><i class="fas fa-flask"></i> Methodology &amp; assumptions</h2>
-    <div class="grid">
-      <div>
-        <h3>What this models</h3>
-        <p>A production-shaped control loop for agentic portfolio oversight. Thirteen role-scoped agents run as a dependency graph over
-        a synthetic $1.0bn multi-asset portfolio: six independent checkers cover policy ranges, tracking error, liquidity,
-        single-company concentration, eligibility and data quality; triage ranks the findings; a planner drafts fixes; an estimator
-        costs them; a compliance simulator re-runs every rule on the post-trade portfolio; a router applies the autonomy policy and
-        its gates; and a logger writes a hash-chained record. Events change the portfolio for real, approvals change it again, and
-        every change triggers a fresh check.</p>
-      </div>
-      <div>
-        <h3>Key assumptions</h3>
-        <ul>
-          <li>Eight asset classes with targets 25/15/10/25/5/10/8/2 and per-class ranges; private equity and real assets are
-          illiquid and capped at 25% together.</li>
-          <li>Company exposure is looked through: stock held in US equity plus bonds held in core bonds, each moving with its sleeve.</li>
-          <li>Liquidity is the share of NAV sellable inside 10 business days, against a 70% floor. &ldquo;Days to sell 90%&rdquo;
-          could never pass with 14% in privates, and a limit that never passes is noise, not a control.</li>
-          <li>Tracking error is <code>&radic;(a&prime;&Sigma;a)</code> on active weights against the target mix, with a fixed long-run covariance.</li>
-          <li>Trading cost is a half-spread plus a square-root impact term per asset class: about 4 bp on US equity up to about
-          38 bp on high yield. Privates are not tradeable at all.</li>
-          <li>Agent latencies and token counts are fixed per role. A cycle takes as long as the longest chain of agents; its cost is
-          the sum of every agent&rsquo;s tokens at its tier&rsquo;s price.</li>
-          <li>The audit fingerprint is 32-bit FNV-1a over the previous fingerprint plus the entry. It demonstrates chaining; anything
-          real would use SHA-256 and sign the head of the chain.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Design decisions worth naming</h3>
-        <ul>
-          <li><b>Checks are code; only planning is generative.</b> Limit checks are arithmetic, where they are testable and cannot
-          hallucinate. The model drafts fixes, and its drafts are re-checked by the same deterministic rules.</li>
-          <li><b>The post-trade check is not optional.</b> Fixing one breach often opens another; funding a top-up out of cash breaks the
-          cash floor. The simulator catches it before a person ever sees the proposal.</li>
-          <li><b>Stale data gates action, not detection.</b> Old prices should not stop you looking, only acting.</li>
-          <li><b>The loop re-plans after every change.</b> Proposals made redundant by an earlier approval are withdrawn; the rest are re-sized.</li>
-          <li><b>Every finding names its agent.</b> That makes the false-positive rate measurable per role, so one agent can be tuned or
-          retired without touching the rest.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Limitations: read these before you read the numbers</h3>
-        <ul>
-          <li><b>No model is called anywhere on this page.</b> It demonstrates an architecture and its controls, not model quality.</li>
-          <li><b>Token, latency and cost figures are illustrative.</b> Real ones depend on prompts, context length, caching and the price list.</li>
-          <li><b>Risk is a static covariance.</b> Correlations do not rise in a sell-off here, so tracking error after a shock is understated.</li>
-          <li><b>Trading costs are a stylised function, not a broker quote</b>, with no settlement, tax lots, lot sizes or wash-sale rules.</li>
-          <li><b>The false-positive rate is not modelled.</b> In a real deployment it decides whether the fleet is used or ignored, and you
-          only learn it by running in observe-only mode against a human baseline for months.</li>
-        </ul>
-      </div>
+<div class="container">
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">What is checked, and the limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>The book has eight asset classes, including private equity and real assets carried at quarterly marks.</li>
+        <li>Each cycle checks policy ranges, drift, tracking error, two-week liquidity, capital call coverage, issuer concentration across stocks and bonds, and price freshness.</li>
+        <li>Each finding comes with a proposed fix, its trades, its cost and the tracking error after the trade.</li>
+        <li>Small fixes can run on their own if you allow it. Stale prices block automatic trading at every setting, and private assets are never sold to fix a range.</li>
+        <li>Every action goes into a hash-chained log, so any later edit shows up.</li>
+      </ul>
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The book and the events are made up. Trading costs and liquidity horizons are assumptions.</li>
+        <li>No order is placed and no model is called.</li>
+      </ul>
     </div>
-    <div class="disclaimer">Educational demonstration. The portfolio, the events, the agents and the audit trail are all simulated in the browser. Nothing here is investment advice, a recommendation, or a representation of any client portfolio.</div>
+  </details>
+  <div class="demo-foot" style="margin-bottom:56px"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a></div></div>
 </div>
-</footer>
 <!-- site-footer:start -->
 <footer class="site-footer">
   <div class="container">

@@ -47,37 +47,22 @@
 <!-- site-nav:end -->
 <main id="main" class="container demo-main">
   <header class="demo-hero">
-    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
-    <p class="eyebrow">06 · Secondaries and GP-leds</p>
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pm">Private markets</span>
     <h1>Secondaries Desk</h1>
-    <p class="lede">Two decisions from the same desk. A fictional LP is selling six fund interests on NAVs dated 31 March; what should a buyer bid, as a share of NAV? And a fictional GP is moving two companies from its fourth fund into a continuation vehicle; should an LP in that fund roll or sell? The desk projects the cash flows, solves for the price, and reads the CV documents for the conflicts. The bid and the election are the team's call.</p>
-    <div class="tags"><span class="tag tag-pm">Private markets</span><span class="tag tag-ai">AI</span></div>
-    <dl class="std-header">
-      <div><dt>Decision it supports</dt><dd>Bid price, or roll vs sell.</dd></div>
-      <div><dt>The hard problem</dt><dd>Pricing LP stakes on stale NAVs, and deciding to roll or sell in a continuation vehicle.</dd></div>
-      <div><dt>What the system takes off the team</dt><dd>Projecting calls, distributions and NAV for every interest, solving the price, rolling stale marks forward, the roll vs sell arithmetic, and reading the CV documents into a conflicts checklist.</dd></div>
-      <div class="h-call"><dt>What stays with the team</dt><dd>Bid price, or roll vs sell.</dd></div>
-      <div><dt>Method</dt><dd>Takahashi-Alexander projection by strategy, present value at the buyer's target IRR, beta roll-forward of stale NAVs, seeded growth shocks for the outcome range, continuation vehicle fees and tiered carry, break-even exit multiple.</dd></div>
-      <div><dt>Data</dt><dd>Synthetic LP portfolio and CV documents, fixed seed, fictional funds and companies. Or your own fund interests, processed locally.</dd></div>
-      <div class="h-ai"><dt>Where AI is used</dt><dd>A terms extractor, a conflicts checklist builder and a memo drafter, with every checklist item approved by a person before it reaches the memo.</dd></div>
-      <div><dt>Limitations</dt><dd>Cash flows come from a model, not from the underlying companies. The CV is a single exit at a gross multiple. The pipeline is a simulation; no model is called.</dd></div>
-    </dl>
+    <p class="lede">Price six LP fund interests on NAVs that are a quarter old. Then decide whether to roll or sell in a GP-led continuation vehicle.</p>
+    <p class="eval-line" id="evalLine"></p>
   </header>
 
-  <div class="toolbar" role="region" aria-label="Demo controls">
-    <label for="seed">Seed <input class="field" id="seed" type="number" value="21" min="1" max="999999"></label>
-    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 21. NAVs at 31 Mar 2026, priced at 30 Jun 2026.</span>
-    <span class="grow"></span>
-    <span id="testsBadge"></span>
-    <div id="exportMenu"></div>
-  </div>
-
   <div id="tabsRoot">
-    <div class="tabs">
-      <button data-tab="pricing" aria-selected="true">LP stake pricing</button>
-      <button data-tab="sensitivity">Sensitivity</button>
-      <button data-tab="cv">Continuation vehicle: roll or sell</button>
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="pricing" aria-selected="true">LP stake pricing</button>
+        <button data-tab="cv">Continuation vehicle</button>
+      </div>
+      <div id="exportMenu"></div>
     </div>
+    <section id="byod" hidden><div id="dzPortfolio"></div></section>
 
     <section id="pricing">
       <div class="kpis" id="prKpis"></div>
@@ -86,10 +71,7 @@
         <div class="panel"><div class="panel-head"><h3>Projected net cash flows to the buyer</h3><span class="sub">Distributions less calls, $m, years from 30 June 2026</span></div><div class="panel-body"><div id="cfChart"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Range of outcomes at the bid</h3><span class="sub">Seeded growth shocks by fund</span></div><div class="panel-body"><div id="mcChart"></div><p class="eval-note" id="mcNote"></p></div></div>
       </div>
-      <div id="dzPortfolio"></div>
-    </section>
-
-    <section id="sensitivity" hidden>
+      <h3 class="sub-h">Sensitivity</h3>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Portfolio price, % of 31 March NAV</h3><span class="sub">Target IRR by NAV haircut</span></div><div class="panel-body"><div id="sensHeat" style="max-width:520px"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Price by fund age</h3><span class="sub">A buyout interest, 10% unfunded, at the target IRR</span></div><div class="panel-body"><div id="ageChart"></div><p class="eval-note" id="ageNote"></p></div></div>
@@ -101,16 +83,54 @@
       <div class="kpis" id="cvKpis"></div>
       <div class="split-2" style="margin-top:18px">
         <div class="panel"><div class="panel-head"><h3>Value at the end of the hold, per $1 of sale price</h3><span class="sub">Rolling vs selling and reinvesting</span></div><div class="panel-body"><div id="rollChart"></div><p class="eval-note" id="rollNote"></p></div></div>
-        <div class="panel"><div class="panel-head"><h3>Scenarios</h3></div><div class="panel-body"><div id="scenTable"></div><p class="eval-note">Context: Houlihan Lokey's 2025 continuation fund study reports record GP-led continuation vehicle volume above $100 billion, a median price of 97% of NAV, and LP rollover of roughly 15% (<a href="https://cdn.hl.com/pdf/2026/2025-continuation-fund-study-hl.pdf" target="_blank" rel="noopener">Houlihan Lokey</a>).</p></div></div>
+        <div class="panel"><div class="panel-head"><h3>Scenarios</h3></div><div class="panel-body"><div id="scenTable"></div></div></div>
       </div>
       <div class="panel"><div class="panel-head"><h3>Hold and multiple: rolling minus selling</h3><span class="sub">Per $1 of sale price, at the end of each hold</span></div><div class="panel-body"><div id="holdHeat" style="max-width:620px"></div></div></div>
     </section>
   </div>
 
-  <section class="demo-section" id="ai">
-    <h2>The agents: the CV documents, read into a conflicts checklist</h2>
-    <p class="intro">Three synthetic documents: the election notice, the fairness opinion summary and the LPA amendment. The checklist covers price discovery, the fee and carry reset, the GP's commitment, the timeline and the status quo option, each with its citations. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
-    <div class="run-steps" id="runSteps"></div>
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>Each fund interest is projected quarterly with Takahashi-Alexander rules by strategy: calls, NAV growth and distributions.</li>
+        <li>Stale NAVs move from 31 March to 30 June with the strategy's beta to public equity, plus calls and less distributions since.</li>
+        <li>The price of each interest is the present value of its projected cash flows at the target IRR. Buy at that price and you earn the target if the projection holds.</li>
+        <li>The outcome range draws a growth shock for each fund and reprojects the cash flows.</li>
+        <li>Roll vs sell compares rolling into the CV, after its fee and tiered carry, with selling and reinvesting at 10%. The break-even is the gross multiple where the two match.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <div class="formula">call_q = (1 - (1 - rc)^(1/4)) x unfunded
+NAV_q = (NAV + call)(1 + g)^(1/4)
+RD(age) = (age / life)^bow
+price = sum (D_t - C_t) / (1 + r)^t
+NAV_today = NAV_ref (1 + beta x R_pub) + calls - dists
+roll = m - fee x hold - carry
+sell = (1 + opp)^hold</div>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      <h3>Projection model by strategy</h3>
+      <div id="modelTable"></div>
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The funds, GP and documents are made up. The public market return for the quarter is an assumption.</li>
+        <li>The CV is modelled as one exit after the hold. Extensions show up as longer holds at the same multiple.</li>
+      </ul>
+      <p style="margin-top:14px"><a href="/notes/" data-final="notes/roll-or-sell-cv.html">Note: roll or sell, an LP's math on a continuation vehicle</a></p>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Source documents, flags for review, evaluation, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="21" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic data, fixed seed 21. NAVs at 31 Mar 2026, priced at 30 Jun 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">A CV election notice, a fairness opinion summary and an LPA amendment, all made up. Click any citation to see its source line. Approve or reject each flag, then try the tamper test on the audit log.</p>
+
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
@@ -124,69 +144,33 @@
       <div class="panel"><div class="panel-head"><h3>Memo inputs from approved items</h3></div><div class="panel-body"><ul class="memo-inputs" id="memoInputs"></ul></div></div>
     </div>
     <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/sec-labels.js</span></div>
-      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field and checklist item</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were read by hand and the checklist judged by hand, both stored apart from the documents and the pipeline. Four items should be raised; two should pass and count toward the false-flag rate.</p></div></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field and checklist item</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand, in a file kept apart from the documents. Some issues are planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
     <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
-  </section>
+    </div>
+  </details>
 
   <section class="demo-section" id="memo">
     <article class="memo">
       <div class="memo-head">
         <div>
-          <div class="memo-kind">Secondary bid memo and CV election</div>
-          <h2>Six-fund LP portfolio, and Fenmoor Capital Partners IV (fictional)</h2>
-          <div class="memo-meta">Written by Cristian Arenas · As of 30 Jun 2026 · Written for the base case, seed 21 · Fictional funds</div>
+          <div class="memo-kind">Secondary bid and CV election</div>
+          <h2>Six-fund LP portfolio, and Fenmoor Capital Partners IV</h2>
         </div>
-        <span class="call-badge" id="memoBadge"></span>
+        <span class="call-badge">Bid 88% · Sell the CV</span>
       </div>
-      <h3>The call</h3><p class="the-call" id="memoCall"></p>
-      <h3>Situation</h3><div id="memoSituation"></div>
-      <h3>Why</h3><ol id="memoWhy"></ol>
-      <h3>Key risks</h3><ul id="memoRisks"></ul>
-      <h3>What would change my mind</h3><ul id="memoChange"></ul>
-      <h3>Sizing and next step</h3><div id="memoNext"></div>
-      <div class="memo-foot"><span>Fictional funds, GP, companies and documents. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 21, default assumptions</span></div>
+      <h3>Recommendation</h3>
+      <p class="the-call" id="memoCall"></p>
+      <h3>Why</h3>
+      <ul id="memoWhy"></ul>
+      <h3>Risks</h3>
+      <ul id="memoRisks"></ul>
+      <h3>Next step</h3>
+      <div id="memoNext"></div>
+      <p class="memo-foot" id="memoBase"></p>
     </article>
   </section>
 
-  <footer class="demo-foot">
-    <h2>Methodology, assumptions and limitations</h2>
-    <div class="df-grid">
-      <div>
-        <h3>Method</h3>
-        <ul>
-          <li><strong>Projection.</strong> Each interest is projected quarterly from its NAV, unfunded commitment and age with Takahashi-Alexander rules: calls at a rate of the unfunded during the investment period, NAV growth, and a distribution rate that rises with age until the fund's life ends.</li>
-          <li><strong>Stale NAVs.</strong> The 31 March NAV is moved to 30 June by the strategy's beta times the public proxy's return over the quarter, plus calls and less distributions paid since.</li>
-          <li><strong>Price.</strong> The price is the present value of the projected net cash flows at the buyer's target IRR, so buying at that price earns exactly the target if the projection holds. Discount = 1 - price / NAV.</li>
-          <li><strong>Outcome range.</strong> Each path draws one growth shock per fund and reprojects the stakes; the chart shows the buyer's IRR at the bid across paths.</li>
-          <li><strong>Roll vs sell.</strong> Rolling invests the sale price in the CV, which grows to a gross multiple over the hold, less the management fee and tiered carry over the preferred return. Selling reinvests the cash at the LP's opportunity cost. The break-even multiple sets the two equal.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Formulas</h3>
-        <div class="formula">call_q = (1 - (1 - rc)^(1/4)) x unfunded
-NAV_q = (NAV + call)(1 + g)^(1/4)
-RD(age) = (age / life)^bow
-price = sum (D_t - C_t) / (1 + r)^t
-NAV_today = NAV_ref (1 + beta x R_pub) + calls - dists
-roll = m - fee x hold - carry
-sell = (1 + opp)^hold</div>
-        <h3 style="margin-top:12px">Related notes</h3>
-        <ul><li><a href="/notes/" data-final="notes/roll-or-sell-cv.html">Roll or sell, an LP's math on a continuation vehicle</a></li></ul>
-      </div>
-    </div>
-    <h3 style="margin-top:22px">Assumptions register</h3>
-    <div id="assumptions"></div>
-    <h3 style="margin-top:22px">Projection model by strategy</h3>
-    <div id="modelTable"></div>
-    <h3 style="margin-top:22px">Limitations</h3>
-    <ul>
-      <li>Every fund, GP, company and number is fictional. Cash flows come from a fund-level model; a real bid would underwrite the largest companies one by one.</li>
-      <li>The public proxy return for the quarter is an assumption on this page, not market data.</li>
-      <li>The CV is modelled as a single exit after the hold, with fees paid at exit; extensions are shown as longer holds at the same multiple.</li>
-    </ul>
-    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
-    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
-  </footer>
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
 </main>
 <!-- site-footer:start -->
 <footer class="site-footer">
@@ -293,7 +277,6 @@ sell = (1 + opp)^hold</div>
       { id: 'bidTotal', label: 'Bid', value: F.money(B.price, 1), sub: 'on ' + F.money(B.nav, 1) + ' of reported NAV' },
       { id: 'rolledNav', label: 'NAV rolled to 30 June', value: F.money(rolled, 1), sub: F.spct(rolled / B.nav - 1, 1) + ' vs reported', tone: rolled < B.nav ? 'bad' : null },
       { id: 'unfunded', label: 'Unfunded the buyer takes on', value: F.money(unf, 1), sub: F.pct(unf / B.nav, 0) + ' of NAV' },
-      { id: 'duration', label: 'Cash-weighted duration', value: F.num(dur, 1) + ' years' },
       { id: 'irrRange', label: 'Buyer IRR at the bid, 10th to 90th', value: F.pct(S.mc.p10, 1) + ' to ' + F.pct(S.mc.p90, 1), sub: F.pct(S.mc.below10, 0) + ' of paths below 10%' }
     ]);
     UI.table('#fundTable', { id: 'interests', name: 'Price by fund interest', columns: [{ key: 'fund', label: 'Fund (fictional)' }, { key: 'st', label: 'Strategy' }, { key: 'vintage', label: 'Vintage', num: 1 }, { key: 'nav', label: 'NAV 31 Mar', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'rolled', label: 'NAV 30 Jun', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'price', label: 'Price', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'pct', label: '% of NAV', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0.85 ? 'neg' : ''; } }, { key: 'dur', label: 'Duration', num: 1, fmt: function (v) { return F.num(v, 1); } }],
@@ -366,7 +349,7 @@ sell = (1 + opp)^hold</div>
           else res.push({ msg: title + ': passes' });
         };
         add('price-discovery', 'Price discovery: ' + fo.bids.value + ' bids from ' + fo.contacted.value + ' contacted, adviser on both sides', fo.bids.value < 3 || !!adv || n.pricePct.value < mid,
-          fo.bids.value + ' of ' + fo.contacted.value + ' potential buyers bid. The fairness adviser also advised the GP, with part of its fee payable only on completion. The price, ' + F.pct(n.pricePct.value, 1) + ' of NAV, sits below the middle of the adviser\'s own range (' + F.pct(mid, 0) + ') and below the 97% median that Houlihan Lokey reports for 2025.',
+          fo.bids.value + ' of ' + fo.contacted.value + ' potential buyers bid. The fairness adviser also advised the GP, with part of its fee payable only on completion. The price, ' + F.pct(n.pricePct.value, 1) + ' of NAV, sits below the middle of the adviser\'s own range (' + F.pct(mid, 0) + ').',
           [fo.contacted.cite, fo.rangeLow.cite, adv && adv.cite, n.pricePct.cite].filter(Boolean), 'Price discovery was thin: two bids, an adviser paid on completion, and a price below the middle of its own fairness range.');
         add('fee-carry-reset', 'Carry reset: the GP is paid ' + F.money(la.crystallizedCarry.value, 1) + ' at the transaction price and restarts carry from it', la.crystallizedCarry.value > 0,
           'On completion the GP takes ' + F.money(la.crystallizedCarry.value, 1) + ' of carried interest from Fund IV as if both companies were sold at the transaction price, and CV carry (' + F.pct(n.carry.value, 1) + ', then ' + F.pct(n.carry2.value, 0) + ') is measured from that same price. Selling LPs fund the first; rolling LPs pay the second.',
@@ -414,21 +397,13 @@ sell = (1 + opp)^hold</div>
   }
 
   /* ---------------- memo ---------------- */
-  var MEMO = {
-    badge: 'Bid 88% · Sell the CV',
-    call: 'Bid 88% of 31 March NAV, $150m, for the six fund interests. In the Fenmoor continuation vehicle, elect to sell, and ask the advisory committee to give LPs the 20 business days the LPA requires and a status quo option.',
-    situation: '<p>A fictional LP is selling six interests with $171.0m of NAV reported at 31 March and $29.0m of unfunded commitments. Separately, the endowment holds $12.4m of NAV in Fenmoor Capital Partners IV, whose GP is moving two companies into a continuation vehicle at 94.0% of NAV. Its election deadline is 15 business days from 2 June.</p>',
-    why: '<li>The NAVs are a quarter old. Rolled forward on the public proxy, they are worth <a class="cite-num" href="#kpi-rolledNav">$162.8m</a>, 4.8% less than reported. A bid of <a class="cite-num" href="#kpi-bidPct">87.9%</a> of reported NAV is 92.3% of today\'s estimate.</li>' +
-      '<li>At that price the projected cash flows return the 15% target. Across 1,000 seeded paths the buyer\'s IRR runs from <a class="cite-num" href="#kpi-irrRange">12.6% to 17.8%</a>, and no path falls below 10%. The price differs by fund: Draycott Infrastructure II at 84.3% (long-dated, low growth) and Arvane Buyout VII at 86.3% (a stale buyout mark) pull it down; Sorrel Ventures IV at 93.1% holds it up.</li>' +
-      '<li>Rolling into the CV needs the two companies to return <a class="cite-num" href="#kpi-breakEven">1.57x</a> gross in four years just to match selling and reinvesting at 10%. The house case of 1.70x clears that by <a class="cite-num" href="#kpi-rollEdge">$1.32m</a> on our stake. With both one-year extensions, which are the GP\'s choice, the same multiple loses 0.19x per dollar against selling, and the downside of 1.2x loses 0.30x.</li>' +
-      '<li>The process does not earn the benefit of the doubt: two bids from nine contacted, a fairness adviser paid on completion, $18.4m of carry crystallized at the transaction price, and no status quo option (see the <a href="#ai">checklist</a>).</li>',
-    risks: '<li>The bid takes on $29.0m of unfunded commitments; Tamsin Buyout IX alone has $14m to call over the next few years.</li><li>Selling the CV gives up the GP case: at 2.3x, rolling would have been worth 0.64x more per dollar than selling.</li><li>The CV price is 94.0% of NAV, below the 97% median Houlihan Lokey reports for 2025. Selling LPs carry that discount.</li>',
-    change: '<li>On the bid: second-quarter NAVs that come in above the rolled-forward estimates, or a seller willing to take part of the price deferred.</li><li>On the CV: a status quo option, a price at or above the middle of the fairness range (95%), or CV carry measured without the extension years counting toward the hurdle.</li>',
-    next: '<p>Submit the bid fund by fund at the prices in the <a href="#pricing">pricing table</a>, conditional on second-quarter NAVs within 5% of the roll-forward. Return the Fenmoor election form as a sale before the deadline, with a letter to the advisory committee on the timeline and the missing status quo option. Recycle the $11.66m of sale proceeds into the secondaries allocation in the pacing plan.</p>'
-  };
   function renderMemo() {
-    /* Fixed text, written for the base case (seed 21, default assumptions); links jump to the live numbers. */
-    $('#memoBadge').textContent = MEMO.badge; $('#memoCall').innerHTML = MEMO.call; $('#memoSituation').innerHTML = MEMO.situation; $('#memoWhy').innerHTML = MEMO.why; $('#memoRisks').innerHTML = MEMO.risks; $('#memoChange').innerHTML = MEMO.change; $('#memoNext').innerHTML = MEMO.next;
+    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
+    $('#memoCall').innerHTML = "Bid 88% of 31 March NAV, $150m, for the six interests. In the Fenmoor continuation vehicle, elect to sell.";
+    $('#memoWhy').innerHTML = "<li>Rolled forward on public markets, the NAVs are worth <a class=\"cite-num\" href=\"#kpi-rolledNav\">$162.8m</a> today, 4.8% below reported. A bid of <a class=\"cite-num\" href=\"#kpi-bidPct\">87.9%</a> of reported NAV is 92% of that.</li><li>At this price the cash flows return 15%. Across 1,000 paths the IRR runs from <a class=\"cite-num\" href=\"#kpi-irrRange\">12.6% to 17.8%</a>.</li><li>Rolling into the CV needs <a class=\"cite-num\" href=\"#kpi-breakEven\">1.57x</a> gross in four years to match selling. My house case of 1.70x clears it by <a class=\"cite-num\" href=\"#kpi-rollEdge\">$1.32m</a>, and loses if the GP uses both extensions.</li>";
+    $('#memoRisks').innerHTML = "<li>We take on <a class=\"cite-num\" href=\"#kpi-unfunded\">$29.0m</a> of unfunded commitments, $14m of it in Tamsin Buyout IX.</li><li>Selling gives up the GP case. At 2.3x, rolling would be worth 0.64x more per dollar.</li>";
+    $('#memoNext').innerHTML = "<p>Submit prices fund by fund, conditional on Q2 NAVs within 5% of the roll-forward. Return the Fenmoor form as a sale and ask the advisory committee for the 20 business days the LPA requires.</p>";
+    $('#memoBase').textContent = "Numbers are from the base case (seed 21, default inputs). The funds and GP are made up.";
   }
 
   /* ---------------- dropped file ---------------- */
@@ -456,7 +431,6 @@ sell = (1 + opp)^hold</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. NAVs at 31 Mar 2026, priced at 30 Jun 2026.'; renderPricing(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runSteps').innerHTML = ['Plan', 'Extract terms', 'Validate citations', 'Build checklist', 'Human approval', 'Draft memo inputs', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
     $('#runBtn').addEventListener('click', runPipeline);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzPortfolio', { title: 'Use your own fund interests', template: '/assets/templates/lp-portfolio.csv', columns: [{ name: 'fund' }, { name: 'strategy', desc: 'buyout, growth, venture, credit or infrastructure' }, { name: 'vintage' }, { name: 'nav', desc: '$m at nav_date' }, { name: 'nav_date', required: false }, { name: 'unfunded', desc: '$m' }, { name: 'calls_since', required: false }, { name: 'dists_since', required: false }],
@@ -464,7 +438,7 @@ sell = (1 + opp)^hold</div>
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Secondaries Desk', slug: 'secondaries-desk', report: 'Bid memo and CV election memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Secondaries Desk'); UI.testsBadge('.tests-badge-slot', 'Secondaries Desk');
     renderAll(); runPipeline();
-    var h = location.hash.slice(1); if (['pricing', 'sensitivity', 'cv'].indexOf(h) !== -1) tabs.show(h);
+    UI.revealHash(tabs);
   }
   init();
 })();

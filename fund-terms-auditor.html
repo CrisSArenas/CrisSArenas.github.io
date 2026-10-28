@@ -51,37 +51,23 @@
 <!-- site-nav:end -->
 <main id="main" class="container demo-main">
   <header class="demo-hero">
-    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
-    <p class="eyebrow">04 · Fund terms and fees</p>
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pm">Private markets</span>
     <h1>Fund Terms Auditor</h1>
-    <p class="lede">An endowment holds a $45m commitment to a fictional 2019 buyout fund, Ostrel Capital Partners VI. Four quarterly reports in the ILPA format have arrived since the fee step-down. This auditor reads the LPA and the reports, recomputes every fee, offset and carry figure from the terms, and cites both sides of each break: the clause and the report line. Which breaks to raise, and whether to re-up, is the team's call.</p>
-    <div class="tags"><span class="tag tag-pm">Private markets</span><span class="tag tag-ai">AI</span></div>
-    <dl class="std-header">
-      <div><dt>Decision it supports</dt><dd>Which breaks to raise with the GP, and whether to re-up.</dd></div>
-      <div><dt>The hard problem</dt><dd>Checking that fees, expenses and carry match the LPA, and seeing IRR without subscription line effects.</dd></div>
-      <div><dt>What the system takes off the team</dt><dd>Reading the LPA and every report, recomputing fees, offsets and accrued carry quarter by quarter, rebuilding net returns without the line, and drafting the query letter.</dd></div>
-      <div class="h-call"><dt>What stays with the team</dt><dd>Which breaks to raise, and whether to re-up.</dd></div>
-      <div><dt>Method</dt><dd>Management fee recomputation on the LPA basis, fee offsets with the gross cap, whole-fund (European) and deal-by-deal (American) waterfalls, hypothetical-liquidation carry accrual, XIRR with and without the subscription line, Monte Carlo of remaining exits.</dd></div>
-      <div><dt>Data</dt><dd>Synthetic LPA excerpt, reports and cash flow ledger for a fictional fund; seeded simulation of future exits. Or your own deal ledger and fee lines, processed locally.</dd></div>
-      <div class="h-ai"><dt>Where AI is used</dt><dd>An LPA terms extractor, a report extractor, a recomputation agent, a breaks agent and a letter drafter, with every break approved by a person before it reaches the letter.</dd></div>
-      <div><dt>Limitations</dt><dd>One LPA excerpt and four reports; real LPAs run to a hundred pages with side letters. Expenses are not tested against a cap. The pipeline is a simulation; no model is called.</dd></div>
-    </dl>
+    <p class="lede">Check the fees and carry a GP reports against the LPA. The auditor recomputes every quarter, flags the breaks and drafts the letter to the GP.</p>
+    <p class="eval-line" id="evalLine"></p>
   </header>
 
-  <div class="toolbar" role="region" aria-label="Demo controls">
-    <label for="seed">Seed <input class="field" id="seed" type="number" value="11" min="1" max="999999"></label>
-    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 11. As of 30 Jun 2026.</span>
-    <span class="grow"></span>
-    <span id="testsBadge"></span>
-    <div id="exportMenu"></div>
-  </div>
-
   <div id="tabsRoot">
-    <div class="tabs">
-      <button data-tab="fees" aria-selected="true">Management fees</button>
-      <button data-tab="carry">Carry and the waterfall</button>
-      <button data-tab="returns">Returns and the line</button>
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="fees" aria-selected="true">Management fees</button>
+        <button data-tab="carry">Carry and waterfall</button>
+        <button data-tab="returns">Returns and the line</button>
+      </div>
+      <div id="exportMenu"></div>
     </div>
+    <section id="byod" hidden><div id="dzFees"></div><div id="dzDeals"></div></section>
 
     <section id="fees">
       <div class="kpis" id="feeKpis"></div>
@@ -90,7 +76,6 @@
         <div class="panel"><div class="panel-head"><h3>Gross management fee per quarter, recomputed</h3><span class="sub">LP share, $ thousands</span></div><div class="panel-body"><div id="feeChart"></div><p class="eval-note" id="feeNote"></p></div></div>
         <div class="panel"><div class="panel-head"><h3>Fee schedule since inception</h3></div><div class="panel-body"><div id="scheduleTable" style="max-height:440px;overflow:auto"></div></div></div>
       </div>
-      <div id="dzFees"></div>
     </section>
 
     <section id="carry" hidden>
@@ -101,22 +86,58 @@
         <div class="panel"><div class="panel-head"><h3>Waterfall detail</h3></div><div class="panel-body"><div id="wfTable"></div></div></div>
       </div>
       <div class="panel"><div class="panel-head"><h3>Where carry could land at the end of the fund</h3><span class="sub">Seeded simulation of the remaining exits</span></div><div class="panel-body"><div class="kpis" id="mcKpis"></div><div id="mcChart" style="margin-top:12px;max-width:900px"></div><p class="eval-note" id="mcNote"></p></div></div>
-      <div id="dzDeals"></div>
     </section>
 
     <section id="returns" hidden>
       <div class="kpis" id="retKpis"></div>
       <div class="split-2" style="margin-top:18px">
-        <div class="panel"><div class="panel-head"><h3>Gross and net, with and without the line</h3></div><div class="panel-body"><div id="perfTable"></div><p class="eval-note">ILPA's updated Performance Template asks for gross and net IRR and TVPI with and without subscription line effects, for funds from Q1 2026 or launching from January 2026 (<a href="https://alston.com/en/insights/publications/2025/02/ilpa-updated-reporting-performance-templates" target="_blank" rel="noopener">Alston &amp; Bird summary</a>). Ostrel VI predates the requirement, so the auditor rebuilds the figures itself.</p></div></div>
+        <div class="panel"><div class="panel-head"><h3>Gross and net, with and without the line</h3></div><div class="panel-body"><div id="perfTable"></div><p class="eval-note">Ostrel VI does not report IRR without the subscription line, so the auditor rebuilds it from the cash flows.</p></div></div>
         <div class="panel"><div class="panel-head"><h3>LP capital called, with and without the line</h3><span class="sub">LP share, $m</span></div><div class="panel-body"><div id="lineChart"></div></div></div>
       </div>
     </section>
   </div>
 
-  <section class="demo-section" id="ai">
-    <h2>The agents: LPA and reports, recomputed and cited</h2>
-    <p class="intro">Five synthetic documents: an LPA excerpt and four quarterly reports in the ILPA format. Every break carries two citations, the clause and the report line. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called.</span></p>
-    <div class="run-steps" id="runSteps"></div>
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>I recompute each quarter's management fee from the LPA. It is 2% of commitments during the investment period and 1.5% of net invested capital after it.</li>
+        <li>Fee offsets are 100% of the fund's transaction and monitoring fees times the LP's share, capped at the gross fee.</li>
+        <li>Accrued carry is what the GP would get if the fund sold everything at reported NAV. It runs through the LPA's whole-fund waterfall with an 8% preferred return and a full catch-up. The American toggle runs the same tiers deal by deal.</li>
+        <li>IRR without the subscription line moves every capital call back to the date of the investment it paid for. TVPI stays the same.</li>
+        <li>The carry range comes from simulating exits for the seven unrealized deals over the next four years.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <div class="formula">fee (in period)   = rate_IP x commitments / 4 x share
+fee (after)       = rate_post x NIC_start / 4 x share
+offset            = min(fee, offset% x portfolio fees x share)
+pref due          += (unreturned + pref due) x ((1 + p)^t - 1)
+catch-up target   = carry x pref paid / (1 - carry)
+accrued carry     = GP total if liquidated at NAV
+IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The fund, GP and documents are made up. The LPA is a two-page excerpt, so side letters and MFN terms are out of scope.</li>
+        <li>Partnership expenses flow through the cash flows but are not tested against a cap.</li>
+      </ul>
+      <p style="margin-top:14px"><a href="/notes/" data-final="notes/irr-subscription-line.html">Note: your IRR with and without the subscription line</a></p>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Source documents, flags for review, evaluation, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="11" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic data, fixed seed 11. As of 30 Jun 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">An LPA excerpt and four quarterly reports, all made up. Click any citation to see its source line. Approve or reject each flag, then try the tamper test on the audit log.</p>
+
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
@@ -130,67 +151,33 @@
       <div class="panel" id="letter"><div class="panel-head"><h3>LP query letter, drafted from approved breaks</h3><span class="sub">Draft for review; not sent</span></div><div class="panel-body"><div class="letter" id="letterBody"></div></div></div>
     </div>
     <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/fta-labels.js</span></div>
-      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were read by hand and the correct figures worked by hand; both are stored apart from the documents and the pipeline. Three seeded breaks; eleven clean checks count toward the false-flag rate.</p></div></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand, in a file kept apart from the documents. Some issues are planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
     <div class="panel" id="audit-panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
-  </section>
+    </div>
+  </details>
 
   <section class="demo-section" id="memo">
     <article class="memo">
       <div class="memo-head">
         <div>
-          <div class="memo-kind">Fund terms audit memo</div>
-          <h2>Ostrel Capital Partners VI (fictional)</h2>
-          <div class="memo-meta">Written by Cristian Arenas · As of 30 Jun 2026 · Written for the base case, seed 11 · Fictional fund</div>
+          <div class="memo-kind">Fund terms audit</div>
+          <h2>Ostrel Capital Partners VI</h2>
         </div>
         <span class="call-badge stop">Raise all three</span>
       </div>
-      <h3>The call</h3><p class="the-call" id="memoCall"></p>
-      <h3>Situation</h3><div id="memoSituation"></div>
-      <h3>Why</h3><ol id="memoWhy"></ol>
-      <h3>Key risks</h3><ul id="memoRisks"></ul>
-      <h3>What would change my mind</h3><ul id="memoChange"></ul>
-      <h3>Next step</h3><div id="memoNext"></div>
-      <div class="memo-foot"><span>Fictional fund, GP and documents. Synthetic data. Not investment advice.</span><span>Written for the base case, seed 11, default assumptions</span></div>
+      <h3>Recommendation</h3>
+      <p class="the-call" id="memoCall"></p>
+      <h3>Why</h3>
+      <ul id="memoWhy"></ul>
+      <h3>Risks</h3>
+      <ul id="memoRisks"></ul>
+      <h3>Next step</h3>
+      <div id="memoNext"></div>
+      <p class="memo-foot" id="memoBase"></p>
     </article>
   </section>
 
-  <footer class="demo-foot">
-    <h2>Methodology, assumptions and limitations</h2>
-    <div class="df-grid">
-      <div>
-        <h3>Method</h3>
-        <ul>
-          <li><strong>Management fee.</strong> Recomputed each quarter from the LPA: the investment-period rate on total commitments, then the post-period rate on net invested capital at the start of the quarter, times the LP's share. Net invested capital is rebuilt from the deal ledger and compared with the report.</li>
-          <li><strong>Offsets.</strong> The LPA offset percentage times the fund's transaction, monitoring and directors' fees, times the LP share, capped at the gross fee.</li>
-          <li><strong>Carry.</strong> Accrued carry is what the GP would receive if the fund were liquidated at reported NAV (LPA section 9.4), run through the whole-fund waterfall in section 9.1: capital, an 8% preferred return compounding annually, a full GP catch-up, then 80/20. The American toggle runs the same tiers deal by deal with no netting.</li>
-          <li><strong>Subscription line.</strong> LP flows are rebuilt as if capital had been called on each investment date. The multiple does not change; the IRR does.</li>
-          <li><strong>Remaining exits.</strong> Each unrealized deal exits at a uniform time over the next four years at its mark times a lognormal multiple; future fees accrue on net invested capital until it exits.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Formulas</h3>
-        <div class="formula">fee (in period)   = rate_IP x commitments / 4 x share
-fee (after)       = rate_post x NIC_start / 4 x share
-offset            = min(fee, offset% x portfolio fees x share)
-pref due          += (unreturned + pref due) x ((1 + p)^t - 1)
-catch-up target   = carry x pref paid / (1 - carry)
-accrued carry     = GP total if liquidated at NAV
-IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
-        <h3 style="margin-top:12px">Related notes</h3>
-        <ul><li><a href="/notes/" data-final="notes/irr-subscription-line.html">Your IRR with and without the subscription line</a></li></ul>
-      </div>
-    </div>
-    <h3 style="margin-top:22px">Assumptions register</h3>
-    <div id="assumptions"></div>
-    <h3 style="margin-top:22px">Limitations</h3>
-    <ul>
-      <li>Every fund, GP, company and number is fictional. The LPA is a two-page excerpt; real agreements, side letters and MFN elections change the terms an LP is owed.</li>
-      <li>Partnership expenses are read and carried into cash flows but not tested against a cap or an allowed-expense list.</li>
-      <li>The deal-by-deal waterfall does not allocate fees and expenses to deals, which flatters the GP slightly. Clawback and escrow terms are not modelled beyond the end-of-fund comparison.</li>
-    </ul>
-    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
-    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
-  </footer>
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
 </main>
 <!-- site-footer:start -->
 <footer class="site-footer">
@@ -527,15 +514,12 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
 
   /* ---------------- memo ---------------- */
   function renderMemo() {
-    /* Fixed text, written for the base case (seed 11, default assumptions); links jump to the live numbers. */
-    $('#memoCall').innerHTML = 'Raise all three breaks with the GP now and ask for a corrected Q2 2026 report. Make no re-up commitment to Ostrel until the corrections are made and the GP shows how its reports are reviewed before they go out.';
-    $('#memoSituation').innerHTML = '<p>The endowment committed $45m to Ostrel Capital Partners VI, a 2019 buyout fund of $1.2bn, and $45m to its successor, Fund VII, in 2024. Fund VI\'s investment period ended in October 2024 and the fee stepped down to 1.5% of net invested capital. Four reports in the ILPA format have arrived since. Recomputed from the LPA, three of their figures are wrong, all in the GP\'s favour.</p>';
-    $('#memoWhy').innerHTML = '<li>The Q3 2025 fee was charged on commitments instead of net invested capital: $168,750 against <a class="cite-num" href="#approvals">$107,578</a> under section 8.1, a $61,172 overcharge in one quarter.</li>' +
-      '<li>The Q1 2026 offset was half of what section 8.2 requires: $47,109 against $94,219, another $47,110. With the Q3 fee that is <a class="cite-num" href="#kpi-overcharge">$108,281</a> to credit back.</li>' +
-      '<li>The Q2 2026 report accrues <a class="cite-num" href="#kpi-carryReported">$1,236,187</a> of carry with no preferred return. Under the whole-fund waterfall nothing is due: LPs still have <a class="cite-num" href="#kpi-prefOwed">$7.05m</a> of preferred return owed after liquidating at NAV. Restated, the net TVPI is 1.14x rather than 1.11x and the net IRR <a class="cite-num" href="#kpi-irrRestated">4.1%</a> rather than 3.3%.</li>';
-    $('#memoRisks').innerHTML = '<li>The breaks are small against a $45m commitment, but they run one way. Three errors in four reports, each in the GP\'s favour, point to a review process problem more than a typing slip.</li><li>The fund itself is weak: 4.1% net after six and a half years, and <a class="cite-num" href="#kpi-irrNoLine">3.6%</a> once the subscription line is taken out. Even restated, that is a weak result for a fund six and a half years old, with only 0.58x paid back.</li><li>Carry is unlikely but not ruled out: the GP earns carry in <a class="cite-num" href="#kpi-mcAny">4%</a> of simulated paths for the remaining exits. Had the LPA been deal by deal, <a class="cite-num" href="#kpi-americanPaid">$1.42m</a> would already have been paid on the winners.</li>';
-    $('#memoChange').innerHTML = '<li>A prompt, complete correction with a credit against the next call, and a restated Q2 2026 report.</li><li>An independent review of the fee and carry calculations by the fund administrator or auditor, shared with LPs.</li><li>Evidence that the 2024 Fund VII reports, which use the same terms, are correct. If they carry the same errors, the re-up answer is no.</li>';
-    $('#memoNext').innerHTML = '<p>Send the query letter in the <a href="#letter">agents section</a> once the three breaks are approved. Ask the GP to confirm the fee basis for every quarter since October 2024, not only the four reviewed here. Ostrel is not in the 24-month re-up calendar in the <a href="private-capital-lab.html#program">Private Capital Lab</a>; this audit goes into the file for the Fund VIII decision, and the Fund VII reports get the same audit next quarter.</p>';
+    /* Fixed text, read from this page with the default inputs. Links jump to the live numbers. */
+    $('#memoCall').innerHTML = "Raise all three breaks with the GP and ask for a corrected Q2 2026 report. No new commitment to Ostrel until the corrections are in.";
+    $('#memoWhy').innerHTML = "<li>The Q3 2025 fee was charged on commitments instead of net invested capital: $168,750 against $107,578.</li><li>The Q1 2026 offset was half of what the LPA requires. With the Q3 fee, the LP is owed <a class=\"cite-num\" href=\"#kpi-overcharge\">$108,281</a>.</li><li>Q2 2026 accrues <a class=\"cite-num\" href=\"#kpi-carryReported\">$1,236,187</a> of carry with no preferred return. Under the whole-fund waterfall nothing is due, with <a class=\"cite-num\" href=\"#kpi-prefOwed\">$7.05m</a> of pref still owed. Restated net IRR is <a class=\"cite-num\" href=\"#kpi-irrRestated\">4.1%</a> against the 3.3% reported.</li>";
+    $('#memoRisks').innerHTML = "<li>Three errors in four reports, all in the GP's favour. That looks like a review problem at the GP.</li><li>The fund is weak anyway: <a class=\"cite-num\" href=\"#kpi-irrNoLine\">3.6%</a> net once the subscription line comes out.</li>";
+    $('#memoNext').innerHTML = "<p>I would send the query letter once the breaks are approved, ask for the fee basis on every quarter since October 2024, and audit the Fund VII reports next quarter.</p>";
+    $('#memoBase').textContent = "Numbers are from the base case (seed 11, default inputs). The fund and GP are made up.";
   }
 
   /* ---------------- dropped files ---------------- */
@@ -577,7 +561,6 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. As of 30 Jun 2026.'; renderMC(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runSteps').innerHTML = ['Plan', 'Extract LPA terms', 'Extract reports', 'Validate citations', 'Recompute', 'Raise breaks', 'Human approval', 'Draft letter', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
     $('#runBtn').addEventListener('click', runPipeline);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzFees', { title: 'Use your own fee lines', template: '/assets/templates/fee-lines.csv', columns: [{ name: 'quarter_end' }, { name: 'in_investment_period', desc: 'yes or no' }, { name: 'net_invested_capital', desc: '$m, fund level, start of quarter' }, { name: 'portfolio_fees', desc: '$m, fund level' }, { name: 'reported_gross', required: false, desc: 'LP share, $' }, { name: 'reported_offset', required: false }, { name: 'reported_net', required: false }],
@@ -587,7 +570,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Fund Terms Auditor', slug: 'fund-terms-auditor', report: 'Fee audit report and query letter (PDF)', source: function () { return S.userDeals || S.userFees ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Fund Terms Auditor'); UI.testsBadge('.tests-badge-slot', 'Fund Terms Auditor');
     renderAll(); runPipeline();
-    var h = location.hash.slice(1); if (['fees', 'carry', 'returns'].indexOf(h) !== -1) tabs.show(h);
+    UI.revealHash(tabs);
   }
   init();
 })();
