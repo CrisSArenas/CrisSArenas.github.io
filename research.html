@@ -99,6 +99,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
   </div>
 </nav>
 <!-- site-nav:end -->
+<div id="main" tabindex="-1"></div>
 
 <section class="rhero">
   <div class="container">
@@ -135,7 +136,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
         portfolio conditional on that label. The discrete label between the stages throws away uncertainty and
         transition dynamics, and the classifier is optimizing the wrong objective. This paper proposes Cross-Attention
         Regime Discovery, which replaces that interface: learnable regime queries attend over a transformer's temporal
-        representation to produce soft regime assignments and regime-specific allocation heads, trained end to end
+        representation to produce soft regime assignments and regime-specific allocation heads, trained as one model
         against a single portfolio objective. It is then evaluated honestly, across three data generating processes,
         three seeds, ten alternatives and a block bootstrap, and the result is not a clean win.
       </p>
@@ -159,11 +160,11 @@ td.num,th.num{font-variant-numeric:tabular-nums}
     <h2><i class="fas fa-compass"></i> Research areas</h2>
     <p class="intro">Where the work sits, and where it is going next.</p>
     <div class="areas">
-      <div class="area"><i class="fas fa-layer-group"></i><h4>End-to-end allocation</h4><p>Training a single model against a portfolio objective instead of chaining a forecast, a classifier and an optimizer, each optimizing something different.</p></div>
+      <div class="area"><i class="fas fa-layer-group"></i><h4>Single-model allocation</h4><p>Training a single model against a portfolio objective instead of chaining a forecast, a classifier and an optimizer, each optimizing something different.</p></div>
       <div class="area"><i class="fas fa-wave-square"></i><h4>Regime representation</h4><p>Soft, learned regime structure rather than discrete labels, and the open question of what a portfolio-relevant regime actually is.</p></div>
       <div class="area"><i class="fas fa-eye"></i><h4>Interpretability</h4><p>Attention over the lookback window as an explanation of which observations drive a regime, so a risk committee can interrogate the model.</p></div>
       <div class="area"><i class="fas fa-scale-balanced"></i><h4>Honest evaluation</h4><p>Multiple data generating processes, multiple seeds, strong baselines, bootstrap intervals, and reporting the null result when that is the result.</p></div>
-      <div class="area"><i class="fas fa-coins"></i><h4>Cost-aware construction</h4><p>Turnover and transaction costs inside the objective, not bolted on afterwards, so stability is rewarded during training.</p></div>
+      <div class="area"><i class="fas fa-coins"></i><h4>Cost-aware construction</h4><p>Turnover and transaction costs inside the objective, so stability is rewarded during training.</p></div>
       <div class="area"><i class="fas fa-hourglass-half"></i><h4>Nowcasting private fund NAVs</h4><p>Working paper in progress: rolling stale private fund NAVs forward with public market proxies, and measuring how much the estimate changes pacing and the denominator.</p></div>
       <div class="area"><i class="fas fa-chart-line"></i><h4>Open direction: real-market validation</h4><p>Taking the CARD protocol to liquid ETF universes with rolling out-of-sample windows and externally dated regimes.</p></div>
     </div>
@@ -204,7 +205,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
       <strong>On synthetic data.</strong> The current paper is a controlled methodological study. Ground truth regimes
       are known, which allows evaluation that real market data does not permit, and it is the only way to ask whether
       a model recovers the structure it claims to. It also means the results are not evidence of real-world portfolio
-      performance, and should not be read that way. Real-market validation is an open research direction, not a footnote to this one.
+      performance, and should not be read that way. Real-market validation is an open research direction.
     </div>
   </div>
 </section>

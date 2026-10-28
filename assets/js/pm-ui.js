@@ -1,7 +1,7 @@
 /* =====================================================================
    pm-ui.js, shared demo components (plain script, no build step).
    Exposes window.UI. Components: tabs, SVG charts, KPI tiles with
-   "Explain this number", tables registered for CSV export, agent log,
+   "Explain this number", tables registered for CSV export, activity log,
    tamper-evident audit log, approval cards, document viewer with
    citations, assumptions register, export menu, local data drop zone,
    work counters, evaluation helpers, model tests badge.
@@ -494,7 +494,7 @@
         }).join('\n\n');
         UI.download(o.slug + '-' + (b.dataset.csv === '*' ? 'tables' : b.dataset.csv) + '.csv', header('CSV').join('\n') + '\n' + body);
       } else if (b.dataset.json) {
-        var payload = { demo: o.demo, data: o.source(), generated: new Date().toISOString(), note: 'Simulation of the pipeline over synthetic documents. Not investment advice.', audit: o.audit ? o.audit() : [] };
+        var payload = { demo: o.demo, data: o.source(), generated: new Date().toISOString(), note: 'Simulated review over synthetic documents. Not investment advice.', audit: o.audit ? o.audit() : [] };
         UI.download(o.slug + '-audit-log.json', JSON.stringify(payload, null, 2), 'application/json');
       } else if (b.dataset.print) {
         if (o.beforePrint) o.beforePrint();
@@ -564,14 +564,14 @@
       '<p class="eval-note">' + (bad === -1 ? 'Chain intact. Editing any past entry breaks every hash after it.' : 'Chain broken at entry #' + (bad + 1) + '. Every entry after it fails the check.') + '</p>';
   };
 
-  /* ---------- agent log ---------- */
+  /* ---------- activity log ---------- */
   UI.AgentLog = function (el, opts) {
     this.el = resolve(el); this.entries = []; this.clock = (opts && opts.start) || Date.UTC(2026, 0, 15, 9, 0, 0);
     this.el.classList.add('agent-log'); this.el.setAttribute('aria-live', 'polite');
   };
   /* the log shows what happened, by time and outcome; internal roles are not shown */
   UI.AgentLog.prototype.add = function (agent, status, msg, details, ms) {
-    if (agent === 'planner') return null;
+    if (agent === 'start') return null;
     this.clock += ms || 380;
     var e = { t: new Date(this.clock).toISOString().slice(11, 19), status: status, msg: msg, details: details || null };
     this.entries.push(e);
@@ -587,7 +587,7 @@
   };
   UI.AgentLog.prototype.clear = function () { this.entries = []; this.el.innerHTML = ''; };
 
-  /* run steps one after another so the reader can follow the control flow.
+  /* run steps one after another so the reader can follow along.
      steps: [{agent, run: () => ({status, msg, details}) | [..]}] */
   UI.runSteps = function (log, steps, done, delay) {
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -659,10 +659,8 @@
   });
 
 
-  /* ---------- citation validator ----------
-     Generalised from the alternative-data platform's validator: a citation must resolve to a
-     document, page and line, the cited line must contain the value, and a drafted claim must
-     carry at least one resolving citation or it is blocked. */
+  /* ---------- citation check ----------
+     a citation must point to a document, page and line that contains the value. */
   UI.numbersIn = function (line) {
     var out = [], re = /(\(?)-?\$?\s?(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?\)?\s?(%|bps|x|m\b|mm\b|million|bn|billion|k\b)?/gi, m;
     while ((m = re.exec(line))) {

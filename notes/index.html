@@ -38,12 +38,11 @@
   </div>
 </nav>
 <!-- site-nav:end -->
-<main id="main" class="container" style="padding:40px var(--gutter) 64px">
-  <a class="back-link" href="/#notes">&larr; Back to home</a>
+<main id="main" class="container" style="padding:64px var(--gutter) 96px">
+  <a class="back-link" href="/">&larr; Home</a>
   <div class="section-head" style="margin-top:14px">
-    <p class="eyebrow">Notes</p>
     <h1 style="font-size:clamp(2rem,4vw,2.6rem)">Practitioner notes</h1>
-    <p>Short write-ups on problems that come up in real portfolios, each linked to the demo where you can test it. Every industry fact links to a public source, and every number comes from the linked demo's base case.</p>
+    <p>Short notes on problems that come up in real portfolios. Each one links to the demo where you can try it.</p>
   </div>
   <div class="grid-3" id="allNotes"></div>
 </main>
@@ -71,11 +70,11 @@
 <script src="/assets/data/notes.js"></script>
 <script>
 (function () {
-  var tag = { pm: '<span class="tag tag-pm">Private markets</span>', pf: '<span class="tag tag-pf">Portfolio</span>' };
+  var tag = { pm: '<span class="group-label pm">Private markets</span>', pf: '<span class="group-label pf">Portfolio</span>' };
   var live = (window.NOTES || []).filter(function (n) { return n.live; });
   document.getElementById('allNotes').innerHTML = live.length ? live.map(function (n) {
     return '<a class="card note-card" href="/notes/' + n.slug + '.html"><h3>' + n.title + '</h3><p>' + n.summary + '</p><div class="nc-foot"><span class="muted">Test it in the ' + n.demoName + '</span>' + tag[n.side] + '</div></a>';
-  }).join('') : '<p class="muted">The first notes are being written.</p>';
+  }).join('') : '';
 })();
 </script>
 </body>

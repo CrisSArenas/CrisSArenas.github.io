@@ -1,6 +1,6 @@
 /* Synthetic GP documents for the Private Capital Lab. Every fund, GP and number is fictional.
-   Written by hand as text so the extraction pipeline has to read them the way it would read a
-   real statement: different templates, units and label wording per GP. The hand-set ground
+   Written by hand as text, the way a
+   real statement reads: different templates, units and label wording per GP. The hand-set ground
    truth for these documents lives in a separate file, assets/data/pcl-labels.js. */
 window.PCL_DOCS = {
   'cas-quorvane': { title: 'Quorvane Buyout IV, capital account, Q2 2026', kind: 'statement', pages: [[

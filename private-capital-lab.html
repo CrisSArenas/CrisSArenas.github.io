@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Private Capital Lab · Cristian Arenas</title>
-    <meta name="description" content="Pace a private markets program across a portfolio of funds on stale NAVs and uncertain calls: stochastic pacing, NAV nowcasting, look-through exposure, liquidity stress, evergreen fund gating, and an agent that reads GP statements into a reconciled, cited ledger.">
+    <meta name="description" content="Plan next year&#x27;s private markets commitments for a $1bn endowment with 20 funds. Change the inputs and see how the allocation and cash needs move. The NAVs are a quarter old, so the lab nowcasts them first.">
     <link rel="canonical" href="https://crissarenas.github.io/private-capital-lab.html">
     <meta property="og:title" content="Private Capital Lab · Cristian Arenas">
-    <meta property="og:description" content="Pacing a private program on stale NAVs and uncertain calls, with a cited, reconciled ledger built by agents.">
+    <meta property="og:description" content="Plan next year&#x27;s private markets commitments for a $1bn endowment with 20 funds. Change the inputs and see how the allocation and cash needs move. The NAVs are a quarter old, so the lab nowcasts them first.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#FFFFFF">
@@ -173,14 +173,14 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
         <li>The endowment, funds, GPs and documents are made up. You can load your own fund cash flows from the More menu, and the file never leaves your browser.</li>
         <li>Model parameters are assumptions I picked to be plausible.</li>
         <li>The nowcast assumes a fund's sensitivity to the index holds steady. That assumption is weakest when marks are most stale, so the band widens with each stale quarter.</li>
-        <li>The agents are a deterministic simulation over text documents. No language model is called.</li>
+        <li>The document review is a fixed simulation over text files. No language model is called.</li>
       </ul>
-      <p style="margin-top:14px"><a href="/notes/" data-final="notes/pacing-stale-navs.html">Note: pacing a private program when the NAVs are a quarter old</a></p>
+      <p style="margin-top:14px"><a href="notes/pacing-stale-navs.html">Note: pacing a private program when the NAVs are a quarter old</a></p>
     </div>
   </details>
 
   <details class="fold" id="under-the-hood">
-    <summary><div><h2>Under the hood</h2><div class="sum-sub">Agent log, approvals, source documents, evaluation, audit log and seed</div></div></summary>
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Activity log, approvals, source documents, evaluation, audit log and seed</div></div></summary>
     <div class="fold-body" id="ai">
       <div class="toolbar">
         <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
@@ -193,7 +193,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
-        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Breaks, with both source lines</span></div><div class="panel-body"><div id="approvals"></div></div></div>
       </div>
       <div>
@@ -202,7 +202,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     </div>
     <div class="panel"><div class="panel-head"><h3>Reconciled, cited ledger</h3><span class="sub">Validated values only. A fund with an open break is held back.</span></div><div class="panel-body"><div id="ledger"></div></div></div>
     <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/pcl-labels.js</span></div>
-      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand and keep the labels in a separate file from the documents and the agents. One roll-forward break is planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">I labeled every field by hand, in a file kept apart from the documents. One roll-forward break is planted on purpose. The other checks are clean, so any flag on them counts as a false flag.</p></div></div>
     <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
     </div>
   </details>
@@ -336,7 +336,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     ['Ivrena Healthcare Partners I', 'Ivrena', 'buyout', 2020, 20, 1], ['Dunmarrow Direct Lending IV', 'Dunmarrow', 'credit', 2021, 30, 1],
     ['Kestrine Climate Infrastructure I', 'Kestrine', 'real', 2024, 25, 1], ['Lorvenne Ventures III', 'Lorvenne', 'venture', 2025, 10, 2]
   ];
-  /* statement figures for the funds the agents read; applied once the ledger approves them */
+  /* statement figures for the funds read from documents; applied once the ledger approves them */
   var DOCFUND = { 'Quorvane Buyout IV': 'cas-quorvane', 'Telmira Growth II': 'cas-telmira', 'Brisolt Credit Opportunities III': 'cas-brisolt', 'Mereth Ventures V': 'cas-mereth', 'Caldrin Infrastructure II': 'notice-caldrin' };
   var SECT = ['Technology', 'Healthcare', 'Industrials', 'Consumer', 'Financials', 'Energy and utilities', 'Real estate'];
   var GEO = ['North America', 'Europe', 'Asia Pacific', 'Rest of world'];
@@ -500,7 +500,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       '<tr><td>Public assets</td><td class="n">' + F.money(T.public, 0) + '</td><td class="n">' + F.money(T.public, 0) + '</td></tr>' +
       '<tr><td>Private allocation</td><td class="n">' + F.pct(T.pctReported, 1) + '</td><td class="n">' + F.pct(T.pctNowcast, 1) + '</td></tr>' +
       '<tr><td>Room below the upper band</td><td class="n">' + F.money(A.bandHi * A.assets - T.reported, 0) + '</td><td class="n">' + F.money(A.bandHi * (T.public + T.nowcast) - T.nowcast, 0) + '</td></tr></tbody></table></div>' +
-      '<p class="eval-note">The nowcast is an estimate with a band, not a mark. It moves the commitment budget, which is why the pacing tab uses it.</p>';
+      '<p class="eval-note">The nowcast is an estimate with a band. It moves the commitment budget, which is why the pacing tab uses it.</p>';
   }
 
   /* ---------------- program view ---------------- */
@@ -538,7 +538,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     wl.push(['warn', '<b>Fee break</b>: Ostrel Capital Partners VI. Management fee above the LPA rate after the step-down, raised by the <a href="fund-terms-auditor.html">Fund Terms Auditor</a>; query sent to the GP.']);
     S.rows.forEach(function (r) { if (r.unfunded > 0.45 * r.f.commitment && r.f.vintage <= 2023) wl.push(['warn', '<b>Liquidity pressure</b>: ' + UI.esc(r.f.name) + ' still has ' + F.money(r.unfunded, 1) + ' unfunded (' + F.pct(r.unfunded / r.f.commitment, 0) + ') entering the back half of its investment period.']); });
     var brk = S.pipeline && S.pipeline.breaks.filter(function (b) { return b.state !== 'rejected'; });
-    if (brk && brk.length) brk.forEach(function (b) { wl.push(['bad', '<b>Statement break</b>: ' + UI.esc(b.title) + '. See the <a href="#ai">agent ledger</a>.']); });
+    if (brk && brk.length) brk.forEach(function (b) { wl.push(['bad', '<b>Statement break</b>: ' + UI.esc(b.title) + '. See <a href="#ai">Under the hood</a>.']); });
     $('#watchlist').innerHTML = wl.map(function (w) { return '<div class="notice ' + w[0] + '">' + w[1] + '</div>'; }).join('');
     /* re-up calendar: GPs whose latest fund is 3+ years old come back within 24 months */
     var last = {}; S.rows.forEach(function (r) { if (!last[r.f.gp] || r.f.vintage > last[r.f.gp].f.vintage) last[r.f.gp] = r; });
@@ -639,7 +639,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     $('#perfRetNote').textContent = 'First-order autocorrelation of reported returns is ' + F.num(rho, 2) + '. Smoothed marks understate volatility, so allocation models that use them over-allocate to private assets.';
   }
 
-  /* ---------------- AI pipeline ---------------- */
+  /* ---------------- review run ---------------- */
   var DOCS = window.PCL_DOCS, LABELS = window.PCL_LABELS, viewer, audit, log, apps;
   var ROLE = [
     ['calledToDate', /since inception|called to date/i], ['unfunded', /unfunded|remaining commitment/i], ['callAmount', /amount due/i],
@@ -698,32 +698,32 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     });
     return { ok: ok, bad: bad, blocked: blocked };
   }
-  function runPipeline() {
+  function runReview() {
     log.clear(); audit.clear();
     var P = S.pipeline = { ex: {}, checks: [], breaks: [], fieldsN: 0, review: 0 };
     var ids = Object.keys(DOCS), steps = [];
-    audit.push('planner', 'run started', 'seed ' + S.seed + ', ' + ids.length + ' documents');
-    steps.push({ agent: 'planner', run: function () { return { msg: 'Plan: classify ' + ids.length + ' documents, extract statement fields with citations, validate every citation, run roll-forward, ledger and cross-document checks, send breaks for approval', details: { documents: ids, checks: ['roll-forward', 'commitment ledger', 'statement vs report'] } }; } });
-    steps.push({ agent: 'document-classifier', run: function () {
-      return ids.map(function (id) { var k = classify(DOCS[id]); P.ex[id] = { kind: k }; audit.push('document-classifier', 'classified', id + ' as ' + k); return { msg: id + ': ' + k, details: { title: DOCS[id].title, kind: k } }; });
+    audit.push('start', 'run started', 'seed ' + S.seed + ', ' + ids.length + ' documents');
+    steps.push({ agent: 'start', run: function () { return { msg: 'Run started.' + ids.length + ' documents, extract statement fields with citations, validate every citation, run roll-forward, ledger and cross-document checks, send breaks for approval', details: { documents: ids, checks: ['roll-forward', 'commitment ledger', 'statement vs report'] } }; } });
+    steps.push({ agent: 'read', run: function () {
+      return ids.map(function (id) { var k = classify(DOCS[id]); P.ex[id] = { kind: k }; audit.push('read', 'classified', id + ' as ' + k); return { msg: id + ': ' + k, details: { title: DOCS[id].title, kind: k } }; });
     } });
-    steps.push({ agent: 'statement-extractor', run: function () {
+    steps.push({ agent: 'read', run: function () {
       return ids.map(function (id) {
         var ex = extract(id, DOCS[id]); P.ex[id].fields = ex.fields; P.ex[id].scale = ex.scale; P.ex[id].skipped = ex.skipped;
         var n = Object.keys(ex.fields).length; P.fieldsN += n;
-        audit.push('statement-extractor', 'extracted', id + ': ' + n + ' fields');
+        audit.push('read', 'extracted', id + ': ' + n + ' fields');
         var res = [{ status: 'ok', msg: id + ': ' + n + ' fields, units ' + (ex.scale === 1e-3 ? '$ thousands' : ex.scale === 1 ? '$ millions' : 'dollars') + ' converted to $m', details: Object.keys(ex.fields).reduce(function (o, k) { o[k] = +ex.fields[k].value.toFixed(6); return o; }, {}) }];
         ex.skipped.forEach(function (s) { res.push({ status: 'info', msg: id + ' line ' + s.line + ': "' + s.label + '" has no value on the same line, left unextracted' }); });
         return res;
       });
     } });
-    steps.push({ agent: 'citation-validator', run: function () {
+    steps.push({ agent: 'cite', run: function () {
       return ids.map(function (id) {
-        var v = validate(id, P.ex[id]); audit.push('citation-validator', v.bad ? 'blocked' : 'passed', id + ': ' + v.ok + ' resolve' + (v.bad ? ', ' + v.bad + ' blocked' : ''));
+        var v = validate(id, P.ex[id]); audit.push('cite', v.bad ? 'blocked' : 'passed', id + ': ' + v.ok + ' resolve' + (v.bad ? ', ' + v.bad + ' blocked' : ''));
         return { status: v.bad ? 'blocked' : 'ok', msg: id + ': ' + v.ok + ' citations resolve to a line that contains the value' + (v.bad ? '; blocked ' + v.blocked.join('; ') : '') };
       });
     } });
-    steps.push({ agent: 'reconciliation', run: function () {
+    steps.push({ agent: 'check', run: function () {
       var res = [];
       ids.forEach(function (id) {
         var fx = P.ex[id].fields || {};
@@ -752,7 +752,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
         res.push({ status: f ? 'approval' : 'ok', msg: 'Quorvane IV: statement ending balance ' + (f ? 'differs from' : 'matches') + ' the quarterly report capital account' });
       }
       ids.forEach(function (id) { (P.ex[id].skipped || []).forEach(function (s) { if (/fee/i.test(s.label)) { P.review++; } }); });
-      audit.push('reconciliation', 'checks run', P.checks.length + ' checks, ' + P.breaks.length + ' break(s)');
+      audit.push('check', 'checks run', P.checks.length + ' checks, ' + P.breaks.length + ' break(s)');
       return res;
     } });
     steps.push({ agent: 'gate', run: function () {
@@ -760,11 +760,11 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       audit.push('gate', 'held back', held.join(', ') || 'none');
       return { status: held.length ? 'blocked' : 'ok', msg: held.length ? 'Ledger update for ' + held.join(', ') + ' held until a person decides the break' : 'No open breaks; ledger can update' };
     } });
-    UI.runSteps(log, steps, function () { afterPipeline(); });
+    UI.runSteps(log, steps, function () { afterReview(); });
   }
-  function afterPipeline() {
+  function afterReview() {
     var P = S.pipeline, items = P.breaks.map(function (b) { return { id: b.id, title: b.title, severity: b.severity, evidence: b.evidence, cites: b.cites, state: 'pending', doc: b.doc }; });
-    if (P.ex['cas-mereth'] && !P.ex['cas-mereth'].fields.fees) items.push({ id: 'R-1', title: 'Mereth Ventures V: management fee not extracted', severity: 'low', evidence: 'The fee label sits on one line and its value on the next, so the extractor left it blank rather than guess. Note 3 says the fee is already inside net income, so the roll-forward still ties. Approve to record the fee by hand from the cited line.', cites: [{ doc: 'cas-mereth', page: 1, line: 10, short: 'mereth' }, { doc: 'cas-mereth', page: 1, line: 18, short: 'mereth note 3' }], state: 'pending', doc: 'cas-mereth' });
+    if (P.ex['cas-mereth'] && !P.ex['cas-mereth'].fields.fees) items.push({ id: 'R-1', title: 'Mereth Ventures V: management fee not extracted', severity: 'low', evidence: 'The fee label sits on one line and its value on the next, so it was left blank rather than guessed. Note 3 says the fee is already inside net income, so the roll-forward still ties. Approve to record the fee by hand from the cited line.', cites: [{ doc: 'cas-mereth', page: 1, line: 10, short: 'mereth' }, { doc: 'cas-mereth', page: 1, line: 18, short: 'mereth note 3' }], state: 'pending', doc: 'cas-mereth' });
     P.items = items;
     apps = UI.approvals('#approvals', items, { audit: audit, approveLabel: 'Approve', rejectLabel: 'Reject', onChange: function () { applyLedger(); renderLedger(); renderProgram(); } });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + Object.keys(P.ex).reduce(function (s, id) { return s + Object.keys(P.ex[id].fields || {}).length; }, 0), flags: P.breaks.length + P.checks.filter(function (c) { return c.flag && !/rollforward/.test(c.id); }).length, review: items.length });
@@ -794,7 +794,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     Object.keys(P.ex).forEach(function (id) {
       var fx = P.ex[id].fields || {};
       Object.keys(fx).forEach(function (k) {
-        rows.push({ doc: id, field: k, value: fx[k].value, cite: fx[k].cites.map(function (c) { return UI.citeHTML(c, 'p' + c.page + ' l' + c.line); }).join(''), status: !fx[k].valid ? 'blocked by validator' : held[id] ? (held[id] === 'approved' ? 'held: GP queried' : 'held: break open') : 'in ledger' });
+        rows.push({ doc: id, field: k, value: fx[k].value, cite: fx[k].cites.map(function (c) { return UI.citeHTML(c, 'p' + c.page + ' l' + c.line); }).join(''), status: !fx[k].valid ? 'held: citation did not match' : held[id] ? (held[id] === 'approved' ? 'held: GP queried' : 'held: break open') : 'in ledger' });
       });
     });
     UI.table('#ledger', { id: 'ledger', name: 'Cited ledger', columns: [{ key: 'doc', label: 'Document' }, { key: 'field', label: 'Field' }, { key: 'value', label: 'Value ($m or ratio)', num: 1, fmt: function (v) { return F.num(v, 4); } }, { key: 'cite', label: 'Citation', html: 1 }, { key: 'status', label: 'Status' }], rows: rows });
@@ -838,7 +838,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     $('#memoBase').textContent = 'Numbers are from the base case (seed 42, default inputs). The endowment and funds are made up.';
   }
 
-  /* ---------------- render orchestration ---------------- */
+  /* ---------------- render ---------------- */
   var tabs;
   function renderAll() { renderPacing(); renderNowcast(); renderProgram(); renderLiquidity(); renderEvergreen(); renderPerformance(); }
   function rerender(id) {
@@ -888,7 +888,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     log = new UI.AgentLog('#agentLog');
     audit = new UI.Audit('#audit');
     $('#runSteps').innerHTML = ['Plan', 'Classify', 'Extract', 'Validate citations', 'Reconcile', 'Gate', 'Human approval', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
-    $('#runBtn').addEventListener('click', runPipeline);
+    $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     /* bring your own data */
     UI.dropZone('#dzProgram', { title: 'Use your own portfolio of funds', template: '/assets/templates/portfolio-of-funds.csv',
@@ -904,7 +904,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     UI.testsBadge('.tests-badge-slot', 'Private Capital Lab');
     renderMemo();
     renderAll();
-    runPipeline();
+    runReview();
     /* deep links to a tab */
     UI.revealHash(tabs);
   }

@@ -217,6 +217,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   </div>
 </nav>
 <!-- site-nav:end -->
+<div id="main" tabindex="-1"></div>
 <div class="demo-bar"><div class="container"><a class="back-link" href="/robotics-embedded.html">&larr; Back to Robotics</a><h1 class="demo-title"><i class="fas fa-compress"></i> TinyML Model Quantization Lab</h1><div class="demo-actions"><span class="d-pill cyan" id="quantPill">FP32</span>
     <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
     <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button></div></div></div>
@@ -2363,9 +2364,8 @@ requestAnimationFrame(drawHeatmap);
         <ul>
           <li>Quantise <code>q = clamp(round(w / s_c), &minus;q_max, q_max)</code>; dequantise <code>w&#770; = q &middot; s_c</code>, the exact inverse of the rounding step.</li>
           <li><code>MSE = mean((w &minus; w&#770;)&sup2;)</code>; <code>SQNR = 10&middot;log10(&Sigma;w&sup2; / &Sigma;(w &minus; w&#770;)&sup2;)</code> dB.</li>
-          <li>Accuracy drop <code>= 21.5 &middot; N^0.35 &middot; k</code> with <code>N</code> the parameter- and sensitivity-weighted relative noise power (first conv 2.5&times;, final dense 2.0&times;, depthwise 1.5&times;) and <code>k</code> a per-model robustness factor; clamped to 0.3&ndash;1.5 pp (INT8) and 3&ndash;10 pp (INT4).</li>
+          <li>Accuracy drop <code>= 21.5 &middot; N^0.35 &middot; k</code> with <code>N</code> the parameter- and sensitivity-weighted relative noise power (first conv 2.5&times;, final dense 2.0&times;, depthwise 1.5&times;) and <code>k</code> a per-model sensitivity factor; clamped to 0.3&ndash;1.5 pp (INT8) and 3&ndash;10 pp (INT4).</li>
           <li><code>bytes = params &middot; bpw + 8&middot;channels + 8&middot;tensors</code>; <code>cycles = &Sigma; MACs / (r &middot; e) + 10&micro;s&middot;f</code>.</li>
-          <li>Jacob et al. (2018), <em>Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference</em>; Krishnamoorthi (2018), <em>Quantizing deep convolutional networks for efficient inference</em>; Zhang et al. (2017), <em>Hello Edge: Keyword Spotting on Microcontrollers</em>; Lai, Suda &amp; Chandra (2018), <em>CMSIS-NN</em>; Banbury et al. (2021), <em>MLPerf Tiny Benchmark</em>.</li>
         </ul>
       </div>
       <div>

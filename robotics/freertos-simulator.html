@@ -222,6 +222,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   </div>
 </nav>
 <!-- site-nav:end -->
+<div id="main" tabindex="-1"></div>
 <div class="demo-bar"><div class="container"><a class="back-link" href="/robotics-embedded.html">&larr; Back to Robotics</a><h1 class="demo-title"><i class="fas fa-microchip"></i> FreeRTOS Kernel Simulator</h1><div class="demo-actions"><button type="button" class="d-btn sm preset-btn" onclick="loadPreset('basic')" title="Three periodic tasks, rate-monotonic priorities, no shared resources">Basic</button>
     <button type="button" class="d-btn sm preset-btn" onclick="loadPreset('inversion')" title="Unbounded priority inversion, inheritance OFF">Inversion</button>
     <button type="button" class="d-btn sm preset-btn" onclick="loadPreset('inheritance')" title="Same scenario with the priority-inheritance protocol ON">Inheritance</button>
@@ -678,7 +679,7 @@ function getHighestPriorityReady() {
   return best;
 }
 
-// U = sum(C_i / T_i) over the periodic tasks, with the Liu & Layland (1973)
+// U = sum(C_i / T_i) over the periodic tasks, with the classic utilization
 // rate-monotonic bound n * (2^(1/n) - 1).
 function schedUtilisation() {
   var u = 0, k = 0;
@@ -1963,7 +1964,6 @@ document.addEventListener('DOMContentLoaded', init);
           <li>Measured CPU busy <code>= 1 &minus; idle ticks / elapsed ticks</code>; per-task share <code>= run ticks / elapsed ticks</code>.</li>
           <li>Priority inheritance: on block, <code>holder.priority = max(holder.priority, waiter.priority)</code>; on <code>xSemaphoreGive</code> the holder returns to its base priority. Mutexes only, semaphores and queues have no owner.</li>
           <li>Switch overhead <code>= switches &times; 84 / 168&nbsp;MHz</code>.</li>
-          <li>Liu &amp; Layland (1973), <em>Scheduling Algorithms for Multiprogramming in a Hard-Real-Time Environment</em>; Sha, Rajkumar &amp; Lehoczky (1990), <em>Priority Inheritance Protocols</em>; Barry, <em>Mastering the FreeRTOS Real Time Kernel</em>.</li>
         </ul>
       </div>
       <div>

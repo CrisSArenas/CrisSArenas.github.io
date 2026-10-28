@@ -1,5 +1,5 @@
 /* Hand-labeled ground truth for the Private Capital Lab documents (assets/data/pcl-docs.js).
-   Kept separate from the documents and from the extraction pipeline in private-capital-lab.html.
+   Kept separate from the documents and the page code.
    How the labels were set: each value was read by hand from the rendered document text, at the
    page and line given, and typed in here in $ millions (statement units converted by hand:
    Telmira reports in $ thousands, Brisolt in $ millions, the others in dollars). Signs follow the

@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Manager Selection Copilot · Cristian Arenas</title>
-    <meta name="description" content="Telling skill from luck in private and public managers: deal-level track record attribution, value creation bridges, IRR without the subscription line, quartile drift, returns-based style analysis, smoothing detection, bootstrapped alpha and agents that check DDQs and letters against the numbers.">
+    <meta name="description" content="Take a buyout manager&#x27;s track record apart deal by deal, and check whether a hedge fund that calls itself market neutral really is.">
     <link rel="canonical" href="https://crissarenas.github.io/manager-selection-copilot.html">
     <meta property="og:title" content="Manager Selection Copilot · Cristian Arenas">
-    <meta property="og:description" content="Telling skill from luck, one big deal and smoothed returns, in private and public managers.">
+    <meta property="og:description" content="Take a buyout manager&#x27;s track record apart deal by deal, and check whether a hedge fund that calls itself market neutral really is.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#FFFFFF">
@@ -80,7 +80,7 @@
       <div class="kpis" id="slKpis"></div>
       <div class="split-2" style="margin-top:18px">
         <div class="panel"><div class="panel-head"><h3>Fund II: LP capital out, with and without the line</h3></div><div class="panel-body"><div id="slChart"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Gross to net, both funds</h3></div><div class="panel-body"><div id="netTable"></div><p class="eval-note">Net figures rebuild LP cash flows from the deals: management fees as stated in the DDQ, carry at 20% of gains after fees once the 8% preferred return is met, taken from the latest distributions and NAV. An approximation, labeled as such; the <a href="fund-terms-auditor.html">Fund Terms Auditor</a> runs the full waterfall.</p></div></div>
+        <div class="panel"><div class="panel-head"><h3>Gross to net, both funds</h3></div><div class="panel-body"><div id="netTable"></div><p class="eval-note">I rebuild LP cash flows from the deals. Fees come from the DDQ. Carry is 20% of gains above an 8% preferred return. This is an estimate. The <a href="fund-terms-auditor.html">Fund Terms Auditor</a> runs the full waterfall.</p></div></div>
       </div>
       <h3 class="sub-h">Quartile drift</h3>
       <div class="kpis" id="drKpis"></div>
@@ -129,7 +129,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
         <li>Managers, companies and peers are made up.</li>
         <li>A bootstrap p-value on one manager is weak evidence. Screening many managers at once turns up false positives.</li>
       </ul>
-      <p style="margin-top:14px"><a href="/notes/" data-final="notes/one-deal-track-record.html">Note: is this track record one deal?</a></p>
+      <p style="margin-top:14px"><a href="notes/one-deal-track-record.html">Note: is this track record one deal?</a></p>
     </div>
   </details>
 
@@ -147,8 +147,8 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
-        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Approved flags go to the memo drafter</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Approved flags become memo inputs</span></div><div class="panel-body"><div id="approvals"></div></div></div>
       </div>
       <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
     </div>
@@ -387,17 +387,17 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     UI.chart.heat('#persist', { rows: ['Q1 first', 'Q2 first', 'Q3 first', 'Q4 first'], cols: ['Q1 next', 'Q2 next', 'Q3 next', 'Q4 next'], matrix: mat, min: 0, max: 1, fmt: function (x) { return F.pct(x, 0); }, cell: 90, labelWidth: 80, label: 'Persistence matrix' });
   }
 
-  /* ---------------- AI pipeline ---------------- */
+  /* ---------------- review run ---------------- */
   var DOCS = window.MSC_DOCS, LABELS = window.MSC_LABELS, log, audit, apps;
   function find(id, re) { var out = null; DOCS[id].pages.forEach(function (pg, pi) { pg.forEach(function (l, li) { var m = re.exec(l); if (m && !out) out = { m: m, cite: { doc: id, page: pi + 1, line: li + 1, short: id } }; }); }); return out; }
-  function runPipeline() {
+  function runReview() {
     log.clear(); audit.clear();
     var P = S.pipe = { ex: {}, checks: [], items: [], team: [], fieldsN: 0 };
-    audit.push('planner', 'run started', 'seed ' + S.seed);
+    audit.push('start', 'run started', 'seed ' + S.seed);
     var put = function (id, k, hit, v, unit) { if (!hit) return; (P.ex[id] = P.ex[id] || {})[k] = { value: v, unit: unit, cite: hit.cite }; P.fieldsN++; };
     UI.runSteps(log, [
-      { agent: 'planner', run: function () { return { msg: 'Plan: extract Fund III and Corvane terms, track team changes across letters, check every claim against the deal data and returns, send contradictions for approval, draft memo inputs from what is approved' }; } },
-      { agent: 'terms-extractor', run: function () {
+      { agent: 'start', run: function () { return { msg: 'Run started.' }; } },
+      { agent: 'read', run: function () {
         var h;
         h = find('ddq-hasturn', /Target fund size: \$(\d[\d,]*) million; hard cap \$(\d[\d,]*) million/); put('ddq-hasturn', 'targetSize', h, h && +h.m[1].replace(/,/g, ''), 'money'); put('ddq-hasturn', 'hardCap', h, h && +h.m[2].replace(/,/g, ''), 'money');
         h = find('ddq-hasturn', /Management fee: ([\d.]+)% of commitments.*?([\d.]+)% of invested/); put('ddq-hasturn', 'feeIP', h, h && +h.m[1] / 100, 'pct'); put('ddq-hasturn', 'feePost', h, h && +h.m[2] / 100, 'pct');
@@ -411,16 +411,16 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
         h = find('odd-corvane', /Level 3 assets: (\d+)% of NAV/); put('odd-corvane', 'level3', h, h && +h.m[1] / 100, 'pct');
         h = find('odd-corvane', /Net equity exposure.*?([+-]?\d+)%/); put('odd-corvane', 'netExposure', h, h && +h.m[1] / 100, 'pct');
         h = find('letter-2025', /net TVPI of ([\d.]+)x/); put('letter-2025', 'claimedNetTvpi', h, h && +h.m[1], 'num');
-        audit.push('terms-extractor', 'extracted', P.fieldsN + ' fields');
+        audit.push('read', 'extracted', P.fieldsN + ' fields');
         return { msg: P.fieldsN + ' fields extracted with citations', details: Object.keys(P.ex).reduce(function (o, id) { o[id] = Object.keys(P.ex[id]).reduce(function (q, k) { q[k] = P.ex[id][k].value; return q; }, {}); return o; }, {}) };
       } },
-      { agent: 'citation-validator', run: function () {
+      { agent: 'cite', run: function () {
         var ok = 0, bad = 0;
         Object.keys(P.ex).forEach(function (id) { Object.keys(P.ex[id]).forEach(function (k) { var f = P.ex[id][k]; var r = f.unit === 'text' ? { ok: UI.lineHas(UI.DocViewer.active.line(f.cite.doc, f.cite.page, f.cite.line), String(f.value).split('; ')[0], 'text') } : UI.validateField(DOCS, { cite: f.cite, value: f.value, unit: f.unit === 'money' ? 'num' : f.unit }); if (f.unit === 'money' && !r.ok) r = UI.validateField(DOCS, { cite: f.cite, value: f.value / 1000, unit: 'num' }); f.valid = r.ok; if (r.ok) ok++; else bad++; }); });
-        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve');
+        audit.push('cite', bad ? 'blocked' : 'passed', ok + ' resolve');
         return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve' + (bad ? ', ' + bad + ' blocked' : '') };
       } },
-      { agent: 'team-changes-tracker', run: function () {
+      { agent: 'check', run: function () {
         var res = [];
         ['letter-2024', 'letter-2025', 'letter-2026'].forEach(function (id) {
           DOCS[id].pages[0].forEach(function (l, li) {
@@ -437,10 +437,10 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
           res.push({ status: 'approval', msg: 'Key person exposure: ' + gone.map(function (g) { return g.who; }).join(', ') + ' left after the DDQ named him a key person' });
           P.items.push({ id: 'K-1', title: 'Key person departure: ' + gone[0].who, severity: 'high', evidence: gone[0].who + ' is one of three named key persons in the February 2026 DDQ and stepped down in March 2026. The clause suspends the investment period only if two of three leave, so it has not triggered, but one more departure would. Approve to carry this into the memo.', cites: [P.ex['ddq-hasturn'].keyPersons.cite, gone[0].cite, { doc: 'ddq-hasturn', page: 1, line: 9, short: 'ddq clause' }], state: 'pending', memo: 'One of three key persons left in March 2026; one more departure suspends the investment period.' });
         }
-        audit.push('team-changes-tracker', 'tracked', P.team.length + ' events');
+        audit.push('check', 'tracked', P.team.length + ' events');
         return res;
       } },
-      { agent: 'consistency-checker', run: function () {
+      { agent: 'check', run: function () {
         var res = [], D = S.deals, f2 = D.filter(function (d) { return d.fund === 'Fund II'; });
         var lossDeal = f2.filter(function (d) { return d.exit && d.realized < d.invested; })[0];
         var claim = find('ddq-hasturn', /Fund II has no realized losses/);
@@ -462,13 +462,13 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
         var ne = P.ex['odd-corvane'].netExposure, drift = (ne && ne.value > 0.1) || (S.pubStats && S.pubStats.eqW > 0.15);
         P.checks.push({ id: 'corvane-style', flag: !!drift });
         if (drift) { res.push({ status: 'approval', msg: 'Corvane declared market neutral; returns imply ' + F.pct(S.pubStats.eqW, 0) + ' equity exposure and its own risk report shows ' + F.spct(ne.value, 0) }); P.items.push({ id: 'C-4', title: 'Corvane: style drift away from market neutral', severity: 'med', evidence: 'Declared net equity exposure is -10% to +10%. Returns-based style analysis puts ' + F.pct(S.pubStats.eqW, 0) + ' of the fund in equity indices, it clusters with ' + S.cluster.toLowerCase() + ' peers, and the March 2026 risk report shows +38% net.', cites: [find('ddq-corvane', /Strategy: equity market neutral/).cite, ne.cite], state: 'pending', memo: 'Corvane is not market neutral in practice.' }); }
-        audit.push('consistency-checker', 'checks run', P.checks.length + ' checks, ' + P.items.length + ' flags');
+        audit.push('check', 'checks run', P.checks.length + ' checks, ' + P.items.length + ' flags');
         return res;
       } },
-      { agent: 'memo-drafter', run: function () { audit.push('memo-drafter', 'waiting', 'drafts from approved flags only'); return { status: 'approval', msg: 'Waiting for approvals; only approved flags become memo inputs' }; } }
-    ], afterPipeline);
+      { agent: 'draft', run: function () { audit.push('draft', 'waiting', 'drafts from approved flags only'); return { status: 'approval', msg: 'Waiting for approvals; only approved flags become memo inputs' }; } }
+    ], afterReview);
   }
-  function afterPipeline() {
+  function afterReview() {
     var P = S.pipe;
     apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderMemoInputs });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.checks.filter(function (c) { return c.flag; }).length, review: P.items.length });
@@ -479,8 +479,8 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
   }
   function renderMemoInputs() {
     var ap = S.pipe.items.filter(function (it) { return it.state === 'approved'; });
-    $('#memoInputs').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.memo) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a flag to send it to the memo drafter.</li>';
-    if (ap.length) audit.push('memo-drafter', 'inputs updated', ap.map(function (a) { return a.id; }).join(', '));
+    $('#memoInputs').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.memo) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a flag to add it to the memo inputs.</li>';
+    if (ap.length) audit.push('draft', 'inputs updated', ap.map(function (a) { return a.id; }).join(', '));
   }
   function renderEval() {
     var P = S.pipe, ext = {}, truth = {};
@@ -540,7 +540,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. As of 30 Jun 2026.'; renderAll(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runBtn').addEventListener('click', runPipeline);
+    $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzDeals', { title: 'Use your own deal-level track record', template: '/assets/templates/deal-track-record.csv', columns: ['fund', 'deal', 'sector', 'entry_date', 'exit_date', 'invested', 'realized', 'unrealized', 'entry_ebitda', 'entry_ev_multiple', 'entry_net_debt', 'exit_ebitda', 'exit_ev_multiple', 'exit_net_debt'].map(function (c) { return { name: c, required: c !== 'sector' && c !== 'exit_date' }; }),
       parse: parseDeals, onData: function (d) { S.userDeals = d; S.fund = 'all'; $('#dataSrc').textContent = 'Your track record file, processed locally.'; renderAll(); }, onReset: function () { S.userDeals = null; S.fund = 'Fund I'; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderAll(); } });
@@ -548,7 +548,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
       parse: parseReturns, onData: function (d) { S.userRet = d; $('#dataSrc').textContent = 'Your return file, processed locally.'; renderPublic(); }, onReset: function () { S.userRet = null; renderPublic(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Manager Selection Copilot', slug: 'manager-selection-copilot', report: 'IC memo (PDF)', source: function () { return S.userDeals || S.userRet ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Manager Selection Copilot'); UI.testsBadge('.tests-badge-slot', 'Manager Selection Copilot');
-    renderAll(); runPipeline();
+    renderAll(); runReview();
     UI.revealHash(tabs);
   }
   init();

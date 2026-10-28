@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Secondaries Desk · Cristian Arenas</title>
-    <meta name="description" content="Pricing LP stakes and deciding whether to roll or sell in a continuation vehicle: projected cash flows, the NAV discount that delivers a buyer's target IRR, stale NAV roll-forward, sensitivities, roll vs sell break-even, and agents that build a conflicts checklist from the CV documents.">
+    <meta name="description" content="Price six LP fund interests on NAVs that are a quarter old. Then decide whether to roll or sell in a GP-led continuation vehicle.">
     <link rel="canonical" href="https://crissarenas.github.io/secondaries-desk.html">
     <meta property="og:title" content="Secondaries Desk · Cristian Arenas">
-    <meta property="og:description" content="Pricing LP stakes and deciding to roll or sell in a continuation vehicle.">
+    <meta property="og:description" content="Price six LP fund interests on NAVs that are a quarter old. Then decide whether to roll or sell in a GP-led continuation vehicle.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#FFFFFF">
@@ -115,7 +115,7 @@ sell = (1 + opp)^hold</div>
         <li>The funds, GP and documents are made up. The public market return for the quarter is an assumption.</li>
         <li>The CV is modelled as one exit after the hold. Extensions show up as longer holds at the same multiple.</li>
       </ul>
-      <p style="margin-top:14px"><a href="/notes/" data-final="notes/roll-or-sell-cv.html">Note: roll or sell, an LP's math on a continuation vehicle</a></p>
+      <p style="margin-top:14px"><a href="notes/roll-or-sell.html">Note: roll or sell, an LP's math on a continuation vehicle</a></p>
     </div>
   </details>
 
@@ -133,8 +133,8 @@ sell = (1 + opp)^hold</div>
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
-        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Conflicts checklist for your approval</h3><span class="sub">Approved items go to the memo drafter</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Conflicts checklist for your approval</h3><span class="sub">Approved items become memo inputs</span></div><div class="panel-body"><div id="approvals"></div></div></div>
       </div>
       <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
     </div>
@@ -218,7 +218,7 @@ sell = (1 + opp)^hold</div>
   var AROWS = [
     { id: 'target', label: 'Buyer target IRR', value: 0.15, unit: '% a year', scale: 100, source: 'Assumption (the buying desk\'s hurdle)', min: 0.05, max: 0.3, step: 0.5 },
     { id: 'haircut', label: 'NAV haircut on top of the roll-forward', value: 0, unit: '%', scale: 100, source: 'Assumption', min: 0, max: 0.4, step: 1 },
-    { id: 'pub', label: 'Public equity return, 31 Mar to 30 Jun 2026', value: -0.04, unit: '%', scale: 100, source: 'Assumption, not market data', min: -0.3, max: 0.3, step: 0.5 },
+    { id: 'pub', label: 'Public equity return, 31 Mar to 30 Jun 2026', value: -0.04, unit: '%', scale: 100, source: 'Assumption', min: -0.3, max: 0.3, step: 0.5 },
     { id: 'mcN', label: 'Simulated paths', value: 1000, unit: '', source: 'Setting', min: 200, max: 5000, step: 100 },
     { id: 'opp', label: 'LP opportunity cost for sale proceeds', value: 0.10, unit: '% a year', scale: 100, source: 'Assumption (the LP\'s expected return on reinvested cash)', min: 0, max: 0.25, step: 0.5 },
     { id: 'mGP', label: 'CV gross multiple, GP case', value: 2.3, unit: 'x', source: 'Assumption (GP materials, fictional)', min: 0.5, max: 5, step: 0.05 },
@@ -230,7 +230,7 @@ sell = (1 + opp)^hold</div>
   window.SECS = S;
   var AS_OF = 2026.5;
 
-  /* ---------------- documents (shared by the CV tab and the agents) ---------------- */
+  /* ---------------- documents (shared by the CV tab and the review) ---------------- */
   function find(id, re) { var out = null; DOCS[id].pages.forEach(function (pg, pi) { pg.forEach(function (l, li) { var m = re.exec(l); if (m && !out) out = { m: m, cite: { doc: id, page: pi + 1, line: li + 1, short: id } }; }); }); return out; }
   function money(s) { return +String(s).replace(/[$,]/g, '') / 1e6; }
   function readDocs() {
@@ -324,22 +324,22 @@ sell = (1 + opp)^hold</div>
     UI.chart.heat('#holdHeat', { rows: holds.map(function (hh) { return hh + ' years'; }), cols: mults.map(function (x) { return F.mult(x, 1); }), matrix: holds.map(function (hh) { var tt = Object.assign({}, t, { hold: hh }); return mults.map(function (x) { return SEC.rollValue(x, tt).net - SEC.sellValue(tt, A.opp); }); }), min: -0.8, max: 0.8, fmt: function (x) { return (x >= 0 ? '+' : '') + F.num(x, 2); }, cell: 80, labelWidth: 80, label: 'Roll minus sell' });
   }
 
-  /* ---------------- AI pipeline ---------------- */
+  /* ---------------- review run ---------------- */
   var log, audit, apps;
-  function runPipeline() {
+  function runReview() {
     log.clear(); audit.clear();
     var P = S.pipe = { ex: {}, items: [], checks: [], fieldsN: 0 };
-    audit.push('planner', 'run started', 'seed ' + S.seed);
+    audit.push('start', 'run started', 'seed ' + S.seed);
     UI.runSteps(log, [
-      { agent: 'planner', run: function () { return { msg: 'Plan: extract the CV terms, the process facts and the LPA requirements, validate every citation, build the conflicts checklist, wait for approval, pass approved items to the memo drafter' }; } },
-      { agent: 'terms-extractor', run: function () { P.ex = readDocs(); Object.keys(P.ex).forEach(function (d) { P.fieldsN += Object.keys(P.ex[d]).length; }); audit.push('terms-extractor', 'extracted', P.fieldsN + ' fields'); return { msg: P.fieldsN + ' fields extracted with citations', details: Object.keys(P.ex['cv-notice']).reduce(function (o, k) { o[k] = P.ex['cv-notice'][k].value; return o; }, {}) }; } },
-      { agent: 'citation-validator', run: function () {
+      { agent: 'start', run: function () { return { msg: 'Run started.' }; } },
+      { agent: 'read', run: function () { P.ex = readDocs(); Object.keys(P.ex).forEach(function (d) { P.fieldsN += Object.keys(P.ex[d]).length; }); audit.push('read', 'extracted', P.fieldsN + ' fields'); return { msg: P.fieldsN + ' fields extracted with citations', details: Object.keys(P.ex['cv-notice']).reduce(function (o, k) { o[k] = P.ex['cv-notice'][k].value; return o; }, {}) }; } },
+      { agent: 'cite', run: function () {
         var ok = 0, bad = 0;
         Object.keys(P.ex).forEach(function (d) { Object.keys(P.ex[d]).forEach(function (k) { var f = P.ex[d][k], ln = UI.DocViewer.active.line(f.cite.doc, f.cite.page, f.cite.line); f.valid = f.unit === 'text' ? UI.lineHas(ln, f.evidence || f.value, 'text') : UI.lineHas(ln, f.value, f.unit); if (f.valid) ok++; else bad++; }); });
-        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve');
+        audit.push('cite', bad ? 'blocked' : 'passed', ok + ' resolve');
         return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve' + (bad ? ', ' + bad + ' blocked' : '') };
       } },
-      { agent: 'conflicts-checklist-builder', run: function () {
+      { agent: 'check', run: function () {
         var n = P.ex['cv-notice'], fo = P.ex['fairness'], la = P.ex['lpa-amend'], res = [];
         var mid = (fo.rangeLow.value + fo.rangeHigh.value) / 2, adv = find('fairness', /also acted as financial adviser to the General Partner/);
         var add = function (id, title, concern, evidence, cites, memo) {
@@ -363,13 +363,13 @@ sell = (1 + opp)^hold</div>
           [n.statusQuo.cite, n.defaultElection.cite], 'No status quo option, and the default is a sale at the transaction price.');
         var lpac = find('lpa-amend', /Advisory Committee approves the transfer and waives the conflict/);
         add('lpac-consent', 'LPAC consent and conflict waiver obtained', !lpac, '', lpac ? [lpac.cite] : [], 'The LPAC approved the transfer.');
-        audit.push('conflicts-checklist-builder', 'built', P.checks.length + ' items, ' + P.items.length + ' to raise');
+        audit.push('check', 'built', P.checks.length + ' items, ' + P.items.length + ' to raise');
         return res;
       } },
-      { agent: 'memo-drafter', run: function () { audit.push('memo-drafter', 'waiting', 'drafts from approved items only'); return { status: 'approval', msg: 'Waiting for approvals; only approved items become memo inputs' }; } }
-    ], afterPipeline);
+      { agent: 'draft', run: function () { audit.push('draft', 'waiting', 'drafts from approved items only'); return { status: 'approval', msg: 'Waiting for approvals; only approved items become memo inputs' }; } }
+    ], afterReview);
   }
-  function afterPipeline() {
+  function afterReview() {
     var P = S.pipe;
     apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderMemoInputs });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.items.length, review: P.items.length });
@@ -379,8 +379,8 @@ sell = (1 + opp)^hold</div>
   }
   function renderMemoInputs() {
     var ap = S.pipe.items.filter(function (it) { return it.state === 'approved'; });
-    $('#memoInputs').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.memo) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a checklist item to send it to the memo drafter.</li>';
-    if (ap.length) audit.push('memo-drafter', 'inputs updated', ap.map(function (a) { return a.id; }).join(', '));
+    $('#memoInputs').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.memo) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a checklist item to add it to the memo inputs.</li>';
+    if (ap.length) audit.push('draft', 'inputs updated', ap.map(function (a) { return a.id; }).join(', '));
   }
   function renderEval() {
     var P = S.pipe, ext = {}, truth = {};
@@ -390,7 +390,7 @@ sell = (1 + opp)^hold</div>
     window.EVAL = { demo: 'Secondaries Desk', href: 'secondaries-desk.html#evaluation', fields: ev.n, accuracy: ev.accuracy, coverage: ev.coverage, seeded: fl.seeded, detected: fl.detected, falseFlagRate: fl.falseFlagRate };
     UI.evalLine(window.EVAL);
     UI.kpis('#evalKpis', [{ id: 'evAcc', label: 'Extraction accuracy', value: F.pct(ev.accuracy, 1), sub: ev.correct + ' of ' + ev.n + ' labeled fields' }, { id: 'evCov', label: 'Citation coverage', value: F.pct(ev.coverage, 1) }, { id: 'evFlag', label: 'Concerns caught / false-flag rate', value: fl.detected + ' of ' + fl.seeded + ' / ' + F.pct(fl.falseFlagRate, 0), sub: (fl.candidates - fl.seeded) + ' items that should pass' }]);
-    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field or item' }, { key: 't', label: 'Label' }, { key: 'e', label: 'Pipeline' }, { key: 'ok', label: 'Match' }],
+    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field or item' }, { key: 't', label: 'Label' }, { key: 'e', label: 'Extracted' }, { key: 'ok', label: 'Match' }],
       rows: Object.keys(truth).map(function (k) { return { k: k, t: String(truth[k].value), e: ext[k] ? String(ext[k].value) : 'missing', ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no' }; })
         .concat(ids.map(function (id) { var s = LABELS.checklist[id].concern, r = raised.indexOf(id) !== -1; return { k: 'checklist: ' + id, t: s ? 'raise' : 'pass', e: r ? 'raise' : 'pass', ok: s === r ? 'yes' : 'no' }; })) });
   }
@@ -430,13 +430,13 @@ sell = (1 + opp)^hold</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. NAVs at 31 Mar 2026, priced at 30 Jun 2026.'; renderPricing(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runBtn').addEventListener('click', runPipeline);
+    $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzPortfolio', { title: 'Use your own fund interests', template: '/assets/templates/lp-portfolio.csv', columns: [{ name: 'fund' }, { name: 'strategy', desc: 'buyout, growth, venture, credit or infrastructure' }, { name: 'vintage' }, { name: 'nav', desc: '$m at nav_date' }, { name: 'nav_date', required: false }, { name: 'unfunded', desc: '$m' }, { name: 'calls_since', required: false }, { name: 'dists_since', required: false }],
       parse: parsePortfolio, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your fund interests, processed locally.'; renderPricing(); renderSensitivity(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderPricing(); renderSensitivity(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Secondaries Desk', slug: 'secondaries-desk', report: 'Bid memo and CV election memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Secondaries Desk'); UI.testsBadge('.tests-badge-slot', 'Secondaries Desk');
-    renderAll(); runPipeline();
+    renderAll(); runReview();
     UI.revealHash(tabs);
   }
   init();

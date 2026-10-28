@@ -197,6 +197,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
   </div>
 </nav>
 <!-- site-nav:end -->
+<div id="main" tabindex="-1"></div>
 
 <header class="rhero">
   <div class="wrap">
@@ -247,7 +248,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
       <h2><span class="n">01</span> Abstract</h2>
       <div class="abs">
         <p>
-          We investigate end-to-end regime-aware portfolio optimization through a novel Cross-Attention Regime
+          We investigate single-model regime-aware portfolio optimization through a novel Cross-Attention Regime
           Discovery (CARD) mechanism that enables transformer architectures to jointly learn regime structure and
           allocation policies. Unlike traditional two-stage pipelines that classify market regimes and optimize
           allocations independently, CARD uses learnable regime query vectors that attend to temporal feature
@@ -293,7 +294,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
         <div class="mini"><span class="k">FAILURE 04</span><h4>Objective misalignment</h4><p>The regime model maximizes classification likelihood. The portfolio needs risk-adjusted return. Those objectives are not guaranteed to align.</p></div>
       </div>
       <p>
-        CARD removes the interface. Regime structure and allocation policy are learned jointly, end to end, against a
+        CARD removes the interface. Regime structure and allocation policy are learned jointly against a
         single portfolio objective. The regime representation is free to be whatever helps the allocation, rather than
         whatever best reproduces a label.
       </p>
@@ -417,7 +418,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
           </div>
         </div>
         <svg id="cMetric" viewBox="0 0 720 360" role="img" aria-label="Bar chart of the selected performance metric by method"></svg>
-        <div class="fig-n"><b>Note the Oracle:</b> it is an infeasible upper reference that is given the true, unobservable regime labels. It is drawn with a dashed outline because it is a ceiling on what perfect regime knowledge buys inside a mean-variance framework, not a competitor.</div>
+        <div class="fig-n"><b>Note the Oracle:</b> it is an infeasible upper reference that is given the true, unobservable regime labels. It is drawn with a dashed outline because it is a ceiling on what perfect regime knowledge buys inside a mean-variance framework.</div>
       </div>
 
       <h3 class="sub">Statistical significance</h3>
@@ -543,14 +544,14 @@ td.num,th.num{font-variant-numeric:tabular-nums}
           </div>
         </div>
         <svg id="cCompute" viewBox="0 0 720 300" role="img" aria-label="Scatter plot of model parameters against forward pass latency"></svg>
-        <div class="fig-n"><b>All of these are small.</b> RAT-CARD is 24,127 parameters and about 1.0 ms per forward pass. The MLP has the most parameters, 42,826, and the fastest inference, 0.10 ms, because it has no sequential structure. Nothing here is compute-bound; the constraint is data, not throughput.</div>
+        <div class="fig-n"><b>All of these are small.</b> RAT-CARD is 24,127 parameters and about 1.0 ms per forward pass. The MLP has the most parameters, 42,826, and the fastest inference, 0.10 ms, because it has no sequential structure. Nothing here is compute-bound; the constraint is data.</div>
       </div>
     </section>
 
     <section id="takeaways">
       <h2><span class="n">11</span> What this means</h2>
       <div class="grid3">
-        <div class="mini"><span class="k">FINDING 01</span><h4>End-to-end beats two-stage</h4><p>Optimizing directly for the portfolio objective outperforms optimizing for regime classification and then allocating, even when the classifier is better at classifying.</p></div>
+        <div class="mini"><span class="k">FINDING 01</span><h4>One model beats two stages</h4><p>Optimizing directly for the portfolio objective outperforms optimizing for regime classification and then allocating, even when the classifier is better at classifying.</p></div>
         <div class="mini"><span class="k">FINDING 02</span><h4>Architecture is not the lever</h4><p>An LSTM with 16k parameters matches or beats a cross-attention transformer here. Complexity has to be justified by a setting that needs it.</p></div>
         <div class="mini"><span class="k">FINDING 03</span><h4>Constraints buy stability</h4><p>The unconstrained variant scores higher on raw Sharpe and trades more. Position bounds act as implicit regularizers, and their advantage grows once costs are real.</p></div>
         <div class="mini"><span class="k">FINDING 04</span><h4>Report the null result</h4><p>Three seeds and 120 test months cannot separate these architectures. Saying so is more useful than picking the seed that wins.</p></div>
@@ -567,7 +568,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
     <section id="limits">
       <h2><span class="n">12</span> Limitations, stated plainly</h2>
       <div class="call warn">
-        <h4>These are the paper's own limitations, not a summary of them</h4>
+        <h4>The paper's own limitations</h4>
         <ol class="body" style="margin-bottom:0">
           <li><strong>Synthetic data only.</strong> A Markov-switching process is a simplification. Real regimes may not be discrete, transitions may not be Markov, and feature-regime relationships are likely more complex.</li>
           <li><strong>Limited DGP variation.</strong> Three parameterizations of one generating structure. Different regime counts, non-stationary transitions, or non-Gaussian returns could change the conclusions.</li>
@@ -575,7 +576,7 @@ td.num,th.num{font-variant-numeric:tabular-nums}
           <li><strong>Modest sample size.</strong> 120 test months gives limited statistical power, which is exactly what the wide bootstrap intervals show.</li>
           <li><strong>No transaction costs in training.</strong> Costs are evaluated but never enter the loss function, so the constrained model's stability advantage is never explicitly rewarded during training.</li>
           <li><strong>Simple constraint mechanism.</strong> Clamp-and-renormalize is an approximation. Exact differentiable convex constraint layers might give different results at higher computational cost.</li>
-          <li><strong>Three seeds.</strong> Enough to show cross-seed variability, not enough to characterize the true performance distribution.</li>
+          <li><strong>Three seeds.</strong> Enough to show cross-seed variability. Too few to characterize the true performance distribution.</li>
         </ol>
       </div>
     </section>
@@ -1116,13 +1117,13 @@ td.num,th.num{font-variant-numeric:tabular-nums}
       body: 'Three learnable regime query vectors, initialized orthogonally to encourage diversity, attend over the encoder output by scaled dot-product cross-attention with 2 heads. Each query produces a regime context vector and, through a learned scoring network and softmax, a soft regime probability. Layer normalization and a residual connection stabilize training. The per-timestep attention weights are what make the regimes interpretable.',
       code: 'C_k = CrossAttn(q_k, H, H);  π = softmax(g(C))' },
     { id: 'heads', x: 472, w: 150, label: 'Allocation heads', sub: 'one per regime', title: 'Constrained allocation heads',
-      body: 'Each regime owns an allocation head that maps its context vector to portfolio weights: a linear layer produces 10 logits, softmax normalizes them, weights are clamped to the position bounds, then renormalized. This is a simple differentiable bounded allocation, not an exact constrained optimizer, and the paper is explicit about that trade-off.',
+      body: 'Each regime owns an allocation head that maps its context vector to portfolio weights: a linear layer produces 10 logits, softmax normalizes them, weights are clamped to the position bounds, then renormalized. This is a simple differentiable bounded allocation. It only approximates a constrained optimizer, and the paper says so.',
       code: 'w_min = 0.02, w_max = 0.25, N = 10' },
     { id: 'blend', x: 638, w: 128, label: 'Regime blend', sub: 'Σ πₖ · fₖ', title: 'Regime-blended allocation',
       body: 'The final portfolio is the regime-probability-weighted sum of the regime-specific portfolios, projected back onto the feasible set. As the probabilities approach one-hot, the model reduces to a set of independent single-regime optimizers; when they stay diffuse, the blend smooths between them, which the paper identifies as one reason specialization gets diluted.',
       code: 'w = Project(Σₖ πₖ fₖ(Cₖ))' },
     { id: 'loss', x: 782, w: 106, label: 'Objective', sub: 'batch Sharpe', title: 'Training objective',
-      body: 'A single end-to-end loss: negative differentiable batch Sharpe ratio, plus an entropy term on the regime assignments that encourages crisp regime discovery, plus a Herfindahl concentration penalty on the weights. There is no separate regime classification loss anywhere, which is the whole point of the design.',
+      body: 'A single loss: negative differentiable batch Sharpe ratio, plus an entropy term on the regime assignments that encourages crisp regime discovery, plus a Herfindahl concentration penalty on the weights. There is no separate regime classification loss anywhere, which is the whole point of the design.',
       code: 'L = −SR + λ_ent H(π) + λ_conc HHI(w)' }
   ];
   (function drawArch() {

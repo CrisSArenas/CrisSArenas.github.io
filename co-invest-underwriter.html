@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Co-Investment Underwriter · Cristian Arenas</title>
-    <meta name="description" content="Underwriting a co-investment in days: an LBO with GP, house and downside cases, the equity value bridge, probability-weighted AI initiatives, fee-free co-investment blended with a fund commitment, a triage of three opportunities, and agents that check the CIM projections against the company's history.">
+    <meta name="description" content="Underwrite a co-invest in a clinical lab buyout in GP, house and downside cases. See what it does to the program&#x27;s net return and decide the check size.">
     <link rel="canonical" href="https://crissarenas.github.io/co-invest-underwriter.html">
     <meta property="og:title" content="Co-Investment Underwriter · Cristian Arenas">
-    <meta property="og:description" content="Underwriting a co-investment in days, not weeks.">
+    <meta property="og:description" content="Underwrite a co-invest in a clinical lab buyout in GP, house and downside cases. See what it does to the program&#x27;s net return and decide the check size.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#FFFFFF">
@@ -97,7 +97,7 @@
     </section>
 
     <section id="triage" hidden>
-      <p class="intro">Co-invest windows are short. Before a full underwrite, every opportunity in the queue gets the same four checks: alignment with the GP, leverage, overlap with sectors the private portfolio already holds, and time to decide.</p>
+      <p class="intro">Co-invest windows are short. I run four quick checks on every deal in the queue before a full underwrite. They cover GP alignment, leverage, sector overlap with the portfolio and time to decide.</p>
       <div class="panel"><div class="panel-head"><h3>Co-investment queue</h3><span class="sub">Fictional opportunities</span></div><div class="panel-body"><div id="triageTable"></div><p class="eval-note" id="triageNote"></p></div></div>
     </section>
   </div>
@@ -146,8 +146,8 @@ uplift_t = p x run-rate x ramp(t)</div>
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
-        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Approved flags go to the memo drafter</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Approved flags become memo inputs</span></div><div class="panel-body"><div id="approvals"></div></div></div>
       </div>
       <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
     </div>
@@ -243,7 +243,7 @@ uplift_t = p x run-rate x ramp(t)</div>
   var S = { seed: 5, view: 'house', user: null, probs: { house: [0.5, 0.7, 0.6], gp: [1, 1, 1], down: [0.25, 0.4, 0.3] } };
   window.COIS = S;
 
-  /* ---------------- CIM reading (shared by the model and the agents) ---------------- */
+  /* ---------------- CIM reading (shared by the model and the review) ---------------- */
   function find(re) { var out = null; DOCS[DOC].pages.forEach(function (pg, pi) { pg.forEach(function (l, li) { var m = re.exec(l); if (m && !out) out = { m: m, cite: { doc: DOC, page: pi + 1, line: li + 1, short: 'cim' } }; }); }); return out; }
   function row(re) { var h = find(re); return h ? { value: h.m[1].trim().split(/\s+/).map(Number), cite: h.cite } : null; }
   function readCIM() {
@@ -347,26 +347,26 @@ uplift_t = p x run-rate x ramp(t)</div>
     S.triage = rows;
     var cls = function (v) { return /^fail/.test(v) ? 'neg' : ''; };
     UI.table('#triageTable', { id: 'triage', name: 'Co-investment triage', columns: [{ key: 'n', label: 'Opportunity (fictional)' }, { key: 'align', label: 'Alignment', cls: cls }, { key: 'lev', label: 'Leverage (6.0x max)', cls: cls }, { key: 'sector', label: 'Sector share of private NAV, after' }, { key: 'overlap', label: 'Overlap (22% max)', cls: cls }, { key: 'time', label: 'Time to decide (10 days min)', cls: cls }, { key: 'score', label: 'Score', num: 1, fmt: function (v) { return v + ' of 4'; } }], rows: rows });
-    $('#triageNote').textContent = 'Valebrook\'s leverage is scored on the house view of EBITDA (' + F.num(S.cases.house.o.leverage, 1) + 'x), not the CIM\'s ' + F.num(CIM.leverage.value, 1) + 'x. Sector shares are of the private portfolio after a check of the size offered. The other two fail at least two checks each and are declined without a full underwrite.';
+    $('#triageNote').textContent = 'Valebrook\'s leverage is scored on the house view of EBITDA (' + F.num(S.cases.house.o.leverage, 1) + 'x). The CIM says ' + F.num(CIM.leverage.value, 1) + 'x. Sector shares are of the private portfolio after a check of the size offered. The other two fail at least two checks each and are declined without a full underwrite.';
   }
 
-  /* ---------------- AI pipeline ---------------- */
+  /* ---------------- review run ---------------- */
   var log, audit, apps;
   function cagr(a, b, n) { return Math.pow(b / a, 1 / n) - 1; }
-  function runPipeline() {
+  function runReview() {
     log.clear(); audit.clear();
     var P = S.pipe = { ex: {}, checks: [], items: [], fieldsN: 0 };
-    audit.push('planner', 'run started', 'seed ' + S.seed);
+    audit.push('start', 'run started', 'seed ' + S.seed);
     UI.runSteps(log, [
-      { agent: 'planner', run: function () { return { msg: 'Plan: extract every KPI from the CIM with citations, validate them, test the projections against the history and the deal arithmetic, send flags for approval, pass approved flags to the memo drafter' }; } },
-      { agent: 'kpi-extractor', run: function () { P.ex = readCIM(); P.fieldsN = Object.keys(P.ex).length; audit.push('kpi-extractor', 'extracted', P.fieldsN + ' fields'); return { msg: P.fieldsN + ' fields extracted with citations (five-year history, projections, deal terms, initiatives)' }; } },
-      { agent: 'citation-validator', run: function () {
+      { agent: 'start', run: function () { return { msg: 'Run started.' }; } },
+      { agent: 'read', run: function () { P.ex = readCIM(); P.fieldsN = Object.keys(P.ex).length; audit.push('read', 'extracted', P.fieldsN + ' fields'); return { msg: P.fieldsN + ' fields extracted with citations (five-year history, projections, deal terms, initiatives)' }; } },
+      { agent: 'cite', run: function () {
         var ok = 0, bad = 0;
         Object.keys(P.ex).forEach(function (k) { var f = P.ex[k], ln = UI.DocViewer.active.line(f.cite.doc, f.cite.page, f.cite.line); f.valid = f.unit === 'series' ? f.value.every(function (v) { return UI.lineHas(ln, v, 'num'); }) : UI.lineHas(ln, f.value, f.unit); if (f.valid) ok++; else bad++; });
-        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve');
+        audit.push('cite', bad ? 'blocked' : 'passed', ok + ' resolve');
         return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve' + (bad ? ', ' + bad + ' blocked' : '') };
       } },
-      { agent: 'consistency-checker', run: function () {
+      { agent: 'check', run: function () {
         var x = P.ex, res = [], r = x.revenue.value, e = x.ebitda.value, pr = x.projRevenue.value, pe = x.projEbitda.value;
         var gH = cagr(r[0], r[4], 4), gP = cagr(r[4], pr[4], 5), m0 = e[0] / r[0], m4 = e[4] / r[4], m9 = pe[4] / pr[4];
         var organic = find(/projections include no acquisitions/), clean = e[4] - x.addbacks.value;
@@ -380,13 +380,13 @@ uplift_t = p x run-rate x ramp(t)</div>
         add('ev-multiple-arithmetic', Math.abs(x.ev.value / e[4] - x.evMultiple.value) > 0.06, 'EV / adjusted EBITDA', F.num(x.evMultiple.value, 1) + 'x', F.num(x.ev.value / e[4], 2) + 'x');
         add('leverage-arithmetic', Math.abs(x.netDebt.value / e[4] - x.leverage.value) > 0.06, 'Net debt / adjusted EBITDA', F.num(x.leverage.value, 1) + 'x', F.num(x.netDebt.value / e[4], 2) + 'x');
         add('customer-concentration', x.topCustomer.value > 0.10, 'Largest customer share of revenue', F.pct(x.topCustomer.value, 0), 'threshold 10%');
-        audit.push('consistency-checker', 'checked', P.checks.length + ' checks, ' + P.items.length + ' flags');
+        audit.push('check', 'checked', P.checks.length + ' checks, ' + P.items.length + ' flags');
         return res;
       } },
-      { agent: 'memo-drafter', run: function () { audit.push('memo-drafter', 'waiting', 'drafts from approved flags only'); return { status: 'approval', msg: 'Waiting for approvals; only approved flags become memo inputs' }; } }
-    ], afterPipeline);
+      { agent: 'draft', run: function () { audit.push('draft', 'waiting', 'drafts from approved flags only'); return { status: 'approval', msg: 'Waiting for approvals; only approved flags become memo inputs' }; } }
+    ], afterReview);
   }
-  function afterPipeline() {
+  function afterReview() {
     var P = S.pipe;
     apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderMemoInputs });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.checks.filter(function (c) { return c.flag; }).length, review: P.items.length });
@@ -396,8 +396,8 @@ uplift_t = p x run-rate x ramp(t)</div>
   }
   function renderMemoInputs() {
     var ap = S.pipe.items.filter(function (it) { return it.state === 'approved'; });
-    $('#memoInputs').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.memo) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a flag to send it to the memo drafter.</li>';
-    if (ap.length) audit.push('memo-drafter', 'inputs updated', ap.map(function (a) { return a.id; }).join(', '));
+    $('#memoInputs').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.memo) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a flag to add it to the memo inputs.</li>';
+    if (ap.length) audit.push('draft', 'inputs updated', ap.map(function (a) { return a.id; }).join(', '));
   }
   function renderEval() {
     var P = S.pipe, ext = {}, truth = {};
@@ -407,7 +407,7 @@ uplift_t = p x run-rate x ramp(t)</div>
     window.EVAL = { demo: 'Co-Investment Underwriter', href: 'co-invest-underwriter.html#evaluation', fields: ev.n, accuracy: ev.accuracy, coverage: ev.coverage, seeded: fl.seeded, detected: fl.detected, falseFlagRate: fl.falseFlagRate };
     UI.evalLine(window.EVAL);
     UI.kpis('#evalKpis', [{ id: 'evAcc', label: 'Extraction accuracy', value: F.pct(ev.accuracy, 1), sub: ev.correct + ' of ' + ev.n + ' labeled fields (a five-year row counts as one)' }, { id: 'evCov', label: 'Citation coverage', value: F.pct(ev.coverage, 1) }, { id: 'evFlag', label: 'Flags caught / false-flag rate', value: fl.detected + ' of ' + fl.seeded + ' / ' + F.pct(fl.falseFlagRate, 0), sub: (fl.candidates - fl.seeded) + ' checks that should pass' }]);
-    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field or check' }, { key: 't', label: 'Label' }, { key: 'e', label: 'Pipeline' }, { key: 'ok', label: 'Match' }],
+    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field or check' }, { key: 't', label: 'Label' }, { key: 'e', label: 'Extracted' }, { key: 'ok', label: 'Match' }],
       rows: Object.keys(truth).map(function (k) { return { k: k, t: String(truth[k].value), e: ext[k] ? String(ext[k].value) : 'missing', ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no' }; })
         .concat(ids.map(function (id) { var s = LABELS.checks[id].flag, r = raised.indexOf(id) !== -1; return { k: 'check: ' + id, t: s ? 'flag' : 'pass', e: r ? 'flag' : 'pass', ok: s === r ? 'yes' : 'no' }; })) });
   }
@@ -449,13 +449,13 @@ uplift_t = p x run-rate x ramp(t)</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. CIM dated May 2026.'; renderLBO(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runBtn').addEventListener('click', runPipeline);
+    $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzFin', { title: 'Use your own company financials', template: '/assets/templates/company-financials.csv', columns: [{ name: 'year' }, { name: 'kind', desc: 'actual or projection' }, { name: 'revenue', desc: '$m' }, { name: 'ebitda', desc: '$m' }, { name: 'capex', required: false }],
       parse: parseFin, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your company financials, processed locally. Deal terms from the CIM.'; renderAll(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderAll(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Co-Investment Underwriter', slug: 'co-invest-underwriter', report: 'Co-invest screening memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Co-Investment Underwriter'); UI.testsBadge('.tests-badge-slot', 'Co-Investment Underwriter');
-    renderAll(); runPipeline();
+    renderAll(); runReview();
     UI.revealHash(tabs);
   }
   init();

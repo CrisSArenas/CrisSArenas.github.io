@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agentic Portfolio Monitoring | Cristian Arenas</title>
-<meta name="description" content="A guided walkthrough of thirteen AI agents monitoring a synthetic $1bn multi-asset portfolio: policy, risk, liquidity and concentration checks, a post-trade compliance simulation, autonomy levels with hard gates, a re-check loop after every decision, and a tamper-evident hash-chained audit trail.">
+<meta name="description" content="Run a $1bn multi-asset book through one day of market events. The system checks every rule, proposes fixes and waits for your approval before anything trades.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -218,24 +218,6 @@ b,strong{color:var(--text);font-weight:600}
 .acard .at i{color:var(--cyan)}
 .acard .ad{font-size:12px;line-height:1.55;margin-top:5px}
 
-/* --------------------------------------------------------------- fleet */
-.alane{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,2fr) 58px;gap:9px;align-items:center;margin-bottom:6px;font-size:12px}
-.alane .an{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11.5px;min-width:0}
-.alane .an i{width:13px;text-align:center;color:var(--faint);font-size:11px;flex:none}
-.alane .an span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.alane .track{height:14px;background:var(--card2);border:1px solid var(--border);border-radius:5px;overflow:hidden;position:relative}
-.alane .fill{position:absolute;top:0;bottom:0;width:0;background:linear-gradient(90deg,color-mix(in srgb, var(--ai) 35%, transparent),color-mix(in srgb, var(--ai) 80%, transparent));border-radius:4px}
-.alane.done .fill{background:linear-gradient(90deg,color-mix(in srgb, var(--positive) 30%, transparent),color-mix(in srgb, var(--positive) 65%, transparent))}
-.alane.hit .fill{background:linear-gradient(90deg,color-mix(in srgb, var(--warning) 30%, transparent),color-mix(in srgb, var(--warning) 75%, transparent))}
-.alane .ls{font-family:var(--mono);font-size:10.5px;text-align:right;color:var(--faint);white-space:nowrap}
-.alane.done .ls{color:var(--green)}.alane.hit .ls{color:var(--yellow)}
-.alane.done .an,.alane.hit .an{color:var(--text)}
-.tier{font-size:8.5px;padding:1px 5px;border-radius:4px;font-family:var(--mono);letter-spacing:.04em;flex:none}
-.t-frontier{background:color-mix(in srgb, var(--ai) 14%, transparent);color:var(--s5);border:1px solid color-mix(in srgb, var(--ai) 26%, transparent)}
-.t-balanced{background:color-mix(in srgb, var(--ai) 12%, transparent);color:var(--cyan);border:1px solid color-mix(in srgb, var(--ai) 24%, transparent)}
-.t-fast{background:rgba(148,163,184,.1);color:var(--dim);border:1px solid var(--surface-2)}
-.phase{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:10px 0 6px}
-.phase:first-child{margin-top:0}
 .feed{display:flex;flex-direction:column;gap:6px;max-height:430px;overflow-y:auto}
 .feed .fe{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px 10px;border-radius:8px;background:var(--card2);font-size:12.5px;line-height:1.55;color:var(--muted);animation:fadeIn .3s ease}
 .feed .fe i{margin-top:3px;font-size:11px;color:var(--green)}
@@ -313,7 +295,7 @@ b,strong{color:var(--text);font-weight:600}
 
 @media(max-width:980px){.autos{grid-template-columns:1fr}}
 @media(max-width:560px){.slv{grid-template-columns:minmax(0,84px) minmax(0,1fr) 96px}.bigrow{grid-template-columns:1fr}
-  .alane{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 50px}.alane .tier{display:none}
+  
   .audit .ar{grid-template-columns:62px 26px minmax(0,1fr)}}
 </style>
 <script src="/assets/js/site.js"></script>
@@ -353,13 +335,13 @@ b,strong{color:var(--text);font-weight:600}
 <nav class="stepper" id="stepper" aria-label="Walkthrough steps">
   <button type="button" class="st" data-go="1"><span class="st-n">1</span><span class="st-l">The portfolio</span></button>
   <button type="button" class="st" data-go="2"><span class="st-n">2</span><span class="st-l">Today&rsquo;s news</span></button>
-  <button type="button" class="st" data-go="3"><span class="st-n">3</span><span class="st-l">Run the agents</span></button>
+  <button type="button" class="st" data-go="3"><span class="st-n">3</span><span class="st-l">Run the checks</span></button>
   <button type="button" class="st" data-go="4"><span class="st-n">4</span><span class="st-l">What they found</span></button>
   <button type="button" class="st" data-go="5"><span class="st-n">5</span><span class="st-l">You decide</span></button>
   <button type="button" class="st" data-go="6"><span class="st-n">6</span><span class="st-l">The audit trail</span></button>
 </nav>
 
-<main class="steps">
+<main class="steps" id="main">
 
 <!-- ============================ STEP 1 ============================ -->
 <section class="step" id="step1" aria-labelledby="h1">
@@ -368,7 +350,7 @@ b,strong{color:var(--text);font-weight:600}
     <h2 id="h1">Meet the portfolio</h2>
     <p>A $1.0bn portfolio spread across eight asset classes, the way a university endowment or foundation invests. Its
     <b>Investment Policy Statement</b>, the rulebook agreed with the investment committee, sets a target and an allowed
-    range for each, plus limits on risk, liquidity and concentration. The agents&rsquo; job is to check every rule, every day.</p>
+    range for each, plus limits on risk, liquidity and concentration. The system checks every rule, every day.</p>
   </div>
   <div class="cols">
     <div class="card">
@@ -420,7 +402,7 @@ b,strong{color:var(--text);font-weight:600}
   </div>
   <div class="step-nav">
     <button type="button" class="d-btn" data-go="1"><i class="fas fa-arrow-left"></i> Back</button>
-    <button type="button" class="d-btn primary big" data-go="3">Next: run the agents <i class="fas fa-arrow-right"></i></button>
+    <button type="button" class="d-btn primary big" data-go="3">Next: run the checks <i class="fas fa-arrow-right"></i></button>
   </div>
 </section>
 
@@ -428,11 +410,11 @@ b,strong{color:var(--text);font-weight:600}
 <section class="step" id="step3" aria-labelledby="h3">
   <div class="step-head">
     <span class="step-badge">Step 3 of 6</span>
-    <h2 id="h3">Run the agents</h2>
+    <h2 id="h3">Run the checks</h2>
     <p>Choose how much the system may do on its own, then run the checks.</p>
   </div>
   <div class="card">
-    <h3><i class="fas fa-user-shield"></i> How much can the agents do without you?</h3>
+    <h3><i class="fas fa-user-shield"></i> How much can the system do without you?</h3>
     <div class="autos" id="autoCards"></div>
   </div>
   <div class="step-nav" style="margin:16px 0">
@@ -440,18 +422,11 @@ b,strong{color:var(--text);font-weight:600}
     <button type="button" class="d-btn primary big" id="runBtn"><i class="fas fa-play"></i> Run the monitoring cycle</button>
   </div>
   <div class="grid2">
-    <div class="card" hidden>
-      <div class="card-head"><h3><i class="fas fa-diagram-project"></i> The fleet at work</h3><span class="tag">bar = when each agent runs</span></div>
-      <div id="fleet"></div>
-      <p class="hint">An agent can only start once everything it depends on has finished, so the six checkers overlap and the cycle
-      takes as long as its <b>longest chain</b>, not the sum of all the work. Tier labels show which size of model each role uses.</p>
-    </div>
     <div class="card">
       <div class="card-head"><h3><i class="fas fa-comments"></i> What the checks found</h3></div>
       <div id="feed"></div>
     </div>
   </div>
-  <div class="tiles" id="fleetTiles" hidden></div>
   <div class="step-nav">
     <button type="button" class="d-btn" data-go="2"><i class="fas fa-arrow-left"></i> Back</button>
     <button type="button" class="d-btn primary big" data-go="4" id="toFindings">Next: what they found <i class="fas fa-arrow-right"></i></button>
@@ -462,10 +437,8 @@ b,strong{color:var(--text);font-weight:600}
 <section class="step" id="step4" aria-labelledby="h4">
   <div class="step-head">
     <span class="step-badge">Step 4 of 6</span>
-    <h2 id="h4">What the agents found</h2>
-    <p>Every finding names the rule it broke, the numbers that broke it, and the agent that raised it, so a wrong call can be
-    traced to one agent and fixed without touching the rest of the fleet. Checks are plain arithmetic in code, never a language
-    model guessing: rules like these must be testable and cannot be allowed to hallucinate.</p>
+    <h2 id="h4">What the checks found</h2>
+    <p>Every finding names the rule it broke and the numbers that broke it. The checks are plain arithmetic, so every one can be tested.</p>
   </div>
   <div class="stale" id="stale4"></div>
   <div class="cols">
@@ -501,10 +474,7 @@ b,strong{color:var(--text);font-weight:600}
   <div class="step-head">
     <span class="step-badge">Step 5 of 6</span>
     <h2 id="h5">You decide</h2>
-    <p>For each finding the planner drafted a fix, costed it, and the compliance agent re-ran every rule on the portfolio as it
-    would look <em>after</em> the trade, so a fix that breaks something else never reaches you. Two gates cannot be
-    overridden: <b>stale prices stop all automatic trading</b>, and <b>private assets cannot be sold</b> to fix a range, so those go
-    to the investment committee instead.</p>
+    <p>Each finding comes with a fix, its cost and the portfolio as it would look after the trade. A fix that breaks another rule never reaches you. Stale prices block automatic trading at every setting, and private assets are never sold to fix a range, so those go to the investment committee.</p>
   </div>
   <div class="stale" id="stale5"></div>
   <div class="cols">
@@ -535,8 +505,8 @@ b,strong{color:var(--text);font-weight:600}
 <section class="step" id="step6" aria-labelledby="h6">
   <div class="step-head">
     <span class="step-badge">Step 6 of 6</span>
-    <h2 id="h6">The audit trail, and the bill</h2>
-    <p>An agent that acted is not enough for a regulated investor; it has to be an agent that can be <b>shown</b> to have acted.
+    <h2 id="h6">The audit trail</h2>
+    <p>An institutional portfolio needs proof of every action.
     Every finding, decision and trade is written to a hash-chained log: each line&rsquo;s fingerprint is computed from the line
     <em>and the fingerprint before it</em>, so changing any entry breaks every fingerprint after it. Try tampering with one.</p>
   </div>
@@ -550,16 +520,6 @@ b,strong{color:var(--text);font-weight:600}
         </div></div>
       <div class="audit" id="audit"></div>
       <div class="verdict" id="verdict"></div>
-    </div>
-    <div class="stack">
-      <div class="card" hidden>
-        <h3><i class="fas fa-coins"></i> What a cycle costs</h3>
-        <div class="bigrow" id="econTiles"></div>
-        <div class="tscroll"><table class="mtable econ" id="econTable" style="min-width:360px"></table></div>
-        <p class="hint">Model prices are illustrative round numbers. The point is the shape: the six checkers compare numbers
-        against limits, which a small, fast model does as well as a large one. Only the planner, which has to weigh several
-        constraints at once, gets the most capable model, and routing the rest down is most of the saving.</p>
-      </div>
     </div>
   </div>
   <div class="step-nav">
@@ -583,55 +543,20 @@ b,strong{color:var(--text);font-weight:600}
     <div class="d-help-body">
 
       <div class="d-help-section">
-        <h3>1 &middot; What the page does</h3>
-        <p>Portfolio monitoring suits agents and not a chatbot: the work is continuous, rule-bound, spread across many data sources,
-        and the output is a short list of things a person must decide. It is also where a mistake is expensive and an unexplained
-        action is unacceptable, so most of the engineering here is about <strong>controls</strong>, not about the model.</p>
-        <p>The walkthrough: look at the portfolio and its rulebook, hit it with real-world events, run the fleet, read the findings,
-        approve or reject the fixes, and finally check that the record of everything that happened cannot be quietly changed.</p>
+        <h3>What the page does</h3>
+        <p>It runs a $1bn multi-asset book through one day of events. Add market events, run the checks, read what they find and approve or reject each fix. The audit trail at the end shows if anyone edits the record later.</p>
       </div>
-
-      <div class="d-help-section" hidden>
-        <h3>2 &middot; The fleet</h3>
-        <table>
-          <tr><th>Agent</th><th>Model</th><th>Job</th></tr>
-          <tr><td>market-data-ingest</td><td>balanced</td><td>Loads prices, FX and the position file; normalises and timestamps every record.</td></tr>
-          <tr><td>data-quality</td><td>fast</td><td>Price freshness and data incidents. <strong>Gates all automatic trading.</strong></td></tr>
-          <tr><td>guideline-monitor</td><td>balanced</td><td>Asset-class ranges, the cash floor, the illiquid cap and drift from target.</td></tr>
-          <tr><td>risk-sentinel</td><td>balanced</td><td>Tracking error against the target mix, from the covariance matrix.</td></tr>
-          <tr><td>liquidity-watch</td><td>balanced</td><td>Share sellable within 10 days, commitment coverage, known payments funded.</td></tr>
-          <tr><td>concentration-monitor</td><td>fast</td><td>Single-company exposure, stocks and bonds together, against 5% of NAV.</td></tr>
-          <tr><td>corporate-actions</td><td>fast</td><td>Rating changes and events that make a holding ineligible.</td></tr>
-          <tr><td>finding-triage</td><td>balanced</td><td>De-duplicates, ranks by severity.</td></tr>
-          <tr><td>remediation-planner</td><td>frontier</td><td>Drafts the fixes. The one role that needs the strongest model, because it weighs several constraints at once.</td></tr>
-          <tr><td>impact-estimator</td><td>balanced</td><td>Spread and market-impact cost of each trade.</td></tr>
-          <tr><td>compliance-simulator</td><td>balanced</td><td>Re-runs every rule on the portfolio as it would look after each trade.</td></tr>
-          <tr><td>approval-router</td><td>fast</td><td>Applies the autonomy policy and the gates, and releases what it is allowed to.</td></tr>
-          <tr><td>audit-logger</td><td>fast</td><td>Writes the hash-chained record.</td></tr>
-        </table>
-      </div>
-
       <div class="d-help-section">
-        <h3>3 &middot; Autonomy, and the gates above it</h3>
-        <p><strong>Observe only</strong> detects and explains and never releases anything, how a deployment starts, while you
-        measure how often the agents are right. <strong>Propose, you approve</strong> drafts, costs and re-checks every fix and waits for a
-        click. <strong>Small trades run automatically</strong> lets the router execute fixes under $25m that are not critical and pass the
-        post-trade check, then re-checks the portfolio after each one.</p>
-        <p>Two gates cannot be overridden from the page. <strong>Stale prices</strong> stop all automatic trading at every setting: an
-        agent acting confidently on yesterday&rsquo;s price is the most expensive failure in this design and the cheapest to prevent.
-        <strong>Private assets</strong> cannot be sold to fix a range, so those findings go to the investment committee instead of
-        becoming an order nobody could fill.</p>
+        <h3>How much runs on its own</h3>
+        <p><strong>Observe only</strong> finds and explains problems and never trades. <strong>Propose, you approve</strong> drafts and costs every fix and waits for you. <strong>Small trades run automatically</strong> releases fixes under $25m that aren't critical and pass the post-trade check.</p>
+        <p>Stale prices block automatic trading at every setting. Private assets are never sold to fix a range, and those findings go to the investment committee.</p>
       </div>
-
       <div class="d-help-section">
-        <h3>4 &middot; The loop closes</h3>
-        <p>Every approval changes the portfolio, so the fleet checks it again straight away. Fixes whose finding has already been
-        cleared are withdrawn, selling emerging-market stocks into cash, for example, also lifts cash above its floor, so the
-        separate cash top-up is no longer needed. Fixes whose finding is still open are re-sized to the new portfolio.</p>
+        <h3>After each approval</h3>
+        <p>The book changes, so it gets checked again. Fixes that are no longer needed are withdrawn and the rest are resized.</p>
       </div>
-
       <div class="d-help-section">
-        <h3>5 &middot; The rules</h3>
+        <h3>The rules</h3>
         <table>
           <tr><th>Rule</th><th>Limit</th><th>Severity</th></tr>
           <tr><td>Asset-class range</td><td>per-class band</td><td>critical</td></tr>
@@ -648,11 +573,8 @@ b,strong{color:var(--text);font-weight:600}
       </div>
 
       <div class="d-help-section">
-        <h3>6 &middot; What is simulated</h3>
-        <p><strong>No model is called</strong> and no network request leaves the page. The agents are deterministic functions with fixed
-        latencies and token counts; each finding&rsquo;s wording is generated from the rule that fired and the numbers that fired it.
-        What is real is the <em>architecture</em>: the dependency graph, the gates, the post-trade check, the re-check loop, the routing
-        and the hash chain. The portfolio is synthetic, and model prices are round illustrative numbers.</p>
+        <h3>What is simulated</h3>
+        <p>The portfolio and the events are made up. No model is called and no order is placed.</p>
       </div>
 
     </div>
@@ -708,7 +630,7 @@ b,strong{color:var(--text);font-weight:600}
 /* ======================= BOOK, POLICY, LIMITS ==========================
    A synthetic $1.0bn institutional multi-asset mandate. Policy weights and
    IPS ranges are the sort a mid-size endowment or foundation runs; the
-   numbers are illustrative, not anyone's actual book.                    */
+   numbers are illustrative.                    */
 const NAV0=1000;                                   // $m
 const SLEEVE=[
  {k:'US Equity',     pol:25,lo:15,hi:35,vol:16.0,cost:4, liqDays:1,  priv:false},
@@ -769,7 +691,7 @@ function resetAll(){
   findings=[];proposals=[];auditLog=[];lastHash='00000000';cycleNo=0;running=false;
   bookVer=0;checkedVer=-1;pid=0;fid=0;tamper=null;FEED=[];LANES={};
   S.auto='propose';S.visited=new Set([1]);
-  push('system','fleet initialised · book $'+B.nav.toFixed(0)+'m · 13 agents registered','a');
+  push('system','book loaded · $'+B.nav.toFixed(0)+'m','a');
 }
 
 /* ============================ HASH CHAIN ===============================
@@ -835,37 +757,29 @@ function tradeCostBps(i,pctNav){
   return s.cost*0.5+s.cost*0.5*Math.sqrt(Math.max(Math.abs(pctNav),0.01)/2.0);
 }
 
-/* ============================ AGENT FLEET ==============================
-   Latency and token counts are fixed per role. Tier prices are illustrative
-   round numbers, chosen to show the shape of the routing decision.       */
-const PRICE={frontier:{in:15,out:75},balanced:{in:3,out:15},fast:{in:0.8,out:4}};   // $ per Mtok
-const AGENTS=[
- {id:'ingest',   n:'market-data-ingest',    i:'fa-download',      tier:'balanced',dep:[],        ms:420,tin:3200,tout:420},
- {id:'dq',       n:'data-quality',          i:'fa-shield-halved', tier:'fast',    dep:['ingest'],ms:310,tin:2600,tout:380},
- {id:'guideline',n:'guideline-monitor',     i:'fa-ruler',         tier:'balanced',dep:['ingest'],ms:480,tin:4100,tout:620},
- {id:'risk',     n:'risk-sentinel',         i:'fa-wave-square',   tier:'balanced',dep:['ingest'],ms:640,tin:5200,tout:710},
- {id:'liquidity',n:'liquidity-watch',       i:'fa-droplet',       tier:'balanced',dep:['ingest'],ms:520,tin:3800,tout:540},
- {id:'conc',     n:'concentration-monitor', i:'fa-layer-group',   tier:'fast',    dep:['ingest'],ms:290,tin:2900,tout:340},
- {id:'corpact',  n:'corporate-actions',     i:'fa-calendar-check',tier:'fast',    dep:['ingest'],ms:260,tin:1900,tout:260},
- {id:'triage',   n:'finding-triage',        i:'fa-filter',        tier:'balanced',dep:['dq','guideline','risk','liquidity','conc','corpact'],ms:380,tin:4600,tout:880},
- {id:'planner',  n:'remediation-planner',   i:'fa-brain',         tier:'frontier',dep:['triage'],ms:910,tin:7400,tout:2100},
- {id:'impact',   n:'impact-estimator',      i:'fa-coins',         tier:'balanced',dep:['planner'],ms:440,tin:3100,tout:480},
- {id:'precheck', n:'compliance-simulator',  i:'fa-clipboard-list',tier:'balanced',dep:['impact'],ms:500,tin:4400,tout:690},
- {id:'router',   n:'approval-router',       i:'fa-route',         tier:'fast',    dep:['precheck'],ms:180,tin:1500,tout:210},
- {id:'audit',    n:'audit-logger',          i:'fa-fingerprint',   tier:'fast',    dep:['router'],ms:140,tin:1100,tout:160}
+/* ============================== CHECK STEPS ============================
+   Display timing for each step of a cycle.                               */
+const STEPS=[
+ {id:'ingest',n:'prices',dep:[],ms:420},
+ {id:'dq',n:'data-quality',dep:['ingest'],ms:310},
+ {id:'guideline',n:'guidelines',dep:['ingest'],ms:480},
+ {id:'risk',n:'risk',dep:['ingest'],ms:640},
+ {id:'liquidity',n:'liquidity',dep:['ingest'],ms:520},
+ {id:'conc',n:'concentration',dep:['ingest'],ms:290},
+ {id:'corpact',n:'corporate-actions',dep:['ingest'],ms:260},
+ {id:'triage',n:'triage',dep:['dq','guideline','risk','liquidity','conc','corpact'],ms:380},
+ {id:'plan',n:'actions',dep:['triage'],ms:910},
+ {id:'impact',n:'cost',dep:['plan'],ms:440},
+ {id:'precheck',n:'pre-trade',dep:['impact'],ms:500},
+ {id:'router',n:'routing',dep:['precheck'],ms:180},
+ {id:'audit',n:'audit',dep:['router'],ms:140}
 ];
-// Earliest start of each agent = latest finish among its dependencies.
 const SCHED=(function(){
   const end={},start={};
-  AGENTS.forEach(a=>{const t0=a.dep.length?Math.max(...a.dep.map(d=>end[d])):0;start[a.id]=t0;end[a.id]=t0+a.ms;});
-  return{start,end,span:Math.max(...AGENTS.map(a=>end[a.id]))};
+  STEPS.forEach(a=>{const t0=a.dep.length?Math.max(...a.dep.map(d=>end[d])):0;start[a.id]=t0;end[a.id]=t0+a.ms;});
+  return{start,end,span:Math.max(...STEPS.map(a=>end[a.id]))};
 })();
-const agentCost=(a,tier)=>{const p=PRICE[tier||a.tier];return(a.tin*p.in+a.tout*p.out)/1e6;};
-const CYCLE_TOK=AGENTS.reduce((s,a)=>s+a.tin+a.tout,0);
-const CYCLE_COST=AGENTS.reduce((s,a)=>s+agentCost(a),0);
-const ALL_FRONTIER=AGENTS.reduce((s,a)=>s+agentCost(a,'frontier'),0);
-const TOTAL_WORK=AGENTS.reduce((s,a)=>s+a.ms,0);
-const AGENT_OF=Object.fromEntries(AGENTS.map(a=>[a.n,a.id]));
+const STEP_OF=Object.fromEntries(STEPS.map(a=>[a.n,a.id]));
 
 /* ============================== EVENTS ================================= */
 function sellPro(idx,pts){                         // sell `pts` of NAV pro-rata across sleeves
@@ -943,35 +857,35 @@ const WHY={
 };
 function detect(){
   const out=[];
-  const F=(agent,sev,key,rule,title,detail,extra)=>out.push(Object.assign({id:++fid,agent,sev,key,rule,title,detail},extra||{}));
+  const F=(check,sev,key,rule,title,detail,extra)=>out.push(Object.assign({id:++fid,check,sev,key,rule,title,detail},extra||{}));
   SLEEVE.forEach((s,i)=>{
     const w=B.w[i];
-    if(w>s.hi+1e-9)F('guideline-monitor','critical','ips:'+i,'ips','Above its range: '+s.k,
+    if(w>s.hi+1e-9)F('guidelines','critical','ips:'+i,'ips','Above its range: '+s.k,
       s.k+' is '+pp(w)+'% of the portfolio against a ceiling of '+s.hi+'%, over by '+pp(w-s.hi)+' points.',{sleeve:i,target:s.hi-0.5});
-    else if(w<s.lo-1e-9)F('guideline-monitor','critical','ips:'+i,'ips','Below its range: '+s.k,
+    else if(w<s.lo-1e-9)F('guidelines','critical','ips:'+i,'ips','Below its range: '+s.k,
       s.k+' is '+pp(w)+'% of the portfolio against a floor of '+s.lo+'%, short by '+pp(s.lo-w)+' points.',{sleeve:i,target:s.lo+0.5});
   });
   const il=illiqPct();
-  if(il>LIMIT.illiq)F('guideline-monitor','critical','illiq','illiq','Too much in illiquid assets',
+  if(il>LIMIT.illiq)F('guidelines','critical','illiq','illiq','Too much in illiquid assets',
     'Private equity and real assets add up to '+pp(il)+'% against a '+LIMIT.illiq+'% cap. Neither can be sold to fix it.');
   const dr=driftBps();
-  if(dr>LIMIT.drift)F('guideline-monitor','medium','drift','drift','Drifted from the target mix',
+  if(dr>LIMIT.drift)F('guidelines','medium','drift','drift','Drifted from the target mix',
     'In total the portfolio sits '+dr.toFixed(0)+' bps away from its target weights; the review trigger is '+LIMIT.drift+' bps.');
   const te=trackingError();
-  if(te>LIMIT.te)F('risk-sentinel','high','te','te','Tracking error above its limit',
+  if(te>LIMIT.te)F('risk','high','te','te','Tracking error above its limit',
     'Estimated tracking error against the target mix is '+te.toFixed(0)+' bps against a '+LIMIT.te+' bps limit, driven by the asset classes outside their ranges. The range trades bring it back.');
   const lw=liquidWithin(LIMIT.liqHorizon);
-  if(lw<LIMIT.liqMin)F('liquidity-watch','high','liq','liq','Not enough sellable within 10 days',
+  if(lw<LIMIT.liqMin)F('liquidity','high','liq','liq','Not enough sellable within 10 days',
     'Only '+lw.toFixed(1)+'% of NAV can be sold within '+LIMIT.liqHorizon+' business days, against a '+LIMIT.liqMin+'% floor.');
   const cv=coverage();
-  if(cv<LIMIT.cover)F('liquidity-watch','high','cover','cover','Commitments thinly covered',
+  if(cv<LIMIT.cover)F('liquidity','high','cover','cover','Commitments thinly covered',
     '$'+callsOnCapital().toFixed(0)+'m could be called against $'+(liquidPct()/100*B.nav).toFixed(0)+'m of liquid assets: '+cv.toFixed(2)+'× against a '+LIMIT.cover+'× floor.');
-  if(B.pending>0&&B.w[CASH]<cashNeed()-1e-9)F('liquidity-watch','high','redeem','redeem','Redemption not yet funded',
+  if(B.pending>0&&B.w[CASH]<cashNeed()-1e-9)F('liquidity','high','redeem','redeem','Redemption not yet funded',
     '$'+B.pending+'m is payable in 30 days. Cash is $'+(B.w[CASH]/100*B.nav).toFixed(0)+'m; paying it while keeping the 1% cash floor needs $'
     +(cashNeed()/100*B.nav).toFixed(0)+'m.');
   B.issuers.forEach(x=>{
     const t=exposure(x);
-    if(t>LIMIT.issuer+1e-9)F('concentration-monitor','high','issuer:'+x.n,'issuer','Too much in one company: '+x.n,
+    if(t>LIMIT.issuer+1e-9)F('concentration','high','issuer:'+x.n,'issuer','Too much in one company: '+x.n,
       x.n+' ('+x.s+') is '+pp(t)+'% of NAV: '+pp(x.eq)+'% in its stock'+(x.fi>0?' and '+pp(x.fi)+'% in its bonds':'')+', against a '+LIMIT.issuer+'% limit.',{issuer:x.n});
     if(IG.indexOf(x.rating)<0&&x.fi>1e-9)F('corporate-actions','high','elig:'+x.n,'elig','Bond no longer eligible: '+x.n,
       x.n+' was cut to '+x.rating+', below investment grade. The core bond sleeve still holds '+pp(x.fi)+'% of NAV of its bonds.',{issuer:x.n});
@@ -987,8 +901,8 @@ function detect(){
 
 /* ============================== PLANNING ================================
    One proposal per finding that a trade or an action can address. Private
-   breaches are never given a trade: an agent that drafts a plausible order
-   for an impossible trade is worse than one that drafts nothing.         */
+   breaches are never given a trade: a plausible order for an impossible
+   trade is worse than no order.         */
 function funder(exclude,delta){                  // delta applies to the FUNDING sleeve
   const order=[CASH,3,0,1,4,2];
   for(const i of order){
@@ -1003,11 +917,11 @@ function planFor(f){
   const esc=(title,why)=>Object.assign(base,{kind:'escalate',title,why});
   if(f.rule==='ips'){
     const i=f.sleeve,s=SLEEVE[i];
-    if(s.priv)return esc('Pacing plan for '+s.k,s.k+' is money locked in private funds; it cannot be sold to fix a range. The planner sends it to the '
+    if(s.priv)return esc('Pacing plan for '+s.k,s.k+' is money locked in private funds; it cannot be sold to fix a range. It goes to the '
       +'investment committee with the realistic options: slow the next commitments, sell a fund stake on the secondary market, or let the public side grow into it.');
     const need=f.target-B.w[i],j=funder(i,-need);
     if(j<0)return esc('No room to rebalance '+s.k,'Moving '+s.k+' by '+pp(Math.abs(need))+' points needs another asset class to take the other side, '
-      +'and every liquid one is already at a limit. That is a policy decision, not a trade.');
+      +'and every liquid one is already at a limit. That is a policy decision.');
     const notional=Math.abs(need)/100*B.nav;
     return Object.assign(base,{kind:'trade',title:(need>0?'Buy ':'Sell ')+pp(Math.abs(need))+' pts of '+s.k,
       legs:[{i,d:need},{i:j,d:-need}],notional,
@@ -1041,11 +955,11 @@ function planFor(f){
         +'cash until the payment date. Doing it now, calmly, costs less than a forced sale in 30 days.'});
   }
   if(f.rule==='stale')return Object.assign(base,{kind:'ops',title:'Re-price from the backup vendor',
-    why:'Switches the affected asset classes to the secondary pricing vendor and re-marks them. It is not a trade, but it changes the numbers every '
-      +'other agent relies on, so it always needs a named person.'});
+    why:'Switches the affected asset classes to the secondary pricing vendor and re-marks them. It is an operational change, and it changes the numbers every '
+      +'other check relies on, so it always needs a named person.'});
   if(f.rule==='illiq'||f.rule==='liq'||f.rule==='cover')
-    return esc('Committee review: '+f.title.toLowerCase(),'A structural liquidity problem, not a drift. Fixing it means slowing new private commitments, '
-      +'selling fund stakes or arranging a credit line, decisions for the investment committee over months. The fleet raises it and stops.');
+    return esc('Committee review: '+f.title.toLowerCase(),'A structural liquidity problem. Fixing it means slowing new private commitments, '
+      +'selling fund stakes or arranging a credit line, decisions for the investment committee over months. The system raises it and stops.');
   return null;                                  // tracking error, drift, incident: informational
 }
 
@@ -1084,13 +998,13 @@ const AUTO_LABEL={observe:'observe only',propose:'propose, human approves',assis
 function route(p){
   if(p.kind==='escalate')return{mode:'committee',why:'goes to the investment committee: no trade can fix it'};
   if(!p.pre.ok)return{mode:'blocked',why:'blocked by the compliance check'};
-  if(S.auto==='observe')return{mode:'shadow',why:'observe-only: logged to measure the agents, never released'};
+  if(S.auto==='observe')return{mode:'shadow',why:'observe only: logged, never released'};
   if(p.kind==='ops')return{mode:'manual',why:'operational changes always need a named person'};
   if(staleNames().length)return{mode:'manual',why:'data-quality gate: prices are stale, so nothing runs automatically'};
   if(S.auto!=='assisted')return{mode:'manual',why:'autonomy is set to propose-and-approve'};
   if(p.sev==='critical')return{mode:'manual',why:'critical findings always go to a person'};
   if(p.notional>AUTO_MAX)return{mode:'manual',why:'$'+p.notional.toFixed(1)+'m is above the $'+AUTO_MAX+'m automatic limit'};
-  return{mode:'auto',why:'small, not critical, prices fresh and post-trade check clean'};
+  return{mode:'auto',why:'small, below critical, prices fresh and post-trade check clean'};
 }
 
 /* ========================= EXECUTION AND RE-CHECK ======================= */
@@ -1110,7 +1024,7 @@ function execute(p,who){
     B.staleHrs=START.staleHrs.slice();B.incident=false;bookVer++;
     push(who,'#'+p.id+' switched to the backup pricing vendor · all public marks refreshed','g');
   }
-  p.state=who.indexOf('approval-router')===0?'auto':'approved';p.by=who;
+  p.state=who.indexOf('routing')===0?'auto':'approved';p.by=who;
   recheck();
   return true;
 }
@@ -1123,17 +1037,17 @@ function recheck(){
     if(p.state!=='open')return;
     if(!keys.has(p.fkey)){
       p.state='superseded';
-      push('remediation-planner','#'+p.id+' '+p.title+', withdrawn: its finding is already cleared','t');
+      push('actions','#'+p.id+' '+p.title+', withdrawn: its finding is already cleared','t');
       return;
     }
     const np=planFor(findings.find(f=>f.key===p.fkey));
     if(np&&(np.title!==p.title||Math.abs(np.notional-p.notional)>0.05)){
       Object.assign(p,np);p.resized=true;
-      push('remediation-planner','#'+p.id+' re-sized after the book changed: '+p.title,'t');
+      push('actions','#'+p.id+' re-sized after the book changed: '+p.title,'t');
     }
     p.pre=precheck(p);p.route=route(p);
   });
-  push('guideline-monitor','re-check after the change · '+findings.length+' finding'+(findings.length===1?'':'s')+' open',findings.length?'w':'g');
+  push('guidelines','re-check after the change · '+findings.length+' finding'+(findings.length===1?'':'s')+' open',findings.length?'w':'g');
 }
 function autoRun(){
   let n=0;
@@ -1147,8 +1061,8 @@ function autoRun(){
 
 /* ============================== THE CYCLE =============================== */
 function reports(){
-  const by=a=>findings.filter(f=>f.agent===a);
-  const st=staleNames(),te=trackingError(),g=by('guideline-monitor').filter(f=>f.rule==='ips');
+  const by=a=>findings.filter(f=>f.check===a);
+  const st=staleNames(),te=trackingError(),g=by('guidelines').filter(f=>f.rule==='ips');
   const cnt=s=>findings.filter(f=>f.sev===s).length;
   const trades=proposals.filter(p=>p.kind==='trade'),ok=trades.filter(p=>p.pre.ok);
   const modes=m=>proposals.filter(p=>p.route.mode===m).length;
@@ -1167,7 +1081,7 @@ function reports(){
     corpact:inel.length?'<b>'+inel[0].issuer+' is below investment grade</b> and still held in the core bond sleeve.':'No rating actions or corporate events that affect eligibility.',
     triage:findings.length?'<b>'+findings.length+' finding'+(findings.length>1?'s':'')+'</b> after de-duplication: '
       +[['critical',cnt('critical')],['high',cnt('high')],['medium',cnt('medium')]].filter(x=>x[1]).map(x=>x[1]+' '+x[0]).join(', ')+'.':'Nothing to report. The book is inside every rule.',
-    planner:proposals.length?'Drafted <b>'+proposals.length+' action'+(proposals.length>1?'s':'')+'</b>: '+trades.length+' trade'+(trades.length===1?'':'s')+', '
+    plan:proposals.length?'Drafted <b>'+proposals.length+' action'+(proposals.length>1?'s':'')+'</b>: '+trades.length+' trade'+(trades.length===1?'':'s')+', '
       +proposals.filter(p=>p.kind==='ops').length+' operational, '+proposals.filter(p=>p.kind==='escalate').length+' for the committee.':'No action needed.',
     impact:trades.length?'Estimated cost of the trades: <b>$'+(trades.reduce((a,p)=>a+p.cost,0)*1000).toFixed(1)+'k</b> on $'
       +trades.reduce((a,p)=>a+p.notional,0).toFixed(1)+'m traded.':'No trades to cost.',
@@ -1181,38 +1095,34 @@ function reports(){
 function runCycle(){
   if(running)return;
   running=true;cycleNo++;CYCLE0=clone(B);
-  push('orchestrator','cycle '+cycleNo+' started · 13 agents · autonomy: '+AUTO_LABEL[S.auto],'a');
+  push('system','cycle '+cycleNo+' started · autonomy: '+AUTO_LABEL[S.auto],'a');
   findings=detect();checkedVer=bookVer;
   proposals=[];
   findings.forEach(f=>{const p=planFor(f);if(p){p.id=++pid;p.state='open';proposals.push(p);}});
   proposals.forEach(p=>{p.pre=precheck(p);p.route=route(p);});
-  findings.forEach(f=>push(f.agent,'['+f.sev+'] '+f.title,f.sev==='medium'?'w':'e'));
-  push('finding-triage',findings.length+' finding'+(findings.length===1?'':'s')+' after de-duplication','a');
-  push('remediation-planner','drafted '+proposals.length+' action'+(proposals.length===1?'':'s'),'a');
-  proposals.forEach(p=>push('compliance-simulator','#'+p.id+' '+p.title+' · '+p.pre.reason,p.pre.ok?'g':'e'));
-  push('approval-router','autonomy '+AUTO_LABEL[S.auto]+' · '+proposals.map(p=>'#'+p.id+' '+p.route.mode).join(', '),'a');
-  push('audit-logger','cycle '+cycleNo+' sealed · '+fmt(CYCLE_TOK)+' tokens · $'+CYCLE_COST.toFixed(3),'a');
+  findings.forEach(f=>push(f.check,'['+f.sev+'] '+f.title,f.sev==='medium'?'w':'e'));
+  push('triage',findings.length+' finding'+(findings.length===1?'':'s')+' after de-duplication','a');
+  push('actions','drafted '+proposals.length+' action'+(proposals.length===1?'':'s'),'a');
+  proposals.forEach(p=>push('pre-trade','#'+p.id+' '+p.title+' · '+p.pre.reason,p.pre.ok?'g':'e'));
+  push('routing','autonomy '+AUTO_LABEL[S.auto]+' · '+proposals.map(p=>'#'+p.id+' '+p.route.mode).join(', '),'a');
+  push('audit','cycle '+cycleNo+' sealed','a');
   const rep=reports();
-  const hits={};findings.forEach(f=>{hits[AGENT_OF[f.agent]]=true;});
+  const hits={};findings.forEach(f=>{hits[STEP_OF[f.check]]=true;});
   // The state is already committed; what follows is the reveal.
-  FEED=[];LANES={};AGENTS.forEach(a=>{LANES[a.id]='idle';});
-  renderFleet();renderFeed();syncRun();
+  FEED=[];LANES={};STEPS.forEach(a=>{LANES[a.id]='idle';});
+  renderFeed();syncRun();
   const SPEED=0.8;
-  AGENTS.forEach(a=>{
-    const fill=el('fill-'+a.id);
-    if(fill){fill.style.transition='none';fill.style.width='0';void fill.offsetWidth;
-      fill.style.transition='width '+(a.ms*SPEED)+'ms linear '+(SCHED.start[a.id]*SPEED)+'ms';fill.style.width=(a.ms/SCHED.span*100).toFixed(1)+'%';}
-    cycleTimers.push(setTimeout(()=>{LANES[a.id]='run';paintLane(a);},SCHED.start[a.id]*SPEED));
+  STEPS.forEach(a=>{
     cycleTimers.push(setTimeout(()=>{
-      LANES[a.id]=hits[a.id]?'hit':'done';paintLane(a);
+      LANES[a.id]=hits[a.id]?'hit':'done';
       FEED.unshift({a,hit:!!hits[a.id],msg:rep[a.id],t:new Date().toTimeString().slice(0,8)});renderFeed();
     },(SCHED.start[a.id]+a.ms)*SPEED));
   });
   cycleTimers.push(setTimeout(()=>{
     const n=autoRun();
-    if(n)FEED.unshift({a:AGENTS.find(x=>x.id==='router'),hit:false,t:new Date().toTimeString().slice(0,8),msg:'Released <b>'+n+' small trade'+(n>1?'s':'')+'</b> automatically, as allowed. Each one was re-checked first.'});
+    if(n)FEED.unshift({a:STEPS.find(x=>x.id==='router'),hit:false,t:new Date().toTimeString().slice(0,8),msg:'Released <b>'+n+' small trade'+(n>1?'s':'')+'</b> automatically, as allowed. Each one was re-checked first.'});
     running=false;cycleTimers=[];
-    renderFeed();syncRun();updateStepper();refreshStatus();renderFleetTiles();
+    renderFeed();syncRun();updateStepper();refreshStatus();
   },SCHED.span*SPEED+120));
 }
 
@@ -1284,47 +1194,23 @@ function renderEvents(){
 
 /* ------------------------------------------------------------- step 3 */
 function renderAutos(){
-  const A=[['observe','fa-eye','Observe only','Agents check and explain, and nothing is ever released. How a real deployment starts: you measure how often the agents are right before letting them near an order.'],
-    ['propose','fa-hand','Propose, you approve','Agents draft, cost and re-check every fix; a person clicks approve. The setting a real deployment lives in for a long time.'],
+  const A=[['observe','fa-eye','Observe only','The checks run and explain, and nothing is released. You see how often they are right before they touch an order.'],
+    ['propose','fa-hand','Propose, you approve','The system drafts, costs and re-checks every fix. A person approves each one.'],
     ['assisted','fa-bolt','Small trades run automatically','Fixes under $'+AUTO_MAX+'m that are not critical and pass the re-check go through on their own. Stale prices still stop everything.']];
   el('autoCards').innerHTML=A.map(a=>'<button type="button" class="acard'+(S.auto===a[0]?' on':'')+'" data-a="'+a[0]+'" aria-pressed="'+(S.auto===a[0])+'">'
     +'<span class="at"><i class="fas '+a[1]+'"></i>'+a[2]+'</span><span class="ad" style="display:block">'+a[3]+'</span></button>').join('');
 }
-function renderFleet(){
-  const phases=[['Collect',['ingest']],['Check, all at once',['dq','guideline','risk','liquidity','conc','corpact']],
-    ['Decide, one after another',['triage','planner','impact','precheck','router','audit']]];
-  el('fleet').innerHTML=phases.map(ph=>'<div class="phase">'+ph[0]+'</div>'+ph[1].map(id=>{
-    const a=AGENTS.find(x=>x.id===id),st=LANES[id]||'idle';
-    return '<div class="alane '+st+'" id="lane-'+id+'" title="'+a.n+' · '+a.tier+' model · '+a.ms+' ms · '+fmt(a.tin+a.tout)+' tokens">'
-      +'<div class="an"><i class="fas '+a.i+'"></i><span>'+a.n+'</span><span class="tier t-'+a.tier+'">'+a.tier+'</span></div>'
-      +'<div class="track"><div class="fill" id="fill-'+id+'" style="left:'+(SCHED.start[id]/SCHED.span*100).toFixed(1)+'%;width:'
-      +(st==='idle'||st==='run'?0:a.ms/SCHED.span*100).toFixed(1)+'%;max-width:'+(a.ms/SCHED.span*100).toFixed(1)+'%"></div></div>'
-      +'<div class="ls" id="st-'+id+'">'+laneText(a,st)+'</div></div>';
-  }).join('')).join('');
-}
-function laneText(a,st){return st==='idle'?a.ms+' ms':st==='run'?'working':(st==='hit'?'● ':'✓ ')+a.ms+' ms';}
-function paintLane(a){
-  const lane=el('lane-'+a.id);if(!lane)return;
-  lane.className='alane '+LANES[a.id];el('st-'+a.id).textContent=laneText(a,LANES[a.id]);
-  if(LANES[a.id]==='done'||LANES[a.id]==='hit')el('fill-'+a.id).style.width=(a.ms/SCHED.span*100).toFixed(1)+'%';
-}
 function renderFeed(){
-  el('feed').innerHTML=FEED.length?'<div class="agent-log">'+FEED.map(f=>'<div class="le"><span class="t">'+(f.t||'')+'</span><span class="a">'+f.a.n+'</span>'
+  el('feed').innerHTML=FEED.length?'<div class="agent-log">'+FEED.map(f=>'<div class="le"><span class="t">'+(f.t||'')+'</span>'
     +'<span class="st '+(f.hit?'approval':'ok')+'">'+(f.hit?'finding':'ok')+'</span><span class="msg">'+f.msg+'</span></div>').join('')+'</div>'
-    :'<div class="empty"><i class="fas fa-comments" style="color:var(--border-strong)"></i>Press <b>Run the monitoring cycle</b> and each agent reports here as it finishes.</div>';
-}
-function renderFleetTiles(){
-  el('fleetTiles').innerHTML=tile((SCHED.span/1000).toFixed(2)+'s','Time for one cycle','the longest chain of agents')
-    +tile((TOTAL_WORK/SCHED.span).toFixed(1)+'×','Faster than one-by-one',(TOTAL_WORK/1000).toFixed(2)+'s of work in total','g')
-    +tile((CYCLE_TOK/1000).toFixed(1)+'k','Tokens per cycle','across all 13 agents')
-    +tile('$'+CYCLE_COST.toFixed(2),'Cost per cycle',(ALL_FRONTIER/CYCLE_COST).toFixed(1)+'× less than all-frontier','y');
+    :'<div class="empty"><i class="fas fa-comments" style="color:var(--border-strong)"></i>Press <b>Run the monitoring cycle</b> and each check reports here as it finishes.</div>';
 }
 function syncRun(){
   const b=el('runBtn');
   b.disabled=running;
-  b.innerHTML=running?'<i class="fas fa-circle-notch fa-spin"></i> Agents working…':'<i class="fas fa-play"></i> '+(cycleNo?'Run the cycle again':'Run the monitoring cycle');
-  el('runHint').innerHTML=running?'Watch the lanes: six checkers run side by side.'
-    :isStale()?'<b style="color:var(--warning)">The portfolio changed since the last check.</b> Run the agents again.'
+  b.innerHTML=running?'<i class="fas fa-circle-notch fa-spin"></i> Checking…':'<i class="fas fa-play"></i> '+(cycleNo?'Run the cycle again':'Run the monitoring cycle');
+  el('runHint').innerHTML=running?'Running the checks.'
+    :isStale()?'<b style="color:var(--warning)">The portfolio changed since the last check.</b> Run the checks again.'
     :cycleNo?'Cycle '+cycleNo+' done: '+findings.length+' finding'+(findings.length===1?'':'s')+', '+proposals.length+' proposed action'+(proposals.length===1?'':'s')+'.'
     :'Autonomy: <b>'+AUTO_LABEL[S.auto]+'</b>.';
   el('toFindings').disabled=!cycleNo||running;
@@ -1333,8 +1219,8 @@ function syncRun(){
 /* ------------------------------------------------------------- step 4 */
 function staleBanner(id){
   const b=el(id);
-  if(isStale()){b.innerHTML='<span><i class="fas fa-circle-exclamation"></i> The portfolio has changed since the agents last checked it.</span>'
-    +'<button type="button" class="d-btn sm" data-act="rerun"><i class="fas fa-rotate"></i> Run the agents again</button>';b.classList.add('show');}
+  if(isStale()){b.innerHTML='<span><i class="fas fa-circle-exclamation"></i> The portfolio has changed since the last check.</span>'
+    +'<button type="button" class="d-btn sm" data-act="rerun"><i class="fas fa-rotate"></i> Run the checks again</button>';b.classList.add('show');}
   else b.classList.remove('show');
 }
 function renderFindings(){
@@ -1344,7 +1230,7 @@ function renderFindings(){
   el('findings').innerHTML=findings.length?findings.map(f=>'<div class="find sev-'+f.sev+'">'
     +'<div class="fh"><span class="ft">'+f.title+'</span><span class="sev '+sevCls(f.sev)+'">'+f.sev.toUpperCase()+'</span></div>'
     +'<div class="fd">'+f.detail+'</div><div class="fw">'+WHY[f.rule]+'</div>'
-    +'<div class="fm"><b>raised by</b> '+f.agent+' &middot; <b>rule</b> '+f.rule+'</div></div>').join('')
+    +'</div>').join('')
     :'<div class="empty"><i class="fas fa-circle-check"></i>Nothing open. Every rule in the rulebook passes.</div>';
   let h='<thead><tr><th>Company</th><th>Stock</th><th>Bonds</th><th>Total</th><th>Rating</th><th>Status</th></tr></thead><tbody>';
   B.issuers.slice().sort((a,b)=>exposure(b)-exposure(a)).forEach(x=>{
@@ -1362,7 +1248,7 @@ const MODE_TAG={auto:['auto','WILL RUN AUTOMATICALLY'],manual:['','NEEDS YOUR AP
 function renderProposals(){
   staleBanner('stale5');
   if(!proposals.length){
-    el('proposals').innerHTML='<div class="empty"><i class="fas fa-inbox"></i>'+(cycleNo?'No finding needs an action.':'Run the agents in step 3 first.')+'</div>';
+    el('proposals').innerHTML='<div class="empty"><i class="fas fa-inbox"></i>'+(cycleNo?'No finding needs an action.':'Run the checks in step 3 first.')+'</div>';
   }else el('proposals').innerHTML=proposals.map(p=>{
     const legs=p.legs.length?p.legs.filter(l=>Math.abs(l.d)>1e-6).map(l=>'<span class="'+(l.d>0?'buy':'sell')+'">'+(l.d>0?'BUY ':'SELL ')+pp(Math.abs(l.d))+' pts</span> '
         +SLEEVE[l.i].k+' <span style="color:var(--faint)">$'+(Math.abs(l.d)/100*B.nav).toFixed(1)+'m</span>').join('<br>')
@@ -1402,26 +1288,14 @@ function renderAudit(){
   const target=tamper?tamper.i:-1;
   el('audit').innerHTML=auditLog.map((e,i)=>'<div class="ar '+e.cls+(broken>=0&&i>=broken?' broken':'')+(verified&&broken<0?' okrow':'')+(i===target?' tampered':'')+'">'
     +'<span class="h">'+e.hash+'</span><span class="n">'+String(e.seq).padStart(3,'0')+'</span>'
-    +'<span class="m" title="'+e.actor+': '+e.msg.replace(/"/g,'&quot;').replace(/<[^>]+>/g,'')+'"><span class="a">'+e.actor+'</span> <span class="x">'+e.msg+'</span></span></div>').join('');
+    +'<span class="m" title="'+e.msg.replace(/"/g,'&quot;').replace(/<[^>]+>/g,'')+'"><span class="a">'+e.actor+'</span> <span class="x">'+e.msg+'</span></span></div>').join('');
   const v=el('verdict');
   if(tamper&&!verified){v.className='verdict show badv';v.innerHTML='Entry <b>#'+(tamper.i+1)+'</b> was quietly edited: &ldquo;'+tamper.from+'&rdquo; now reads &ldquo;'+tamper.to+'&rdquo;. Nothing else changed. Press <b>Verify</b> to see whether the chain notices.';}
   else if(verified&&broken>=0){v.className='verdict show badv';v.innerHTML='<b>Chain broken at entry #'+(broken+1)+'.</b> Its fingerprint no longer matches its contents, and because every later fingerprint was built on it, all '
-    +(auditLog.length-broken)+' entries from there on fail too. An edit cannot hide: the fake entry would need every later fingerprint rewritten, and in production the head of the chain is signed and stored elsewhere.';}
+    +(auditLog.length-broken)+' entries from there on fail too. An edit cannot hide. A fake entry would need every later fingerprint rewritten.';}
   else if(verified){v.className='verdict show good';v.innerHTML='<b>All '+auditLog.length+' entries verified.</b> Every fingerprint recomputes from its own contents and the one before it.';}
   else v.className='verdict';
   el('tamperBtn').disabled=!!tamper||auditLog.length<3;el('restoreBtn').disabled=!tamper;
-}
-function renderEcon(){
-  const tiers=['frontier','balanced','fast'];
-  el('econTiles').innerHTML=tile('$'+CYCLE_COST.toFixed(2),'Per cycle',fmt(CYCLE_TOK)+' tokens')
-    +tile('$'+(ALL_FRONTIER-CYCLE_COST).toFixed(2),'Saved by routing',(ALL_FRONTIER/CYCLE_COST).toFixed(1)+'× cheaper','g')
-    +tile('$'+fmt(CYCLE_COST*7*252),'A year, checking hourly','7 checks × 252 trading days','y');
-  let h='<thead><tr><th>Model tier</th><th>Agents</th><th>Tokens</th><th>Cost / cycle</th></tr></thead><tbody>';
-  tiers.forEach(t=>{const g=AGENTS.filter(a=>a.tier===t);
-    h+='<tr><td>'+t+'<small>'+g.map(a=>a.n).join(', ')+'</small></td><td>'+g.length+'</td><td>'+fmt(g.reduce((s,a)=>s+a.tin+a.tout,0))+'</td><td>$'+g.reduce((s,a)=>s+agentCost(a),0).toFixed(3)+'</td></tr>';});
-  h+='<tr><td>as routed</td><td>13</td><td>'+fmt(CYCLE_TOK)+'</td><td style="color:var(--positive)">$'+CYCLE_COST.toFixed(3)+'</td></tr>'
-    +'<tr><td>everything on frontier<small>the obvious first build</small></td><td>13</td><td>'+fmt(CYCLE_TOK)+'</td><td style="color:var(--negative)">$'+ALL_FRONTIER.toFixed(3)+'</td></tr>';
-  el('econTable').innerHTML=h+'</tbody>';
 }
 
 /* ================================ STEPS ================================= */
@@ -1442,17 +1316,17 @@ function updateStepper(){
     b.classList.toggle('active',n===S.step);
     b.classList.toggle('done',n!==S.step&&S.visited.has(n));
     b.disabled=!canGo(n);
-    b.title=canGo(n)?'':'Run the agents in step 3 first';
+    b.title=canGo(n)?'':'Run the checks in step 3 first';
     if(n===S.step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');
   });
 }
 function renderStep(n){
   if(n===1)renderBook();
   else if(n===2)renderEvents();
-  else if(n===3){renderAutos();renderFleet();renderFeed();renderFleetTiles();syncRun();}
+  else if(n===3){renderAutos();renderFeed();syncRun();}
   else if(n===4)renderFindings();
   else if(n===5)renderProposals();
-  else if(n===6){renderAudit();renderEcon();}
+  else if(n===6){renderAudit();}
 }
 function refreshStatus(){
   const c=findings.filter(f=>f.sev==='critical'||f.sev==='high').length;
@@ -1460,7 +1334,7 @@ function refreshStatus(){
     +(cycleNo?'findings <b>'+findings.length+'</b> ('+c+' critical/high) &middot; ':'')+'tracking error <b>'+trackingError().toFixed(0)+' bps</b> &middot; autonomy <b>'
     +AUTO_LABEL[S.auto]+'</b>'+(staleNames().length?' &middot; <span style="color:var(--negative)">automatic trading gated: stale prices</span>':'');
   const b=el('stateBadge');
-  if(running){b.textContent='AGENTS RUNNING';b.className='d-pill pill-watch';}
+  if(running){b.textContent='CHECKING';b.className='d-pill pill-watch';}
   else if(!cycleNo||isStale()){b.textContent='NOT CHECKED';b.className='d-pill pill-watch';}
   else if(c){b.textContent=c+' TO CLEAR';b.className='d-pill pill-breach';}
   else if(findings.length){b.textContent='WATCH';b.className='d-pill pill-watch';}
@@ -1490,7 +1364,7 @@ el('autoCards').addEventListener('click',e=>{
   const b=e.target.closest('.acard');if(!b||b.dataset.a===S.auto)return;
   S.auto=b.dataset.a;
   proposals.filter(p=>p.state==='open').forEach(p=>{p.route=route(p);});
-  push('approval-router','autonomy changed to: '+AUTO_LABEL[S.auto],'a');
+  push('routing','autonomy changed to: '+AUTO_LABEL[S.auto],'a');
   rerenderAll();
 });
 el('runBtn').addEventListener('click',runCycle);

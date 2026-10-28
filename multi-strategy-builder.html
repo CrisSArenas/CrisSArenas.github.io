@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Multi-Strategy Builder · Cristian Arenas</title>
-    <meta name="description" content="Building a multi-strategy book from five sleeves: equal risk contribution, volatility targeting and drawdown stops, crowding and correlation spikes in stress, hidden factor overlap, fee netting and pass-through fees, a portable alpha overlay, and agents that watch for style drift and correlation shifts.">
+    <meta name="description" content="Build a five-sleeve hedge fund book sized by risk. See where the sleeves overlap and what happens when crowded trades unwind.">
     <link rel="canonical" href="https://crissarenas.github.io/multi-strategy-builder.html">
     <meta property="og:title" content="Multi-Strategy Builder · Cristian Arenas">
-    <meta property="og:description" content="Hidden correlation and crowding across sleeves, and fee netting.">
+    <meta property="og:description" content="Build a five-sleeve hedge fund book sized by risk. See where the sleeves overlap and what happens when crowded trades unwind.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#FFFFFF">
@@ -116,7 +116,7 @@
     </section>
 
     <section id="pa" hidden>
-      <p class="intro">The overlay keeps a 60/40 benchmark exposure through futures and puts part of the collateral into an alpha sleeve. The engine is the original Portable Alpha Simulator's, unchanged and moved into the shared library; it is checked against the old page number by number (<a href="/tests.html">model tests</a>). Use the button to plug in the multi-strategy book built above as the alpha sleeve.</p>
+      <p class="intro">The overlay holds 60/40 exposure through futures. Part of the collateral goes into an alpha sleeve. The math matches the old simulator page number for number (<a href="/tests.html">model tests</a>). The button plugs in the book built above as the alpha sleeve.</p>
       <div class="panel"><div class="panel-head"><h3>Parameters</h3><span><button class="btn btn-ghost btn-sm" id="paBook" type="button">Use this book as the alpha sleeve</button> <button class="btn btn-ghost btn-sm" id="paReset" type="button">Reset to defaults</button></span></div><div class="panel-body"><div class="pa-inputs" id="paInputs"></div><p class="eval-note" id="paSrc"></p></div></div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Growth of $100</h3><span class="sub">Shaded: crisis and rate-shock months</span></div><div class="panel-body"><div id="paGrowth"></div></div></div>
@@ -158,7 +158,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
         <li>The managers are made up. Five factors stand in for a full risk model.</li>
         <li>Weights use the full ten-year covariance, so the backtest is in-sample. The risk controls do not look ahead.</li>
       </ul>
-      <p style="margin-top:14px"><a href="/notes/" data-final="notes/same-bet-two-sleeves.html">Note: when two sleeves are running the same bet</a></p>
+      <p style="margin-top:14px"><a href="notes/two-sleeves-same-bet.html">Note: when two sleeves are running the same bet</a></p>
     </div>
   </details>
 
@@ -176,7 +176,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
-        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Approved flags go to the risk note</span></div><div class="panel-body"><div id="approvals"></div></div></div>
       </div>
       <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
@@ -263,7 +263,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
   function vol(r) { return PM.std(r) * Math.sqrt(12); }
   function cagr(r) { var g = 1; r.forEach(function (v) { g *= 1 + v; }); return Math.pow(g, 12 / r.length) - 1; }
 
-  /* ---------------- mandates (shared by the tabs and the agents) ---------------- */
+  /* ---------------- mandates (shared by the tabs and the review) ---------------- */
   function find(id, re) { var out = null; DOCS[id].pages.forEach(function (pg, pi) { pg.forEach(function (l, li) { var m = re.exec(l); if (m && !out) out = { m: m, cite: { doc: id, page: pi + 1, line: li + 1, short: id.replace('mandate-', '') } }; }); }); return out; }
   function readMandate(id) {
     var o = {}, h, put = function (k, hit, v, unit, ev) { if (hit) o[k] = { value: v, unit: unit, cite: hit.cite, evidence: ev }; };
@@ -329,7 +329,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     var rows = [['No risk controls', 'none'], ['Volatility targeting', 'vt'], ['Drawdown stops', 'dd'], ['Both', 'both']].map(function (r) { var v = B.V[r[1]], s = stats(v.r); return { n: r[0], ret: s.ret, vol: s.vol, sharpe: s.sharpe, dd: s.dd, stops: r[1] === 'dd' || r[1] === 'both' ? v.stops : '' }; });
     S.ctrl = rows;
     UI.table('#ctrlTable', { id: 'controls', name: 'Risk controls compared', columns: [{ key: 'n', label: 'Controls' }, { key: 'ret', label: 'Return', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'vol', label: 'Vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sharpe', label: 'Sharpe', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'dd', label: 'Max DD', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'stops', label: 'Stops fired', num: 1 }], rows: rows });
-    $('#ctrlNote').textContent = 'Stops act after the loss, so they cut the drawdown only when a fall keeps going; in a sharp crowded unwind that reverses, they sell near the low. Volatility targeting reacts to the trailing 12 months, so it is late into the first stress month and early out of the last.';
+    $('#ctrlNote').textContent = 'Stops act after the loss. They help only when a fall keeps going. In a crowded unwind that snaps back, they sell near the low. Volatility targeting looks at the last 12 months, so it reacts late.';
   }
 
   /* ---------------- tab 2: crowding and overlap ---------------- */
@@ -438,23 +438,23 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     S.paSrc = 'book'; paForm(); renderPA();
   }
 
-  /* ---------------- AI pipeline ---------------- */
+  /* ---------------- review run ---------------- */
   var log, audit, apps;
   var FACTOR_LINE = { equity: /Net equity beta/, momentum: /trend|momentum|style tilts/i, value: /style tilts|value/i, credit: /Credit spread beta/, rates: /Rates beta/ };
-  function runPipeline() {
+  function runReview() {
     log.clear(); audit.clear();
     var P = S.pipe = { ex: {}, checks: [], items: [], fieldsN: 0, drift: [] }, B = S.B, D = B.D, W = windows(D.R.length);
-    audit.push('planner', 'run started', 'seed ' + S.seed);
+    audit.push('start', 'run started', 'seed ' + S.seed);
     UI.runSteps(log, [
-      { agent: 'planner', run: function () { return { msg: 'Plan: extract each mandate, test every sleeve and factor for drift, every pair for a correlation shift and a shared factor bet, send flags with citations for approval, draft the risk note from what is approved' }; } },
-      { agent: 'mandate-extractor', run: function () { SH.forEach(function (s) { P.ex['mandate-' + s] = readMandate('mandate-' + s); P.fieldsN += Object.keys(P.ex['mandate-' + s]).length; }); audit.push('mandate-extractor', 'extracted', P.fieldsN + ' fields'); return { msg: P.fieldsN + ' mandate fields extracted with citations (target vol, fees, hurdles, pass-through, limits)' }; } },
-      { agent: 'citation-validator', run: function () {
+      { agent: 'start', run: function () { return { msg: 'Run started.' }; } },
+      { agent: 'read', run: function () { SH.forEach(function (s) { P.ex['mandate-' + s] = readMandate('mandate-' + s); P.fieldsN += Object.keys(P.ex['mandate-' + s]).length; }); audit.push('read', 'extracted', P.fieldsN + ' fields'); return { msg: P.fieldsN + ' mandate fields extracted with citations (target vol, fees, hurdles, pass-through, limits)' }; } },
+      { agent: 'cite', run: function () {
         var ok = 0, bad = 0;
         Object.keys(P.ex).forEach(function (id) { Object.keys(P.ex[id]).forEach(function (k) { var f = P.ex[id][k], ln = UI.DocViewer.active.line(f.cite.doc, f.cite.page, f.cite.line); f.valid = f.unit === 'text' ? UI.lineHas(ln, f.evidence, 'text') : UI.lineHas(ln, f.value, f.unit); if (f.valid) ok++; else bad++; }); });
-        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve');
+        audit.push('cite', bad ? 'blocked' : 'passed', ok + ' resolve');
         return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve' + (bad ? ', ' + bad + ' blocked' : '') };
       } },
-      { agent: 'drift-monitor', run: function () {
+      { agent: 'check', run: function () {
         if (!D.F) return { status: 'blocked', msg: 'No factor columns in the data: drift checks skipped' };
         var res = [];
         SH.forEach(function (s, i) {
@@ -473,10 +473,10 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
           });
         });
         res.push({ msg: P.checks.filter(function (c) { return !c.flag; }).length + ' sleeve and factor pairs stable' });
-        audit.push('drift-monitor', 'checked', P.drift.length + ' drifts in ' + SH.length * FS.length + ' pairs');
+        audit.push('check', 'checked', P.drift.length + ' drifts in ' + SH.length * FS.length + ' pairs');
         return res;
       } },
-      { agent: 'correlation-regime-monitor', run: function () {
+      { agent: 'check', run: function () {
         var res = [], n = 0;
         for (var a = 0; a < 5; a++) for (var b = a + 1; b < 5; b++) {
           var c = MS.corrShift(B.net[a], B.net[b], W.base, W.recent, B.calm), flag = c.z > A.zCorr && c.rRecent - c.rBase > 0.3, id = 'corr:' + SH[a] + '/' + SH[b];
@@ -484,10 +484,10 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
           if (flag) { n++; P.items.push({ id: 'C-' + (P.items.length + 1), check: id, title: NAMES[a] + ' and ' + NAMES[b] + ': correlation ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2), severity: 'med', evidence: 'Calm-month correlation rose from ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2) + ' (Fisher z = ' + F.num(c.z, 1) + '). Stress months are excluded, so this is not a crowding episode: the two sleeves now move together in ordinary months.', cites: [{ doc: 'mandate-' + SH[a], page: 1, line: 2, short: SH[a] }, { doc: 'mandate-' + SH[b], page: 1, line: 2, short: SH[b] }], state: 'pending', note: NAMES[a] + ' and ' + NAMES[b] + ' now move together in calm months (correlation ' + F.num(c.rRecent, 2) + ', from ' + F.num(c.rBase, 2) + '). The diversification the book was sized on is smaller than it was.' }); res.push({ status: 'approval', msg: NAMES[a] + ' / ' + NAMES[b] + ': ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2) }); }
         }
         res.push({ msg: (10 - n) + ' of 10 sleeve pairs stable in calm months' });
-        audit.push('correlation-regime-monitor', 'checked', n + ' shifts in 10 pairs');
+        audit.push('check', 'checked', n + ' shifts in 10 pairs');
         return res;
       } },
-      { agent: 'factor-overlap-checker', run: function () {
+      { agent: 'check', run: function () {
         var res = [];
         (S.overlap || []).forEach(function (o) {
           P.checks.push({ id: o.id, flag: o.flag });
@@ -498,13 +498,13 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
           }
         });
         res.push({ msg: (S.overlap || []).filter(function (o) { return !o.flag; }).length + ' sleeve pairs with no shared factor bet' });
-        audit.push('factor-overlap-checker', 'checked', (S.overlap || []).filter(function (o) { return o.flag; }).length + ' overlaps');
+        audit.push('check', 'checked', (S.overlap || []).filter(function (o) { return o.flag; }).length + ' overlaps');
         return res;
       } },
-      { agent: 'risk-note-drafter', run: function () { audit.push('risk-note-drafter', 'waiting', 'drafts from approved flags only'); return { status: 'approval', msg: 'Waiting for approvals; only approved flags go into the risk note' }; } }
-    ], afterPipeline);
+      { agent: 'draft', run: function () { audit.push('draft', 'waiting', 'drafts from approved flags only'); return { status: 'approval', msg: 'Waiting for approvals; only approved flags go into the risk note' }; } }
+    ], afterReview);
   }
-  function afterPipeline() {
+  function afterReview() {
     var P = S.pipe, B = S.B, D = B.D;
     apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderNote });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.checks.filter(function (c) { return c.flag; }).length, review: P.items.length });
@@ -520,7 +520,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
   function renderNote() {
     var ap = S.pipe.items.filter(function (it) { return it.state === 'approved'; });
     $('#noteBody').innerHTML = ap.length ? ap.map(function (it) { return '<li>' + UI.esc(it.note) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') : '<li class="muted">Approve a flag to add it to the risk note.</li>';
-    if (ap.length) audit.push('risk-note-drafter', 'note updated', ap.map(function (a) { return a.id; }).join(', '));
+    if (ap.length) audit.push('draft', 'note updated', ap.map(function (a) { return a.id; }).join(', '));
   }
   function renderEval() {
     var P = S.pipe, ext = {}, truth = {};
@@ -530,7 +530,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     window.EVAL = { demo: 'Multi-Strategy Builder', href: 'multi-strategy-builder.html#evaluation', fields: ev.n, accuracy: ev.accuracy, coverage: ev.coverage, seeded: fl.seeded, detected: fl.detected, falseFlagRate: fl.falseFlagRate };
     UI.evalLine(window.EVAL);
     UI.kpis('#evalKpis', [{ id: 'evAcc', label: 'Mandate extraction accuracy', value: F.pct(ev.accuracy, 1), sub: ev.correct + ' of ' + ev.n + ' labeled fields' }, { id: 'evCov', label: 'Citation coverage', value: F.pct(ev.coverage, 1) }, { id: 'evFlag', label: 'Injected events caught / false-flag rate', value: fl.detected + ' of ' + fl.seeded + ' / ' + F.pct(fl.falseFlagRate, 1), sub: (fl.candidates - fl.seeded) + ' clean checks, seed ' + S.seed + (unknown ? '; ' + unknown + ' unlabeled' : '') }]);
-    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field or check' }, { key: 't', label: 'Label' }, { key: 'e', label: 'Pipeline' }, { key: 'ok', label: 'Match' }],
+    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field or check' }, { key: 't', label: 'Label' }, { key: 'e', label: 'Extracted' }, { key: 'ok', label: 'Match' }],
       rows: Object.keys(truth).map(function (k) { return { k: k, t: String(truth[k].value), e: ext[k] ? String(ext[k].value) : 'missing', ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no' }; })
         .concat(all.map(function (id) { var s = seeded.indexOf(id) !== -1, r = raised.indexOf(id) !== -1; return { k: id, t: s ? 'event' : 'clean', e: r ? 'flagged' : 'quiet', ok: s === r ? 'yes' : 'no' }; })) });
   }
@@ -564,25 +564,25 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
 
   function renderAll() { renderSleeves(); renderCrowding(); renderFees(); renderMemo(); }
   function init() {
-    reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); runPipeline(); });
+    reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); runReview(); });
     var tabs = UI.tabs('#tabsRoot');
     $('#scheme').addEventListener('change', function () { S.scheme = this.value; renderAll(); });
     $('#vtOn').addEventListener('change', function () { S.vt = this.checked; renderSleeves(); });
     $('#ddOn').addEventListener('change', function () { S.dd = this.checked; renderSleeves(); });
-    UI.seed('#seed', function (v) { S.seed = v; S.pa.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. Jul 2016 to Jun 2026.'; paForm(); renderAll(); renderPA(); runPipeline(); });
+    UI.seed('#seed', function (v) { S.seed = v; S.pa.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. Jul 2016 to Jun 2026.'; paForm(); renderAll(); renderPA(); runReview(); });
     paForm();
     var tmr; $('#paInputs').addEventListener('input', function () { clearTimeout(tmr); tmr = setTimeout(function () { paRead(); renderPA(); }, 150); });
     $('#paReset').addEventListener('click', function () { S.pa = Object.assign({}, PA.DEFAULT_PARAMS, { seed: S.seed }); S.paSrc = 'defaults'; paForm(); renderPA(); });
     $('#paBook').addEventListener('click', bookToPA);
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runBtn').addEventListener('click', runPipeline);
+    $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzSleeves', { title: 'Use your own sleeve returns', template: '/assets/templates/sleeve-returns.csv', columns: [{ name: 'date' }].concat(SH.map(function (s) { return { name: s, desc: s === 'els' ? 'monthly return, decimal, gross of fees' : null }; })).concat(['equity', 'momentum', 'value', 'credit_spread', 'rates'].map(function (c) { return { name: c, required: false }; })).concat([{ name: 'regime', required: false, desc: 'calm or stress' }]),
-      parse: parseSleeves, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your sleeve returns, processed locally. Fees from the mandates.'; renderAll(); runPipeline(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderAll(); runPipeline(); } });
+      parse: parseSleeves, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your sleeve returns, processed locally. Fees from the mandates.'; renderAll(); runReview(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderAll(); runReview(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Multi-Strategy Builder', slug: 'multi-strategy-builder', report: 'Risk note and sleeve sizing memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Multi-Strategy Builder'); UI.testsBadge('.tests-badge-slot', 'Multi-Strategy Builder');
-    renderAll(); renderPA(); runPipeline();
+    renderAll(); renderPA(); runReview();
     UI.revealHash(tabs);
   }
   init();

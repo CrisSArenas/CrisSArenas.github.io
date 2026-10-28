@@ -1,5 +1,5 @@
 /* Hand-labeled ground truth for the Fund Terms Auditor documents (assets/data/fta-docs.js), kept apart
-   from the documents and from the pipeline in fund-terms-auditor.html. How the labels were set: each value
+   from the documents and the page code. How the labels were set: each value
    was read by hand from the document text at the page and line given. Rates as decimals, money in
    $ millions, LP share unless the line says fund level. The correct figures under `issues` were worked
    by hand from the LPA terms and the report lines, not by the page's code. Nothing here is generated. */

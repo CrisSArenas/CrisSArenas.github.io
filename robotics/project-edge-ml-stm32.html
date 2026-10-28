@@ -201,6 +201,7 @@
   </div>
 </nav>
 <!-- site-nav:end -->
+<div id="main" tabindex="-1"></div>
 
     <!-- Project Detail Content -->
     <div class="project-detail">
@@ -250,7 +251,7 @@
             <section class="content-section">
                 <h2>System Overview</h2>
                 <p>
-                    This project demonstrates end-to-end on-device machine learning inference on a resource-constrained
+                    This project runs on-device machine learning inference on a resource-constrained
                     microcontroller. The STM32H7 captures images from an OV7670 camera, runs a quantized CNN classifier
                     using TensorFlow Lite for Microcontrollers, and displays results on an SPI-connected LCD.
                 </p>
@@ -387,7 +388,7 @@
                     <li>Depthwise separable convolutions to reduce parameter count</li>
                     <li>Small input resolution (48x48 grayscale)</li>
                     <li>Total parameters under 50K for minimal memory footprint</li>
-                    <li>Training with data augmentation (rotation, flip, brightness) for robustness</li>
+                    <li>Training with data augmentation (rotation, flip, brightness) to handle variation</li>
                 </ul>
 
                 <h3>INT8 Quantization</h3>
@@ -461,7 +462,7 @@
                     <p>System performance metrics:</p>
                     <ul>
                         <li><strong>Inference time:</strong> ~45ms per frame (INT8 on Cortex-M7 at 480 MHz)</li>
-                        <li><strong>Frame rate:</strong> ~15 FPS end-to-end (capture + preprocess + infer + display)</li>
+                        <li><strong>Frame rate:</strong> ~15 FPS for the full loop (capture + preprocess + infer + display)</li>
                         <li><strong>Classification accuracy:</strong> 94% on test set (less than 2% drop from float32)</li>
                         <li><strong>Power consumption:</strong> ~350mW during active inference</li>
                         <li><strong>Memory usage:</strong> ~296KB of 512KB SRAM utilized</li>

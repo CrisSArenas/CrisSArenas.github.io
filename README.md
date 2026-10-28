@@ -1,6 +1,6 @@
 # crissarenas.github.io
 
-Personal site of **Cristian Arenas**, Quantitative Investment Professional and AI Engineer. I work on investment decisions in private markets and portfolio construction, and I build the systems behind them.
+Personal site of **Cristian Arenas**, Quantitative Investment Professional and AI Engineer. Private markets and multi-asset portfolios. I build the models and AI tools investment teams use.
 
 Live at https://crissarenas.github.io
 
@@ -8,9 +8,8 @@ Live at https://crissarenas.github.io
 
 | Area | Files |
 |------|-------|
-| Home: the Allocation Stack, investment work, AI systems, about, research, notes | `index.html`, `script.js` |
+| Home: about, work, AI systems, investment memos, research, contact | `index.html`, `script.js` |
 | Flagship demos (in-browser, synthetic data, fictional entities) | `allocation-lab.html`, `private-capital-lab.html`, `manager-selection-copilot.html`, `fund-terms-auditor.html`, `co-invest-underwriter.html`, `secondaries-desk.html`, `multi-strategy-builder.html`, `agentic-portfolio-monitor.html` |
-| Architecture and data | `ai-systems.html`, `data-model.html` |
 | Shared math library and its tests | `assets/js/pm-math.js`, `assets/js/pm-tests.js`, `tests.html`, `tests/run.js` |
 | Shared components | `styles.css`, `assets/css/demo-shell.css`, `assets/js/pm-ui.js`, `assets/js/site.js` |
 | Practitioner notes | `notes/` |
@@ -25,7 +24,7 @@ Static site, no build step. Every demo is a self-contained HTML page that shares
 ```
 node tests/run.js                 # math tests (the same tests run on /tests.html)
 node tools/sync-chrome.mjs --check  # nav and footer identical on every page
-node tools/contrast.mjs           # WCAG AA contrast for every palette pair
+node tools/contrast.mjs           # WCAG AA contrast, light and dark
 node tools/qa.mjs <pages>         # console errors and horizontal scroll (server on :8765)
 ```
 

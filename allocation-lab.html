@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Allocation Lab · Cristian Arenas</title>
-    <meta name="description" content="Total portfolio and asset allocation across liquid and illiquid assets: desmoothed private risk, liquidity-aware and Black-Litterman optimization, a resampled frontier, a total portfolio mode against a reference portfolio, regime tilts, Brinson attribution and a rebalancing agent behind a compliance gate.">
+    <meta name="description" content="Set the policy portfolio for an $880m endowment with private assets in it. Compare fixed targets with a total portfolio approach, and check the trades before you release them.">
     <link rel="canonical" href="https://crissarenas.github.io/allocation-lab.html">
     <meta property="og:title" content="Allocation Lab · Cristian Arenas">
-    <meta property="og:description" content="Allocating across liquid and illiquid assets when private risk is smoothed and cash flows are uncertain.">
+    <meta property="og:description" content="Set the policy portfolio for an $880m endowment with private assets in it. Compare fixed targets with a total portfolio approach, and check the trades before you release them.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#FFFFFF">
@@ -93,7 +93,7 @@
         </div>
       </div>
       <h3 class="sub-h">Black-Litterman views</h3>
-      <p class="mode-note">Black-Litterman starts from the returns implied by a market portfolio (reverse optimization, as excess returns over cash), then blends in views with stated confidence. Views that are not certain move expected returns part of the way. Returns below are total returns, cash added back.</p>
+      <p class="mode-note">Black-Litterman starts from the returns a market portfolio implies. It then blends in my views at the confidence I give them. A view I am unsure of moves returns only part of the way. Returns below include cash.</p>
       <div class="split">
         <div class="panel"><div class="panel-head"><h3>Equilibrium</h3></div><div class="panel-body controls" id="blControls"></div></div>
         <div>
@@ -104,7 +104,7 @@
     </section>
 
     <section id="tpa" hidden>
-      <p class="notice mode-note">CalPERS's board adopted a total portfolio approach in November 2025, moving away from fixed asset class targets toward judging the whole portfolio against a reference (<a href="https://www.calpers.ca.gov/newsroom/calpers-news/2025/calpers-board-adopts-streamlined-investment-approach-to-seize-market-opportunities" target="_blank" rel="noopener">CalPERS</a>). This tab runs the same portfolio both ways.</p>
+      <p class="notice mode-note">Run the same portfolio two ways: fixed asset class targets, or a reference portfolio with a risk budget.</p>
       <div class="toolbar" style="position:static;border:0;padding:0 0 12px"><div class="seg" id="modeSeg" role="tablist" aria-label="Allocation mode"><button class="active" data-m="tpa" type="button">Total portfolio approach</button><button data-m="saa" type="button">Classic SAA</button></div><span class="muted" id="modeHint" style="font-size:.85rem"></span></div>
       <div class="kpis" id="tpaKpis"></div>
       <div class="split-2" style="margin-top:18px">
@@ -121,10 +121,10 @@
 
     <section id="stress" hidden>
       <div class="kpis" id="stressKpis"></div>
-      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Historical-style stress tests</h3><span class="sub">Peak-to-trough shocks per asset class; private assets shocked at economic, not reported, values</span></div><div class="panel-body"><div id="stressChart"></div><div id="stressTable" style="margin-top:12px"></div></div></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Historical-style stress tests</h3><span class="sub">Peak-to-trough shocks per asset class; private assets shocked at economic values</span></div><div class="panel-body"><div id="stressChart"></div><div id="stressTable" style="margin-top:12px"></div></div></div>
       <div class="panel"><div class="panel-head"><h3>Liquidity after a GFC-sized stress</h3></div><div class="panel-body"><div id="liqBox"></div></div></div>
       <h3 class="sub-h">Regime tilts</h3>
-      <p class="notice mode-note"><b>Illustrative, synthetic regime probabilities.</b> Soft regime assignments, in the spirit of the cross-attention regime discovery in my <a href="research-regime-aware-transformer.html">working paper</a>, are generated here from a seeded process. They are not outputs of the trained model.</p>
+      <p class="notice mode-note">The regime probabilities here are synthetic. They follow the idea in my <a href="research-regime-aware-transformer.html">working paper</a>, but they come from a seeded process. They do not come from the trained model.</p>
       <div class="split">
         <div class="panel"><div class="panel-head"><h3>Tilt settings</h3></div><div class="panel-body controls" id="regControls"></div></div>
         <div>
@@ -159,7 +159,7 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
         <li>The endowment and its documents are made up. Expected returns are assumptions, and the optimizer is sensitive to them.</li>
         <li>Private marks lag public markets, so private weights after a fall are estimates.</li>
       </ul>
-      <p style="margin-top:14px"><a href="/notes/" data-final="notes/saa-or-tpa.html">Note: SAA or total portfolio approach, what actually changes</a></p>
+      <p style="margin-top:14px"><a href="notes/saa-or-tpa.html">Note: SAA or total portfolio approach, what actually changes</a></p>
     </div>
   </details>
 
@@ -177,7 +177,7 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
-        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Needs your approval</h3></div><div class="panel-body"><div id="approvals"></div></div></div>
       </div>
       <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
@@ -291,10 +291,10 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
   /* ---------------- state ---------------- */
   var S = { seed: 100, user: null, mode: 'tpa', policyApproved: 'pending', trades: null };
   window.ALAB = S;
-  /* custodian holdings, $m (the agents extract these from the custodian report) */
+  /* custodian holdings, $m (read from the custodian report) */
   var MV = [125.0, 69.5, 27.3, 169.0, 122.3, 81.0, 237.6, 48.4];
   function current() { var t = PM.sum(MV); return MV.map(function (v) { return v / t; }); }
-  /* policy: IPS, with the committee's changes once they are in the register (the agent proposes them; reject to undo) */
+  /* policy: IPS, with the committee's changes once they are in the register (reject to undo) */
   var IPS = { target: [0.24, 0.12, 0.05, 0.16, 0.12, 0.08, 0.20, 0.03], lo: [0.15, 0.06, 0, 0.10, 0.06, 0.04, 0.12, 0], hi: [0.35, 0.18, 0.10, 0.22, 0.16, 0.12, 0.30, 0.06] };
   function policy() {
     var p = { target: IPS.target.slice(), lo: IPS.lo.slice(), hi: IPS.hi.slice() };
@@ -505,7 +505,7 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
       rows: ASSETS.map(function (a, i) { return { a: a, wp: wp[i], wb: wb[i], rp: rp[i], rb: rb[i], al: b.rows[i].alloc, se: b.rows[i].sel, in: b.rows[i].inter }; }), foot: { a: 'Total', al: b.alloc, se: b.sel, in: b.inter } });
   }
 
-  /* ---------------- AI pipeline ---------------- */
+  /* ---------------- review run ---------------- */
   var DOCS = window.ALLOC_DOCS, LABELS = window.ALLOC_LABELS, log, audit, apps;
   var pctRe = /(\d+(?:\.\d+)?)%/g;
   function extractIPS(id) {
@@ -547,21 +547,21 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
     });
     return out;
   }
-  function runPipeline() {
+  function runReview() {
     log.clear(); audit.clear();
     var P = S.pipe = { ex: {}, checks: [], items: [], fieldsN: 0 };
-    audit.push('planner', 'run started', 'seed ' + S.seed);
+    audit.push('start', 'run started', 'seed ' + S.seed);
     UI.runSteps(log, [
-      { agent: 'planner', run: function () { return { msg: 'Plan: read the IPS, the latest minutes and the custodian report; build one policy register; check targets, ranges and totals; draft trades under the IPS; gate them; ask for approval' }; } },
-      { agent: 'policy-reader', run: function () { P.ex.ips = extractIPS('ips'); P.ex.minutes = extractMinutes('minutes'); var n = Object.keys(P.ex.ips).length + Object.keys(P.ex.minutes).length; P.fieldsN += n; audit.push('policy-reader', 'extracted', n + ' policy fields'); return [{ msg: 'IPS: ' + Object.keys(P.ex.ips).length + ' fields (targets, ranges, liquidity multiple, trade limit)' }, { msg: 'Minutes: ' + Object.keys(P.ex.minutes).length + ' fields (two target changes, reference portfolio, active risk budget)' }]; } },
-      { agent: 'holdings-extractor', run: function () { P.ex.custody = extractCustody('custody'); var n = Object.keys(P.ex.custody).length; P.fieldsN += n; audit.push('holdings-extractor', 'extracted', n + ' holdings fields'); return { msg: 'Custodian report: ' + n + ' values in $ millions', details: Object.keys(P.ex.custody).reduce(function (o, k) { o[k] = P.ex.custody[k].value; return o; }, {}) }; } },
-      { agent: 'citation-validator', run: function () {
+      { agent: 'start', run: function () { return { msg: 'Run started.' }; } },
+      { agent: 'read', run: function () { P.ex.ips = extractIPS('ips'); P.ex.minutes = extractMinutes('minutes'); var n = Object.keys(P.ex.ips).length + Object.keys(P.ex.minutes).length; P.fieldsN += n; audit.push('read', 'extracted', n + ' policy fields'); return [{ msg: 'IPS: ' + Object.keys(P.ex.ips).length + ' fields (targets, ranges, liquidity multiple, trade limit)' }, { msg: 'Minutes: ' + Object.keys(P.ex.minutes).length + ' fields (two target changes, reference portfolio, active risk budget)' }]; } },
+      { agent: 'read', run: function () { P.ex.custody = extractCustody('custody'); var n = Object.keys(P.ex.custody).length; P.fieldsN += n; audit.push('read', 'extracted', n + ' holdings fields'); return { msg: 'Custodian report: ' + n + ' values in $ millions', details: Object.keys(P.ex.custody).reduce(function (o, k) { o[k] = P.ex.custody[k].value; return o; }, {}) }; } },
+      { agent: 'cite', run: function () {
         var bad = 0, ok = 0;
         ['ips', 'minutes', 'custody'].forEach(function (id) { Object.keys(P.ex[id]).forEach(function (k) { var f = P.ex[id][k]; var r = UI.validateField(DOCS, { cite: f.cites[0], value: f.unit === 'pct' ? f.value : f.value, unit: f.unit === 'pct' ? 'pct' : 'num' }); f.valid = r.ok; if (r.ok) ok++; else bad++; }); });
-        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve, ' + bad + ' blocked');
+        audit.push('cite', bad ? 'blocked' : 'passed', ok + ' resolve, ' + bad + ' blocked');
         return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve to a line containing the value' + (bad ? ', ' + bad + ' blocked' : '') };
       } },
-      { agent: 'consistency-checker', run: function () {
+      { agent: 'check', run: function () {
         var res = [], ips = P.ex.ips, mi = P.ex.minutes, cu = P.ex.custody;
         var tsum = PM.sum(ASSETS.map(function (a) { return ips['target.' + a] ? ips['target.' + a].value : 0; }));
         P.checks.push({ id: 'targets-sum:ips', flag: Math.abs(tsum - 1) > 1e-9 }); res.push({ msg: 'IPS targets sum to ' + F.pct(tsum, 1) });
@@ -581,10 +581,10 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
           res.push({ status: 'approval', msg: 'Custodian total ' + F.money(cu.total.value, 1) + ' does not equal the sum of lines ' + F.money(lineSum, 1) + ' (' + F.money(brk, 1) + ')' });
           P.items.push({ id: 'H-1', title: 'Custodian total does not add up (' + F.money(brk, 1) + ')', severity: 'high', evidence: 'The eight lines sum to ' + F.money(lineSum, 1) + '; the printed total is ' + F.money(cu.total.value, 1) + '. Weights are computed on the sum of lines. Approve to query the custodian.', cites: [cu.total.cites[0], { doc: 'custody', page: 1, line: 5, short: 'custody' }], state: 'pending', kind: 'custody' });
         }
-        audit.push('consistency-checker', 'checks run', P.checks.length + ' checks');
+        audit.push('check', 'checks run', P.checks.length + ' checks');
         return res;
       } },
-      { agent: 'rebalancing-agent', run: function () {
+      { agent: 'propose', run: function () {
         var w = current(), pol = policy(), res = [];
         var outside = ASSETS.filter(function (_, i) { return w[i] < pol.lo[i] - 1e-9 || w[i] > pol.hi[i] + 1e-9; });
         /* proposal A: IPS rule, breaching classes to the nearest edge, funded from the most overweight liquid classes */
@@ -594,10 +594,10 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
         var B = { trade: trade.map(function (t, i) { return pol.target[i] - w[i]; }) };
         P.proposals = [{ id: 'T-1', name: 'Rebalance breaches to the range edge (IPS section 6)', trade: trade }, { id: 'T-2', name: 'Rebalance every class to target', trade: B.trade }];
         P.proposals.forEach(function (p) { res.push({ status: 'ok', msg: p.id + ' drafted: ' + p.name, details: ASSETS.reduce(function (o, a, i) { if (Math.abs(p.trade[i]) > 1e-6) o[a] = F.spct(p.trade[i], 2) + ' (' + F.money(p.trade[i] * assets(), 1) + ')'; return o; }, {}) }); });
-        audit.push('rebalancing-agent', 'drafted', P.proposals.length + ' proposals');
+        audit.push('propose', 'drafted', P.proposals.length + ' proposals');
         return res;
       } },
-      { agent: 'compliance-gate', run: function () {
+      { agent: 'gate', run: function () {
         var res = [], w = current(), pol = policy(), maxT = P.ex.ips.maxTrade ? P.ex.ips.maxTrade.value : 0.1;
         P.proposals.forEach(function (p) {
           var after = w.map(function (x, i) { return x + p.trade[i]; }), why = [];
@@ -606,7 +606,7 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
           ASSETS.forEach(function (a, i) { if (after[i] < pol.lo[i] - 1e-6 || after[i] > pol.hi[i] + 1e-6) why.push(a + ' ends outside its range'); });
           if (O.liquidAfterStress(after, LIQUID, STRESS[0].s).value < liquidityRequired() - 1e-9) why.push('fails the liquidity-after-stress test');
           p.blocked = why;
-          audit.push('compliance-gate', why.length ? 'blocked' : 'passed', p.id + (why.length ? ': ' + why.join('; ') : ''));
+          audit.push('gate', why.length ? 'blocked' : 'passed', p.id + (why.length ? ': ' + why.join('; ') : ''));
           if (why.length) res.push({ status: 'blocked', msg: p.id + ' blocked: ' + why.join('; ') });
           else {
             res.push({ status: 'approval', msg: p.id + ' passes the gate (turnover ' + F.pct(turnover, 1) + '), sent for approval' });
@@ -615,9 +615,9 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
         });
         return res;
       } }
-    ], afterPipeline);
+    ], afterReview);
   }
-  function afterPipeline() {
+  function afterReview() {
     var P = S.pipe;
     apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: function (items, it) {
       if (it.kind === 'policy') { S.policyApproved = it.state; renderAll(); }
@@ -693,13 +693,13 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. As of 30 Sep 2026.'; renderAll(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runBtn').addEventListener('click', function () { S.policyApproved = 'pending'; runPipeline(); renderAll(); });
+    $('#runBtn').addEventListener('click', function () { S.policyApproved = 'pending'; runReview(); renderAll(); });
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzReturns', { title: 'Use your own asset returns', template: '/assets/templates/asset-returns.csv', columns: [{ name: 'date', desc: 'month end, YYYY-MM-DD' }].concat(ASSETS.map(function (a) { return { name: a, desc: 'monthly return, decimal' }; })),
       parse: parseReturns, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your return file, processed locally.'; renderAll(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '. As of 30 Sep 2026.'; renderAll(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Allocation Lab', slug: 'allocation-lab', report: 'Total portfolio recommendation (PDF)', source: function () { return S.user ? 'user return file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Allocation Lab'); UI.testsBadge('.tests-badge-slot', 'Allocation Lab');
-    renderMemo(); renderAll(); runPipeline();
+    renderMemo(); renderAll(); runReview();
     var h = location.hash.slice(1), T = ['optimize', 'views', 'tpa', 'stress', 'regimes', 'attribution'];
     var tabs = UI.tabs('#tabsRoot'); if (T.indexOf(h) !== -1) tabs.show(h);
   }

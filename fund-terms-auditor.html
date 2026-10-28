@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Fund Terms Auditor · Cristian Arenas</title>
-    <meta name="description" content="Checking that management fees, offsets and carried interest match the LPA: quarterly fee recomputation, European and American waterfalls, accrued carry, and gross and net IRR with and without the subscription line, with agents that read the LPA and ILPA-format reports and cite every break.">
+    <meta name="description" content="Check the fees and carry a GP reports against the LPA. The auditor recomputes every quarter, flags the breaks and drafts the letter to the GP.">
     <link rel="canonical" href="https://crissarenas.github.io/fund-terms-auditor.html">
     <meta property="og:title" content="Fund Terms Auditor · Cristian Arenas">
-    <meta property="og:description" content="Fees, offsets and carry recomputed from the LPA, breaks cited to the page and line.">
+    <meta property="og:description" content="Check the fees and carry a GP reports against the LPA. The auditor recomputes every quarter, flags the breaks and drafts the letter to the GP.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#FFFFFF">
@@ -122,7 +122,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
         <li>The fund, GP and documents are made up. The LPA is a two-page excerpt, so side letters and MFN terms are out of scope.</li>
         <li>Partnership expenses flow through the cash flows but are not tested against a cap.</li>
       </ul>
-      <p style="margin-top:14px"><a href="/notes/" data-final="notes/irr-subscription-line.html">Note: your IRR with and without the subscription line</a></p>
+      <p style="margin-top:14px"><a href="notes/irr-subscription-line.html">Note: your IRR with and without the subscription line</a></p>
     </div>
   </details>
 
@@ -140,13 +140,13 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
     <div class="counters-wrap"><div id="counters"></div></div>
     <div class="ai-grid">
       <div>
-        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Breaks for your approval</h3><span class="sub">Only approved breaks go into the letter</span></div><div class="panel-body"><div id="approvals"></div></div></div>
       </div>
       <div><div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div></div>
     </div>
     <div class="split-2">
-      <div class="panel"><div class="panel-head"><h3>Every check the recomputation agent ran</h3></div><div class="panel-body"><div id="checkTable"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Every check that ran</h3></div><div class="panel-body"><div id="checkTable"></div></div></div>
       <div class="panel" id="letter"><div class="panel-head"><h3>LP query letter, drafted from approved breaks</h3><span class="sub">Draft for review; not sent</span></div><div class="panel-body"><div class="letter" id="letterBody"></div></div></div>
     </div>
     <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/fta-labels.js</span></div>
@@ -233,7 +233,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
   function usd(x) { return (x < -5e-7 ? '-' : '') + '$' + F.int(Math.abs(x) * 1e6); }
   function terms() { return { pref: A.pref, carry: A.carry, catchUp: A.catchUp }; }
 
-  /* ---------------- document reading (shared by the tabs and the agents) ---------------- */
+  /* ---------------- document reading (shared by the tabs and the review) ---------------- */
   function find(id, re) { var out = null; DOCS[id].pages.forEach(function (pg, pi) { pg.forEach(function (l, li) { var m = re.exec(l); if (m && !out) out = { m: m, cite: { doc: id, page: pi + 1, line: li + 1, short: id.replace('rpt-', '') } }; }); }); return out; }
   function dollars(s) { return +String(s).replace(/[$,()]/g, '') / 1e6; }
   function readReport(id) {
@@ -402,24 +402,24 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
     UI.chart.line('#lineChart', { xs: ts, series: [{ name: 'Called, with line', ys: ts.map(function (t) { return cum(fl, t); }), color: 's2' }, { name: 'Called, without line', ys: ts.map(function (t) { return cum(adj, t); }), color: 's1' }], yFmt: function (v) { return F.num(v, 0); }, xFmt: function (v) { return new Date(v).getUTCFullYear(); }, height: 240, xTicks: 7, label: 'Cumulative LP capital called' });
   }
 
-  /* ---------------- AI pipeline ---------------- */
+  /* ---------------- review run ---------------- */
   var log, audit, apps;
-  function runPipeline() {
+  function runReview() {
     log.clear(); audit.clear();
     var P = S.pipe = { ex: {}, checks: [], items: [], fieldsN: 0, recon: [] };
-    audit.push('planner', 'run started', 'seed ' + S.seed);
+    audit.push('start', 'run started', 'seed ' + S.seed);
     var cnt = function (o) { return Object.keys(o).length; };
     UI.runSteps(log, [
-      { agent: 'planner', run: function () { return { msg: 'Plan: extract LPA terms, extract each report, validate every citation, recompute fees, offsets and carry from the terms, raise breaks with both citations, wait for approval, draft the query letter from what is approved' }; } },
-      { agent: 'lpa-terms-extractor', run: function () { P.ex.lpa = readLPA(); P.fieldsN += cnt(P.ex.lpa); audit.push('lpa-terms-extractor', 'extracted', cnt(P.ex.lpa) + ' terms'); return { msg: cnt(P.ex.lpa) + ' terms extracted from the LPA with citations', details: Object.keys(P.ex.lpa).reduce(function (o, k) { o[k] = P.ex.lpa[k].value; return o; }, {}) }; } },
-      { agent: 'report-extractor', run: function () { var n = 0; RPTS.forEach(function (id) { P.ex[id] = readReport(id); n += cnt(P.ex[id]); }); P.fieldsN += n; audit.push('report-extractor', 'extracted', n + ' lines from ' + RPTS.length + ' reports'); return { msg: n + ' report lines extracted from ' + RPTS.length + ' quarterly reports' }; } },
-      { agent: 'citation-validator', run: function () {
+      { agent: 'start', run: function () { return { msg: 'Run started.' }; } },
+      { agent: 'read', run: function () { P.ex.lpa = readLPA(); P.fieldsN += cnt(P.ex.lpa); audit.push('read', 'extracted', cnt(P.ex.lpa) + ' terms'); return { msg: cnt(P.ex.lpa) + ' terms extracted from the LPA with citations', details: Object.keys(P.ex.lpa).reduce(function (o, k) { o[k] = P.ex.lpa[k].value; return o; }, {}) }; } },
+      { agent: 'read', run: function () { var n = 0; RPTS.forEach(function (id) { P.ex[id] = readReport(id); n += cnt(P.ex[id]); }); P.fieldsN += n; audit.push('read', 'extracted', n + ' lines from ' + RPTS.length + ' reports'); return { msg: n + ' report lines extracted from ' + RPTS.length + ' quarterly reports' }; } },
+      { agent: 'cite', run: function () {
         var ok = 0, bad = 0;
         Object.keys(P.ex).forEach(function (id) { Object.keys(P.ex[id]).forEach(function (k) { var f = P.ex[id][k], ln = UI.DocViewer.active.line(f.cite.doc, f.cite.page, f.cite.line); var r = f.unit === 'text' ? UI.lineHas(ln, f.evidence || f.value, 'text') : UI.lineHas(ln, f.value, f.unit); f.valid = r; if (r) ok++; else bad++; }); });
-        audit.push('citation-validator', bad ? 'blocked' : 'passed', ok + ' resolve');
+        audit.push('cite', bad ? 'blocked' : 'passed', ok + ' resolve');
         return { status: bad ? 'blocked' : 'ok', msg: ok + ' citations resolve' + (bad ? ', ' + bad + ' blocked' : '') };
       } },
-      { agent: 'recomputation-agent', run: function () {
+      { agent: 'check', run: function () {
         var L = P.ex.lpa, res = [], share = A.share;
         var t = { inIP: false, commitment: L.commitments.value, rateIP: L.feeIP.value, ratePost: L.feePost.value, lpShare: share, offsetPct: L.offsetPct.value };
         RPTS.forEach(function (id) {
@@ -439,10 +439,10 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
         var tv = (q2.distributions.value + q2.nav.value - q2.accruedCarry.value) / q2.contributions.value, dpi = q2.distributions.value / q2.contributions.value;
         P.checks.push({ id: 'perf:rpt-q2-2026', flag: Math.abs(tv - q2.netTvpi.value) > 0.006 || Math.abs(dpi - q2.dpi.value) > 0.006, label: 'Q2-2026 net TVPI and DPI vs the GP\'s own capital account', rep: F.mult(q2.netTvpi.value) + ', ' + F.mult(q2.dpi.value), calc: F.mult(tv, 3) + ', ' + F.mult(dpi, 3) });
         res.push({ msg: 'Accrued carry under the LPA ' + L.waterfall.value + ' waterfall: ' + usd(wf) + ' (reported ' + usd(q2.accruedCarry.value) + ')' });
-        audit.push('recomputation-agent', 'recomputed', P.checks.length + ' checks');
+        audit.push('check', 'recomputed', P.checks.length + ' checks');
         return res;
       } },
-      { agent: 'breaks-agent', run: function () {
+      { agent: 'check', run: function () {
         var L = P.ex.lpa, res = [];
         P.recon.forEach(function (r) {
           var nm = r.id.slice(4).toUpperCase().replace('-', ' ');
@@ -472,13 +472,13 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
           res.push({ status: 'approval', msg: 'Carry break: ' + usd(cr.rep) + ' accrued with no preferred return; LPA gives ' + usd(cr.calc) });
         }
         res.push({ msg: P.checks.filter(function (c) { return !c.flag; }).length + ' checks tie, including net invested capital in all four quarters and the GP\'s TVPI on its own figures' });
-        audit.push('breaks-agent', 'breaks raised', P.items.length + ' breaks, each with the clause and the report line');
+        audit.push('check', 'breaks raised', P.items.length + ' breaks, each with the clause and the report line');
         return res;
       } },
-      { agent: 'letter-drafter', run: function () { audit.push('letter-drafter', 'waiting', 'drafts from approved breaks only'); return { status: 'approval', msg: 'Waiting for approvals; only approved breaks go into the letter' }; } }
-    ], afterPipeline);
+      { agent: 'draft', run: function () { audit.push('draft', 'waiting', 'drafts from approved breaks only'); return { status: 'approval', msg: 'Waiting for approvals; only approved breaks go into the letter' }; } }
+    ], afterReview);
   }
-  function afterPipeline() {
+  function afterReview() {
     var P = S.pipe;
     apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderLetter, approveLabel: 'Approve break' });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.checks.filter(function (c) { return c.flag; }).length, review: P.items.length });
@@ -494,7 +494,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
       ap.map(function (it) { return '<li>' + UI.esc(it.letter) + ' ' + it.cites.map(function (c) { return UI.citeHTML(c); }).join('') + '</li>'; }).join('') + '</ol>' +
       (fees > 0 ? '<p>Together the fee items come to ' + usd(fees) + ' for our account. We would ask that this be credited against the next capital call.</p>' : '') +
       '<p>We are happy to walk through our calculations. Kind regards,<br>Fictional Endowment Fund, private markets team</p>';
-    audit.push('letter-drafter', 'letter updated', ap.map(function (a) { return a.id; }).join(', '));
+    audit.push('draft', 'letter updated', ap.map(function (a) { return a.id; }).join(', '));
   }
   function renderEval() {
     var P = S.pipe, ext = {}, truth = {};
@@ -560,7 +560,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. As of 30 Jun 2026.'; renderMC(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
-    $('#runBtn').addEventListener('click', runPipeline);
+    $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzFees', { title: 'Use your own fee lines', template: '/assets/templates/fee-lines.csv', columns: [{ name: 'quarter_end' }, { name: 'in_investment_period', desc: 'yes or no' }, { name: 'net_invested_capital', desc: '$m, fund level, start of quarter' }, { name: 'portfolio_fees', desc: '$m, fund level' }, { name: 'reported_gross', required: false, desc: 'LP share, $' }, { name: 'reported_offset', required: false }, { name: 'reported_net', required: false }],
       parse: parseFees, onData: function (d) { S.userFees = d; $('#dataSrc').textContent = 'Your fee lines, processed locally. Terms from the assumptions register.'; renderAll(); }, onReset: function () { S.userFees = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderAll(); } });
@@ -568,7 +568,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
       parse: parseDeals, onData: function (d) { S.userDeals = d; $('#dataSrc').textContent = 'Your deal ledger, processed locally.'; renderAll(); }, onReset: function () { S.userDeals = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderAll(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Fund Terms Auditor', slug: 'fund-terms-auditor', report: 'Fee audit report and query letter (PDF)', source: function () { return S.userDeals || S.userFees ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Fund Terms Auditor'); UI.testsBadge('.tests-badge-slot', 'Fund Terms Auditor');
-    renderAll(); runPipeline();
+    renderAll(); runReview();
     UI.revealHash(tabs);
   }
   init();

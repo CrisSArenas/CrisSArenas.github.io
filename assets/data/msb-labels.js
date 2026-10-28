@@ -1,5 +1,5 @@
 /* Hand-labeled ground truth for the Multi-Strategy Builder (mandates in assets/data/msb-docs.js, drift
-   events planted in the synthetic sleeve data). Kept apart from the documents and the monitors.
+   events planted in the synthetic sleeve data). Kept apart from the documents and the page code.
    How the labels were set: mandate fields read by hand at the page and line given (rates as decimals).
    Issues: the drift events were written down by hand from the design of the synthetic data (which sleeve,
    which factor, from which month), and the correlation and overlap consequences were worked out by hand
