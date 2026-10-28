@@ -15,7 +15,7 @@ for (const p of pages) {
       const ctx = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: scheme });
       const page = await ctx.newPage();
       const errs = [];
-      page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+      page.on('console', m => { if (m.type() === 'error' && !/ERR_TUNNEL|ERR_NAME_NOT_RESOLVED|ERR_PROXY/.test(m.text())) errs.push(m.text()); });
       page.on('pageerror', e => errs.push(String(e)));
       page.on('requestfailed', r => { const u = r.url(); if (u.startsWith(base)) errs.push('failed: ' + u); });
       page.on('response', r => { if (r.url().startsWith(base) && r.status() >= 400) errs.push(r.status() + ' ' + r.url()); });

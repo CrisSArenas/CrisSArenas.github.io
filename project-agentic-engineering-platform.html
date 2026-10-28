@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agentic Engineering Platform | Cristian Arenas</title>
-<meta name="description" content="Technical write-up of a multi-agent engineering platform: orchestration topology, verification gates, model routing and cost accounting, context budgeting, persistent memory, guardrails, failure modes, and telemetry from a real multi-agent run.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
+<meta name="description" content="Technical write-up of a multi-agent engineering platform: orchestration topology, verification gates, model routing and cost accounting, context budgeting, persistent memory, guardrails, failure modes, and telemetry from a real multi-agent run."><rect width='100' height='100' rx='18' fill='%230a0e27'/><text x='50' y='68' font-size='58' text-anchor='middle' font-family='monospace' fill='%2300f7ff'>&gt;_</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+<link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 .project-detail{padding-top:80px;min-height:100vh;background:var(--dark-bg)}
@@ -100,41 +100,45 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
   .code pre{font-size:.72rem}
 }
 </style>
+<script src="/assets/js/site.js"></script>
 </head>
 <body>
 
-<nav class="navbar">
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
   <div class="container">
-    <div class="nav-brand"><span class="terminal-prompt">cristian@portfolio:~$</span></div>
-    <button class="mobile-menu-toggle" id="mobileMenuBtn" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
-    <ul class="nav-links" id="navLinks">
-      <li><a href="index.html#home">Home</a></li>
-      <li><a href="index.html#about">About</a></li>
-      <li><a href="index.html#skills">Skills</a></li>
-      <li><a href="index.html#projects">Projects</a></li>
-      <li><a href="index.html#research">Research</a></li>
-      <li><a href="index.html#demos">Demos</a></li>
-      <li><a href="robotics-embedded.html">Robotics</a></li>
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#stack">Stack</a></li>
+      <li><a href="/#work">Investment work</a></li>
+      <li><a href="/#ai">AI Systems</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/notes/">Notes</a></li>
+      <li><a href="/#experience">Experience</a></li>
+      <li><a href="/#contact">Contact</a></li>
     </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 </nav>
+<!-- site-nav:end -->
 
 <div class="project-detail">
   <div class="project-hero">
     <div class="container">
-      <a href="index.html#projects" class="back-button"><i class="fas fa-arrow-left"></i> Back to Projects</a>
+      <a href="/#ai" class="back-button"><i class="fas fa-arrow-left"></i> Back to AI Systems</a>
       <h1>Agentic Engineering Platform</h1>
       <div class="project-meta">
         <div class="meta-item"><i class="fas fa-calendar"></i><span>2025 &ndash; present</span></div>
         <div class="meta-item"><i class="fas fa-briefcase"></i><span>Agentic AI Engineering</span></div>
-        <div class="meta-item"><i class="fas fa-code-branch"></i><span>Quant tooling, research code, this site</span></div>
+        <div class="meta-item"><i class="fas fa-code-branch"></i><span>Investment analytics, research code, prototypes</span></div>
       </div>
       <p class="hero-description">
         A standing team of specialised AI agents that plans, builds, reviews, tests and ships software. This page is
         the engineering write-up: how roles are defined and constrained, the orchestration topology and its
         concurrency limits, the verification gate that no agent may bypass, model routing and cost accounting,
-        context budgeting, the memory subsystem, the guardrails, the failure modes it has actually hit, and
-        telemetry from a real run in which eleven agents rebuilt the interactive demos on this site.
+        context budgeting, the memory subsystem, the guardrails, and the failure modes it has actually hit.
       </p>
       <div class="project-tags-large">
         <span class="tag-large">Multi-Agent Orchestration</span>
@@ -154,8 +158,8 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
     <section class="content-section">
       <h2>1. The design problem</h2>
       <p>
-        One engineer owning portfolio-management tooling, research code, robotics prototypes and a public site cannot
-        context-switch fast enough with a single chat window. A single assistant also has a structural weakness: it
+        One person owning investment analytics, research code and prototypes cannot context-switch fast enough with
+        a single chat window. A single assistant also has a structural weakness: it
         writes the code and then grades its own homework. Both problems have the same shape as an engineering
         organisation, and the same fix, which is roles with narrow briefs, defined hand-offs, and separation between
         the thing that produces work and the thing that certifies it.
@@ -169,8 +173,8 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
       <div class="kpi-row">
         <div class="kpi"><div class="v">13</div><div class="l">standing roles, each a versioned definition file</div></div>
         <div class="kpi"><div class="v">60+</div><div class="l">skills the agents can invoke by name or trigger</div></div>
-        <div class="kpi"><div class="v">2.34M</div><div class="l">tokens consumed rebuilding the eleven demos on this site</div></div>
-        <div class="kpi"><div class="v">5.7&times;</div><div class="l">speed-up from concurrency on that rebuild, 217 agent-minutes in 38</div></div>
+        <div class="kpi"><div class="v">5</div><div class="l">concurrency ceiling for parallel workers on large files</div></div>
+        <div class="kpi"><div class="v">1</div><div class="l">gate every worker must pass before it may report done</div></div>
       </div>
     </section>
 
@@ -268,7 +272,7 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
       <p>
         Many similar tasks over disjoint files, dispatched together under a concurrency ceiling. Each worker
         receives a pointer to the shared specification rather than its text, so the orchestrator's own context does
-        not grow with the number of workers. This is the pattern used to rebuild the eleven demos on this site.
+        not grow with the number of workers.
       </p>
       <h3>Pipeline, for dependent stages that still overlap</h3>
       <p>
@@ -282,8 +286,7 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
         A finding produced by one agent is examined by a second whose brief is to disprove it. Generation and
         adjudication are different jobs and should not share a context, for the same reason the author of a change
         is a poor reviewer of it. This is the same principle as the independent adjudication step in my
-        <a href="project-alt-data-research-brain.html">alternative-data platform</a>, arrived at separately in both
-        systems.
+        document-extraction pipelines, where a validator that did not write a claim decides whether it may ship.
       </p>
       <div class="highlight-box">
         <strong>The rule that matters:</strong> the agent that writes a change never certifies it. Verification is
@@ -300,7 +303,7 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
         checker every worker must run, and the definition of done is that checker's clean output reproduced in the
         report. Self-assessment is not accepted as evidence.
       </p>
-      <p>For the demo rebuild, the gate asserted three things about each file:</p>
+      <p>For a fan-out over web pages, the gate asserts three things about each file:</p>
       <ul>
         <li><strong>Every inline script parses.</strong> Each script block is compiled in isolation, so a syntax error introduced by a careless edit cannot be reported as success.</li>
         <li><strong>Every element the code reaches for exists.</strong> Identifiers referenced by scripts are resolved against the markup, with elements created at runtime accounted for separately. This catches the rename that quietly orphans a handler.</li>
@@ -312,8 +315,8 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
         error, a dangling reference, or a page that drifted from the shared design.
       </p>
       <div class="warn-box">
-        <strong>What a gate cannot catch, and how that bit me.</strong> A checker reads text, not pixels. In this
-        run every worker passed the gate while two demos appeared to render nothing at all in my probes. The cause
+        <strong>What a gate cannot catch, and how that bit me.</strong> A checker reads text, not pixels. In one
+        run every worker passed the gate while two pages appeared to render nothing at all in my probes. The cause
         was the preview surface being hidden, which suspends animation frames, so anything drawn in a render loop
         never painted. Driving the draw path directly showed both were fine. The lesson generalises: a gate proves
         the absence of a known failure class, never the presence of correctness, and someone with eyes still has to
@@ -340,7 +343,7 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
           </tbody>
         </table>
       </div>
-      <p>Adjust the mix to see the effect on a workload the size of that rebuild, which consumed 2.34 million tokens across ten workers:</p>
+      <p>Adjust the mix to see the effect on an illustrative fan-out workload of 2.34 million tokens:</p>
       <div class="demo">
         <div class="demo-head">
           <span class="t"><i class="fas fa-coins"></i> Routing cost model</span>
@@ -382,8 +385,8 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
         <li><strong>The orchestrator does not read the work files.</strong> It holds paths, slugs and checklists, and delegates the reading. The moment it starts reading targets, the coordination layer becomes the bottleneck it exists to prevent.</li>
       </ul>
       <div class="warn-box">
-        <strong>The concurrency ceiling, learned the hard way.</strong> The first attempt at this run dispatched
-        eleven workers at once against files up to 155&nbsp;KB. The session hit its usage limit and all eleven were
+        <strong>The concurrency ceiling, learned the hard way.</strong> An early fan-out dispatched every
+        worker at once against files up to 155&nbsp;KB. The session hit its usage limit and all of them were
         terminated mid-flight. Two had chosen whole-file regeneration and left truncated, unopenable files,
         recovered only because the tree was clean and the previous versions were still in version control. The fix
         was two changes: ban regeneration in favour of asserted edits, and cap concurrency at five with the largest
@@ -501,7 +504,7 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
             <tr><td>Gate passes, output still wrong</td><td>Clean checker run, page renders nothing</td><td>Orchestrator re-verifies in a browser with pixel and interaction probes. Agents have no eyes; only the lead does.</td></tr>
             <tr><td>Confident false positive</td><td>A reported bug that is not real</td><td>Adversarial second agent tries to disprove every finding before it is reported.</td></tr>
             <tr><td>Partial-context edit</td><td>A change that breaks a caller elsewhere in the file</td><td>Whole-file read mandated before the first edit; the gate then re-resolves every referenced identifier.</td></tr>
-            <tr><td>Spec drift between workers</td><td>Eleven demos, eleven interpretations of the design</td><td>One shared stylesheet and one migrated reference implementation, written before fan-out and named in every prompt.</td></tr>
+            <tr><td>Spec drift between workers</td><td>Many files, many interpretations of the design</td><td>One shared stylesheet and one migrated reference implementation, written before fan-out and named in every prompt.</td></tr>
           </tbody>
         </table>
       </div>
@@ -528,33 +531,36 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
     <section class="content-section">
       <h2>14. Where it runs</h2>
       <ul>
-        <li><strong>Portfolio-management tooling:</strong> dynamic target and rebalancing tools, momentum dashboards, re-underwriting analyses and client reporting, where the reviewer and security roles carry the most weight.</li>
+        <li><strong>Portfolio analytics and research tools:</strong> allocation, risk and private markets models, where the reviewer and security roles carry the most weight.</li>
         <li><strong>Research code:</strong> the experiment pipeline behind my regime-aware transformer paper, where reproducibility gates and the documentation agent keep a single script generating every table and figure.</li>
-        <li><strong>Applied AI systems:</strong> the alternative-data research brain, where the QA agent exercised the live portal and the design reviewer polished the terminal UI.</li>
-        <li><strong>This site:</strong> content, research pages and the eleven interactive demos, standardised by the fan-out documented above.</li>
+        <li><strong>Applied AI systems:</strong> document extraction and agent pipelines, where the QA agent exercises the interface in a headless browser before anything ships.</li>
       </ul>
     </section>
 
   </div>
 </div>
 
-<footer class="footer">
+<!-- site-footer:start -->
+<footer class="site-footer">
   <div class="container">
-    <div class="footer-content">
-      <div class="footer-text">
-        <p>&copy; 2026 Cristian Arenas. Quantitative Research &amp; AI/ML Engineering.</p>
-        <p class="footer-subtext"><a href="mailto:cristianmiguelsa@gmail.com">cristianmiguelsa@gmail.com</a></p>
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
       </div>
-      <div class="footer-links">
-        <a href="https://linkedin.com/in/cristian-arenas-ai-engineer" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-        <a href="https://github.com/CrisSArenas" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
-        <a href="mailto:cristianmiguelsa@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
-      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/data-model.html">Data model</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics and embedded</a></li>
+      </ul>
     </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. Demos use synthetic data and fictional entities. Nothing on this site is investment advice.</p>
   </div>
 </footer>
-
-<button id="scrollTop" class="scroll-top" aria-label="Scroll to top"><i class="fas fa-arrow-up"></i></button>
+<!-- site-footer:end -->
 
 <script>
 (function(){
@@ -564,7 +570,7 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
   function el(t,a,txt){ var e=document.createElementNS(NS,t); for(var k in a){ if(a[k]!==null&&a[k]!==undefined) e.setAttribute(k,a[k]); } if(txt!==undefined&&txt!==null) e.textContent=txt; return e; }
 
   /* ---------- routing cost basis ----------
-     Aggregate token volume measured across the ten workers of the demo rebuild.
+     Illustrative workload size for the routing cost model.
      Used as the basis for the routing cost model below. */
   var TOTAL_TOK = 2339719;
 
@@ -587,7 +593,7 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
         '<div class="rc">$'+cf.toFixed(2)+'</div><div class="rl">'+((TOTAL_TOK*f)/1e6).toFixed(2)+'M tokens</div></div>' +
       '<div class="routecard"><div class="rn">Small tier</div><div class="rm">search · classification · summary</div>' +
         '<div class="rc">$'+cs.toFixed(2)+'</div><div class="rl">'+((TOTAL_TOK*(1-f))/1e6).toFixed(2)+'M tokens</div></div>' +
-      '<div class="routecard"><div class="rn">Workload total</div><div class="rm">ten-worker demo rebuild</div>' +
+      '<div class="routecard"><div class="rn">Workload total</div><div class="rm">illustrative fan-out workload</div>' +
         '<div class="rc">$'+tot.toFixed(2)+'</div><div class="rl">2.34M tokens</div></div>' +
       '<div class="routecard"><div class="rn">Saved vs all-frontier</div><div class="rm">routing benefit</div>' +
         '<div class="rc">$'+saved.toFixed(2)+'</div><div class="rl">'+(allFront>0?(100*saved/allFront).toFixed(0):0)+'% lower</div></div>';
@@ -600,6 +606,5 @@ table.spec td.num{text-align:right;font-family:var(--font-mono)}
   renderRoute();
 })();
 </script>
-<script src="script.js"></script>
 </body>
 </html>

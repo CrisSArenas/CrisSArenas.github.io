@@ -1,6 +1,6 @@
-# CrisSArenas.github.io
+# crissarenas.github.io
 
-Personal site of **Cristian Arenas**: quantitative portfolio manager and AI engineer.
+Personal site of **Cristian Arenas**, Quantitative Investment Professional and AI Engineer. I work on investment decisions in private markets and portfolio construction, and I build the systems behind them.
 
 Live at https://crissarenas.github.io
 
@@ -8,24 +8,34 @@ Live at https://crissarenas.github.io
 
 | Area | Files |
 |------|-------|
-| Home (about, skills, projects, research, demos) | `index.html`, `styles.css`, `script.js` |
-| Project deep-dives | `project-*.html` |
-| Research hub and interactive paper summaries | `research.html`, `research-*.html`, `assets/research/` |
-| Finance demos (in-browser, seeded synthetic data) | `portfolio-optimizer.html`, `macro-regime-dashboard.html`, `portable-alpha-simulator.html`, `alpha-signal-engine.html`, `nlp-alpha-lab.html` |
-| Robotics and embedded demos | `robotics-embedded.html`, `Robotics and Embedded Systems/` |
-| Shared demo design system | `assets/css/demo-shell.css` |
+| Home: the Allocation Stack, investment work, AI systems, about, research, notes | `index.html`, `script.js` |
+| Flagship demos (in-browser, synthetic data, fictional entities) | `allocation-lab.html`, `private-capital-lab.html`, `manager-selection-copilot.html`, `fund-terms-auditor.html`, `co-invest-underwriter.html`, `secondaries-desk.html`, `multi-strategy-builder.html`, `agentic-portfolio-monitor.html` |
+| Architecture and data | `ai-systems.html`, `data-model.html` |
+| Shared math library and its tests | `assets/js/pm-math.js`, `assets/js/pm-tests.js`, `tests.html`, `tests/run.js` |
+| Shared components | `styles.css`, `assets/css/demo-shell.css`, `assets/js/pm-ui.js`, `assets/js/site.js` |
+| Practitioner notes | `notes/` |
+| Research and interactive paper summary | `research.html`, `research-regime-aware-transformer.html`, `assets/research/` |
+| Games and robotics simulators | `arcade.html`, `furnace.html`, `terminal-heist.html`, `robotics-embedded.html`, `robotics/` |
+| Tooling (not served content) | `tools/` |
 
-Static site, no build step. Every demo is a single self-contained HTML file. Open `index.html`
-or serve the folder with any static server (for example `python -m http.server 8765`).
+Static site, no build step. Every demo is a self-contained HTML page that shares the stylesheets, the component script and the math library. Serve the folder with any static server, for example `python -m http.server 8765`, and open http://localhost:8765. Pages use root-relative links, so open them through a server rather than from the file system.
+
+## Checks
+
+```
+node tests/run.js                 # math tests (the same tests run on /tests.html)
+node tools/sync-chrome.mjs --check  # nav and footer identical on every page
+node tools/contrast.mjs           # WCAG AA contrast for every palette pair
+node tools/qa.mjs <pages>         # console errors and horizontal scroll (server on :8765)
+```
+
+All demos use synthetic data and fictional funds, managers and companies. Nothing here is investment advice.
 
 ## License
 
-Code is available under the [MIT License](LICENSE). Research papers in `assets/research/` are
-the author's own work and are shared for personal, non-commercial reading; cite the SSRN version.
+Code is available under the [MIT License](LICENSE). Research papers in `assets/research/` are the author's own work and are shared for personal, non-commercial reading; cite the SSRN version.
 
-## Author
+## Contact
 
-**Cristian Arenas**
-- LinkedIn: [cristian-arenas-ai-engineer](https://linkedin.com/in/cristian-arenas-ai-engineer)
-- GitHub: [@CrisSArenas](https://github.com/CrisSArenas)
+- LinkedIn: [cristian-arenas-ai-engineer](https://www.linkedin.com/in/cristian-arenas-ai-engineer)
 - Email: cristianmiguelsa@gmail.com
