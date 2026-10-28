@@ -114,6 +114,43 @@
     near(program(15), program(25), 1e-12, 'program NAV in two steady-state years'); near(program(20), f.navYears, 1e-12, 'equals the sum of one vintage NAVs');
   }, 'Private Capital Lab');
 
+  var PO = { pub0: 735, funds: [{ unfunded: 80, nav: 100, age: 3 }, { unfunded: 60, nav: 80, age: 2 }, { unfunded: 10, nav: 52, age: 6 }], model: { rc: 0.3, ip: 5, life: 12, growth: 0.11, bow: 2.5 }, pubReturn: 0.065, spend: 0.045, years: 10, targetPct: 0.25, horizon: 4 };
+  T.add('Pacing', 'Pacing plan puts the private share on target at the horizon', function () {
+    var P = PM.priv.pacingPlan(PO), cs = [P[0].commit, P[0].commit, P[0].commit, P[0].commit];
+    var rows = PM.priv.project(Object.assign({}, PO, { years: 4 }), cs);
+    near(rows[3].pct, 0.25, 1e-6);
+  }, 'Private Capital Lab');
+  T.add('Pacing', 'Monte Carlo with no volatility tracks the deterministic plan', function () {
+    var P = PM.priv.pacingPlan(PO), mc = PM.priv.pacingMC(Object.assign({}, PO, { plan: P.map(function (r) { return r.commit; }), quarters: 40, seed: 1, paths: 20, pubMu: 0.065, pubVol: 0, privBeta: 0.6, privVol: 0, callVol: 0, distBeta: 0, band: [0.2, 0.3], liquidPctOfPublic: 0.7, coverageMin: 1 }));
+    [3, 7, 11, 15, 19].forEach(function (q) { var y = (q + 1) / 4 - 1; ok(Math.abs(mc.pctQ.p50[q] - P[y].pct) < 0.006, 'year ' + (y + 1) + ': MC ' + mc.pctQ.p50[q] + ' plan ' + P[y].pct); });
+  }, 'Private Capital Lab');
+  T.add('Pacing', 'Reconciliation identity: opening + calls - distributions + gains = closing', function () {
+    var r = PM.priv.rollForward({ opening: 31.4125, contributions: 1.85, distributions: 2.4, gains: 1.874 - 0.175 - 0.0425, closing: 32.519 });
+    near(r.break, 0, 1e-9); near(PM.priv.rollForward({ opening: 22.15, contributions: 0.9, distributions: 1.35, gains: 0.73 - 0.08, closing: 23.05 }).break, 0.70, 1e-9);
+  }, 'Private Capital Lab');
+  T.add('Pacing', 'Nowcast equals the reported NAV when the proxy return and cash flows are zero', function () {
+    var n = PM.priv.nowcast({ nav: 42.5, flows: [], proxy: [0, 0], betas: [0.5, 0.3, 0.1], proxyBefore: [0, 0], alpha: 0, sigma: 0.04 });
+    near(n.nav, 42.5, 1e-12);
+  }, 'Private Capital Lab');
+  T.add('Pacing', 'Nowcast catch-up and stale-quarter roll on a hand example', function () {
+    var n = PM.priv.nowcast({ nav: 100, flows: [{ q: 1, amount: 5 }], proxy: [-0.10], betas: [0.5, 0.3, 0.1], proxyBefore: [-0.05, 0.02], alpha: 0 });
+    var catchUp = (0.3 + 0.1) * -0.05 + 0.1 * 0.02;
+    near(n.nav, (100 * (1 + catchUp) + 5) * (1 - 0.09), 1e-12);
+  }, 'Private Capital Lab');
+  T.add('Pacing', 'Distributed-lag nowcast fit recovers known betas', function () {
+    var rng = PM.mulberry32(3), z = PM.normalGen(rng), px = [], nv = [];
+    for (var t = 0; t < 80; t++) px.push(0.02 + 0.07 * z());
+    for (t = 0; t < 80; t++) nv.push(0.01 + 0.5 * px[t] + 0.3 * (px[t - 1] || 0) + 0.1 * (px[t - 2] || 0) + 0.0001 * z());
+    var f = PM.priv.nowcastFit(nv, px, 2);
+    near(f.betas[0], 0.5, 2e-3); near(f.betas[1], 0.3, 2e-3); near(f.betas[2], 0.1, 2e-3);
+  }, 'Private Capital Lab');
+  T.add('Pacing', 'Evergreen gate never pays out above the redemption limit', function () {
+    var req = [0.02, 0.15, 0.2, 0.25, 0.1, 0.02, 0, 0], ret = [0.01, -0.08, -0.04, 0.0, 0.02, 0.02, 0.02, 0.02];
+    var e = PM.priv.evergreen({ nav0: 1000, sleevePct: 0.1, facility: 50, limitPct: 0.05, requests: req, returns: ret, sleeveReturn: 0.04, saleDiscount: 0.15, facilityRate: 0.07 });
+    e.rows.forEach(function (r) { ok(r.paid <= r.cap + 1e-9, 'quarter ' + r.q + ' paid ' + r.paid + ' above limit ' + r.cap); });
+    ok(e.rows.some(function (r) { return r.gated; }), 'stress should gate');
+    near(PM.sum(e.rows.map(function (r) { return r.requested; })), PM.sum(e.rows.map(function (r) { return r.paid; })) + e.rows[e.rows.length - 1].queue, 1e-9);
+  }, 'Private Capital Lab');
   /* ---------------- Allocation ---------------- */
   var SIG4 = [[0.0256, 0.0112, 0.0048, 0.0010], [0.0112, 0.0324, 0.0060, 0.0015], [0.0048, 0.0060, 0.0225, 0.0020], [0.0010, 0.0015, 0.0020, 0.0036]];
   var MU4 = [0.07, 0.08, 0.075, 0.04];

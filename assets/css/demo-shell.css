@@ -59,7 +59,7 @@
 }
 
 /* data notice and banners */
-.notice { display: flex; gap: 10px; align-items: flex-start; font-size: .86rem; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+.notice { display: block; font-size: .86rem; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
 .notice.ok { border-color: color-mix(in srgb, var(--positive) 45%, var(--border)); }
 .notice.warn { border-color: color-mix(in srgb, var(--warning) 55%, var(--border)); }
 .notice.bad { border-color: color-mix(in srgb, var(--negative) 55%, var(--border)); }
@@ -345,3 +345,9 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .demo-bar .demo-title { font-size: 1.25rem; margin: 0; flex: 1; min-width: 200px; display: flex; gap: 8px; align-items: center; }
 .demo-bar .demo-title i { color: var(--accent-text); font-size: .95rem; }
 .demo-bar .demo-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* grid children must be allowed to shrink below their content width */
+.df-grid > *, .split > *, .split-2 > *, .ai-grid > *, .bars-2 > *, .kpis > * { min-width: 0; }
+.doc-viewer .dv-head select { max-width: 100%; min-width: 0; flex: 1 1 180px; }
+
+.wl .notice { display: block; }

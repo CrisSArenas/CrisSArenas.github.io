@@ -4,7 +4,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const files = process.argv.slice(2).length ? process.argv.slice(2) : ['index.html', 'ai-systems.html', 'data-model.html', 'notes/index.html'];
+const all = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => ['.git', 'tools', 'tests', 'qa'].includes(e.name) ? [] : e.isDirectory() ? all(path.join(d, e.name)) : e.name.endsWith('.html') ? [path.relative(root, path.join(d, e.name))] : []);
+const files = process.argv.slice(2).length ? process.argv.slice(2) : all(root);
 let n = 0;
 for (const rel of files) {
   const f = path.join(root, rel);

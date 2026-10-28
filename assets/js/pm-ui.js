@@ -45,6 +45,7 @@
   var F = UI.fmt = {};
   function fixed(x, d) {
     if (x == null || !isFinite(x)) return '–';
+    if (Math.abs(x) < 0.5 * Math.pow(10, -d)) x = 0;   // no negative zero
     return Number(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
   F.num = function (x, d) { return fixed(x, d == null ? 1 : d); };
@@ -56,8 +57,8 @@
   F.mult = function (x, d) { return (x == null || !isFinite(x)) ? '–' : fixed(x, d == null ? 2 : d) + 'x'; };
   F.money = function (x, d, unit) {
     if (x == null || !isFinite(x)) return '–';
-    var s = x < 0 ? '-' : '';
-    return s + '$' + fixed(Math.abs(x), d == null ? 1 : d) + (unit == null ? 'm' : unit);
+    var dd = d == null ? 1 : d, s = x < 0 && Math.abs(x) >= 0.5 * Math.pow(10, -dd) ? '-' : '';
+    return s + '$' + fixed(Math.abs(x), dd) + (unit == null ? 'm' : unit);
   };
   F.date = function (d) { return d instanceof Date ? d.toISOString().slice(0, 10) : String(d); };
 
@@ -201,7 +202,7 @@
     var cats = o.categories, ser = o.series, nC = cats.length, nS = ser.length;
     var horiz = !!o.horizontal;
     var W = o.width || 760, H = o.height || (horiz ? Math.max(160, 26 * nC + 50) : 280);
-    var m = horiz ? { l: o.labelWidth || 150, r: 24, t: 10, b: 28 } : { l: 56, r: 12, t: 14, b: 42 };
+    var m = horiz ? { l: o.labelWidth || 150, r: o.values ? 56 : 24, t: 10, b: 28 } : { l: 56, r: 12, t: o.values ? 28 : 14, b: 42 };
     var vals = [];
     if (o.stacked) {
       cats.forEach(function (c, k) {
@@ -651,7 +652,8 @@
       var c = [n.v];
       if (unit === 'pct') c = n.unit === 'bps' ? [n.v / 1e4] : [n.v / 100];
       else if (unit === 'bps') c = n.unit === '%' ? [n.v * 100] : [n.v];
-      else if (unit === 'money') c = (n.unit === 'm' || n.unit === 'mm' || n.unit === 'million') ? [n.v] : (n.unit === 'bn' || n.unit === 'billion') ? [n.v * 1000] : n.unit === 'k' ? [n.v / 1000] : [n.v / 1e6, n.v];
+      else if (unit === 'money') c = (n.unit === 'm' || n.unit === 'mm' || n.unit === 'million') ? [n.v] : (n.unit === 'bn' || n.unit === 'billion') ? [n.v * 1000] : n.unit === 'k' ? [n.v / 1000] : [n.v / 1e6, n.v / 1e3, n.v];
+      if (unit === 'money') return c.some(function (x) { return Math.abs(Math.abs(x) - Math.abs(value)) <= 1e-6 + 1e-4 * Math.abs(value); });
       return c.some(function (x) { return Math.abs(x - value) <= tol * Math.max(1, Math.abs(value)) * (unit === 'pct' ? 0.01 : 1); });
     });
   };
@@ -844,20 +846,25 @@
   /* ---------- model tests badge ---------- */
   UI.testsBadge = function (el, filter) {
     el = resolve(el);
-    el.outerHTML = '<a class="tests-badge" id="testsBadge" href="/tests.html"><span class="dot"></span><span>Model tests: running</span></a>';
-    el = document.getElementById('testsBadge');
+    var a = UI.el('a', { class: 'tests-badge', href: '/tests.html' }, UI.el('span', { class: 'dot' }), UI.el('span', { text: 'Model tests: running' }));
+    el.parentNode.replaceChild(a, el);
     function run() {
       try {
         var r = global.PMTests.run(filter);
-        el.classList.add(r.failed ? 'fail' : 'pass');
-        el.lastChild.textContent = 'Model tests: ' + r.passed + ' of ' + r.total + ' passed';
-      } catch (e) { el.classList.add('fail'); el.lastChild.textContent = 'Model tests: could not run'; }
+        a.classList.add(r.failed ? 'fail' : 'pass');
+        a.lastChild.textContent = 'Model tests: ' + r.passed + ' of ' + r.total + ' passed';
+      } catch (e) { a.classList.add('fail'); a.lastChild.textContent = 'Model tests: could not run'; }
     }
     if (global.PMTests) run();
     else {
-      var s = UI.el('script', { src: '/assets/js/pm-tests.js' });
-      s.onload = run; s.onerror = function () { el.lastChild.textContent = 'Model tests: unavailable'; };
-      document.body.appendChild(s);
+      var pending = UI.testsBadge.queue = UI.testsBadge.queue || [];
+      pending.push(run);
+      if (pending.length === 1) {
+        var s = UI.el('script', { src: '/assets/js/pm-tests.js' });
+        s.onload = function () { pending.forEach(function (f) { f(); }); };
+        s.onerror = function () { a.lastChild.textContent = 'Model tests: unavailable'; };
+        document.body.appendChild(s);
+      }
     }
   };
 

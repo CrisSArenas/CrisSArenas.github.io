@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Private Capital Lab · Cristian Arenas</title>
+    <meta name="description" content="Pace a private markets program across a portfolio of funds on stale NAVs and uncertain calls: stochastic pacing, NAV nowcasting, look-through exposure, liquidity stress, evergreen fund gating, and an agent that reads GP statements into a reconciled, cited ledger.">
+    <link rel="canonical" href="https://crissarenas.github.io/private-capital-lab.html">
+    <meta property="og:title" content="Private Capital Lab · Cristian Arenas">
+    <meta property="og:description" content="Pacing a private program on stale NAVs and uncertain calls, with a cited, reconciled ledger built by agents.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0E1522" media="(prefers-color-scheme: dark)">
+    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png" sizes="64x64">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/assets/css/demo-shell.css">
+    <script src="/assets/js/site.js"></script>
+    <style>
+      .wl { display: grid; gap: 8px; }
+      .wl .notice { font-size: .84rem; }
+      .bars-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+      @media (max-width: 860px) { .bars-2 { grid-template-columns: minmax(0, 1fr); } }
+      .ledger td .cite { margin-right: 4px; }
+      .src-tag { font: 600 .68rem var(--sans); letter-spacing: .04em; text-transform: uppercase; color: var(--pm); }
+      .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+      @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
+      .fund-pick { max-width: 100%; }
+    </style>
+</head>
+<body>
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
+  <div class="container">
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#stack">Stack</a></li>
+      <li><a href="/#work">Investment work</a></li>
+      <li><a href="/#ai">AI Systems</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/notes/">Notes</a></li>
+      <li><a href="/#experience">Experience</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</nav>
+<!-- site-nav:end -->
+<main id="main" class="container demo-main">
+  <header class="demo-hero">
+    <a class="back-link" href="/#stack">&larr; Back to the Stack</a>
+    <p class="eyebrow">02 · Private capital program</p>
+    <h1>Private Capital Lab</h1>
+    <p class="lede">A fictional $1bn endowment runs a program of twenty private funds. Its NAVs arrive a quarter late, public markets have just fallen, and next year's commitment budget is due. This lab does the gathering, nowcasting, pacing and stress testing. The commitment is the committee's call.</p>
+    <div class="tags"><span class="tag tag-pm">Private markets</span><span class="tag tag-ai">AI</span></div>
+    <dl class="std-header">
+      <div><dt>Decision it supports</dt><dd>How much to commit this year, and to what.</dd></div>
+      <div><dt>The hard problem</dt><dd>Pacing a program across a portfolio of funds on stale NAVs and uncertain calls, without a liquidity squeeze.</dd></div>
+      <div><dt>What the system takes off the team</dt><dd>Reading GP statements into a reconciled, cited ledger; nowcasting stale NAVs; projecting calls, distributions and the allocation under thousands of paths.</dd></div>
+      <div class="h-call"><dt>What stays with the team</dt><dd>How much to commit this year, and to what.</dd></div>
+      <div><dt>Method</dt><dd>Takahashi-Alexander cash flow model, a pacing rule to target, quarterly Monte Carlo, NAV nowcasting on a lagged public proxy, IRR, TVPI, DPI, KS-PME, Direct Alpha, Geltner desmoothing.</dd></div>
+      <div><dt>Data</dt><dd>Synthetic data, fixed seed, fictional funds and GPs. Or your own file, processed locally.</dd></div>
+      <div class="h-ai"><dt>Where AI is used</dt><dd>Document classification, statement extraction with citations, a citation validator and a reconciliation agent, with human approval of every break.</dd></div>
+      <div><dt>Limitations</dt><dd>Model parameters are assumptions, not estimates from real funds. The pipeline is a deterministic simulation; no model is called.</dd></div>
+    </dl>
+  </header>
+
+  <div class="toolbar" role="region" aria-label="Demo controls">
+    <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
+    <span class="muted" style="font-size:.82rem" id="dataSrc">Synthetic data, fixed seed 42. As of 30 Sep 2026.</span>
+    <span class="grow"></span>
+    <span id="testsBadge"></span>
+    <div id="exportMenu"></div>
+  </div>
+
+  <div id="tabsRoot">
+    <div class="tabs">
+      <button data-tab="pacing" aria-selected="true">Pacing</button>
+      <button data-tab="nowcast">NAV nowcast</button>
+      <button data-tab="program">Program view</button>
+      <button data-tab="liquidity">Liquidity stress</button>
+      <button data-tab="evergreen">Evergreen funds</button>
+      <button data-tab="performance">Fund performance</button>
+    </div>
+
+    <!-- ================= PACING ================= -->
+    <section id="pacing">
+      <div class="kpis" id="pacingKpis"></div>
+      <div class="split" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Plan inputs</h3></div><div class="panel-body controls" id="planControls"></div></div>
+        <div>
+          <div class="panel"><div class="panel-head"><h3>Commitment plan and private allocation</h3><span class="sub">Rule: commit each year so projected NAV in <span data-out="horizon"></span> years sits on target</span></div>
+            <div class="panel-body"><div id="planChart"></div><div id="planTable" style="margin-top:14px"></div></div></div>
+        </div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Pacing under uncertainty</h3><span class="sub" id="mcSub"></span></div>
+        <div class="panel-body">
+          <p>Calls, distributions, private NAV growth and public returns are drawn together each quarter. The plan above is held fixed; the fans show where the program can end up anyway.</p>
+          <div class="bars-2"><div><strong style="font-size:.88rem">Private allocation, share of total assets</strong><div id="mcPct"></div></div><div><strong style="font-size:.88rem">Net cash flow to the program, $m per quarter</strong><div id="mcNet"></div></div></div>
+        </div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>One fund under the Takahashi-Alexander model</h3><span class="sub">The building block of every projection on this page</span></div>
+        <div class="panel-body split">
+          <div class="controls" id="taControls"></div>
+          <div><div id="taChart"></div><div class="kpis" id="taKpis" style="margin-top:12px"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= NOWCAST ================= -->
+    <section id="nowcast" hidden>
+      <div class="kpis" id="nowKpis"></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Reported vs nowcast NAV, by fund</h3><span class="sub">Last reported NAV rolled forward with known cash flows and a lagged public proxy</span></div>
+        <div class="panel-body"><div id="nowChart"></div><div id="nowTable" style="margin-top:14px"></div></div></div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Program NAV, reported and nowcast</h3></div><div class="panel-body"><div id="nowPath"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>What the nowcast does to the denominator</h3></div><div class="panel-body" id="denomBox"></div></div>
+      </div>
+    </section>
+
+    <!-- ================= PROGRAM ================= -->
+    <section id="program" hidden>
+      <div class="kpis" id="progKpis"></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Twenty funds</h3><span class="sub">NAV shown as reported and as nowcast. Values from cited statements are marked.</span></div>
+        <div class="panel-body"><div id="progTable"></div></div></div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Watchlist</h3></div><div class="panel-body wl" id="watchlist"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Re-up calendar, next 24 months</h3></div><div class="panel-body"><div id="reupTable"></div></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Concentration</h3><div class="seg" id="concSeg" role="tablist" aria-label="Concentration view"><button class="active" data-k="vintage" type="button">Vintage</button><button data-k="strategy" type="button">Strategy</button><button data-k="gp" type="button">GP</button><button data-k="sector" type="button">Sector</button><button data-k="geo" type="button">Geography</button></div></div>
+        <div class="panel-body"><div id="concChart"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Look-through exposure, private and public combined</h3><span class="sub">Fund holdings aggregated by NAV share, then added to the public portfolio</span></div>
+        <div class="panel-body"><div id="ltSector"></div><div id="ltGeo" style="margin-top:16px"></div></div></div>
+      <div id="dzProgram"></div>
+    </section>
+
+    <!-- ================= LIQUIDITY ================= -->
+    <section id="liquidity" hidden>
+      <div class="split">
+        <div class="panel"><div class="panel-head"><h3>Stress inputs</h3></div><div class="panel-body controls" id="liqControls"></div></div>
+        <div>
+          <div class="kpis" id="liqKpis"></div>
+          <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Before and after the drawdown</h3></div><div class="panel-body"><div id="liqTable"></div></div></div>
+          <div class="panel"><div class="panel-head"><h3>Release valve: sell LP stakes</h3><span class="sub">Priced in the <a href="/#stack" data-final="secondaries-desk.html">Secondaries Desk</a></span></div><div class="panel-body"><div id="valveChart"></div><p class="eval-note" id="valveNote"></p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= EVERGREEN ================= -->
+    <section id="evergreen" hidden>
+      <p class="notice" style="margin-bottom:14px">Semi-liquid private markets funds promise limited periodic liquidity from a portfolio of illiquid assets. In 2026, reporting described managers gating evergreen funds as withdrawal requests rose (<a href="https://www.privateequitywire.co.uk/partners-group-signals-further-fund-gating-as-evergreen-withdrawal-pressure-spreads/" target="_blank" rel="noopener">Private Equity Wire</a>). This tab models one fictional fund.</p>
+      <div class="split">
+        <div class="panel"><div class="panel-head"><h3>Fund and stress</h3></div><div class="panel-body controls" id="evControls"></div></div>
+        <div>
+          <div class="kpis" id="evKpis"></div>
+          <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Requests, payments and the queue, % of NAV</h3></div><div class="panel-body"><div id="evChart"></div></div></div>
+          <div class="panel"><div class="panel-head"><h3>Where the cash came from, $m</h3></div><div class="panel-body"><div id="evSources"></div><div id="evTable" style="margin-top:14px"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PERFORMANCE ================= -->
+    <section id="performance" hidden>
+      <div class="toolbar" style="position:static;border:0;padding:0 0 12px"><label for="fundPick">Fund <select class="field fund-pick" id="fundPick"></select></label></div>
+      <div class="kpis" id="perfKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Cash flows and NAV, $m</h3></div><div class="panel-body"><div id="perfFlows"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Reported and desmoothed quarterly returns</h3></div><div class="panel-body"><div id="perfRet"></div><p class="eval-note" id="perfRetNote"></p></div></div>
+      </div>
+      <div id="dzFlows"></div>
+    </section>
+  </div>
+
+  <!-- ================= AI LAYER ================= -->
+  <section class="demo-section" id="ai">
+    <h2>The agents: GP statements to a cited, reconciled ledger</h2>
+    <p class="intro">Six synthetic documents for five fictional funds: four capital account statements on four different templates, a quarterly report and a capital call notice. <span class="sim-label">Simulation of the pipeline: deterministic, no model is called, the control flow is the real one.</span></p>
+    <div class="run-steps" id="runSteps"></div>
+    <div class="counters-wrap"><div id="counters"></div></div>
+    <div class="ai-grid">
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Agent log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run the pipeline again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Breaks and gaps, with both citations</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+      </div>
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Source documents</h3></div><div class="panel-body"><div id="docViewer"></div></div></div>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Reconciled, cited ledger</h3><span class="sub">Only validated values; funds with an open break are held back</span></div><div class="panel-body"><div id="ledger"></div></div></div>
+    <div class="panel" id="evaluation"><div class="panel-head"><h3>Evaluation against hand-labeled ground truth</h3><span class="sub">Computed in this page from assets/data/pcl-labels.js</span></div>
+      <div class="panel-body"><div class="eval-grid" id="evalKpis"></div><details style="margin-top:14px"><summary style="cursor:pointer;font-weight:500">Every labeled field, with how its label was set</summary><div id="evalTable" style="margin-top:10px"></div></details><p class="eval-note">Labels were set by reading each document by hand and are stored apart from the documents and the pipeline, so the score is not the pipeline grading itself. Seeded issue: one planted roll-forward break. The rest of the checks are clean and count toward the false-flag rate.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
+  </section>
+
+  <!-- ================= MEMO ================= -->
+  <section class="demo-section" id="memo">
+    <article class="memo">
+      <div class="memo-head">
+        <div>
+          <div class="memo-kind">Pacing plan</div>
+          <h2>Commitment budget, 2027 to 2029</h2>
+          <div class="memo-meta">Written by Cristian Arenas · As of 30 Sep 2026 · Written for the base case, seed 42 · Fictional endowment</div>
+        </div>
+        <span class="call-badge go">Commit</span>
+      </div>
+      <h3>The call</h3>
+      <p class="the-call" id="memoCall"></p>
+      <h3>Situation</h3>
+      <div id="memoSituation"></div>
+      <h3>Why</h3>
+      <ol id="memoWhy"></ol>
+      <h3>Key risks</h3>
+      <ul id="memoRisks"></ul>
+      <h3>What would change my mind</h3>
+      <ul id="memoChange"></ul>
+      <h3>Sizing and next step</h3>
+      <div id="memoNext"></div>
+      <div class="memo-foot"><span>Fictional endowment and funds. Synthetic data. Not investment advice.</span><span id="memoBase"></span></div>
+    </article>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="demo-foot">
+    <h2>Methodology, assumptions and limitations</h2>
+    <div class="df-grid">
+      <div>
+        <h3>Method</h3>
+        <ul>
+          <li><strong>Fund model.</strong> Takahashi and Alexander (2002): calls are a fixed share of unfunded commitment during the investment period, NAV compounds at the growth rate, distributions are a rising share of NAV with a bow factor and a yield floor. The extracted code reproduces the original pacing panel exactly (<code>tests/legacy-proof.js</code>).</li>
+          <li><strong>Pacing rule.</strong> Every fund, existing and planned, follows the Takahashi-Alexander rules from its current state. Each year the plan finds, by bisection, the level commitment that puts the projected private share on target <em>h</em> years ahead, given the commitments already planned.</li>
+          <li><strong>Monte Carlo.</strong> The same fund rules at quarterly steps, with lognormal shocks: public returns, private NAV returns (beta to the public shock plus idiosyncratic noise), call rates and distribution rates (higher after good markets) drawn jointly. With every volatility set to zero it tracks the deterministic plan (tested). Spending is paid from public assets.</li>
+          <li><strong>Nowcast.</strong> Reported quarterly NAV returns are regressed on the public proxy at lags 0, 1 and 2. The lagged betas catch up the part of past market moves the mark has not yet absorbed; their sum, the economic beta, rolls the NAV through each stale quarter with the cash flows known since. Alpha is set to zero.</li>
+          <li><strong>Performance.</strong> XIRR on dated quarterly flows, TVPI, DPI, RVPI, Kaplan-Schoar PME and Direct Alpha against the public proxy, Geltner desmoothing at the measured first-order autocorrelation.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Formulas</h3>
+        <div class="formula">C_t = RC x unfunded            (t &lt;= IP)
+NAV_t = (NAV_t-1 + C_t)(1 + G)
+D_t = max(Y, (t/L)^B) x NAV_t
+nowcast_k = (nowcast_k-1 + calls_k - dists_k)(1 + B r_proxy,k), B = b0 + b1 + b2
+KS-PME = (sum D I_T/I_t + NAV_T) / sum C I_T/I_t
+r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
+        <h3 style="margin-top:12px">Related notes</h3>
+        <ul><li><a href="/#stack" data-final="notes/pacing-stale-navs.html">Pacing a private program when the NAVs are a quarter old</a></li></ul>
+      </div>
+    </div>
+    <h3 style="margin-top:22px">Assumptions register</h3>
+    <div id="assumptions"></div>
+    <h3 style="margin-top:22px">Limitations</h3>
+    <ul>
+      <li>All funds, GPs, documents and the endowment are fictional, and every number is synthetic. Parameters are plausible, not estimated from real funds.</li>
+      <li>The fund model is deterministic per vintage; real programs have fund-specific pacing, recallable capital and extensions.</li>
+      <li>The nowcast assumes the fund's sensitivity to the public proxy is stable. Stale marks in a fast market are exactly when that assumption is weakest, which is why the band widens with every stale quarter.</li>
+      <li>The pipeline is a simulation over text documents. It shows the control flow, citations, validation, approvals and logging, not a language model's accuracy on real PDFs.</li>
+    </ul>
+    <p class="nia">Not investment advice. Educational demonstration with synthetic data and fictional entities.</p>
+    <div class="df-bottom"><a class="back-link" href="/#stack">&larr; Back to the Stack</a><span class="tests-badge-slot"></span></div>
+  </footer>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
+      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/data-model.html">Data model</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics and embedded</a></li>
+      </ul>
+    </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. Demos use synthetic data and fictional entities. Nothing on this site is investment advice.</p>
+  </div>
+</footer>
+<!-- site-footer:end -->
+<script src="/assets/js/pm-math.js"></script>
+<script src="/assets/js/pm-ui.js"></script>
+<script src="/assets/data/pcl-docs.js"></script>
+<script src="/assets/data/pcl-labels.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = UI.fmt, $ = UI.$;
+  var TODAY_Q = 42, START_YEAR = 2016;
+  var qDate = function (q) { var y = START_YEAR + Math.floor(q / 4), m = (q % 4) * 3 + 3; return y + '-' + (m < 10 ? '0' : '') + m + '-' + (m === 3 || m === 12 ? '31' : '30'); };
+  var qLabel = function (q) { return (START_YEAR + Math.floor(q / 4)) + ' Q' + (q % 4 + 1); };
+
+  /* ---------------- assumptions register (single source for every input) ---------------- */
+  var AROWS = [
+    { id: 'assets', label: 'Endowment total assets today', value: 1000, unit: '$m', source: 'Fictional endowment', min: 500, max: 10000, step: 50 },
+    { id: 'target', label: 'Target private allocation', value: 0.25, unit: '% of total assets', scale: 100, source: 'Fictional policy', min: 0.05, max: 0.5, step: 1 },
+    { id: 'bandLo', label: 'Policy band, low', value: 0.20, unit: '%', scale: 100, source: 'Fictional policy', min: 0, max: 0.5, step: 1 },
+    { id: 'bandHi', label: 'Policy band, high', value: 0.30, unit: '%', scale: 100, source: 'Fictional policy', min: 0.05, max: 0.6, step: 1 },
+    { id: 'spend', label: 'Spending rate', value: 0.045, unit: '% of assets a year', scale: 100, source: 'Assumption, typical endowment range', min: 0, max: 0.08, step: 0.1 },
+    { id: 'pubRet', label: 'Expected public return (plan)', value: 0.065, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.12, step: 0.1 },
+    { id: 'horizon', label: 'Pacing horizon', value: 4, unit: 'years', source: 'Assumption: NAV per $ committed peaks around year 4', min: 2, max: 7, step: 1 },
+    { id: 'rc', label: 'Rate of contribution', value: 0.30, unit: '% of unfunded a year', scale: 100, source: 'Takahashi-Alexander parameter, assumption', min: 0.1, max: 0.6, step: 1 },
+    { id: 'ip', label: 'Investment period', value: 5, unit: 'years', source: 'Assumption', min: 2, max: 7, step: 1 },
+    { id: 'life', label: 'Fund life', value: 12, unit: 'years', source: 'Assumption', min: 8, max: 16, step: 1 },
+    { id: 'growth', label: 'Private NAV growth (model)', value: 0.11, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.25, step: 0.5 },
+    { id: 'bow', label: 'Distribution bow factor', value: 2.5, unit: '', source: 'Takahashi-Alexander parameter, assumption', min: 0.5, max: 6, step: 0.1 },
+    { id: 'pubVol', label: 'Public volatility', value: 0.16, unit: '% a year', scale: 100, source: 'Assumption', min: 0.05, max: 0.35, step: 0.5 },
+    { id: 'privBeta', label: 'Private beta to public', value: 0.6, unit: '', source: 'Assumption', min: 0, max: 1.5, step: 0.05 },
+    { id: 'privVol', label: 'Private idiosyncratic volatility', value: 0.10, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.3, step: 0.5 },
+    { id: 'callVol', label: 'Call rate shock volatility', value: 0.35, unit: 'log-normal sigma', source: 'Assumption', min: 0, max: 1, step: 0.05 },
+    { id: 'distBeta', label: 'Distribution sensitivity to public returns', value: 1.5, unit: '', source: 'Assumption', min: 0, max: 4, step: 0.1 },
+    { id: 'liquidShare', label: 'Public assets sellable within a quarter', value: 0.70, unit: '% of public', scale: 100, source: 'Assumption', min: 0.2, max: 1, step: 1 },
+    { id: 'coverMin', label: 'Minimum coverage of unfunded commitments', value: 1.0, unit: 'x', source: 'Fictional policy', min: 0.2, max: 3, step: 0.1 },
+    { id: 'paths', label: 'Monte Carlo paths', value: 600, unit: 'paths', source: 'Setting', min: 100, max: 3000, step: 100 },
+    { id: 'ddPub', label: 'Stress: public drawdown', value: 0.25, unit: '%', scale: 100, source: 'Assumption, stylised', min: 0, max: 0.6, step: 1 },
+    { id: 'ddPriv', label: 'Stress: private markdown (lagged)', value: 0.10, unit: '%', scale: 100, source: 'Assumption, stylised', min: 0, max: 0.5, step: 1 },
+    { id: 'stressCall', label: 'Stress: calls over 12 months', value: 0.35, unit: '% of unfunded', scale: 100, source: 'Assumption, stylised', min: 0, max: 0.8, step: 1 },
+    { id: 'distCut', label: 'Stress: cut in distributions', value: 0.60, unit: '%', scale: 100, source: 'Assumption, stylised', min: 0, max: 1, step: 1 },
+    { id: 'saleShare', label: 'Release valve: LP stakes sold', value: 0.10, unit: '% of private NAV', scale: 100, source: 'Assumption', min: 0, max: 0.5, step: 1 },
+    { id: 'saleDisc', label: 'Release valve: discount to NAV', value: 0.12, unit: '%', scale: 100, source: 'Assumption, see Secondaries Desk', min: 0, max: 0.5, step: 1 },
+    { id: 'evLimit', label: 'Evergreen: quarterly redemption limit', value: 0.05, unit: '% of NAV', scale: 100, source: 'Common semi-liquid fund term, assumption', min: 0.01, max: 0.25, step: 0.5 },
+    { id: 'evSleeve', label: 'Evergreen: liquidity sleeve', value: 0.10, unit: '% of NAV', scale: 100, source: 'Assumption', min: 0, max: 0.4, step: 1 },
+    { id: 'evFacility', label: 'Evergreen: credit facility', value: 0.05, unit: '% of NAV', scale: 100, source: 'Assumption', min: 0, max: 0.25, step: 1 },
+    { id: 'evStress', label: 'Evergreen: stressed requests', value: 0.12, unit: '% of NAV a quarter', scale: 100, source: 'Assumption, stylised', min: 0, max: 0.4, step: 0.5 },
+    { id: 'evDisc', label: 'Evergreen: forced sale discount', value: 0.15, unit: '%', scale: 100, source: 'Assumption', min: 0, max: 0.5, step: 1 }
+  ];
+  var A = UI.A(AROWS), reg;
+  var syncers = {};
+  function setA(id, v) { A[id] = v; var r = AROWS.filter(function (x) { return x.id === id; })[0]; r.value = v; if (reg) reg.set(id, v); (syncers[id] || []).forEach(function (f) { f(v); }); }
+
+  /* range controls bound to the register */
+  function control(box, id, label, fmt, hint) {
+    var r = AROWS.filter(function (x) { return x.id === id; })[0], sc = r.scale || 1;
+    var wrap = UI.el('div', { class: 'control' });
+    var inId = 'c-' + id + '-' + box.id;
+    wrap.innerHTML = '<label for="' + inId + '">' + UI.esc(label) + ' <output for="' + inId + '"></output></label><input type="range" id="' + inId + '" min="' + r.min * sc + '" max="' + r.max * sc + '" step="' + (r.step || 1) + '" value="' + r.value * sc + '">' + (hint ? '<div class="hint">' + UI.esc(hint) + '</div>' : '');
+    box.appendChild(wrap);
+    var inp = wrap.querySelector('input'), out = wrap.querySelector('output');
+    var show = function () { out.textContent = fmt(+inp.value / sc); };
+    show();
+    inp.addEventListener('input', function () { show(); setA(id, +inp.value / sc); rerender(id); });
+    (syncers[id] = syncers[id] || []).push(function (v) { inp.value = v * sc; show(); });
+  }
+
+  /* ---------------- synthetic program ---------------- */
+  var STRAT = {
+    buyout: { rc: 0.28, ip: 5, alpha: 0.010, beta: 1.0, vol: 0.05, dStart: 3, dRate: 0.06, rho: 0.5, label: 'Buyout' },
+    growth: { rc: 0.30, ip: 4, alpha: 0.011, beta: 1.2, vol: 0.07, dStart: 4, dRate: 0.05, rho: 0.5, label: 'Growth' },
+    venture: { rc: 0.25, ip: 5, alpha: 0.012, beta: 1.4, vol: 0.10, dStart: 5, dRate: 0.045, rho: 0.6, label: 'Venture' },
+    credit: { rc: 0.40, ip: 3, alpha: 0.019, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.07, rho: 0.3, label: 'Private credit' },
+    real: { rc: 0.30, ip: 4, alpha: 0.013, beta: 0.5, vol: 0.03, dStart: 2, dRate: 0.05, rho: 0.7, label: 'Real assets' },
+    secondaries: { rc: 0.45, ip: 3, alpha: 0.012, beta: 0.9, vol: 0.04, dStart: 1, dRate: 0.08, rho: 0.5, label: 'Secondaries' }
+  };
+  var FUNDS = [
+    ['Quorvane Buyout III', 'Quorvane', 'buyout', 2017, 35, 1], ['Quorvane Buyout IV', 'Quorvane', 'buyout', 2021, 40, 1],
+    ['Telmira Growth II', 'Telmira', 'growth', 2022, 25, 1], ['Telmira Growth III', 'Telmira', 'growth', 2025, 25, 1],
+    ['Brisolt Credit Opportunities II', 'Brisolt', 'credit', 2019, 25, 1], ['Brisolt Credit Opportunities III', 'Brisolt', 'credit', 2023, 30, 1],
+    ['Mereth Ventures IV', 'Mereth', 'venture', 2018, 12, 1], ['Mereth Ventures V', 'Mereth', 'venture', 2022, 15, 1],
+    ['Caldrin Infrastructure II', 'Caldrin', 'real', 2021, 35, 1], ['Ostrel Capital Partners VI', 'Ostrel', 'buyout', 2019, 45, 2],
+    ['Ostrel Capital Partners VII', 'Ostrel', 'buyout', 2024, 45, 1], ['Vandrel Growth Equity III', 'Vandrel', 'growth', 2020, 20, 1],
+    ['Solvane Secondaries V', 'Solvane', 'secondaries', 2020, 25, 1], ['Solvane Secondaries VI', 'Solvane', 'secondaries', 2024, 30, 1],
+    ['Pellidor Real Estate Value II', 'Pellidor', 'real', 2018, 20, 2], ['Hasturn Mid-Market Buyout II', 'Hasturn', 'buyout', 2022, 30, 1],
+    ['Ivrena Healthcare Partners I', 'Ivrena', 'buyout', 2020, 20, 1], ['Dunmarrow Direct Lending IV', 'Dunmarrow', 'credit', 2021, 30, 1],
+    ['Kestrine Climate Infrastructure I', 'Kestrine', 'real', 2024, 25, 1], ['Lorvenne Ventures III', 'Lorvenne', 'venture', 2025, 10, 2]
+  ];
+  /* statement figures for the funds the agents read; applied once the ledger approves them */
+  var DOCFUND = { 'Quorvane Buyout IV': 'cas-quorvane', 'Telmira Growth II': 'cas-telmira', 'Brisolt Credit Opportunities III': 'cas-brisolt', 'Mereth Ventures V': 'cas-mereth', 'Caldrin Infrastructure II': 'notice-caldrin' };
+  var SECT = ['Technology', 'Healthcare', 'Industrials', 'Consumer', 'Financials', 'Energy and utilities', 'Real estate'];
+  var GEO = ['North America', 'Europe', 'Asia Pacific', 'Rest of world'];
+  var SECT_TILT = { buyout: [.24, .18, .22, .16, .12, .05, .03], growth: [.45, .25, .08, .12, .08, .02, 0], venture: [.62, .25, .04, .06, .03, 0, 0], credit: [.2, .15, .25, .2, .12, .05, .03], real: [.04, .02, .12, 0, 0, .42, .40], secondaries: [.26, .17, .2, .15, .12, .06, .04] };
+  var GEO_TILT = { buyout: [.6, .3, .07, .03], growth: [.62, .18, .17, .03], venture: [.72, .15, .12, .01], credit: [.65, .3, .03, .02], real: [.5, .38, .1, .02], secondaries: [.55, .35, .08, .02] };
+  var PUBLIC_SECT = [.26, .12, .12, .14, .16, .08, .03], PUBLIC_GEO = [.62, .2, .14, .04];
+
+  function generate(seed) {
+    var rng = PM.mulberry32(seed), z = PM.normalGen(rng);
+    var idx = [100], ret = [];
+    for (var q = 1; q <= TODAY_Q; q++) {
+      var r = 0.022 + 0.075 * z();
+      if (q === TODAY_Q - 1) r -= 0.09;   // stylised drawdown overlay in the last two quarters
+      if (q === TODAY_Q) r -= 0.05;
+      ret.push(r); idx.push(idx[q - 1] * (1 + r));
+    }
+    var funds = FUNDS.map(function (row, k) {
+      var p = STRAT[row[2]], q0 = (row[3] - START_YEAR) * 4, C = row[4], lag = row[5];
+      var unf = C, nav = 0, rep = 0, prevRepRet = 0, flows = [], navT = [], navR = [], fr = PM.mulberry32(seed * 31 + k * 977), fz = PM.normalGen(fr);
+      for (var q = q0; q <= TODAY_Q; q++) {
+        var age = (q - q0) / 4, call = 0, dist = 0, rI = q > 0 ? ret[q - 1] : 0;
+        if (q === q0) call = C * 0.08;
+        else if (age <= p.ip) call = unf * p.rc / 4 * Math.exp(0.3 * fz() - 0.045);
+        call = Math.min(call, unf); unf -= call;
+        var rTrue = q === q0 ? 0 : p.alpha + p.beta * (rI - 0.022) + p.vol * fz();
+        var navBefore = nav;
+        nav = (nav + call) * (1 + rTrue);
+        if (age >= p.dStart) { var dr = p.dRate * (1 + 1.5 * rI) * (age > 9 ? 2 : 1); dist = nav * Math.max(0, Math.min(0.4, dr)); }
+        nav -= dist;
+        var repRet = (1 - p.rho) * rTrue + p.rho * prevRepRet; prevRepRet = repRet;
+        rep = Math.max(0, (rep + call) * (1 + repRet) - dist);
+        if (call) flows.push({ q: q, amount: -call, type: 'contribution' });
+        if (dist) flows.push({ q: q, amount: dist, type: 'distribution' });
+        navT.push({ q: q, nav: nav }); navR.push({ q: q, nav: rep });
+      }
+      var sw = SECT_TILT[row[2]].map(function (w) { return Math.max(0, w * (0.75 + 0.5 * fr())); }), sws = PM.sum(sw);
+      var gw = GEO_TILT[row[2]].map(function (w) { return Math.max(0, w * (0.75 + 0.5 * fr())); }), gws = PM.sum(gw);
+      return { name: row[0], gp: row[1], strategy: row[2], vintage: row[3], commitment: C, lag: lag, q0: q0, flows: flows, navTrue: navT, navRep: navR,
+        sector: sw.map(function (w) { return w / sws; }), geo: gw.map(function (w) { return w / gws; }), fromStatement: false };
+    });
+    return { idx: idx, ret: ret, funds: funds };
+  }
+
+  /* fund state as of today: reported NAV at its date, flows since, nowcast */
+  function fundState(f, D) {
+    var navQ = TODAY_Q - f.lag, repRow = f.navRep.filter(function (r) { return r.q === navQ; })[0];
+    var reported = repRow ? repRow.nav : 0;
+    if (f.override && f.override.nav != null) reported = f.override.nav;
+    var paidIn = 0, dist = 0, paidToNav = 0, distToNav = 0, after = [];
+    f.flows.forEach(function (x) {
+      if (x.amount < 0) paidIn -= x.amount; else dist += x.amount;
+      if (x.q <= navQ) { if (x.amount < 0) paidToNav -= x.amount; else distToNav += x.amount; }
+      else after.push({ q: x.q - navQ, amount: -x.amount });
+    });
+    if (f.override && f.override.paidIn != null) { paidToNav += f.override.paidIn - paidIn; paidIn = f.override.paidIn; }
+    if (f.override && f.override.pendingCall) after.push({ q: TODAY_Q - navQ, amount: f.override.pendingCall });
+    var unfunded = f.override && f.override.unfunded != null ? f.override.unfunded : Math.max(0, f.commitment - paidIn);
+    /* nowcast fit on this fund's reported returns vs the proxy */
+    var rr = [], pr = [];
+    for (var i = 1; i < f.navRep.length && f.navRep[i].q <= navQ; i++) {
+      var a = f.navRep[i - 1].nav, b = f.navRep[i].nav, q = f.navRep[i].q, c = 0, d = 0;
+      f.flows.forEach(function (x) { if (x.q === q) { if (x.amount < 0) c -= x.amount; else d += x.amount; } });
+      if (a + c > 0.5) { rr.push((b - a - c + d) / (a + c)); pr.push(D.ret[q - 1]); }
+    }
+    var fit = rr.length >= 10 ? PM.priv.nowcastFit(rr, pr, 2) : null;
+    if (!fit) { var sp = STRAT[f.strategy] || STRAT.buyout, b0 = sp.beta * (1 - sp.rho); fit = { alpha: 0, betas: [b0, b0 * sp.rho, b0 * sp.rho * sp.rho], beta: b0 * (1 + sp.rho + sp.rho * sp.rho), r2: 0, sigma: sp.vol, n: rr.length, prior: true }; }
+    var proxy = []; for (var k = navQ + 1; k <= TODAY_Q; k++) proxy.push(D.ret[k - 1]);
+    var nc = PM.priv.nowcast({ nav: reported, flows: after, proxy: proxy, betas: fit.betas, proxyBefore: [D.ret[navQ - 1], D.ret[navQ - 2]], alpha: 0, sigma: fit.sigma });
+    return { navQ: navQ, reported: reported, paidIn: paidIn, distributed: dist, unfunded: unfunded, fit: fit, nowcast: nc.nav, lo: nc.lo, hi: nc.hi, stale: TODAY_Q - navQ, rr: rr, flowsAfter: after,
+      tvpi: paidIn > 0 ? (dist + reported) / paidIn : NaN, dpi: paidIn > 0 ? dist / paidIn : NaN, paidToNav: paidToNav, distToNav: distToNav };
+  }
+
+  /* ---------------- state ---------------- */
+  var S = { seed: 42, D: null, rows: [], user: null, ledgerApplied: {} };
+
+  function buildProgram() {
+    if (!S.D) S.D = generate(S.seed);
+    var funds = S.user ? S.user : S.D.funds;
+    S.rows = funds.map(function (f) { var st = fundState(f, S.D); st.f = f; return st; });
+    var T = S.tot = { commit: 0, paidIn: 0, dist: 0, reported: 0, nowcast: 0, unfunded: 0, lo: 0, hi: 0 };
+    S.rows.forEach(function (r) { T.commit += r.f.commitment; T.paidIn += r.paidIn; T.dist += r.distributed; T.reported += r.reported; T.nowcast += r.nowcast; T.unfunded += r.unfunded; T.lo += r.lo; T.hi += r.hi; });
+    /* the public portfolio is marked to market today; total assets set from the register */
+    T.public = A.assets - T.reported;
+    T.pctReported = T.reported / A.assets;
+    T.pctNowcast = T.nowcast / (T.public + T.nowcast);
+  }
+
+  /* ---------------- pacing ---------------- */
+  function model() { return { rc: A.rc, ip: A.ip, life: A.life, growth: A.growth, bow: A.bow, yieldFloor: 0 }; }
+  function programState() {
+    return { pub0: S.tot.public, funds: S.rows.map(function (r) { return { unfunded: r.unfunded, nav: r.nowcast, age: Math.max(0.25, 2026.75 - r.f.vintage) }; }), model: model(), pubReturn: A.pubRet, spend: A.spend, years: 10 };
+  }
+  function plan() {
+    return PM.priv.pacingPlan(Object.assign(programState(), { targetPct: A.target, horizon: A.horizon }));
+  }
+  function renderPacing() {
+    var P = S.plan = plan(), y1 = P[0], ys = P.map(function (r) { return 2026 + r.year; });
+    var mc = S.mc = PM.priv.pacingMC(Object.assign(programState(), { plan: P.map(function (r) { return r.commit; }), quarters: 40, seed: S.seed + 7, paths: A.paths, pubMu: A.pubRet, pubVol: A.pubVol,
+      privBeta: A.privBeta, privVol: A.privVol, callVol: A.callVol, distBeta: A.distBeta, band: [A.bandLo, A.bandHi], liquidPctOfPublic: A.liquidShare, coverageMin: A.coverMin }));
+    var q12 = 11, med3 = mc.pctQ.p50[q12];
+    UI.kpis('#pacingKpis', [
+      { id: 'commit1', label: 'Commitment budget, 2027', value: F.money(y1.commit, 0), sub: 'pacing rule, base case', explain: function () { return { title: 'Commitment budget for 2027', formula: 'c solves: private NAV / total assets at the end of year t+h-1 = target, committing c in each year t..t+h-1 on top of commitments already planned (bisection)', inputs: [{ name: 'Target', value: F.pct(A.target, 0), src: 'assumption' }, { name: 'Horizon h', value: A.horizon + ' years', src: 'assumption' }, { name: 'Total assets today (nowcast)', value: F.money(S.tot.public + S.tot.nowcast, 0), src: 'computed', note: 'public plus nowcast private NAV' }, { name: 'Public return, spending', value: F.pct(A.pubRet, 1) + ', ' + F.pct(A.spend, 1), src: 'assumption' }, { name: 'Model', value: 'RC ' + F.pct(A.rc, 0) + ', IP ' + A.ip + 'y, G ' + F.pct(A.growth, 0), src: 'assumption' }], result: F.money(y1.commit, 1) }; } },
+      { id: 'commit3', label: 'Commitments, 2027 to 2029', value: F.money(P[0].commit + P[1].commit + P[2].commit, 0), sub: 'three vintages' },
+      { id: 'breach', label: 'Chance of breaching the upper band', value: F.pct(mc.breachProb, 0), sub: 'any quarter in 10 years', tone: mc.breachProb > 0.25 ? 'bad' : null, explain: function () { return { title: 'Probability of breaching the upper band', formula: 'share of paths where private / total assets > band high in any of 40 quarters', inputs: [{ name: 'Band high', value: F.pct(A.bandHi, 0), src: 'assumption' }, { name: 'Paths', value: A.paths, src: 'assumption' }, { name: 'Paths breaching', value: Math.round(mc.breachProb * A.paths), src: 'computed' }], result: F.pct(mc.breachProb, 1) }; } },
+      { id: 'shortfall', label: 'Chance of a liquidity shortfall', value: F.pct(mc.shortfallProb, 0), sub: 'liquid public < ' + F.mult(A.coverMin, 1) + ' unfunded', tone: mc.shortfallProb > 0.1 ? 'bad' : null, explain: function () { return { title: 'Probability of a liquidity shortfall', formula: 'share of paths where liquid public assets < minimum coverage x unfunded commitments in any quarter', inputs: [{ name: 'Liquid share of public', value: F.pct(A.liquidShare, 0), src: 'assumption' }, { name: 'Minimum coverage', value: F.mult(A.coverMin, 1), src: 'assumption' }, { name: 'Unfunded today', value: F.money(S.tot.unfunded, 0), src: 'computed' }], result: F.pct(mc.shortfallProb, 1) }; } },
+      { id: 'med3', label: 'Private allocation in 3 years, median', value: F.pct(med3, 1), sub: '10th to 90th: ' + F.pct(mc.pctQ.p10[q12], 0) + ' to ' + F.pct(mc.pctQ.p90[q12], 0) }
+    ]);
+    UI.chart.line('#planChart', { xs: [2026].concat(ys), series: [{ name: 'Private allocation (plan)', ys: [S.tot.pctNowcast].concat(P.map(function (r) { return r.pct; })), dots: true }], bands: [], hlines: [{ y: A.target, label: 'Target', color: 'accent-text' }, { y: A.bandHi, label: 'Band high', color: 'negative' }, { y: A.bandLo, label: 'Band low', color: 'negative' }], yFmt: function (v) { return F.pct(v, 0); }, height: 240, label: 'Planned private allocation by year', forceLegend: true });
+    UI.table('#planTable', { id: 'plan', name: 'Pacing plan', columns: [{ key: 'year', label: 'Year', fmt: function (v) { return 2026 + v; } }, { key: 'commit', label: 'Commit', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'calls', label: 'Calls', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'dists', label: 'Distributions', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'net', label: 'Net flow', num: 1, fmt: function (v) { return F.money(v, 1); }, cls: function (v) { return v < 0 ? 'neg' : 'pos'; } }, { key: 'nav', label: 'Private NAV', num: 1, fmt: function (v) { return F.money(v, 0); } }, { key: 'pct', label: 'Private %', num: 1, fmt: function (v) { return F.pct(v, 1); } }],
+      rows: P, foot: { year: 'Total 10y', commit: PM.sum(P.map(function (r) { return r.commit; })), calls: PM.sum(P.map(function (r) { return r.calls; })), dists: PM.sum(P.map(function (r) { return r.dists; })), net: PM.sum(P.map(function (r) { return r.net; })) },
+      footExplain: { commit: function () { return { title: 'Ten-year commitments', formula: 'sum of the yearly pacing rule', inputs: P.map(function (r) { return { name: String(2026 + r.year), value: F.money(r.commit, 1), src: 'computed' }; }) }; } } });
+    var qx = []; for (var i = 1; i <= 40; i++) qx.push(2026.75 + i / 4);
+    var xf = function (v) { return String(Math.floor(v)); };
+    UI.chart.line('#mcPct', { xs: qx, series: [{ name: 'Median', ys: mc.pctQ.p50 }], bands: [{ name: '10th to 90th', lo: mc.pctQ.p10, hi: mc.pctQ.p90, color: 's1' }, { name: '25th to 75th', lo: mc.pctQ.p25, hi: mc.pctQ.p75, color: 's1', opacity: 0.22 }], hlines: [{ y: A.bandHi, label: 'Band high' }, { y: A.bandLo, label: 'Band low' }, { y: A.target, label: 'Target', color: 'accent-text' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: xf, height: 240, label: 'Fan chart of private allocation' });
+    UI.chart.line('#mcNet', { xs: qx, series: [{ name: 'Median', ys: mc.netQ.p50, color: 's2' }], bands: [{ name: '10th to 90th', lo: mc.netQ.p10, hi: mc.netQ.p90, color: 's2' }, { name: '25th to 75th', lo: mc.netQ.p25, hi: mc.netQ.p75, color: 's2', opacity: 0.22 }], yFmt: function (v) { return F.num(v, 0); }, xFmt: xf, height: 240, label: 'Fan chart of net cash flow' });
+    $('#mcSub').textContent = A.paths + ' paths, 40 quarters, seed ' + (S.seed + 7);
+    UI.tables.mc = { id: 'mc', name: 'Monte Carlo quantiles', columns: [{ key: 'q', label: 'Quarter' }, { key: 'p10', label: 'Private % p10' }, { key: 'p50', label: 'Private % p50' }, { key: 'p90', label: 'Private % p90' }, { key: 'n10', label: 'Net flow p10' }, { key: 'n50', label: 'Net flow p50' }, { key: 'n90', label: 'Net flow p90' }],
+      rows: qx.map(function (x, i) { return { q: i + 1, p10: mc.pctQ.p10[i], p50: mc.pctQ.p50[i], p90: mc.pctQ.p90[i], n10: mc.netQ.p10[i], n50: mc.netQ.p50[i], n90: mc.netQ.p90[i] }; }) };
+    renderTA();
+  }
+
+  function renderTA() {
+    var f = PM.taFund({ commit: 100, rc: A.rc, ip: A.ip, life: A.life, growth: A.growth, bow: A.bow, yieldFloor: 0 });
+    var net = PM.taNetOfFees(f, { commit: 100, mgmt: 0.02, carry: 0.2, pref: 0.08 }), sm = PM.taSummary(f, 100, A.target * 100);
+    var xs = f.data.map(function (d) { return d.y; });
+    UI.chart.line('#taChart', { xs: xs, series: [{ name: 'Net cash flow (J-curve)', ys: f.data.map(function (d) { return d.cf; }), color: 's2', width: 2.5 }, { name: 'NAV', ys: f.data.map(function (d) { return d.nav; }), color: 's1' }, { name: 'Cumulative called', ys: f.data.map(function (d) { return d.cal; }), color: 's5', dash: '5 4' }, { name: 'Cumulative distributed', ys: f.data.map(function (d) { return d.dist; }), color: 's3', dash: '5 4' }], yFmt: function (v) { return '$' + F.num(v, 0) + 'm'; }, xFmt: function (v) { return 'Y' + v; }, height: 240, label: 'J-curve of one fund per $100m committed' });
+    UI.kpis('#taKpis', [
+      { label: 'TVPI gross / net', value: F.mult(sm.tvpi) + ' / ' + F.mult(net.netTvpi) },
+      { label: 'Net IRR', value: F.pct(net.netIrr, 1), sub: 'gross IRR equals G (' + F.pct(sm.irr, 1) + ') by construction', explain: function () { return { title: 'Net IRR of one fund', formula: '2% fee on commitment in the investment period then on prior NAV; 20% carry over an 8% compounded pref, European waterfall, full catch-up', inputs: [{ name: 'Fees paid', value: F.money(net.feeTot, 1), src: 'computed' }, { name: 'GP carry', value: F.money(net.gpCarry, 1), src: 'computed' }], result: F.pct(net.netIrr, 2) }; } },
+      { label: 'Peak net outlay', value: F.money(sm.peakOutlay, 0), sub: F.pct(sm.peakOutlay / 100, 0) + ' of commitment' },
+      { label: 'Break-even year', value: sm.breakEvenYear ? 'Y' + sm.breakEvenYear : 'beyond life' },
+      { label: 'Commit a year to hold target', value: F.pct(sm.ssPct / 100, 2), sub: 'of total assets, steady state' }
+    ]);
+  }
+
+  /* ---------------- nowcast ---------------- */
+  function renderNowcast() {
+    var T = S.tot, rows = S.rows.slice().sort(function (a, b) { return b.reported - a.reported; });
+    UI.kpis('#nowKpis', [
+      { id: 'navRep', label: 'Private NAV, as reported', value: F.money(T.reported, 0), sub: 'marks dated ' + qDate(TODAY_Q - 1) + ' or earlier' },
+      { id: 'navNow', label: 'Private NAV, nowcast to today', value: F.money(T.nowcast, 0), sub: '90% band ' + F.money(T.lo, 0) + ' to ' + F.money(T.hi, 0), explain: function () { return { title: 'Nowcast private NAV', formula: 'sum over funds of NAV_reported rolled forward: (NAV + calls - dists)(1 + a + b r_proxy) each stale quarter', inputs: [{ name: 'Reported NAV', value: F.money(T.reported, 1), src: 'computed', note: 'statements and GP marks' }, { name: 'Public proxy, last 2 quarters', value: F.spct(S.D.ret[TODAY_Q - 2]) + ', ' + F.spct(S.D.ret[TODAY_Q - 1]), src: 'computed', note: 'synthetic index' }, { name: 'Median economic beta (sum of lags)', value: F.num(PM.quantile(S.rows.map(function (r) { return r.fit.beta; }), 0.5), 2), src: 'computed' }, { name: 'Alpha in the nowcast', value: '0', src: 'assumption', note: 'no credit for manager skill in a stale mark' }], result: F.money(T.nowcast, 1) }; } },
+      { id: 'pctRep', label: 'Private allocation, reported marks', value: F.pct(T.pctReported, 1), sub: 'target ' + F.pct(A.target, 0) + ', band ' + F.pct(A.bandLo, 0) + ' to ' + F.pct(A.bandHi, 0), tone: T.pctReported > A.bandHi ? 'bad' : null },
+      { id: 'pctNow', label: 'Private allocation, nowcast', value: F.pct(T.pctNowcast, 1), sub: F.pp(T.pctNowcast - T.pctReported) + ' once marks catch up', explain: function () { return { title: 'Private allocation with nowcast NAV', formula: 'nowcast private NAV / (public assets + nowcast private NAV)', inputs: [{ name: 'Public assets today', value: F.money(T.public, 0), src: 'computed', note: 'total assets less reported private NAV' }, { name: 'Nowcast private NAV', value: F.money(T.nowcast, 0), src: 'computed' }], result: F.pct(T.pctNowcast, 2) }; } }
+    ]);
+    var top = rows.slice(0, 12);
+    UI.chart.bar('#nowChart', { categories: top.map(function (r) { return r.f.name.split(' ')[0] + ' ' + r.f.name.split(' ').pop(); }), series: [{ name: 'Reported', values: top.map(function (r) { return r.reported; }), color: 's4' }, { name: 'Nowcast', values: top.map(function (r) { return r.nowcast; }), color: 's1' }], yFmt: function (v) { return F.num(v, 0); }, height: 260, label: 'Reported vs nowcast NAV for the 12 largest funds' });
+    UI.table('#nowTable', { id: 'nowcast', name: 'NAV nowcast by fund', columns: [{ key: 'name', label: 'Fund (fictional)' }, { key: 'date', label: 'NAV date' }, { key: 'stale', label: 'Quarters stale', num: 1 }, { key: 'reported', label: 'Reported', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'beta', label: 'Beta', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'src', label: 'Beta from' }, { key: 'r2', label: 'R squared', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'nowcast', label: 'Nowcast', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'chg', label: 'Change', num: 1, fmt: function (v) { return F.spct(v, 1); }, cls: function (v) { return v < 0 ? 'neg' : 'pos'; } }, { key: 'band', label: '90% band', num: 1 }],
+      rows: rows.map(function (r) { return { name: r.f.name, date: qDate(r.navQ), stale: r.stale, reported: r.reported, beta: r.fit.beta, src: r.fit.prior ? 'strategy prior' : r.fit.n + ' quarters', r2: r.fit.r2, nowcast: r.nowcast, chg: r.reported > 0 ? r.nowcast / r.reported - 1 : 0, band: F.num(r.lo, 1) + ' to ' + F.num(r.hi, 1) }; }),
+      foot: { name: 'Program', reported: T.reported, nowcast: T.nowcast, chg: T.nowcast / T.reported - 1 },
+      footExplain: { nowcast: function () { return { title: 'Program nowcast', formula: 'sum of fund nowcasts', inputs: [{ name: 'Funds', value: S.rows.length, src: 'computed' }], result: F.money(T.nowcast, 1) }; } } });
+    /* program NAV path: reported (lagged) vs nowcast for recent quarters */
+    var qs = []; for (var q = TODAY_Q - 8; q <= TODAY_Q; q++) qs.push(q);
+    var repPath = qs.map(function (q) { var s = 0; S.rows.forEach(function (r) { var row = r.f.navRep.filter(function (x) { return x.q === Math.min(q, r.navQ); })[0]; s += q > r.navQ ? r.reported : (row ? row.nav : 0); }); return s; });
+    var nowPath = qs.map(function (q, i) { return i < qs.length - 2 ? null : (i === qs.length - 1 ? T.nowcast : null); });
+    var truePath = qs.map(function (q) { var s = 0; S.rows.forEach(function (r) { var row = r.f.navTrue.filter(function (x) { return x.q === q; })[0]; s += row ? row.nav : 0; }); return s; });
+    nowPath[qs.length - 2] = repPath[qs.length - 2];
+    UI.chart.line('#nowPath', { xs: qs, series: [{ name: 'Latest reported marks', ys: repPath, color: 's4' }, { name: 'Nowcast', ys: nowPath, color: 's1', dots: true }, { name: 'Simulated true value (unknown in practice)', ys: truePath, color: 's3', dash: '4 4' }], yFmt: function (v) { return '$' + F.num(v, 0) + 'm'; }, xFmt: qLabel, height: 240, xTicks: 5, label: 'Program NAV path' });
+    $('#denomBox').innerHTML = '<p>Public assets are marked daily; private funds report a quarter or two later. After a fall in public markets, the reported private share is too high: the denominator has already dropped, the numerator has not.</p>' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th></th><th class="n">Reported marks</th><th class="n">Nowcast</th></tr></thead><tbody>' +
+      '<tr><td>Private NAV</td><td class="n">' + F.money(T.reported, 0) + '</td><td class="n">' + F.money(T.nowcast, 0) + '</td></tr>' +
+      '<tr><td>Public assets</td><td class="n">' + F.money(T.public, 0) + '</td><td class="n">' + F.money(T.public, 0) + '</td></tr>' +
+      '<tr><td>Private allocation</td><td class="n">' + F.pct(T.pctReported, 1) + '</td><td class="n">' + F.pct(T.pctNowcast, 1) + '</td></tr>' +
+      '<tr><td>Room below the upper band</td><td class="n">' + F.money(A.bandHi * A.assets - T.reported, 0) + '</td><td class="n">' + F.money(A.bandHi * (T.public + T.nowcast) - T.nowcast, 0) + '</td></tr></tbody></table></div>' +
+      '<p class="eval-note">The nowcast is an estimate with a band, not a mark. It moves the commitment budget, which is why the pacing tab uses it.</p>';
+  }
+
+  /* ---------------- program view ---------------- */
+  var CONC = 'vintage';
+  function renderProgram() {
+    var T = S.tot;
+    var gpN = {}; S.rows.forEach(function (r) { gpN[r.f.gp] = (gpN[r.f.gp] || 0) + r.nowcast; });
+    var topGp = Object.keys(gpN).sort(function (a, b) { return gpN[b] - gpN[a]; })[0];
+    var pTvpi = (T.dist + T.nowcast) / T.paidIn, pDpi = T.dist / T.paidIn;
+    var allFlows = []; S.rows.forEach(function (r) { r.f.flows.forEach(function (x) { allFlows.push({ q: x.q, amount: x.amount }); }); });
+    var pm = PM.priv.fundMetrics(allFlows, T.nowcast, S.D.idx.slice(0, TODAY_Q + 1), Date.UTC(2016, 0, 1));
+    S.programMetrics = pm;
+    UI.kpis('#progKpis', [
+      { id: 'pCommit', label: 'Commitments', value: F.money(T.commit, 0), sub: S.rows.length + ' funds' },
+      { id: 'pUnf', label: 'Unfunded', value: F.money(T.unfunded, 0), sub: F.pct(T.unfunded / T.commit, 0) + ' of commitments' },
+      { id: 'pTvpi', label: 'Program TVPI / DPI', value: F.mult(pTvpi) + ' / ' + F.mult(pDpi), sub: 'on nowcast NAV', explain: function () { return { title: 'Program TVPI', formula: '(distributed + nowcast NAV) / paid-in', inputs: [{ name: 'Paid-in', value: F.money(T.paidIn, 1), src: 'computed' }, { name: 'Distributed', value: F.money(T.dist, 1), src: 'computed' }, { name: 'Nowcast NAV', value: F.money(T.nowcast, 1), src: 'computed' }], result: F.mult(pTvpi, 3) }; } },
+      { id: 'pIrr', label: 'Program IRR', value: F.pct(pm.irr, 1), sub: 'KS-PME ' + F.num(pm.ksPme, 2) + ', Direct Alpha ' + F.spct(pm.directAlpha, 1), explain: function () { return { title: 'Program IRR and PME', formula: 'XIRR of all quarterly flows plus nowcast NAV; KS-PME and Direct Alpha against the synthetic public proxy', inputs: [{ name: 'Flows', value: allFlows.length + ' quarterly', src: 'computed' }, { name: 'KS-PME', value: F.num(pm.ksPme, 3), src: 'computed' }, { name: 'Direct Alpha', value: F.pct(pm.directAlpha, 2), src: 'computed' }], result: F.pct(pm.irr, 2) }; } },
+      { id: 'pTopGp', label: 'Largest GP exposure', value: topGp, sub: F.pct(gpN[topGp] / T.nowcast, 1) + ' of private NAV' }
+    ]);
+    UI.table('#progTable', { id: 'program', name: 'Program view', columns: [
+      { key: 'name', label: 'Fund (fictional)', html: 1, fmt: function (v, r) { return UI.esc(v) + (r.src ? ' <span class="src-tag" title="From a validated, cited statement">cited</span>' : ''); } },
+      { key: 'strategy', label: 'Strategy' }, { key: 'vintage', label: 'Vintage', num: 1 },
+      { key: 'commitment', label: 'Commitment', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'paidIn', label: 'Called', num: 1, fmt: function (v) { return F.num(v, 1); } },
+      { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'dist', label: 'Distributed', num: 1, fmt: function (v) { return F.num(v, 1); } },
+      { key: 'reported', label: 'NAV reported', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'nowcast', label: 'NAV nowcast', num: 1, fmt: function (v) { return F.num(v, 1); } },
+      { key: 'tvpi', label: 'TVPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'dpi', label: 'DPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'irr', label: 'IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }],
+      rows: S.rows.map(function (r) { var m = PM.priv.fundMetrics(r.f.flows.filter(function (x) { return x.q <= r.navQ; }).map(function (x) { return { q: x.q, amount: x.amount }; }), r.reported, null, Date.UTC(2016, 0, 1));
+        return { name: r.f.name, src: !!r.f.fromStatement, strategy: STRAT[r.f.strategy] ? STRAT[r.f.strategy].label : r.f.strategy, vintage: r.f.vintage, commitment: r.f.commitment, paidIn: r.paidIn, unfunded: r.unfunded, dist: r.distributed, reported: r.reported, nowcast: r.nowcast, tvpi: (r.distributed + r.nowcast) / r.paidIn, dpi: r.dpi, irr: m.irr }; }),
+      foot: { name: 'Program ($m)', commitment: T.commit, paidIn: T.paidIn, unfunded: T.unfunded, dist: T.dist, reported: T.reported, nowcast: T.nowcast, tvpi: pTvpi, dpi: pDpi, irr: pm.irr },
+      footExplain: { unfunded: function () { return { title: 'Program unfunded', formula: 'sum over funds of commitment - called (statement value where cited)', inputs: [{ name: 'Commitments', value: F.money(T.commit, 1), src: 'computed' }, { name: 'Called', value: F.money(T.paidIn, 1), src: 'computed' }], result: F.money(T.unfunded, 1) }; } } });
+    /* watchlist */
+    var wl = [];
+    S.rows.forEach(function (r) { if (r.stale >= 2) wl.push(['warn', '<b>Stale NAV</b>: ' + UI.esc(r.f.name) + ' last marked ' + qDate(r.navQ) + ' (' + r.stale + ' quarters). Nowcast ' + F.money(r.nowcast, 1) + ' vs reported ' + F.money(r.reported, 1) + '.']); });
+    wl.push(['bad', '<b>Key person event</b>: Hasturn Mid-Market Buyout II. Departure of a named key person flagged by the <a href="/#stack" data-final="manager-selection-copilot.html">Manager Selection Copilot</a> team-changes tracker; confirm whether the key person clause triggers.']);
+    wl.push(['warn', '<b>Fee break</b>: Ostrel Capital Partners VI. Management fee above the LPA rate after the step-down, raised by the <a href="/#stack" data-final="fund-terms-auditor.html">Fund Terms Auditor</a>; query sent to the GP.']);
+    S.rows.forEach(function (r) { if (r.unfunded > 0.45 * r.f.commitment && r.f.vintage <= 2023) wl.push(['warn', '<b>Liquidity pressure</b>: ' + UI.esc(r.f.name) + ' still has ' + F.money(r.unfunded, 1) + ' unfunded (' + F.pct(r.unfunded / r.f.commitment, 0) + ') entering the back half of its investment period.']); });
+    var brk = S.pipeline && S.pipeline.breaks.filter(function (b) { return b.state !== 'rejected'; });
+    if (brk && brk.length) brk.forEach(function (b) { wl.push(['bad', '<b>Statement break</b>: ' + UI.esc(b.title) + '. See the <a href="#ai">agent ledger</a>.']); });
+    $('#watchlist').innerHTML = wl.map(function (w) { return '<div class="notice ' + w[0] + '">' + w[1] + '</div>'; }).join('');
+    /* re-up calendar: GPs whose latest fund is 3+ years old come back within 24 months */
+    var last = {}; S.rows.forEach(function (r) { if (!last[r.f.gp] || r.f.vintage > last[r.f.gp].f.vintage) last[r.f.gp] = r; });
+    var P = S.plan || plan(), budget = P[0].commit + P[1].commit;
+    var re = Object.keys(last).map(function (g) { var r = last[g]; return { gp: g, last: r.f.name, vintage: r.f.vintage, back: r.f.vintage + (r.f.strategy === 'credit' || r.f.strategy === 'secondaries' ? 3 : 4), strategy: STRAT[r.f.strategy].label, prior: r.f.commitment }; })
+      .filter(function (x) { return x.back >= 2026 && x.back <= 2028; }).sort(function (a, b) { return a.back - b.back; });
+    var reTot = PM.sum(re.map(function (x) { return x.prior; }));
+    re.forEach(function (x) { x.need = budget * x.prior / Math.max(reTot, budget); });
+    UI.table('#reupTable', { id: 'reups', name: 'Re-up calendar', columns: [{ key: 'gp', label: 'GP (fictional)' }, { key: 'back', label: 'Expected in market', num: 1 }, { key: 'strategy', label: 'Strategy' }, { key: 'prior', label: 'Prior commit', num: 1, fmt: function (v) { return F.num(v, 0); } }, { key: 'need', label: 'Plan allows', num: 1, fmt: function (v) { return F.num(v, 1); } }],
+      rows: re, foot: { gp: 'Total vs 2027 to 2028 budget', prior: reTot, need: PM.sum(re.map(function (x) { return x.need; })) },
+      footExplain: { need: function () { return { title: 'Re-up capacity', formula: 'plan commitments for 2027 and 2028, shared across returning GPs by their prior commitment size; capped at each prior size when the budget allows', inputs: [{ name: 'Budget 2027 + 2028', value: F.money(budget, 1), src: 'computed', note: 'pacing tab' }, { name: 'Prior commitments of returning GPs', value: F.money(reTot, 1), src: 'computed' }] }; } } });
+    renderConc();
+    /* look-through */
+    var priv = SECT.map(function () { return 0; }), privG = GEO.map(function () { return 0; });
+    S.rows.forEach(function (r) { r.f.sector.forEach(function (w, i) { priv[i] += w * r.nowcast; }); r.f.geo.forEach(function (w, i) { privG[i] += w * r.nowcast; }); });
+    var pub = PUBLIC_SECT.map(function (w) { return w * T.public; }), pubG = PUBLIC_GEO.map(function (w) { return w * T.public; });
+    var tot = T.public + T.nowcast;
+    UI.chart.bar('#ltSector', { categories: SECT, series: [{ name: 'Public', values: pub.map(function (v) { return v / tot; }), color: 's4' }, { name: 'Private (look-through)', values: priv.map(function (v) { return v / tot; }), color: 's1' }], stacked: true, horizontal: true, yFmt: function (v) { return F.pct(v, 0); }, labelWidth: 140, label: 'Sector exposure' });
+    UI.chart.bar('#ltGeo', { categories: GEO, series: [{ name: 'Public', values: pubG.map(function (v) { return v / tot; }), color: 's4' }, { name: 'Private (look-through)', values: privG.map(function (v) { return v / tot; }), color: 's1' }], stacked: true, horizontal: true, yFmt: function (v) { return F.pct(v, 0); }, labelWidth: 140, label: 'Geographic exposure' });
+    UI.tables.lookthrough = { id: 'lookthrough', name: 'Look-through exposure', columns: [{ key: 'k', label: 'Bucket' }, { key: 'pub', label: 'Public $m' }, { key: 'priv', label: 'Private $m' }, { key: 'share', label: 'Share of total' }],
+      rows: SECT.map(function (s, i) { return { k: s, pub: pub[i], priv: priv[i], share: (pub[i] + priv[i]) / tot }; }).concat(GEO.map(function (g, i) { return { k: g, pub: pubG[i], priv: privG[i], share: (pubG[i] + privG[i]) / tot }; })) };
+  }
+  function renderConc() {
+    var k = CONC, by = {};
+    S.rows.forEach(function (r) {
+      if (k === 'sector') r.f.sector.forEach(function (w, i) { by[SECT[i]] = (by[SECT[i]] || 0) + w * r.nowcast; });
+      else if (k === 'geo') r.f.geo.forEach(function (w, i) { by[GEO[i]] = (by[GEO[i]] || 0) + w * r.nowcast; });
+      else { var key = k === 'strategy' ? STRAT[r.f.strategy].label : k === 'gp' ? r.f.gp : String(r.f.vintage); by[key] = (by[key] || 0) + r.nowcast; }
+    });
+    var keys = Object.keys(by); if (k === 'vintage') keys.sort(); else keys.sort(function (a, b) { return by[b] - by[a]; });
+    UI.chart.bar('#concChart', { categories: keys, series: [{ name: 'Share of private NAV', values: keys.map(function (x) { return by[x] / S.tot.nowcast; }) }], yFmt: function (v) { return F.pct(v, 0); }, values: true, height: 240, label: 'Concentration by ' + k });
+  }
+
+  /* ---------------- liquidity stress ---------------- */
+  function renderLiquidity() {
+    var T = S.tot, pub0 = T.public, priv0 = T.nowcast;
+    var pub1 = pub0 * (1 - A.ddPub), privRep1 = T.reported * (1 - A.ddPriv), priv1 = priv0 * (1 - A.ddPriv);
+    var calls = T.unfunded * A.stressCall, dists0 = PM.sum(S.rows.map(function (r) { return r.f.flows.filter(function (x) { return x.amount > 0 && x.q > TODAY_Q - 4; }).reduce(function (s, x) { return s + x.amount; }, 0); }));
+    var dists1 = dists0 * (1 - A.distCut), spend = (pub0 + priv0) * A.spend;
+    var liquid1 = pub1 * A.liquidShare, need = calls - dists1 + spend, cover = liquid1 / Math.max(1e-9, need);
+    var pct1 = privRep1 / (pub1 + privRep1), pctTrue = priv1 / (pub1 + priv1);
+    S.liq = { cover: cover, pct1: pct1, need: need, liquid1: liquid1, calls: calls, dists1: dists1 };
+    UI.kpis('#liqKpis', [
+      { id: 'cover', label: '12-month liquidity coverage', value: F.mult(cover, 1), sub: 'liquid public / net cash need', tone: cover < 1.5 ? 'bad' : 'good', explain: function () { return { title: 'Liquidity coverage under stress', formula: 'liquid public after drawdown / (stressed calls - cut distributions + spending)', inputs: [{ name: 'Public after drawdown', value: F.money(pub1, 0), src: 'computed' }, { name: 'Liquid share', value: F.pct(A.liquidShare, 0), src: 'assumption' }, { name: 'Calls, 12 months', value: F.money(calls, 1), src: 'computed', note: F.pct(A.stressCall, 0) + ' of unfunded' }, { name: 'Distributions after cut', value: F.money(dists1, 1), src: 'computed' }, { name: 'Spending', value: F.money(spend, 1), src: 'computed' }], result: F.mult(cover, 2) }; } },
+      { id: 'pctStress', label: 'Private allocation after the drawdown', value: F.pct(pct1, 1), sub: 'on lagged marks; ' + F.pct(pctTrue, 1) + ' once marked down', tone: pct1 > A.bandHi ? 'bad' : null },
+      { id: 'need', label: 'Net cash need, 12 months', value: F.money(need, 0), sub: 'calls less distributions, plus spending' }
+    ]);
+    UI.table('#liqTable', { id: 'liquidity', name: 'Liquidity stress', columns: [{ key: 'k', label: '' }, { key: 'b', label: 'Today', num: 1 }, { key: 'a', label: 'After stress', num: 1 }],
+      rows: [{ k: 'Public assets', b: F.money(pub0, 0), a: F.money(pub1, 0) }, { k: 'Private NAV, reported marks', b: F.money(T.reported, 0), a: F.money(privRep1, 0) }, { k: 'Private allocation (reported)', b: F.pct(T.pctReported, 1), a: F.pct(pct1, 1) }, { k: 'Unfunded commitments', b: F.money(T.unfunded, 0), a: F.money(T.unfunded - calls, 0) }, { k: 'Distributions, trailing / next 12 months', b: F.money(dists0, 0), a: F.money(dists1, 0) }, { k: 'Liquid assets / unfunded', b: F.mult(pub0 * A.liquidShare / T.unfunded, 2), a: F.mult(liquid1 / Math.max(1e-9, T.unfunded - calls), 2) }] });
+    var shares = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3];
+    var after = shares.map(function (s) { var sold = privRep1 * s, cash = sold * (1 - A.saleDisc); return (privRep1 - sold) / (pub1 + cash + privRep1 - sold); });
+    UI.chart.line('#valveChart', { xs: shares, series: [{ name: 'Private allocation after sale', ys: after, dots: true }], hlines: [{ y: A.bandHi, label: 'Band high' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return F.pct(v, 0) + ' sold'; }, height: 220, label: 'Effect of selling LP stakes' });
+    var sold = privRep1 * A.saleShare, cash = sold * (1 - A.saleDisc);
+    $('#valveNote').textContent = 'Selling ' + F.pct(A.saleShare, 0) + ' of the private book at a ' + F.pct(A.saleDisc, 0) + ' discount raises ' + F.money(cash, 0) + ', costs ' + F.money(sold - cash, 0) + ' against NAV, and brings the allocation to ' + F.pct(after[shares.indexOf(A.saleShare)] != null ? after[shares.indexOf(A.saleShare)] : (privRep1 - sold) / (pub1 + cash + privRep1 - sold), 1) + '.';
+  }
+
+  /* ---------------- evergreen ---------------- */
+  function renderEvergreen() {
+    var Q = 12, req = [], rets = [];
+    for (var q = 0; q < Q; q++) { req.push(q >= 3 && q <= 5 ? A.evStress : 0.02); rets.push(q === 3 ? -0.06 : q === 4 ? -0.03 : 0.018); }
+    var e = S.ev = PM.priv.evergreen({ nav0: 1000, sleevePct: A.evSleeve, facility: A.evFacility * 1000, limitPct: A.evLimit, requests: req, returns: rets, sleeveReturn: 0.04, saleDiscount: A.evDisc, facilityRate: 0.07, subscriptions: req.map(function (x, i) { return i >= 3 && i <= 7 ? 0.005 : 0.02; }) });
+    var gated = e.rows.filter(function (r) { return r.gated; }).length;
+    UI.kpis('#evKpis', [
+      { id: 'evGated', label: 'Quarters gated', value: String(gated), sub: 'of ' + Q + ', limit ' + F.pct(A.evLimit, 0) + ' of NAV' },
+      { id: 'evQueue', label: 'Largest queue', value: F.money(e.maxQueue, 0), sub: F.pct(e.maxQueue / 1000, 1) + ' of starting NAV' },
+      { id: 'evForced', label: 'Forced private sales', value: F.money(e.forcedSales, 0), sub: 'at a ' + F.pct(A.evDisc, 0) + ' discount' },
+      { id: 'evLoss', label: 'Cost borne by remaining investors', value: F.money(e.saleLoss, 1), sub: F.pct(e.saleLoss / 1000, 2) + ' of starting NAV', tone: e.saleLoss > 0 ? 'bad' : null, explain: function () { return { title: 'Cost to remaining investors', formula: 'sum of (forced sale proceeds at NAV - cash received); paid by investors who stay', inputs: [{ name: 'Forced sales at NAV', value: F.money(e.forcedSales, 1), src: 'computed' }, { name: 'Discount', value: F.pct(A.evDisc, 0), src: 'assumption' }], result: F.money(e.saleLoss, 2) }; } }
+    ]);
+    var xs = e.rows.map(function (r) { return r.q; });
+    UI.chart.line('#evChart', { xs: xs, series: [{ name: 'Requested', ys: e.rows.map(function (r) { return r.requested / r.nav; }), color: 's5' }, { name: 'Paid', ys: e.rows.map(function (r) { return r.paidPctOfNav; }), color: 's1' }, { name: 'Queue', ys: e.rows.map(function (r) { return r.queue / r.nav; }), color: 's2', dash: '5 4' }], hlines: [{ y: A.evLimit, label: 'Limit', color: 'negative' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return 'Q' + v; }, height: 240, label: 'Evergreen redemptions' });
+    UI.chart.bar('#evSources', { categories: xs.map(function (q) { return 'Q' + q; }), series: [{ name: 'Liquidity sleeve', values: e.rows.map(function (r) { return r.fromSleeve; }), color: 's3' }, { name: 'Credit facility', values: e.rows.map(function (r) { return r.fromFacility; }), color: 's2' }, { name: 'Forced sales (cash received)', values: e.rows.map(function (r) { return r.forcedSale - r.saleLoss; }), color: 's5' }], stacked: true, yFmt: function (v) { return F.num(v, 0); }, height: 220, label: 'Sources of redemption cash' });
+    UI.table('#evTable', { id: 'evergreen', name: 'Evergreen fund quarters', columns: [{ key: 'q', label: 'Quarter', num: 1 }, { key: 'nav', label: 'NAV', num: 1, fmt: function (v) { return F.num(v, 0); } }, { key: 'requested', label: 'Requested', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'cap', label: 'Limit', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'paid', label: 'Paid', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'queue', label: 'Queue', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'drawn', label: 'Facility drawn', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'forcedSale', label: 'Forced sale', num: 1, fmt: function (v) { return F.num(v, 1); } }], rows: e.rows });
+  }
+
+  /* ---------------- fund performance ---------------- */
+  function renderPerformance() {
+    var sel = $('#fundPick');
+    if (!sel.options.length || sel.dataset.n !== String(S.rows.length) + (S.user ? 'u' : '')) {
+      sel.innerHTML = S.rows.map(function (r, i) { return '<option value="' + i + '">' + UI.esc(r.f.name) + '</option>'; }).join('');
+      sel.dataset.n = String(S.rows.length) + (S.user ? 'u' : '');
+    }
+    var r = S.rows[+sel.value || 0], f = r.f;
+    var fl = f.flows.filter(function (x) { return x.q <= r.navQ; }).map(function (x) { return { q: x.q, amount: x.amount }; });
+    var m = PM.priv.fundMetrics(fl, r.reported, S.D.idx.slice(0, r.navQ + 1), Date.UTC(2016, 0, 1));
+    var rho = PM.autocorr(r.rr, 1), des = PM.geltnerDesmooth(r.rr, Math.max(0, Math.min(0.9, rho)));
+    UI.kpis('#perfKpis', [
+      { label: 'IRR', value: F.pct(m.irr, 1), sub: 'XIRR to ' + qDate(r.navQ), explain: function () { return { title: 'Fund IRR', formula: 'rate r solving sum CF_i (1+r)^-(days_i/365) = 0, Newton with bisection fallback', inputs: [{ name: 'Cash flows', value: fl.length, src: 'computed' }, { name: 'Terminal NAV', value: F.money(r.reported, 2), src: f.fromStatement ? 'document' : 'computed', note: f.fromStatement ? 'validated statement' : 'GP mark' }], result: F.pct(m.irr, 2) }; } },
+      { label: 'TVPI / DPI / RVPI', value: F.mult(m.tvpi) + ' / ' + F.mult(m.dpi) + ' / ' + F.mult(m.rvpi) },
+      { label: 'KS-PME', value: F.num(m.ksPme, 2), sub: 'above 1 beats the public proxy', explain: function () { return { title: 'Kaplan-Schoar PME', formula: '(sum D_t I_T/I_t + NAV_T) / (sum C_t I_T/I_t)', inputs: [{ name: 'Index', value: 'synthetic public proxy', src: 'computed' }], result: F.num(m.ksPme, 3) }; } },
+      { label: 'Direct Alpha', value: F.spct(m.directAlpha, 1), sub: 'annualised, vs proxy' },
+      { label: 'Volatility, reported vs desmoothed', value: F.pct(PM.std(r.rr) * 2, 1) + ' / ' + F.pct(PM.std(des) * 2, 1), sub: 'annualised, rho ' + F.num(rho, 2) }
+    ]);
+    var qs = [], c = [], d = [], nv = [];
+    for (var q = f.q0; q <= r.navQ; q++) { qs.push(q); var cc = 0, dd = 0; f.flows.forEach(function (x) { if (x.q === q) { if (x.amount < 0) cc += x.amount; else dd += x.amount; } }); c.push(cc); d.push(dd); var row = f.navRep.filter(function (x) { return x.q === q; })[0]; nv.push(row ? row.nav : null); }
+    UI.chart.line('#perfFlows', { xs: qs, series: [{ name: 'Reported NAV', ys: nv }, { name: 'Calls', ys: c, color: 's5' }, { name: 'Distributions', ys: d, color: 's3' }], yFmt: function (v) { return F.num(v, 0); }, xFmt: qLabel, xTicks: 6, height: 240, label: 'Fund cash flows and NAV' });
+    var xs = r.rr.map(function (_, i) { return i + 1; });
+    UI.chart.line('#perfRet', { xs: xs, series: [{ name: 'Reported', ys: r.rr, color: 's4' }, { name: 'Desmoothed (Geltner)', ys: des, color: 's1' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return 'q' + v; }, height: 240, label: 'Reported and desmoothed returns' });
+    $('#perfRetNote').textContent = 'First-order autocorrelation of reported returns is ' + F.num(rho, 2) + '. Smoothed marks understate volatility, so allocation models that use them over-allocate to private assets.';
+  }
+
+  /* ---------------- AI pipeline ---------------- */
+  var DOCS = window.PCL_DOCS, LABELS = window.PCL_LABELS, viewer, audit, log, apps;
+  var ROLE = [
+    ['calledToDate', /since inception|called to date/i], ['unfunded', /unfunded|remaining commitment/i], ['callAmount', /amount due/i],
+    ['commitment', /commitment|committed capital/i], ['opening', /beginning|opening/i], ['closing', /ending|end of period|closing/i],
+    ['contributions', /contribution|capital called/i], ['distributions', /distribution/i], ['fees', /management fee/i], ['expenses', /expense/i],
+    ['pnl', /gain|income|apprec|unrealized|realized/i]
+  ];
+  function classify(d) {
+    var head = d.pages[0].slice(0, 4).join(' ');
+    if (/capital call notice/i.test(head)) return 'notice';
+    if (/quarterly report/i.test(head)) return 'report';
+    if (/capital account|partner'?s capital|capital statement/i.test(head)) return 'statement';
+    return 'unknown';
+  }
+  function unitScale(d) {
+    var head = d.pages[0].slice(0, 6).join(' ');
+    if (/in thousands/i.test(head)) return 1e-3;
+    if (/usd millions|\$ ?millions|in millions/i.test(head)) return 1;
+    return 1e-6;
+  }
+  function extract(id, d) {
+    var out = {}, sc = unitScale(d), skipped = [];
+    d.pages.forEach(function (pg, pi) {
+      pg.forEach(function (line, li) {
+        if (d.kind === 'report') {
+          var m;
+          if ((m = /capital account at [^:]*:\s*\$?([\d,]+)/i.exec(line))) out.lpNav = { value: +m[1].replace(/,/g, '') / 1e6, unit: 'money', cites: [{ doc: id, page: pi + 1, line: li + 1, short: id }] };
+          if ((m = /net IRR ([\d.]+)%/i.exec(line))) out.fundNetIrr = { value: +m[1] / 100, unit: 'pct', cites: [{ doc: id, page: pi + 1, line: li + 1, short: id }] };
+          if ((m = /net TVPI ([\d.]+)x/i.exec(line))) out.fundTvpi = { value: +m[1], unit: 'num', cites: [{ doc: id, page: pi + 1, line: li + 1, short: id }] };
+          if ((m = /DPI ([\d.]+)x/i.exec(line))) out.fundDpi = { value: +m[1], unit: 'num', cites: [{ doc: id, page: pi + 1, line: li + 1, short: id }] };
+          return;
+        }
+        if (line.charAt(0) !== '|') return;
+        var body = line.slice(1).replace(/\(see note \d+\)|note \d+/gi, ''), nums = body.match(/\(?-?\$?\s?[\d,]+(\.\d+)?\)?(?=\s*$)/);
+        var label = body.replace(/\(?-?\$?\s?[\d,]+(\.\d+)?\)?\s*$/, '').replace(/[.\s]+$/, '').trim();
+        if (/due date/i.test(label)) return;
+        if (!nums) { if (label) skipped.push({ line: li + 1, label: label }); return; }
+        if (!label) { skipped.push({ line: li + 1, label: '(value with no label)' }); return; }
+        var raw = nums[0], neg = /\(/.test(raw) || /-/.test(raw), v = +raw.replace(/[()$,\s-]/g, '') * sc;
+        var role = null; for (var k = 0; k < ROLE.length; k++) if (ROLE[k][1].test(label)) { role = ROLE[k][0]; break; }
+        if (!role) { skipped.push({ line: li + 1, label: label }); return; }
+        var signed = neg ? -v : v, cite = { doc: id, page: pi + 1, line: li + 1, short: id };
+        if (role === 'pnl') { out.pnl = out.pnl || { value: 0, unit: 'money', cites: [], parts: [] }; out.pnl.value += signed; out.pnl.cites.push(cite); out.pnl.parts.push(signed); }
+        else out[role] = { value: Math.abs(signed), unit: 'money', cites: [cite] };
+      });
+    });
+    return { fields: out, skipped: skipped, scale: sc };
+  }
+  function validate(id, ex) {
+    var ok = 0, bad = 0, blocked = [];
+    Object.keys(ex.fields).forEach(function (k) {
+      var f = ex.fields[k];
+      var parts = f.parts || [f.value];
+      f.valid = f.cites.every(function (c, i) { var r = UI.validateField(DOCS, { cite: c, value: f.parts ? parts[i] / (ex.scale === 1e-3 ? 1 : 1) : f.value, unit: f.unit }); if (!r.ok) blocked.push(k + ': ' + r.reason); return r.ok; });
+      if (f.valid) ok++; else bad++;
+    });
+    return { ok: ok, bad: bad, blocked: blocked };
+  }
+  function runPipeline() {
+    log.clear(); audit.clear();
+    var P = S.pipeline = { ex: {}, checks: [], breaks: [], fieldsN: 0, review: 0 };
+    var ids = Object.keys(DOCS), steps = [];
+    audit.push('planner', 'run started', 'seed ' + S.seed + ', ' + ids.length + ' documents');
+    steps.push({ agent: 'planner', run: function () { return { msg: 'Plan: classify ' + ids.length + ' documents, extract statement fields with citations, validate every citation, run roll-forward, ledger and cross-document checks, send breaks for approval', details: { documents: ids, checks: ['roll-forward', 'commitment ledger', 'statement vs report'] } }; } });
+    steps.push({ agent: 'document-classifier', run: function () {
+      return ids.map(function (id) { var k = classify(DOCS[id]); P.ex[id] = { kind: k }; audit.push('document-classifier', 'classified', id + ' as ' + k); return { msg: id + ': ' + k, details: { title: DOCS[id].title, kind: k } }; });
+    } });
+    steps.push({ agent: 'statement-extractor', run: function () {
+      return ids.map(function (id) {
+        var ex = extract(id, DOCS[id]); P.ex[id].fields = ex.fields; P.ex[id].scale = ex.scale; P.ex[id].skipped = ex.skipped;
+        var n = Object.keys(ex.fields).length; P.fieldsN += n;
+        audit.push('statement-extractor', 'extracted', id + ': ' + n + ' fields');
+        var res = [{ status: 'ok', msg: id + ': ' + n + ' fields, units ' + (ex.scale === 1e-3 ? '$ thousands' : ex.scale === 1 ? '$ millions' : 'dollars') + ' converted to $m', details: Object.keys(ex.fields).reduce(function (o, k) { o[k] = +ex.fields[k].value.toFixed(6); return o; }, {}) }];
+        ex.skipped.forEach(function (s) { res.push({ status: 'info', msg: id + ' line ' + s.line + ': "' + s.label + '" has no value on the same line, left unextracted' }); });
+        return res;
+      });
+    } });
+    steps.push({ agent: 'citation-validator', run: function () {
+      return ids.map(function (id) {
+        var v = validate(id, P.ex[id]); audit.push('citation-validator', v.bad ? 'blocked' : 'passed', id + ': ' + v.ok + ' resolve' + (v.bad ? ', ' + v.bad + ' blocked' : ''));
+        return { status: v.bad ? 'blocked' : 'ok', msg: id + ': ' + v.ok + ' citations resolve to a line that contains the value' + (v.bad ? '; blocked ' + v.blocked.join('; ') : '') };
+      });
+    } });
+    steps.push({ agent: 'reconciliation', run: function () {
+      var res = [];
+      ids.forEach(function (id) {
+        var fx = P.ex[id].fields || {};
+        if (P.ex[id].kind === 'statement' && fx.opening && fx.closing) {
+          var g = (fx.pnl ? fx.pnl.value : 0) - (fx.fees ? fx.fees.value : 0) - (fx.expenses ? fx.expenses.value : 0);
+          var rf = PM.priv.rollForward({ opening: fx.opening.value, contributions: fx.contributions ? fx.contributions.value : 0, distributions: fx.distributions ? fx.distributions.value : 0, gains: g, closing: fx.closing.value });
+          var flag = Math.abs(rf.break) > 0.001;
+          P.checks.push({ id: 'rollforward:' + id, flag: flag, size: rf.break });
+          if (flag) {
+            P.breaks.push({ id: 'B-' + (P.breaks.length + 1), check: 'rollforward:' + id, title: DOCS[id].title.split(',')[0] + ': roll-forward break of ' + F.money(rf.break, 2), severity: 'high', doc: id,
+              evidence: 'Opening ' + F.money(fx.opening.value, 2) + ' + contributions ' + F.money(fx.contributions ? fx.contributions.value : 0, 2) + ' - distributions ' + F.money(fx.distributions ? fx.distributions.value : 0, 2) + ' + net income and gains after fees ' + F.money(g, 2) + ' = ' + F.money(rf.expected, 2) + ', but the statement shows closing ' + F.money(fx.closing.value, 2) + '. Approve to query the GP and hold the fund out of the ledger; reject to accept the GP figure.',
+              cites: fx.opening.cites.concat(fx.closing.cites) });
+            res.push({ status: 'approval', msg: id + ': roll-forward break ' + F.money(rf.break, 2) + ', sent for approval' });
+          } else res.push({ status: 'ok', msg: id + ': roll-forward ties (' + F.money(rf.break, 3) + ')' });
+        }
+        if (fx.calledToDate && fx.unfunded && fx.commitment) {
+          var lb = fx.calledToDate.value + fx.unfunded.value - fx.commitment.value, lf = Math.abs(lb) > 0.001;
+          P.checks.push({ id: 'ledger:' + id, flag: lf, size: lb });
+          res.push({ status: lf ? 'approval' : 'ok', msg: id + ': called + unfunded = commitment ' + (lf ? 'fails by ' + F.money(lb, 3) : 'ties') });
+        }
+      });
+      var a = P.ex['cas-quorvane'].fields, b = P.ex['qr-quorvane'].fields;
+      if (a && b && a.closing && b.lpNav) {
+        var d = a.closing.value - b.lpNav.value, f = Math.abs(d) > 0.001;
+        P.checks.push({ id: 'crossdoc:cas-quorvane/qr-quorvane', flag: f, size: d });
+        res.push({ status: f ? 'approval' : 'ok', msg: 'Quorvane IV: statement ending balance ' + (f ? 'differs from' : 'matches') + ' the quarterly report capital account' });
+      }
+      ids.forEach(function (id) { (P.ex[id].skipped || []).forEach(function (s) { if (/fee/i.test(s.label)) { P.review++; } }); });
+      audit.push('reconciliation', 'checks run', P.checks.length + ' checks, ' + P.breaks.length + ' break(s)');
+      return res;
+    } });
+    steps.push({ agent: 'gate', run: function () {
+      var held = P.breaks.map(function (b) { return b.doc; });
+      audit.push('gate', 'held back', held.join(', ') || 'none');
+      return { status: held.length ? 'blocked' : 'ok', msg: held.length ? 'Ledger update for ' + held.join(', ') + ' held until a person decides the break' : 'No open breaks; ledger can update' };
+    } });
+    UI.runSteps(log, steps, function () { afterPipeline(); });
+  }
+  function afterPipeline() {
+    var P = S.pipeline, items = P.breaks.map(function (b) { return { id: b.id, title: b.title, severity: b.severity, evidence: b.evidence, cites: b.cites, state: 'pending', doc: b.doc }; });
+    if (P.ex['cas-mereth'] && !P.ex['cas-mereth'].fields.fees) items.push({ id: 'R-1', title: 'Mereth Ventures V: management fee not extracted', severity: 'low', evidence: 'The fee label sits on one line and its value on the next, so the extractor left it blank rather than guess. Note 3 says the fee is already inside net income, so the roll-forward still ties. Approve to record the fee by hand from the cited line.', cites: [{ doc: 'cas-mereth', page: 1, line: 10, short: 'mereth' }, { doc: 'cas-mereth', page: 1, line: 18, short: 'mereth note 3' }], state: 'pending', doc: 'cas-mereth' });
+    P.items = items;
+    apps = UI.approvals('#approvals', items, { audit: audit, approveLabel: 'Approve', rejectLabel: 'Reject', onChange: function () { applyLedger(); renderLedger(); renderProgram(); } });
+    UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + Object.keys(P.ex).reduce(function (s, id) { return s + Object.keys(P.ex[id].fields || {}).length; }, 0), flags: P.breaks.length + P.checks.filter(function (c) { return c.flag && !/rollforward/.test(c.id); }).length, review: items.length });
+    applyLedger(); renderLedger(); renderEval(); buildProgram(); renderAll(true);
+    document.querySelectorAll('#runSteps span').forEach(function (s) { s.className = 'done'; });
+  }
+  /* approved, validated statement values flow into the program view */
+  function applyLedger() {
+    var P = S.pipeline; if (!P || S.user) return;
+    var held = {}; (P.items || []).forEach(function (it) { if (/^B-/.test(it.id) && it.state !== 'rejected') held[it.doc] = true; });
+    S.D.funds.forEach(function (f) {
+      var id = DOCFUND[f.name]; f.override = null; f.fromStatement = false;
+      if (!id || held[id]) return;
+      var fx = P.ex[id] && P.ex[id].fields; if (!fx) return;
+      var valid = function (k) { return fx[k] && fx[k].valid; };
+      var o = {};
+      if (valid('closing')) o.nav = fx.closing.value;
+      if (valid('unfunded')) { o.unfunded = fx.unfunded.value; o.paidIn = f.commitment - fx.unfunded.value; }
+      if (valid('calledToDate')) o.paidIn = fx.calledToDate.value;
+      if (valid('callAmount')) { o.pendingCall = fx.callAmount.value; o.paidIn = f.commitment - fx.unfunded.value; }
+      if (Object.keys(o).length) { f.override = o; f.fromStatement = true; }
+    });
+  }
+  function renderLedger() {
+    var P = S.pipeline, rows = [];
+    var held = {}; (P.items || []).forEach(function (it) { if (/^B-/.test(it.id) && it.state !== 'rejected') held[it.doc] = it.state; });
+    Object.keys(P.ex).forEach(function (id) {
+      var fx = P.ex[id].fields || {};
+      Object.keys(fx).forEach(function (k) {
+        rows.push({ doc: id, field: k, value: fx[k].value, cite: fx[k].cites.map(function (c) { return UI.citeHTML(c, 'p' + c.page + ' l' + c.line); }).join(''), status: !fx[k].valid ? 'blocked by validator' : held[id] ? (held[id] === 'approved' ? 'held: GP queried' : 'held: break open') : 'in ledger' });
+      });
+    });
+    UI.table('#ledger', { id: 'ledger', name: 'Cited ledger', columns: [{ key: 'doc', label: 'Document' }, { key: 'field', label: 'Field' }, { key: 'value', label: 'Value ($m or ratio)', num: 1, fmt: function (v) { return F.num(v, 4); } }, { key: 'cite', label: 'Citation', html: 1 }, { key: 'status', label: 'Status' }], rows: rows });
+  }
+  function renderEval() {
+    var P = S.pipeline, ext = {}, truth = {};
+    Object.keys(LABELS.fields).forEach(function (id) {
+      Object.keys(LABELS.fields[id]).forEach(function (k) {
+        truth[id + '.' + k] = { value: LABELS.fields[id][k].value };
+        var f = P.ex[id] && P.ex[id].fields && P.ex[id].fields[k];
+        if (f) ext[id + '.' + k] = { value: k === 'pnl' ? f.value : Math.abs(f.value), cite: f.valid ? f.cites[0] : null };
+      });
+    });
+    var ev = UI.evaluate(ext, truth, 1e-6);
+    var kinds = Object.keys(LABELS.kinds), kindOk = kinds.filter(function (id) { return P.ex[id] && P.ex[id].kind === LABELS.kinds[id]; }).length;
+    var seeded = Object.keys(LABELS.issues).filter(function (k) { return LABELS.issues[k].seeded; });
+    var raised = P.checks.filter(function (c) { return c.flag; }).map(function (c) { return c.id; });
+    var fl = UI.evalFlags(raised, seeded, Object.keys(LABELS.issues).length);
+    S.eval = { ev: ev, fl: fl, kindOk: kindOk, kinds: kinds.length };
+    window.EVAL = { demo: 'Private Capital Lab', href: 'private-capital-lab.html#evaluation', fields: ev.n, accuracy: ev.accuracy, coverage: ev.coverage, seeded: fl.seeded, detected: fl.detected, falseFlagRate: fl.falseFlagRate };
+    UI.kpis('#evalKpis', [
+      { id: 'evAcc', label: 'Extraction accuracy', value: F.pct(ev.accuracy, 1), sub: ev.correct + ' of ' + ev.n + ' labeled fields', explain: function () { return { title: 'Extraction accuracy', formula: 'labeled fields extracted with the right value / labeled fields', inputs: [{ name: 'Missed or wrong', value: ev.wrong.join(', ') || 'none', src: 'computed' }], result: F.pct(ev.accuracy, 1) }; } },
+      { id: 'evCov', label: 'Citation coverage', value: F.pct(ev.coverage, 1), sub: 'fields with a resolving citation' },
+      { id: 'evFlag', label: 'Seeded issues caught / false-flag rate', value: fl.detected + ' of ' + fl.seeded + ' / ' + F.pct(fl.falseFlagRate, 0), sub: fl.candidates - fl.seeded + ' clean checks' }
+    ]);
+    UI.table('#evalTable', { id: 'evaluation', name: 'Evaluation detail', columns: [{ key: 'k', label: 'Field' }, { key: 't', label: 'Label', num: 1, fmt: function (v) { return F.num(v, 4); } }, { key: 'e', label: 'Extracted', num: 1, fmt: function (v) { return v == null ? 'missing' : F.num(v, 4); } }, { key: 'ok', label: 'Match' }, { key: 'how', label: 'How the label was set' }],
+      rows: Object.keys(truth).map(function (k) { var id = k.split('.')[0], fk = k.split('.')[1]; return { k: k, t: truth[k].value, e: ext[k] ? ext[k].value : null, ok: ev.wrong.indexOf(k) === -1 ? 'yes' : 'no', how: LABELS.fields[id][fk].how }; }) });
+  }
+
+  /* ---------------- memo (static text, written for the base case) ---------------- */
+  function renderMemo() {
+    /* The memo text is fixed. Its numbers were read from this page at seed 42 with the default
+       assumptions; each link jumps to where that number is computed live. */
+    $('#memoCall').innerHTML = 'Commit <a class="cite-num" href="#kpi-commit3">$168m</a> across the 2027 to 2029 vintages, starting with <a class="cite-num" href="#kpi-commit1">$59m</a> in 2027, and hold a liquidity buffer of at least $160m in cash and short Treasuries.';
+    $('#memoSituation').innerHTML = '<p>The fictional endowment has $1.0bn of assets, a 25% private markets target and a 20% to 30% band. Twenty funds hold <a class="cite-num" href="#kpi-pCommit">$542m</a> of commitments, <a class="cite-num" href="#kpi-pUnf">$148m</a> of it unfunded. Public markets fell about a quarter over the last two quarters while private marks still date from June or March, so the reported private allocation of <a class="cite-num" href="#kpi-pctRep">26.5%</a> overstates where the program really sits.</p>';
+    $('#memoWhy').innerHTML = '<li>Rolled forward to today, private NAV is <a class="cite-num" href="#kpi-navNow">$232m</a> and the allocation is <a class="cite-num" href="#kpi-pctNow">24.0%</a>: below target and inside the band. The denominator moved first; the program is not over-allocated.</li>' +
+      '<li>The pacing rule sets 2027 at <a class="cite-num" href="#kpi-commit1">$59m</a>, the level that puts projected private NAV on target four years out while existing vintages distribute. The next two years step down slightly as recent vintages mature.</li>' +
+      '<li>In a stress with a further 25% public drawdown, stressed calls and distributions cut by 60%, liquid public assets still cover the 12-month cash need <a class="cite-num" href="#kpi-cover">4.9x</a>. The budget does not depend on distributions arriving on time.</li>';
+    $('#memoRisks').innerHTML = '<li>Over ten years, <a class="cite-num" href="#kpi-breach">62%</a> of simulated paths cross the 30% upper band in at least one quarter, almost always right after a public drawdown. That is the denominator effect, not overcommitment, but the committee will see it in reported numbers.</li>' +
+      '<li>In <a class="cite-num" href="#kpi-shortfall">17%</a> of paths, liquid public assets fall below unfunded commitments at some point, because spending is paid from the public book. The $160m buffer, about twice the stressed 12-month need of <a class="cite-num" href="#kpi-need">$79m</a>, is sized for that.</li>' +
+      '<li>The nowcast is an estimate with a band, and a fund-specific write-down would not show up in a beta to the market. Brisolt Credit Opportunities III also has an open roll-forward break and stays out of the ledger until the GP answers.</li>';
+    $('#memoChange').innerHTML = '<li>Another 20% fall in public markets before the first close: cut 2027 toward $40m and keep the LP stake sale in the <a href="/#stack" data-final="secondaries-desk.html">Secondaries Desk</a> ready as the release valve.</li>' +
+      '<li>Q3 marks arriving more than 5% below the nowcast: re-run the plan on the new marks before committing.</li>' +
+      '<li>Distributions below half of the trailing year for two quarters: hold 2028 at the 2027 level.</li>';
+    $('#memoNext').innerHTML = '<p>Spend 2027 on two or three commitments of $20m to $25m: re-ups with the returning buyout and credit managers in the <a href="#program">re-up calendar</a> that pass diligence in the <a href="/#stack" data-final="manager-selection-copilot.html">Manager Selection Copilot</a>, and one secondaries fund to shorten the J-curve. Refresh the nowcast and this plan every quarter.</p>';
+    $('#memoBase').textContent = 'Written for the base case, seed 42, default assumptions';
+  }
+
+  /* ---------------- render orchestration ---------------- */
+  var tabs;
+  function renderAll() { renderPacing(); renderNowcast(); renderProgram(); renderLiquidity(); renderEvergreen(); renderPerformance(); }
+  function rerender(id) {
+    if (['assets', 'target', 'bandLo', 'bandHi'].indexOf(id) !== -1) buildProgram();
+    renderAll();
+  }
+  window.PCL = S;
+  function init() {
+    S.D = generate(S.seed);
+    buildProgram();
+    /* controls */
+    var pc = $('#planControls');
+    control(pc, 'target', 'Target private allocation', function (v) { return F.pct(v, 0); });
+    control(pc, 'bandHi', 'Upper band', function (v) { return F.pct(v, 0); });
+    control(pc, 'horizon', 'Pacing horizon', function (v) { return v + ' years'; }, 'Commitments made now reach peak NAV about four years later.');
+    control(pc, 'pubRet', 'Expected public return', function (v) { return F.pct(v, 1); });
+    control(pc, 'pubVol', 'Public volatility', function (v) { return F.pct(v, 0); });
+    control(pc, 'callVol', 'Call rate uncertainty', function (v) { return F.num(v, 2); });
+    control(pc, 'distBeta', 'Distributions sensitivity to markets', function (v) { return F.num(v, 1); });
+    var tc = $('#taControls');
+    control(tc, 'rc', 'Rate of contribution', function (v) { return F.pct(v, 0); });
+    control(tc, 'ip', 'Investment period', function (v) { return v + ' years'; });
+    control(tc, 'life', 'Fund life', function (v) { return v + ' years'; });
+    control(tc, 'growth', 'NAV growth', function (v) { return F.pct(v, 1); });
+    control(tc, 'bow', 'Bow factor', function (v) { return F.num(v, 1); });
+    var lc = $('#liqControls');
+    control(lc, 'ddPub', 'Public drawdown', function (v) { return F.pct(v, 0); });
+    control(lc, 'ddPriv', 'Private markdown', function (v) { return F.pct(v, 0); });
+    control(lc, 'stressCall', 'Calls over 12 months', function (v) { return F.pct(v, 0) + ' of unfunded'; });
+    control(lc, 'distCut', 'Cut in distributions', function (v) { return F.pct(v, 0); });
+    control(lc, 'saleShare', 'LP stakes sold', function (v) { return F.pct(v, 0) + ' of NAV'; });
+    control(lc, 'saleDisc', 'Discount to NAV', function (v) { return F.pct(v, 0); });
+    var ec = $('#evControls');
+    control(ec, 'evLimit', 'Quarterly redemption limit', function (v) { return F.pct(v, 1); });
+    control(ec, 'evSleeve', 'Liquidity sleeve', function (v) { return F.pct(v, 0); });
+    control(ec, 'evFacility', 'Credit facility', function (v) { return F.pct(v, 0) + ' of NAV'; });
+    control(ec, 'evStress', 'Stressed requests', function (v) { return F.pct(v, 1) + ' a quarter'; });
+    control(ec, 'evDisc', 'Forced sale discount', function (v) { return F.pct(v, 0); });
+    document.querySelectorAll('[data-out="horizon"]').forEach(function (e) { e.textContent = A.horizon; });
+    reg = UI.assumptions('#assumptions', AROWS, function (id, v) { setA(id, v); rerender(id); });
+    tabs = UI.tabs('#tabsRoot');
+    $('#concSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; CONC = b.dataset.k; UI.$$('#concSeg button').forEach(function (x) { x.classList.toggle('active', x === b); }); renderConc(); });
+    $('#fundPick').addEventListener('change', renderPerformance);
+    UI.seed('#seed', function (v) { S.seed = v; S.D = generate(v); S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. As of 30 Sep 2026.'; applyLedger(); buildProgram(); renderAll(); });
+    /* AI layer */
+    viewer = new UI.DocViewer(document.getElementById('docViewer'), DOCS);
+    log = new UI.AgentLog('#agentLog');
+    audit = new UI.Audit('#audit');
+    $('#runSteps').innerHTML = ['Plan', 'Classify', 'Extract', 'Validate citations', 'Reconcile', 'Gate', 'Human approval', 'Audit log'].map(function (s) { return '<span>' + s + '</span>'; }).join('');
+    $('#runBtn').addEventListener('click', runPipeline);
+    $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
+    /* bring your own data */
+    UI.dropZone('#dzProgram', { title: 'Use your own portfolio of funds', template: '/assets/templates/portfolio-of-funds.csv',
+      columns: [{ name: 'fund' }, { name: 'gp' }, { name: 'strategy', desc: 'buyout, growth, venture, credit, real assets, secondaries' }, { name: 'vintage' }, { name: 'commitment' }, { name: 'paid_in' }, { name: 'distributed' }, { name: 'nav' }, { name: 'nav_date', desc: 'YYYY-MM-DD' }],
+      parse: parsePortfolio, onData: function (funds) { S.user = funds; $('#dataSrc').textContent = 'Your file, processed locally. Synthetic public proxy, seed ' + S.seed + '.'; buildProgram(); renderAll(); },
+      onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '. As of 30 Sep 2026.'; buildProgram(); renderAll(); } });
+    UI.dropZone('#dzFlows', { title: 'Use your own fund cash flows', template: '/assets/templates/fund-cashflows.csv',
+      columns: [{ name: 'fund' }, { name: 'date', desc: 'YYYY-MM-DD' }, { name: 'type', desc: 'contribution, distribution or nav' }, { name: 'amount', desc: '$m, positive' }],
+      parse: parseFlows, onData: function (funds) { S.user = funds; $('#dataSrc').textContent = 'Your file, processed locally. Synthetic public proxy, seed ' + S.seed + '.'; buildProgram(); renderAll(); },
+      onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '. As of 30 Sep 2026.'; buildProgram(); renderAll(); } });
+    UI.exportMenu('#exportMenu', { demo: 'Private Capital Lab', slug: 'private-capital-lab', report: 'Liquidity and pacing report (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
+    UI.testsBadge('#testsBadge', 'Private Capital Lab');
+    UI.testsBadge('.tests-badge-slot', 'Private Capital Lab');
+    renderMemo();
+    renderAll();
+    runPipeline();
+    /* deep links to a tab */
+    var h = location.hash.slice(1); if (['pacing', 'nowcast', 'program', 'liquidity', 'evergreen', 'performance'].indexOf(h) !== -1) tabs.show(h);
+    window.addEventListener('hashchange', function () { var k = location.hash.slice(1); if (['pacing', 'nowcast', 'program', 'liquidity', 'evergreen', 'performance'].indexOf(k) !== -1) tabs.show(k); });
+  }
+
+  /* ---------------- dropped files: validation and mapping (local only) ---------------- */
+  function toQ(d) { return (d.getUTCFullYear() - START_YEAR) * 4 + Math.floor(d.getUTCMonth() / 3); }
+  function parsePortfolio(rows) {
+    var errs = [], funds = [];
+    rows.forEach(function (r, i) {
+      var n = i + 2, v = +r.vintage, c = UI.parse.num(r.commitment), pi = UI.parse.num(r.paid_in), di = UI.parse.num(r.distributed), nv = UI.parse.num(r.nav), d = UI.parse.date(r.nav_date);
+      var strat = String(r.strategy || '').toLowerCase().replace('real assets', 'real').replace('private credit', 'credit');
+      if (!STRAT[strat]) errs.push('Row ' + n + ': strategy "' + r.strategy + '" is not one of buyout, growth, venture, credit, real assets, secondaries.');
+      if (!(v >= 1990 && v <= 2030)) errs.push('Row ' + n + ': vintage "' + r.vintage + '" is not a year.');
+      [['commitment', c], ['paid_in', pi], ['distributed', di], ['nav', nv]].forEach(function (x) { if (!isFinite(x[1]) || x[1] < 0) errs.push('Row ' + n + ': ' + x[0] + ' must be a positive number in $m.'); });
+      if (!d) errs.push('Row ' + n + ': nav_date "' + r.nav_date + '" is not a date (YYYY-MM-DD).');
+      if (pi > c * 1.2) errs.push('Row ' + n + ': paid_in is more than 120% of commitment; check units.');
+      if (errs.length) return;
+      var navQ = Math.min(TODAY_Q, toQ(d)), q0 = Math.max(0, (v - START_YEAR) * 4), mid = Math.round((q0 + navQ) / 2);
+      funds.push({ name: r.fund, gp: r.gp || r.fund, strategy: strat, vintage: v, commitment: c, lag: TODAY_Q - navQ, q0: q0,
+        flows: [{ q: q0, amount: -pi * 0.5 }, { q: mid, amount: -pi * 0.5 }].concat(di > 0 ? [{ q: Math.max(mid, navQ - 1), amount: di }] : []),
+        navTrue: [{ q: navQ, nav: nv }], navRep: [{ q: q0, nav: 0 }, { q: navQ, nav: nv }], sector: SECT_TILT[strat], geo: GEO_TILT[strat], fromStatement: false });
+    });
+    return { errors: errs, data: funds, summary: funds.length + ' funds, ' + F.money(PM.sum(funds.map(function (f) { return f.commitment; })), 0) + ' committed' };
+  }
+  function parseFlows(rows) {
+    var errs = [], by = {};
+    rows.forEach(function (r, i) {
+      var n = i + 2, d = UI.parse.date(r.date), a = UI.parse.num(r.amount), t = String(r.type || '').toLowerCase().trim();
+      if (!d) errs.push('Row ' + n + ': date "' + r.date + '" is not a date (YYYY-MM-DD).');
+      if (!isFinite(a)) errs.push('Row ' + n + ': amount "' + r.amount + '" is not a number.');
+      else if (a < 0) errs.push('Row ' + n + ': amounts are positive; the type column sets the sign.');
+      if (['contribution', 'distribution', 'nav'].indexOf(t) === -1) errs.push('Row ' + n + ': type "' + r.type + '" must be contribution, distribution or nav.');
+      if (d && toQ(d) > TODAY_Q) errs.push('Row ' + n + ': date is after the demo as-of date (2026-09-30).');
+      if (errs.length) return;
+      var f = by[r.fund] = by[r.fund] || { name: r.fund, flows: [], navs: [] };
+      if (t === 'nav') f.navs.push({ q: Math.max(0, toQ(d)), nav: a });
+      else f.flows.push({ q: Math.max(0, toQ(d)), amount: t === 'contribution' ? -a : a });
+    });
+    var funds = Object.keys(by).map(function (k) {
+      var f = by[k]; f.flows.sort(function (a, b) { return a.q - b.q; }); f.navs.sort(function (a, b) { return a.q - b.q; });
+      if (!f.navs.length) errs.push(k + ': needs at least one nav row.');
+      if (!f.flows.some(function (x) { return x.amount < 0; })) errs.push(k + ': needs at least one contribution.');
+      var nq = f.navs.length ? f.navs[f.navs.length - 1].q : TODAY_Q, q0 = f.flows.length ? f.flows[0].q : 0;
+      var paid = -PM.sum(f.flows.filter(function (x) { return x.amount < 0; }).map(function (x) { return x.amount; }));
+      return { name: k, gp: k, strategy: 'buyout', vintage: START_YEAR + Math.floor(q0 / 4), commitment: paid, lag: TODAY_Q - nq, q0: q0, flows: f.flows, navTrue: f.navs, navRep: [{ q: q0, nav: 0 }].concat(f.navs), sector: SECT_TILT.buyout, geo: GEO_TILT.buyout, fromStatement: false };
+    });
+    return { errors: errs, data: funds, summary: funds.length + ' fund(s), ' + rows.length + ' rows' };
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

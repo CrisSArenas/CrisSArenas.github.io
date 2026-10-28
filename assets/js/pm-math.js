@@ -988,75 +988,102 @@
     return { nav: f.nav, calls: f.calls, dists: f.dists };
   };
 
-  /** pacingPlan(o): annual commitments that reach and hold a target private allocation.
-      o = {assets0, privateNav0, existing: [{vintage, commit}], model, targetPct, years, publicReturn,
-           horizon (years ahead the plan aims at, default 4), maxStep (cap on the change in commitments)}
-      Each year t the plan picks a level commitment c_t (assumed repeated until t + horizon) so that
-      projected private NAV at t + horizon equals targetPct x projected total assets then.
-      Total assets grow at publicReturn on the public part and at the model growth net of flows on the
-      private part. Returns per-year arrays: commit, calls, dists, nav, assets, pct. */
-  P.pacingPlan = function (o) {
-    var m = o.model, cur = P.navCurve(m), L = m.life, H = o.horizon || 4, Y = o.years;
-    var vint = (o.existing || []).map(function (v) { return { age0: v.age, c: v.commit }; });
-    var plan = [], commits = [];
-    var navAt = function (vs, k) { var s = 0; vs.forEach(function (v) { var a = v.age0 + k; if (a >= 1 && a <= L) s += v.c * cur.nav[a]; }); return s; };
-    var flowAt = function (vs, k) { var c = 0, d = 0; vs.forEach(function (v) { var a = v.age0 + k; if (a >= 1 && a <= L) { c += v.c * cur.calls[a]; d += v.c * cur.dists[a]; } }); return { calls: c, dists: d }; };
-    var assets = o.assets0, pub = o.assets0 - o.privateNav0;
-    for (var t = 1; t <= Y; t++) {
-      // projected total assets at t + H: public compounding plus private NAV is circular, so use
-      // the target identity: assets_{t+H} = pub growth + private NAV, approximated with assets growth at publicReturn
-      var aH = assets * Math.pow(1 + o.publicReturn, H);
-      var base = navAt(vint, t - 1 + H);
-      var perC = 0; for (var k = 0; k < H; k++) { var age = H - k; if (age >= 1 && age <= L) perC += cur.nav[age]; }
-      var c = Math.max(0, (o.targetPct * aH - base) / (perC || 1));
-      if (o.maxStep && commits.length) c = Math.min(commits[commits.length - 1] * (1 + o.maxStep), Math.max(commits[commits.length - 1] * (1 - o.maxStep), c));
-      commits.push(c);
-      vint.push({ age0: -(t - 1), c: c });
-      var f = flowAt(vint, t), nav = navAt(vint, t);
-      pub = pub * (1 + o.publicReturn) - f.calls + f.dists;
-      assets = pub + nav;
-      plan.push({ year: t, commit: c, calls: f.calls, dists: f.dists, net: f.dists - f.calls, nav: nav, assets: assets, pct: nav / assets });
+  /** RD(age): Takahashi-Alexander distribution rate at a fund age (years) */
+  function rd(m, age) { return age >= m.life ? 1 : Math.max(m.yieldFloor || 0, Math.pow(Math.max(0, age) / m.life, m.bow)); }
+  P.distRate = rd;
+
+  /** project(o, commits): deterministic annual projection of a program under the
+      Takahashi-Alexander rules, applied to every fund from its current state.
+      o = {pub0, funds: [{unfunded, nav, age}], model, pubReturn, spend, years}
+      commits[y] is committed at the start of year y + 1 as a new fund of age 0.
+      Each year, for each fund: age += 1; call = rc x unfunded while age <= ip;
+      NAV = (NAV + call)(1 + growth); dist = RD(age) x NAV.
+      Public assets: pub = pub (1 + pubReturn) - calls + dists - spend x (pub + NAV) at the start of the year.
+      Returns per-year rows {year, commit, calls, dists, net, nav, unfunded, pub, assets, pct}. */
+  P.project = function (o, commits) {
+    var m = o.model, funds = o.funds.map(function (f) { return { unf: f.unfunded, nav: f.nav, age: f.age }; });
+    var pub = o.pub0, rows = [];
+    for (var y = 1; y <= o.years; y++) {
+      var c = commits[y - 1] || 0;
+      if (c > 0) funds.push({ unf: c, nav: 0, age: 0 });
+      var navStart = PM.sum(funds.map(function (f) { return f.nav; })), spend = o.spend * (pub + navStart);
+      var calls = 0, dists = 0, nav = 0, unf = 0;
+      funds.forEach(function (f) {
+        f.age += 1;
+        var call = f.age <= m.ip ? m.rc * f.unf : 0; f.unf -= call; calls += call;
+        f.nav = (f.nav + call) * (1 + m.growth);
+        var d = rd(m, f.age) * f.nav; f.nav -= d; dists += d;
+        nav += f.nav; unf += f.unf;
+      });
+      pub = pub * (1 + o.pubReturn) - calls + dists - spend;
+      rows.push({ year: y, commit: c, calls: calls, dists: dists, net: dists - calls, nav: nav, unfunded: unf, pub: pub, assets: pub + nav, pct: nav / (pub + nav) });
     }
-    return plan;
+    return rows;
   };
 
-  /** pacingMC(o): quarterly Monte Carlo of a program with stochastic calls, distributions, private
-      NAV growth and public market returns.
-      o = {assets0, pub0, funds: [{commit, unfunded, nav}] (existing), plan: [annual commitments],
-           quarters, seed, paths, pubMu, pubVol, privAlpha, privBeta, privVol, callRate (annual, of
-           unfunded), callVol, distRate (annual, of NAV), distBeta (sensitivity to public return),
-           ip (years a new commitment can be called), band: [lo, hi], liquidBufferPct, spendPct}
-      Returns {pct: [paths][q], net: [paths][q], breachProb, shortfallProb, quantiles} */
+  /** pacingPlan(o): annual commitments that reach and hold a target private allocation.
+      o = project() inputs plus {targetPct, horizon (years)}.
+      Year t's commitment c_t is found by bisection so that, committing c_t in every year from t to
+      t + horizon - 1 on top of the commitments already chosen, the projected private share at the end
+      of year t + horizon - 1 equals the target (zero if the target is met without committing).
+      Returns the projection under the chosen commitments. */
+  P.pacingPlan = function (o) {
+    var Y = o.years, H = o.horizon || 4, chosen = [];
+    for (var t = 0; t < Y; t++) {
+      var pctWith = function (c) {
+        var cs = chosen.slice(); for (var k = t; k < t + H; k++) cs[k] = c;
+        var rows = P.project(Object.assign({}, o, { years: t + H }), cs);
+        return rows[t + H - 1].pct;
+      };
+      var lo = 0, hi = (o.pub0 + PM.sum(o.funds.map(function (f) { return f.nav; }))) * 0.5;
+      if (pctWith(0) >= o.targetPct) { chosen.push(0); continue; }
+      for (var i = 0; i < 50; i++) { var mid = (lo + hi) / 2; if (pctWith(mid) < o.targetPct) lo = mid; else hi = mid; }
+      chosen.push((lo + hi) / 2);
+    }
+    return P.project(o, chosen);
+  };
+
+  /** pacingMC(o): quarterly Monte Carlo of the same program with shocks.
+      o = project() inputs plus {plan: [annual commitments], quarters, seed, paths, pubMu, pubVol,
+          privBeta, privVol, callVol, distBeta, band: [lo, hi], liquidPctOfPublic, coverageMin}
+      Quarterly rates are the annual model rates converted exactly ((1 + g)^(1/4) - 1 and so on), so
+      with every volatility at zero the median path matches project() up to quarterly compounding.
+      Shocks are lognormal so that the median compound growth of public assets is pubMu and of private NAV
+      is the model growth (the deterministic plan's rates): log(1 + r_pub) = log(1 + pubMu)/4 + pubVol/2 z1,
+      log(1 + r_priv) = log(1 + growth)/4 + privBeta pubVol/2 z1 + privVol/2 z2; call rate x lognormal(callVol);
+      distribution rate x (1 + distBeta x 4 x the public shock).
+      Returns quantile bands of private share and net cash flow, and the share of paths that breach the
+      upper band, or where liquid public assets fall below coverageMin x unfunded, in any quarter. */
   P.pacingMC = function (o) {
-    var rng = PM.mulberry32(o.seed), z = PM.normalGen(rng), Q = o.quarters, out = { pct: [], net: [], liquid: [] };
-    var breach = 0, short = 0;
+    var m = o.model, rng = PM.mulberry32(o.seed), z = PM.normalGen(rng), Q = o.quarters, out = { pct: [], net: [] };
+    var gq = Math.pow(1 + m.growth, 0.25) - 1, rcq = 1 - Math.pow(1 - m.rc, 0.25), breach = 0, short = 0;
     for (var p = 0; p < o.paths; p++) {
-      var pub = o.pub0, unfunded = 0, nav = 0, pct = [], net = [], liq = [], br = false, sf = false;
-      var pool = o.funds.map(function (f) { return { unf: f.unfunded, nav: f.nav, age: f.age || 3 }; });
+      var pub = o.pub0, pct = [], net = [], br = false, sf = false;
+      var pool = o.funds.map(function (f) { return { unf: f.unfunded, nav: f.nav, age: f.age }; });
       for (var q = 1; q <= Q; q++) {
-        if ((q - 1) % 4 === 0) { var yr = (q - 1) / 4; if (o.plan[yr]) pool.push({ unf: o.plan[yr], nav: 0, age: 0 }); }
+        if ((q - 1) % 4 === 0) { var yr = (q - 1) / 4; if (o.plan[yr] > 0) pool.push({ unf: o.plan[yr], nav: 0, age: 0 }); }
         var zp = z(), zi = z(), zc = z();
-        var rPub = o.pubMu / 4 + o.pubVol / 2 * zp;
-        var rPriv = o.privAlpha / 4 + o.privBeta * rPub + o.privVol / 2 * zi;
-        var calls = 0, dists = 0; nav = 0; unfunded = 0;
+        var lp = Math.log(1 + o.pubMu) / 4, rPub = Math.exp(lp + o.pubVol / 2 * zp) - 1, ex = Math.exp(o.pubVol / 2 * zp) - 1;
+        var rPriv = Math.exp(Math.log(1 + gq) + o.privBeta * o.pubVol / 2 * zp + o.privVol / 2 * zi) - 1;
+        var shock = Math.exp(o.callVol * zc - 0.5 * o.callVol * o.callVol);
+        var navStart = 0; pool.forEach(function (f) { navStart += f.nav; });
+        var spend = o.spend / 4 * (pub + navStart), calls = 0, dists = 0, nav = 0, unfunded = 0;
         pool.forEach(function (f) {
           f.age += 0.25;
-          var cr = f.age <= o.ip + 0.01 ? Math.max(0, Math.min(1, (o.callRate / 4) * Math.exp(o.callVol * zc - 0.5 * o.callVol * o.callVol))) : 0;
-          var c = f.unf * cr; f.unf -= c; calls += c;
-          f.nav = (f.nav + c) * (1 + rPriv);
-          var dr = Math.max(0, Math.min(0.5, (o.distRate / 4) * (1 + o.distBeta * rPub * 4) * Math.min(1, f.age / 4)));
-          var d = f.nav * dr; f.nav -= d; dists += d;
+          var c = f.age <= m.ip + 1e-9 ? f.unf * Math.min(1, rcq * shock) : 0; f.unf -= c; calls += c;
+          f.nav = Math.max(0, (f.nav + c) * (1 + rPriv));
+          var dq = 1 - Math.pow(1 - Math.min(0.999999, rd(m, Math.ceil(f.age - 1e-9))), 0.25);   // the annual rate of the fund year being spanned
+          dq = Math.max(0, Math.min(1, dq * (1 + o.distBeta * ex * 4)));
+          var d = f.nav * dq; f.nav -= d; dists += d;
           nav += f.nav; unfunded += f.unf;
         });
-        var spend = (pub + nav) * o.spendPct / 4;
         pub = pub * (1 + rPub) - calls + dists - spend;
-        var pctv = nav / (pub + nav);
-        pct.push(pctv); net.push(dists - calls);
-        liq.push(pub * o.liquidPctOfPublic / Math.max(1e-9, unfunded));
-        if (pctv > o.band[1]) br = true;
+        var pv = nav / (pub + nav);
+        pct.push(pv); net.push(dists - calls);
+        if (pv > o.band[1]) br = true;
         if (pub * o.liquidPctOfPublic < unfunded * o.coverageMin) sf = true;
       }
-      out.pct.push(pct); out.net.push(net); out.liquid.push(liq);
+      out.pct.push(pct); out.net.push(net);
       if (br) breach++; if (sf) short++;
     }
     var qs = function (arr) {
@@ -1072,34 +1099,40 @@
     return out;
   };
 
-  /** nowcastFit(navRet, proxyRet, maxLag): regress reported quarterly NAV returns on current and
-      lagged public proxy returns, picking the lag (0..maxLag) with the highest R squared.
-      Model: r_nav_t = a + beta * r_proxy_{t-lag} + e. Returns {alpha, beta, lag, r2, sigma} */
-  P.nowcastFit = function (navRet, proxyRet, maxLag) {
-    var best = null;
-    for (var lag = 0; lag <= (maxLag || 2); lag++) {
-      var y = [], X = [];
-      for (var t = lag; t < navRet.length; t++) { y.push(navRet[t]); X.push([proxyRet[t - lag]]); }
-      if (y.length < 4) continue;
-      var f = PM.ols(y, X), s = PM.std(f.resid);
-      if (!best || f.r2 > best.r2) best = { alpha: f.alpha, beta: f.beta[0], lag: lag, r2: f.r2, sigma: s, n: y.length };
+  /** nowcastFit(navRet, proxyRet, lags): distributed-lag regression of reported quarterly NAV
+      returns on the public proxy, r_nav_t = a + b0 r_t + b1 r_t-1 + ... + bL r_t-L + e.
+      Smoothed marks spread a market move over several quarters, so the sum of the b's is the
+      fund's economic beta. Returns {alpha, betas[], beta (sum), r2, sigma, n}. */
+  P.nowcastFit = function (navRet, proxyRet, lags) {
+    var L = lags == null ? 2 : lags, y = [], X = [];
+    for (var t = L; t < navRet.length; t++) {
+      var row = []; for (var j = 0; j <= L; j++) row.push(proxyRet[t - j]);
+      y.push(navRet[t]); X.push(row);
     }
-    return best;
+    if (y.length < L + 4) return null;
+    var f = PM.ols(y, X);
+    return { alpha: f.alpha, betas: f.beta, beta: PM.sum(f.beta), r2: f.r2, sigma: PM.std(f.resid), n: y.length };
   };
   /** nowcast(o): roll the last reported NAV forward to today.
-      o = {nav, flows: [{q, amount}] (calls positive into the fund, distributions negative, in each
-      quarter since the NAV date), proxy: [quarterly proxy returns since the NAV date], beta, alpha, sigma}
-      NAV_k = (NAV_{k-1} + calls_k - dists_k) x (1 + alpha + beta r_proxy_k), band +/- 1.645 sigma sqrt(k).
-      With zero proxy returns, zero alpha and no flows, the nowcast equals the reported NAV. */
+      o = {nav, flows: [{q, amount}] (contributions positive, distributions negative, q = quarters after
+      the NAV date), proxy: [proxy returns for each quarter after the NAV date], betas: [b0..bL],
+      proxyBefore: [r at the NAV quarter, r one quarter earlier, ...], alpha, sigma}
+      Two parts: (1) catch-up, the lagged response to proxy returns already in the past at the NAV date
+      that the reported mark has not yet absorbed: sum_j>=1 sum_i>=j b_i r_(navQ-j+1);
+      (2) each stale quarter k: NAV_k = (NAV_k-1 + flows_k)(1 + alpha + B r_k), B = sum of betas.
+      Band: +/- 1.645 sigma sqrt(quarters stale + 1).  If betas is omitted, o.beta is used for (2) only.
+      With zero proxy returns, zero alpha and no flows the nowcast equals the reported NAV. */
   P.nowcast = function (o) {
-    var nav = o.nav, k = o.proxy.length, path = [nav];
-    for (var i = 0; i < k; i++) {
-      var fl = 0; (o.flows || []).forEach(function (f) { if (f.q === i + 1) fl += f.amount; });
-      nav = (nav + fl) * (1 + (o.alpha || 0) + o.beta * o.proxy[i]);
+    var betas = o.betas || [o.beta], B = PM.sum(betas), before = o.proxyBefore || [], catchUp = 0;
+    for (var j = 1; j < betas.length; j++) { var w = 0; for (var i = j; i < betas.length; i++) w += betas[i]; catchUp += w * (before[j - 1] || 0); }
+    var nav = o.nav * (1 + catchUp), k = o.proxy.length, path = [o.nav, nav];
+    for (var q = 0; q < k; q++) {
+      var fl = 0; (o.flows || []).forEach(function (f) { if (f.q === q + 1) fl += f.amount; });
+      nav = (nav + fl) * (1 + (o.alpha || 0) + B * o.proxy[q]);
       path.push(nav);
     }
-    var band = 1.645 * (o.sigma || 0) * Math.sqrt(Math.max(1, k));
-    return { nav: nav, lo: nav * (1 - band), hi: nav * (1 + band), path: path, quarters: k };
+    var band = 1.645 * (o.sigma || 0) * Math.sqrt(k + 1);
+    return { nav: nav, lo: nav * (1 - band), hi: nav * (1 + band), path: path, quarters: k, catchUp: catchUp, beta: B };
   };
 
   /** rollForward(s): capital account identity. opening + contributions - distributions + gains
