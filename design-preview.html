@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Design preview</title>
+    <meta name="description" content="Every shared component of the site design system, rendered in palette A (light), C (dark) and B (light alternative).">
+    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/assets/css/demo-shell.css">
+    <script src="/assets/js/site.js"></script>
+    <style>
+      .pv-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+      @media (max-width: 1200px) { .pv-cols { grid-template-columns: minmax(0, 1fr); } }
+      .pv { background: var(--bg); color: var(--text); padding: 24px 18px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-content: start; min-width: 0; }
+      .pv > h2 { font-size: 1.2rem; }
+      .pv h4 { font-family: var(--sans); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+      .pv .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .pv .stack-card { max-width: 300px; }
+      .pv .std-header { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pv .std-header > div { border-right: 1px solid var(--border) !important; border-bottom: 1px solid var(--border) !important; }
+      .pv .memo { padding: 20px; }
+      .swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+      .sw { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; font: 500 .66rem var(--mono); }
+      .sw i { display: block; height: 28px; }
+      .sw span { display: block; padding: 3px 5px; background: var(--surface); }
+    </style>
+</head>
+<body>
+<header class="container" style="padding:28px var(--gutter) 10px">
+  <p class="eyebrow">Design system</p>
+  <h1 style="font-size:2rem">Design preview</h1>
+  <p class="lead">Every shared component in palette A (Ink and brass, light), palette C (Midnight and gold, dark) and palette B (Evergreen and copper, light alternative). The live site uses A in light mode and C in dark mode, following the system setting with a manual toggle. Contrast results: <code>node tools/contrast.mjs</code>.</p>
+</header>
+<div class="pv-cols">
+  <section class="pv pal-a dv-scope" data-name="A · Ink and brass (light)"></section>
+  <section class="pv pal-c dv-scope" data-name="C · Midnight and gold (dark)"></section>
+  <section class="pv pal-b dv-scope" data-name="B · Evergreen and copper (light)"></section>
+</div>
+<script src="/assets/js/pm-ui.js"></script>
+<script>
+(function () {
+  var TOK = ['bg','surface','surface-2','border','text','muted','primary','accent','accent-text','pm','pf','ai','positive','negative','warning','s1','s2','s3','s4','s5','s6'];
+  var docs = { lpa: { title: 'Fund VII LPA excerpt (fictional)', pages: [[
+    '# Section 8.1 Management fee',
+    'During the Investment Period the Partnership shall pay an annual',
+    'management fee equal to 1.75% of Commitments.',
+    'After the Investment Period the fee shall equal 1.25% of Invested Capital.',
+    '| Fee offset: 100% of transaction and monitoring fees'
+  ]] } };
+  document.querySelectorAll('.pv').forEach(function (col, ci) {
+    var id = 'pv' + ci;
+    col.innerHTML =
+      '<h2>' + col.dataset.name + '</h2>' +
+      '<div><h4>Tokens</h4><div class="swatches">' + TOK.map(function (t) { return '<div class="sw"><i style="background:var(--' + t + ')"></i><span>' + t + '</span></div>'; }).join('') + '</div></div>' +
+      '<div><h4>Type</h4><p class="eyebrow">Eyebrow small caps</p><h2 style="font-size:1.7rem">Section title in Source Serif</h2><p>Body copy in Inter at 16.5px with a 1.6 line height. <a href="#">A link</a>. Numbers use <span class="num">1,234.56</span> tabular figures.</p><p class="mono" style="font-size:.85rem">IRR = r such that Σ CF_t / (1 + r)^t = 0</p></div>' +
+      '<div><h4>Buttons and tags</h4><div class="row"><button class="btn btn-primary">Primary</button><button class="btn btn-secondary">Secondary</button><button class="btn btn-ghost">Ghost</button></div>' +
+      '<div class="row" style="margin-top:8px"><span class="tag tag-pm">Private markets</span><span class="tag tag-pf">Portfolio</span><span class="tag tag-pub">Public markets</span><span class="tag tag-ai">AI</span><span class="call-badge go">Commit</span><span class="call-badge stop">Pass</span><span class="call-badge">Bid 88%</span></div>' +
+      '<p style="margin-top:8px">Placeholder style: <span class="ph">[[CRISTIAN: example]]</span></p></div>' +
+      '<div><h4>Stack card</h4><a class="stack-card" href="#"><div class="sc-top"><span class="sc-num">02</span><span class="tag tag-pm">Private markets</span></div><h3>Private capital program</h3><div class="sc-demo">Private Capital Lab</div>' +
+      '<dl><div class="l-hard"><dt>Hard problem</dt><dd>Pacing a program on stale NAVs and uncertain calls.</dd></div><div class="l-quant"><dt>Quant</dt><dd>Stochastic pacing, NAV nowcasting.</dd></div><div class="l-agent"><dt>Agent</dt><dd>Reads GP statements into a cited ledger.</dd></div><div class="l-call"><dt>Your call</dt><dd>How much to commit this year.</dd></div></dl><span class="sc-go">Open the lab</span></a></div>' +
+      '<div><h4>Investment work card</h4><a class="card work-card" href="#"><span class="wc-type">Fund diligence memo</span><p class="wc-sit">A fictional buyout fund returns to market with a track record that leans on one exit.</p><div class="wc-foot"><span class="call-badge go">Commit</span><span class="tag tag-pm">Private markets</span></div></a></div>' +
+      '<div><h4>KPI tiles with Explain</h4><div id="' + id + '-k"></div></div>' +
+      '<div><h4>Standard header</h4><dl class="std-header"><div><dt>Decision it supports</dt><dd>How much to commit this year.</dd></div><div><dt>Hard problem</dt><dd>Stale NAVs, uncertain calls.</dd></div><div><dt>What the system takes off the team</dt><dd>Reading statements, reconciling, projecting.</dd></div><div class="h-call"><dt>What stays with the team</dt><dd>The commitment budget.</dd></div><div><dt>Method</dt><dd>Takahashi-Alexander, Monte Carlo.</dd></div><div><dt>Data</dt><dd>Synthetic data, fixed seed.</dd></div><div class="h-ai"><dt>Where AI is used</dt><dd>Statement extraction and reconciliation.</dd></div><div><dt>Limitations</dt><dd>Model parameters are assumptions.</dd></div></dl></div>' +
+      '<div><h4>Notice and data drop zone</h4><div class="notice">Synthetic data, fixed seed 42. All funds are fictional.</div><div id="' + id + '-dz" style="margin-top:8px"></div></div>' +
+      '<div><h4>Agent log</h4><p class="sim-label">Simulation of the pipeline, deterministic over synthetic documents.</p><div id="' + id + '-log"></div></div>' +
+      '<div><h4>Approval card</h4><div id="' + id + '-ap"></div></div>' +
+      '<div><h4>Document viewer</h4><div id="' + id + '-dv"></div></div>' +
+      '<div><h4>Assumptions register</h4><div id="' + id + '-as"></div></div>' +
+      '<div><h4>Work counters</h4><div id="' + id + '-ct"></div></div>' +
+      '<div><h4>Table</h4><div id="' + id + '-tb"></div></div>' +
+      '<div><h4>Line chart with band</h4><div id="' + id + '-ch"></div></div>' +
+      '<div><h4>Bar chart</h4><div id="' + id + '-bc"></div></div>' +
+      '<div class="row"><h4 style="margin:0">Export menu</h4><div id="' + id + '-ex"></div><span id="' + id + '-tb2"></span></div>' +
+      '<div><h4>Audit log</h4><div id="' + id + '-au"></div></div>' +
+      '<div><h4>Decision memo</h4><article class="memo"><div class="memo-head"><div><div class="memo-kind">Fund diligence memo</div><h2>Fund VII (fictional)</h2><div class="memo-meta">Written by Cristian Arenas · As of 15 Jan 2026 · Written for the base case, seed 42</div></div><span class="call-badge go">Commit</span></div>' +
+      '<h3>The call</h3><p class="the-call">Commit $25m, below the $40m target size.</p><h3>Why</h3><ol><li>Top deal share of value <a class="cite-num" href="#">38%</a>.</li><li>Ex-best-deal net TVPI <a class="cite-num" href="#">1.6x</a>.</li></ol><div class="memo-foot"><span>Fictional fund. Not investment advice.</span><span>Print-ready</span></div></article></div>';
+    UI.kpis('#' + id + '-k', [
+      { id: id + 'a', label: 'Net IRR', value: '14.2%', sub: 'since inception', explain: function () { return { title: 'Net IRR', formula: 'NPV(r) = Σ CF_t (1+r)^-t = 0', inputs: [{ name: 'Cash flows', value: '12 quarters', src: 'document', note: 'capital account statements', cite: { doc: 'lpa', page: 1, line: 3 } }, { name: 'Solver', value: 'Newton, bisection fallback', src: 'computed' }], result: '14.2%' }; } },
+      { id: id + 'b', label: 'Liquidity shortfall', value: '6.1%', sub: 'probability, 3 years', tone: 'bad' },
+      { id: id + 'c', label: 'TVPI', value: '1.62x', tone: 'good' }]);
+    UI.dropZone('#' + id + '-dz', { title: 'Use your own cash flows', columns: [{ name: 'date' }, { name: 'amount', desc: 'negative = call' }], parse: function (rows) { return { data: rows, summary: rows.length + ' rows' }; }, onData: function () {} });
+    var log = new UI.AgentLog('#' + id + '-log');
+    log.add('planner', 'ok', 'Plan: classify 4 documents, extract 12 fields, validate, reconcile');
+    log.add('statement-extractor', 'ok', 'Extracted closing NAV 41.8 with citation', { doc: 'cas-q3', page: 1, line: 14 });
+    log.add('citation-validator', 'blocked', 'Blocked uncited claim: "fees in line with peers"');
+    log.add('reconciliation', 'approval', 'Break of 0.6 on Q3 roll-forward, sent for review');
+    var audit = new UI.Audit('#' + id + '-au');
+    audit.push('planner', 'run started', 'seed 42');
+    UI.approvals('#' + id + '-ap', [{ id: 'F-1', title: 'Management fee above LPA rate', severity: 'high', evidence: 'Reported 0.47m vs recomputed 0.44m for Q2 (break 0.03m).', cites: [{ doc: 'lpa', page: 1, line: 3, short: 'LPA' }] }], { audit: audit });
+    new UI.DocViewer(document.getElementById(id + '-dv'), docs);
+    UI.assumptions('#' + id + '-as', [{ id: 'rc', label: 'Rate of contribution', value: 0.25, unit: '% of unfunded / yr', scale: 100, source: 'Takahashi and Alexander (2002) range' }, { id: 'g', label: 'NAV growth', value: 0.11, unit: '% / yr', scale: 100, source: 'Assumption' }]);
+    UI.counters('#' + id + '-ct', { docs: 4, fields: 12, checks: 31, flags: 2, review: 2 });
+    UI.table('#' + id + '-tb', { id: id + 't', name: 'Funds', columns: [{ key: 'f', label: 'Fund' }, { key: 'c', label: 'Commitment', num: 1, fmt: function (v) { return UI.fmt.money(v); } }, { key: 't', label: 'TVPI', num: 1, fmt: function (v) { return UI.fmt.mult(v); } }],
+      rows: [{ f: 'Fund A', c: 25, t: 1.41 }, { f: 'Fund B', c: 15, t: 1.12 }], foot: { f: 'Total', c: 40, t: 1.30 }, footExplain: { t: function () { return { title: 'Total TVPI', formula: '(Σ distributions + Σ NAV) / Σ paid-in' }; } } });
+    var xs = [], a = [], lo = [], hi = [];
+    for (var i = 0; i < 13; i++) { xs.push(2026 + i); a.push(10 + 6 * Math.sin(i / 3) + i * 0.4); lo.push(a[i] - 2 - i * .2); hi.push(a[i] + 2 + i * .2); }
+    UI.chart.line('#' + id + '-ch', { xs: xs, series: [{ name: 'Median', ys: a }, { name: 'Target', ys: xs.map(function () { return 15; }), color: 's2', dash: '5 4' }], bands: [{ name: '10th to 90th', lo: lo, hi: hi, color: 's1' }], yFmt: function (v) { return v.toFixed(0) + '%'; }, height: 220 });
+    UI.chart.bar('#' + id + '-bc', { categories: ['Buyout', 'Growth', 'Venture', 'Credit'], series: [{ name: 'Called', values: [30, 18, 9, 14] }, { name: 'Unfunded', values: [12, 8, 6, 5], color: 's2' }], height: 200 });
+    UI.exportMenu('#' + id + '-ex', { demo: 'Design preview', slug: 'preview', source: function () { return 'synthetic, seed 42'; }, audit: function () { return audit.toJSON(); } });
+  });
+})();
+</script>
+</body>
+</html>
