@@ -46,6 +46,29 @@
       rev.forEach(function (el) { io.observe(el); });
       window.addEventListener('beforeprint', function () { rev.forEach(function (el) { el.classList.add('in'); }); });
     }
+    // pointer light: cards, tiles, panels and buttons track the pointer for their spotlight
+    var SPOT = '.card, .work-card, .memo-card, .cap-card, .results-row .r, .kpi, .panel, .note-card, .btn';
+    if (window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+      var raf = 0, last = null;
+      document.addEventListener('pointermove', function (e) {
+        last = e; if (raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = 0;
+          document.body.style.setProperty('--cx', last.clientX + 'px');
+          document.body.style.setProperty('--cy', last.clientY + 'px');
+          var el = last.target && last.target.closest && last.target.closest(SPOT);
+          while (el) {
+            var r = el.getBoundingClientRect();
+            el.style.setProperty('--mx', (last.clientX - r.left) + 'px');
+            el.style.setProperty('--my', (last.clientY - r.top) + 'px');
+            el = el.parentElement && el.parentElement.closest(SPOT);
+          }
+        });
+      }, { passive: true });
+      document.documentElement.addEventListener('pointerenter', function () { document.body.classList.add('pointer-in'); });
+      document.documentElement.addEventListener('pointerleave', function () { document.body.classList.remove('pointer-in'); });
+      document.body.classList.add('pointer-in');
+    }
     // mark the current page in the nav
     var path = location.pathname.replace(/index\.html$/, '');
     document.querySelectorAll('.nav-links a').forEach(function (a) {

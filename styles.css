@@ -478,3 +478,146 @@ table.data td.neg { color: var(--negative); }
   .ai-two { margin-top: 48px; }
   .model-pick { padding: 22px; }
 }
+
+/* ===== Glass and interaction layer ===== */
+:root {
+  --glass-card: rgba(255, 255, 255, .64);
+  --glass-edge: rgba(14, 59, 46, .10);
+  --glass-hi: rgba(255, 255, 255, .9);
+  --spot: rgba(14, 59, 46, .07);
+  --spot-edge: rgba(14, 59, 46, .55);
+  --amb-1: rgba(14, 59, 46, .12);
+  --amb-2: rgba(19, 41, 75, .10);
+  --cursor-glow: rgba(14, 59, 46, .05);
+  --glow: 0 10px 30px rgba(14, 59, 46, .16);
+}
+:root[data-theme="dark"] {
+  --glass-card: rgba(18, 38, 31, .58);
+  --glass-edge: rgba(255, 255, 255, .08);
+  --glass-hi: rgba(255, 255, 255, .06);
+  --spot: rgba(111, 181, 154, .10);
+  --spot-edge: rgba(111, 181, 154, .7);
+  --amb-1: rgba(111, 181, 154, .13);
+  --amb-2: rgba(143, 169, 209, .10);
+  --cursor-glow: rgba(111, 181, 154, .07);
+  --glow: 0 10px 30px rgba(0, 0, 0, .45);
+}
+
+/* ambient color behind the glass, plus a soft light that follows the pointer */
+body::before {
+  content: ''; position: fixed; inset: -10vmax; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(42vmax 36vmax at 12% 8%, var(--amb-1), transparent 70%),
+    radial-gradient(38vmax 34vmax at 92% 30%, var(--amb-2), transparent 70%),
+    radial-gradient(44vmax 38vmax at 30% 92%, var(--amb-2), transparent 70%),
+    radial-gradient(40vmax 36vmax at 85% 88%, var(--amb-1), transparent 70%);
+}
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .4s;
+  background: radial-gradient(520px circle at var(--cx, 50%) var(--cy, 50%), var(--cursor-glow), transparent 70%);
+}
+body.pointer-in::after { opacity: 1; }
+.section { background: transparent; }
+.section.alt { background: color-mix(in srgb, var(--bg-alt) 62%, transparent); }
+
+/* glass surfaces */
+.card, .work-card, .memo-card, .cap-card, .results-row .r, .kpi, .panel, details.fold, .note-card {
+  background: var(--glass-card);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow);
+}
+.wc-preview { background: color-mix(in srgb, var(--wc-panel) 70%, transparent); }
+.model-pick { background: color-mix(in srgb, var(--wc-panel) 72%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+details.fold .panel, details.fold .kpi { background: color-mix(in srgb, var(--surface-2) 60%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* spotlight that follows the pointer (position set by site.js) */
+.card, .work-card, .memo-card, .cap-card, .results-row .r, .kpi, .panel, .note-card, .btn { position: relative; isolation: isolate; }
+.card::before, .results-row .r::before, .kpi::before, .panel::before, .btn::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1; opacity: 0; transition: opacity .25s ease;
+  background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), var(--spot), transparent 65%);
+}
+.card::after, .results-row .r::after, .kpi::after, .panel::after {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s ease; padding: 1px;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--spot-edge), transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.card:hover::before, .card:hover::after, .results-row .r:hover::before, .results-row .r:hover::after,
+.kpi:hover::before, .kpi:hover::after, .panel:hover::before, .panel:hover::after, .btn:hover::before { opacity: 1; }
+
+/* lift and depth on hover */
+.card, .results-row .r, .kpi { transition: transform .25s cubic-bezier(.2, .7, .2, 1), box-shadow .25s ease, border-color .25s ease; }
+a.card:hover, .cap-card:hover, .note-card:hover, .results-row .r:hover, .kpi:hover { transform: translateY(-3px); box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-hover); }
+.results-row .r:hover .v { color: var(--wc-g); }
+.kpi:hover .k-val { color: var(--heading); }
+.kpi.good:hover .k-val { color: var(--positive); }
+.kpi.bad:hover .k-val { color: var(--negative); }
+
+/* work cards: the preview comes alive on hover */
+.wc-chart path, .wc-chart line, .wc-chart rect, .wc-chart circle { transition: stroke-width .25s ease, fill-opacity .25s ease, opacity .25s ease; }
+.work-card:hover .wc-chart .k-g, .work-card:hover .wc-chart .k-n { stroke-width: 2.3; }
+.work-card:hover .wc-chart .f-band { fill-opacity: .26; }
+.work-card:hover .wc-preview { background: color-mix(in srgb, var(--wc-panel) 92%, transparent); }
+.work-card:hover .wc-num { color: var(--wc-g); }
+.work-card:hover h3, .memo-card:hover h3, .cap-card:hover h3, .note-card:hover h3 { color: var(--wc-g); }
+.wc-link span { display: inline-block; transition: transform .25s ease; }
+.work-card:hover .wc-link span, .memo-card:hover .wc-link span { transform: translateX(5px); }
+.cap-icon { transition: transform .3s cubic-bezier(.2, .7, .2, 1); }
+.cap-card:hover .cap-icon { transform: translateY(-2px) scale(1.12); }
+
+/* chips */
+.chips li { transition: color .2s ease, border-color .2s ease, background-color .2s ease, transform .2s ease; background: color-mix(in srgb, var(--wc-bg) 40%, transparent); }
+.chips li:hover { color: var(--wc-g); border-color: var(--wc-g); background: color-mix(in srgb, var(--wc-g) 8%, transparent); transform: translateY(-1px); }
+.work-card:hover .chips li { border-color: color-mix(in srgb, var(--wc-g) 35%, var(--wc-chip-border)); }
+
+/* buttons */
+.btn { transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, opacity .2s ease; overflow: hidden; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(.98); }
+.btn-primary:hover { opacity: 1; box-shadow: var(--glow); }
+.btn-primary::before { background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, .22), transparent 70%); }
+.btn-secondary:hover { box-shadow: inset 0 0 0 1.5px var(--navy), 0 8px 22px color-mix(in srgb, var(--navy) 18%, transparent); }
+.btn-ghost { background: var(--glass-card); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.btn-ghost:hover { box-shadow: inset 0 0 0 1px var(--wc-g), 0 6px 18px color-mix(in srgb, var(--wc-g) 14%, transparent); }
+
+/* navigation */
+.nav-links a { border-radius: 999px; transition: background-color .2s ease, color .2s ease, opacity .2s ease; }
+.nav-links a:hover { background: color-mix(in srgb, var(--wc-g) 10%, transparent); color: var(--wc-g); }
+.icon-btn { transition: background-color .2s ease, transform .3s ease; border-radius: 999px; }
+.icon-btn:hover { background: color-mix(in srgb, var(--wc-g) 10%, transparent); }
+.theme-toggle:hover svg { transform: rotate(20deg); }
+.theme-toggle svg { transition: transform .4s ease; }
+.brand { transition: opacity .2s ease; }
+.brand:hover { opacity: .8; text-decoration: none; }
+
+/* text links: an underline that grows in */
+.section-head a, .about-grid a, .research-card a:not(.btn), .article p a, .article li a, .memo-doc p a, .memo-doc li a, .cap-see a, .fine a, .site-footer a {
+  text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size .3s ease, color .2s ease;
+}
+.section-head a:hover, .about-grid a:hover, .research-card a:not(.btn):hover, .article p a:hover, .article li a:hover, .memo-doc p a:hover, .memo-doc li a:hover, .cap-see a:hover, .fine a:hover, .site-footer a:hover {
+  background-size: 100% 1px; text-decoration: none;
+}
+
+/* lists and tables respond to the pointer */
+.prod-list li { transition: color .2s ease, transform .2s ease; }
+.prod-list li:hover { color: var(--heading); transform: translateX(3px); }
+.prod-list li::before { transition: background-color .2s ease; }
+.prod-list li:hover::before { background: color-mix(in srgb, var(--wc-g) 14%, transparent); }
+.stack-row { border-radius: 12px; padding: 6px 8px; margin: -6px -8px; transition: background-color .2s ease; }
+.stack-row:hover { background: color-mix(in srgb, var(--wc-g) 5%, transparent); }
+.stack-row:hover .stack-label { color: var(--wc-g); }
+table.data tbody tr, .memo-table tbody tr { transition: background-color .15s ease; }
+table.data tbody tr:hover, .memo-table tbody tr:hover { background: color-mix(in srgb, var(--wc-g) 6%, transparent); }
+
+/* hero photo */
+.hero-photo { transition: transform .4s cubic-bezier(.2, .7, .2, 1), box-shadow .4s ease; }
+.hero-photo:hover { transform: scale(1.04); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--wc-g), 0 14px 40px color-mix(in srgb, var(--wc-g) 30%, transparent); }
+
+@media (hover: none) { body::after { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  a.card:hover, .cap-card:hover, .note-card:hover, .results-row .r:hover, .kpi:hover, .btn:hover, .chips li:hover, .prod-list li:hover, .hero-photo:hover { transform: none; }
+}
+@media print { body::before, body::after { display: none; } .card, .panel, .kpi { -webkit-backdrop-filter: none; backdrop-filter: none; } }
+.card:hover, .card:focus-within, .panel:hover, .panel:focus-within, .kpi:hover, .kpi:focus-within, .results-row .r:hover { z-index: 2; }
