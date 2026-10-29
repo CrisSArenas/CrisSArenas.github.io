@@ -244,7 +244,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
 (function () {
   'use strict';
   var F = UI.fmt, $ = UI.$;
-  var TODAY_Q = 42, START_YEAR = 2016, IDX_MU = 0.024, IDX_VOL = 0.075;
+  var TODAY_Q = 42, START_YEAR = 2016, IDX_MU = 0.021, IDX_VOL = 0.07;
   var qDate = function (q) { var y = START_YEAR + Math.floor(q / 4), m = (q % 4) * 3 + 3; return y + '-' + (m < 10 ? '0' : '') + m + '-' + (m === 3 || m === 12 ? '31' : '30'); };
   var qLabel = function (q) { return (START_YEAR + Math.floor(q / 4)) + ' Q' + (q % 4 + 1); };
 
@@ -302,24 +302,24 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
 
   /* ---------------- synthetic program ---------------- */
   var STRAT = {
-    buyout: { rc: 0.28, ip: 5, mu: 0.028, beta: 1.0, vol: 0.05, dStart: 3, dRate: 0.06, rho: 0.5, label: 'Buyout' },
-    growth: { rc: 0.30, ip: 4, mu: 0.028, beta: 1.2, vol: 0.07, dStart: 4, dRate: 0.05, rho: 0.5, label: 'Growth' },
+    buyout: { rc: 0.28, ip: 5, mu: 0.026, beta: 1.0, vol: 0.05, dStart: 3, dRate: 0.065, rho: 0.5, label: 'Buyout' },
+    growth: { rc: 0.30, ip: 4, mu: 0.027, beta: 1.2, vol: 0.07, dStart: 4, dRate: 0.055, rho: 0.5, label: 'Growth' },
     venture: { rc: 0.25, ip: 5, mu: 0.030, beta: 1.4, vol: 0.10, dStart: 5, dRate: 0.045, rho: 0.6, label: 'Venture' },
-    credit: { rc: 0.40, ip: 3, mu: 0.021, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.07, rho: 0.3, label: 'Private credit' },
-    real: { rc: 0.30, ip: 4, mu: 0.021, beta: 0.5, vol: 0.03, dStart: 2, dRate: 0.05, rho: 0.7, label: 'Real assets' },
-    secondaries: { rc: 0.45, ip: 3, mu: 0.026, beta: 0.9, vol: 0.04, dStart: 1, dRate: 0.08, rho: 0.5, label: 'Secondaries' }
+    credit: { rc: 0.40, ip: 3, mu: 0.020, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.075, rho: 0.3, label: 'Private credit' },
+    real: { rc: 0.30, ip: 4, mu: 0.019, beta: 0.5, vol: 0.03, dStart: 2, dRate: 0.035, rho: 0.7, label: 'Real assets' },
+    secondaries: { rc: 0.45, ip: 3, mu: 0.025, beta: 0.9, vol: 0.04, dStart: 1, dRate: 0.085, rho: 0.5, label: 'Secondaries' }
   };
   var FUNDS = [
-    ['Quorvane Buyout III', 'Quorvane', 'buyout', 2017, 35, 1], ['Quorvane Buyout IV', 'Quorvane', 'buyout', 2021, 40, 1],
+    ['Quorvane Buyout III', 'Quorvane', 'buyout', 2017, 30, 1], ['Quorvane Buyout IV', 'Quorvane', 'buyout', 2021, 40, 1],
     ['Telmira Growth II', 'Telmira', 'growth', 2022, 25, 1], ['Telmira Growth III', 'Telmira', 'growth', 2025, 25, 1],
     ['Brisolt Credit Opportunities II', 'Brisolt', 'credit', 2019, 25, 1], ['Brisolt Credit Opportunities III', 'Brisolt', 'credit', 2023, 30, 1],
     ['Mereth Ventures IV', 'Mereth', 'venture', 2018, 12, 1], ['Mereth Ventures V', 'Mereth', 'venture', 2022, 15, 1],
-    ['Caldrin Infrastructure II', 'Caldrin', 'real', 2021, 35, 1], ['Ostrel Capital Partners VI', 'Ostrel', 'buyout', 2019, 45, 2],
-    ['Ostrel Capital Partners VII', 'Ostrel', 'buyout', 2024, 45, 1], ['Vandrel Growth Equity III', 'Vandrel', 'growth', 2020, 20, 1],
-    ['Solvane Secondaries V', 'Solvane', 'secondaries', 2020, 25, 1], ['Solvane Secondaries VI', 'Solvane', 'secondaries', 2024, 30, 1],
-    ['Pellidor Real Estate Value II', 'Pellidor', 'real', 2018, 20, 2], ['Hasturn Mid-Market Buyout II', 'Hasturn', 'buyout', 2022, 30, 1],
+    ['Caldrin Infrastructure II', 'Caldrin', 'real', 2021, 35, 1], ['Ostrel Capital Partners VI', 'Ostrel', 'buyout', 2019, 40, 2],
+    ['Ostrel Capital Partners VII', 'Ostrel', 'buyout', 2024, 40, 1], ['Vandrel Growth Equity III', 'Vandrel', 'growth', 2020, 15, 1],
+    ['Solvane Secondaries V', 'Solvane', 'secondaries', 2020, 25, 1], ['Solvane Secondaries VI', 'Solvane', 'secondaries', 2024, 25, 1],
+    ['Pellidor Real Estate Value II', 'Pellidor', 'real', 2018, 15, 2], ['Hasturn Mid-Market Buyout II', 'Hasturn', 'buyout', 2022, 25, 1],
     ['Ivrena Healthcare Partners I', 'Ivrena', 'buyout', 2020, 20, 1], ['Dunmarrow Direct Lending IV', 'Dunmarrow', 'credit', 2021, 30, 1],
-    ['Kestrine Climate Infrastructure I', 'Kestrine', 'real', 2024, 25, 1], ['Lorvenne Ventures III', 'Lorvenne', 'venture', 2025, 10, 2]
+    ['Kestrine Climate Infrastructure I', 'Kestrine', 'real', 2024, 20, 1], ['Lorvenne Ventures III', 'Lorvenne', 'venture', 2025, 10, 2]
   ];
   /* statement figures for the funds read from documents; applied once the ledger approves them */
   var DOCFUND = { 'Quorvane Buyout IV': 'cas-quorvane', 'Telmira Growth II': 'cas-telmira', 'Brisolt Credit Opportunities III': 'cas-brisolt', 'Mereth Ventures V': 'cas-mereth', 'Caldrin Infrastructure II': 'notice-caldrin' };
@@ -333,11 +333,15 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var rng = PM.mulberry32(seed), z = PM.normalGen(rng);
     var idx = [100], ret = [], zs = [];
     for (var q = 1; q <= TODAY_Q - 2; q++) zs.push(z());
-    var zm = PM.mean(zs), zsd = PM.std(zs);
+    /* the shocks are demeaned, detrended and rescaled over the sample, so every seed's proxy earns its drift
+       (2.1% a quarter, 7% quarterly volatility: about 8.5% a year compound with 14% volatility) without a run of
+       good or bad years at one end; the last two quarters are a stylised drawdown: -8% in Q2 2026 and -5% in Q3 2026 */
+    var n = zs.length, tm = (n - 1) / 2, zm = PM.mean(zs), sl = 0, dd = 0;
+    zs.forEach(function (v, t) { sl += (t - tm) * (v - zm); dd += (t - tm) * (t - tm); }); sl /= dd;
+    zs = zs.map(function (v, t) { return v - zm - sl * (t - tm); });
+    var zsd = PM.std(zs);
     for (q = 1; q <= TODAY_Q; q++) {
-      /* the shocks are standardised over the sample, so every seed's proxy earns the 10% a year drift with 15% volatility;
-         the last two quarters are a stylised drawdown: -8% in Q2 2026 and -5% in Q3 2026 */
-      var r = q === TODAY_Q - 1 ? -0.08 : q === TODAY_Q ? -0.05 : IDX_MU + IDX_VOL * (zs[q - 1] - zm) / zsd;
+      var r = q === TODAY_Q - 1 ? -0.08 : q === TODAY_Q ? -0.05 : IDX_MU + IDX_VOL * zs[q - 1] / zsd;
       ret.push(r); idx.push(idx[q - 1] * (1 + r));
     }
     var funds = FUNDS.map(function (row, k) {

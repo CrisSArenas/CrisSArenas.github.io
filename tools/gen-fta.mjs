@@ -24,7 +24,7 @@ const f = (x, d = 0) => '$' + x.toLocaleString('en-US', { minimumFractionDigits:
 const lpFee = r => r.gross * SHARE, lpOff = r => Math.min(r.gross, r.pfee) * SHARE;
 const Q = feeRows.slice(-4);
 // planted breaks: Q3 2025 fee on commitments at the post-period rate; Q1 2026 offset at 50%; Q2 2026 carry accrued with no hurdle
-const rep = Q.map((r, i) => { let g = lpFee(r), o = lpOff(r); if (i === 0) g = 0.015 * SIZE / 4 * SHARE; if (i === 2) o = o / 2; return { q: r.q, gross: g, off: o, net: g - o, nic: r.nic, pfee: r.pfee }; });
+const rep = Q.map((r, i) => { let g = lpFee(r), o = lpOff(r); if (i === 0) g = 0.015 * SIZE / 4 * SHARE; if (i === 2) o = o / 2; const $ = v => Math.round(v * 1e6) / 1e6; return { q: r.q, gross: g, off: o, net: $(g) - $(o), nic: r.nic, pfee: r.pfee }; }); // net ties to the rounded lines, as a report prints it
 // LP cash flows as charged (the reported fee in the last four quarters), with the subscription line, and the GP's naive accrued carry
 const lp = [];
 deals.forEach(d => { lp.push({ date: new Date(D(d.invest).getTime() + LINE_DAYS * 864e5), c: d.cost * SHARE }); if (d.exit && D(d.exit) <= ASOF) lp.push({ date: D(d.exit), dist: d.value * SHARE }); });

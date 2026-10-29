@@ -81,7 +81,7 @@
       <div class="kpis" id="slKpis"></div>
       <div class="split-2" style="margin-top:18px">
         <div class="panel"><div class="panel-head"><h3>Fund II: LP capital out, with and without the line</h3></div><div class="panel-body"><div id="slChart"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Gross to net, both funds</h3></div><div class="panel-body"><div id="netTable"></div><p class="eval-note">I rebuild LP cash flows from the deals. Fees come from the DDQ. Carry is 20% of gains above an 8% preferred return. This is an estimate. The <a href="fund-terms-auditor.html">Fund Terms Auditor</a> runs the full waterfall.</p></div></div>
+        <div class="panel"><div class="panel-head"><h3>Gross to net, both funds</h3></div><div class="panel-body"><div id="netTable"></div><p class="eval-note">I rebuild LP cash flows from the deals. Fees come from the DDQ. Carry runs through a whole-fund waterfall: an 8% preferred return, full catch-up, then 20%, with the remaining NAV treated as sold at its mark. Interest on the subscription line is left out, so the line case overstates TVPI slightly. This is an estimate. The <a href="fund-terms-auditor.html">Fund Terms Auditor</a> runs the full waterfall.</p></div></div>
       </div>
       <h3 class="sub-h">Quartile drift</h3>
       <div class="kpis" id="drKpis"></div>
@@ -111,8 +111,9 @@
       <ul>
         <li>Concentration is the share of total gains from the best one and three deals. The loss ratio is the capital in deals below 1.0x.</li>
         <li>The value bridge splits each deal's equity gain into EBITDA growth, the change in multiple and debt paydown.</li>
-        <li>IRR without the subscription line moves each call back to its investment date. Net returns are rebuilt from the deals and the stated fees and carry.</li>
+        <li>IRR without the subscription line moves each call back to its investment date. Net returns are rebuilt from the deals and the stated fees, with carry from a whole-fund (European) waterfall. Net DPI is LP distributions after carry over paid-in capital, fees included.</li>
         <li>Style analysis is a constrained regression of the fund's returns on style indices. Smoothed returns are unwound with an MA(2) model before computing the Sharpe ratio.</li>
+        <li>Smoothing pushes part of a fund's equity exposure into later months, so betas and the alpha regression include US large cap returns lagged one and two months, and the beta is the sum of the three coefficients.</li>
         <li>Skill is tested with a block bootstrap of the alpha t-stat under zero alpha.</li>
       </ul>
       <h3>Formulas</h3>
@@ -121,7 +122,8 @@ loss ratio = invested in deals with MOIC &lt; 1 / invested
 EBITDA growth = (E1 - E0) m0   multiple = (m1 - m0) E1
 deleveraging = D0 - D1
 style: min ||r - Xw||^2,  w &gt;= 0, sum w = 1
-R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
+R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2
+beta = b0 + b1 + b2   (US large cap at t, t-1, t-2)</div>
       <h3>Assumptions</h3>
       <div id="assumptions"></div>
       
@@ -235,7 +237,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     var byGain = t.deals.slice().sort(function (a, b) { return b.gain - a.gain; }), cum = 0;
     UI.chart.line('#concChart', { xs: byGain.map(function (_, i) { return i + 1; }), series: [{ name: 'Cumulative share of gains', ys: byGain.map(function (x) { cum += x.gain; return cum / t.gains; }), dots: true }], hlines: [{ y: 1, label: '100%', color: 'muted' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return v + ' deal' + (v > 1 ? 's' : ''); }, height: 240, label: 'Concentration of gains' });
     UI.chart.waterfall('#bridgeChart', { steps: [{ label: 'EBITDA growth', value: b.ebitda }, { label: 'Multiple change', value: b.multiple }, { label: 'Net debt change', value: b.deleveraging }], total: true, totalLabel: 'Equity gain', yFmt: function (v) { return F.num(v, 0); }, height: 240, label: 'Value creation bridge' });
-    $('#bridgeNote').textContent = 'EBITDA growth explains ' + F.pct(b.ebitda / b.total, 0) + ' of the equity gain and multiple change ' + F.pct(b.multiple / b.total, 0) + '. Net debt ' + (b.deleveraging < 0 ? 'rose by ' + F.money(-b.deleveraging, 0) + ' (add-ons and recapitalisations), which took value away from equity.' : 'fell, adding ' + F.money(b.deleveraging, 0) + '.');
+    $('#bridgeNote').textContent = 'EBITDA growth explains ' + F.pct(b.ebitda / b.total, 0) + ' of the equity gain and multiple change ' + F.pct(b.multiple / b.total, 0) + '. Net debt ' + (b.deleveraging < 0 ? 'rose by ' + F.money(-b.deleveraging, 0) + ', mostly to fund add-on acquisitions, which took value away from equity. EBITDA growth includes the EBITDA those add-ons bought.' : 'fell, adding ' + F.money(b.deleveraging, 0) + '.');
     UI.table('#dealTable', { id: 'deals', name: 'Deal-level track record', columns: [{ key: 'fund', label: 'Fund' }, { key: 'name', label: 'Company (fictional)' }, { key: 'sector', label: 'Sector' }, { key: 'entry', label: 'Entry' }, { key: 'exit', label: 'Exit', fmt: function (v) { return v || 'unrealized'; } }, { key: 'invested', label: 'Invested', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'value', label: 'Value', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'moic', label: 'MOIC', num: 1, fmt: function (v) { return F.mult(v); }, cls: function (v) { return v < 1 ? 'neg' : ''; } }, { key: 'irr', label: 'Gross IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }],
       rows: t.deals.map(function (x) { return Object.assign({}, x, { irr: M.dealIrr({ entry: dt(x.entry), exit: x.exit ? dt(x.exit) : null, invested: x.invested, realized: x.realized, unrealized: x.unrealized }, AS_OF) }); }),
       foot: { name: 'Total', invested: t.invested, value: t.value, moic: t.moic },
@@ -277,7 +279,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     UI.kpis('#slKpis', [
       { id: 'f2irrLine', label: 'Fund II net IRR, as reported (with line)', value: F.pct(withL.irr, 1), sub: 'calls about ' + Math.round(A.lineDays / 30) + ' months after each investment' },
       { id: 'f2irrAdj', label: 'Fund II net IRR without the line', value: F.pct(adj, 1), sub: 'flows rebuilt to investment dates', tone: 'bad', explain: function () { return { title: 'IRR without the subscription line', formula: 'XIRR of LP flows with every call moved back to its investment date (multiple unchanged)', inputs: [{ name: 'Days the line defers calls', value: A.lineDays, src: 'document', note: 'DDQ section 6', cite: { doc: 'ddq-hasturn', page: 2, line: 7, short: 'ddq' } }, { name: 'IRR with the line', value: F.pct(withL.irr, 2), src: 'computed' }], result: F.pct(adj, 2) }; } },
-      { id: 'lineUplift', label: 'IRR added by the line', value: F.pp(withL.irr - adj, 1), sub: 'TVPI unchanged at ' + F.mult(withL.tvpi) },
+      { id: 'lineUplift', label: 'IRR added by the line', value: F.pp(withL.irr - adj, 1), sub: 'TVPI ' + F.mult(withL.tvpi) + ' either way, before line interest' },
       { id: 'f1net', label: 'Fund I net TVPI (rebuilt)', value: F.mult(f1.tvpi), sub: 'net IRR ' + F.pct(f1.irr, 1) + '; letter claims 2.1x', tone: 'bad', explain: function () { return { title: 'Fund I net TVPI, rebuilt from the deals', formula: '(LP distributions + NAV after carry) / (invested + fees)', inputs: [{ name: 'Gross value', value: F.money(f1.paid - f1.fees + (f1.grossMoic - 1) * (f1.paid - f1.fees), 0), src: 'computed' }, { name: 'Management fees', value: F.money(f1.fees, 1), src: 'computed', note: 'DDQ terms' }, { name: 'Carry', value: F.money(f1.carry, 1), src: 'computed' }], result: F.mult(f1.tvpi, 3) }; } }
     ]);
     var cumL = [], cumN = [], dates = [], a = 0, b = 0;
@@ -324,7 +326,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     var X = [];
     for (var t = 0; t < T; t++) { var e = STYLES.map(function () { return z(); }); X.push(mu.map(function (m, i) { var s = 0; for (var j = 0; j <= i; j++) s += L[i][j] * e[j]; return m + vol[i] * s; })); }
     var aum = [], tr = [];
-    for (t = 0; t < T; t++) { var a = 300 * Math.pow(8, t / (T - 1)); aum.push(a); var alpha = 0.0042 - 0.0035 * (a / 2400); tr.push(0.30 * X[t][0] + 0.15 * X[t][1] + 0.20 * X[t][3] + 0.35 * X[t][5] + alpha + 0.007 * z()); }
+    for (t = 0; t < T; t++) { var a = 300 * Math.pow(8, t / (T - 1)); aum.push(a); var alpha = 0.0042 - 0.0035 * (a / 2400); tr.push(0.30 * X[t][0] + 0.15 * X[t][1] + 0.20 * X[t][3] + 0.35 * X[t][5] + alpha + 0.010 * z()); }
     var obs = PM.glmSmooth(tr, [0.6, 0.3, 0.1]);
     var peers = [], cats = [];
     /* each peer group shares a hidden strategy factor, so groups move together the way real strategy peers do */
@@ -340,8 +342,11 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     var sty = M.styleWeights(y, X), eqW = sty.w[0] + sty.w[1] + sty.w[2];
     var r1 = PM.autocorr(y, 1), r2 = PM.autocorr(y, 2), th = PM.glmTheta(Math.max(0, r1), Math.max(0, r2)), un = PM.glmUnsmooth(y, th);
     var shO = PM.sharpe(y, 0.036), shU = PM.sharpe(un, 0.036);
-    var excess = X.map(function (r) { return r.slice(0, 5); });
-    var bt = M.bootstrapAlpha(y.map(function (v, i) { return v - X[i][5]; }), excess.map(function (r, i) { return r.map(function (v) { return v - X[i][5]; }); }), { n: A.boot, block: A.block, seed: S.seed });
+    /* alpha regression: excess return on the five excess style returns plus US large cap lagged one and two months,
+       so equity exposure that smoothing pushes into later months is not counted as alpha (Dimson; Asness, Krail and Liew) */
+    var excess = X.map(function (r) { return r.slice(0, 5).map(function (v) { return v - r[5]; }); });
+    var bt = M.bootstrapAlpha(y.slice(2).map(function (v, i) { return v - X[i + 2][5]; }), excess.slice(2).map(function (r, i) { return r.concat([excess[i + 1][0], excess[i][0]]); }), { n: A.boot, block: A.block, seed: S.seed });
+    var dimsonBeta = function (s) { var f = PM.ols(s.slice(2), X.slice(2).map(function (r, i) { return [r[0], X[i + 1][0], X[i][0]]; })); return f.beta[0] + f.beta[1] + f.beta[2]; };
     S.pubStats = { eqW: eqW, r1: r1, shO: shO, shU: shU, t: bt.t, p: bt.p, alpha: bt.alpha };
     UI.kpis('#pubKpis', [
       { id: 'eqExposure', label: 'Equity exposure from returns', value: F.pct(eqW, 0), sub: 'declared: market neutral (about 0%)', tone: eqW > 0.15 ? 'bad' : null, explain: function () { return { title: 'Equity weight in the style regression', formula: 'sum of the weights on US large cap, US small cap and international equity, constrained regression over ' + T + ' months', inputs: STYLES.map(function (s, i) { return { name: s, value: F.pct(sty.w[i], 1), src: 'computed' }; }), result: F.pct(eqW, 1) }; } },
@@ -357,12 +362,12 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     var lo = Math.min.apply(null, bt.tDist.concat([bt.t])) - 0.2, hi = Math.max.apply(null, bt.tDist.concat([bt.t])) + 0.2, bins = 24, w = (hi - lo) / bins, h = new Array(bins).fill(0);
     bt.tDist.forEach(function (v) { h[Math.min(bins - 1, Math.floor((v - lo) / w))]++; });
     UI.chart.bar('#bootChart', { categories: h.map(function (_, i) { return F.num(lo + (i + 0.5) * w, 1); }), series: [{ name: 'Bootstrap t under zero alpha', values: h, colors: h.map(function (_, i) { return lo + (i + 1) * w > bt.t && lo + i * w <= bt.t ? 's5' : 's4'; }) }], yFmt: function (v) { return F.num(v, 0); }, height: 180, label: 'Bootstrap distribution of the alpha t-stat' });
-    $('#bootNote').textContent = 'The observed t-stat (' + F.num(bt.t, 2) + ', highlighted bin) against ' + A.boot + ' bootstrap draws with zero alpha. Screening a dozen managers at a 5% level should turn up about one false positive by chance, so a single p-value near 0.05 is weak evidence.';
+    $('#bootNote').textContent = 'The observed t-stat (' + F.num(bt.t, 2) + ', highlighted bin) against ' + A.boot + ' bootstrap draws with zero alpha. Screening twenty managers with no skill at a 5% level turns up about one false positive by chance, so a single p-value near 0.05 is weak evidence.';
     var all = [y].concat(P.peers), ids = M.cluster(all, 3), names = ['Corvane (declared: equity market neutral)'].concat(P.cats.map(function (c, i) { return 'Peer ' + (i + 1) + ' (' + c + ')'; }));
     var clName = function (id) { var members = all.map(function (_, i) { return i; }).filter(function (i) { return ids[i] === id && i > 0; }); var c = {}; members.forEach(function (i) { c[P.cats[i - 1]] = (c[P.cats[i - 1]] || 0) + 1; }); var k = Object.keys(c).sort(function (a, b) { return c[b] - c[a]; })[0]; return k || 'mixed'; };
     S.cluster = clName(ids[0]);
-    UI.table('#clusterTable', { id: 'clusters', name: 'Peer clusters', columns: [{ key: 'n', label: 'Manager (fictional)' }, { key: 'c', label: 'Behaves like' }, { key: 'b', label: 'Equity beta', num: 1, fmt: function (v) { return F.num(v, 2); } }],
-      rows: all.map(function (s, i) { return { n: names[i], c: clName(ids[i]), b: PM.ols(s, X.map(function (r) { return [r[0]]; })).beta[0] }; }) });
+    UI.table('#clusterTable', { id: 'clusters', name: 'Peer clusters', columns: [{ key: 'n', label: 'Manager (fictional)' }, { key: 'c', label: 'Behaves like' }, { key: 'b', label: 'Equity beta, lags 0 to 2', num: 1, fmt: function (v) { return F.num(v, 2); } }],
+      rows: all.map(function (s, i) { return { n: names[i], c: clName(ids[i]), b: dimsonBeta(s) }; }) });
     var roll = [], aumPts = [];
     for (t = 24; t <= T; t += 6) { var f = PM.ols(y.slice(t - 24, t), X.slice(t - 24, t).map(function (r) { return [r[0], r[3]]; })); roll.push(f.alpha * 12); aumPts.push(P.aum[t - 1]); }
     var capFit = PM.ols(roll, aumPts.map(function (a) { return [a / 1000]; }));

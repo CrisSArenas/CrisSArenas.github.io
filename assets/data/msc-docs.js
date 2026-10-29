@@ -21,7 +21,7 @@ window.MSC_DOCS = {
     '| Investment period: 5 years; term 10 years plus two one-year extensions',
     '',
     '4. Strategy',
-    'Control buyouts of North American businesses with EBITDA of $10m to $50m in healthcare,',
+    'Control buyouts of North American businesses with EBITDA of $5m to $25m in healthcare,',
     'industrials, technology-enabled services and consumer.'
   ], [
     '5. Track record (gross, as of 31 December 2025)',
