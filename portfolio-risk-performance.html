@@ -38,8 +38,9 @@
     <a class="brand" href="/">Cristian Arenas</a>
     <ul class="nav-links">
       <li><a href="/#about">About</a></li>
-      <li><a href="/#work">Work</a></li>
+      <li><a href="/#portfolio">Portfolio</a></li>
       <li><a href="/#ai">AI</a></li>
+      <li><a href="/#work">Work</a></li>
       <li><a href="/#memos">Memos</a></li>
       <li><a href="/#research">Research</a></li>
       <li><a href="/#contact">Contact</a></li>
@@ -184,6 +185,7 @@ stress loss = sum_i w_i b_i' shock</pre>
       <ul>
         <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
         <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/ai-systems.html">AI systems</a></li>
         <li><a href="/notes/">Notes</a></li>
         <li><a href="/tests.html">Model tests</a></li>
         <li><a href="/arcade.html">Games</a></li>
@@ -216,7 +218,7 @@ stress loss = sum_i w_i b_i' shock</pre>
     { n: 'High yield index', b: [0.30, 0.35, 1.30, 0, 0], spread: 0 },
     { n: 'Hedge fund composite', b: [0.30, 0, 0.20, 0, 0.10], spread: 0.01 },
     { n: 'Global equity plus spread', b: [0.97, 0, 0, 0, 0.35], spread: null },
-    { n: 'Leveraged loans plus 2%', b: [0.20, 0.05, 1.00, 0, 0], spread: 0.02 },
+    { n: 'Senior loans plus 2%', b: [0.20, 0.05, 1.00, 0, 0], spread: 0.02 },
     { n: 'Real assets index', b: [0.35, 0.30, 0, 1.00, 0.10], spread: 0.01 }
   ];
   /* managers: class, target weight, true betas, alpha and specific risk a year, mandate tracking error limit, smoothing */
@@ -418,7 +420,7 @@ stress loss = sum_i w_i b_i' shock</pre>
     $('#attSub').textContent = YEARS[S.year] + ', by asset class';
     UI.chart.waterfall('#attWaterfall', { steps: [{ label: 'Allocation', value: b.alloc * 100 }, { label: 'Selection', value: b.sel * 100 }, { label: 'Interaction', value: b.inter * 100 }], total: true, totalLabel: 'Active', yFmt: function (v) { return F.num(v, 2) + '%'; }, height: 240, label: 'Attribution waterfall' });
     var ok = Math.abs(b.resid) < 1e-9;
-    $('#attCheck').innerHTML = 'Check: allocation ' + UI.esc(F.pp(b.alloc, 2)) + ' + selection ' + UI.esc(F.pp(b.sel, 2)) + ' + interaction ' + UI.esc(F.pp(b.inter, 2)) + ' = ' + UI.esc(F.pp(b.alloc + b.sel + b.inter, 3)) + '. Active return computed directly from the two portfolios = ' + UI.esc(F.pp(b.total, 3)) + '. Difference ' + UI.esc(Math.abs(b.resid).toExponential(1)) + ' <span class="' + (ok ? 'tie-ok' : 'tie-no') + '">' + (ok ? 'ties' : 'does not tie') + '</span>.';
+    $('#attCheck').innerHTML = 'Allocation ' + UI.esc(F.pp(b.alloc, 2)) + ' plus selection ' + UI.esc(F.pp(b.sel, 2)) + ' plus interaction ' + UI.esc(F.pp(b.inter, 2)) + ' comes to ' + UI.esc(F.pp(b.alloc + b.sel + b.inter, 3)) + '. The active return computed directly from the two portfolios is ' + UI.esc(F.pp(b.total, 3)) + ', a difference of ' + UI.esc(Math.abs(b.resid).toExponential(1)) + ', so the attribution <span class="' + (ok ? 'tie-ok' : 'tie-no') + '">' + (ok ? 'ties' : 'does not tie') + '</span>.';
     UI.table('#attTable', { id: 'attribution', name: 'Brinson attribution', columns: [{ key: 'a', label: 'Asset class' }, { key: 'wp', label: 'Portfolio wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'wb', label: 'Policy wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rp', label: 'Portfolio ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rb', label: 'Benchmark ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'bn', label: 'Benchmark' }, { key: 'al', label: 'Alloc', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'se', label: 'Select', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'in', label: 'Inter', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'tot', label: 'Total', num: 1, fmt: function (v) { return F.bps(v); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }],
       rows: CLS.map(function (a, k) { var r = b.rows[k]; return { a: a, wp: att.wp[k], wb: POLICY[k], rp: att.rp[k], rb: att.rb[k], bn: benchName(k), al: r.alloc, se: r.sel, in: r.inter, tot: r.alloc + r.sel + r.inter }; }), foot: { a: 'Total', wp: 1, wb: 1, rp: b.rpTot, rb: b.rbTot, al: b.alloc, se: b.sel, in: b.inter, tot: b.total } });
     var y = S.year, G = B.P.G[y], Gb = B.Bm.G[y];
@@ -490,7 +492,7 @@ stress loss = sum_i w_i b_i' shock</pre>
             res.push({ status: 'approval', msg: m.n + ': last ' + st + ' marks unchanged since ' + asOf + '; those months are left out of its risk estimate' });
           }
         });
-        if (!res.length) res.push({ msg: 'No stale marks: every manager reported a change in the last ' + A.staleN + ' months' });
+        if (!res.length) res.push({ msg: 'No stale marks; every manager reported a change in the last ' + A.staleN + ' months' });
         audit.push('check', 'stale data', P.items.length + ' stale');
         return res;
       } },
@@ -554,7 +556,7 @@ stress loss = sum_i w_i b_i' shock</pre>
             if (fl) {
               var x = { i: i, k: k, a: a.beta[k], b: b.beta[k], z: z, cut: cut };
               if (!best || Math.abs(z) > Math.abs(best.z)) best = x;
-              P.items.push({ id: 'D-' + (P.items.length + 1), mgr: i, short: 'style drift', title: m.n + ': ' + f.toLowerCase() + ' beta ' + F.num(a.beta[k], 2) + ' to ' + F.num(b.beta[k], 2), severity: 'med', evidence: 'Factor regression on monthly returns: ' + f.toLowerCase() + ' beta ' + F.num(a.beta[k], 2) + ' up to ' + UI.esc(monthLabel(cut - 1)) + ' and ' + F.num(b.beta[k], 2) + ' in the last ' + (use - cut) + ' months (z = ' + F.num(z, 1) + '). Its benchmark, the ' + UI.esc(IDX[m.c].n) + ', has a beta of ' + F.num(IDX[m.c].b[k], 2) + '. Approve to put the manager on the watch list and ask about the change.', state: 'pending' });
+              P.items.push({ id: 'D-' + (P.items.length + 1), mgr: i, short: 'style drift', title: m.n + ': ' + f.toLowerCase() + ' beta ' + F.num(a.beta[k], 2) + ' to ' + F.num(b.beta[k], 2), severity: 'med', evidence: 'In a factor regression on monthly returns the ' + f.toLowerCase() + ' beta is ' + F.num(a.beta[k], 2) + ' up to ' + UI.esc(monthLabel(cut - 1)) + ' and ' + F.num(b.beta[k], 2) + ' in the last ' + (use - cut) + ' months (z = ' + F.num(z, 1) + '). Its benchmark, the ' + UI.esc(IDX[m.c].n) + ', has a beta of ' + F.num(IDX[m.c].b[k], 2) + '. Approve to put the manager on the watch list and ask about the change.', state: 'pending' });
               res.push({ status: 'approval', msg: m.n + ': ' + f.toLowerCase() + ' beta ' + F.num(a.beta[k], 2) + ' to ' + F.num(b.beta[k], 2) + ' (z ' + F.num(z, 1) + ')' });
             }
           });
