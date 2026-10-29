@@ -371,6 +371,11 @@
     var b = PM.brinson([0.6, 0.3, 0.1], [0.5, 0.4, 0.1], [0.08, 0.03, 0.12], [0.07, 0.035, 0.10]);
     near(b.alloc + b.sel + b.inter, b.total, 1e-12); near(b.total, 0.6 * 0.08 + 0.3 * 0.03 + 0.1 * 0.12 - (0.5 * 0.07 + 0.4 * 0.035 + 0.1 * 0.10), 1e-12);
   }, 'Portfolio Risk and Performance');
+  T.add('Risk and performance', 'Brinson-Fachler allocation measures each class against the total benchmark return', function () {
+    var b = PM.brinson([0.6, 0.3, 0.1], [0.5, 0.4, 0.1], [0.08, 0.03, 0.12], [0.07, 0.035, 0.10]), Rb = 0.5 * 0.07 + 0.4 * 0.035 + 0.1 * 0.10;
+    near(b.rows[0].alloc, 0.1 * (0.07 - Rb), 1e-12); near(b.rows[1].alloc, -0.1 * (0.035 - Rb), 1e-12); near(b.rows[2].alloc, 0, 1e-12);
+    near(b.alloc, 0.1 * 0.07 - 0.1 * 0.035, 1e-12);
+  }, 'Portfolio Risk and Performance');
   T.add('Risk and performance', 'Maximum drawdown on a hand example', function () {
     var d = PM.risk.drawdown([0.1, -0.2, 0.05, -0.1, 0.3]); near(d.maxDD, 1.1 * 0.8 * 1.05 * 0.9 / 1.1 - 1, 1e-12);
   }, 'Portfolio Risk and Performance');

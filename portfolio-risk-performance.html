@@ -91,7 +91,7 @@
       <div class="kpis" id="perfKpis"></div>
       <div class="split-2" style="margin-top:18px">
         <div class="panel"><div class="panel-head"><h3>Returns against the policy benchmark</h3><span class="sub">Annualised, net of fees, to 30 Sep 2026</span></div><div class="panel-body"><div id="retChart"></div><div id="retTable" style="margin-top:12px"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Brinson attribution</h3><span class="sub" id="attSub"></span></div><div class="panel-body">
+        <div class="panel"><div class="panel-head"><h3>Brinson-Fachler attribution</h3><span class="sub" id="attSub"></span></div><div class="panel-body">
           <div class="bar-controls"><label for="attYear">Year <select class="field" id="attYear"></select></label></div>
           <div id="attWaterfall"></div><p class="eval-note" id="attCheck"></p></div></div>
       </div>
@@ -350,10 +350,8 @@ stress loss = sum_i w_i b_i' shock</pre>
     return YEARS.map(function (_, y) {
       var rp = CLS.map(function (_, c) { var num = 0, den = 0; MGR.forEach(function (m, i) { if (m.c === c) { num += W0[i] * P.G[y][i]; den += W0[i]; } }); return num / den - 1; });
       var rb = Bm.G[y].map(function (g) { return g - 1; });
-      var b = PM.brinson(Wc, POLICY, rp, rb);
-      /* Brinson-Fachler: each class's allocation effect is measured against the total benchmark return; the total is unchanged */
-      b.rows.forEach(function (r, k) { r.alloc = (Wc[k] - POLICY[k]) * (rb[k] - b.rbTot); });
-      return { b: b, rp: rp, rb: rb, wp: Wc };
+      /* Brinson-Fachler: each class's allocation effect is measured against the total benchmark return */
+      return { b: PM.brinson(Wc, POLICY, rp, rb), rp: rp, rb: rb, wp: Wc };
     });
   }
 
@@ -430,7 +428,7 @@ stress loss = sum_i w_i b_i' shock</pre>
     UI.chart.waterfall('#attWaterfall', { steps: [{ label: 'Allocation', value: b.alloc * 100 }, { label: 'Selection', value: b.sel * 100 }, { label: 'Interaction', value: b.inter * 100 }], total: true, totalLabel: 'Active', yFmt: function (v) { return F.num(v, 2) + '%'; }, height: 240, label: 'Attribution waterfall' });
     var ok = Math.abs(b.resid) < 1e-9;
     $('#attCheck').innerHTML = 'Allocation ' + UI.esc(F.pp(b.alloc, 2)) + ' plus selection ' + UI.esc(F.pp(b.sel, 2)) + ' plus interaction ' + UI.esc(F.pp(b.inter, 2)) + ' comes to ' + UI.esc(F.pp(b.alloc + b.sel + b.inter, 3)) + '. The active return computed directly from the two portfolios is ' + UI.esc(F.pp(b.total, 3)) + ', a difference of ' + UI.esc(Math.abs(b.resid).toExponential(1)) + ', so the attribution <span class="' + (ok ? 'tie-ok' : 'tie-no') + '">' + (ok ? 'ties' : 'does not tie') + '</span>.';
-    UI.table('#attTable', { id: 'attribution', name: 'Brinson attribution', columns: [{ key: 'a', label: 'Asset class' }, { key: 'wp', label: 'Portfolio wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'wb', label: 'Policy wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rp', label: 'Portfolio ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rb', label: 'Benchmark ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'bn', label: 'Benchmark' }, { key: 'al', label: 'Alloc', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'se', label: 'Select', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'in', label: 'Inter', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'tot', label: 'Total', num: 1, fmt: function (v) { return F.bps(v); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }],
+    UI.table('#attTable', { id: 'attribution', name: 'Brinson-Fachler attribution', columns: [{ key: 'a', label: 'Asset class' }, { key: 'wp', label: 'Portfolio wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'wb', label: 'Policy wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rp', label: 'Portfolio ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rb', label: 'Benchmark ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'bn', label: 'Benchmark' }, { key: 'al', label: 'Alloc', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'se', label: 'Select', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'in', label: 'Inter', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'tot', label: 'Total', num: 1, fmt: function (v) { return F.bps(v); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }],
       rows: CLS.map(function (a, k) { var r = b.rows[k]; return { a: a, wp: att.wp[k], wb: POLICY[k], rp: att.rp[k], rb: att.rb[k], bn: benchName(k), al: r.alloc, se: r.sel, in: r.inter, tot: r.alloc + r.sel + r.inter }; }), foot: { a: 'Total', wp: 1, wb: 1, rp: b.rpTot, rb: b.rbTot, al: b.alloc, se: b.sel, in: b.inter, tot: b.total } });
     var y = S.year, G = B.P.G[y], Gb = B.Bm.G[y];
     var mrows = MGR.map(function (m, i) {

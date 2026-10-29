@@ -870,14 +870,16 @@
     return { weights: weights, points: weights.map(function (w) { return { w: w, r: O.portMu(w, mu), v: O.portVol(w, S) }; }) };
   };
 
-  /** Brinson-Hood-Beebower attribution. alloc = sum (wp - wb) rb, selection = sum wb (rp - rb),
-      interaction = sum (wp - wb)(rp - rb). total is computed independently as rp_tot - rb_tot,
-      so alloc + sel + inter = total is a real check (as in the original macro dashboard). */
+  /** Brinson-Fachler attribution. alloc_i = (wp_i - wb_i)(rb_i - Rb), Rb = sum wb rb, selection_i = wb_i (rp_i - rb_i),
+      interaction_i = (wp_i - wb_i)(rp_i - rb_i). With weights summing to 1 on both sides the allocation total equals
+      the Brinson-Hood-Beebower total; only the split by row changes. total is computed independently as
+      rp_tot - rb_tot, so alloc + sel + inter = total is a real check. */
   PM.brinson = function (wp, wb, rp, rb) {
-    var alloc = 0, sel = 0, inter = 0, rpTot = 0, rbTot = 0, rows = [];
-    for (var i = 0; i < wb.length; i++) {
-      var a = (wp[i] - wb[i]) * rb[i], s = wb[i] * (rp[i] - rb[i]), x = (wp[i] - wb[i]) * (rp[i] - rb[i]);
-      alloc += a; sel += s; inter += x; rpTot += wp[i] * rp[i]; rbTot += wb[i] * rb[i];
+    var alloc = 0, sel = 0, inter = 0, rpTot = 0, rbTot = 0, rows = [], i;
+    for (i = 0; i < wb.length; i++) { rpTot += wp[i] * rp[i]; rbTot += wb[i] * rb[i]; }
+    for (i = 0; i < wb.length; i++) {
+      var a = (wp[i] - wb[i]) * (rb[i] - rbTot), s = wb[i] * (rp[i] - rb[i]), x = (wp[i] - wb[i]) * (rp[i] - rb[i]);
+      alloc += a; sel += s; inter += x;
       rows.push({ alloc: a, sel: s, inter: x });
     }
     var total = rpTot - rbTot;
@@ -1862,6 +1864,7 @@
       eff[o.overlay.from] -= excess;
     }
     return { flows: { calls: flowIn, spending: o.spending || 0 }, navBefore: PM.sum(o.value), nav: nav, navAfter: navAfter, pre: pre, trades: tr, costs: costs, after: wa, effective: eff, overlay: overlay, overlayExcess: excess, overlayBeta: beta,
-      turnover: tr.reduce(function (s, t, i) { return i === c ? s : s + Math.abs(t); }, 0) / 2, breachesBefore: RB.drift(pre, o.lo, o.hi), breachesAfter: RB.drift(eff, o.lo, o.hi) };
+      /* gross value traded in the liquid sleeves; cash flows make purchases and sales unequal, so no halving */
+      turnover: tr.reduce(function (s, t, i) { return i === c ? s : s + Math.abs(t); }, 0), breachesBefore: RB.drift(pre, o.lo, o.hi), breachesAfter: RB.drift(eff, o.lo, o.hi) };
   };
 })(typeof window !== 'undefined' ? window : globalThis);

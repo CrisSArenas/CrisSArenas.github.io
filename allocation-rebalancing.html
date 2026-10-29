@@ -323,6 +323,7 @@ overlay = beta_PE x (w_PE - hi_PE) x NAV_after,  beta_PE = rho_PE,US sigma_PE / 
   function viewsFull() {
     var v = S.views.map(function (x, i) { return PRIV.indexOf(i) !== -1 || i === CASH ? 0 : x; });
     v[CASH] = -PM.sum(v);
+    if (Math.abs(v[CASH]) < 1e-12) v[CASH] = 0;
     return v;
   }
   function renderViewsTable() {
@@ -386,7 +387,7 @@ overlay = beta_PE x (w_PE - hi_PE) x NAV_after,  beta_PE = rho_PE,US sigma_PE / 
     var passed = checks.filter(function (c) { return c.ok; }).length;
     var wPEafter = p.after[PE];
     UI.kpis('#rebKpis', [
-      { id: 'trades', label: 'Trades in liquid sleeves', value: F.int(nTr), sub: 'turnover ' + F.money(p.turnover, 1) + ', ' + F.pct(p.turnover / p.nav, 1) + ' of assets' },
+      { id: 'trades', label: 'Trades in liquid sleeves', value: F.int(nTr), sub: 'gross traded ' + F.money(p.turnover, 1) + ', ' + F.pct(p.turnover / p.nav, 1) + ' of assets' },
       { id: 'costs', label: 'Trading costs', value: kUsd(p.costs), sub: F.num(p.costs / p.nav * 1e4, 2) + ' bps of assets',
         explain: function () { return { title: 'Trading costs', formula: 'sum over liquid sleeves of |trade_i| x cost_i / 10,000, paid from cash', inputs: SLEEVES.map(function (s, i) { return i === CASH || !LIQUID[i] || !p.trades[i] ? null : { name: s, value: F.money(Math.abs(p.trades[i]), 1) + ' x ' + COST[i] + ' bps', src: 'assumption', note: 'trading cost' }; }).filter(Boolean), result: kUsd(p.costs, 1) }; } },
       { id: 'overlay', label: 'Futures overlay', value: F.money(p.overlay, 1), sub: p.overlay > 0 ? 'sell US equity futures, beta ' + F.num(p.overlayBeta, 2) + '; PE at ' + F.pct(wPEafter, 1) + ' vs ' + F.pct(POL.hi[PE], 0) + ' limit' : 'not needed, private equity inside its range',
@@ -453,8 +454,8 @@ overlay = beta_PE x (w_PE - hi_PE) x NAV_after,  beta_PE = rho_PE,US sigma_PE / 
         return { status: ok ? 'ok' : 'blocked', msg: 'Tilts sized within budget: tracking error ' + F.pct(T.st.te, 2) + ' against ' + F.pct(A.teBudget, 2) + (T.st.scale < 1 ? ', after scaling every view by ' + F.num(T.st.scale, 2) : ', at full size'), details: T.outside.length ? T.outside.map(function (i) { return SLEEVES[i] + ' tactical target outside its range'; }) : null };
       }) },
       { agent: 'draft', run: step(function () {
-        audit.push('draft', 'trade list drafted', R.nTr + ' trades, turnover ' + F.money(p.turnover, 1) + ', costs ' + kUsd(p.costs, 1));
-        return { msg: 'Trade list drafted: ' + R.nTr + ' trades in liquid sleeves, turnover ' + F.money(p.turnover, 1) + ', costs ' + kUsd(p.costs, 1), details: SLEEVES.reduce(function (o, s, i) { if (Math.abs(p.trades[i]) > 1e-9) o[s] = (p.trades[i] > 0 ? '+' : '') + F.num(p.trades[i], 1) + ' $m'; return o; }, {}) };
+        audit.push('draft', 'trade list drafted', R.nTr + (R.nTr === 1 ? ' trade' : ' trades') + ', gross traded ' + F.money(p.turnover, 1) + ', costs ' + kUsd(p.costs, 1));
+        return { msg: 'Trade list drafted: ' + R.nTr + (R.nTr === 1 ? ' trade' : ' trades') + ' in liquid sleeves, gross traded ' + F.money(p.turnover, 1) + ', costs ' + kUsd(p.costs, 1), details: SLEEVES.reduce(function (o, s, i) { if (Math.abs(p.trades[i]) > 1e-9) o[s] = (p.trades[i] > 0 ? '+' : '') + F.num(p.trades[i], 1) + ' $m'; return o; }, {}) };
       }) },
       { agent: 'check', run: step(function () { var c = R.checks[0]; audit.push('check', c.ok ? 'passed' : 'blocked', c.name); return { status: c.ok ? 'ok' : 'blocked', msg: 'Trades net to zero after the cash flows: ' + (c.ok ? 'yes' : 'no') + ' (' + c.detail + ')' }; }) },
       { agent: 'check', run: step(function () { var c = R.checks[1]; audit.push('check', c.ok ? 'passed' : 'blocked', c.name); return { status: c.ok ? 'ok' : 'blocked', msg: 'Post-trade weights inside ranges: ' + (c.ok ? 'yes' : 'no') + ' (' + c.detail + ')' }; }) },
@@ -478,7 +479,7 @@ overlay = beta_PE x (w_PE - hi_PE) x NAV_after,  beta_PE = rho_PE,US sigma_PE / 
         if (p.overlay > 0) P.items.push({ id: 'O-1', key: 'overlay', title: 'Sell ' + F.money(p.overlay, 1) + ' of US equity index futures as an overlay', severity: 'med', state: 'pending',
           evidence: UI.esc('Private equity stays at ' + F.pct(p.after[PE], 1) + ' because private sleeves are never traded. The excess over the ' + F.pct(POL.hi[PE], 0) + ' limit is ' + F.money(p.overlayExcess * p.navAfter, 1) + ', and at a beta of ' + F.num(p.overlayBeta, 2) + ' to US equity the futures carry ' + F.money(p.overlay, 1) + ' of notional. They hold its equity exposure at the limit until distributions or new marks bring the weight down.') });
         audit.push('propose', 'sent for approval', P.items.length + ' items');
-        return { status: 'approval', msg: P.items.length + ' items sent for approval (' + R.nTr + ' trades' + (p.overlay > 0 ? ' and the overlay' : '') + ')' };
+        return { status: 'approval', msg: P.items.length + ' items sent for approval (' + R.nTr + (R.nTr === 1 ? ' trade' : ' trades') + (p.overlay > 0 ? ' and the overlay' : '') + ')' };
       }) }
     ], function () { if (token === S.run) afterReview(); });
   }
