@@ -50,26 +50,32 @@
     });
   }
 
-  /* AI systems: read it in plain English or in technical detail (choice remembered) */
+  /* AI systems: read it in plain English or in technical detail. One choice shared by the homepage section
+     and ai-systems.html (localStorage aiMode, plain when storage is blocked) */
   var ai = document.getElementById('ai');
   if (ai) {
+    var modeBtns = ai.querySelectorAll('.seg2 button');
     var setMode = function (m) {
       ai.setAttribute('data-mode', m);
-      var all = ai.querySelector('.fold-all'), folds = ai.querySelectorAll('details.ai-fold');
-    var syncAll = function () { var open = Array.prototype.every.call(folds, function (d) { return d.open; }); all.textContent = open ? 'Close all sections' : 'Open all sections'; all.setAttribute('aria-expanded', open ? 'true' : 'false'); };
-    if (all) {
-      all.addEventListener('click', function () { var open = all.getAttribute('aria-expanded') !== 'true'; folds.forEach(function (d) { d.open = open; }); syncAll(); });
-      folds.forEach(function (d) { d.addEventListener('toggle', syncAll); });
-      syncAll();
-    }
-    ai.querySelectorAll('.seg2 button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m ? 'true' : 'false'); });
+      modeBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m ? 'true' : 'false'); });
     };
     var saved = null; try { saved = localStorage.getItem('aiMode'); } catch (e) { /* storage blocked */ }
     setMode(saved === 'tech' ? 'tech' : 'plain');
-    ai.querySelectorAll('.seg2 button').forEach(function (b) {
+    modeBtns.forEach(function (b) {
       b.addEventListener('click', function () { var m = b.getAttribute('data-mode'); setMode(m); try { localStorage.setItem('aiMode', m); } catch (e) { /* ignore */ } });
     });
   }
+
+  /* ai-systems.html contents: mark the section in view, and close the mobile menu after a pick */
+  var toc = document.querySelector('.dd-toc');
+  if (toc && 'IntersectionObserver' in window) {
+    var tocLinks = toc.querySelectorAll('a');
+    var mark = function (id) { tocLinks.forEach(function (a) { if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); }); };
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) mark(e.target.id); }); }, { rootMargin: '-30% 0px -60% 0px' });
+    document.querySelectorAll('.dd-sec').forEach(function (x) { io.observe(x); });
+  }
+  var tocM = document.querySelector('.dd-toc-m');
+  if (tocM) tocM.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { tocM.open = false; }); });
 
   /* AI systems results, from the evaluation panels of every demo (assets/data/eval-results.js) */
   var box = document.getElementById('aiResults');

@@ -110,24 +110,93 @@
 
 <section class="section" id="ai">
   <div class="container">
-    <div class="section-head reveal"><h2>AI systems</h2><p>I build AI systems that investment teams use every day, on the models and cloud platforms large firms already run. Everything below is something I&#39;ve designed, shipped and maintained.</p></div>
-    <div class="ai-mode reveal" role="group" aria-label="Choose how to read this section"><span>Read it as</span><div class="seg2"><button type="button" data-mode="plain" aria-pressed="true">Plain English</button><button type="button" data-mode="tech" aria-pressed="false">Technical</button></div><button type="button" class="fold-all" aria-expanded="false">Open all sections</button></div>
-    <div class="ai-lead reveal"><p class="t-plain">I design and build agentic AI systems: software agents that read documents, use the firm&#39;s own tools, check their work and hand every decision that matters to a person. For an investment team, that means the first pass on every LPA, GP report, statement and data feed is done before anyone opens the file. Analysts spend their time on judgment. I take each system from the first idea to a production system the team relies on, with a human in the loop at every step.</p><p class="t-tech">I design, build and run agentic systems in production: tool-using LLM agents with typed tool contracts, bounded autonomy, retrieval over firm documents, evaluation gates in CI and explicit human approval steps. They run inside the firm&#39;s Azure or AWS tenant and inside Microsoft 365, under the same identity, permissions and audit rules as every other system the firm runs.</p></div>
-
-    <details class="ai-fold reveal" open>
-      <summary><div><h3 class="ai-sub">What I build</h3><p class="fold-sub">Six capabilities, each one working in a demo on this site</p></div><span class="fold-ic" aria-hidden="true"></span></summary>
-      <div class="ai-fold-body">
-    <div class="grid-3 cap-grid">
-      <div class="card cap-card"><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 12h6M10 16h6"/></svg><h3>Document intelligence</h3><p class="t-plain">My systems read LPAs, GP reports, capital account statements, DDQs and CIMs and pull out the figures a team needs: fees, commitments, NAVs, cash flows and key terms. Every number links back to the page and line it came from, so an analyst can check it in seconds. That turns days of manual data entry into a review of exceptions, and it gives the team one source of truth across GPs that all report differently.</p><p class="t-tech">Layout-aware parsing of native and scanned PDFs, table reconstruction across page breaks, and extraction into typed fields with units, currency, period and fund identity normalized. Each value carries a page and line reference and is verified against the source text before it is accepted. Values that fail are held for review and never imputed. Field-level accuracy and citation coverage are tracked per document type and per GP template, because a new template is where extraction quality usually drops.</p><p class="cap-see">See it in <a href="private-capital-lab.html#under-the-hood">Private Capital Lab</a> and <a href="fund-terms-auditor.html#under-the-hood">Fund Terms Auditor</a></p></div>
-      <div class="card cap-card"><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="12" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8.5 6H12a3 3 0 0 1 3 3v.5M8.5 18H12a3 3 0 0 0 3-3v-.5"/></svg><h3>Agent workflows</h3><p class="t-plain">Multi-step systems that research, monitor and reconcile across sources, so analysts start the day from the exceptions. One agent can read a capital call, match it to the books, check it against the liquidity plan and draft the cash movement. It stops for a person to sign off before anything moves money or reaches a client.</p><p class="t-tech">Tool-using agents built on the Claude Agent SDK and Model Context Protocol servers, with scoped tools, step and token budgets, explicit stop conditions and hard checks between steps. I use fixed workflows where the path is known and give the model freedom to branch only where the task needs it. Every run is traced and can be replayed from its log with the same inputs, tools and model version.</p><p class="cap-see">See it in <a href="agentic-portfolio-monitor.html">Agentic Portfolio Monitoring</a></p></div>
-      <div class="card cap-card"><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.8-5"/></svg><h3>Evaluation and quality</h3><p class="t-plain">Every system is tested on real documents whose answers are already known and confirmed by experts, for accuracy, citation coverage and false flags. Any change is retested before it ships, so a team knows the error rate before it relies on the output. The same test set is how I decide whether a new model is better or just newer.</p><p class="t-tech">Expert-verified gold sets per document type, stratified by GP template and including planted errors, versioned with the code. Scoring covers field accuracy within tolerance, citation coverage, recall on planted issues and false-positive rate, plus tool-call validity for agents. The regression suite runs in CI on every model, configuration or code change, and a release ships only if no metric drops.</p><p class="cap-see">See it in <a href="#ai-results">the results below</a></p></div>
-      <div class="card cap-card"><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.3 3 7.8 7 9.5 4-1.7 7-5.2 7-9.5V6z"/><path d="M9.5 12h5M12 9.5v5"/></svg><h3>Governance and security</h3><p class="t-plain">Each user reaches only the data they are allowed to see, and every action leaves an audit trail. Sensitive data stays inside the firm&#39;s own cloud tenant, with a clear record of which model did what and who approved it. That is what lets compliance and risk teams say yes.</p><p class="t-tech">Entra ID single sign-on and role-based access, with each user&#39;s permissions carried into search so a model never reads what that user cannot open. Private networking, managed secrets and customer-managed keys in the firm&#39;s Azure or AWS tenant. Append-only logs record model, version, inputs, outputs, tools called and approver for every action, retained under the firm&#39;s records policy.</p><p class="cap-see">See it in <a href="agentic-portfolio-monitor.html">Agentic Portfolio Monitoring</a></p></div>
-      <div class="card cap-card"><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8"/></svg><h3>Data foundations</h3><p class="t-plain">I connect portfolio systems, accounting, market data vendors and data warehouses into one reconciled source. Models then work from the same numbers the investment and operations teams sign off on. Without this, AI just produces faster versions of the same spreadsheet disagreements.</p><p class="t-tech">Feeds from portfolio, accounting and market data systems land in Snowflake or PostgreSQL, scheduled with Airflow and modeled in dbt with tests on keys, freshness and reconciliations. Agents read governed views through typed tools, never raw tables, so every number traces back to a source system and a load time. Extracted document data flows back into the same models with its citations attached.</p><p class="cap-see">See it in <a href="private-capital-lab.html">Private Capital Lab</a></p></div>
-      <div class="card cap-card"><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16"/><path d="m7 15 4-4 3 3 5-6"/></svg><h3>Quant and machine learning models</h3><p class="t-plain">Forecasting, regime models and portfolio optimization built for allocation decisions. This includes my published research on deep learning for multi-asset portfolios. Agents call these models as tools, so a recommendation rests on tested math and the language model only explains it.</p><p class="t-tech">PyTorch models validated walk-forward with purged splits to avoid look-ahead, regime models that learn soft market states, and optimization with Black-Litterman, resampled frontiers and risk budgets. Results are reported against simple baselines with uncertainty. The models are exposed to agents as versioned tools with fixed inputs and outputs, so the same question always gets the same numbers.</p><p class="cap-see">See it in <a href="allocation-lab.html">Allocation Lab</a> and <a href="research-regime-aware-transformer.html">Research</a></p></div>
-    </div>
+    <div class="section-head reveal"><h2>AI systems</h2><p>Agentic systems that investment teams use every day, built on the models and cloud platforms large firms already run.</p></div>
+    <div class="ai-mode reveal" role="group" aria-label="Choose how to read this section"><span>Read it as</span><div class="seg2"><button type="button" data-mode="plain" aria-pressed="true">Plain English</button><button type="button" data-mode="tech" aria-pressed="false">Technical</button></div></div>
+    <div class="feat-stack">
+    <article class="card feat-card reveal" id="feat-agents">
+      <div class="feat-body">
+        <p class="feat-eyebrow">01 · Multi-agent systems</p>
+        <h3>Teams of agents that do the first pass</h3>
+        <p class="t-plain">Several agents split the work the way an investment team does. One reads, one analyzes, one checks and one drafts, with hard checks between steps and a person approving anything that matters.</p><p class="t-tech">Orchestrator-worker designs with narrow agents, typed tool contracts and an independent verifier. Fixed workflows where the path is known, and planning only where the task varies, with step budgets and full traces.</p>
+        <ul class="feat-points t-plain"><li>Monitoring, research and reconciliation</li><li>Hard checks between every step</li><li>Human sign-off before anything moves</li></ul><ul class="feat-points t-tech"><li>Scoped tools through Model Context Protocol</li><li>Schema-validated tool calls and budgets</li><li>Replayable traces and approval gates</li></ul>
+        <div class="feat-kpi"><!-- ai:agents:start --><span class="feat-num">5</span><!-- ai:agents:end --><span class="feat-lab">Rule breaches caught on the demo book</span></div>
+        <p class="feat-links"><a href="agentic-portfolio-monitor.html">See it in Agentic Portfolio Monitoring <span aria-hidden="true">&rarr;</span></a><a href="ai-systems.html#multi-agent">Deep dive <span aria-hidden="true">&rarr;</span></a></p>
       </div>
-    </details>
-
+      <figure class="feat-art"><!-- ai-art:agents:start --><svg class="art" viewBox="0 0 480 270" role="img"><title>An orchestrator assigns work to four agents, a reader, an analyst, a drafter and a verifier, and its output waits for a person to approve it</title>
+<text class="tx-m" x="24" y="24">run 0142 · step 6 of 12</text><text class="tx-m" x="456" y="24" text-anchor="end">trace on</text>
+<path class="flow" d="M176 116C150 116 156 57 132 57"/><path class="flow" d="M304 116C330 116 324 57 348 57"/><path class="flow" d="M176 134C150 134 156 197 132 197"/><path class="flow" d="M304 134C330 134 324 197 348 197"/>
+<path class="flow k" d="M240 146V226"/>
+<rect class="box key" x="176" y="104" width="128" height="42" rx="8"/><text class="tx-k" x="240" y="129" text-anchor="middle">orchestrator</text>
+<rect class="box" x="24" y="40" width="108" height="34" rx="7"/><text class="tx-t" x="78" y="61" text-anchor="middle">reader</text>
+<rect class="box" x="348" y="40" width="108" height="34" rx="7"/><text class="tx-t" x="402" y="61" text-anchor="middle">analyst</text>
+<rect class="box" x="24" y="180" width="108" height="34" rx="7"/><text class="tx-t" x="78" y="201" text-anchor="middle">drafter</text>
+<rect class="box" x="348" y="180" width="108" height="34" rx="7"/><text class="tx-t" x="402" y="201" text-anchor="middle">verifier</text>
+<circle class="dot g" cx="153" cy="86.5" r="4"/><circle class="dot g" cx="327" cy="86.5" r="4"/><circle class="dot g" cx="153" cy="165.5" r="4"/><circle class="dot k" cx="327" cy="165.5" r="4"/>
+<rect class="pill" x="168" y="226" width="144" height="28" rx="14"/><text class="tx-k" x="240" y="244" text-anchor="middle">human.approve()</text>
+<circle class="dot g" cx="28" cy="245" r="3.5"/><text class="tx-m" x="36" y="248.5">done</text><circle class="dot k" cx="82" cy="245" r="3.5"/><text class="tx-m" x="90" y="248.5">pending</text>
+</svg><!-- ai-art:agents:end --></figure>
+    </article>
+    <article class="card feat-card reveal" id="feat-documents">
+      <div class="feat-body">
+        <p class="feat-eyebrow">02 · Document intelligence</p>
+        <h3>Every number tied to its page</h3>
+        <p class="t-plain">LPAs, GP reports, capital account statements, DDQs and CIMs read in minutes. Every figure is linked to the page and line it came from and checked before anyone uses it.</p><p class="t-tech">Layout-aware parsing, schema-first extraction into typed fields, span-level citations and cross-document reconciliation, with low-confidence fields routed to review.</p>
+        <ul class="feat-points t-plain"><li>Fees, terms, cash flows and NAVs</li><li>Works across GPs that report differently</li><li>Exceptions go to a person, and nothing is guessed</li></ul><ul class="feat-points t-tech"><li>Scanned PDFs, multi-page tables and footnotes</li><li>Accuracy tracked per GP template</li><li>Roll-forward and cross-document checks</li></ul>
+        <div class="feat-kpi"><!-- ai:documents:start --><span class="feat-num">99.5%</span><!-- ai:documents:end --><span class="feat-lab">Extraction accuracy on labeled demo documents</span></div>
+        <p class="feat-links"><a href="private-capital-lab.html#under-the-hood">See it in Private Capital Lab <span aria-hidden="true">&rarr;</span></a><a href="ai-systems.html#documents">Deep dive <span aria-hidden="true">&rarr;</span></a></p>
+      </div>
+      <figure class="feat-art"><!-- ai-art:documents:start --><svg class="art" viewBox="0 0 480 270" role="img"><title>A statement page with its table and paragraph detected, three values highlighted and extracted as fields, each with a page and line citation, and a roll-forward check that ties</title>
+<rect class="box" x="20" y="20" width="176" height="230" rx="6"/><text class="tx-m" x="30" y="38">statement.pdf</text><text class="tx-m" x="186" y="38" text-anchor="end">p2</text>
+<rect class="bar" x="32" y="50" width="92" height="6" rx="3"/><rect class="bar" x="32" y="62" width="60" height="4" rx="2"/>
+<rect class="reg" x="28" y="76" width="160" height="48" rx="4"/><text class="tx-m s" x="182" y="88" text-anchor="end">para</text>
+<rect class="bar" x="36" y="86" width="118" height="3" rx="1.5"/><rect class="bar" x="36" y="96" width="140" height="3" rx="1.5"/><rect class="bar" x="36" y="106" width="124" height="3" rx="1.5"/><rect class="bar" x="36" y="116" width="92" height="3" rx="1.5"/>
+<rect class="reg" x="28" y="136" width="160" height="100" rx="4"/><text class="tx-m s" x="182" y="148" text-anchor="end">table</text>
+<path class="rule" d="M36 172H180M36 190H180M36 208H180"/>
+<rect class="bar" x="36" y="160" width="62" height="4" rx="2"/><rect class="bar" x="36" y="178" width="54" height="4" rx="2"/><rect class="bar" x="36" y="196" width="66" height="4" rx="2"/><rect class="bar" x="36" y="214" width="48" height="4" rx="2"/>
+<rect class="bar" x="142" y="178" width="34" height="4" rx="2"/>
+<rect class="hl" x="136" y="155" width="46" height="14" rx="3"/><rect class="hl" x="136" y="191" width="46" height="14" rx="3"/><rect class="hl" x="136" y="209" width="46" height="14" rx="3"/>
+<path class="flow k" d="M200 130H228"/><path class="arrow" d="M236 130L228 125.5V134.5Z"/>
+<rect class="box" x="240" y="44" width="220" height="140" rx="8"/><text class="tx-m" x="252" y="64">fields · Q3 2026</text><path class="rule" d="M240 74H460"/>
+<text class="tx-t" x="252" y="100">nav_close</text><text class="tx-t" x="326" y="100">48.2m</text><text class="tx-k" x="370" y="100">[p2:L14]</text><text class="tx-g" x="448" y="100" text-anchor="end">✓</text>
+<text class="tx-t" x="252" y="130">called</text><text class="tx-t" x="326" y="130">12.5m</text><text class="tx-k" x="370" y="130">[p2:L17]</text><text class="tx-g" x="448" y="130" text-anchor="end">✓</text>
+<text class="tx-t" x="252" y="160">mgmt_fee</text><text class="tx-t" x="326" y="160">0.41m</text><text class="tx-k" x="370" y="160">[p2:L19]</text><text class="tx-g" x="448" y="160" text-anchor="end">✓</text>
+<path class="flow g" d="M350 184V210"/>
+<rect class="pill g" x="264" y="210" width="172" height="28" rx="14"/><text class="tx-g" x="350" y="228" text-anchor="middle">roll-forward ties ✓</text>
+</svg><!-- ai-art:documents:end --></figure>
+    </article>
+    <article class="card feat-card reveal" id="feat-data">
+      <div class="feat-body">
+        <p class="feat-eyebrow">03 · Data foundations</p>
+        <h3>One reconciled source of truth</h3>
+        <p class="t-plain">Portfolio, accounting, market data and document data brought into one tested, reconciled place, so every model and agent works from the same numbers.</p><p class="t-tech">Raw, clean and reconciled layers on Snowflake, Databricks or PostgreSQL, orchestrated with Airflow and modeled in dbt, with freshness and reconciliation tests, lineage and governed views for agents.</p>
+        <ul class="feat-points t-plain"><li>One master list of funds and GPs</li><li>Freshness and reconciliation checks</li><li>Access limited to what each user can see</li></ul><ul class="feat-points t-tech"><li>Entity master and history kept as reported and as corrected</li><li>Tests on keys, freshness and reconciliations</li><li>Row-level permissions on governed views</li></ul>
+        <div class="feat-kpi"><!-- ai:data:start --><span class="feat-num">7</span><!-- ai:data:end --><span class="feat-lab">Reconciliation checks run in the Private Capital Lab base case</span></div>
+        <p class="feat-links"><a href="private-capital-lab.html">See it in Private Capital Lab <span aria-hidden="true">&rarr;</span></a><a href="ai-systems.html#data">Deep dive <span aria-hidden="true">&rarr;</span></a></p>
+      </div>
+      <figure class="feat-art"><!-- ai-art:data:start --><svg class="art" viewBox="0 0 480 270" role="img"><title>Four sources load into raw, clean and reconciled layers, tested for freshness and lineage, and the reconciled layer feeds agents, models and dashboards</title>
+<text class="tx-m" x="16" y="24">sources</text><text class="tx-m" x="176" y="32">warehouse</text><text class="tx-m" x="356" y="58">consumers</text>
+<path class="flow" d="M124 51C150 51 150 52 176 52"/><path class="flow" d="M124 103C152 103 148 59 176 59"/><path class="flow" d="M124 155C156 155 146 67 176 67"/><path class="flow" d="M124 207C160 207 144 74 176 74"/>
+<path class="flow g" d="M304 175C330 175 330 85 356 85"/><path class="flow g" d="M304 175C330 175 330 137 356 137"/><path class="flow g" d="M304 175C330 175 330 189 356 189"/>
+<rect class="box" x="16" y="36" width="108" height="30" rx="7"/><text class="tx-t" x="70" y="55.5" text-anchor="middle">portfolio</text>
+<rect class="box" x="16" y="88" width="108" height="30" rx="7"/><text class="tx-t" x="70" y="107.5" text-anchor="middle">accounting</text>
+<rect class="box" x="16" y="140" width="108" height="30" rx="7"/><text class="tx-t" x="70" y="159.5" text-anchor="middle">market_data</text>
+<rect class="box" x="16" y="192" width="108" height="30" rx="7"/><text class="tx-t" x="70" y="211.5" text-anchor="middle">documents</text>
+<path class="rule" d="M240 82V100M240 138V156"/><path class="arrow-s" d="M240 100L236.5 94H243.5ZM240 156L236.5 150H243.5Z"/>
+<rect class="box" x="176" y="44" width="128" height="38" rx="7"/><text class="tx-t" x="240" y="67.5" text-anchor="middle">raw</text>
+<rect class="box" x="176" y="100" width="128" height="38" rx="7"/><text class="tx-t" x="240" y="123.5" text-anchor="middle">clean</text>
+<rect class="box key" x="176" y="156" width="128" height="38" rx="7"/><text class="tx-k" x="240" y="179.5" text-anchor="middle">reconciled</text>
+<text class="tx-g" x="240" y="222" text-anchor="middle">tests ✓<tspan dx="12">fresh 2h</tspan><tspan dx="12">lineage ✓</tspan></text>
+<rect class="box" x="356" y="70" width="108" height="30" rx="7"/><text class="tx-t" x="410" y="89.5" text-anchor="middle">agents</text>
+<rect class="box" x="356" y="122" width="108" height="30" rx="7"/><text class="tx-t" x="410" y="141.5" text-anchor="middle">models</text>
+<rect class="box" x="356" y="174" width="108" height="30" rx="7"/><text class="tx-t" x="410" y="193.5" text-anchor="middle">dashboards</text>
+</svg><!-- ai-art:data:end --></figure>
+    </article>
+    </div>
+    <div class="grid-3 mini-grid reveal">
+      <div class="card mini-card"><h4>Evaluation</h4><p class="t-plain">Every system is tested on labeled documents before each release.</p><p class="t-tech">Expert-verified gold sets with planted errors, scored in CI on every change.</p></div>
+      <div class="card mini-card"><h4>Governance</h4><p class="t-plain">Permissions, audit trails, and data that stays inside the firm.</p><p class="t-tech">Entra ID access carried into retrieval, append-only logs, in-tenant deployment.</p></div>
+      <div class="card mini-card"><h4>Quant and ML models</h4><p class="t-plain">Forecasting, regime models and optimization the agents call as tools.</p><p class="t-tech">Walk-forward validated PyTorch models and optimizers exposed as versioned tools.</p></div>
+    </div>
     <details class="ai-fold reveal">
       <summary><div><h3 class="ai-sub">Models and platforms I work with</h3><p class="fold-sub">Models, cloud and enterprise, agent tooling, data and investment platforms</p></div><span class="fold-ic" aria-hidden="true"></span></summary>
       <div class="ai-fold-body">
@@ -155,7 +224,7 @@
         </dl>
       </details>
     </div>
-    <p class="ai-more reveal"><a href="ai-systems.html">Read more on how I build and run AI systems <span aria-hidden="true">&rarr;</span></a></p>
+    <p class="ai-more reveal"><a href="ai-systems.html">Read the full deep dive <span aria-hidden="true">&rarr;</span></a></p>
   </div>
 </section>
 
