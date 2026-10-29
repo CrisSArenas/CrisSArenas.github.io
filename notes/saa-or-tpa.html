@@ -67,52 +67,52 @@ sigma_true   = sigma_rep sqrt((1 + rho) / (1 - rho))
 a change passes if
   d(return) / d(vol) &gt; (mu_p - r_f) / sigma_p
   and active risk stays within budget, or falls</pre>
-<p>The first block is tracking error and its Euler split. The second is the Geltner adjustment, with rho the autocorrelation of the reported series. The last is the test I care about. A change has to beat the fund's own Sharpe ratio, 0.25 in the base case, or it dilutes the fund.</p>
+<p>The first block is tracking error and its Euler split. The second is the Geltner adjustment, with rho the autocorrelation of the reported series. The last is the test I care about. A change has to beat the fund's own Sharpe ratio, 0.26 in the base case, or it dilutes the fund.</p>
 <h2>The base case</h2>
 <p>The endowment holds $880.1m by the sum of the custodian's lines. The printed total is $890.1m, a $10.0m break, so I compute weights on the sum of the lines until the custodian confirms. After the fall in listed equity, US equity sits at 14.2%, below its 15% floor. Private equity is at 19.2% and hedge funds at 13.9% on their latest marks.</p>
 <div class="table-wrap"><table class="memo-table">
 <thead><tr><th>Asset class</th><th class="n">Weight</th><th class="n">Reference</th><th class="n">To total vol</th><th class="n">To active risk</th></tr></thead>
 <tbody>
-<tr><td>US equity</td><td class="n">14.2%</td><td class="n">42.0%</td><td class="n">2.02%</td><td class="n">1.69%</td></tr>
-<tr><td>International equity</td><td class="n">7.9%</td><td class="n">21.0%</td><td class="n">1.19%</td><td class="n">0.85%</td></tr>
-<tr><td>Emerging markets equity</td><td class="n">3.1%</td><td class="n">7.0%</td><td class="n">0.51%</td><td class="n">0.27%</td></tr>
-<tr><td>Private equity</td><td class="n">19.2%</td><td class="n">0.0%</td><td class="n">4.01%</td><td class="n">1.20%</td></tr>
-<tr><td>Hedge funds</td><td class="n">13.9%</td><td class="n">0.0%</td><td class="n">0.79%</td><td class="n">-0.14%</td></tr>
-<tr><td>Real estate</td><td class="n">9.2%</td><td class="n">0.0%</td><td class="n">1.76%</td><td class="n">0.44%</td></tr>
-<tr><td>US Treasuries</td><td class="n">27.0%</td><td class="n">30.0%</td><td class="n">0.31%</td><td class="n">0.00%</td></tr>
+<tr><td>US equity</td><td class="n">14.2%</td><td class="n">42.0%</td><td class="n">2.03%</td><td class="n">2.19%</td></tr>
+<tr><td>International equity</td><td class="n">7.9%</td><td class="n">21.0%</td><td class="n">1.19%</td><td class="n">1.09%</td></tr>
+<tr><td>Emerging markets equity</td><td class="n">3.1%</td><td class="n">7.0%</td><td class="n">0.51%</td><td class="n">0.35%</td></tr>
+<tr><td>Private equity</td><td class="n">19.2%</td><td class="n">0.0%</td><td class="n">4.05%</td><td class="n">0.79%</td></tr>
+<tr><td>Hedge funds</td><td class="n">13.9%</td><td class="n">0.0%</td><td class="n">0.80%</td><td class="n">-0.23%</td></tr>
+<tr><td>Real estate</td><td class="n">9.2%</td><td class="n">0.0%</td><td class="n">1.15%</td><td class="n">0.04%</td></tr>
+<tr><td>US Treasuries</td><td class="n">27.0%</td><td class="n">30.0%</td><td class="n">0.30%</td><td class="n">0.00%</td></tr>
 <tr><td>Cash</td><td class="n">5.5%</td><td class="n">0.0%</td><td class="n">0.00%</td><td class="n">0.00%</td></tr>
-<tr><td>Total</td><td class="n">100.0%</td><td class="n">100.0%</td><td class="n">10.58%</td><td class="n">4.31%</td></tr>
+<tr><td>Total</td><td class="n">100.0%</td><td class="n">100.0%</td><td class="n">10.03%</td><td class="n">4.23%</td></tr>
 </tbody></table></div>
-<p>Active risk is 4.31% against a 4% budget. The three listed equity lines add 2.81% of it, about two thirds, and that is the part I can trade. Private equity adds 1.20% because the reference holds none of it. Its desmoothed correlation with US equity is 0.72, so it offsets some of the listed equity underweight, but it cannot be traded to close the gap. Hedge funds reduce active risk slightly. Treasuries sit close to their reference weight and add nothing.</p>
-<p>The fund expects 6.36% at 10.6% volatility. The reference expects 6.24% at 11.5%. So the fund earns 0.12 pp more for 4.31% of active risk, or 0.03 per unit. That is thin pay for the risk the committee is carrying.</p>
+<p>Active risk is 4.23% against a 4% budget. The three listed equity lines add 3.63% of it, about 86%, and that is the part I can trade. Private equity adds 0.79% because the reference holds none of it. Its desmoothed correlation with US equity is 0.72, so it offsets some of the listed equity underweight, but it cannot be traded to close the gap. Hedge funds reduce active risk by 0.23%, and real estate adds almost nothing. Treasuries sit close to their reference weight and add nothing.</p>
+<p>The fund expects 6.36% at 10.0% volatility. The reference expects 6.24% at 11.5%. So the fund earns 0.12 pp more for 4.23% of active risk, or 0.03 per unit. That is thin pay for the risk the committee is carrying.</p>
 <p>The demo judges six candidate changes both ways.</p>
 <div class="table-wrap"><table class="memo-table">
 <thead><tr><th>Change</th><th class="n">Return</th><th class="n">Total vol</th><th class="n">Active risk</th><th>SAA verdict</th><th>Total portfolio verdict</th></tr></thead>
 <tbody>
-<tr><td>+3% EM equity, from US equity</td><td class="n">+0.03 pp</td><td class="n">+0.07 pp</td><td class="n">0.00 pp</td><td>Breaks a range</td><td>Improves the total portfolio</td></tr>
-<tr><td>+3% hedge funds, from US Treasuries</td><td class="n">+0.04 pp</td><td class="n">+0.14 pp</td><td class="n">-0.02 pp</td><td>Breaks a range</td><td>Improves the total portfolio</td></tr>
-<tr><td>+2% private equity, from US equity</td><td class="n">+0.05 pp</td><td class="n">+0.14 pp</td><td class="n">+0.25 pp</td><td>Breaks a range</td><td>Breaks the active risk budget</td></tr>
-<tr><td>+3% US Treasuries, from cash</td><td class="n">+0.02 pp</td><td class="n">+0.03 pp</td><td class="n">+0.00 pp</td><td>Breaks a range</td><td>Breaks the active risk budget</td></tr>
-<tr><td>+2% real estate, from international equity</td><td class="n">-0.01 pp</td><td class="n">+0.09 pp</td><td class="n">+0.24 pp</td><td>Breaks a range</td><td>Breaks the active risk budget</td></tr>
-<tr><td>+3% US equity, from US Treasuries</td><td class="n">+0.07 pp</td><td class="n">+0.40 pp</td><td class="n">-0.16 pp</td><td>Fits ranges</td><td>Adds risk for too little return</td></tr>
+<tr><td>+3% EM equity, from US equity</td><td class="n">+0.03 pp</td><td class="n">+0.07 pp</td><td class="n">-0.01 pp</td><td>Breaks a range</td><td>Improves the total portfolio</td></tr>
+<tr><td>+3% hedge funds, from US Treasuries</td><td class="n">+0.04 pp</td><td class="n">+0.14 pp</td><td class="n">-0.04 pp</td><td>Breaks a range</td><td>Adds risk for too little return</td></tr>
+<tr><td>+2% private equity, from US equity</td><td class="n">+0.05 pp</td><td class="n">+0.14 pp</td><td class="n">+0.25 pp</td><td>Breaks a range</td><td>Leaves active risk over the budget</td></tr>
+<tr><td>+3% US Treasuries, from cash</td><td class="n">+0.02 pp</td><td class="n">+0.03 pp</td><td class="n">0.00 pp</td><td>Breaks a range</td><td>Improves the total portfolio</td></tr>
+<tr><td>+2% real estate, from international equity</td><td class="n">-0.01 pp</td><td class="n">-0.05 pp</td><td class="n">+0.18 pp</td><td>Breaks a range</td><td>Leaves active risk over the budget</td></tr>
+<tr><td>+3% US equity, from US Treasuries</td><td class="n">+0.07 pp</td><td class="n">+0.40 pp</td><td class="n">-0.21 pp</td><td>Fits ranges</td><td>Adds risk for too little return</td></tr>
 </tbody></table></div>
-<p>The approaches disagree on 3 of 6. Five changes break a range because US equity already sits below its floor, and any change that leaves it there fails the SAA test. The only change that fits every range is the move from Treasuries into US equity, and that is the one the total portfolio test rejects. It cuts active risk by 0.16 pp but adds 0.40 pp of volatility for 0.07 pp of return, well under the 0.25 hurdle.</p>
-<p>Two rows show active risk at zero after rounding. One edges it down and passes. The other edges it up and fails, because a fund already over budget gets no credit for a trade that does not bring it back.</p>
+<p>The approaches disagree on 3 of 6. Five changes break a range because US equity already sits below its floor, and any change that leaves it there fails the SAA test. The only change that fits every range is the move from Treasuries into US equity, and that is the one the total portfolio test rejects. It cuts active risk by 0.21 pp but adds 0.40 pp of volatility for 0.07 pp of return, well under the 0.26 hurdle. The hedge fund trade fails the same test by a narrower margin.</p>
+<p>The move from cash into Treasuries shows active risk at zero after rounding. It edges active risk down, so it passes. Had it edged active risk up it would fail, because a fund already over budget gets no credit for a trade that does not bring it back.</p>
 <div class="callout"><p>T-1, the $7.0m trade list I support, is a small move in the direction the total portfolio test rejects. I release it because the IPS requires the range repair. That is why I keep the ranges as guardrails and use the reference portfolio and the budget to decide which trades go first.</p></div>
-<p>Reoptimizing does little. The best Sharpe ratio is 0.26 against 0.25 today, reached by filling private equity and hedge funds to their ceilings, classes staff cannot trade to rebalance. Liquidity does not bind. After a GFC-sized stress the fund holds $416m of liquid assets against $254m required.</p>
+<p>Reoptimizing does little. The best Sharpe ratio rounds to 0.26, the same as today. The optimizer gets there by taking hedge funds to their 14% ceiling and private equity to 21.6%, close to its 22% ceiling, and staff cannot trade either class to rebalance. Liquidity does not bind. After a GFC-sized stress the fund holds $416m of liquid assets against $254m required.</p>
 <h2>What changes the answer</h2>
 <h3>The reference equity share</h3>
-<p>Lower it and the reference moves toward the fund's actual mix. Active risk falls, and trades that add equity start to fail the budget. Raise it and active risk climbs while the return over the reference turns negative. The reference is a policy choice, and the committee should make it deliberately.</p>
+<p>Lower it and the reference moves toward the fund's actual mix. At 60% equity active risk falls to 3.74%, inside the budget, and the return over the reference rises to 0.39 pp. Raise it to 80% and active risk climbs to 5.24% while the return over the reference turns negative. The reference is a policy choice, and the committee should make it deliberately.</p>
 <h3>Desmoothing private risk</h3>
 <p>Switch desmoothing off and total volatility falls, as you would expect. Active risk rises. On reported correlations the private book stops offsetting the listed equity underweight. Smoothing flatters the total risk number and distorts the active one.</p>
 <h3>The size of the budget</h3>
-<p>Raise the budget above 4.31% and the changes that only nudge active risk up start to pass. The move from US equity into private equity still fails a modest increase, because it adds 0.25 pp of active risk on its own.</p>
+<p>Raise the budget just above 4.23% and the verdicts do not move. The two trades that add active risk add a lot of it, 0.18 pp for real estate and 0.25 pp for private equity. The move from US equity into private equity passes only once the budget reaches 4.5%.</p>
 <h2>Pitfalls</h2>
 <ul>
 <li>Treating the reference portfolio as a return target. I use it to measure risk. The return test is the Sharpe hurdle.</li>
 <li>Feeding reported private marks into the risk model. Desmoothing lifts private equity volatility from 14.5% to 23.5% and its correlation with US equity from 0.45 to 0.72.</li>
-<li>Dropping the ranges once the budget exists. The total portfolio test passes the hedge fund trade, yet it would breach the new 14% ceiling in a class the IPS says is not traded to rebalance.</li>
-<li>Trading toward the optimizer. A Sharpe gain of 0.01 is inside the error of the return assumptions, and the Black-Litterman posterior cuts private equity from 9.40% to 8.42%.</li>
+<li>Dropping the ranges once the budget exists. The total portfolio test passes the EM equity trade, yet it takes US equity from 14.2% to 11.2%, further below its 15% floor.</li>
+<li>Trading toward the optimizer. A Sharpe gain of less than 0.01 is inside the error of the return assumptions, and the Black-Litterman posterior cuts private equity from 9.40% to 7.82%.</li>
 <li>Computing weights on a custodian total that does not add up.</li>
 </ul>
 <h2>What I check</h2>

@@ -67,30 +67,30 @@ Fisher z = (atanh r1 - atanh r0)
            / sqrt(1/(n0-3) + 1/(n1-3))</pre>
 <p>Here b_A and b_B are the two sleeves' loading vectors, S_f is the factor covariance matrix, and vol_A and vol_B are the sleeve volatilities. The overlap number is the part of the pair's correlation that comes through the factors alone. The demo flags drift above a z of 3 and a calm-month correlation shift above 2.5.</p>
 <h2>The base case</h2>
-<p>The demo book has five sleeves weighted by equal risk contribution over July 2016 to June 2026. Relative value holds 29.5%, credit 23.1%, macro 19.6%, quant 14.8% and equity long/short 13.0%, each carrying 20.0% of the risk. The book returned 3.4% a year net with 4.8% volatility and a maximum drawdown of 17.0%.</p>
-<p>On the full history the book looks diversified. Average correlation between sleeves is 0.10 in calm months. In the 18 stress months it is 0.47. With the same weights, book volatility is 3.3% on the calm covariance and 8.3% on the stress covariance, and the diversification ratio falls from 1.88 to 1.32.</p>
+<p>The demo book has five sleeves weighted by equal risk contribution over July 2016 to June 2026. Relative value holds 28.1%, credit 23.6%, macro 18.7%, quant 16.1% and equity long/short 13.5%, each carrying 20.0% of the risk. The book returned 5.2% a year net with 4.7% volatility and a maximum drawdown of 10.4%.</p>
+<p>On the full history the book looks diversified. Average correlation between sleeves is 0.11 in calm months. In the 18 stress months it is 0.47. With the same weights, book volatility is 3.4% on the calm covariance and 8.5% on the stress covariance, and the diversification ratio falls from 1.86 to 1.32.</p>
 <div class="table-wrap"><table class="memo-table">
 <thead><tr><th>Pair</th><th class="n">Calm corr</th><th class="n">Stress corr</th><th class="n">Explained by factors</th><th>Shared bet</th></tr></thead>
 <tbody>
-<tr><td>Eq L/S / Quant</td><td class="n">0.30</td><td class="n">0.67</td><td class="n">0.44</td><td>Momentum (0.32, 0.62)</td></tr>
-<tr><td>Macro / Quant</td><td class="n">0.29</td><td class="n">0.47</td><td class="n">0.16</td><td>None on base loadings</td></tr>
-<tr><td>RV / Credit</td><td class="n">0.17</td><td class="n">0.76</td><td class="n">0.31</td><td>None</td></tr>
-<tr><td>Eq L/S / Credit</td><td class="n">0.17</td><td class="n">0.43</td><td class="n">0.31</td><td>None</td></tr>
+<tr><td>Eq L/S / Quant</td><td class="n">0.33</td><td class="n">0.68</td><td class="n">0.39</td><td>Momentum (0.28, 0.59)</td></tr>
+<tr><td>Macro / Quant</td><td class="n">0.31</td><td class="n">0.48</td><td class="n">0.13</td><td>None on base loadings</td></tr>
+<tr><td>RV / Credit</td><td class="n">0.20</td><td class="n">0.74</td><td class="n">0.27</td><td>None</td></tr>
+<tr><td>Eq L/S / Credit</td><td class="n">0.18</td><td class="n">0.41</td><td class="n">0.26</td><td>None</td></tr>
 </tbody>
 </table></div>
-<p>Equity long/short and quant are the only pair with a shared factor bet. Equity long/short loads 0.32 on momentum and quant loads 0.62. The factors alone explain a correlation of 0.44 between them, more than the 0.30 they show in calm months. In stress they correlate 0.67. The Veyl mandate names momentum as a source of return. The Quillmere mandate says the sleeve has no systematic style tilts. The regression disagrees with Quillmere, and I trust the regression.</p>
-<p>The worst stress episode ran 11 months from June 2017. Replayed on today's weights the book loses 17.0%. Quant contributed the most at &minus;5.5%, and equity long/short gave &minus;4.7%. Macro made 0.4%.</p>
+<p>Equity long/short and quant are the only pair with a shared factor bet. Equity long/short loads 0.28 on momentum and quant loads 0.59. The factors alone explain a correlation of 0.39 between them, more than the 0.33 they show in calm months. In stress they correlate 0.68. The Veyl mandate names momentum as a source of return. The Quillmere mandate says the sleeve has no systematic style tilts. The regression disagrees with Quillmere, and I trust the regression.</p>
+<p>The worst stress episode ran 11 months from June 2017. Replayed on today's weights the book loses 10.3%. Quant contributed the most at &minus;3.5%, and equity long/short gave &minus;3.3%. Macro made 0.8%.</p>
 <h3>Drift</h3>
-<p>Loadings also move. Between the first seven years and the last 30 months, macro's calm-month momentum loading went from 0.10 to 0.79 (z 5.3). The Tarsen mandate rules out a momentum overlay. Over the same windows its calm-month correlation with quant rose from 0.13 to 0.69 (Fisher z 3.0). The overlap table still shows macro and quant with no shared bet, because it uses the first-seven-year loadings. Relative value drifted too, on rates, from 0.08 to 0.78 against a 0.1 cap. That one is a mandate breach on duration and a separate question from momentum crowding.</p>
+<p>Loadings also move. Between the first seven years and the last 30 months, macro's calm-month momentum loading went from 0.10 to 0.79 (z 5.3). The Tarsen mandate rules out a momentum overlay. Over the same windows its calm-month correlation with quant rose from 0.12 to 0.74 (Fisher z 3.5). The overlap table still shows macro and quant with no shared bet, because it uses the first-seven-year loadings. Relative value drifted too, on rates, from 0.10 to 0.75 against a 0.1 cap. That one is a mandate breach on duration and a separate question from momentum crowding.</p>
 <div class="callout"><p>Three of the five sleeves now carry momentum. I size equity long/short and quant as one momentum position, and I count macro's overlay against the same budget until it is gone.</p></div>
 <h2>What changes the answer</h2>
-<p>The weighting scheme moves the risk around. Under equal risk contribution each sleeve adds a fifth of the variance. Switch the demo to equal weight and the two momentum sleeves take more of the risk than their weight suggests. At 20.0% weight each, equity long/short carries 31.7% of the risk and quant 27.5%, so the two sleeves carry 59.2% of book variance between them. The maximum drawdown deepens from 17.0% to 19.2%.</p>
-<p>Risk controls change the drawdown more than the overlap. With volatility targeting and drawdown stops both on, the book returns 4.8% a year with a 10.2% drawdown, against 17.0% with neither. They do not remove the shared bet. Stops act after the loss, and volatility targeting reacts on a 12-month lookback.</p>
+<p>The weighting scheme moves the risk around. Under equal risk contribution each sleeve adds a fifth of the variance. Switch the demo to equal weight and the two momentum sleeves take more of the risk than their weight suggests. At 20.0% weight each, equity long/short carries 30.9% of the risk and quant 25.8%, so the two sleeves carry 56.7% of book variance between them. The maximum drawdown deepens from 10.4% to 12.0%.</p>
+<p>Risk controls change the drawdown more than the overlap. With volatility targeting and drawdown stops both on, the book returns 6.3% a year with a 5.8% drawdown, against 10.4% with neither. Most of the extra return comes from running sleeves above 1x in calm months, financed at the cash rate. The controls do not remove the shared bet. Stops act after the loss, and volatility targeting reacts on a 12-month lookback.</p>
 <p>The regime labels matter as much as either. Every correlation in this note depends on which months are called stress. If you load your own returns without a regime column, the demo labels the weakest tenth of equity months as stress. A different split will give different calm and stress matrices, so I check the labels before I read the numbers.</p>
 <h2>Pitfalls</h2>
 <ul>
 <li>Sizing on a full-history correlation matrix. It blends calm and stress months and hides how the book behaves when it matters.</li>
-<li>Taking the mandate at its word. Quillmere says it has no style tilts and loads 0.32 on momentum.</li>
+<li>Taking the mandate at its word. Quillmere says it has no style tilts and loads 0.28 on momentum.</li>
 <li>Fitting loadings once. The base overlap table misses macro's new momentum overlay entirely.</li>
 <li>Testing correlation shifts on all months. Then a crowding episode looks like a lasting change in how the sleeves move.</li>
 <li>Expecting stops to handle crowding. In an unwind that snaps back, they sell near the low.</li>
@@ -109,7 +109,7 @@ Fisher z = (atanh r1 - atanh r0)
 <li>Treat each overlapping cluster as one position when sizing, and rerun the book on the new weights before any money moves.</li>
 </ol>
 <h2>What I do with it</h2>
-<p>I treat two overlapping sleeves as one position when I size them. In the demo that means cutting quant, the weakest and most crowded sleeve, from 15% to 5%, and moving the ten points to credit. Quant made 3.1% gross and 0.6% net a year on average, with a 36.7% drawdown. Credit has calm-month correlations of 0.17 or less with every other sleeve. It has no drift flag and shares no factor bet. The cost is that credit and relative value correlate 0.76 in stress, so I want the rerun before the subscription goes in.</p>
+<p>I treat two overlapping sleeves as one position when I size them. In the demo that means cutting quant, the weakest and most crowded sleeve, from 16% to 6%, and moving the ten points to credit. Quant made 5.5% gross and 2.5% net a year on average, with a 23.8% drawdown. Credit has calm-month correlations of 0.20 or less with every other sleeve. It has no drift flag and shares no factor bet. The cost is that credit and relative value correlate 0.74 in stress, so I want the rerun before the subscription goes in.</p>
 <p>You can run every step above in the <a href="/multi-strategy-builder.html">Multi-Strategy Builder</a> and change the weighting or the risk controls to see what moves. It also takes your own sleeve returns. The full case for the cut, with the fee and liquidity work, is in the <a href="/memos/multi-strategy-book.html">multi-strategy book memo</a>.</p>
     <p class="fine">The numbers come from the base case of the linked demo. The funds and managers are made up.</p>
   </article>
