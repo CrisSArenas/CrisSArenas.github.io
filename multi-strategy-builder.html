@@ -139,14 +139,14 @@
     <div class="fold-body">
       <ul>
         <li>Sleeve and factor returns are simulated over ten years with calm and stress regimes. In stress months crowded trades fall together.</li>
-        <li>Equal risk contribution sets weights so each sleeve adds the same share of variance. Volatility targeting scales each sleeve to its mandate's target. A drawdown stop halves a sleeve for six months after a 10% fall.</li>
+        <li>Equal risk contribution sets weights so each sleeve adds the same share of variance. Volatility targeting scales each sleeve to its mandate's target. A drawdown stop halves a sleeve for six months after a 10% fall. Capital the controls take out earns the cash rate, and capital they add above 1x is financed at it.</li>
         <li>Style drift is a change in a sleeve's factor loadings between the first seven years and the last 30 months. Correlation shifts are tested on calm months only.</li>
         <li>Fees are charged monthly and performance fees crystallise once a year above the high-water mark. Netting cost is what sleeves pay in performance fees minus what one fee on the whole book would cost.</li>
         <li>The portable alpha tab runs the original simulator's engine unchanged.</li>
       </ul>
       <h3>Formulas</h3>
       <div class="formula">ERC: w_i (S w)_i = w_j (S w)_j for all i, j
-vol target: scale_t = min(cap, target / vol_12m)
+vol target: scale_t = min(cap, target / vol_12m),  r_t = scale_t r_sleeve + (1 - scale_t) rf
 drift z = (b_recent - b_base) / sqrt(se_r^2 + se_b^2)
 Fisher z = (atanh r1 - atanh r0) / sqrt(1/(n0-3) + 1/(n1-3))
 overlap = b_A' S_f b_B / (vol_A vol_B)
@@ -230,7 +230,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
   var F = UI.fmt, $ = UI.$, MS = PM.ms, PA = PM.pa;
   var DOCS = window.MSB_DOCS, LABELS = window.MSB_LABELS, NAMES = MS.SLEEVES, SN = ['Eq L/S', 'Macro', 'RV', 'Credit', 'Quant'], SH = MS.SHORT, FN = MS.FACTORS, FS = ['equity', 'momentum', 'value', 'credit', 'rates'];
   var AROWS = [
-    { id: 'rf', label: 'Cash rate for Sharpe ratios', value: 0.02, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.06, step: 0.25 },
+    { id: 'rf', label: 'Cash rate, for Sharpe ratios and risk-control financing', value: 0.02, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.06, step: 0.25 },
     { id: 'vtLook', label: 'Volatility targeting lookback', value: 12, unit: 'months', source: 'Setting', min: 6, max: 36, step: 1 },
     { id: 'vtCap', label: 'Volatility targeting scale cap', value: 2, unit: 'x', source: 'Setting', min: 1, max: 4, step: 0.1 },
     { id: 'ddStop', label: 'Drawdown stop trigger', value: 0.10, unit: '% from peak', scale: 100, source: 'Setting', min: 0.02, max: 0.4, step: 1 },
@@ -280,7 +280,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     var fees = tm.map(function (t, i) { return MS.fees(col(D.R, i), t); }), net = fees.map(function (f) { return f.net; });
     var C = PM.covMatrix(D.R.map(function (_, t) { return net.map(function (s) { return s[t]; }); })), w = weights(C);
     function variant(vt, dd) {
-      var stops = 0, cols = net.map(function (s, i) { var x = s; if (vt) x = MS.volTarget(x, tm[i].targetVol, A.vtLook, A.vtCap).r; if (dd) { var d = MS.drawdownStop(x, A.ddStop, A.ddCut, A.ddWait); stops += d.fired.length; x = d.r; } return x; });
+      var stops = 0, cols = net.map(function (s, i) { var x = s; if (vt) x = MS.volTarget(x, tm[i].targetVol, A.vtLook, A.vtCap, A.rf / 12).r; if (dd) { var d = MS.drawdownStop(x, A.ddStop, A.ddCut, A.ddWait, A.rf / 12); stops += d.fired.length; x = d.r; } return x; });
       var p = D.R.map(function (_, t) { return PM.sum(cols.map(function (s, i) { return w[i] * s[t]; })); });
       return { r: p, cols: cols, stops: stops };
     }
@@ -364,7 +364,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     var B = S.B, yrs = B.T / 12, rows = NAMES.map(function (n, i) {
       var t = B.tm[i], f = B.fees[i], g = ann(col(B.D.R, i)), nt = ann(B.net[i]);
       var std = MS.fees(col(B.D.R, i), { mgmt: A.stdFee, perf: 0.2 });
-      return { n: n, terms: F.pct(t.mgmt, 2) + ' / ' + F.pct(t.perf, 0) + (t.hurdle ? ' over ' + F.pct(t.hurdle, 0) : '') + (t.pass ? ' + ' + F.pct(t.pass, 1) + ' pass-through' : ''), gross: g, mgmt: f.mgmt / yrs, pass: f.pass / yrs, perf: f.perf / yrs, net: nt, drag: g - nt, std: g - ann(std.net), pt: t.pass > 0 };
+      return { n: n, terms: F.pct(t.mgmt, 2) + ' / ' + F.pct(t.perf, 0) + (t.hurdle ? ' over a ' + F.pct(t.hurdle, 0) + ' soft hurdle' : '') + (t.pass ? ' + ' + F.pct(t.pass, 1) + ' pass-through' : ''), gross: g, mgmt: f.mgmt / yrs, pass: f.pass / yrs, perf: f.perf / yrs, net: nt, drag: g - nt, std: g - ann(std.net), pt: t.pass > 0 };
     });
     var pg = ann(B.D.R.map(function (r) { return PM.dot(r, B.w); })), pn = ann(B.V.none.r), nett = MS.netting(B.D.R, B.w, B.tm);
     var ptRows = rows.filter(function (r) { return r.pt; }), ptExtra = PM.sum(ptRows.map(function (r) { var i = NAMES.indexOf(r.n); return B.w[i] * (r.drag - r.std); }));
@@ -418,8 +418,10 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
   }
   function bookToPA() {
     var B = S.B, r = B.cur.r, D = B.D, eq = D.F ? col(D.F, 0) : null, f = eq ? PM.ols(r, eq.map(function (v) { return [v]; })) : null;
-    var beta = f ? f.beta[0] : 0, resid = f ? f.resid : r, rv = PM.std(resid) * Math.sqrt(12), alpha = f ? f.alpha * 12 - S.pa.cashRate * (1 - beta) : ann(r) - S.pa.cashRate;
-    S.pa.alphaVol = Math.max(0, Math.min(0.2, vol(r))); S.pa.alphaBeta = Math.max(-0.5, Math.min(1, beta)); S.pa.alphaIR = Math.max(-1, Math.min(3, rv > 0 ? alpha / rv : 0)); S.pa.mgmtFee = 0; S.pa.perfFee = 0;
+    /* the equity factor is an excess return, so alpha is the book's return over its own cash rate that the
+       equity beta does not explain; the engine's alpha volatility is the residual volatility */
+    var beta = f ? f.beta[0] : 0, resid = f ? f.resid : r, rv = PM.std(resid) * Math.sqrt(12), alpha = (f ? f.alpha * 12 : ann(r)) - A.rf;
+    S.pa.alphaVol = Math.max(0, Math.min(0.2, rv)); S.pa.alphaBeta = Math.max(-0.5, Math.min(1, beta)); S.pa.alphaIR = Math.max(-1, Math.min(3, rv > 0 ? alpha / rv : 0)); S.pa.mgmtFee = 0; S.pa.perfFee = 0;
     S.paSrc = 'book'; paForm(); renderPA();
   }
 

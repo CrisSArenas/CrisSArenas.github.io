@@ -1334,8 +1334,8 @@
 
   /** sublineAdjust(flows): LP cash flows as if capital had been called on the investment date
       instead of being bridged by a subscription line. flows: [{date, amount, investDate?}] where a call
-      carries investDate when the GP drew on the line first. Returns the rebuilt flows. The fee for
-      the line is left in the rebuilt calls (it is part of the cost either way). */
+      carries investDate when the GP drew on the line first. Returns the rebuilt flows. Line interest
+      is not modelled, so TVPI is unchanged only before that cost. */
   TR.sublineAdjust = function (flows) {
     return flows.map(function (f) { return f.amount < 0 && f.investDate ? { date: f.investDate, amount: f.amount } : { date: f.date, amount: f.amount }; })
       .sort(function (a, b) { return a.date - b.date; });
@@ -1368,18 +1368,21 @@
       Returns {lp, gp, rows: [{date, amount, lp, gp, tiers}], unreturned, prefOwed}. */
   TR.european = function (events, t) {
     var ev = events.slice().sort(function (a, b) { return a.date - b.date; });
-    var unret = 0, prefDue = 0, prefPaid = 0, gpCU = 0, lp = 0, gp = 0, last = ev.length ? ev[0].date : 0, rows = [];
+    var unret = 0, prefDue = 0, prefPaid = 0, gpCU = 0, lpCU = 0, lp = 0, gp = 0, last = ev.length ? ev[0].date : 0, rows = [];
     ev.forEach(function (e) {
       var g = Math.pow(1 + t.pref, yrs(last, e.date)) - 1;
       prefDue += (unret + prefDue) * g; last = e.date;
       if (e.contribution) { unret += e.contribution; return; }
       var d = e.distribution, a = Math.min(d, unret); unret -= a; d -= a;
       var b = Math.min(d, prefDue); prefDue -= b; prefPaid += b; d -= b;
-      /* catch-up: GP receives catchUp of each dollar until gp = carry x (prefPaid + gp) */
-      var target = t.carry * prefPaid / (1 - t.carry), need = Math.max(0, target - gpCU), c = 0;
-      if (need > 0 && d > 0) { var take = Math.min(d, need / (t.catchUp || 1)); c = take * (t.catchUp || 1); var lpc = take - c; gpCU += c; lp += lpc; d -= take; }
-      var split = d * t.carry, lpLast = d - split;
-      var lpRow = a + b + lpLast + (rows.length ? 0 : 0), gpRow = c + split;
+      /* catch-up: GP receives k of each dollar (LP the rest) until the GP holds carry x all profit paid so far,
+         gpCU = carry x (prefPaid + lpCU + gpCU); a take of x moves that gap by x (k - carry) */
+      var k = t.catchUp || 1, c = 0;
+      if (d > 0) {
+        var gap = t.carry * (prefPaid + lpCU + gpCU) - gpCU, take = k > t.carry ? Math.min(d, Math.max(0, gap / (k - t.carry))) : d;
+        c = take * k; gpCU += c; lpCU += take - c; lp += take - c; d -= take;
+      }
+      var split = d * t.carry, lpLast = d - split, gpRow = c + split;
       lp += a + b + lpLast; gp += gpRow;
       rows.push({ date: e.date, amount: e.distribution, lp: e.distribution - gpRow, gp: gpRow, tiers: { capital: a, pref: b, catchUp: c, split: split } });
     });
@@ -1411,7 +1414,7 @@
   MS.FACTORS = ['Equity', 'Momentum', 'Value', 'Credit spread', 'Rates'];
   /* true factor loadings by sleeve (rows) and factor (columns), before any injected drift */
   MS.BASE = [[0.35, 0.30, 0.00, 0.00, 0.00], [0.10, 0.05, 0.00, 0.00, 0.25], [0.00, 0.00, 0.00, 0.10, 0.00], [0.00, 0.00, 0.00, 0.60, 0.05], [0.05, 0.50, 0.25, 0.00, 0.00]];
-  MS.ALPHA = [0.0060, 0.0050, 0.0060, 0.0035, 0.0050];
+  MS.ALPHA = [0.0060, 0.0050, 0.0085, 0.0035, 0.0050];
   MS.IDIO = [0.018, 0.015, 0.010, 0.010, 0.010];
   MS.CROWD = [0.6, 0.1, 0.5, 0.3, 0.8];
   /* drift injected into the synthetic data: loading ramps to `to` over six months from `start` */
@@ -1421,17 +1424,18 @@
   MS.factorCov = function () { return FC.map(function (r, i) { return r.map(function (c, j) { return c * FVOL[i] * FVOL[j]; }); }); };
   /** simulate(seed, T): monthly factor returns F, gross sleeve returns R, regimes and the true loadings
       used each month. Regimes follow a two-state Markov chain (calm to stress 3% a month, stress
-      persists 75%). In stress months factor means turn (equity -3%, momentum and value -1.5%, credit
-      -1.5%), factor vol rises 1.8x, and a common crowding shock (mean -2%, vol 2%) hits each sleeve
-      in proportion to MS.CROWD: the crowded unwind that makes sleeves fall together. */
+      persists 75%). In stress months factor means turn (equity -2%, momentum -1%, value -0.5%, credit
+      -1% a month), factor vol rises 1.8x, and a common crowding shock (mean -1%, vol 2%) hits each sleeve
+      in proportion to MS.CROWD: the crowded unwind that makes sleeves fall together. Calibrated so sleeve
+      drawdowns and the book's stress loss stay in the range of hedge fund composites. */
   MS.simulate = function (seed, T) {
     T = T || 120;
     var rng = PM.mulberry32(seed), z = PM.normalGen(rng), L = PM.cholesky(FC), F = [], R = [], reg = [], load = [], s = 'calm';
     for (var t = 0; t < T; t++) {
       if (t > 0) s = s === 'calm' ? (rng() < 0.03 ? 'stress' : 'calm') : (rng() < 0.75 ? 'stress' : 'calm');
       var st = s === 'stress', e = FMU.map(function () { return z(); }), f = [];
-      for (var i = 0; i < 5; i++) { var c = 0; for (var j = 0; j <= i; j++) c += L[i][j] * e[j]; var mu = st ? [-0.03, -0.015, -0.015, -0.015, 0.004][i] : FMU[i]; f.push(mu + FVOL[i] * (st ? 1.8 : 1) * c); }
-      var crowd = st ? -0.02 + 0.02 * z() : 0, lt = MS.BASE.map(function (r) { return r.slice(); });
+      for (var i = 0; i < 5; i++) { var c = 0; for (var j = 0; j <= i; j++) c += L[i][j] * e[j]; var mu = st ? [-0.02, -0.01, -0.005, -0.01, 0.004][i] : FMU[i]; f.push(mu + FVOL[i] * (st ? 1.8 : 1) * c); }
+      var crowd = st ? -0.01 + 0.02 * z() : 0, lt = MS.BASE.map(function (r) { return r.slice(); });
       MS.INJECT.forEach(function (d) { if (t >= d.start) { var k = Math.min(1, (t - d.start + 1) / 6); lt[d.sleeve][d.factor] = MS.BASE[d.sleeve][d.factor] + k * (d.to - MS.BASE[d.sleeve][d.factor]); } });
       R.push(lt.map(function (b, k) { return MS.ALPHA[k] + PM.dot(b, f) + MS.CROWD[k] * crowd + MS.IDIO[k] * z(); }));
       F.push(f); reg.push(s); load.push(lt);
@@ -1462,19 +1466,22 @@
     var q = function (x, y) { return PM.dot(x, PM.matVec(S, y)); }, d = volA && volB ? volA * volB : Math.sqrt(q(bA, bA) * q(bB, bB));
     return d > 0 ? q(bA, bB) / d : 0;
   };
-  /** volTarget(r, target, look, cap): scale each month by target / trailing annualised vol of the
-      previous `look` months (no look-ahead), capped at `cap`; scale 1 until enough history. */
-  MS.volTarget = function (r, target, look, cap) {
-    var scale = [], out = r.map(function (v, t) { var s = 1; if (t >= look) { var vol = PM.std(r.slice(t - look, t)) * Math.sqrt(12); s = vol > 0 ? Math.min(cap, target / vol) : 1; } scale.push(s); return v * s; });
+  /** volTarget(r, target, look, cap, rfm): scale each month by target / trailing annualised vol of the
+      previous `look` months (no look-ahead), capped at `cap`; scale 1 until enough history. With a monthly
+      cash rate rfm, capital taken out of the sleeve earns cash and capital added above 1x is borrowed at
+      cash: r_t = s r + (1 - s) rfm. */
+  MS.volTarget = function (r, target, look, cap, rfm) {
+    var c = rfm || 0, scale = [], out = r.map(function (v, t) { var s = 1; if (t >= look) { var vol = PM.std(r.slice(t - look, t)) * Math.sqrt(12); s = vol > 0 ? Math.min(cap, target / vol) : 1; } scale.push(s); return v * s + (1 - s) * c; });
     return { r: out, scale: scale };
   };
-  /** drawdownStop(r, stop, cut, wait): when the sleeve's drawdown from its peak (unmanaged) passes
-      `stop`, its allocation is multiplied by `cut` for the next `wait` months. Returns managed
-      returns, the multiplier path and the months a stop fired. */
-  MS.drawdownStop = function (r, stop, cut, wait) {
-    var nav = 1, peak = 1, left = 0, mult = [], fired = [], out = [];
+  /** drawdownStop(r, stop, cut, wait, rfm): when the sleeve's drawdown from its peak (unmanaged) passes
+      `stop`, its allocation is multiplied by `cut` for the next `wait` months; the capital taken out
+      earns the monthly cash rate rfm (0 if omitted). Returns managed returns, the multiplier path and
+      the months a stop fired. */
+  MS.drawdownStop = function (r, stop, cut, wait, rfm) {
+    var c = rfm || 0, nav = 1, peak = 1, left = 0, mult = [], fired = [], out = [];
     r.forEach(function (v, t) {
-      var m = left > 0 ? cut : 1; mult.push(m); out.push(v * m); if (left > 0) left--;
+      var m = left > 0 ? cut : 1; mult.push(m); out.push(v * m + (1 - m) * c); if (left > 0) left--;
       nav *= 1 + v; peak = Math.max(peak, nav);
       if (left === 0 && nav / peak - 1 < -stop) { left = wait; fired.push(t); peak = nav; }
     });
@@ -1482,7 +1489,8 @@
   };
   /** fees(r, f): gross monthly returns to net. f = {mgmt, pass (pass-through expenses, a year, on NAV),
       perf, hurdle (a year)}. Management and pass-through charged monthly; performance fee crystallises
-      every 12 months on gains above the high-water mark and the hurdle. Returns {net, mgmt, pass, perf}
+      every 12 months on the gain above the high-water mark, once that gain clears the hurdle (a soft
+      hurdle: the fee then applies to the whole gain, as in MS.netting). Returns {net, mgmt, pass, perf}
       with fee totals as sums of monthly fractions of NAV. */
   MS.fees = function (r, f) {
     var nav = 1, hwm = 1, start = 1, net = [], tm = 0, tp = 0, tf = 0, prev = 1;
@@ -1613,16 +1621,17 @@
   var PM = root.PM, SEC = PM.sec = {};
   /** stakeFlows(f, o): quarterly projection of one fund interest from its current state under the
       Takahashi-Alexander rules, annual rates converted to quarterly ones.
-      f = {nav, unfunded, age (years), model: {rc, ip, life, growth, bow, yieldFloor}}
+      f = {nav, unfunded, age (years), model: {rc, ip, life, growth, bow, yieldFloor, rcPost}}
       o = {haircut (cut to starting NAV, buyer's view), years (max horizon, default 15)}
-      Each quarter: call = (1 - (1 - rc)^(1/4)) x unfunded while age <= ip;
+      Each quarter: call = (1 - (1 - rc)^(1/4)) x unfunded while age <= ip, then (1 - (1 - rcPost)^(1/4)) x unfunded
+      until the end of the fund's life (follow-ons, fees and expenses; rcPost defaults to 0);
       NAV = (NAV + call)(1 + growth)^(1/4); dist = (1 - (1 - RD(age))^(1/4)) x NAV.
       Anything left at the horizon is distributed then. Returns [{t, call, dist, nav}]. */
   SEC.stakeFlows = function (f, o) {
     o = o || {}; var m = f.model, nav = f.nav * (1 - (o.haircut || 0)), unf = f.unfunded, age = f.age, out = [], Q = Math.round((o.years || 15) * 4);
     for (var q = 1; q <= Q; q++) {
       age += 0.25;
-      var call = age <= m.ip ? (1 - Math.pow(1 - m.rc, 0.25)) * unf : 0; unf -= call;
+      var rcA = age <= m.ip ? m.rc : age <= m.life ? (m.rcPost || 0) : 0, call = (1 - Math.pow(1 - rcA, 0.25)) * unf; unf -= call;
       nav = (nav + call) * Math.pow(1 + m.growth, 0.25);
       var rdA = PM.priv.distRate(m, age), d = (rdA >= 1 ? 1 : 1 - Math.pow(1 - rdA, 0.25)) * nav;
       if (q === Q) d = nav;
@@ -1809,7 +1818,7 @@
   /** trade list back inside ranges after the quarter's cash flows.
       o: {value[] $m, target[], lo[], hi[], liquid[] bool, cost[] bps, cash: index, minTrade $m,
           calls[] $m into each sleeve (paid from cash), spending $m (paid from cash),
-          overlay: {from: illiquid index, proxy: liquid index} futures used when the illiquid sleeve is above range }
+          overlay: {from: illiquid index, proxy: liquid index, beta} futures used when the illiquid sleeve is above range }
       Liquid sleeves outside their range trade to the nearest edge (or to target when toTarget).
       Cash is the balancing account; if cash ends outside its range, the most overweight liquid
       sleeves are sold (or the most underweight bought) without crossing their own ranges.
@@ -1844,12 +1853,15 @@
     tr[c] = -tr.reduce(function (s, t, i) { return i === c ? s : s + t; }, 0);
     var costs = tr.reduce(function (s, t, i) { return i === c ? s : s + Math.abs(t) * (o.cost[i] || 0) / 1e4; }, 0);
     var after = v.map(function (x, i) { return x + tr[i] - (i === c ? costs : 0); }), navAfter = PM.sum(after);
-    var wa = after.map(function (x) { return x / navAfter; }), overlay = 0, eff = wa.slice();
+    var wa = after.map(function (x) { return x / navAfter; }), overlay = 0, excess = 0, eff = wa.slice(), beta = o.overlay && o.overlay.beta != null ? o.overlay.beta : 1;
     if (o.overlay && wa[o.overlay.from] > o.hi[o.overlay.from]) {
-      overlay = (wa[o.overlay.from] - o.hi[o.overlay.from]) * navAfter;
-      eff[o.overlay.from] -= overlay / navAfter; eff[o.overlay.proxy] += 0;
+      /* futures notional = beta of the illiquid sleeve to the proxy x the excess over its upper limit x NAV;
+         the hedge is booked against the illiquid sleeve, so its effective weight sits at the limit */
+      excess = wa[o.overlay.from] - o.hi[o.overlay.from];
+      overlay = beta * excess * navAfter;
+      eff[o.overlay.from] -= excess;
     }
-    return { flows: { calls: flowIn, spending: o.spending || 0 }, navBefore: PM.sum(o.value), nav: nav, navAfter: navAfter, pre: pre, trades: tr, costs: costs, after: wa, effective: eff, overlay: overlay,
+    return { flows: { calls: flowIn, spending: o.spending || 0 }, navBefore: PM.sum(o.value), nav: nav, navAfter: navAfter, pre: pre, trades: tr, costs: costs, after: wa, effective: eff, overlay: overlay, overlayExcess: excess, overlayBeta: beta,
       turnover: tr.reduce(function (s, t, i) { return i === c ? s : s + Math.abs(t); }, 0) / 2, breachesBefore: RB.drift(pre, o.lo, o.hi), breachesAfter: RB.drift(eff, o.lo, o.hi) };
   };
 })(typeof window !== 'undefined' ? window : globalThis);

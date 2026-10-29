@@ -148,9 +148,9 @@
     <div class="fold-body">
       <ul>
         <li>Each fund follows the Takahashi-Alexander model. It calls a share of its unfunded commitment each year of the investment period, grows its NAV and pays out a rising share of NAV as it ages.</li>
-        <li>The pacing rule picks each year's commitment so projected private NAV sits on target four years out.</li>
+        <li>The pacing rule picks each year's commitment so projected private NAV sits on target four years out. The projection treats NAV growth G as net of fees; the one-fund panel below also shows what a 2% fee and 20% carry would take off if G were the gross return.</li>
         <li>The Monte Carlo draws public returns, private returns, calls and distributions together, quarter by quarter, for ten years.</li>
-        <li>The nowcast regresses each fund's reported NAV returns on a public index at lags of zero to two quarters. It then rolls the last NAV through the stale quarters with the cash flows since.</li>
+        <li>The nowcast regresses each fund's reported NAV returns on a public index at lags of zero to two quarters and shrinks the betas toward a strategy prior, with weight n / (n + 12) on n quarters of data. It then rolls the last NAV through the stale quarters with the cash flows since.</li>
         <li>Fund performance uses XIRR, TVPI, DPI, KS-PME and Direct Alpha. Quarterly returns are desmoothed with Geltner's method.</li>
       </ul>
       <h3>Formulas</h3>
@@ -334,7 +334,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var idx = [100], ret = [], zs = [];
     for (var q = 1; q <= TODAY_Q - 2; q++) zs.push(z());
     /* the shocks are demeaned, detrended and rescaled over the sample, so every seed's proxy earns its drift
-       (2.1% a quarter, 7% quarterly volatility: about 8.5% a year compound with 14% volatility) without a run of
+       (2.1% a quarter, 7% quarterly volatility: about 7.6% a year compound with 14% volatility) without a run of
        good or bad years at one end; the last two quarters are a stylised drawdown: -8% in Q2 2026 and -5% in Q3 2026 */
     var n = zs.length, tm = (n - 1) / 2, zm = PM.mean(zs), sl = 0, dd = 0;
     zs.forEach(function (v, t) { sl += (t - tm) * (v - zm); dd += (t - tm) * (t - tm); }); sl /= dd;
@@ -405,7 +405,13 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       if (a + c > 0.5) { rr.push((b - a - c + d) / (a + c)); pr.push(D.ret[q - 1]); }
     }
     var fit = rr.length >= 10 ? PM.priv.nowcastFit(rr, pr, 2) : null;
-    if (!fit) { var sp = STRAT[f.strategy] || STRAT.buyout, b0 = sp.beta * (1 - sp.rho); fit = { alpha: 0, betas: [b0, b0 * sp.rho, b0 * sp.rho * sp.rho], beta: b0 * (1 + sp.rho + sp.rho * sp.rho), r2: 0, sigma: sp.vol, n: rr.length, prior: true }; }
+    var sp = STRAT[f.strategy] || STRAT.buyout, b0 = sp.beta * (1 - sp.rho), prior = [b0, b0 * sp.rho, b0 * sp.rho * sp.rho];
+    if (!fit) fit = { alpha: 0, betas: prior, beta: PM.sum(prior), r2: 0, sigma: sp.vol, n: rr.length, prior: true };
+    else {
+      /* a few years of quarterly marks give noisy betas, so each lag is shrunk toward the strategy prior, weight n / (n + 12) */
+      var wS = fit.n / (fit.n + 12);
+      fit.betas = fit.betas.map(function (b, j) { return wS * b + (1 - wS) * prior[j]; }); fit.beta = PM.sum(fit.betas); fit.weight = wS;
+    }
     var proxy = []; for (var k = navQ + 1; k <= TODAY_Q; k++) proxy.push(D.ret[k - 1]);
     var nc = PM.priv.nowcast({ nav: reported, flows: after, proxy: proxy, betas: fit.betas, proxyBefore: [D.ret[navQ - 1], D.ret[navQ - 2]], alpha: 0, sigma: fit.sigma });
     return { flows: flows, navQ: navQ, reported: reported, paidIn: paidIn, distributed: dist, unfunded: unfunded, fit: fit, nowcast: nc.nav, lo: nc.lo, hi: nc.hi, stale: TODAY_Q - navQ, rr: rr, flowsAfter: after,
@@ -488,8 +494,8 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     ]);
     var top = rows.slice(0, 12);
     UI.chart.bar('#nowChart', { categories: top.map(function (r) { return r.f.name.split(' ')[0] + ' ' + r.f.name.split(' ').pop(); }), series: [{ name: 'Reported', values: top.map(function (r) { return r.reported; }), color: 's4' }, { name: 'Nowcast', values: top.map(function (r) { return r.nowcast; }), color: 's1' }], yFmt: function (v) { return F.num(v, 0); }, height: 260, label: 'Reported vs nowcast NAV for the 12 largest funds' });
-    UI.table('#nowTable', { id: 'nowcast', name: 'NAV nowcast by fund', columns: [{ key: 'name', label: 'Fund (fictional)' }, { key: 'date', label: 'NAV date' }, { key: 'stale', label: 'Quarters stale', num: 1 }, { key: 'reported', label: 'Reported', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'beta', label: 'Beta', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'src', label: 'Beta from' }, { key: 'r2', label: 'R squared', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'nowcast', label: 'Nowcast', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'chg', label: 'Change', num: 1, fmt: function (v) { return F.spct(v, 1); }, cls: function (v) { return v < 0 ? 'neg' : 'pos'; } }, { key: 'band', label: '90% band', num: 1 }],
-      rows: rows.map(function (r) { return { name: r.f.name, date: qDate(r.navQ), stale: r.stale, reported: r.reported, beta: r.fit.beta, src: r.fit.prior ? 'strategy prior' : r.fit.n + ' quarters', r2: r.fit.r2, nowcast: r.nowcast, chg: r.reported > 0 ? r.nowcast / r.reported - 1 : 0, band: F.num(r.lo, 1) + ' to ' + F.num(r.hi, 1) }; }),
+    UI.table('#nowTable', { id: 'nowcast', name: 'NAV nowcast by fund', columns: [{ key: 'name', label: 'Fund (fictional)' }, { key: 'date', label: 'NAV date' }, { key: 'stale', label: 'Quarters stale', num: 1 }, { key: 'reported', label: 'Reported', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'beta', label: 'Beta', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'src', label: 'Beta from' }, { key: 'r2', label: 'R squared', num: 1, fmt: function (v) { return v == null ? '–' : F.num(v, 2); } }, { key: 'nowcast', label: 'Nowcast', num: 1, fmt: function (v) { return F.money(v, 1); } }, { key: 'chg', label: 'Change', num: 1, fmt: function (v) { return F.spct(v, 1); }, cls: function (v) { return v < 0 ? 'neg' : 'pos'; } }, { key: 'band', label: '90% band', num: 1 }],
+      rows: rows.map(function (r) { return { name: r.f.name, date: qDate(r.navQ), stale: r.stale, reported: r.reported, beta: r.fit.beta, src: r.fit.prior ? 'strategy prior' : r.fit.n + ' quarters, ' + F.pct(1 - r.fit.weight, 0) + ' prior', r2: r.fit.prior ? null : r.fit.r2, nowcast: r.nowcast, chg: r.reported > 0 ? r.nowcast / r.reported - 1 : 0, band: F.num(r.lo, 1) + ' to ' + F.num(r.hi, 1) }; }),
       foot: { name: 'Program', reported: T.reported, nowcast: T.nowcast, chg: T.nowcast / T.reported - 1 },
       footExplain: { nowcast: function () { return { title: 'Program nowcast', formula: 'sum of fund nowcasts', inputs: [{ name: 'Funds', value: S.rows.length, src: 'computed' }], result: F.money(T.nowcast, 1) }; } } });
     /* program NAV path: reported (lagged) vs nowcast for recent quarters */

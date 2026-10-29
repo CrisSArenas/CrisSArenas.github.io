@@ -66,14 +66,14 @@
 
     <section id="pricing">
       <div class="kpis" id="prKpis"></div>
-      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Price by fund interest</h3><span class="sub">$ millions; price at the target IRR</span></div><div class="panel-body"><div id="fundTable"></div></div></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Price by fund interest</h3><span class="sub">$ millions; price at each strategy's target IRR, quoted on 31 March NAV</span></div><div class="panel-body"><div id="fundTable"></div></div></div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Projected net cash flows to the buyer</h3><span class="sub">Distributions less calls, $m, years from 30 June 2026</span></div><div class="panel-body"><div id="cfChart"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Range of outcomes at the bid</h3><span class="sub">Seeded growth shocks by fund</span></div><div class="panel-body"><div id="mcChart"></div><p class="eval-note" id="mcNote"></p></div></div>
       </div>
       <h3 class="sub-h">Sensitivity</h3>
       <div class="split-2">
-        <div class="panel"><div class="panel-head"><h3>Portfolio price, % of 31 March NAV</h3><span class="sub">Target IRR by NAV haircut</span></div><div class="panel-body"><div id="sensHeat" style="max-width:520px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Portfolio price, % of 31 March NAV</h3><span class="sub">Buyout target IRR (other strategies at their spreads) by NAV haircut</span></div><div class="panel-body"><div id="sensHeat" style="max-width:520px"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Price by fund age</h3><span class="sub">A buyout interest, 10% unfunded, at the target IRR</span></div><div class="panel-body"><div id="ageChart"></div><p class="eval-note" id="ageNote"></p></div></div>
       </div>
       <div class="panel"><div class="panel-head"><h3>Price by unfunded commitment</h3><span class="sub">A three-year-old buyout interest, at the target IRR</span></div><div class="panel-body"><div id="unfChart" style="max-width:900px"></div><p class="eval-note" id="unfNote"></p></div></div>
@@ -93,17 +93,19 @@
     <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
     <div class="fold-body">
       <ul>
-        <li>Each fund interest is projected quarterly with Takahashi-Alexander rules by strategy: calls, NAV growth and distributions.</li>
+        <li>Each fund interest is projected quarterly with Takahashi-Alexander rules by strategy: calls, NAV growth and distributions. Unfunded commitment keeps being called after the investment period at a lower rate, for follow-ons and fees.</li>
         <li>Stale NAVs move from 31 March to 30 June with the strategy's beta to public equity, plus calls and less distributions since.</li>
-        <li>The price of each interest is the present value of its projected cash flows at the target IRR. Buy at that price and you earn the target if the projection holds.</li>
+        <li>The cash paid for each interest is the present value of its projected cash flows at its target IRR. Buy at that price and you earn the target if the projection holds. Riskier strategies carry a higher target: venture 6 points above buyout, growth 2 points above, credit and infrastructure 3 points below.</li>
+        <li>The headline price is quoted as a share of the 31 March reference NAV. Distributions the seller received after that date are added back and calls the seller paid are taken off, which is how the cash at closing is adjusted in practice.</li>
         <li>The outcome range draws a growth shock for each fund and reprojects the cash flows.</li>
         <li>Roll vs sell compares rolling into the CV, after its fee and tiered carry, with selling and reinvesting at 10%. The break-even is the gross multiple where the two match.</li>
       </ul>
       <h3>Formulas</h3>
-      <div class="formula">call_q = (1 - (1 - rc)^(1/4)) x unfunded
+      <div class="formula">call_q = (1 - (1 - rc)^(1/4)) x unfunded   (rcPost after the investment period)
 NAV_q = (NAV + call)(1 + g)^(1/4)
-RD(age) = (age / life)^bow
-price = sum (D_t - C_t) / (1 + r)^t
+RD(age) = max(yield, (age / life)^bow)
+cash at closing = sum (D_t - C_t) / (1 + r)^t,  r = buyout target + strategy spread
+price = cash at closing + distributions since 31 Mar - calls since 31 Mar
 NAV_today = NAV_ref (1 + beta x R_pub) + calls - dists
 roll = m - fee x hold - carry
 sell = (1 + opp)^hold</div>
@@ -186,11 +188,11 @@ sell = (1 + opp)^hold</div>
   'use strict';
   var F = UI.fmt, $ = UI.$, SEC = PM.sec, DOCS = window.SEC_DOCS, LABELS = window.SEC_LABELS;
   var MODELS = {
-    buyout: { label: 'Buyout', rc: 0.30, ip: 5, life: 15, growth: 0.11, bow: 2.2, beta: 0.9, vol: 0.04 },
-    growth: { label: 'Growth', rc: 0.30, ip: 4, life: 15, growth: 0.13, bow: 2.5, beta: 1.2, vol: 0.05 },
-    venture: { label: 'Venture', rc: 0.25, ip: 5, life: 16, growth: 0.14, bow: 2.8, beta: 1.5, vol: 0.07 },
-    credit: { label: 'Credit', rc: 0.40, ip: 3, life: 10, growth: 0.08, bow: 1.5, yieldFloor: 0.08, beta: 0.3, vol: 0.02 },
-    infrastructure: { label: 'Infrastructure', rc: 0.30, ip: 4, life: 18, growth: 0.08, bow: 1.8, yieldFloor: 0.05, beta: 0.4, vol: 0.025 }
+    buyout: { label: 'Buyout', rc: 0.30, ip: 5, life: 15, growth: 0.12, bow: 2.2, rcPost: 0.15, beta: 0.9, vol: 0.04, spread: 0 },
+    growth: { label: 'Growth', rc: 0.30, ip: 4, life: 15, growth: 0.12, bow: 2.5, rcPost: 0.15, beta: 1.2, vol: 0.05, spread: 0.02 },
+    venture: { label: 'Venture', rc: 0.25, ip: 5, life: 16, growth: 0.11, bow: 2.8, rcPost: 0.15, beta: 1.5, vol: 0.07, spread: 0.06 },
+    credit: { label: 'Credit', rc: 0.40, ip: 3, life: 10, growth: 0.08, bow: 1.5, yieldFloor: 0.08, rcPost: 0.15, beta: 0.3, vol: 0.02, spread: -0.03 },
+    infrastructure: { label: 'Infrastructure', rc: 0.30, ip: 4, life: 15, growth: 0.08, bow: 1.8, yieldFloor: 0.05, rcPost: 0.15, beta: 0.4, vol: 0.025, spread: -0.03 }
   };
   var PORTFOLIO = [
     { fund: 'Arvane Buyout VII', strategy: 'buyout', vintage: 2016, nav: 42, unfunded: 3, calls: 0.2, dists: 2.6 },
@@ -201,7 +203,7 @@ sell = (1 + opp)^hold</div>
     { fund: 'Tamsin Buyout IX', strategy: 'buyout', vintage: 2021, nav: 35, unfunded: 14, calls: 1.4, dists: 0 }
   ];
   var AROWS = [
-    { id: 'target', label: 'Buyer target IRR', value: 0.15, unit: '% a year', scale: 100, source: 'Assumption (the buying desk\'s hurdle)', min: 0.05, max: 0.3, step: 0.5 },
+    { id: 'target', label: 'Buyer target IRR, buyout', value: 0.15, unit: '% a year', scale: 100, source: 'Assumption (the buying desk\'s hurdle; other strategies at the spreads in the model table)', min: 0.05, max: 0.3, step: 0.5 },
     { id: 'haircut', label: 'NAV haircut on top of the roll-forward', value: 0, unit: '%', scale: 100, source: 'Assumption', min: 0, max: 0.4, step: 1 },
     { id: 'pub', label: 'Public equity return, 31 Mar to 30 Jun 2026', value: -0.04, unit: '%', scale: 100, source: 'Assumption', min: -0.3, max: 0.3, step: 0.5 },
     { id: 'mcN', label: 'Simulated paths', value: 1000, unit: '', source: 'Setting', min: 200, max: 5000, step: 100 },
@@ -245,26 +247,30 @@ sell = (1 + opp)^hold</div>
     var m = MODELS[f.strategy], rolled = SEC.rollForward(f.nav, m.beta, A.pub, f.calls, f.dists);
     return { f: f, m: m, rolled: rolled, age: AS_OF - f.vintage - 0.5, flows: SEC.stakeFlows({ nav: rolled, unfunded: f.unfunded, age: AS_OF - f.vintage - 0.5, model: m }, { haircut: haircut }) };
   }
+  /* each interest is priced at the buyout target plus its strategy's spread. The cash paid at 30 June is the present value
+     of the projected flows; the headline price is quoted on the 31 March reference NAV, so it adds back the distributions
+     the seller received since then and takes off the calls the seller paid (the usual reference-date adjustment) */
   function priceBook(target, haircut) {
-    var rows = portfolio().map(function (f) { var s = stake(f, haircut), p = SEC.price(s.flows, target, f.nav); var dsum = PM.sum(s.flows.map(function (x) { return x.dist; })); return Object.assign(s, { price: p.price, pctNav: p.pctNav, dur: dsum ? PM.sum(s.flows.map(function (x) { return x.t * x.dist; })) / dsum : 0 }); });
-    var nav = PM.sum(rows.map(function (r) { return r.f.nav; })), price = PM.sum(rows.map(function (r) { return r.price; }));
-    return { rows: rows, nav: nav, price: price, pct: price / nav };
+    var rows = portfolio().map(function (f) { var s = stake(f, haircut), r = target + (s.m.spread || 0), p = SEC.price(s.flows, r, f.nav); var dsum = PM.sum(s.flows.map(function (x) { return x.dist; })), head = p.price + (f.dists || 0) - (f.calls || 0); return Object.assign(s, { target: r, cash: p.price, price: head, pctNav: head / f.nav, dur: dsum ? PM.sum(s.flows.map(function (x) { return x.t * x.dist; })) / dsum : 0 }); });
+    var nav = PM.sum(rows.map(function (r) { return r.f.nav; })), price = PM.sum(rows.map(function (r) { return r.price; })), cash = PM.sum(rows.map(function (r) { return r.cash; }));
+    return { rows: rows, nav: nav, price: price, cash: cash, pct: price / nav };
   }
   function renderPricing() {
     var B = S.book = priceBook(A.target, A.haircut), rows = B.rows;
-    var unf = PM.sum(rows.map(function (r) { return r.f.unfunded; })), rolled = PM.sum(rows.map(function (r) { return r.rolled; })), dur = PM.sum(rows.map(function (r) { return r.dur * r.price; })) / B.price;
+    var unf = PM.sum(rows.map(function (r) { return r.f.unfunded; })), rolled = PM.sum(rows.map(function (r) { return r.rolled; })), dur = PM.sum(rows.map(function (r) { return r.dur * r.cash; })) / B.cash;
     var mcFunds = rows.map(function (r) { return { nav: r.rolled, unfunded: r.f.unfunded, age: r.age, model: r.m, vol: r.m.vol }; });
-    var irrs = SEC.outcomes(mcFunds, B.price, { n: Math.round(A.mcN), seed: S.seed, haircut: A.haircut });
+    var irrs = SEC.outcomes(mcFunds, B.cash, { n: Math.round(A.mcN), seed: S.seed, haircut: A.haircut });
+    S.irrBid = SEC.irr(B.cash, (function () { var tot = {}; rows.forEach(function (r) { r.flows.forEach(function (x) { tot[x.t] = (tot[x.t] || 0) + x.dist - x.call; }); }); return Object.keys(tot).map(function (t) { return { t: +t, dist: Math.max(0, tot[t]), call: Math.max(0, -tot[t]) }; }); })());
     S.mc = { p10: PM.quantile(irrs, 0.1), p50: PM.quantile(irrs, 0.5), p90: PM.quantile(irrs, 0.9), below10: irrs.filter(function (x) { return x < 0.10; }).length / irrs.length };
     UI.kpis('#prKpis', [
-      { id: 'bidPct', label: 'Bid, % of 31 March NAV', value: F.pct(B.pct, 1), sub: 'discount ' + F.pct(1 - B.pct, 1), explain: function () { return { title: 'Portfolio price', formula: 'sum over interests of the present value of projected distributions less calls at the target IRR, over the sum of reported NAVs', inputs: [{ name: 'Target IRR', value: F.pct(A.target, 1), src: 'assumption' }, { name: 'Reported NAV', value: F.money(B.nav, 1), src: 'data' }, { name: 'NAV rolled to 30 June', value: F.money(rolled, 1), src: 'computed' }], result: F.money(B.price, 2) + ' = ' + F.pct(B.pct, 2) }; } },
-      { id: 'bidTotal', label: 'Bid', value: F.money(B.price, 1), sub: 'on ' + F.money(B.nav, 1) + ' of reported NAV' },
+      { id: 'bidPct', label: 'Bid, % of 31 March NAV', value: F.pct(B.pct, 1), sub: 'discount ' + F.pct(1 - B.pct, 1), explain: function () { return { title: 'Portfolio price', formula: 'sum over interests of (present value of projected distributions less calls at the strategy target IRR + distributions since 31 March - calls since 31 March), over the sum of 31 March NAVs', inputs: [{ name: 'Buyout target IRR', value: F.pct(A.target, 1), src: 'assumption', note: 'other strategies at their spreads' }, { name: 'Reported NAV', value: F.money(B.nav, 1), src: 'data' }, { name: 'NAV rolled to 30 June', value: F.money(rolled, 1), src: 'computed' }, { name: 'Cash at closing', value: F.money(B.cash, 1), src: 'computed' }], result: F.money(B.price, 2) + ' = ' + F.pct(B.pct, 2) }; } },
+      { id: 'bidTotal', label: 'Bid', value: F.money(B.price, 1), sub: 'on ' + F.money(B.nav, 1) + ' of 31 March NAV; ' + F.money(B.cash, 1) + ' cash at closing' },
       { id: 'rolledNav', label: 'NAV rolled to 30 June', value: F.money(rolled, 1), sub: F.spct(rolled / B.nav - 1, 1) + ' vs reported', tone: rolled < B.nav ? 'bad' : null },
       { id: 'unfunded', label: 'Unfunded the buyer takes on', value: F.money(unf, 1), sub: F.pct(unf / B.nav, 0) + ' of NAV' },
-      { id: 'irrRange', label: 'Buyer IRR at the bid, 10th to 90th', value: F.pct(S.mc.p10, 1) + ' to ' + F.pct(S.mc.p90, 1), sub: F.pct(S.mc.below10, 0) + ' of paths below 10%' }
+      { id: 'irrRange', label: 'Buyer IRR at the bid, 10th to 90th', value: F.pct(S.mc.p10, 1) + ' to ' + F.pct(S.mc.p90, 1), sub: 'base case ' + F.pct(S.irrBid, 1) + '; ' + F.pct(S.mc.below10, 0) + ' of paths below 10%' }
     ]);
-    UI.table('#fundTable', { id: 'interests', name: 'Price by fund interest', columns: [{ key: 'fund', label: 'Fund (fictional)' }, { key: 'st', label: 'Strategy' }, { key: 'vintage', label: 'Vintage', num: 1 }, { key: 'nav', label: 'NAV 31 Mar', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'rolled', label: 'NAV 30 Jun', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'price', label: 'Price', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'pct', label: '% of NAV', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0.85 ? 'neg' : ''; } }, { key: 'dur', label: 'Duration', num: 1, fmt: function (v) { return F.num(v, 1); } }],
-      rows: rows.map(function (r) { return { fund: r.f.fund, st: r.m.label, vintage: r.f.vintage, nav: r.f.nav, rolled: r.rolled, unfunded: r.f.unfunded, price: r.price, pct: r.pctNav, dur: r.dur }; }), foot: { fund: 'Portfolio', nav: B.nav, rolled: rolled, unfunded: unf, price: B.price, pct: B.pct, dur: dur },
+    UI.table('#fundTable', { id: 'interests', name: 'Price by fund interest', columns: [{ key: 'fund', label: 'Fund (fictional)' }, { key: 'st', label: 'Strategy' }, { key: 'vintage', label: 'Vintage', num: 1 }, { key: 'nav', label: 'NAV 31 Mar', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'rolled', label: 'NAV 30 Jun', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'target', label: 'Target IRR', num: 1, fmt: function (v) { return v == null ? '' : F.pct(v, 0); } }, { key: 'price', label: 'Price', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'pct', label: '% of NAV', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0.85 ? 'neg' : ''; } }, { key: 'cash', label: 'Cash at closing', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'dur', label: 'Distribution duration, years', num: 1, fmt: function (v) { return F.num(v, 1); } }],
+      rows: rows.map(function (r) { return { fund: r.f.fund, st: r.m.label, vintage: r.f.vintage, nav: r.f.nav, rolled: r.rolled, unfunded: r.f.unfunded, target: r.target, price: r.price, pct: r.pctNav, cash: r.cash, dur: r.dur }; }), foot: { fund: 'Portfolio', nav: B.nav, rolled: rolled, unfunded: unf, price: B.price, pct: B.pct, cash: B.cash, dur: dur },
       footExplain: { pct: function () { return { title: 'Portfolio % of NAV', formula: 'total price / total reported NAV', inputs: [{ name: 'Price', value: F.money(B.price, 2), src: 'computed' }, { name: 'NAV', value: F.money(B.nav, 2), src: 'data' }], result: F.pct(B.pct, 2) }; } } });
     var byYear = {}; rows.forEach(function (r) { r.flows.forEach(function (x) { var y = Math.ceil(x.t - 1e-9); byYear[y] = (byYear[y] || 0) + x.dist - x.call; }); });
     var ys = Object.keys(byYear).map(Number).sort(function (a, b) { return a - b; }).filter(function (y) { return y <= 12; });
@@ -282,7 +288,7 @@ sell = (1 + opp)^hold</div>
     UI.chart.heat('#sensHeat', { rows: irrs.map(function (r) { return F.pct(r, 0) + ' IRR'; }), cols: hcs.map(function (x) { return F.pct(x, 0) + ' cut'; }), matrix: irrs.map(function (r) { return hcs.map(function (h) { return priceBook(r, h).pct; }); }), min: 0.6, max: 1.05, fmt: function (x) { return F.pct(x, 0); }, cell: 80, labelWidth: 90, label: 'Price sensitivity' });
     var m = MODELS.buyout, ages = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], pr = ages.map(function (a) { return SEC.price(SEC.stakeFlows({ nav: 100, unfunded: 10, age: a, model: m }, { haircut: A.haircut }), A.target, 100).pctNav; });
     UI.chart.line('#ageChart', { xs: ages, series: [{ name: '% of NAV', ys: pr, dots: true }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return v + 'y'; }, height: 220, zero: false, label: 'Price by fund age' });
-    $('#ageNote').textContent = 'Younger interests wait longer for distributions and carry more calls, so the same target IRR buys them at a deeper discount: ' + F.pct(pr[0], 0) + ' of NAV at two years against ' + F.pct(pr[pr.length - 1], 0) + ' at twelve, on this model.';
+    $('#ageNote').textContent = 'Younger interests wait longer for distributions and carry more calls, so the same target IRR buys them at a deeper discount: ' + F.pct(pr[0], 0) + ' of NAV at two years against ' + F.pct(pr[pr.length - 1], 0) + ' at twelve, on this model. In the market, tail-end funds often trade wider than this, because the few assets left are harder to value and buyers price that risk.';
     var us = [0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40], pu = us.map(function (u) { return SEC.price(SEC.stakeFlows({ nav: 100, unfunded: 100 * u, age: 3, model: m }, { haircut: A.haircut }), A.target, 100).pctNav; });
     UI.chart.bar('#unfChart', { categories: us.map(function (u) { return F.pct(u, 0) + ' of NAV'; }), series: [{ name: '% of NAV', values: pu }], yFmt: function (v) { return F.pct(v, 0); }, height: 200, values: true, label: 'Price by unfunded commitment' });
     $('#unfNote').textContent = 'Unfunded commitment is money the buyer must still pay in, at par, for assets that earn the fund\'s growth rate. When that growth is below the target IRR, every dollar of unfunded costs the buyer price. Here the price moves from ' + F.pct(pu[0], 1) + ' of NAV with no unfunded to ' + F.pct(pu[pu.length - 1], 1) + ' at 40% unfunded.';
@@ -336,7 +342,7 @@ sell = (1 + opp)^hold</div>
           fo.bids.value + ' of ' + fo.contacted.value + ' potential buyers bid. The fairness adviser also advised the GP, with part of its fee payable only on completion. The price, ' + F.pct(n.pricePct.value, 1) + ' of NAV, sits below the middle of the adviser\'s own range (' + F.pct(mid, 0) + ').',
           [fo.contacted.cite, fo.rangeLow.cite, adv && adv.cite, n.pricePct.cite].filter(Boolean), 'Price discovery was thin: two bids, an adviser paid on completion, and a price below the middle of its own fairness range.');
         add('fee-carry-reset', 'Carry reset: the GP is paid ' + F.money(la.crystallizedCarry.value, 1) + ' at the transaction price and restarts carry from it', la.crystallizedCarry.value > 0,
-          'On completion the GP takes ' + F.money(la.crystallizedCarry.value, 1) + ' of carried interest from Fund IV as if both companies were sold at the transaction price, and CV carry (' + F.pct(n.carry.value, 1) + ', then ' + F.pct(n.carry2.value, 0) + ') is measured from that same price. Selling LPs fund the first; rolling LPs pay the second.',
+          'On completion the GP takes ' + F.money(la.crystallizedCarry.value, 1) + ' of carried interest from Fund IV as if both companies were sold at the transaction price, and CV carry (' + F.pct(n.carry.value, 1) + ', then ' + F.pct(n.carry2.value, 0) + ') is measured from that same price. The GP is paid on the gain up to a price it negotiated, then again on gains above it.',
           [la.crystallizedCarry.cite, find('lpa-amend', /calculated from the transaction price/).cite, n.carry.cite], 'The GP is paid carry at the transaction price and again on gains above it.');
         add('gp-commitment', 'GP commitment: rolls 100% of crystallized carry plus ' + F.money(n.gpCash.value, 0) + ' cash', !(n.gpCash.value > 0),
           '', [n.gpCash.cite], 'The GP rolls all of its crystallized carry and adds cash.');
@@ -401,7 +407,7 @@ sell = (1 + opp)^hold</div>
   function renderAll() { renderPricing(); renderSensitivity(); renderCV(); }
   function init() {
     reg = UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); });
-    UI.table('#modelTable', { id: 'models', name: 'Projection model by strategy', columns: [{ key: 'label', label: 'Strategy' }, { key: 'rc', label: 'Call rate', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'ip', label: 'Investment period', num: 1 }, { key: 'life', label: 'Life', num: 1 }, { key: 'growth', label: 'NAV growth', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'bow', label: 'Bow', num: 1 }, { key: 'yieldFloor', label: 'Yield floor', num: 1, fmt: function (v) { return v ? F.pct(v, 0) : '–'; } }, { key: 'beta', label: 'Beta to public equity', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'vol', label: 'Growth shock vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }], rows: Object.keys(MODELS).map(function (k) { return MODELS[k]; }) });
+    UI.table('#modelTable', { id: 'models', name: 'Projection model by strategy', columns: [{ key: 'label', label: 'Strategy' }, { key: 'rc', label: 'Call rate', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'ip', label: 'Investment period', num: 1 }, { key: 'life', label: 'Life', num: 1 }, { key: 'growth', label: 'NAV growth', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'bow', label: 'Bow', num: 1 }, { key: 'yieldFloor', label: 'Yield floor', num: 1, fmt: function (v) { return v ? F.pct(v, 0) : '–'; } }, { key: 'rcPost', label: 'Call rate after IP', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'beta', label: 'Beta to public equity', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'vol', label: 'Growth shock vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'spread', label: 'Target IRR vs buyout', num: 1, fmt: function (v) { return (v > 0 ? '+' : '') + F.pct(v, 0); } }], rows: Object.keys(MODELS).map(function (k) { return MODELS[k]; }) });
     var tabs = UI.tabs('#tabsRoot');
     UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. NAVs at 31 Mar 2026, priced at 30 Jun 2026.'; renderPricing(); });
     new UI.DocViewer(document.getElementById('docViewer'), DOCS);

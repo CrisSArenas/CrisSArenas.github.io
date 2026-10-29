@@ -239,8 +239,8 @@ stress loss = sum_i w_i b_i' shock</pre>
     { n: 'Fenwright High Yield', c: 4, w: 0.06, b: [0.25, 0.35, 1.20, 0, 0], a: 0.007, s: 0.020, lim: 0.03 },
     { n: 'Saltmarsh Global Macro', c: 5, w: 0.05, b: [0.05, 0.20, 0, 0.30, 0.20], a: 0.020, s: 0.060, lim: 0.08 },
     { n: 'Kestrel Ridge Multi-Strategy', c: 5, w: 0.06, b: [0.25, 0, 0.20, 0, 0], a: 0.025, s: 0.035, lim: 0.06 },
-    { n: 'Larchmont Buyout Partners', c: 6, w: 0.08, b: [1.05, 0, 0.15, 0, 0.30], a: 0.030, s: 0.050, lim: null, rho: 0.50 },
-    { n: 'Westerly Growth Partners', c: 6, w: 0.06, b: [1.20, 0, 0, 0, 0.25], a: 0.020, s: 0.070, lim: null, rho: 0.50 },
+    { n: 'Larchmont Buyout Partners', c: 6, w: 0.08, b: [1.05, 0, 0.15, 0, 0.30], a: 0.030, s: 0.070, lim: null, rho: 0.50 },
+    { n: 'Westerly Growth Partners', c: 6, w: 0.06, b: [1.20, 0, 0, 0, 0.25], a: 0.020, s: 0.090, lim: null, rho: 0.50 },
     { n: 'Brookhaven Direct Lending', c: 7, w: 0.07, b: [0.20, 0.05, 0.90, 0, 0], a: 0.035, s: 0.030, lim: null, rho: 0.40 },
     { n: 'Granite Shoal Real Assets', c: 8, w: 0.065, b: [0.40, 0.20, 0.10, 0.90, 0.10], a: 0.020, s: 0.070, lim: null, rho: 0.55, stale: 3 }
   ];
@@ -478,7 +478,8 @@ stress loss = sum_i w_i b_i' shock</pre>
     ];
     S.privEffect = eff;
     UI.table('#privEffect', { id: 'private-effect', name: 'Effect of desmoothing on total risk', columns: [{ key: 'm', label: 'Measure' }, { key: 'r', label: 'Reported marks', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'd', label: 'Desmoothed', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'x', label: 'Difference', num: 1, fmt: function (v) { return F.pp(v, 2); } }], rows: eff.map(function (e) { return { m: e.m, r: e.r, d: e.d, x: e.d - e.r }; }) });
-    $('#privNote').textContent = 'On reported marks the private sleeves look like ' + F.pct(pshare(Rr), 0) + ' of total risk. Desmoothed, they are ' + F.pct(pshare(Rd), 0) + '. I size and budget risk on the desmoothed figures, since the reported ones would let private assets crowd out risk the portfolio cannot see.';
+    var peB = function (R) { var pw = PRIV_M.filter(function (i) { return MGR[i].c === 6; }), t = PM.sum(pw.map(function (i) { return B.w[i]; })); return PM.sum(pw.map(function (i) { return B.w[i] / t * R.M.fits[i].beta[0]; })); };
+    $('#privNote').textContent = 'On reported marks the private sleeves look like ' + F.pct(pshare(Rr), 0) + ' of total risk. Desmoothed, they are ' + F.pct(pshare(Rd), 0) + '. Smoothing also distorts tracking error: it pulls the equity beta of the private equity managers down to ' + F.num(peB(Rr), 2) + ', against ' + F.num(peB(Rd), 2) + ' desmoothed and ' + F.num(IDX[6].b[0], 2) + ' for the benchmark, so on reported marks private assets appear to carry ' + F.pct(pshareA(Rr), 0) + ' of tracking error against ' + F.pct(pshareA(Rd), 0) + ' desmoothed. I size and budget risk on the desmoothed figures.';
   }
 
   /* ---------------- checks, flags and audit ---------------- */

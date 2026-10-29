@@ -294,6 +294,12 @@
     var d = PM.ms.drawdownStop(r, 0.10, 0.5, 2);
     ok(d.fired[0] === 1, 'fires after month 2'); near(d.r[2], 0.005, 1e-12); near(d.r[3], 0.005, 1e-12); near(d.r[4], 0.01, 1e-12);
   }, 'Multi-Strategy Builder');
+  T.add('Multi-strategy', 'Risk controls move capital to and from cash at the cash rate', function () {
+    var c = 0.002, d = PM.ms.drawdownStop([-0.06, -0.06, 0.01, 0.01], 0.10, 0.5, 2, c);
+    near(d.r[2], 0.5 * 0.01 + 0.5 * c, 1e-12);
+    var r = [0.02, -0.02, 0.02, -0.02, 0.01], v = PM.ms.volTarget(r, 0.2, 4, 3, c), s = v.scale[4];
+    ok(s > 1, 'scaled up'); near(v.r[4], s * 0.01 + (1 - s) * c, 1e-12);
+  }, 'Multi-Strategy Builder');
   T.add('Multi-strategy', 'Exposure drift and correlation shift tests find a planted change', function () {
     var z = PM.normalGen(PM.mulberry32(9)), X = [], y = [], u = [], v = [];
     for (var t = 0; t < 120; t++) { var f = [z(), z()]; X.push(f); y.push((t < 80 ? 0 : 0.8) * f[0] + 0.3 * z()); var c = z(); u.push(z() + (t >= 80 ? 2 * c : 0)); v.push(z() + (t >= 80 ? 2 * c : 0)); }
@@ -315,6 +321,13 @@
   T.add('Secondaries', 'Stake projection conserves value: distributions = NAV + calls + growth', function () {
     var f = { nav: 10, unfunded: 0, age: 9, model: { rc: 0.3, ip: 5, life: 12, growth: 0, bow: 2 } }, fl = PM.sec.stakeFlows(f);
     near(PM.sum(fl.map(function (x) { return x.dist; })), 10, 1e-9);
+  }, 'Secondaries Desk');
+  T.add('Secondaries', 'Unfunded past the investment period is called at the follow-on rate, and none without it', function () {
+    var m = { rc: 0.3, ip: 5, life: 12, growth: 0, bow: 2 };
+    var none = PM.sec.stakeFlows({ nav: 10, unfunded: 4, age: 7, model: m }), post = PM.sec.stakeFlows({ nav: 10, unfunded: 4, age: 7, model: Object.assign({ rcPost: 0.2 }, m) });
+    near(PM.sum(none.map(function (x) { return x.call; })), 0, 1e-12);
+    near(post[0].call, 4 * (1 - Math.pow(0.8, 0.25)), 1e-12);
+    near(PM.sum(post.map(function (x) { return x.dist; })), 10 + PM.sum(post.map(function (x) { return x.call; })), 1e-9, 'zero growth: distributions = NAV + calls');
   }, 'Secondaries Desk');
   T.add('Secondaries', 'Roll and sell are equal at the computed break-even', function () {
     var t = { hold: 4, fee: 0.01, pref: 0.08, carry: 0.125, carry2: 0.2, tier2: 2.5 }, opp = 0.10, m = PM.sec.breakEven(t, opp);
@@ -376,6 +389,10 @@
   T.add('Allocation and rebalancing', 'Tilts are scaled to the tracking error budget', function () {
     var S = [[0.04, 0.01], [0.01, 0.01]], t = PM.rebal.sizeTilts([0.05, -0.05], S, 0.005);
     near(t.te, 0.005, 1e-12); ok(t.scale < 1, 'scaled down');
+  }, 'Allocation and Rebalancing');
+  T.add('Allocation and rebalancing', 'Futures overlay is beta-adjusted and books the illiquid sleeve at its limit', function () {
+    var o = Object.assign({}, RPLAN, { value: [300, 200, 160, 120, 190, 30], overlay: { from: 4, proxy: 0, beta: 1.2 } }), p = PM.rebal.plan(o);
+    ok(p.overlay > 0, 'overlay used'); near(p.overlay, 1.2 * (p.after[4] - 0.18) * p.navAfter, 1e-9); near(p.effective[4], 0.18, 1e-12);
   }, 'Allocation and Rebalancing');
 
   if (typeof module !== 'undefined' && module.exports) module.exports = T;
