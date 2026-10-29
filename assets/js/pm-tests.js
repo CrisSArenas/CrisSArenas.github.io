@@ -340,5 +340,43 @@
     near(a.blendIrr, a.fundIrr, 1e-9); ok(b.blendIrr > a.blendIrr, 'blend higher'); near(b.coNet, 2, 1e-12);
   }, 'Co-Investment Underwriter');
 
+  /* ---------------- Portfolio risk and performance ---------------- */
+  var RB3 = [[1, 0.2], [0.8, -0.3], [0.1, 1.1]], RF3 = [[0.03, 0.004], [0.004, 0.01]], RS3 = [0.002, 0.001, 0.0015];
+  T.add('Risk and performance', 'Risk contributions sum to total portfolio volatility', function () {
+    var S = PM.risk.factorCov(RB3, RF3, RS3), r = PM.risk.contrib([0.5, 0.3, 0.2], S);
+    near(PM.sum(r.c), r.vol, 1e-12); near(r.vol, Math.sqrt(PM.dot([0.5, 0.3, 0.2], PM.matVec(S, [0.5, 0.3, 0.2]))), 1e-12);
+  }, 'Portfolio Risk and Performance');
+  T.add('Risk and performance', 'Factor and specific contributions sum to total volatility', function () {
+    var w = [0.5, 0.3, 0.2], S = PM.risk.factorCov(RB3, RF3, RS3), f = PM.risk.factorContrib(w, RB3, RF3, RS3);
+    near(PM.sum(f.factors) + f.specific, f.vol, 1e-12); near(f.vol, PM.risk.contrib(w, S).vol, 1e-12);
+  }, 'Portfolio Risk and Performance');
+  T.add('Risk and performance', 'Active risk contributions sum to tracking error', function () {
+    var S = PM.risk.factorCov(RB3, RF3, RS3), a = PM.risk.active([0.5, 0.3, 0.2], [0.4, 0.4, 0.2], S);
+    near(PM.sum(a.c), a.te, 1e-12); ok(a.te > 0, 'positive tracking error');
+  }, 'Portfolio Risk and Performance');
+  T.add('Risk and performance', 'Brinson effects sum to active return', function () {
+    var b = PM.brinson([0.6, 0.3, 0.1], [0.5, 0.4, 0.1], [0.08, 0.03, 0.12], [0.07, 0.035, 0.10]);
+    near(b.alloc + b.sel + b.inter, b.total, 1e-12); near(b.total, 0.6 * 0.08 + 0.3 * 0.03 + 0.1 * 0.12 - (0.5 * 0.07 + 0.4 * 0.035 + 0.1 * 0.10), 1e-12);
+  }, 'Portfolio Risk and Performance');
+  T.add('Risk and performance', 'Maximum drawdown on a hand example', function () {
+    var d = PM.risk.drawdown([0.1, -0.2, 0.05, -0.1, 0.3]); near(d.maxDD, 1.1 * 0.8 * 1.05 * 0.9 / 1.1 - 1, 1e-12);
+  }, 'Portfolio Risk and Performance');
+  /* ---------------- Allocation and rebalancing ---------------- */
+  var RPLAN = { value: [300, 200, 160, 120, 140, 30], target: [0.33, 0.22, 0.15, 0.12, 0.15, 0.03], lo: [0.28, 0.18, 0.10, 0.08, 0.10, 0.01], hi: [0.38, 0.26, 0.20, 0.16, 0.18, 0.06],
+    liquid: [true, true, true, false, false, true], cost: [8, 5, 20, 0, 0, 0], cash: 5, minTrade: 2, calls: [0, 0, 0, 12, 18, 0], spending: 11, overlay: { from: 4, proxy: 0 } };
+  T.add('Allocation and rebalancing', 'Trades net to zero after the quarter\'s cash flows', function () {
+    var p = PM.rebal.plan(RPLAN); near(PM.sum(p.trades), 0, 1e-9); near(p.nav, 950 - 11, 1e-9); near(p.navAfter, p.nav - p.costs, 1e-9);
+  }, 'Allocation and Rebalancing');
+  T.add('Allocation and rebalancing', 'Post-trade weights sit inside their ranges', function () {
+    var p = PM.rebal.plan(RPLAN); ok(p.breachesAfter.length === 0, p.breachesAfter.length + ' breaches left');
+  }, 'Allocation and Rebalancing');
+  T.add('Allocation and rebalancing', 'Private sleeves are never traded', function () {
+    var p = PM.rebal.plan(RPLAN); ok(p.trades[3] === 0 && p.trades[4] === 0, 'illiquid sleeves untouched');
+  }, 'Allocation and Rebalancing');
+  T.add('Allocation and rebalancing', 'Tilts are scaled to the tracking error budget', function () {
+    var S = [[0.04, 0.01], [0.01, 0.01]], t = PM.rebal.sizeTilts([0.05, -0.05], S, 0.005);
+    near(t.te, 0.005, 1e-12); ok(t.scale < 1, 'scaled down');
+  }, 'Allocation and Rebalancing');
+
   if (typeof module !== 'undefined' && module.exports) module.exports = T;
 })(typeof window !== 'undefined' ? window : globalThis);

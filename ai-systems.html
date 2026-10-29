@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI systems · Cristian Arenas</title>
+    <meta name="description" content="How I build and run AI systems for investment teams: the agent loop, an example workflow, production practices, the lifecycle from idea to production, human in the loop and model choice.">
+    <link rel="canonical" href="https://crissarenas.github.io/ai-systems.html">
+    <meta property="og:title" content="AI systems · Cristian Arenas">
+    <meta property="og:description" content="How I build and run AI systems for investment teams: the agent loop, an example workflow, production practices, the lifecycle from idea to production, human in the loop and model choice.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#0B1A15">
+    <link rel="icon" href="/assets/images/favicon.svg?v=4" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=4" type="image/png" sizes="64x64">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=4">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/assets/js/site.js"></script>
+</head>
+<body>
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
+  <div class="container">
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#about">About</a></li>
+      <li><a href="/#portfolio">Portfolio</a></li>
+      <li><a href="/#ai">AI</a></li>
+      <li><a href="/#work">Work</a></li>
+      <li><a href="/#memos">Memos</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</nav>
+<!-- site-nav:end -->
+<main id="main">
+<section class="section ai-page" id="ai">
+  <div class="container">
+    <a class="back-link" href="/#ai">&larr; Back to the homepage</a>
+    <div class="section-head reveal" style="margin-top:20px"><h1>AI systems</h1><p>How I build and run AI systems for investment teams. Each part opens on its own, in plain English or in technical detail.</p></div>
+    <div class="ai-mode reveal" role="group" aria-label="Choose how to read this page"><span>Read it as</span><div class="seg2"><button type="button" data-mode="plain" aria-pressed="true">Plain English</button><button type="button" data-mode="tech" aria-pressed="false">Technical</button></div><button type="button" class="fold-all" aria-expanded="false">Open all sections</button></div>
+
+    <details class="ai-fold reveal" open>
+      <summary><div><h3 class="ai-sub"><span class="t-plain">What an AI agent does</span><span class="t-tech">The agent loop I build on</span></h3><p class="fold-sub">The four things an agent does, from reading a document to asking before it acts</p></div><span class="fold-ic" aria-hidden="true"></span></summary>
+      <div class="ai-fold-body">
+    <ol class="agent-loop">
+      <li class="card loop-card"><span class="loop-n">01</span><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 12h6M10 16h6"/></svg><h4>Reads</h4><p class="t-plain">An agent opens a document the way an analyst would. It finds the fee clause, the capital account and the NAV table, and writes down each number with the page and line it came from.</p><p class="t-tech">Layout-aware parsing of native and scanned PDFs, table reconstruction and OCR where needed, then retrieval with metadata filters by fund, period and document type. Every extracted value stays bound to its source span.</p></li>
+      <li class="card loop-card"><span class="loop-n">02</span><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg><h4>Uses tools</h4><p class="t-plain">It does not do the math in its head. It calls a calculator, a database or the firm&#39;s own models, the same tools a person would use, and keeps every result.</p><p class="t-tech">Typed tool contracts exposed through Model Context Protocol servers: SQL over governed views, cash flow and pricing libraries, document search and ticketing. The model chooses the tool and the tool does the arithmetic, so numeric results are deterministic and testable.</p></li>
+      <li class="card loop-card"><span class="loop-n">03</span><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z"/><path d="m8.5 12.2 2.4 2.4 4.8-5"/></svg><h4>Checks itself</h4><p class="t-plain">Before it reports anything, it re-checks the numbers against the source and against each other. When something does not tie, it says so plainly.</p><p class="t-tech">Deterministic assertions after each step: totals tie, units and currencies match, dates fall in range and every citation resolves to text that contains the value. Failed checks trigger a bounded retry or an escalation to a person.</p></li>
+      <li class="card loop-card"><span class="loop-n">04</span><svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.3 3 7.8 7 9.5 4-1.7 7-5.2 7-9.5V6z"/><path d="m9.5 12 1.8 1.8 3.4-3.6"/></svg><h4>Asks before it acts</h4><p class="t-plain">Anything that moves money, changes a record or reaches a client waits for a named person to approve it. The agent prepares the work and a person signs it off.</p><p class="t-tech">Approval is a first-class step. Actions are drafted as proposals with evidence attached, routed by risk tier and executed only after sign-off. The approver, the time and the exact change are written to an append-only log.</p></li>
+    </ol>
+      </div>
+    </details>
+
+    <details class="ai-fold reveal">
+      <summary><div><h3 class="ai-sub">An example workflow: a capital call</h3><p class="fold-sub">One routine task from inbox to books, step by step</p></div><span class="fold-ic" aria-hidden="true"></span></summary>
+      <div class="ai-fold-body">
+    <p class="ai-lede"><span class="t-plain">How an agentic system handles one routine task from inbox to books, with a person in charge of the only step that moves money.</span><span class="t-tech">The same task as a run: trigger, extraction, controls, proposal and execution, each step traced and replayable.</span></p>
+    <ol class="flow">
+      <li class="flow-step"><span class="flow-dot">1</span><div><h4>A notice arrives</h4><p class="t-plain">A GP emails a capital call notice. The system picks it up from the shared mailbox within minutes.</p><p class="t-tech">A Microsoft Graph subscription on the operations mailbox triggers the run. The attachment is classified and de-duplicated by content hash, so a resent notice is processed once.</p></div></li>
+      <li class="flow-step"><span class="flow-dot">2</span><div><h4>Read and match</h4><p class="t-plain">It reads the amount, due date and wire details, matches them to the right fund and commitment in the books and checks the amount against the unfunded commitment.</p><p class="t-tech">Typed extraction with citations, entity resolution of fund and LP names against master data, and reconciliation of the requested amount against the commitment ledger through a SQL tool.</p></div></li>
+      <li class="flow-step"><span class="flow-dot">3</span><div><h4>Check the cash</h4><p class="t-plain">It checks the amount against cash on hand and the liquidity plan and flags anything unusual, such as changed wire instructions.</p><p class="t-tech">Rule checks on unfunded balance, due-date window and liquidity buffer, plus an anomaly check on bank details. Any change to wire instructions blocks automation and forces a call-back control.</p></div></li>
+      <li class="flow-step"><span class="flow-dot">4</span><div><h4>Prepare the work</h4><p class="t-plain">It drafts the cash movement and the accounting entry, with the notice attached and every number linked to its source.</p><p class="t-tech">A proposal record with evidence, citations and a risk tier is written to the queue and posted to Teams as an approval card with approve and reject actions.</p></div></li>
+      <li class="flow-step human"><span class="flow-dot">5</span><div><h4>A person approves</h4><p class="t-plain">Operations reviews and approves. The system books it, files the notice and updates the pacing model.</p><p class="t-tech">On approval, idempotent writes go to the accounting system and the warehouse, the pacing model refresh is scheduled and the run trace is sealed in the audit log.</p></div></li>
+    </ol>
+      </div>
+    </details>
+
+    <details class="ai-fold reveal">
+      <summary><div><h3 class="ai-sub">How I run AI in production</h3><p class="fold-sub">Eight engineering practices that make these systems safe to rely on</p></div><span class="fold-ic" aria-hidden="true"></span></summary>
+      <div class="ai-fold-body">
+    <p class="ai-lede">The engineering that makes these systems safe to rely on. Use the switch at the top for plain or technical detail.</p>
+    <div class="grid-4 prac-grid">
+      <div class="card prac-card"><h4>Grounded answers</h4><p class="t-plain">Every answer comes with the passage it rests on, so nobody has to trust a summary they cannot check. If the system cannot find support in the documents, it says it does not know.</p><p class="t-tech">Hybrid retrieval, keyword and vector search together, over chunked documents with metadata filters by fund, period and document type, then reranking. Generation is limited to retrieved passages, and an answer without a resolving citation is withheld.</p></div>
+      <div class="card prac-card"><h4>Typed, checked outputs</h4><p class="t-plain">Numbers come out in the right units and periods, ready to drop into a model or a report. Nothing is quietly filled in when a value is missing.</p><p class="t-tech">Extraction targets typed fields with explicit units, currency and period. Outputs are validated before anything uses them. A field that fails is retried a bounded number of times with the error attached, and then routed to a person.</p></div>
+      <div class="card prac-card"><h4>The right model per task</h4><p class="t-plain">Fast, inexpensive models handle routine work. The strongest models handle the hard reading. That keeps quality high and the bill predictable.</p><p class="t-tech">Per-task routing on measured accuracy, cost per document and latency at the median and the tail. Context caching for long documents, batch runs for overnight volumes and a token budget per workflow with alerts when it is exceeded.</p></div>
+      <div class="card prac-card"><h4>Inside Microsoft 365 and Teams</h4><p class="t-plain">People use the tools where they already work, in Teams, Outlook and SharePoint. Nobody has to learn a new app or copy files around.</p><p class="t-tech">Copilot agents and Teams apps that read SharePoint, OneDrive and Outlook through Microsoft Graph on behalf of the signed-in user, so the model sees only what that person can open. Approvals arrive as Teams cards and their outcome is logged.</p></div>
+      <div class="card prac-card"><h4>Data stays in the firm</h4><p class="t-plain">Sensitive data stays inside the firm&#39;s own cloud and never trains anyone else&#39;s model.</p><p class="t-tech">Private networking, managed secrets and encryption keys in the firm&#39;s Azure or AWS tenant, with zero-retention terms on hosted model endpoints. Personal data is redacted before any call that leaves the tenant, and open-weight models run in-tenant when data cannot leave at all.</p></div>
+      <div class="card prac-card"><h4>Observability</h4><p class="t-plain">Every run can be traced, costed and replayed after the fact, which is what auditors and risk teams ask for first.</p><p class="t-tech">Structured traces per run with model, version, inputs, outputs, tools called, latency and cost. Dashboards per workflow, and alerts when accuracy on live spot checks, cost or response time moves outside agreed bands.</p></div>
+      <div class="card prac-card"><h4>Reliability</h4><p class="t-plain">If a model provider has an outage, the work still gets done.</p><p class="t-tech">Timeouts, retries with backoff and jitter, provider and model fallbacks, durable queues and idempotent actions, so a failed step can be rerun without posting anything twice.</p></div>
+      <div class="card prac-card"><h4>Release discipline</h4><p class="t-plain">Nothing changes in production until it passes the tests, and every change can be undone.</p><p class="t-tech">Verified regression sets run in CI on every change. A new model runs in shadow next to the current one before any switch, and every release has a documented rollback.</p></div>
+    </div>
+      </div>
+    </details>
+
+    <details class="ai-fold reveal">
+      <summary><div><h3 class="ai-sub">From idea to production system</h3><p class="fold-sub">Seven stages, with a human in the loop at every one</p></div><span class="fold-ic" aria-hidden="true"></span></summary>
+      <div class="ai-fold-body">
+    <p class="ai-lede"><span class="t-plain">I build each system all the way through, from the first conversation with the team to a production system they rely on. A human stays in the loop at every stage.</span><span class="t-tech">The full lifecycle I run on every system, with the human review points designed in from the first step.</span></p>
+    <ol class="steps-grid">
+      <li class="card step-card"><span class="loop-n">01</span><h4>Frame the decision</h4><p class="t-plain">I sit with the team to understand the decision, the documents behind it and where the hours go today. We agree what a good outcome looks like and who signs off.</p><p class="t-tech">A written spec of inputs, outputs, tolerances and failure modes, the approval points, and a split between the steps that must stay deterministic and the steps that need a model.</p></li>
+      <li class="card step-card"><span class="loop-n">02</span><h4>Design the system</h4><p class="t-plain">I design how the agents, the firm&#39;s data and the people fit together, including exactly where a person reviews and approves.</p><p class="t-tech">Workflow and agent design, typed tool contracts, data access scoped to each user&#39;s permissions, a risk tier for every action and the approval gate attached to it.</p></li>
+      <li class="card step-card"><span class="loop-n">03</span><h4>Build and connect</h4><p class="t-plain">I build the agents and connect them to the documents, data and tools the team already uses, including Teams and Outlook.</p><p class="t-tech">Agents on the Claude Agent SDK with Model Context Protocol tools, governed data views in Snowflake or PostgreSQL and Microsoft Graph for mail and files, deployed in the firm&#39;s own tenant.</p></li>
+      <li class="card step-card"><span class="loop-n">04</span><h4>Test against known answers</h4><p class="t-plain">Before anyone relies on it, the system is tested on real documents where the right answers are already known and confirmed by the team&#39;s experts.</p><p class="t-tech">Expert-verified gold sets with planted errors, scored on accuracy, citation coverage, recall and false flags, with the regression suite running in CI.</p></li>
+      <li class="card step-card"><span class="loop-n">05</span><h4>Run alongside the team</h4><p class="t-plain">For a few weeks the system works next to the team without acting. People compare its work with their own and correct it, and every correction makes it better.</p><p class="t-tech">Shadow mode with observe-only permissions. Agreement with reviewers is tracked per field and per action, and reviewer corrections are added to the test set.</p></li>
+      <li class="card step-card"><span class="loop-n">06</span><h4>Launch with a human in the loop</h4><p class="t-plain">It goes live with a person approving every action that matters. The system prepares the work and the evidence, and the professional makes the judgment.</p><p class="t-tech">Risk-tiered autonomy. Low-risk steps run on their own, anything touching money, records or clients waits for approval with evidence attached, and every decision is logged.</p></li>
+      <li class="card step-card"><span class="loop-n">07</span><h4>Operate and improve</h4><p class="t-plain">After launch I keep measuring. Reviews and corrections from the team feed back into the tests, so the system keeps getting more accurate and nobody has to trust it blindly.</p><p class="t-tech">Monitoring of accuracy on live spot checks, cost and latency, alerts on drift, retesting on every change and a rollback path for every release.</p></li>
+    </ol>
+    <div class="hil"><div class="hil-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/><path d="m15.5 4.5 1.5 1.5 3-3"/></svg></div><div><h3>Human in the loop</h3><p class="t-plain">Every system I build keeps investment professionals in charge. The agents do the reading, checking and drafting. People review the flags, make the judgment calls and approve anything that moves money, changes a record or reaches a client. Every review is recorded with who made it and why, and each correction becomes a new test. The system learns from the team&#39;s judgment, and the final word always belongs to a person.</p><p class="t-tech">Human-in-the-loop is designed in from the first step. Low-confidence fields and failed checks go to a review queue, actions are gated by risk tier and delivered as Teams approval cards, and the reviewer&#39;s identity, decision and rationale are written to the append-only log. Reviewer corrections flow back into the verified test set and the regression suite. Autonomy is widened only when measured agreement with reviewers supports it, and it can be narrowed again at any time.</p></div></div>
+      </div>
+    </details>
+
+    <details class="ai-fold reveal">
+      <summary><div><h3 class="ai-sub">Model choice and production standards</h3><p class="fold-sub">How I pick the right model, and what every release has to meet</p></div><span class="fold-ic" aria-hidden="true"></span></summary>
+      <div class="ai-fold-body">
+    <div class="ai-two">
+      <div class="model-pick">
+        <h3>How I pick the right model</h3>
+        <p class="t-plain">Each task gets the model that fits it. I judge every candidate on accuracy on the firm&#39;s own documents, cost per document, speed and where the data is allowed to go. Frontier models like Claude and OpenAI&#39;s models take the long documents and the hard reasoning. Open-weight models run where data has to stay inside the firm or where volume makes cost the deciding factor. No model goes into production, and none gets swapped in, until it beats the current one on a verified test set.</p><p class="t-tech">For each candidate I run the verified test set and record field accuracy, citation accuracy, tool-call validity, latency at the median and the tail, and cost per document. Long-context frontier models handle full LPAs and reasoning across several documents. Smaller, faster models handle classification, routing and first-pass extraction. Open-weight models run in-tenant for restricted data, sized to the hardware the firm has. Structured outputs and tool calls are checked on every call whatever the model, and a model is promoted only when it wins on the verified test set at an acceptable cost.</p>
+      </div>
+      <div class="prod-grade">
+        <h3>What makes it production-grade</h3>
+        <ul class="prod-list"><li>Tested against verified answers before every release</li><li>Human approval on anything that moves money or reaches a client</li><li>Full audit trail of every action and every model output</li><li>Access limited to the data each user is allowed to see</li><li>Cost and response time monitored per workflow</li><li>Fallbacks when a model or provider is down</li></ul>
+      </div>
+    </div>
+      </div>
+    </details>
+  </div>
+</section>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
+      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/ai-systems.html">AI systems</a></li>
+        <li><a href="/notes/">Notes</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics</a></li>
+      </ul>
+    </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>
+  </div>
+</footer>
+<!-- site-footer:end -->
+<script src="/script.js"></script>
+</body>
+</html>

@@ -1750,3 +1750,106 @@
     return { fundNet: fN, coNet: cN, fundIrr: Math.pow(fN, 1 / o.fundHold) - 1, coIrr: Math.pow(cN, 1 / o.coHold) - 1, blendMultiple: (fN + o.ratio * cN) / (1 + o.ratio), blendIrr: (lo + hi) / 2 };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Portfolio risk and performance (Portfolio Risk and Performance demo)
+   and allocation and rebalancing (Allocation and Rebalancing demo).
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, dot = PM.dot, matVec = PM.matVec;
+  function vol(w, S) { return Math.sqrt(Math.max(0, dot(w, matVec(S, w)))); }
+
+  var RK = PM.risk = {};
+  /** covariance from a factor model: S = B F B' + diag(spec), B is assets x factors */
+  RK.factorCov = function (B, F, spec) {
+    var n = B.length, S = [];
+    for (var i = 0; i < n; i++) { S[i] = []; for (var j = 0; j < n; j++) { var s = dot(B[i], matVec(F, B[j])); S[i][j] = s + (i === j ? spec[i] : 0); } }
+    return S;
+  };
+  /** absolute risk contributions c_i = w_i (S w)_i / vol; they sum to vol */
+  RK.contrib = function (w, S) {
+    var Sw = matVec(S, w), v = vol(w, S);
+    return { vol: v, c: w.map(function (x, i) { return v > 0 ? x * Sw[i] / v : 0; }) };
+  };
+  /** tracking error and active risk contributions of w against benchmark b; contributions sum to TE */
+  RK.active = function (w, b, S) {
+    var a = w.map(function (x, i) { return x - b[i]; }), r = RK.contrib(a, S);
+    return { te: r.vol, c: r.c, active: a };
+  };
+  /** factor decomposition of portfolio risk: factor contributions plus specific, summing to vol */
+  RK.factorContrib = function (w, B, F, spec) {
+    var x = PM.transpose(B).map(function (col) { return dot(col, w); }), Fx = matVec(F, x);
+    var sys = dot(x, Fx), sp = w.reduce(function (s, wi, i) { return s + wi * wi * spec[i]; }, 0), v = Math.sqrt(Math.max(0, sys + sp));
+    return { vol: v, exposure: x, factors: x.map(function (xi, k) { return v > 0 ? xi * Fx[k] / v : 0; }), specific: v > 0 ? sp / v : 0 };
+  };
+  /** cumulative growth, drawdown series and maximum drawdown of periodic returns */
+  RK.drawdown = function (r) {
+    var g = 1, pk = 1, mdd = 0, dd = [], cum = [];
+    r.forEach(function (x) { g *= 1 + x; if (g > pk) pk = g; var d = g / pk - 1; dd.push(d); cum.push(g); if (d < mdd) mdd = d; });
+    return { cum: cum, dd: dd, maxDD: mdd };
+  };
+  /** annualised compound return of the last m monthly returns */
+  RK.annualised = function (r, m) {
+    var s = r.slice(-m), g = s.reduce(function (a, x) { return a * (1 + x); }, 1);
+    return Math.pow(g, 12 / s.length) - 1;
+  };
+
+  var RB = PM.rebal = {};
+  /** weights against targets and ranges: breaches carry the gap to the nearest range edge */
+  RB.drift = function (w, lo, hi) {
+    return w.map(function (x, i) { return { i: i, w: x, below: x < lo[i] - 1e-12, above: x > hi[i] + 1e-12, gap: x < lo[i] ? lo[i] - x : x > hi[i] ? hi[i] - x : 0 }; })
+      .filter(function (d) { return d.below || d.above; });
+  };
+  /** size active views (weights summing to zero) to a tracking error budget: k = min(1, budget / TE(views)) */
+  RB.sizeTilts = function (views, S, budget, mu) {
+    var te = vol(views, S), k = te > 0 ? Math.min(1, budget / te) : 0, t = views.map(function (v) { return v * k; });
+    return { scale: k, tilt: t, te: te * k, dRet: mu ? dot(t, mu) : 0 };
+  };
+  /** trade list back inside ranges after the quarter's cash flows.
+      o: {value[] $m, target[], lo[], hi[], liquid[] bool, cost[] bps, cash: index, minTrade $m,
+          calls[] $m into each sleeve (paid from cash), spending $m (paid from cash),
+          overlay: {from: illiquid index, proxy: liquid index} futures used when the illiquid sleeve is above range }
+      Liquid sleeves outside their range trade to the nearest edge (or to target when toTarget).
+      Cash is the balancing account; if cash ends outside its range, the most overweight liquid
+      sleeves are sold (or the most underweight bought) without crossing their own ranges.
+      Trades below minTrade are dropped unless they cure a breach. Costs are paid from cash. */
+  RB.plan = function (o) {
+    var n = o.value.length, c = o.cash, v = o.value.slice(), calls = o.calls || [], k;
+    var flowIn = 0;
+    for (k = 0; k < n; k++) { var cl = calls[k] || 0; v[k] += cl; flowIn += cl; }
+    v[c] -= flowIn + (o.spending || 0);
+    var nav = PM.sum(v), w = v.map(function (x) { return x / nav; }), pre = w.slice();
+    var tr = new Array(n).fill(0), cure = new Array(n).fill(false);
+    for (k = 0; k < n; k++) {
+      if (k === c || !o.liquid[k]) continue;
+      var tgt = w[k] < o.lo[k] ? (o.toTarget ? o.target[k] : o.lo[k]) : w[k] > o.hi[k] ? (o.toTarget ? o.target[k] : o.hi[k]) : w[k];
+      if (tgt !== w[k]) { tr[k] = (tgt - w[k]) * nav; cure[k] = true; }
+    }
+    var cashAfter = function () { return v[c] - tr.reduce(function (s, t, i) { return i === c ? s : s + t; }, 0); };
+    var order = function (sign) {
+      return Array.from({ length: n }, function (_, i) { return i; }).filter(function (i) { return i !== c && o.liquid[i]; })
+        .sort(function (a, b) { return sign * ((w[b] + tr[b] / nav - o.target[b]) - (w[a] + tr[a] / nav - o.target[a])); });
+    };
+    var ca = cashAfter() / nav;
+    if (ca < o.lo[c]) {
+      var need = (o.target[c] - ca) * nav;
+      order(1).forEach(function (i) { if (need <= 0) return; var room = (w[i] + tr[i] / nav - Math.max(o.lo[i], Math.min(o.target[i], w[i] + tr[i] / nav))) * nav; var x = Math.min(need, Math.max(0, room)); if (x > 0) { tr[i] -= x; need -= x; } });
+      order(1).forEach(function (i) { if (need <= 0) return; var room = (w[i] + tr[i] / nav - o.lo[i]) * nav; var x = Math.min(need, Math.max(0, room)); if (x > 0) { tr[i] -= x; need -= x; } });
+    } else if (ca > o.hi[c]) {
+      var spare = (ca - o.target[c]) * nav;
+      order(-1).forEach(function (i) { if (spare <= 0) return; var room = (Math.min(o.hi[i], Math.max(o.target[i], w[i] + tr[i] / nav)) - (w[i] + tr[i] / nav)) * nav; var x = Math.min(spare, Math.max(0, room)); if (x > 0) { tr[i] += x; spare -= x; } });
+    }
+    for (k = 0; k < n; k++) if (k !== c && !cure[k] && Math.abs(tr[k]) > 0 && Math.abs(tr[k]) < (o.minTrade || 0)) tr[k] = 0;
+    tr[c] = -tr.reduce(function (s, t, i) { return i === c ? s : s + t; }, 0);
+    var costs = tr.reduce(function (s, t, i) { return i === c ? s : s + Math.abs(t) * (o.cost[i] || 0) / 1e4; }, 0);
+    var after = v.map(function (x, i) { return x + tr[i] - (i === c ? costs : 0); }), navAfter = PM.sum(after);
+    var wa = after.map(function (x) { return x / navAfter; }), overlay = 0, eff = wa.slice();
+    if (o.overlay && wa[o.overlay.from] > o.hi[o.overlay.from]) {
+      overlay = (wa[o.overlay.from] - o.hi[o.overlay.from]) * navAfter;
+      eff[o.overlay.from] -= overlay / navAfter; eff[o.overlay.proxy] += 0;
+    }
+    return { flows: { calls: flowIn, spending: o.spending || 0 }, navBefore: PM.sum(o.value), nav: nav, navAfter: navAfter, pre: pre, trades: tr, costs: costs, after: wa, effective: eff, overlay: overlay,
+      turnover: tr.reduce(function (s, t, i) { return i === c ? s : s + Math.abs(t); }, 0) / 2, breachesBefore: RB.drift(pre, o.lo, o.hi), breachesAfter: RB.drift(eff, o.lo, o.hi) };
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

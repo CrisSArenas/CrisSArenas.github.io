@@ -9,7 +9,8 @@ const root = new URL('..', import.meta.url).pathname;
 const CHECK = process.argv.includes('--check');
 const DEMOS = {
   pcl: 'private-capital-lab.html', fta: 'fund-terms-auditor.html', coi: 'co-invest-underwriter.html', sec: 'secondaries-desk.html',
-  alloc: 'allocation-lab.html', msb: 'multi-strategy-builder.html', msc: 'manager-selection-copilot.html', apm: 'agentic-portfolio-monitor.html'
+  alloc: 'allocation-lab.html', msb: 'multi-strategy-builder.html', msc: 'manager-selection-copilot.html', apm: 'agentic-portfolio-monitor.html',
+  prp: 'portfolio-risk-performance.html', arb: 'allocation-rebalancing.html'
 };
 
 const b = await chromium.launch(), cards = {};
@@ -82,6 +83,19 @@ const DRAW = {
     const Y = sy(Math.min(0, ...c.values), Math.max(...c.values)), g = (W - 2 * P) / c.values.length, bw = g * 0.66;
     return { desc: 'Share of total gains by deal, largest first',
       svg: c.values.map((v, i) => rect(P + i * g + (g - bw) / 2, Y(0), bw, Y(v) - Y(0), v < 0 ? 'f-r' : i === 0 ? 'f-g' : 'f-n')).join('') };
+  },
+  rcbars(c) {
+    const Y = sy(0, Math.max(...c.values)), g = (W - 2 * P) / c.values.length, bw = g * 0.62, top = c.values.indexOf(Math.max(...c.values));
+    return { desc: 'Share of total risk by asset class: ' + c.labels.map((l, i) => l + ' ' + Math.round(c.values[i] * 100) + '%').join(', '),
+      svg: c.values.map((v, i) => rect(P + i * g + (g - bw) / 2, Y(0), bw, Y(v) - Y(0), i === top ? 'f-g' : 'f-n')).join('') };
+  },
+  bands(c) {
+    const n = c.items.length, hi = Math.max(...c.items.map(x => Math.max(x.hi, x.w))), Y = sy(0, hi), g = (W - 2 * P) / n, bw = g * 0.5;
+    return { desc: 'Current weight against the policy range for each sleeve; breaches in red',
+      svg: c.items.map((x, i) => { const x0 = P + i * g + (g - bw) / 2;
+        return `<rect class="f-band" x="${f(x0 - 2)}" y="${Y(x.hi)}" width="${f(bw + 4)}" height="${f(Math.max(1, Y(x.lo) - Y(x.hi)))}" rx="2"/>` +
+          `<line class="k-n" x1="${f(x0 - 2)}" x2="${f(x0 + bw + 2)}" y1="${Y(x.target)}" y2="${Y(x.target)}" style="stroke-width:1"/>` +
+          `<circle class="${x.breach ? 'f-r' : 'f-g'}" cx="${f(x0 + bw / 2)}" cy="${Y(x.w)}" r="2.8"/>`; }).join('') };
   },
   timeline(c) {
     const X = sx(0, c.span), mid = 34, stack = {};
