@@ -104,7 +104,7 @@
         <li>I recompute each quarter's management fee from the LPA. It is 2% of commitments during the investment period and 1.5% of net invested capital after it.</li>
         <li>Fee offsets are 100% of the fund's transaction and monitoring fees times the LP's share, capped at the gross fee.</li>
         <li>Accrued carry is what the GP would get if the fund sold everything at reported NAV. It runs through the LPA's whole-fund waterfall with an 8% preferred return and a full catch-up. The American toggle runs the same tiers deal by deal.</li>
-        <li>IRR without the subscription line moves every capital call back to the date of the investment it paid for. TVPI stays the same.</li>
+        <li>IRR without the subscription line moves every capital call back to the date of the investment it paid for. The reports do not show the line's interest cost, so it is left out and TVPI stays the same.</li>
         <li>The carry range comes from simulating exits for the seven unrealized deals over the next four years.</li>
       </ul>
       <h3>Formulas</h3>
@@ -122,6 +122,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
       <ul>
         <li>The fund, GP and documents are made up. The LPA is a two-page excerpt, so side letters and MFN terms are out of scope.</li>
         <li>Partnership expenses flow through the cash flows but are not tested against a cap.</li>
+        <li>Fees are charged by whole quarter. The excerpt does not say how the first quarter after the initial close and the quarter in which the investment period ends are pro-rated, or whether an offset above the gross fee carries forward.</li>
       </ul>
       <p style="margin-top:14px"><a href="notes/irr-subscription-line.html">Note: your IRR with and without the subscription line</a></p>
     </div>
@@ -208,7 +209,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
     { id: 'lineDays', label: 'Subscription line, days from investment to LP call', value: 180, unit: 'days', source: 'Cash flow ledger (calls lag investments by about six months)', min: 0, max: 540, step: 15 },
     { id: 'expQ', label: 'Partnership expenses per quarter, fund level', value: 0.35, unit: '$m', source: 'Reports: $13,125 LP share', min: 0, max: 2, step: 0.05 },
     { id: 'mcN', label: 'Simulated paths', value: 2000, unit: '', source: 'Setting', min: 200, max: 10000, step: 100 },
-    { id: 'exitVol', label: 'Exit multiple volatility', value: 0.30, unit: '% a year', scale: 100, source: 'Assumption', min: 0.05, max: 0.8, step: 1 },
+    { id: 'exitVol', label: 'Volatility of deal values to exit', value: 0.30, unit: '% a year', scale: 100, source: 'Assumption', min: 0.05, max: 0.8, step: 1 },
     { id: 'exitDrift', label: 'Expected growth of marks to exit', value: 0.06, unit: '% a year', scale: 100, source: 'Assumption', min: -0.1, max: 0.2, step: 0.5 }
   ];
   var A = UI.A(AROWS), reg;
@@ -352,7 +353,7 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
     UI.kpis('#mcKpis', [
       { id: 'mcAny', label: 'Paths where the GP earns any carry', value: F.pct(pAny, 0), sub: 'whole-fund waterfall, per LPA' },
       { id: 'mcMedian', label: 'Median final carry, European vs American', value: F.money(S.mc.medEU, 2) + ' / ' + F.money(S.mc.medAM, 2), sub: 'LP share' },
-      { id: 'mcClaw', label: 'Paths where deal-by-deal carry exceeds whole-fund carry', value: F.pct(pClaw, 0), sub: 'the amount a clawback would have to recover' }
+      { id: 'mcClaw', label: 'Paths where deal-by-deal carry exceeds whole-fund carry', value: F.pct(pClaw, 0), sub: 'clawback exposure if carry were paid deal by deal' }
     ]);
     var hi = Math.max.apply(null, ams.concat(eus)), bins = 20, w = hi / bins || 1, he = new Array(bins).fill(0), ha = new Array(bins).fill(0);
     eus.forEach(function (v) { he[Math.min(bins - 1, Math.floor(v / w))]++; }); ams.forEach(function (v) { ha[Math.min(bins - 1, Math.floor(v / w))]++; });
@@ -420,10 +421,10 @@ IRR: sum CF_t / (1 + r)^((t - t0)/365) = 0</div>
         });
         var q2 = P.ex['rpt-q2-2026'], cn = S.carry || carryNow(), wf = L.waterfall.value === 'european' ? cn.eu.gp : cn.am.gp;
         P.carry = { calc: wf, rep: q2.accruedCarry.value, prefOwed: cn.eu.prefOwed, value: q2.contributions.value };
-        P.checks.push({ id: 'carry:rpt-q2-2026', flag: Math.abs(q2.accruedCarry.value - wf) > 1e-3, label: 'Q2-2026 accrued carry (' + L.waterfall.value + ' waterfall)', rep: usd(q2.accruedCarry.value), calc: usd(wf) });
+        P.checks.push({ id: 'carry:rpt-q2-2026', flag: Math.abs(q2.accruedCarry.value - wf) > 1e-3, label: 'Q2-2026 accrued carry (' + (L.waterfall.value === 'european' ? 'European' : 'American') + ' waterfall)', rep: usd(q2.accruedCarry.value), calc: usd(wf) });
         var tv = (q2.distributions.value + q2.nav.value - q2.accruedCarry.value) / q2.contributions.value, dpi = q2.distributions.value / q2.contributions.value;
         P.checks.push({ id: 'perf:rpt-q2-2026', flag: Math.abs(tv - q2.netTvpi.value) > 0.006 || Math.abs(dpi - q2.dpi.value) > 0.006, label: 'Q2-2026 net TVPI and DPI vs the GP\'s own capital account', rep: F.mult(q2.netTvpi.value) + ', ' + F.mult(q2.dpi.value), calc: F.mult(tv, 3) + ', ' + F.mult(dpi, 3) });
-        res.push({ msg: 'Accrued carry under the LPA ' + L.waterfall.value + ' waterfall: ' + usd(wf) + ' (reported ' + usd(q2.accruedCarry.value) + ')' });
+        res.push({ msg: 'Accrued carry under the LPA ' + (L.waterfall.value === 'european' ? 'European' : 'American') + ' waterfall: ' + usd(wf) + ' (reported ' + usd(q2.accruedCarry.value) + ')' });
         audit.push('check', 'recomputed', P.checks.length + ' checks');
         return res;
       } },

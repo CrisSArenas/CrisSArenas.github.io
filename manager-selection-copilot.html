@@ -207,7 +207,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     { id: 'carry', label: 'Carried interest', value: 0.20, unit: '%', scale: 100, source: 'DDQ (extracted)', min: 0, max: 0.3, step: 1 },
     { id: 'pref', label: 'Preferred return', value: 0.08, unit: '% a year', scale: 100, source: 'DDQ (extracted)', min: 0, max: 0.12, step: 0.5 },
     { id: 'lineDays', label: 'Subscription line, days from investment to call', value: 270, unit: 'days', source: 'DDQ: about nine months', min: 0, max: 540, step: 15 },
-    { id: 'fund1Size', label: 'Fund I size', value: 450, unit: '$m', source: 'Assumption (fictional)', min: 100, max: 2000, step: 10 },
+    { id: 'fund1Size', label: 'Fund I size', value: 500, unit: '$m', source: 'Assumption (fictional)', min: 100, max: 2000, step: 10 },
     { id: 'fund2Size', label: 'Fund II size', value: 700, unit: '$m', source: 'Assumption (fictional)', min: 100, max: 3000, step: 10 },
     { id: 'interim1', label: 'Fund I net TVPI when Fund II was raised (2021)', value: 1.78, unit: 'x', source: 'Assumption: fundraising materials (fictional)', min: 1, max: 3, step: 0.01 },
     { id: 'boot', label: 'Bootstrap draws', value: 500, unit: '', source: 'Setting', min: 100, max: 3000, step: 100 },
@@ -260,13 +260,14 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     }
     flows.sort(function (a, b) { return a.date - b.date; });
     var paid = -PM.sum(flows.filter(function (f) { return f.amount < 0; }).map(function (f) { return f.amount; })), dist = PM.sum(flows.filter(function (f) { return f.amount > 0; }).map(function (f) { return f.amount; }));
-    var yrsOut = (AS_OF - start) / (365 * DAY), hurdle = paid * (Math.pow(1 + A.pref, yrsOut / 2) - 1);
-    var gain = dist + nav - paid, carry = gain > hurdle ? A.carry * gain : 0;
-    var navNet = Math.max(0, nav - carry), carryFromNav = nav - navNet, carryLeft = carry - carryFromNav;
-    if (carryLeft > 0) { for (var i = flows.length - 1; i >= 0 && carryLeft > 0; i--) if (flows[i].amount > 0) { var cut = Math.min(flows[i].amount, carryLeft); flows[i].amount -= cut; carryLeft -= cut; } }
+    /* carry: whole-fund (European) waterfall on dated LP contributions (calls and fees) and gross proceeds, with the
+       remaining NAV treated as sold at its mark on the as-of date (the GP's share of that is accrued carry) */
+    var wf = PM.terms.european(flows.map(function (f) { return f.amount < 0 ? { date: f.date, contribution: -f.amount } : { date: f.date, distribution: f.amount }; }).concat([{ date: AS_OF, distribution: nav }]), { pref: A.pref, carry: A.carry, catchUp: 1 });
+    var k = 0; flows.forEach(function (f) { if (f.amount > 0) f.amount = wf.rows[k++].lp; });
+    var navNet = wf.rows[k].lp, carry = wf.gp, lpDist = PM.sum(flows.filter(function (f) { return f.amount > 0; }).map(function (f) { return f.amount; }));
     var net = flows.concat([{ date: AS_OF, amount: navNet }]);
     var grossFl = D.map(function (d) { return { date: dt(d.entry), amount: -d.invested }; }).concat(D.filter(function (d) { return d.exit; }).map(function (d) { return { date: dt(d.exit), amount: d.realized }; })).concat([{ date: AS_OF, amount: nav }]);
-    return { flows: flows, net: net, nav: navNet, fees: fees, carry: carry, paid: paid, irr: PM.xirr(net), tvpi: (PM.sum(flows.filter(function (f) { return f.amount > 0; }).map(function (f) { return f.amount; })) + navNet) / paid, grossIrr: PM.xirr(grossFl), grossMoic: (dist + nav) / PM.sum(D.map(function (d) { return d.invested; })) };
+    return { flows: flows, net: net, nav: navNet, fees: fees, carry: carry, paid: paid, irr: PM.xirr(net), tvpi: (lpDist + navNet) / paid, dpi: lpDist / paid, grossIrr: PM.xirr(grossFl), grossMoic: (dist + nav) / PM.sum(D.map(function (d) { return d.invested; })) };
   }
   function renderSubline() {
     var withL = fundFlows('Fund II', true), noL = fundFlows('Fund II', false), f1 = fundFlows('Fund I', false);
@@ -287,19 +288,21 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
       dates.push(t); cumL.push(a); cumN.push(b);
     });
     UI.chart.line('#slChart', { xs: dates, series: [{ name: 'Called, with line', ys: cumL, color: 's2' }, { name: 'Called, without line', ys: cumN, color: 's1' }], yFmt: function (v) { return F.num(v, 0); }, xFmt: function (v) { return new Date(v).getUTCFullYear(); }, height: 240, label: 'Cumulative capital called' });
-    var rows = [['Fund I', fundFlows('Fund I', false)], ['Fund II, with line', withL], ['Fund II, without line', noL]].map(function (r) { return { f: r[0], gm: r[1].grossMoic, gi: r[1].grossIrr, fees: r[1].fees, carry: r[1].carry, tvpi: r[1].tvpi, irr: r[1].irr }; });
-    UI.table('#netTable', { id: 'net', name: 'Gross to net', columns: [{ key: 'f', label: 'Fund' }, { key: 'gm', label: 'Gross MOIC', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'gi', label: 'Gross IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'fees', label: 'Fees', num: 1, fmt: function (v) { return F.money(v, 0); } }, { key: 'carry', label: 'Carry', num: 1, fmt: function (v) { return F.money(v, 0); } }, { key: 'tvpi', label: 'Net TVPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'irr', label: 'Net IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }], rows: rows });
+    var rows = [['Fund I', fundFlows('Fund I', false)], ['Fund II, with line', withL], ['Fund II, without line', noL]].map(function (r) { return { f: r[0], gm: r[1].grossMoic, gi: r[1].grossIrr, fees: r[1].fees, carry: r[1].carry, tvpi: r[1].tvpi, dpi: r[1].dpi, irr: r[1].irr }; });
+    UI.table('#netTable', { id: 'net', name: 'Gross to net', columns: [{ key: 'f', label: 'Fund' }, { key: 'gm', label: 'Gross MOIC', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'gi', label: 'Gross IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'fees', label: 'Fees', num: 1, fmt: function (v) { return F.money(v, 0); } }, { key: 'carry', label: 'Carry', num: 1, fmt: function (v) { return F.money(v, 0); } }, { key: 'tvpi', label: 'Net TVPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'dpi', label: 'Net DPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'irr', label: 'Net IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }], rows: rows });
   }
 
   /* ---------------- private: quartile drift ---------------- */
   function renderDrift() {
     var rng = PM.mulberry32(S.seed * 11 + 2), z = PM.normalGen(rng), peers = [];
-    for (var i = 0; i < 80; i++) { var a = Math.exp(Math.log(1.42) + 0.17 * z()); var f = 1 + (a - 1) * (0.75 + 0.5 * z()) + 0.22 * z(); peers.push({ interim: a, final: Math.max(0.4, f) }); }
+    /* calibrated to 2016-vintage buyout net TVPIs: median about 1.55x at year five, about 1.85x near the end of fund life */
+    for (var i = 0; i < 80; i++) { var a = Math.exp(Math.log(1.55) + 0.15 * z()); var f = 1 + (a - 1) * (1.55 + 0.5 * z()) + 0.35 * z(); peers.push({ interim: a, final: Math.max(0.4, f) }); }
     var f1 = S.sub ? S.sub.f1.tvpi : 1.6, me = { interim: A.interim1, final: f1 };
     var all = peers.concat([me]), qi = M.quartile(all.map(function (p) { return p.interim; })), qf = M.quartile(all.map(function (p) { return p.final; }));
     var mi = qi[qi.length - 1], mf = qf[qf.length - 1], mat = M.persistence(qi.slice(0, -1), qf.slice(0, -1));
     var stay = mat[0][0];
-    S.drift = { mi: mi, mf: mf, stay: stay };
+    var medI = PM.quantile(peers.map(function (p) { return p.interim; }), 0.5), medF = PM.quantile(peers.map(function (p) { return p.final; }), 0.5);
+    S.drift = { mi: mi, mf: mf, stay: stay, medI: medI, medF: medF };
     var qn = ['top', 'second', 'third', 'bottom'];
     UI.kpis('#drKpis', [
       { id: 'qThen', label: 'Fund I quartile when Fund II was raised', value: qn[mi - 1] + ' quartile', sub: 'net TVPI ' + F.mult(A.interim1) + ' (2021, mostly unrealized)' },
@@ -309,7 +312,7 @@ R_obs,t = th0 R_t + th1 R_t-1 + th2 R_t-2</div>
     UI.chart.scatter('#drChart', { points: peers.map(function (p) { return { x: p.interim, y: p.final, color: 's4', r: 3 }; }).concat([{ x: me.interim, y: me.final, color: 's5', r: 8, label: 'Hasturn I' }]), labels: true, xFmt: function (v) { return F.num(v, 1) + 'x'; }, yFmt: function (v) { return F.num(v, 1) + 'x'; }, xLabel: 'Net TVPI in 2021', height: 260, label: 'Interim vs final TVPI of 2016 peers' });
     $('#drMatrix').innerHTML = '';
     UI.chart.heat('#drMatrix', { rows: ['Q1 then', 'Q2 then', 'Q3 then', 'Q4 then'], cols: ['Q1 now', 'Q2 now', 'Q3 now', 'Q4 now'], matrix: mat, min: 0, max: 1, fmt: function (x) { return F.pct(x, 0); }, cell: 80, labelWidth: 80, label: 'Quartile transition matrix' });
-    $('#drNote').textContent = 'Re-up decisions are made on interim numbers. Among these synthetic 2016 peers, ' + F.pct(stay, 0) + ' of funds in the top quartile at fundraising were still there once their portfolios matured.';
+    $('#drNote').textContent = 'Re-up decisions are made on interim numbers. Among these synthetic 2016 peers, ' + F.pct(stay, 0) + ' of funds in the top quartile at fundraising were still there once their portfolios matured. The peer median net TVPI was ' + F.mult(medI) + ' at fundraising and is ' + F.mult(medF) + ' today.';
   }
 
   /* ---------------- public: hedge fund and peers ---------------- */

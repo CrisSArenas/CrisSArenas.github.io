@@ -92,7 +92,7 @@ window.FTA_DOCS = {
     "| Management fee, gross                                          $94,219",
     "| Transaction and monitoring fees received (fund level)         $2,800,000",
     "| Management fee offsets                                        ($47,109)",
-    "| Management fee, net                                            $47,109",
+    "| Management fee, net                                            $47,110",
     "",
     "Partnership expenses",
     "| Partnership expenses (LP share)                                $13,125"

@@ -563,9 +563,9 @@ b,strong{color:var(--text);font-weight:600}
           <tr><td>Illiquid cap</td><td>&le; 25% of NAV</td><td>critical</td></tr>
           <tr><td>Tracking error</td><td>&le; 150 bps</td><td>high</td></tr>
           <tr><td>Sellable within 10 days</td><td>&ge; 70% of NAV</td><td>high</td></tr>
-          <tr><td>Commitment coverage</td><td>liquid &ge; 2&times; what can be called</td><td>high</td></tr>
-          <tr><td>Known payment funded</td><td>cash &ge; payment + 1% floor</td><td>high</td></tr>
-          <tr><td>Single company</td><td>&le; 5% of NAV, stock and bonds together</td><td>high</td></tr>
+          <tr><td>Commitment coverage</td><td>liquid assets &ge; 2&times; unfunded commitments plus scheduled payouts</td><td>high</td></tr>
+          <tr><td>Spending payout funded</td><td>cash &ge; payout + 1% floor</td><td>high</td></tr>
+          <tr><td>Single company</td><td>&le; 3% of NAV, stock and bonds together</td><td>high</td></tr>
           <tr><td>Bond eligibility</td><td>investment grade only in core bonds</td><td>high</td></tr>
           <tr><td>Price freshness</td><td>&le; 24 hours</td><td>medium, gates automation</td></tr>
           <tr><td>Drift from target</td><td>&gt; 300 bps</td><td>medium</td></tr>
@@ -655,7 +655,7 @@ const CORR=[
  [0.55,0.58,0.60,0.20,0.45,0.48,1.00,0.00],
  [0.00,0.00,0.00,0.10,0.00,0.00,0.00,1.00]
 ];
-const LIMIT={te:150,issuer:5.0,illiq:25.0,cash:1.0,liqHorizon:10,liqMin:70,stale:24,drift:300,cover:2.0};
+const LIMIT={te:150,issuer:3.0,illiq:25.0,cash:1.0,liqHorizon:10,liqMin:70,stale:24,drift:300,cover:2.0};
 const AUTO_MAX=25;                                 // $m: the largest trade the router may release alone
 const IG=['AAA','AA+','AA','AA-','A+','A','A-','BBB+','BBB','BBB-'];
 
@@ -666,15 +666,15 @@ const START={
   w:[27.4,15.8,15.6,21.2,5.1,10.4,3.6,0.9],       // drifted: EM, real assets and cash out of range
   nav:NAV0,uncalled:96,pending:0,incident:false,
   issuers:[
-    {n:'Issuer 01',s:'Semiconductors', eq:5.42,fi:0.00,rating:'A'},
-    {n:'Issuer 02',s:'Software',       eq:3.60,fi:0.50,rating:'A-'},
-    {n:'Issuer 03',s:'Pharmaceuticals',eq:2.74,fi:0.50,rating:'A+'},
-    {n:'Issuer 04',s:'Banks',          eq:1.61,fi:1.20,rating:'BBB-'},
-    {n:'Issuer 05',s:'Energy',         eq:1.66,fi:0.70,rating:'BBB'},
-    {n:'Issuer 06',s:'Retail',         eq:1.22,fi:0.70,rating:'BBB-'},
-    {n:'Issuer 07',s:'Industrials',    eq:1.21,fi:0.40,rating:'A-'},
-    {n:'Issuer 08',s:'Utilities',      eq:0.58,fi:0.60,rating:'BBB+'}],
-  staleHrs:[2,3,4,1,6,72,96,0],                    // privates carry quarterly marks by design
+    {n:'Issuer 01',s:'Semiconductors', eq:3.20,fi:0.00,rating:'A'},
+    {n:'Issuer 02',s:'Software',       eq:1.90,fi:0.30,rating:'A-'},
+    {n:'Issuer 03',s:'Pharmaceuticals',eq:1.20,fi:0.30,rating:'A+'},
+    {n:'Issuer 04',s:'Banks',          eq:0.80,fi:0.60,rating:'BBB-'},
+    {n:'Issuer 05',s:'Energy',         eq:0.85,fi:0.35,rating:'BBB'},
+    {n:'Issuer 06',s:'Retail',         eq:0.65,fi:0.35,rating:'BBB-'},
+    {n:'Issuer 07',s:'Industrials',    eq:0.60,fi:0.25,rating:'A-'},
+    {n:'Issuer 08',s:'Utilities',      eq:0.30,fi:0.40,rating:'BBB+'}],
+  staleHrs:[2,3,4,1,6,2900,2900,0],                // privates carry the latest quarterly NAV, about four months old, by design
   events:[],eventMsgs:{}
 };
 
@@ -724,6 +724,11 @@ function verifyChain(){
 function cov(i,j){return CORR[i][j]*SLEEVE[i].vol/100*SLEEVE[j].vol/100;}
 function quad(v){let s=0;for(let i=0;i<N;i++)for(let j=0;j<N;j++)s+=v[i]*v[j]*cov(i,j);return s;}
 function teOf(w){return Math.sqrt(Math.max(0,quad(w.map((x,i)=>(x-SLEEVE[i].pol)/100))))*1e4;}
+// Euler contribution of each asset class to ex-ante tracking error, in bps; sums to teOf(w).
+function teContrib(w){
+  const a=w.map((x,i)=>(x-SLEEVE[i].pol)/100),te=teOf(w)/1e4;
+  return a.map((ai,i)=>te>0?ai*a.reduce((s,aj,j)=>s+aj*cov(i,j),0)/te*1e4:0);
+}
 const trackingError=()=>teOf(B.w);
 const portVol=()=>Math.sqrt(Math.max(0,quad(B.w.map(x=>x/100))))*100;
 const illiqPct=()=>ILLIQ.reduce((a,i)=>a+B.w[i],0);
@@ -790,17 +795,17 @@ function sellPro(idx,pts){                         // sell `pts` of NAV pro-rata
 }
 const EVENTS={
   call:{icon:'fa-hand-holding-dollar',title:'Capital call',
-    desc:'A private-equity fund the endowment committed to draws $34m. The money must be wired within ten days: from cash first, then, if cash falls short, by selling. That shortfall is the risk this checks.',
+    desc:'Two private-equity funds the endowment committed to call a combined $15m, due in ten business days. It is paid from cash first, then, if cash falls short, by selling. That shortfall is the risk this checks.',
     tests:'forced selling and the cash floor',
     apply(){
-      const amt=34,pct=amt/B.nav*100;
+      const amt=15,pct=amt/B.nav*100;
       const fromCash=Math.min(Math.max(B.w[CASH],0),pct),rest=pct-fromCash;
       let w=B.w.slice();w[CASH]-=fromCash;
       if(rest>1e-9){const base=[0,1,2,3,4].reduce((a,i)=>a+w[i],0);[0,1,2,3,4].forEach(i=>{w[i]-=rest*B.w[i]/base;});}
       w[5]+=pct;B.uncalled-=amt;setWeights(w);
-      push('market','capital call $'+amt+'m to private equity · $'+(fromCash/100*B.nav).toFixed(0)+'m from cash'
+      push('market','capital calls $'+amt+'m to private equity · $'+(fromCash/100*B.nav).toFixed(0)+'m from cash'
         +(rest>1e-9?', $'+(rest/100*B.nav).toFixed(0)+'m raised by selling public assets':'')+' · uncalled now $'+B.uncalled+'m','w');
-      return '$'+amt+'m wired to the private-equity fund. Cash covered only <b>$'+(fromCash/100*B.nav).toFixed(0)+'m</b>, so <b>$'
+      return '$'+amt+'m wired to the private-equity funds. Cash covered only <b>$'+(fromCash/100*B.nav).toFixed(0)+'m</b>, so <b>$'
         +(rest/100*B.nav).toFixed(0)+'m</b> of stocks and bonds had to be sold to meet it, and cash is now empty.';
     }},
   outage:{icon:'fa-plug-circle-xmark',title:'Pricing outage (stale prices)',
@@ -811,22 +816,22 @@ const EVENTS={
       push('market','pricing vendor outage · Intl equity 29h, EM equity 41h, high yield 63h since last good price','e');
       return 'Three asset classes are now priced on marks up to <b>63 hours</b> old.';
     }},
-  redemption:{icon:'fa-building-columns',title:'Redemption notice',
-    desc:'The endowment will withdraw $60m in 30 days to fund university spending. Nothing is sold yet, but the cash has to be there on the day.',
+  redemption:{icon:'fa-building-columns',title:'Spending payout',
+    desc:'The endowment pays $25m to the university in 30 days, half of this year’s spending distribution. Nothing is sold yet, but the cash has to be there on the day.',
     tests:'planning ahead for a known outflow',
     apply(){
-      B.pending+=60;bookVer++;
-      push('treasury','redemption notice: $60m payable in 30 days','w');
-      return 'A <b>$60m</b> payment is due in 30 days. Cash today is <b>$'+(B.w[CASH]/100*B.nav).toFixed(0)+'m</b>.';
+      B.pending+=25;bookVer++;
+      push('treasury','spending payout: $25m payable to the university in 30 days','w');
+      return 'A <b>$25m</b> spending payout is due in 30 days. Cash today is <b>$'+(B.w[CASH]/100*B.nav).toFixed(0)+'m</b>.';
     }},
   selloff:{icon:'fa-arrow-trend-down',title:'Equity sell-off',
-    desc:'Developed stocks fall 14% and emerging markets 17%; high yield drops 6% and government bonds rally 2.5%. Private-fund valuations are stale quarterly NAVs, so they barely move.',
+    desc:'Developed stocks fall 14% and emerging markets 17%; high yield drops 6% and core bonds gain 2.5%. Private-fund valuations are stale quarterly NAVs, so they barely move.',
     tests:'drift, the cash floor and the denominator effect',
     apply(){
       const shock=[-14,-14,-17,2.5,-6,-2,-3,0];
       const mv=B.w.map((x,i)=>x*(1+shock[i]/100)),tot=mv.reduce((a,b)=>a+b,0);
       B.nav=B.nav*tot/100;setWeights(mv);
-      push('market','equity sell-off: developed −14%, EM −17%, HY −6%, government bonds +2.5%, private marks −2 to −3% · NAV $'+B.nav.toFixed(0)+'m','w');
+      push('market','equity sell-off: developed −14%, EM −17%, HY −6%, core bonds +2.5%, private marks −2 to −3% · NAV $'+B.nav.toFixed(0)+'m','w');
       return 'Public markets fell hard while private valuations barely moved, so privates are now a bigger slice of a smaller portfolio, the <b>denominator effect</b>. NAV is now <b>$'+B.nav.toFixed(0)+'m</b>.';
     }},
   downgrade:{icon:'fa-ranking-star',title:'Credit downgrade',
@@ -849,8 +854,8 @@ const WHY={
   drift:'Not a breach, but the mix has wandered far enough from target to be worth a look.',
   te:'Tracking error is how differently the portfolio could perform from its target mix. Too high, and results depend on bets nobody chose.',
   liq:'If too little can be sold within two weeks, a crisis turns into a fire sale.',
-  cover:'Money that can be called at short notice must be comfortably covered by liquid assets.',
-  redeem:'A known payment is coming. Selling calmly now costs less than a forced sale on the day.',
+  cover:'Unfunded commitments can be called at short notice and spending must be paid, so both must be comfortably covered by liquid assets.',
+  redeem:'A known payout is coming. Selling calmly now costs less than a forced sale on the day.',
   issuer:'Too much riding on one company, counting its stock and its bonds together.',
   elig:'The core bond sleeve may only hold investment-grade debt; a downgrade makes a holding ineligible.',
   stale:'Decisions on old prices can be badly wrong. Checking carries on; automatic trading stops.',
@@ -872,17 +877,17 @@ function detect(){
   const dr=driftBps();
   if(dr>LIMIT.drift)F('guidelines','medium','drift','drift','Drifted from the target mix',
     'In total the portfolio sits '+dr.toFixed(0)+' bps away from its target weights; the review trigger is '+LIMIT.drift+' bps.');
-  const te=trackingError();
+  const te=trackingError(),tc=teContrib(B.w).reduce((m,v,k)=>v>m.v?{k,v}:m,{k:0,v:-Infinity});
   if(te>LIMIT.te)F('risk','high','te','te','Tracking error above its limit',
-    'Estimated tracking error against the target mix is '+te.toFixed(0)+' bps against a '+LIMIT.te+' bps limit, driven by the asset classes outside their ranges. The range trades bring it back.');
+    'Ex-ante tracking error against the policy portfolio is '+te.toFixed(0)+' bps against a '+LIMIT.te+' bps limit. The largest contributor is '+SLEEVE[tc.k].k+', at '+tc.v.toFixed(0)+' bps of it.');
   const lw=liquidWithin(LIMIT.liqHorizon);
   if(lw<LIMIT.liqMin)F('liquidity','high','liq','liq','Not enough sellable within 10 days',
     'Only '+lw.toFixed(1)+'% of NAV can be sold within '+LIMIT.liqHorizon+' business days, against a '+LIMIT.liqMin+'% floor.');
   const cv=coverage();
   if(cv<LIMIT.cover)F('liquidity','high','cover','cover','Commitments thinly covered',
-    '$'+callsOnCapital().toFixed(0)+'m could be called against $'+(liquidPct()/100*B.nav).toFixed(0)+'m of liquid assets: '+cv.toFixed(2)+'× against a '+LIMIT.cover+'× floor.');
-  if(B.pending>0&&B.w[CASH]<cashNeed()-1e-9)F('liquidity','high','redeem','redeem','Redemption not yet funded',
-    '$'+B.pending+'m is payable in 30 days. Cash is $'+(B.w[CASH]/100*B.nav).toFixed(0)+'m; paying it while keeping the 1% cash floor needs $'
+    '$'+callsOnCapital().toFixed(0)+'m of unfunded commitments'+(B.pending>0?' and scheduled payouts':'')+' against $'+(liquidPct()/100*B.nav).toFixed(0)+'m of liquid assets: '+cv.toFixed(2)+'× against a '+LIMIT.cover+'× floor.');
+  if(B.pending>0&&B.w[CASH]<cashNeed()-1e-9)F('liquidity','high','redeem','redeem','Spending payout not yet funded',
+    '$'+B.pending+'m is payable to the university in 30 days. Cash is $'+(B.w[CASH]/100*B.nav).toFixed(0)+'m; paying it while keeping the 1% cash floor needs $'
     +(cashNeed()/100*B.nav).toFixed(0)+'m.');
   B.issuers.forEach(x=>{
     const t=exposure(x);
@@ -918,13 +923,15 @@ function planFor(f){
   const esc=(title,why)=>Object.assign(base,{kind:'escalate',title,why});
   if(f.rule==='ips'){
     const i=f.sleeve,s=SLEEVE[i];
-    if(s.priv)return esc('Pacing plan for '+s.k,s.k+' is money locked in private funds; it cannot be sold to fix a range. It goes to the '
-      +'investment committee with the realistic options: slow the next commitments, sell a fund stake on the secondary market, or let the public side grow into it.');
+    if(s.priv)return esc('Pacing plan for '+s.k,s.k+' is held in private funds; it cannot be '+(f.target<s.lo+1?'bought':'sold')+' quickly to fix a range. It goes to the '
+      +'investment committee with the realistic options: '+(f.target<s.lo+1
+        ?'raise the pace of new commitments, buy fund interests on the secondary market, or hold a listed proxy until the commitments are drawn.'
+        :'slow the next commitments, sell a fund stake on the secondary market, or let the public side grow into it.'));
     const need=f.target-B.w[i],j=funder(i,-need);
     if(j<0)return esc('No room to rebalance '+s.k,'Moving '+s.k+' by '+pp(Math.abs(need))+' points needs another asset class to take the other side, '
       +'and every liquid one is already at a limit. That is a policy decision.');
     const notional=Math.abs(need)/100*B.nav;
-    return Object.assign(base,{kind:'trade',title:(need>0?'Buy ':'Sell ')+pp(Math.abs(need))+' pts of '+s.k,
+    return Object.assign(base,{kind:'trade',title:(i===CASH?(need>0?'Raise ':'Invest ')+pp(Math.abs(need))+' pts of cash':(need>0?'Buy ':'Sell ')+pp(Math.abs(need))+' pts of '+s.k),
       legs:[{i,d:need},{i:j,d:-need}],notional,
       cost:(tradeCostBps(i,need)+tradeCostBps(j,need))/1e4*notional,
       why:'Takes '+s.k+' to '+f.target.toFixed(1)+'%, half a point inside its '+s.lo+'–'+s.hi+'% range rather than on the edge, so an ordinary '
@@ -950,7 +957,7 @@ function planFor(f){
     const tot=src.reduce((a,i)=>a+B.w[i],0),legs=[{i:CASH,d:add}];
     src.forEach(i=>legs.push({i,d:-add*B.w[i]/tot}));
     const notional=add/100*B.nav;
-    return Object.assign(base,{kind:'trade',title:'Raise $'+Math.round(notional)+'m of cash for the redemption',legs,notional,
+    return Object.assign(base,{kind:'trade',title:'Raise $'+Math.round(notional)+'m of cash for the spending payout',legs,notional,
       cost:legs.reduce((a,l)=>a+(l.i===CASH?0:tradeCostBps(l.i,l.d)/1e4*Math.abs(l.d)/100*B.nav),0),
       why:'Sells US equity, international equity and core bonds in proportion to their size, so the mix barely changes, and holds the proceeds as '
         +'cash until the payment date. Doing it now, calmly, costs less than a forced sale in 30 days.'});
@@ -1076,7 +1083,7 @@ function reports(){
       :'All eight asset classes inside their ranges.',
     risk:'Tracking error <b>'+te.toFixed(0)+' bps</b> against a '+LIMIT.te+' bps limit'+(te>LIMIT.te?', <b>breach</b>':'')+'. Volatility '+portVol().toFixed(1)+'% a year.',
     liquidity:liquidWithin(10).toFixed(0)+'% of NAV sellable within 10 days; commitments covered '+coverage().toFixed(1)+'×'
-      +(B.pending>0?'; the <b>$'+B.pending+'m redemption is '+(B.w[CASH]<cashNeed()-1e-9?'not yet funded':'funded')+'</b>':'')+'.',
+      +(B.pending>0?'; the <b>$'+B.pending+'m spending payout is '+(B.w[CASH]<cashNeed()-1e-9?'not yet funded':'funded')+'</b>':'')+'.',
     conc:exposure(tx)>LIMIT.issuer?'<b>'+tx.n+' at '+pp(exposure(tx))+'%</b> of NAV, over the '+LIMIT.issuer+'% single-company limit.'
       :'Largest single company is '+tx.n+' at '+pp(exposure(tx))+'%, inside the '+LIMIT.issuer+'% limit.',
     corpact:inel.length?'<b>'+inel[0].issuer+' is below investment grade</b> and still held in the core bond sleeve.':'No rating actions or corporate events that affect eligibility.',
@@ -1086,7 +1093,7 @@ function reports(){
       +proposals.filter(p=>p.kind==='ops').length+' operational, '+proposals.filter(p=>p.kind==='escalate').length+' for the committee.':'No action needed.',
     impact:trades.length?'Estimated cost of the trades: <b>$'+(trades.reduce((a,p)=>a+p.cost,0)*1000).toFixed(1)+'k</b> on $'
       +trades.reduce((a,p)=>a+p.notional,0).toFixed(1)+'m traded.':'No trades to cost.',
-    precheck:trades.length?'Re-ran every rule on the post-trade book: <b>'+ok.length+' clean</b>, '+(trades.length-ok.length)+' blocked.':'Nothing to re-check.',
+    precheck:trades.length?'Re-ran the hard limits (ranges, illiquid cap, single company) on the post-trade book: <b>'+ok.length+' clean</b>, '+(trades.length-ok.length)+' blocked.':'Nothing to re-check.',
     router:'Autonomy &ldquo;'+AUTO_LABEL[S.auto]+'&rdquo;: '+[['auto',modes('auto'),' run automatically'],['manual',modes('manual'),' to a person'],
       ['committee',modes('committee'),' to the committee'],['blocked',modes('blocked'),' blocked'],['shadow',modes('shadow'),' logged only']]
       .filter(x=>x[1]).map(x=>'<b>'+x[1]+'</b>'+x[2]).join(', ')+(proposals.length?'.':'nothing to route.'),
@@ -1155,7 +1162,7 @@ function ruleRows(){
     ['Tracking error','≤ '+LIMIT.te+' bps',trackingError().toFixed(0)+' bps',trackingError()<=LIMIT.te],
     ['Sellable within 10 days','≥ '+LIMIT.liqMin+'%',liquidWithin(10).toFixed(0)+'%',liquidWithin(10)>=LIMIT.liqMin],
     ['Commitments covered','≥ '+LIMIT.cover+'×',coverage().toFixed(1)+'×',coverage()>=LIMIT.cover],
-    ['Known payments funded','cash ready',B.pending>0?'$'+(B.w[CASH]/100*B.nav).toFixed(0)+'m of $'+(cashNeed()/100*B.nav).toFixed(0)+'m':'none due',B.w[CASH]>=cashNeed()-1e-9],
+    ['Spending payout funded','cash ready',B.pending>0?'$'+(B.w[CASH]/100*B.nav).toFixed(0)+'m of $'+(cashNeed()/100*B.nav).toFixed(0)+'m':'none due',B.w[CASH]>=cashNeed()-1e-9],
     ['Largest single company','≤ '+LIMIT.issuer+'%',pp(exposure(tx))+'%',exposure(tx)<=LIMIT.issuer+1e-9],
     ['Bonds investment grade','all',inel?inel+' not':'all',inel===0],
     ['Prices fresh','≤ '+LIMIT.stale+'h',st?st+' stale':'all fresh',st===0]];
@@ -1417,7 +1424,8 @@ window.cardStat=function(){
   const B0=B,f0=fid;B=clone(START);
   const fs=detect(),ps=fs.map(f=>{const p=planFor(f);if(p)p.pre=precheck(p);return p;}).filter(Boolean);
   B=B0;fid=f0;
-  return{value:String(fs.length),label:'Rule breaches caught on the opening book',chart:{type:'timeline',span:SCHED.span,
+  // Breaches are findings against a limit (critical or high); the medium drift and data warnings are not breaches.
+  return{value:String(fs.filter(f=>f.sev==='critical'||f.sev==='high').length),label:'Rule breaches caught on the opening book',chart:{type:'timeline',span:SCHED.span,
     alerts:fs.map(f=>({t:SCHED.end[STEP_OF[f.check]],sev:f.sev})),fixes:ps.map(p=>({t:SCHED.end.precheck,ok:!!(p.pre&&p.pre.ok),kind:p.kind}))}};
 };
 resetAll();

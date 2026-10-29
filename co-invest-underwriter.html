@@ -110,7 +110,7 @@
         <li>The LBO runs year by year. Revenue grows, the margin moves in a straight line to its exit level, and free cash flow after interest, tax and capex pays down debt.</li>
         <li>Exit equity is the exit multiple times final EBITDA, less net debt. The price is fixed at $840m, and each case decides how much of the add-backs to believe.</li>
         <li>The bridge splits the equity gain into EBITDA growth, AI initiatives, the change in multiple, debt paydown and costs. The pieces add up to the total.</li>
-        <li>AI initiatives enter at the CIM's cost and run-rate uplift, times the odds I give them.</li>
+        <li>AI initiatives enter at the CIM's cost and run-rate uplift, times the odds I give them. The CIM's 2030 margin already includes them, so the GP case sets its organic margin net of the plan and its exit EBITDA ties to the CIM.</li>
         <li>The blend compares the fund after a 1.5% fee and 20% carry over an 8% hurdle with a co-invest that pays neither.</li>
       </ul>
       <h3>Formulas</h3>
@@ -208,14 +208,14 @@ uplift_t = p x run-rate x ramp(t)</div>
     { id: 'sweep', label: 'Cash sweep', value: 0.75, unit: '% of free cash flow', scale: 100, source: 'Assumption', min: 0, max: 1, step: 5 },
     { id: 'fees', label: 'Transaction costs', value: 0.02, unit: '% of EV', scale: 100, source: 'Assumption', min: 0, max: 0.05, step: 0.25 },
     { id: 'gpG', label: 'GP case revenue growth', value: 0.12, unit: '% a year', scale: 100, source: 'CIM projections (extracted)', min: -0.05, max: 0.25, step: 0.5 },
-    { id: 'gpM', label: 'GP case exit margin', value: 0.27, unit: '%', scale: 100, source: 'CIM projections, 2030 (extracted)', min: 0.1, max: 0.4, step: 0.5 },
+    { id: 'gpM', label: 'GP case exit margin, AI plan included', value: 0.27, unit: '%', scale: 100, source: 'CIM projections, 2030 (extracted)', min: 0.1, max: 0.4, step: 0.5 },
     { id: 'gpX', label: 'GP case exit multiple', value: 12.1, unit: 'x', source: 'Entry multiple held (GP materials)', min: 5, max: 20, step: 0.1 },
     { id: 'hG', label: 'House case revenue growth', value: 0.07, unit: '% a year', scale: 100, source: 'CIM history: 6.7% a year, 2021 to 2025', min: -0.05, max: 0.25, step: 0.5 },
-    { id: 'hM', label: 'House case margin change to exit', value: 0.01, unit: 'points', scale: 100, source: 'Assumption: about the historical pace', min: -0.1, max: 0.1, step: 0.25 },
-    { id: 'hX', label: 'House case exit multiple', value: 11, unit: 'x', source: 'Assumption: one turn below entry', min: 5, max: 20, step: 0.1 },
+    { id: 'hM', label: 'House case margin change to exit, before AI initiatives', value: 0.01, unit: 'points', scale: 100, source: 'Assumption: about the historical pace', min: -0.1, max: 0.1, step: 0.25 },
+    { id: 'hX', label: 'House case exit multiple', value: 11, unit: 'x', source: 'Assumption: about one turn below the 12.1x headline', min: 5, max: 20, step: 0.1 },
     { id: 'hA', label: 'House case add-backs accepted', value: 0.5, unit: '%', scale: 100, source: 'Assumption', min: 0, max: 1, step: 5 },
     { id: 'dG', label: 'Downside revenue growth', value: 0.03, unit: '% a year', scale: 100, source: 'Assumption', min: -0.1, max: 0.2, step: 0.5 },
-    { id: 'dM', label: 'Downside margin change to exit', value: -0.01, unit: 'points', scale: 100, source: 'Assumption', min: -0.1, max: 0.1, step: 0.25 },
+    { id: 'dM', label: 'Downside margin change to exit, before AI initiatives', value: -0.01, unit: 'points', scale: 100, source: 'Assumption', min: -0.1, max: 0.1, step: 0.25 },
     { id: 'dX', label: 'Downside exit multiple', value: 9.5, unit: 'x', source: 'Assumption', min: 4, max: 20, step: 0.1 },
     { id: 'fundGross', label: 'Quorvane Buyout IV, expected gross multiple', value: 2.0, unit: 'x', source: 'Assumption', min: 1, max: 4, step: 0.05 },
     { id: 'fundFee', label: 'Fund management fee', value: 0.015, unit: '% a year', scale: 100, source: 'Assumption (fictional fund terms)', min: 0, max: 0.03, step: 0.25 },
@@ -253,8 +253,10 @@ uplift_t = p x run-rate x ramp(t)</div>
   function caseInputs(c) {
     var H = history(), rev = H.revenue[H.revenue.length - 1], adj = H.ebitda[H.ebitda.length - 1], add = S.user ? 0 : CIM.addbacks.value;
     var acc = c === 'gp' ? 1 : c === 'house' ? A.hA : 0, e0 = adj - (1 - acc) * add, ev = S.user ? adj * CIM.evMultiple.value : CIM.ev.value, nd = S.user ? adj * CIM.leverage.value : CIM.netDebt.value;
-    var g = c === 'gp' ? A.gpG : c === 'house' ? A.hG : A.dG, m0 = e0 / rev, mH = c === 'gp' ? A.gpM : m0 + (c === 'house' ? A.hM : A.dM), x = c === 'gp' ? A.gpX : c === 'house' ? A.hX : A.dX;
+    var g = c === 'gp' ? A.gpG : c === 'house' ? A.hG : A.dG, m0 = e0 / rev, x = c === 'gp' ? A.gpX : c === 'house' ? A.hX : A.dX;
     var pr = S.probs[c], inits = [1, 2, 3].map(function (i, k) { return { cost: CIM['init' + i + 'Cost'].value, uplift: CIM['init' + i + 'Uplift'].value, prob: pr[k], start: CIM['init' + i + 'Year'].value - 2025, ramp: k === 2 ? 1 : 2 }; });
+    /* the CIM's exit margin already includes the AI plan at run rate, so the GP case's organic margin is set net of it */
+    var mH = c === 'gp' ? A.gpM - PM.sum(inits.map(function (it) { return it.uplift; })) / (rev * Math.pow(1 + g, A.hold)) : m0 + (c === 'house' ? A.hM : A.dM);
     return { revenue: rev, margin: m0, growth: g, exitMargin: mH, capex: A.capex, da: A.da, nwc: A.nwc, tax: A.tax, entryMultiple: ev / e0, exitMultiple: x, leverage: nd / e0, rate: A.rate, fees: A.fees, sweep: A.sweep, hold: A.hold, initiatives: inits, acc: acc };
   }
   function runCases() { S.cases = {}; ['gp', 'house', 'down'].forEach(function (c) { var o = caseInputs(c), r = L.model(o); S.cases[c] = { o: o, r: r, b: L.bridge(r, o) }; }); return S.cases; }
@@ -270,9 +272,9 @@ uplift_t = p x run-rate x ramp(t)</div>
       { id: 'entryLev', label: 'Entry leverage, house view', value: F.num(h.o.leverage, 1) + 'x', sub: 'CIM says ' + F.num(CIM.leverage.value, 1) + 'x on adjusted EBITDA' },
       { id: 'entryMult', label: 'Price paid, house view', value: F.num(h.o.entryMultiple, 1) + 'x EBITDA', sub: 'CIM says ' + F.num(CIM.evMultiple.value, 1) + 'x' }
     ]);
-    var rows = ['gp', 'house', 'down'].map(function (c) { var x = C[c]; return { c: CN[c], g: x.o.growth, m: x.o.exitMargin, add: x.o.acc, x: x.o.exitMultiple, e: x.r.ebitdaH, nd: x.r.netDebtH, moic: x.r.moic, irr: x.r.irr }; });
+    var rows = ['gp', 'house', 'down'].map(function (c) { var x = C[c]; return { c: CN[c], g: x.o.growth, m: x.r.ebitdaH / x.r.years[x.r.years.length - 1].revenue, add: x.o.acc, x: x.o.exitMultiple, e: x.r.ebitdaH, nd: x.r.netDebtH, moic: x.r.moic, irr: x.r.irr }; });
     UI.table('#caseTable', { id: 'cases', name: 'Three cases', columns: [{ key: 'c', label: 'Case' }, { key: 'g', label: 'Growth', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'm', label: 'Exit margin', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'add', label: 'Add-backs', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'x', label: 'Exit multiple', num: 1, fmt: function (v) { return F.num(v, 1) + 'x'; } }, { key: 'e', label: 'Exit EBITDA', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'nd', label: 'Exit net debt', num: 1, fmt: function (v) { return F.num(v, 0); } }, { key: 'moic', label: 'MOIC', num: 1, fmt: function (v) { return F.mult(v); }, cls: function (v) { return v < 1 ? 'neg' : ''; } }, { key: 'irr', label: 'IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }], rows: rows });
-    $('#caseNote').textContent = 'The price is fixed at the CIM\'s ' + F.money(CIM.ev.value, 0) + '. The cases differ in growth, margin, exit multiple, the share of the ' + F.money(CIM.addbacks.value, 1) + ' of add-backs they believe, and the odds on the AI initiatives.';
+    $('#caseNote').textContent = 'The price is fixed at the CIM\'s ' + F.money(CIM.ev.value, 0) + '. The cases differ in growth, margin, exit multiple, the share of the ' + F.money(CIM.addbacks.value, 1) + ' of add-backs they believe, and the odds on the AI initiatives. Exit margin includes the initiatives.';
     var hy = H.years || [2021, 2022, 2023, 2024, 2025], last = hy[hy.length - 1], xs = hy.concat([1, 2, 3, 4, 5].map(function (k) { return last + k; }));
     var hist = H.ebitda.concat([null, null, null, null, null]), gp = hy.map(function (_, i) { return i === hy.length - 1 ? H.ebitda[i] : null; }).concat(H.projEbitda || []), house = hy.map(function (_, i) { return i === hy.length - 1 ? h.r.ebitda0 : null; }).concat(h.r.years.slice(0, 5).map(function (y) { return y.ebitda; }));
     UI.chart.line('#ebitdaChart', { xs: xs, series: [{ name: 'History (adjusted)', ys: hist, color: 's4', dots: true }, { name: 'GP projections', ys: gp, color: 's2', dash: '5 4' }, { name: 'House case', ys: house, color: 's1' }], yFmt: function (v) { return F.num(v, 0); }, xFmt: String, height: 240, label: 'EBITDA paths' });
@@ -314,7 +316,7 @@ uplift_t = p x run-rate x ramp(t)</div>
     ]);
     var down = S.cases.down.r.moic;
     UI.chart.line('#blendChart', { xs: rs, series: [{ name: 'Blend, house case', ys: rs.map(function (r) { return L.blend(Object.assign({ ratio: r }, base)).blendIrr; }), color: 's1', dots: true }, { name: 'Blend, downside', ys: rs.map(function (r) { return L.blend(Object.assign({ ratio: r }, base, { coGross: down })).blendIrr; }), color: 's5', dots: true }], hlines: [{ y: cur.fundIrr, label: 'fund alone' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return F.num(v, 2) + 'x'; }, height: 240, zero: false, label: 'Blended net IRR' });
-    $('#blendNote').textContent = 'Fee-free co-investment lifts the blend when the deal does as well as the fund before fees; in the downside it pulls the blend down faster than fees ever would. The check size sets how much of each the program takes.';
+    $('#blendNote').textContent = 'Fee-free co-investment lifts the blend whenever the deal beats the fund\'s net multiple of ' + F.mult(cur.fundNet) + ', even below the fund\'s gross multiple. In the downside it pulls the blend down faster than fees ever would. The check size sets how much of each the program takes.';
     UI.table('#blendTable', { id: 'blend', name: 'Fund vs co-investment', columns: [{ key: 'k', label: '' }, { key: 'f', label: 'Fund', num: 1 }, { key: 'c', label: 'Co-invest', num: 1 }], rows: [{ k: 'Gross multiple', f: F.mult(A.fundGross), c: F.mult(h.r.moic) }, { k: 'Fees and carry', f: F.mult(A.fundGross - cur.fundNet), c: '0.00x' }, { k: 'Net multiple', f: F.mult(cur.fundNet), c: F.mult(cur.coNet) }, { k: 'Net IRR', f: F.pct(cur.fundIrr, 1), c: F.pct(cur.coIrr, 1) }] });
   }
 

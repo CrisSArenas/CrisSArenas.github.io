@@ -244,7 +244,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
 (function () {
   'use strict';
   var F = UI.fmt, $ = UI.$;
-  var TODAY_Q = 42, START_YEAR = 2016;
+  var TODAY_Q = 42, START_YEAR = 2016, IDX_MU = 0.024, IDX_VOL = 0.075;
   var qDate = function (q) { var y = START_YEAR + Math.floor(q / 4), m = (q % 4) * 3 + 3; return y + '-' + (m < 10 ? '0' : '') + m + '-' + (m === 3 || m === 12 ? '31' : '30'); };
   var qLabel = function (q) { return (START_YEAR + Math.floor(q / 4)) + ' Q' + (q % 4 + 1); };
 
@@ -302,12 +302,12 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
 
   /* ---------------- synthetic program ---------------- */
   var STRAT = {
-    buyout: { rc: 0.28, ip: 5, alpha: 0.010, beta: 1.0, vol: 0.05, dStart: 3, dRate: 0.06, rho: 0.5, label: 'Buyout' },
-    growth: { rc: 0.30, ip: 4, alpha: 0.011, beta: 1.2, vol: 0.07, dStart: 4, dRate: 0.05, rho: 0.5, label: 'Growth' },
-    venture: { rc: 0.25, ip: 5, alpha: 0.012, beta: 1.4, vol: 0.10, dStart: 5, dRate: 0.045, rho: 0.6, label: 'Venture' },
-    credit: { rc: 0.40, ip: 3, alpha: 0.019, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.07, rho: 0.3, label: 'Private credit' },
-    real: { rc: 0.30, ip: 4, alpha: 0.013, beta: 0.5, vol: 0.03, dStart: 2, dRate: 0.05, rho: 0.7, label: 'Real assets' },
-    secondaries: { rc: 0.45, ip: 3, alpha: 0.012, beta: 0.9, vol: 0.04, dStart: 1, dRate: 0.08, rho: 0.5, label: 'Secondaries' }
+    buyout: { rc: 0.28, ip: 5, mu: 0.028, beta: 1.0, vol: 0.05, dStart: 3, dRate: 0.06, rho: 0.5, label: 'Buyout' },
+    growth: { rc: 0.30, ip: 4, mu: 0.028, beta: 1.2, vol: 0.07, dStart: 4, dRate: 0.05, rho: 0.5, label: 'Growth' },
+    venture: { rc: 0.25, ip: 5, mu: 0.030, beta: 1.4, vol: 0.10, dStart: 5, dRate: 0.045, rho: 0.6, label: 'Venture' },
+    credit: { rc: 0.40, ip: 3, mu: 0.021, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.07, rho: 0.3, label: 'Private credit' },
+    real: { rc: 0.30, ip: 4, mu: 0.021, beta: 0.5, vol: 0.03, dStart: 2, dRate: 0.05, rho: 0.7, label: 'Real assets' },
+    secondaries: { rc: 0.45, ip: 3, mu: 0.026, beta: 0.9, vol: 0.04, dStart: 1, dRate: 0.08, rho: 0.5, label: 'Secondaries' }
   };
   var FUNDS = [
     ['Quorvane Buyout III', 'Quorvane', 'buyout', 2017, 35, 1], ['Quorvane Buyout IV', 'Quorvane', 'buyout', 2021, 40, 1],
@@ -331,11 +331,13 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
 
   function generate(seed) {
     var rng = PM.mulberry32(seed), z = PM.normalGen(rng);
-    var idx = [100], ret = [];
-    for (var q = 1; q <= TODAY_Q; q++) {
-      var r = 0.022 + 0.075 * z();
-      if (q === TODAY_Q - 1) r -= 0.09;   // stylised drawdown overlay in the last two quarters
-      if (q === TODAY_Q) r -= 0.05;
+    var idx = [100], ret = [], zs = [];
+    for (var q = 1; q <= TODAY_Q - 2; q++) zs.push(z());
+    var zm = PM.mean(zs), zsd = PM.std(zs);
+    for (q = 1; q <= TODAY_Q; q++) {
+      /* the shocks are standardised over the sample, so every seed's proxy earns the 10% a year drift with 15% volatility;
+         the last two quarters are a stylised drawdown: -8% in Q2 2026 and -5% in Q3 2026 */
+      var r = q === TODAY_Q - 1 ? -0.08 : q === TODAY_Q ? -0.05 : IDX_MU + IDX_VOL * (zs[q - 1] - zm) / zsd;
       ret.push(r); idx.push(idx[q - 1] * (1 + r));
     }
     var funds = FUNDS.map(function (row, k) {
@@ -345,8 +347,9 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
         var age = (q - q0) / 4, call = 0, dist = 0, rI = q > 0 ? ret[q - 1] : 0;
         if (q === q0) call = C * 0.08;
         else if (age <= p.ip) call = unf * p.rc / 4 * Math.exp(0.3 * fz() - 0.045);
+        else if (age <= p.ip + 4) call = unf * 0.20 / 4 * Math.exp(0.3 * fz() - 0.045);   // follow-ons, fees and expenses after the investment period
         call = Math.min(call, unf); unf -= call;
-        var rTrue = q === q0 ? 0 : p.alpha + p.beta * (rI - 0.022) + p.vol * fz();
+        var rTrue = q === q0 ? 0 : p.mu + p.beta * (rI - IDX_MU) + p.vol * fz();   // mu: expected quarterly return net of fees
         var navBefore = nav;
         nav = (nav + call) * (1 + rTrue);
         if (age >= p.dStart) { var dr = p.dRate * (1 + 1.5 * rI) * (age > 9 ? 2 : 1); dist = nav * Math.max(0, Math.min(0.4, dr)); }

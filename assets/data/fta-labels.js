@@ -36,7 +36,7 @@ window.FTA_LABELS = {
       gross: { value: 0.094219, page: 1, line: 7, how: 'read: $94,219' },
       portfolioFees: { value: 2.8, page: 1, line: 8, how: 'read: $2,800,000 (fund level)' },
       offset: { value: 0.047109, page: 1, line: 9, how: 'read: ($47,109)' },
-      net: { value: 0.047109, page: 1, line: 10, how: 'read: $47,109' }
+      net: { value: 0.04711, page: 1, line: 10, how: 'read: $47,110' }
     },
     'rpt-q2-2026': {
       nic: { value: 600, page: 1, line: 6, how: 'read: $600,000,000 (fund level)' },
