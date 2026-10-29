@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AI systems · Cristian Arenas</title>
-    <meta name="description" content="How I build and run AI systems for investment teams: multi-agent systems, document intelligence, data foundations, production practices and the path from idea to production.">
+    <meta name="description" content="How I build and run AI systems for investment teams: agentic AI systems, document intelligence, data foundations, production practices and the path from idea to production.">
     <link rel="canonical" href="https://crissarenas.github.io/ai-systems.html">
     <meta property="og:title" content="AI systems · Cristian Arenas">
-    <meta property="og:description" content="How I build and run AI systems for investment teams: multi-agent systems, document intelligence, data foundations, production practices and the path from idea to production.">
+    <meta property="og:description" content="How I build and run AI systems for investment teams: agentic AI systems, document intelligence, data foundations, production practices and the path from idea to production.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#07120E">
@@ -44,12 +44,12 @@
     <div class="section-head reveal dd-head"><h1>AI systems</h1><p>How I design, build and run AI systems for investment teams. The page follows the three systems on the homepage in more depth, then covers how I run them in production and take each one from idea to launch.</p></div>
     <div class="ai-mode" role="group" aria-label="Choose how to read this page"><span>Read it as</span><div class="seg2"><button type="button" data-mode="plain" aria-pressed="true">Plain English</button><button type="button" data-mode="tech" aria-pressed="false">Technical</button></div></div>
     <div class="dd-layout">
-      <aside class="dd-side"><nav class="dd-toc" aria-label="On this page"><p class="dd-toc-h">On this page</p><ol><li><a href="#multi-agent"><span>01</span>Multi-agent systems</a></li><li><a href="#documents"><span>02</span>Document intelligence</a></li><li><a href="#data"><span>03</span>Data foundations</a></li><li><a href="#production"><span>04</span>Running it in production</a></li><li><a href="#lifecycle"><span>05</span>From idea to production</a></li></ol></nav></aside>
-      <details class="dd-toc-m"><summary>On this page</summary><nav aria-label="On this page, mobile"><ol><li><a href="#multi-agent"><span>01</span>Multi-agent systems</a></li><li><a href="#documents"><span>02</span>Document intelligence</a></li><li><a href="#data"><span>03</span>Data foundations</a></li><li><a href="#production"><span>04</span>Running it in production</a></li><li><a href="#lifecycle"><span>05</span>From idea to production</a></li></ol></nav></details>
+      <aside class="dd-side"><nav class="dd-toc" aria-label="On this page"><p class="dd-toc-h">On this page</p><ol><li><a href="#multi-agent"><span>01</span>Agentic AI systems</a></li><li><a href="#documents"><span>02</span>Document intelligence</a></li><li><a href="#data"><span>03</span>Data foundations</a></li><li><a href="#production"><span>04</span>Running it in production</a></li><li><a href="#lifecycle"><span>05</span>From idea to production</a></li></ol></nav></aside>
+      <details class="dd-toc-m"><summary>On this page</summary><nav aria-label="On this page, mobile"><ol><li><a href="#multi-agent"><span>01</span>Agentic AI systems</a></li><li><a href="#documents"><span>02</span>Document intelligence</a></li><li><a href="#data"><span>03</span>Data foundations</a></li><li><a href="#production"><span>04</span>Running it in production</a></li><li><a href="#lifecycle"><span>05</span>From idea to production</a></li></ol></nav></details>
       <div class="dd-main">
   <section class="dd-sec" id="multi-agent">
-    <p class="feat-eyebrow">01 · Multi-agent systems</p>
-    <h2>Multi-agent and agentic systems</h2>
+    <p class="feat-eyebrow">01</p>
+    <h2>Agentic AI systems</h2>
     <div class="dd-lead"><p class="t-plain">An agent is a model that can use tools and check its own work. Several of them, each with a narrow job, can do the first pass on work an analyst would otherwise start from a blank page.</p><p class="t-tech">Agentic systems built from narrow, tool-using workers under an orchestrator, with deterministic checks between steps, an independent verifier and an explicit approval gate.</p></div>
     <figure class="feat-art dd-art"><!-- ai-art:agents:start --><svg class="art" viewBox="0 0 480 270" role="img"><title>An orchestrator assigns work to four agents, a reader, an analyst, a drafter and a verifier, and its output waits for a person to approve it</title>
 <text class="tx-m" x="24" y="24">run 0142 · step 6 of 12</text><text class="tx-m" x="456" y="24" text-anchor="end">trace on</text>
@@ -101,7 +101,7 @@
     <div class="hil"><div class="hil-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/><path d="m15.5 4.5 1.5 1.5 3-3"/></svg></div><div><h3>Human in the loop</h3><p class="t-plain">Every system I build keeps investment professionals in charge. The agents do the reading, checking and drafting. People review the flags, make the judgment calls and approve anything that moves money, changes a record or reaches a client. Every review is recorded with who made it and why, and each correction becomes a new test. The system learns from the team&#39;s judgment, and the final word always belongs to a person.</p><p class="t-tech">Human-in-the-loop is designed in from the first step. Low-confidence fields and failed checks go to a review queue, actions are gated by risk tier and delivered as approval cards in Outlook, and the reviewer&#39;s identity, decision and rationale are written to the append-only log. Reviewer corrections flow back into the verified test set and the regression suite. Autonomy is widened only when measured agreement with reviewers supports it, and it can be narrowed again at any time.</p></div></div>
   </section>
   <section class="dd-sec" id="documents">
-    <p class="feat-eyebrow">02 · Document intelligence</p>
+    <p class="feat-eyebrow">02</p>
     <h2>Document intelligence</h2>
     <div class="dd-lead"><p class="t-plain">Investment teams spend hours copying numbers out of PDFs. My systems read the documents, pull out the figures and terms a team needs and link every value to the page and line it came from, so a reviewer can check any number in seconds.</p><p class="t-tech">Layout-aware parsing and schema-first extraction into typed fields, with span-level citations, cross-document reconciliation and review routing for low-confidence values.</p></div>
     <figure class="feat-art dd-art"><!-- ai-art:documents:start --><svg class="art" viewBox="0 0 480 270" role="img"><title>A statement page with its table and paragraph detected, three values highlighted and extracted as fields, each with a page and line citation, and a roll-forward check that ties</title>
@@ -155,7 +155,7 @@
     </div>
   </section>
   <section class="dd-sec" id="data">
-    <p class="feat-eyebrow">03 · Data foundations</p>
+    <p class="feat-eyebrow">03</p>
     <h2>Data foundations</h2>
     <div class="dd-lead"><p class="t-plain">Models and agents are only as good as the numbers they read. I bring portfolio, accounting, market and document data into one tested, reconciled place, so every system works from the numbers the investment and operations teams sign off on.</p><p class="t-tech">A layered warehouse with tested transformations, lineage and governed views, so every agent and model reads the same reconciled numbers through typed tools.</p></div>
     <figure class="feat-art dd-art"><!-- ai-art:data:start --><svg class="art" viewBox="0 0 480 270" role="img"><title>Four sources load into raw, clean and reconciled layers, tested for freshness and lineage, and the reconciled layer feeds agents, models and dashboards</title>
@@ -194,7 +194,7 @@
     <ul class="chips dd-chips"><li>Snowflake</li><li>Databricks</li><li>PostgreSQL</li><li>Airflow</li><li>dbt</li><li>Azure AI Foundry</li></ul>
   </section>
   <section class="dd-sec" id="production">
-    <p class="feat-eyebrow">04 · Production</p>
+    <p class="feat-eyebrow">04</p>
     <h2>Running it in production</h2>
     <p class="ai-lede">The engineering that makes these systems safe to rely on.</p>
     <div class="grid-4 prac-grid">
@@ -219,7 +219,7 @@
     </div>
   </section>
   <section class="dd-sec" id="lifecycle">
-    <p class="feat-eyebrow">05 · Lifecycle</p>
+    <p class="feat-eyebrow">05</p>
     <h2>From idea to production</h2>
     <p class="ai-lede"><span class="t-plain">I build each system all the way through, from the first conversation with the team to a production system they rely on. A human stays in the loop at every stage.</span><span class="t-tech">The full lifecycle I run on every system, with the human review points designed in from the first step.</span></p>
     <ol class="steps-grid">
