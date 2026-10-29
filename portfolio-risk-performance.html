@@ -537,7 +537,7 @@ stress loss = sum_i w_i b_i' shock</pre>
           P.checks.push({ id: 'mandate', name: 'Tracking error mandate: ' + m.n, val: F.pct(te, 2), tgt: 'up to ' + F.pct(m.lim, 1), ok: !br, quiet: !br });
           if (br) {
             var spec = Math.sqrt(R.M.spec[i]);
-            P.items.push({ id: 'M-' + (P.items.length + 1), mgr: i, short: 'TE above mandate', title: m.n + ': tracking error ' + F.pct(te, 1) + ' against a ' + F.pct(m.lim, 1) + ' mandate limit', severity: 'high', evidence: 'Ex-ante tracking error against the ' + UI.esc(IDX[m.c].n) + ' is ' + F.pct(te, 2) + '. Specific risk alone is ' + F.pct(spec, 1) + ' a year. The manager contributes ' + F.pct(R.act.c[i], 2) + ' of the fund\'s ' + F.pct(R.act.te, 2) + ' tracking error at ' + F.pct(B.w[i], 1) + ' weight. Approve to ask the manager to explain the positions and bring risk back inside the mandate.', state: 'pending' });
+            P.items.push({ id: 'M-' + (P.items.length + 1), mgr: i, short: 'TE above mandate', title: m.n + ': tracking error ' + F.pct(te, 1) + ' against a ' + F.pct(m.lim, 1) + ' mandate limit', severity: 'high', evidence: 'Ex-ante tracking error against the ' + UI.esc(IDX[m.c].n) + ' is ' + F.pct(te, 2) + '. Specific risk alone is ' + F.pct(spec, 1) + ' a year. The manager holds ' + F.pct(B.w[i], 1) + ' of the fund, which runs ' + F.pct(R.act.te, 2) + ' tracking error against the policy benchmark. Approve to ask the manager to explain the positions and bring risk back inside the mandate.', state: 'pending' });
             res.push({ status: 'approval', msg: m.n + ': tracking error ' + F.pct(te, 1) + ' vs mandate ' + F.pct(m.lim, 1) });
           }
         });
