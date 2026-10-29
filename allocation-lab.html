@@ -79,7 +79,7 @@
               <select class="field" id="method"><option value="sharpe">Maximum Sharpe</option><option value="minvar">Minimum variance</option><option value="target">Target volatility</option><option value="hurdle">Lowest risk clearing spending plus inflation</option></select></div>
             <div class="control"><label for="inputs">Expected returns</label>
               <select class="field" id="inputs"><option value="cma">Capital market assumptions</option><option value="bl">Black-Litterman posterior</option></select></div>
-            <div class="control"><label><span><input type="checkbox" id="desmooth" checked> Desmooth private risk (Geltner)</span></label><div class="hint">Off uses the smoothed, reported volatility and correlations of appraisal-based series.</div></div>
+            <div class="control"><label><span><input type="checkbox" id="desmooth" checked> Desmooth private risk (Geltner)</span></label><div class="hint">Off uses the smoothed, reported volatility and correlations of appraisal-based and stale-priced series.</div></div>
             <div class="control"><label><span><input type="checkbox" id="policyOn" checked> Policy ranges as bounds</span></label></div>
             <div class="control"><label><span><input type="checkbox" id="liqOn" checked> Liquidity after stress</span></label><div class="hint">Liquid assets after a GFC-sized shock must cover the policy multiple of 24 months of calls and spending.</div></div>
             <div id="optControls" class="controls"></div>
@@ -144,14 +144,14 @@
         <li>The optimizer maximizes the Sharpe ratio inside the policy ranges. It only accepts portfolios that still cover projected capital calls with liquid assets after a stress.</li>
         <li>Black-Litterman blends equilibrium returns with views. The resampled frontier averages many optimizations on simulated returns.</li>
         <li>Total portfolio mode measures active risk against a 70/30 reference portfolio and judges each candidate by what it adds to total risk and return.</li>
-        <li>Stress tests replay GFC, 2022 rate shock and COVID-style moves. Attribution uses the Brinson model.</li>
+        <li>Stress tests replay GFC, 2022 rate shock and COVID-style moves. Attribution uses the Brinson-Fachler model.</li>
       </ul>
       <h3>Formulas</h3>
       <div class="formula">sigma_true = sigma_rep sqrt((1+rho)/(1-rho))
 max  lambda mu'w - w'Sigma w   s.t. lo &lt;= w &lt;= hi, sum w = 1, a'w &gt;= b
 pi = delta Sigma w_mkt
 CTR_active,i = a_i (Sigma a)_i / sqrt(a'Sigma a),  a = w - w_ref
-alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
+alloc_i = (wp_i - wb_i)(rb_i - Rb)   sel_i = wb_i (rp_i - rb_i)</div>
       <h3>Assumptions</h3>
       <div id="assumptions"></div>
       
@@ -231,16 +231,16 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
   var N = 8;
   /* capital market assumptions and reported risk, as in the original optimizer page */
   var MU_CMA = [0.068, 0.072, 0.079, 0.094, 0.056, 0.066, 0.044, null];
-  var VOL_REPORTED = [0.160, 0.175, 0.215, 0.145, 0.055, 0.115, 0.055, 0.008];
-  var AUTOCORR = [0, 0, 0, 0.45, 0.30, 0.65, 0, 0];
+  var VOL_REPORTED = [0.160, 0.175, 0.215, 0.145, 0.055, 0.085, 0.055, 0.008];
+  var AUTOCORR = [0, 0, 0, 0.45, 0.30, 0.60, 0, 0];
   var CORR = [[1.00, 0.85, 0.74, 0.72, 0.72, 0.60, 0.05, 0.00], [0.85, 1.00, 0.80, 0.68, 0.72, 0.58, 0.05, 0.00], [0.74, 0.80, 1.00, 0.60, 0.68, 0.50, 0.00, 0.00], [0.72, 0.68, 0.60, 1.00, 0.60, 0.55, 0.00, -0.05],
     [0.72, 0.72, 0.68, 0.60, 1.00, 0.48, 0.05, 0.05], [0.60, 0.58, 0.50, 0.55, 0.48, 1.00, 0.20, 0.00], [0.05, 0.05, 0.00, 0.00, 0.05, 0.20, 1.00, 0.25], [0.00, 0.00, 0.00, -0.05, 0.05, 0.00, 0.25, 1.00]];
   var PRIV_I = [3, 4, 5], PUB_I = [0, 1, 2, 6];
   var LIQUID = [1, 1, 1, 0, 0, 0, 1, 1], TRADABLE = [1, 1, 1, 0, 0, 0, 1, 1];
   var STRESS = [
-    { name: 'GFC', win: 'Oct 2007 to Mar 2009', s: [-0.50, -0.55, -0.60, -0.30, -0.20, -0.60, 0.10, 0.03] },
-    { name: 'COVID crash', win: 'Feb to Mar 2020', s: [-0.34, -0.33, -0.32, -0.20, -0.11, -0.40, 0.08, 0.002] },
-    { name: '2022 rate shock', win: 'Jan to Oct 2022', s: [-0.25, -0.25, -0.29, -0.20, -0.06, -0.28, -0.13, 0.015] },
+    { name: 'GFC', win: 'Oct 2007 to Mar 2009', s: [-0.50, -0.55, -0.60, -0.40, -0.20, -0.40, 0.10, 0.03] },
+    { name: 'COVID crash', win: 'Feb to Mar 2020', s: [-0.34, -0.33, -0.32, -0.20, -0.11, -0.20, 0.08, 0.002] },
+    { name: '2022 rate shock', win: 'Jan to Oct 2022', s: [-0.25, -0.25, -0.29, -0.20, -0.06, -0.18, -0.13, 0.006] },
     { name: 'Stagflation', win: 'stylised, 12 months', s: [-0.20, -0.18, -0.22, -0.15, -0.05, -0.08, -0.08, 0.06] }
   ];
   /* reference portfolio for the total portfolio approach: 70% global equity (60/30/10), 30% bonds */
@@ -254,7 +254,7 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
     { id: 'calls24', label: 'Projected capital calls, next 24 months', value: 90, unit: '$m', source: 'Pacing input, see the Private Capital Lab', min: 0, max: 400, step: 5 },
     { id: 'liqMult', label: 'Liquidity multiple', value: 1.5, unit: 'x', source: 'IPS section 5 (extracted)', min: 0.5, max: 4, step: 0.1 },
     { id: 'maxW', label: 'Maximum weight in any asset', value: 0.35, unit: '%', scale: 100, source: 'Assumption', min: 0.15, max: 1, step: 1 },
-    { id: 'delta', label: 'Black-Litterman risk aversion', value: 2.5, unit: '', source: 'Common choice', min: 0.5, max: 6, step: 0.1 },
+    { id: 'delta', label: 'Black-Litterman risk aversion', value: 1.9, unit: '', source: 'Calibrated: market portfolio excess return over its variance, on the capital market assumptions', min: 0.5, max: 6, step: 0.1 },
     { id: 'tau', label: 'Black-Litterman tau', value: 0.05, unit: '', source: 'Common choice', min: 0.01, max: 0.5, step: 0.01 },
     { id: 'refEq', label: 'Reference portfolio equity share', value: 0.70, unit: '%', scale: 100, source: 'Committee minutes, item 4 (extracted)', min: 0.3, max: 0.9, step: 1 },
     { id: 'activeBudget', label: 'Active risk budget', value: 0.04, unit: '% a year', scale: 100, source: 'Committee minutes, item 4 (extracted)', min: 0.01, max: 0.1, step: 0.25 },
@@ -425,7 +425,7 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
       var budgetOk = O.tpa(w2, ref, I.Sigma).activeVol <= A.activeBudget + 1e-9 || r.dActive < -1e-6;   // inside the budget, or moving back toward it
       var addsValue = r.ratio === Infinity || (r.dVol > 0 && r.ratio > hurdle) || (r.dVol < 0 && r.dRet > -1e-9);
       var tpa = addsValue && budgetOk, saa = inRange;
-      return { name: c.name, dRet: r.dRet, dVol: r.dVol, dActive: r.dActive, ratio: r.ratio, saa: saa ? 'Fits ranges' : 'Breaks a range', tpa: tpa ? 'Improves the total portfolio' : (budgetOk ? 'Adds risk for too little return' : 'Breaks the active risk budget'), saaOk: saa, tpaOk: tpa };
+      return { name: c.name, dRet: r.dRet, dVol: r.dVol, dActive: r.dActive, ratio: r.ratio, saa: saa ? 'Fits ranges' : 'Breaks a range', tpa: tpa ? 'Improves the total portfolio' : (budgetOk ? 'Adds risk for too little return' : (t.activeVol > A.activeBudget ? 'Leaves active risk over the budget' : 'Breaks the active risk budget')), saaOk: saa, tpaOk: tpa };
     });
     S.cands = rows;
     var verdictCol = S.mode === 'tpa' ? { key: 'tpa', label: 'Total portfolio verdict', html: 1, fmt: function (v, r) { return '<span class="' + (r.tpaOk ? 'verdict-ok' : 'verdict-no') + '">' + v + '</span>'; } } : { key: 'saa', label: 'SAA verdict', html: 1, fmt: function (v, r) { return '<span class="' + (r.saaOk ? 'verdict-ok' : 'verdict-no') + '">' + v + '</span>'; } };
@@ -469,17 +469,20 @@ alloc = sum (wp - wb) rb   sel = sum wb (rp - rb)</div>
     var xs = P.map(function (_, i) { return i - 23; });
     UI.chart.line('#regChart', { xs: xs, series: REG_NAMES.map(function (n, k) { return { name: n, ys: P.map(function (p) { return p[k]; }), color: 's' + (k + 1) }; }), yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return v === 0 ? 'now' : v + 'm'; }, height: 230, yMin: 0, yMax: 1, label: 'Synthetic regime probabilities' });
     UI.table('#tiltTable', { id: 'tilts', name: 'Regime tilts', columns: [{ key: 'a', label: 'Asset class' }, { key: 'pol', label: 'Policy', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'tilt', label: 'Tilt', num: 1, fmt: function (v) { return F.pp(v, 1); } }, { key: 'taa', label: 'Tactical (within ranges)', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'trade', label: 'Tradable now', }],
-      rows: ASSETS.map(function (a, i) { return { a: a, pol: pol.target[i], tilt: tilt[i], taa: taa[i], trade: TRADABLE[i] ? 'yes' : 'no, through commitments' }; }), foot: { a: 'Most likely regime now: ' + REG_NAMES[now.indexOf(Math.max.apply(null, now))] + ' (' + F.pct(Math.max.apply(null, now), 0) + ')' } });
+      rows: ASSETS.map(function (a, i) { return { a: a, pol: pol.target[i], tilt: tilt[i], taa: taa[i], trade: TRADABLE[i] ? 'yes' : i === 4 ? 'no, through subscriptions and redemptions' : 'no, through commitments' }; }), foot: { a: 'Most likely regime now: ' + REG_NAMES[now.indexOf(Math.max.apply(null, now))] + ' (' + F.pct(Math.max.apply(null, now), 0) + ')' } });
   }
 
   /* ---------------- attribution ---------------- */
   function renderAttribution() {
     var rng = PM.mulberry32(S.seed * 13 + 5), z = PM.normalGen(rng);
-    var rb = [-0.084, -0.102, -0.121, 0.021, 0.031, -0.012, 0.038, 0.048].map(function (r) { return r + 0.01 * z(); });
+    var rb = [-0.084, -0.102, -0.121, 0.021, 0.031, -0.012, 0.038, 0.039].map(function (r, i) { return r + (i === 7 ? 0.001 : 0.01) * z(); });
     var rp = rb.map(function (r, i) { return r + (TRADABLE[i] ? 0.004 : 0.012) * z() + (i === 4 ? 0.006 : 0); });
     var wb = IPS.target, wp = current().map(function (x, i) { return 0.5 * x + 0.5 * IPS.target[i] + (i === 6 ? 0.01 : i === 0 ? -0.01 : 0); });
     var s = PM.sum(wp); wp = wp.map(function (x) { return x / s; });
     var b = PM.brinson(wp, wb, rp, rb);
+    /* Brinson-Fachler: each class's allocation effect is measured against the total policy return, so an
+       overweight in a class that beat the policy counts as a gain. The totals equal the Brinson-Hood-Beebower ones. */
+    b.rows.forEach(function (r, i) { r.alloc = (wp[i] - wb[i]) * (rb[i] - b.rbTot); });
     S.att = b;
     UI.kpis('#attKpis', [
       { id: 'attTotal', label: 'Active return, 12 months', value: F.pp(b.total, 2), sub: 'portfolio ' + F.pct(b.rpTot, 2) + ' vs policy ' + F.pct(b.rbTot, 2), explain: function () { return { title: 'Active return', formula: 'sum wp rp - sum wb rb, computed directly; then split into allocation, selection and interaction', inputs: [{ name: 'Allocation', value: F.pp(b.alloc, 3), src: 'computed' }, { name: 'Selection', value: F.pp(b.sel, 3), src: 'computed' }, { name: 'Interaction', value: F.pp(b.inter, 3), src: 'computed' }, { name: 'Residual (should be 0)', value: b.resid.toExponential(1), src: 'computed' }], result: F.pp(b.total, 3) }; } },

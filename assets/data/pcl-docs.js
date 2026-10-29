@@ -35,7 +35,7 @@ window.PCL_DOCS = {
     'Portfolio companies held at quarter end: 11, of which 2 partially realized.',
     '',
     'Performance since inception (fund level)',
-    'Gross IRR 19.4%, net IRR 14.1%, net TVPI 1.62x, DPI 0.71x.',
+    'Gross IRR 18.2%, net IRR 13.6%, net TVPI 1.55x, DPI 0.38x.',
     '',
     'Your investment',
     'Your capital account at June 30, 2026: $32,519,000.',

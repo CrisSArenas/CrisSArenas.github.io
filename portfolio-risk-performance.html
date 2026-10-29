@@ -79,7 +79,7 @@
         <div class="panel"><div class="panel-head"><h3>Risk by asset class</h3><span class="sub">Share of total volatility and of tracking error</span></div><div class="panel-body"><div id="rcClass"></div><div id="rcClassTable" style="margin-top:12px"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Risk by factor</h3><span class="sub">Five factors plus manager-specific risk</span></div><div class="panel-body"><div id="rcFactor"></div><p class="eval-note" id="factorNote"></p></div></div>
       </div>
-      <div class="panel"><div class="panel-head"><h3>Risk by manager</h3><span class="sub">Weights at 30 Sep 2026; contributions add up to the totals in the last row</span></div><div class="panel-body"><div id="rcMgr"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Risk by manager</h3><span class="sub">Weights at 30 Sep 2026; contributions to TE are net of each manager's share of its class benchmark and add up to the totals in the last row</span></div><div class="panel-body"><div id="rcMgr"></div></div></div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Drawdown history</h3><span class="sub">Oct 2021 to Sep 2026, from the running peak</span></div><div class="panel-body"><div id="ddChart"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Stress tests</h3><span class="sub">Each episode's factor moves applied to today's betas</span></div><div class="panel-body"><div id="stressChart"></div></div></div>
@@ -118,9 +118,10 @@
         <li>Monthly returns come from a five-factor model (equity, rates, credit, inflation and currency). Each manager adds its own alpha and specific risk on top of its factor betas.</li>
         <li>Private equity, private credit and real assets report smoothed marks. Before they enter the risk model I estimate each series' first-order autocorrelation and desmooth it with the Geltner filter.</li>
         <li>Betas and specific risk come from a regression of each manager's monthly returns on the five factors. The covariance matrix is the factor covariance mapped through the betas, plus specific variance.</li>
-        <li>Risk contributions use the Euler split. Each manager's weight times its marginal risk gives its share, and the shares add up to total volatility. Tracking error is the volatility of the active weights (portfolio minus policy benchmark) in the same model, and it splits the same way.</li>
+        <li>Risk contributions use the Euler split. Each manager's weight times its marginal risk gives its share, and the shares add up to total volatility. Ex-ante tracking error is the volatility of the active weights (portfolio minus policy benchmark) in the same model, and it splits the same way. In the manager table each manager carries its share of the class benchmark, pro rata to its weight in the class, so an index fund shows close to zero.</li>
         <li>Stress tests apply the factor moves of three episodes to the current betas. Private assets are shocked at their desmoothed betas.</li>
-        <li>The portfolio and the policy benchmark are both rebalanced on 1 October each year and held between rebalances. That makes each year's Brinson attribution add up exactly to the year's active return.</li>
+        <li>The portfolio and the policy benchmark both start each year on 1 October from fixed weights and are held between those dates. For the liquid sleeves that is the annual rebalance. For the private sleeves it stands in for a year of capital calls, distributions and commitment pacing, since private funds cannot be traded back to weight. Holding the weights through the year makes each year's attribution add up exactly to the year's active return.</li>
+        <li>Attribution is Brinson-Fachler by asset class. A class's allocation effect is its active weight times its benchmark return less the total benchmark return, so an overweight in a class that lagged the benchmark counts against the fund. Selection uses policy weights and interaction is shown on its own.</li>
       </ul>
       <h3>Formulas</h3>
       <pre class="formula">r_i,t = a_i + b_i' f_t + e_i,t
@@ -130,13 +131,14 @@ TE = sqrt(a' Sigma a),    a = w_portfolio - w_benchmark
 factor k: x_k (F x)_k / vol,  x = B' w;   specific: sum w_i^2 s_i^2 / vol
 r_true,t = (r_obs,t - rho r_obs,t-1) / (1 - rho)
 sigma_true = sigma_obs sqrt((1 + rho) / (1 - rho))
-alloc = sum (wp - wb) rb,  sel = sum wb (rp - rb),  inter = sum (wp - wb)(rp - rb)
+alloc_k = (wp_k - wb_k)(rb_k - Rb),  sel_k = wb_k (rp_k - rb_k),  inter_k = (wp_k - wb_k)(rp_k - rb_k)
 stress loss = sum_i w_i b_i' shock</pre>
       <h3>Assumptions</h3>
       <div id="assumptions"></div>
       <h3>Data and limits</h3>
       <ul>
-        <li>The fund, its managers and every return are made up. The policy benchmark indices are modelled as exact combinations of the five factors, so all specific risk sits with the managers.</li>
+        <li>The fund, its managers and every return are made up. Each private line is a separate account spread across many funds or deals. The policy benchmark indices are modelled as exact combinations of the five factors, so all specific risk sits with the managers.</li>
+        <li>Private equity is measured against global equity plus a spread, with no lag. Many funds lag that benchmark by a quarter to match statement timing. The synthetic marks here are monthly and trail the true values by about a month, so a quarter's lag would overcorrect.</li>
         <li>Sixty months is a short window for a five-factor regression. The betas of the private managers are the least certain numbers on the page.</li>
         <li>Geltner desmoothing assumes one lag of smoothing. Marks that lag by more than a quarter still understate risk after the filter.</li>
         <li>The stress tests are linear in the betas. They do not capture forced selling or the slow repricing of private marks after a fall.</li>
@@ -221,22 +223,25 @@ stress loss = sum_i w_i b_i' shock</pre>
     { n: 'Senior loans plus 2%', b: [0.20, 0.05, 1.00, 0, 0], spread: 0.02 },
     { n: 'Real assets index', b: [0.35, 0.30, 0, 1.00, 0.10], spread: 0.01 }
   ];
-  /* managers: class, target weight, true betas, alpha and specific risk a year, mandate tracking error limit, smoothing */
+  /* managers: class, start weight, true betas, alpha and specific risk a year, mandate tracking error limit, smoothing.
+     Start weights hold deliberate tilts against policy: US equity under, international, emerging markets, high yield,
+     hedge funds and private credit over, core fixed income and real assets under, private equity at policy.
+     Each private line is a separate account spread across many funds or deals. */
   var MGR = [
-    { n: 'Quillmere Equity Partners', c: 0, w: 0.09, b: [1.05, 0, 0, 0, 0], a: 0.008, s: 0.035, lim: 0.04 },
+    { n: 'Quillmere Equity Partners', c: 0, w: 0.08, b: [1.05, 0, 0, 0, 0], a: 0.008, s: 0.035, lim: 0.04 },
     { n: 'Harrowgate US Index Fund', c: 0, w: 0.09, b: [1.00, 0, 0, 0, 0], a: -0.0003, s: 0.0015, lim: 0.005 },
     { n: 'Bellwyn Small Cap', c: 0, w: 0.03, b: [1.20, 0, 0.10, 0, 0], a: 0.010, s: 0.060, lim: 0.10 },
-    { n: 'Ostrander Global Equity', c: 1, w: 0.06, b: [0.95, 0, 0, 0, 0.80], a: 0.006, s: 0.030, lim: 0.05 },
-    { n: 'Tidewell International Value', c: 1, w: 0.05, b: [1.00, 0, 0, 0.10, 0.90], a: -0.004, s: 0.040, lim: 0.06 },
-    { n: 'Corvane Emerging Markets', c: 2, w: 0.07, b: [1.20, 0, 0.10, 0.15, 1.20], a: 0.005, s: 0.085, lim: 0.05 },
+    { n: 'Ostrander Global Equity', c: 1, w: 0.065, b: [0.95, 0, 0, 0, 0.80], a: 0.006, s: 0.030, lim: 0.05 },
+    { n: 'Tidewell International Value', c: 1, w: 0.06, b: [1.00, 0, 0, 0.10, 0.90], a: -0.004, s: 0.040, lim: 0.06 },
+    { n: 'Corvane Emerging Markets', c: 2, w: 0.065, b: [1.20, 0, 0.10, 0.15, 1.20], a: 0.005, s: 0.085, lim: 0.05 },
     { n: 'Ashcombe Fixed Income', c: 3, w: 0.09, b: [0, 1.00, 0.25, 0, 0], a: 0.003, s: 0.008, lim: 0.03, drift: { from: 36, b: [0.05, 0.95, 0.85, 0, 0] } },
-    { n: 'Merrow Core Bond Index', c: 3, w: 0.07, b: [0, 1.00, 0.25, 0, 0], a: -0.0002, s: 0.001, lim: 0.005 },
-    { n: 'Fenwright High Yield', c: 4, w: 0.05, b: [0.25, 0.35, 1.20, 0, 0], a: 0.007, s: 0.020, lim: 0.03 },
+    { n: 'Merrow Core Bond Index', c: 3, w: 0.075, b: [0, 1.00, 0.25, 0, 0], a: -0.0002, s: 0.001, lim: 0.005 },
+    { n: 'Fenwright High Yield', c: 4, w: 0.06, b: [0.25, 0.35, 1.20, 0, 0], a: 0.007, s: 0.020, lim: 0.03 },
     { n: 'Saltmarsh Global Macro', c: 5, w: 0.05, b: [0.05, 0.20, 0, 0.30, 0.20], a: 0.020, s: 0.060, lim: 0.08 },
     { n: 'Kestrel Ridge Multi-Strategy', c: 5, w: 0.06, b: [0.25, 0, 0.20, 0, 0], a: 0.025, s: 0.035, lim: 0.06 },
-    { n: 'Larchmont Buyout Fund IV', c: 6, w: 0.10, b: [1.25, 0, 0.20, 0, 0.20], a: 0.020, s: 0.090, lim: null, rho: 0.50 },
-    { n: 'Westerly Growth Partners III', c: 6, w: 0.065, b: [1.45, 0, 0, 0, 0.10], a: 0.010, s: 0.120, lim: null, rho: 0.50 },
-    { n: 'Brookhaven Direct Lending II', c: 7, w: 0.06, b: [0.20, 0.05, 0.90, 0, 0], a: 0.035, s: 0.030, lim: null, rho: 0.40 },
+    { n: 'Larchmont Buyout Partners', c: 6, w: 0.08, b: [1.05, 0, 0.15, 0, 0.30], a: 0.030, s: 0.050, lim: null, rho: 0.50 },
+    { n: 'Westerly Growth Partners', c: 6, w: 0.06, b: [1.20, 0, 0, 0, 0.25], a: 0.020, s: 0.070, lim: null, rho: 0.50 },
+    { n: 'Brookhaven Direct Lending', c: 7, w: 0.07, b: [0.20, 0.05, 0.90, 0, 0], a: 0.035, s: 0.030, lim: null, rho: 0.40 },
     { n: 'Granite Shoal Real Assets', c: 8, w: 0.065, b: [0.40, 0.20, 0.10, 0.90, 0.10], a: 0.020, s: 0.070, lim: null, rho: 0.55, stale: 3 }
   ];
   var NM = MGR.length, PRIV_M = MGR.map(function (m, i) { return m.rho ? i : -1; }).filter(function (i) { return i >= 0; });
@@ -345,7 +350,10 @@ stress loss = sum_i w_i b_i' shock</pre>
     return YEARS.map(function (_, y) {
       var rp = CLS.map(function (_, c) { var num = 0, den = 0; MGR.forEach(function (m, i) { if (m.c === c) { num += W0[i] * P.G[y][i]; den += W0[i]; } }); return num / den - 1; });
       var rb = Bm.G[y].map(function (g) { return g - 1; });
-      return { b: PM.brinson(Wc, POLICY, rp, rb), rp: rp, rb: rb, wp: Wc };
+      var b = PM.brinson(Wc, POLICY, rp, rb);
+      /* Brinson-Fachler: each class's allocation effect is measured against the total benchmark return; the total is unchanged */
+      b.rows.forEach(function (r, k) { r.alloc = (Wc[k] - POLICY[k]) * (rb[k] - b.rbTot); });
+      return { b: b, rp: rp, rb: rb, wp: Wc };
     });
   }
 
@@ -380,7 +388,7 @@ stress loss = sum_i w_i b_i' shock</pre>
     var fv = R.fac.factors.concat([R.fac.specific]), fa = R.facA.factors.concat([R.facA.specific]);
     UI.chart.bar('#rcFactor', { categories: FACT.concat(['Specific']), series: [{ name: 'Contribution to total volatility', values: fv, color: 's1' }, { name: 'Contribution to tracking error', values: fa, color: 's2' }], yFmt: function (v) { return F.pct(v, 1); }, height: 250, label: 'Risk contribution by factor' });
     var fk = R.facA.factors.indexOf(Math.max.apply(null, R.facA.factors));
-    $('#factorNote').textContent = 'Equity explains ' + F.pct(fv[0] / vol, 0) + ' of total volatility. Manager-specific risk is ' + F.pct(fa[5] / te, 0) + ' of tracking error. The other ' + F.pct(1 - fa[5] / te, 0) + ' comes from factor tilts against the policy weights, led by ' + FACT[fk].toLowerCase() + '. Factors add ' + F.pct(PM.sum(R.fac.factors), 2) + ' and specific risk ' + F.pct(R.fac.specific, 2) + ', which sum to the ' + F.pct(vol, 2) + ' total.';
+    $('#factorNote').textContent = 'Equity explains ' + F.pct(fv[0] / vol, 0) + ' of total volatility. Manager-specific risk is ' + F.pct(fa[5] / te, 0) + ' of tracking error. The other ' + F.pct(1 - fa[5] / te, 0) + ' comes from factor exposures that differ from the policy benchmark\'s, led by ' + FACT[fk].toLowerCase() + '. Factors add ' + F.pct(PM.sum(R.fac.factors), 2) + ' and specific risk ' + F.pct(R.fac.specific, 2) + ', which sum to the ' + F.pct(vol, 2) + ' total.';
     renderMgrRisk();
     var xs = B.P.r.map(function (_, t) { return t; });
     UI.chart.line('#ddChart', { xs: xs, series: [{ name: 'Portfolio, reported marks', ys: dd.dd, color: 's1', area: true }, { name: 'Policy benchmark', ys: ddB.dd, color: 's4' }, { name: 'Portfolio, desmoothed marks', ys: ddD.dd, color: 's5', dash: '4 3' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: monthLabel, xTicks: 5, height: 250, label: 'Drawdown history' });
@@ -398,10 +406,11 @@ stress loss = sum_i w_i b_i' shock</pre>
     return f.map(function (it) { return it.short + ': ' + (it.state === 'approved' ? 'on watch list' : it.state === 'rejected' ? 'dismissed' : 'for review'); }).join('; ');
   }
   function renderMgrRisk() {
-    var B = S.B, R = cur(), vol = R.tot.vol, te = R.act.te;
-    var rows = MGR.map(function (m, i) { return { n: m.n, a: SHORT[m.c], w: B.w[i], sv: Math.sqrt(R.M.S[i][i]), ct: R.tot.c[i], sh: R.tot.c[i] / vol, ca: R.act.c[i], mte: R.mgrTE[i], lim: m.lim, st: statusOf(i) }; });
+    var B = S.B, R = cur(), vol = R.tot.vol, te = R.act.te, wc = byClass(B.w);
+    /* each manager carries its share of the class benchmark leg, pro rata to its weight in the class */
+    var rows = MGR.map(function (m, i) { return { n: m.n, a: SHORT[m.c], w: B.w[i], sv: Math.sqrt(R.M.S[i][i]), ct: R.tot.c[i], sh: R.tot.c[i] / vol, ca: R.act.c[i] + R.act.c[NM + m.c] * B.w[i] / wc[m.c], mte: R.mgrTE[i], lim: m.lim, st: statusOf(i) }; });
     UI.table('#rcMgr', { id: 'risk-manager', name: 'Risk by manager', columns: [{ key: 'n', label: 'Manager' }, { key: 'a', label: 'Class' }, { key: 'w', label: 'Weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sv', label: 'Own vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ct', label: 'To total vol', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'sh', label: 'Share', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ca', label: 'To TE', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'mte', label: 'TE vs own index', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v, r) { return r.lim != null && v > r.lim ? 'neg' : ''; } }, { key: 'lim', label: 'Mandate limit', num: 1, fmt: function (v) { return v == null ? 'none' : F.pct(v, 1); } }, { key: 'st', label: 'Flag' }],
-      rows: rows, foot: { n: 'Total, incl. benchmark legs in TE', w: PM.sum(B.w), ct: vol, sh: PM.sum(rows.map(function (r) { return r.sh; })), ca: te } });
+      rows: rows, foot: { n: 'Total', w: PM.sum(B.w), ct: vol, sh: PM.sum(rows.map(function (r) { return r.sh; })), ca: te } });
   }
 
   /* ---------------- tab 2: performance ---------------- */

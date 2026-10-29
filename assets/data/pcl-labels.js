@@ -22,9 +22,9 @@ window.PCL_LABELS = {
     },
     'qr-quorvane': {
       lpNav: { value: 32.519, page: 1, line: 11, how: 'read: Your capital account at June 30, 2026: $32,519,000' },
-      fundNetIrr: { value: 0.141, page: 1, line: 8, how: 'read: net IRR 14.1%' },
-      fundTvpi: { value: 1.62, page: 1, line: 8, how: 'read: net TVPI 1.62x' },
-      fundDpi: { value: 0.71, page: 1, line: 8, how: 'read: DPI 0.71x' }
+      fundNetIrr: { value: 0.136, page: 1, line: 8, how: 'read: net IRR 13.6%' },
+      fundTvpi: { value: 1.55, page: 1, line: 8, how: 'read: net TVPI 1.55x' },
+      fundDpi: { value: 0.38, page: 1, line: 8, how: 'read: DPI 0.38x' }
     },
     'cas-telmira': {
       commitment: { value: 25.0, page: 1, line: 6, how: 'read: Total commitment 25,000.0 ($ thousands)' },

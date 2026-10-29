@@ -101,7 +101,7 @@
 
     <section id="program" hidden>
       <div class="kpis" id="progKpis"></div>
-      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Twenty funds</h3><span class="sub">NAV shown as reported and as nowcast. Values from cited statements are marked.</span></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Twenty funds</h3><span class="sub">NAV shown as reported and as nowcast. TVPI and IRR use the nowcast NAV; IRR is not meaningful (n.m.) for funds under three years old. Values from cited statements are marked.</span></div>
         <div class="panel-body"><div id="progTable"></div></div></div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Watchlist</h3></div><div class="panel-body wl" id="watchlist"></div></div>
@@ -256,7 +256,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     { id: 'bandHi', label: 'Policy band, high', value: 0.30, unit: '%', scale: 100, source: 'Fictional policy', min: 0.05, max: 0.6, step: 1 },
     { id: 'spend', label: 'Spending rate', value: 0.045, unit: '% of assets a year', scale: 100, source: 'Assumption, typical endowment range', min: 0, max: 0.08, step: 0.1 },
     { id: 'pubRet', label: 'Expected public return (plan)', value: 0.065, unit: '% a year', scale: 100, source: 'Assumption', min: 0, max: 0.12, step: 0.1 },
-    { id: 'horizon', label: 'Pacing horizon', value: 4, unit: 'years', source: 'Assumption: NAV per $ committed peaks around year 4', min: 2, max: 7, step: 1 },
+    { id: 'horizon', label: 'Pacing horizon', value: 4, unit: 'years', source: 'Assumption: NAV per $ committed is near its peak by year 4', min: 2, max: 7, step: 1 },
     { id: 'rc', label: 'Rate of contribution', value: 0.30, unit: '% of unfunded a year', scale: 100, source: 'Takahashi-Alexander parameter, assumption', min: 0.1, max: 0.6, step: 1 },
     { id: 'ip', label: 'Investment period', value: 5, unit: 'years', source: 'Assumption', min: 2, max: 7, step: 1 },
     { id: 'life', label: 'Fund life', value: 12, unit: 'years', source: 'Assumption', min: 8, max: 16, step: 1 },
@@ -275,7 +275,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     { id: 'stressCall', label: 'Stress: calls over 12 months', value: 0.35, unit: '% of unfunded', scale: 100, source: 'Assumption, stylised', min: 0, max: 0.8, step: 1 },
     { id: 'distCut', label: 'Stress: cut in distributions', value: 0.60, unit: '%', scale: 100, source: 'Assumption, stylised', min: 0, max: 1, step: 1 },
     { id: 'saleShare', label: 'Release valve: LP stakes sold', value: 0.10, unit: '% of private NAV', scale: 100, source: 'Assumption', min: 0, max: 0.5, step: 1 },
-    { id: 'saleDisc', label: 'Release valve: discount to NAV', value: 0.12, unit: '%', scale: 100, source: 'Assumption, see Secondaries Desk', min: 0, max: 0.5, step: 1 },
+    { id: 'saleDisc', label: 'Release valve: discount to NAV', value: 0.20, unit: '%', scale: 100, source: 'Assumption: secondary discounts widen in a sell-off, well past the 5% to 15% of normal markets', min: 0, max: 0.5, step: 1 },
     { id: 'evLimit', label: 'Evergreen: quarterly redemption limit', value: 0.05, unit: '% of NAV', scale: 100, source: 'Common semi-liquid fund term, assumption', min: 0.01, max: 0.25, step: 0.5 },
     { id: 'evSleeve', label: 'Evergreen: liquidity sleeve', value: 0.10, unit: '% of NAV', scale: 100, source: 'Assumption', min: 0, max: 0.4, step: 1 },
     { id: 'evFacility', label: 'Evergreen: credit facility', value: 0.05, unit: '% of NAV', scale: 100, source: 'Assumption', min: 0, max: 0.25, step: 1 },
@@ -302,12 +302,12 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
 
   /* ---------------- synthetic program ---------------- */
   var STRAT = {
-    buyout: { rc: 0.28, ip: 5, mu: 0.026, beta: 1.0, vol: 0.05, dStart: 3, dRate: 0.065, rho: 0.5, label: 'Buyout' },
-    growth: { rc: 0.30, ip: 4, mu: 0.027, beta: 1.2, vol: 0.07, dStart: 4, dRate: 0.055, rho: 0.5, label: 'Growth' },
-    venture: { rc: 0.25, ip: 5, mu: 0.030, beta: 1.4, vol: 0.10, dStart: 5, dRate: 0.045, rho: 0.6, label: 'Venture' },
-    credit: { rc: 0.40, ip: 3, mu: 0.020, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.075, rho: 0.3, label: 'Private credit' },
-    real: { rc: 0.30, ip: 4, mu: 0.019, beta: 0.5, vol: 0.03, dStart: 2, dRate: 0.035, rho: 0.7, label: 'Real assets' },
-    secondaries: { rc: 0.45, ip: 3, mu: 0.025, beta: 0.9, vol: 0.04, dStart: 1, dRate: 0.085, rho: 0.5, label: 'Secondaries' }
+    buyout: { rc: 0.28, ip: 5, mu: 0.028, beta: 1.0, vol: 0.05, dStart: 3, dRate: 0.065, rho: 0.5, label: 'Buyout' },
+    growth: { rc: 0.30, ip: 4, mu: 0.028, beta: 1.2, vol: 0.07, dStart: 4, dRate: 0.055, rho: 0.5, label: 'Growth' },
+    venture: { rc: 0.25, ip: 5, mu: 0.031, beta: 1.4, vol: 0.10, dStart: 5, dRate: 0.045, rho: 0.6, label: 'Venture' },
+    credit: { rc: 0.40, ip: 3, mu: 0.021, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.075, rho: 0.3, label: 'Private credit' },
+    real: { rc: 0.30, ip: 4, mu: 0.020, beta: 0.5, vol: 0.03, dStart: 2, dRate: 0.035, rho: 0.7, label: 'Real assets' },
+    secondaries: { rc: 0.45, ip: 3, mu: 0.026, beta: 0.9, vol: 0.04, dStart: 1, dRate: 0.085, rho: 0.5, label: 'Secondaries' }
   };
   var FUNDS = [
     ['Quorvane Buyout III', 'Quorvane', 'buyout', 2017, 30, 1], ['Quorvane Buyout IV', 'Quorvane', 'buyout', 2021, 40, 1],
@@ -347,13 +347,17 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var funds = FUNDS.map(function (row, k) {
       var p = STRAT[row[2]], q0 = (row[3] - START_YEAR) * 4, C = row[4], lag = row[5];
       var unf = C, nav = 0, rep = 0, prevRepRet = 0, flows = [], navT = [], navR = [], fr = PM.mulberry32(seed * 31 + k * 977), fz = PM.normalGen(fr);
+      /* quarterly shocks are demeaned over the fund's life, and the fund's excess return is set by one draw of manager skill,
+         so dispersion across funds stays in a realistic range (about 3 points a year for buyout, 6 for venture) */
+      var eps = [], nq = TODAY_Q - q0; for (var e = 0; e < nq; e++) eps.push(fz());
+      var em = PM.mean(eps), skill = 0.15 * p.vol * fz();
       for (var q = q0; q <= TODAY_Q; q++) {
         var age = (q - q0) / 4, call = 0, dist = 0, rI = q > 0 ? ret[q - 1] : 0;
         if (q === q0) call = C * 0.08;
         else if (age <= p.ip) call = unf * p.rc / 4 * Math.exp(0.3 * fz() - 0.045);
         else if (age <= p.ip + 4) call = unf * 0.20 / 4 * Math.exp(0.3 * fz() - 0.045);   // follow-ons, fees and expenses after the investment period
         call = Math.min(call, unf); unf -= call;
-        var rTrue = q === q0 ? 0 : p.mu + p.beta * (rI - IDX_MU) + p.vol * fz();   // mu: expected quarterly return net of fees
+        var rTrue = q === q0 ? 0 : p.mu + skill + p.beta * (rI - IDX_MU) + p.vol * (eps[q - q0 - 1] - em);   // mu: expected quarterly return net of fees
         var navBefore = nav;
         nav = (nav + call) * (1 + rTrue);
         if (age >= p.dStart) { var dr = p.dRate * (1 + 1.5 * rI) * (age > 9 ? 2 : 1); dist = nav * Math.max(0, Math.min(0.4, dr)); }
@@ -377,14 +381,21 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var navQ = TODAY_Q - f.lag, repRow = f.navRep.filter(function (r) { return r.q === navQ; })[0];
     var reported = repRow ? repRow.nav : 0;
     if (f.override && f.override.nav != null) reported = f.override.nav;
+    /* where a statement gives paid-in capital, the fund's contributions are scaled to tie to it, so TVPI and IRR use the
+       same cash flows; a call noticed but not yet paid is booked in the current quarter */
+    var flows = f.flows;
+    if (f.override && f.override.paidIn != null) {
+      var synth = 0; f.flows.forEach(function (x) { if (x.amount < 0) synth -= x.amount; });
+      var kf = synth > 0 ? (f.override.paidIn - (f.override.pendingCall || 0)) / synth : 1;
+      flows = f.flows.map(function (x) { return x.amount < 0 ? { q: x.q, amount: x.amount * kf, type: x.type } : x; });
+      if (f.override.pendingCall) flows = flows.concat([{ q: TODAY_Q, amount: -f.override.pendingCall, type: 'contribution' }]);
+    }
     var paidIn = 0, dist = 0, paidToNav = 0, distToNav = 0, after = [];
-    f.flows.forEach(function (x) {
+    flows.forEach(function (x) {
       if (x.amount < 0) paidIn -= x.amount; else dist += x.amount;
       if (x.q <= navQ) { if (x.amount < 0) paidToNav -= x.amount; else distToNav += x.amount; }
       else after.push({ q: x.q - navQ, amount: -x.amount });
     });
-    if (f.override && f.override.paidIn != null) { paidToNav += f.override.paidIn - paidIn; paidIn = f.override.paidIn; }
-    if (f.override && f.override.pendingCall) after.push({ q: TODAY_Q - navQ, amount: f.override.pendingCall });
     var unfunded = f.override && f.override.unfunded != null ? f.override.unfunded : Math.max(0, f.commitment - paidIn);
     /* nowcast fit on this fund's reported returns vs the proxy */
     var rr = [], pr = [];
@@ -397,9 +408,11 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     if (!fit) { var sp = STRAT[f.strategy] || STRAT.buyout, b0 = sp.beta * (1 - sp.rho); fit = { alpha: 0, betas: [b0, b0 * sp.rho, b0 * sp.rho * sp.rho], beta: b0 * (1 + sp.rho + sp.rho * sp.rho), r2: 0, sigma: sp.vol, n: rr.length, prior: true }; }
     var proxy = []; for (var k = navQ + 1; k <= TODAY_Q; k++) proxy.push(D.ret[k - 1]);
     var nc = PM.priv.nowcast({ nav: reported, flows: after, proxy: proxy, betas: fit.betas, proxyBefore: [D.ret[navQ - 1], D.ret[navQ - 2]], alpha: 0, sigma: fit.sigma });
-    return { navQ: navQ, reported: reported, paidIn: paidIn, distributed: dist, unfunded: unfunded, fit: fit, nowcast: nc.nav, lo: nc.lo, hi: nc.hi, stale: TODAY_Q - navQ, rr: rr, flowsAfter: after,
+    return { flows: flows, navQ: navQ, reported: reported, paidIn: paidIn, distributed: dist, unfunded: unfunded, fit: fit, nowcast: nc.nav, lo: nc.lo, hi: nc.hi, stale: TODAY_Q - navQ, rr: rr, flowsAfter: after,
       tvpi: paidIn > 0 ? (dist + reported) / paidIn : NaN, dpi: paidIn > 0 ? dist / paidIn : NaN, paidToNav: paidToNav, distToNav: distToNav };
   }
+
+  function fundAge(f) { return 2026.75 - f.vintage; }
 
   /* ---------------- state ---------------- */
   var S = { seed: 42, D: null, rows: [], user: null, ledgerApplied: {} };
@@ -457,7 +470,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     UI.chart.line('#taChart', { xs: xs, series: [{ name: 'Net cash flow (J-curve)', ys: f.data.map(function (d) { return d.cf; }), color: 's2', width: 2.5 }, { name: 'NAV', ys: f.data.map(function (d) { return d.nav; }), color: 's1' }, { name: 'Cumulative called', ys: f.data.map(function (d) { return d.cal; }), color: 's5', dash: '5 4' }, { name: 'Cumulative distributed', ys: f.data.map(function (d) { return d.dist; }), color: 's3', dash: '5 4' }], yFmt: function (v) { return '$' + F.num(v, 0) + 'm'; }, xFmt: function (v) { return 'Y' + v; }, height: 240, label: 'J-curve of one fund per $100m committed' });
     UI.kpis('#taKpis', [
       { label: 'TVPI gross / net', value: F.mult(sm.tvpi) + ' / ' + F.mult(net.netTvpi) },
-      { label: 'Net IRR', value: F.pct(net.netIrr, 1), sub: 'gross IRR equals G (' + F.pct(sm.irr, 1) + ') by construction', explain: function () { return { title: 'Net IRR of one fund', formula: '2% fee on commitment in the investment period then on prior NAV; 20% carry over an 8% compounded pref, European waterfall, full catch-up', inputs: [{ name: 'Fees paid', value: F.money(net.feeTot, 1), src: 'computed' }, { name: 'GP carry', value: F.money(net.gpCarry, 1), src: 'computed' }], result: F.pct(net.netIrr, 2) }; } },
+      { label: 'Net IRR', value: F.pct(net.netIrr, 1), sub: 'gross IRR equals G (' + F.pct(sm.irr, 1) + ') by construction', explain: function () { return { title: 'Net IRR of one fund', formula: '2% fee on commitment in the investment period then on prior NAV; 20% carry over an 8% preferred return accrued each year on unreturned capital, European waterfall, full catch-up', inputs: [{ name: 'Fees paid', value: F.money(net.feeTot, 1), src: 'computed' }, { name: 'GP carry', value: F.money(net.gpCarry, 1), src: 'computed' }], result: F.pct(net.netIrr, 2) }; } },
       { label: 'Peak net outlay', value: F.money(sm.peakOutlay, 0), sub: F.pct(sm.peakOutlay / 100, 0) + ' of commitment' },
       { label: 'Break-even year', value: sm.breakEvenYear ? 'Y' + sm.breakEvenYear : 'beyond life' },
       { label: 'Commit a year to hold target', value: F.pct(sm.ssPct / 100, 2), sub: 'of total assets, steady state' }
@@ -502,7 +515,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var gpN = {}; S.rows.forEach(function (r) { gpN[r.f.gp] = (gpN[r.f.gp] || 0) + r.nowcast; });
     var topGp = Object.keys(gpN).sort(function (a, b) { return gpN[b] - gpN[a]; })[0];
     var pTvpi = (T.dist + T.nowcast) / T.paidIn, pDpi = T.dist / T.paidIn;
-    var allFlows = []; S.rows.forEach(function (r) { r.f.flows.forEach(function (x) { allFlows.push({ q: x.q, amount: x.amount }); }); });
+    var allFlows = []; S.rows.forEach(function (r) { r.flows.forEach(function (x) { allFlows.push({ q: x.q, amount: x.amount }); }); });
     var pm = PM.priv.fundMetrics(allFlows, T.nowcast, S.D.idx.slice(0, TODAY_Q + 1), Date.UTC(2016, 0, 1));
     S.programMetrics = pm;
     UI.kpis('#progKpis', [
@@ -518,8 +531,9 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       { key: 'commitment', label: 'Commitment', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'paidIn', label: 'Called', num: 1, fmt: function (v) { return F.num(v, 1); } },
       { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'dist', label: 'Distributed', num: 1, fmt: function (v) { return F.num(v, 1); } },
       { key: 'reported', label: 'NAV reported', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'nowcast', label: 'NAV nowcast', num: 1, fmt: function (v) { return F.num(v, 1); } },
-      { key: 'tvpi', label: 'TVPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'dpi', label: 'DPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'irr', label: 'IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }],
-      rows: S.rows.map(function (r) { var m = PM.priv.fundMetrics(r.f.flows.filter(function (x) { return x.q <= r.navQ; }).map(function (x) { return { q: x.q, amount: x.amount }; }), r.reported, null, Date.UTC(2016, 0, 1));
+      { key: 'tvpi', label: 'TVPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'dpi', label: 'DPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'irr', label: 'IRR', num: 1, fmt: function (v) { return v == null ? 'n.m.' : F.pct(v, 1); } }],
+      rows: S.rows.map(function (r) { var m = PM.priv.fundMetrics(r.flows.map(function (x) { return { q: x.q, amount: x.amount }; }), r.nowcast, S.D.idx.slice(0, TODAY_Q + 1), Date.UTC(2016, 0, 1));
+        if (fundAge(r.f) < 3) m.irr = null;
         return { name: r.f.name, src: !!r.f.fromStatement, strategy: STRAT[r.f.strategy] ? STRAT[r.f.strategy].label : r.f.strategy, vintage: r.f.vintage, commitment: r.f.commitment, paidIn: r.paidIn, unfunded: r.unfunded, dist: r.distributed, reported: r.reported, nowcast: r.nowcast, tvpi: (r.distributed + r.nowcast) / r.paidIn, dpi: r.dpi, irr: m.irr }; }),
       foot: { name: 'Program ($m)', commitment: T.commit, paidIn: T.paidIn, unfunded: T.unfunded, dist: T.dist, reported: T.reported, nowcast: T.nowcast, tvpi: pTvpi, dpi: pDpi, irr: pm.irr },
       footExplain: { unfunded: function () { return { title: 'Program unfunded', formula: 'sum over funds of commitment - called (statement value where cited)', inputs: [{ name: 'Commitments', value: F.money(T.commit, 1), src: 'computed' }, { name: 'Called', value: F.money(T.paidIn, 1), src: 'computed' }], result: F.money(T.unfunded, 1) }; } } });
@@ -579,7 +593,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       { id: 'need', label: 'Net cash need, 12 months', value: F.money(need, 0), sub: 'calls less distributions, plus spending' }
     ]);
     UI.table('#liqTable', { id: 'liquidity', name: 'Liquidity stress', columns: [{ key: 'k', label: '' }, { key: 'b', label: 'Today', num: 1 }, { key: 'a', label: 'After stress', num: 1 }],
-      rows: [{ k: 'Public assets', b: F.money(pub0, 0), a: F.money(pub1, 0) }, { k: 'Private NAV, reported marks', b: F.money(T.reported, 0), a: F.money(privRep1, 0) }, { k: 'Private allocation (reported)', b: F.pct(T.pctReported, 1), a: F.pct(pct1, 1) }, { k: 'Unfunded commitments', b: F.money(T.unfunded, 0), a: F.money(T.unfunded - calls, 0) }, { k: 'Distributions, trailing / next 12 months', b: F.money(dists0, 0), a: F.money(dists1, 0) }, { k: 'Liquid assets / unfunded', b: F.mult(pub0 * A.liquidShare / T.unfunded, 2), a: F.mult(liquid1 / Math.max(1e-9, T.unfunded - calls), 2) }] });
+      rows: [{ k: 'Public assets', b: F.money(pub0, 0), a: F.money(pub1, 0) }, { k: 'Private NAV, reported marks', b: F.money(T.reported, 0), a: F.money(privRep1, 0) }, { k: 'Private allocation (reported)', b: F.pct(T.pctReported, 1), a: F.pct(pct1, 1) }, { k: 'Unfunded commitments', b: F.money(T.unfunded, 0), a: F.money(T.unfunded - calls, 0) }, { k: 'Distributions, trailing / next 12 months', b: F.money(dists0, 0), a: F.money(dists1, 0) }, { k: 'Liquid public assets / unfunded (after stress: net of the 12-month cash need)', b: F.mult(pub0 * A.liquidShare / T.unfunded, 2), a: F.mult(Math.max(0, liquid1 - need) / Math.max(1e-9, T.unfunded - calls), 2) }] });
     var shares = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3];
     var after = shares.map(function (s) { var sold = privRep1 * s, cash = sold * (1 - A.saleDisc); return (privRep1 - sold) / (pub1 + cash + privRep1 - sold); });
     UI.chart.line('#valveChart', { xs: shares, series: [{ name: 'Private allocation after sale', ys: after, dots: true }], hlines: [{ y: A.bandHi, label: 'Band high' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return F.pct(v, 0) + ' sold'; }, height: 220, label: 'Effect of selling LP stakes' });
@@ -613,18 +627,18 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       sel.dataset.n = String(S.rows.length) + (S.user ? 'u' : '');
     }
     var r = S.rows[+sel.value || 0], f = r.f;
-    var fl = f.flows.filter(function (x) { return x.q <= r.navQ; }).map(function (x) { return { q: x.q, amount: x.amount }; });
+    var fl = r.flows.filter(function (x) { return x.q <= r.navQ; }).map(function (x) { return { q: x.q, amount: x.amount }; }), young = fundAge(f) < 3;
     var m = PM.priv.fundMetrics(fl, r.reported, S.D.idx.slice(0, r.navQ + 1), Date.UTC(2016, 0, 1));
     var rho = PM.autocorr(r.rr, 1), des = PM.geltnerDesmooth(r.rr, Math.max(0, Math.min(0.9, rho)));
     UI.kpis('#perfKpis', [
-      { label: 'IRR', value: F.pct(m.irr, 1), sub: 'XIRR to ' + qDate(r.navQ), explain: function () { return { title: 'Fund IRR', formula: 'rate r solving sum CF_i (1+r)^-(days_i/365) = 0, Newton with bisection fallback', inputs: [{ name: 'Cash flows', value: fl.length, src: 'computed' }, { name: 'Terminal NAV', value: F.money(r.reported, 2), src: f.fromStatement ? 'document' : 'computed', note: f.fromStatement ? 'validated statement' : 'GP mark' }], result: F.pct(m.irr, 2) }; } },
+      { label: 'IRR', value: young ? 'n.m.' : F.pct(m.irr, 1), sub: young ? 'fund under three years old' : 'XIRR to ' + qDate(r.navQ), explain: function () { return { title: 'Fund IRR', formula: 'rate r solving sum CF_i (1+r)^-(days_i/365) = 0, Newton with bisection fallback', inputs: [{ name: 'Cash flows', value: fl.length, src: 'computed' }, { name: 'Terminal NAV', value: F.money(r.reported, 2), src: f.fromStatement ? 'document' : 'computed', note: f.fromStatement ? 'validated statement' : 'GP mark' }], result: F.pct(m.irr, 2) }; } },
       { label: 'TVPI / DPI / RVPI', value: F.mult(m.tvpi) + ' / ' + F.mult(m.dpi) + ' / ' + F.mult(m.rvpi) },
       { label: 'KS-PME', value: F.num(m.ksPme, 2), sub: 'above 1 beats the public proxy', explain: function () { return { title: 'Kaplan-Schoar PME', formula: '(sum D_t I_T/I_t + NAV_T) / (sum C_t I_T/I_t)', inputs: [{ name: 'Index', value: 'synthetic public proxy', src: 'computed' }], result: F.num(m.ksPme, 3) }; } },
       { label: 'Direct Alpha', value: F.spct(m.directAlpha, 1), sub: 'annualised, vs proxy' },
       { label: 'Volatility, reported vs desmoothed', value: F.pct(PM.std(r.rr) * 2, 1) + ' / ' + F.pct(PM.std(des) * 2, 1), sub: 'annualised, rho ' + F.num(rho, 2) }
     ]);
     var qs = [], c = [], d = [], nv = [];
-    for (var q = f.q0; q <= r.navQ; q++) { qs.push(q); var cc = 0, dd = 0; f.flows.forEach(function (x) { if (x.q === q) { if (x.amount < 0) cc += x.amount; else dd += x.amount; } }); c.push(cc); d.push(dd); var row = f.navRep.filter(function (x) { return x.q === q; })[0]; nv.push(row ? row.nav : null); }
+    for (var q = f.q0; q <= r.navQ; q++) { qs.push(q); var cc = 0, dd = 0; r.flows.forEach(function (x) { if (x.q === q) { if (x.amount < 0) cc += x.amount; else dd += x.amount; } }); c.push(cc); d.push(dd); var row = f.navRep.filter(function (x) { return x.q === q; })[0]; nv.push(row ? row.nav : null); }
     UI.chart.line('#perfFlows', { xs: qs, series: [{ name: 'Reported NAV', ys: nv }, { name: 'Calls', ys: c, color: 's5' }, { name: 'Distributions', ys: d, color: 's3' }], yFmt: function (v) { return F.num(v, 0); }, xFmt: qLabel, xTicks: 6, height: 240, label: 'Fund cash flows and NAV' });
     var xs = r.rr.map(function (_, i) { return i + 1; });
     UI.chart.line('#perfRet', { xs: xs, series: [{ name: 'Reported', ys: r.rr, color: 's4' }, { name: 'Desmoothed (Geltner)', ys: des, color: 's1' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return 'q' + v; }, height: 240, label: 'Reported and desmoothed returns' });
@@ -833,7 +847,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var pc = $('#planControls');
     control(pc, 'target', 'Target private allocation', function (v) { return F.pct(v, 0); });
     control(pc, 'bandHi', 'Upper band', function (v) { return F.pct(v, 0); });
-    control(pc, 'horizon', 'Pacing horizon', function (v) { return v + ' years'; }, 'Commitments made now reach peak NAV about four years later.');
+    control(pc, 'horizon', 'Pacing horizon', function (v) { return v + ' years'; }, 'Commitments made now reach peak NAV four to five years later.');
     control(pc, 'pubRet', 'Expected public return', function (v) { return F.pct(v, 1); });
     control(pc, 'pubVol', 'Public volatility', function (v) { return F.pct(v, 0); });
     control(pc, 'callVol', 'Call rate uncertainty', function (v) { return F.num(v, 2); });
