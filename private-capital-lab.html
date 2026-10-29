@@ -101,7 +101,7 @@
 
     <section id="program" hidden>
       <div class="kpis" id="progKpis"></div>
-      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Twenty funds</h3><span class="sub">NAV shown as reported and as nowcast. TVPI and IRR use the nowcast NAV; IRR is not meaningful (n.m.) for funds under three years old. Values from cited statements are marked.</span></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Twenty funds</h3><span class="sub">NAV shown as reported and as nowcast. TVPI and IRR use the nowcast NAV; IRR is not meaningful (n.m.) for funds under three years old. Values from cited statements are marked; Brisolt III is carried at its statement's roll-forward value while the break is open. Ostrel VI comes from its Q2 2026 report, net of accrued carry.</span></div>
         <div class="panel-body"><div id="progTable"></div></div></div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Watchlist</h3></div><div class="panel-body wl" id="watchlist"></div></div>
@@ -305,23 +305,26 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     buyout: { rc: 0.28, ip: 5, mu: 0.028, beta: 1.0, vol: 0.05, dStart: 3, dRate: 0.065, rho: 0.5, label: 'Buyout' },
     growth: { rc: 0.30, ip: 4, mu: 0.028, beta: 1.2, vol: 0.07, dStart: 4, dRate: 0.055, rho: 0.5, label: 'Growth' },
     venture: { rc: 0.25, ip: 5, mu: 0.031, beta: 1.4, vol: 0.10, dStart: 5, dRate: 0.045, rho: 0.6, label: 'Venture' },
-    credit: { rc: 0.40, ip: 3, mu: 0.021, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.075, rho: 0.3, label: 'Private credit' },
+    credit: { rc: 0.40, ip: 3, mu: 0.021, beta: 0.3, vol: 0.02, dStart: 1, dRate: 0.05, wind: 6, rho: 0.3, label: 'Private credit' },
     real: { rc: 0.30, ip: 4, mu: 0.020, beta: 0.5, vol: 0.03, dStart: 2, dRate: 0.035, rho: 0.7, label: 'Real assets' },
     secondaries: { rc: 0.45, ip: 3, mu: 0.026, beta: 0.9, vol: 0.04, dStart: 1, dRate: 0.085, rho: 0.5, label: 'Secondaries' }
   };
   var FUNDS = [
     ['Quorvane Buyout III', 'Quorvane', 'buyout', 2017, 30, 1], ['Quorvane Buyout IV', 'Quorvane', 'buyout', 2021, 40, 1],
     ['Telmira Growth II', 'Telmira', 'growth', 2022, 25, 1], ['Telmira Growth III', 'Telmira', 'growth', 2025, 25, 1],
-    ['Brisolt Credit Opportunities II', 'Brisolt', 'credit', 2019, 25, 1], ['Brisolt Credit Opportunities III', 'Brisolt', 'credit', 2023, 30, 1],
+    ['Brisolt Credit Opportunities II', 'Brisolt', 'credit', 2019, 20, 1], ['Brisolt Credit Opportunities III', 'Brisolt', 'credit', 2023, 30, 1],
     ['Mereth Ventures IV', 'Mereth', 'venture', 2018, 12, 1], ['Mereth Ventures V', 'Mereth', 'venture', 2022, 15, 1],
-    ['Caldrin Infrastructure II', 'Caldrin', 'real', 2021, 35, 1], ['Ostrel Capital Partners VI', 'Ostrel', 'buyout', 2019, 40, 2],
-    ['Ostrel Capital Partners VII', 'Ostrel', 'buyout', 2024, 40, 1], ['Vandrel Growth Equity III', 'Vandrel', 'growth', 2020, 15, 1],
-    ['Solvane Secondaries V', 'Solvane', 'secondaries', 2020, 25, 1], ['Solvane Secondaries VI', 'Solvane', 'secondaries', 2024, 25, 1],
+    ['Caldrin Infrastructure II', 'Caldrin', 'real', 2021, 35, 1], ['Ostrel Capital Partners VI', 'Ostrel', 'buyout', 2019, 45, 1],
+    ['Ostrel Capital Partners VII', 'Ostrel', 'buyout', 2024, 35, 1], ['Vandrel Growth Equity III', 'Vandrel', 'growth', 2020, 15, 1],
+    ['Solvane Secondaries V', 'Solvane', 'secondaries', 2020, 25, 1], ['Solvane Secondaries VI', 'Solvane', 'secondaries', 2024, 20, 1],
     ['Pellidor Real Estate Value II', 'Pellidor', 'real', 2018, 15, 2], ['Hasturn Mid-Market Buyout II', 'Hasturn', 'buyout', 2022, 25, 1],
-    ['Ivrena Healthcare Partners I', 'Ivrena', 'buyout', 2020, 20, 1], ['Dunmarrow Direct Lending IV', 'Dunmarrow', 'credit', 2021, 30, 1],
+    ['Ivrena Healthcare Partners I', 'Ivrena', 'buyout', 2020, 20, 1], ['Dunmarrow Direct Lending IV', 'Dunmarrow', 'credit', 2021, 20, 1],
     ['Kestrine Climate Infrastructure I', 'Kestrine', 'real', 2024, 20, 1], ['Lorvenne Ventures III', 'Lorvenne', 'venture', 2025, 10, 2]
   ];
   /* statement figures for the funds read from documents; applied once the ledger approves them */
+  /* Ostrel VI is the position the Fund Terms Auditor reviews: LP share from the GP's Q2 2026 report ($1,200m fund, 3.75%).
+     The capital account is carried net of the report's $1.24m of accrued carried interest, as LP capital accounts are */
+  var EXTERNAL = { 'Ostrel Capital Partners VI': { nav: 24.9375 - 1.236187, paidIn: 44.631563, distributed: 25.875, unfunded: 45 - 44.631563, source: 'Q2 2026 report' } };
   var DOCFUND = { 'Quorvane Buyout IV': 'cas-quorvane', 'Telmira Growth II': 'cas-telmira', 'Brisolt Credit Opportunities III': 'cas-brisolt', 'Mereth Ventures V': 'cas-mereth', 'Caldrin Infrastructure II': 'notice-caldrin' };
   var SECT = ['Technology', 'Healthcare', 'Industrials', 'Consumer', 'Financials', 'Energy and utilities', 'Real estate'];
   var GEO = ['North America', 'Europe', 'Asia Pacific', 'Rest of world'];
@@ -360,7 +363,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
         var rTrue = q === q0 ? 0 : p.mu + skill + p.beta * (rI - IDX_MU) + p.vol * (eps[q - q0 - 1] - em);   // mu: expected quarterly return net of fees
         var navBefore = nav;
         nav = (nav + call) * (1 + rTrue);
-        if (age >= p.dStart) { var dr = p.dRate * (1 + 1.5 * rI) * (age > 9 ? 2 : 1); dist = nav * Math.max(0, Math.min(0.4, dr)); }
+        if (age >= p.dStart) { var dr = p.dRate * (1 + 1.5 * rI) * (age > (p.wind || 9) ? 2 : 1); dist = nav * Math.max(0, Math.min(0.4, dr)); }
         nav -= dist;
         var repRet = (1 - p.rho) * rTrue + p.rho * prevRepRet; prevRepRet = repRet;
         rep = Math.max(0, (rep + call) * (1 + repRet) - dist);
@@ -371,7 +374,8 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       var sw = SECT_TILT[row[2]].map(function (w) { return Math.max(0, w * (0.75 + 0.5 * fr())); }), sws = PM.sum(sw);
       var gw = GEO_TILT[row[2]].map(function (w) { return Math.max(0, w * (0.75 + 0.5 * fr())); }), gws = PM.sum(gw);
       return { name: row[0], gp: row[1], strategy: row[2], vintage: row[3], commitment: C, lag: lag, q0: q0, flows: flows, navTrue: navT, navRep: navR,
-        sector: sw.map(function (w) { return w / sws; }), geo: gw.map(function (w) { return w / gws; }), fromStatement: false };
+        sector: sw.map(function (w) { return w / sws; }), geo: gw.map(function (w) { return w / gws; }), fromStatement: false,
+        base: EXTERNAL[row[0]] || null, override: EXTERNAL[row[0]] ? Object.assign({}, EXTERNAL[row[0]]) : null };
     });
     return { idx: idx, ret: ret, funds: funds };
   }
@@ -384,10 +388,11 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     /* where a statement gives paid-in capital, the fund's contributions are scaled to tie to it, so TVPI and IRR use the
        same cash flows; a call noticed but not yet paid is booked in the current quarter */
     var flows = f.flows;
-    if (f.override && f.override.paidIn != null) {
-      var synth = 0; f.flows.forEach(function (x) { if (x.amount < 0) synth -= x.amount; });
-      var kf = synth > 0 ? (f.override.paidIn - (f.override.pendingCall || 0)) / synth : 1;
-      flows = f.flows.map(function (x) { return x.amount < 0 ? { q: x.q, amount: x.amount * kf, type: x.type } : x; });
+    if (f.override && (f.override.paidIn != null || f.override.distributed != null)) {
+      var synth = 0, synthD = 0; f.flows.forEach(function (x) { if (x.amount < 0) synth -= x.amount; else synthD += x.amount; });
+      var kf = synth > 0 && f.override.paidIn != null ? (f.override.paidIn - (f.override.pendingCall || 0)) / synth : 1;
+      var kd = synthD > 0 && f.override.distributed != null ? f.override.distributed / synthD : 1;
+      flows = f.flows.map(function (x) { return { q: x.q, amount: x.amount * (x.amount < 0 ? kf : kd), type: x.type }; });
       if (f.override.pendingCall) flows = flows.concat([{ q: TODAY_Q, amount: -f.override.pendingCall, type: 'contribution' }]);
     }
     var paidIn = 0, dist = 0, paidToNav = 0, distToNav = 0, after = [];
@@ -532,7 +537,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       { id: 'pTopGp', label: 'Largest GP exposure', value: topGp, sub: F.pct(gpN[topGp] / T.nowcast, 1) + ' of private NAV' }
     ]);
     UI.table('#progTable', { id: 'program', name: 'Program view', columns: [
-      { key: 'name', label: 'Fund (fictional)', html: 1, fmt: function (v, r) { return UI.esc(v) + (r.src ? ' <span class="src-tag" title="From a validated, cited statement">cited</span>' : ''); } },
+      { key: 'name', label: 'Fund (fictional)', html: 1, fmt: function (v, r) { return UI.esc(v) + (r.src ? ' <span class="src-tag" title="' + (r.src === 'Q2 report' ? 'From the GP\'s Q2 2026 report, net of accrued carry' : r.src === 'cited' ? 'From a validated, cited statement' : 'From the cited statement, at its roll-forward value while the break is open') + '">' + r.src + '</span>' : ''); } },
       { key: 'strategy', label: 'Strategy' }, { key: 'vintage', label: 'Vintage', num: 1 },
       { key: 'commitment', label: 'Commitment', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'paidIn', label: 'Called', num: 1, fmt: function (v) { return F.num(v, 1); } },
       { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'dist', label: 'Distributed', num: 1, fmt: function (v) { return F.num(v, 1); } },
@@ -540,7 +545,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       { key: 'tvpi', label: 'TVPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'dpi', label: 'DPI', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'irr', label: 'IRR', num: 1, fmt: function (v) { return v == null ? 'n.m.' : F.pct(v, 1); } }],
       rows: S.rows.map(function (r) { var m = PM.priv.fundMetrics(r.flows.map(function (x) { return { q: x.q, amount: x.amount }; }), r.nowcast, S.D.idx.slice(0, TODAY_Q + 1), Date.UTC(2016, 0, 1));
         if (fundAge(r.f) < 3) m.irr = null;
-        return { name: r.f.name, src: !!r.f.fromStatement, strategy: STRAT[r.f.strategy] ? STRAT[r.f.strategy].label : r.f.strategy, vintage: r.f.vintage, commitment: r.f.commitment, paidIn: r.paidIn, unfunded: r.unfunded, dist: r.distributed, reported: r.reported, nowcast: r.nowcast, tvpi: (r.distributed + r.nowcast) / r.paidIn, dpi: r.dpi, irr: m.irr }; }),
+        return { name: r.f.name, src: r.f.fromStatement ? (r.f.override && r.f.override.breakOpen ? 'cited, break open' : 'cited') : (r.f.base ? r.f.base.source.replace('2026 ', '') : ''), strategy: STRAT[r.f.strategy] ? STRAT[r.f.strategy].label : r.f.strategy, vintage: r.f.vintage, commitment: r.f.commitment, paidIn: r.paidIn, unfunded: r.unfunded, dist: r.distributed, reported: r.reported, nowcast: r.nowcast, tvpi: (r.distributed + r.nowcast) / r.paidIn, dpi: r.dpi, irr: m.irr }; }),
       foot: { name: 'Program ($m)', commitment: T.commit, paidIn: T.paidIn, unfunded: T.unfunded, dist: T.dist, reported: T.reported, nowcast: T.nowcast, tvpi: pTvpi, dpi: pDpi, irr: pm.irr },
       footExplain: { unfunded: function () { return { title: 'Program unfunded', formula: 'sum over funds of commitment - called (statement value where cited)', inputs: [{ name: 'Commitments', value: F.money(T.commit, 1), src: 'computed' }, { name: 'Called', value: F.money(T.paidIn, 1), src: 'computed' }], result: F.money(T.unfunded, 1) }; } } });
     /* watchlist */
@@ -588,7 +593,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
   function renderLiquidity() {
     var T = S.tot, pub0 = T.public, priv0 = T.nowcast;
     var pub1 = pub0 * (1 - A.ddPub), privRep1 = T.reported * (1 - A.ddPriv), priv1 = priv0 * (1 - A.ddPriv);
-    var calls = T.unfunded * A.stressCall, dists0 = PM.sum(S.rows.map(function (r) { return r.f.flows.filter(function (x) { return x.amount > 0 && x.q > TODAY_Q - 4; }).reduce(function (s, x) { return s + x.amount; }, 0); }));
+    var calls = T.unfunded * A.stressCall, dists0 = PM.sum(S.rows.map(function (r) { return r.flows.filter(function (x) { return x.amount > 0 && x.q > TODAY_Q - 4; }).reduce(function (s, x) { return s + x.amount; }, 0); }));
     var dists1 = dists0 * (1 - A.distCut), spend = (pub0 + priv0) * A.spend;
     var liquid1 = pub1 * A.liquidShare, need = calls - dists1 + spend, cover = liquid1 / Math.max(1e-9, need);
     var pct1 = privRep1 / (pub1 + privRep1), pctTrue = priv1 / (pub1 + priv1);
@@ -778,7 +783,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var P = S.pipeline, items = P.breaks.map(function (b) { return { id: b.id, title: b.title, severity: b.severity, evidence: b.evidence, cites: b.cites, state: 'pending', doc: b.doc }; });
     if (P.ex['cas-mereth'] && !P.ex['cas-mereth'].fields.fees) items.push({ id: 'R-1', title: 'Mereth Ventures V: management fee not extracted', severity: 'low', evidence: 'The fee label sits on one line and its value on the next, so it was left blank rather than guessed. Note 3 says the fee is already inside net income, so the roll-forward still ties. Approve to record the fee by hand from the cited line.', cites: [{ doc: 'cas-mereth', page: 1, line: 10, short: 'mereth' }, { doc: 'cas-mereth', page: 1, line: 18, short: 'mereth note 3' }], state: 'pending', doc: 'cas-mereth' });
     P.items = items;
-    apps = UI.approvals('#approvals', items, { audit: audit, approveLabel: 'Approve', rejectLabel: 'Reject', onChange: function () { applyLedger(); renderLedger(); renderProgram(); } });
+    apps = UI.approvals('#approvals', items, { audit: audit, approveLabel: 'Approve', rejectLabel: 'Reject', onChange: function () { applyLedger(); renderLedger(); buildProgram(); renderAll(); } });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + Object.keys(P.ex).reduce(function (s, id) { return s + Object.keys(P.ex[id].fields || {}).length; }, 0), flags: P.breaks.length + P.checks.filter(function (c) { return c.flag && !/rollforward/.test(c.id); }).length, review: items.length });
     applyLedger(); renderLedger(); renderEval(); buildProgram(); renderAll(true);
     document.querySelectorAll('#runSteps span').forEach(function (s) { s.className = 'done'; });
@@ -788,8 +793,8 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var P = S.pipeline; if (!P || S.user) return;
     var held = {}; (P.items || []).forEach(function (it) { if (/^B-/.test(it.id) && it.state !== 'rejected') held[it.doc] = true; });
     S.D.funds.forEach(function (f) {
-      var id = DOCFUND[f.name]; f.override = null; f.fromStatement = false;
-      if (!id || held[id]) return;
+      var id = DOCFUND[f.name]; f.override = f.base ? Object.assign({}, f.base) : null; f.fromStatement = false;
+      if (!id) return;
       var fx = P.ex[id] && P.ex[id].fields; if (!fx) return;
       var valid = function (k) { return fx[k] && fx[k].valid; };
       var o = {};
@@ -797,6 +802,13 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       if (valid('unfunded')) { o.unfunded = fx.unfunded.value; o.paidIn = f.commitment - fx.unfunded.value; }
       if (valid('calledToDate')) o.paidIn = fx.calledToDate.value;
       if (valid('callAmount')) { o.pendingCall = fx.callAmount.value; o.paidIn = f.commitment - fx.unfunded.value; }
+      /* while a roll-forward break is open, the fund is carried at the value its own statement lines support
+         (opening + contributions - distributions + income after fees), not at the unexplained closing figure */
+      if (held[id] && o.nav != null && fx.opening) {
+        var gains = (fx.pnl ? fx.pnl.value : 0) - (fx.fees ? fx.fees.value : 0) - (fx.expenses ? fx.expenses.value : 0);
+        o.nav = PM.priv.rollForward({ opening: fx.opening.value, contributions: fx.contributions ? fx.contributions.value : 0, distributions: fx.distributions ? fx.distributions.value : 0, gains: gains, closing: fx.closing.value }).expected;
+        o.breakOpen = true;
+      }
       if (Object.keys(o).length) { f.override = o; f.fromStatement = true; }
     });
   }
