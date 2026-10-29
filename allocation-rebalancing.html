@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Allocation and Rebalancing · Cristian Arenas</title>
+    <meta name="description" content="Set policy ranges, size tactical tilts and get the trades that bring the portfolio back in line.">
+    <link rel="canonical" href="https://crissarenas.github.io/allocation-rebalancing.html">
+    <meta property="og:title" content="Allocation and Rebalancing · Cristian Arenas">
+    <meta property="og:description" content="Set policy ranges, size tactical tilts and get the trades that bring the portfolio back in line.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#0B1A15">
+    <link rel="icon" href="/assets/images/favicon.svg?v=4" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=4" type="image/png" sizes="64x64">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/assets/css/demo-shell.css">
+    <script src="/assets/js/site.js"></script>
+    <style>
+      .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+      @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
+      .views td input { width: 80px; }
+      .views td .muted { font-size: .8rem; }
+      .mode-note { margin-bottom: 14px; }
+      .controls select.field, .controls input[type="number"].field { width: 100%; max-width: 100%; }
+      .check-ok { color: var(--positive); font-weight: 600; }
+      .check-no { color: var(--negative); font-weight: 600; }
+    </style>
+</head>
+<body>
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
+  <div class="container">
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#about">About</a></li>
+      <li><a href="/#portfolio">Portfolio</a></li>
+      <li><a href="/#ai">AI</a></li>
+      <li><a href="/#work">Work</a></li>
+      <li><a href="/#memos">Memos</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</nav>
+<!-- site-nav:end -->
+<main id="main" class="container demo-main">
+  <header class="demo-hero">
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pf">Portfolio management</span>
+    <h1>Allocation and Rebalancing</h1>
+    <p class="lede">Set policy ranges, size tactical tilts and get the trades that bring the portfolio back in line.</p>
+    <p class="eval-line" id="evalLine"></p>
+  </header>
+
+  <div id="tabsRoot">
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="drift" aria-selected="true">Drift</button>
+        <button data-tab="tilts">Tactical tilts</button>
+        <button data-tab="rebalance">Rebalancing</button>
+      </div>
+      <div id="exportMenu"></div>
+    </div>
+
+    <section id="drift">
+      <div class="kpis" id="driftKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Weights against policy ranges</h3><span class="sub">Gap to the policy target in percentage points; red bars sit outside the range</span></div><div class="panel-body"><div id="driftChart"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Where the drift tracking error comes from</h3><span class="sub">Contribution of each sleeve, a year</span></div><div class="panel-body"><div id="teChart"></div><p class="eval-note" id="teNote"></p></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Sleeves, targets and ranges</h3><span class="sub">Holdings at 30 September 2026</span></div><div class="panel-body"><div id="driftTable"></div></div></div>
+    </section>
+
+    <section id="tilts" hidden>
+      <p class="notice mode-note">I enter each view in percentage points against the policy target. The views sum to zero, with cash taking any remainder. Private equity and real assets take no tilt because they cannot be traded at short notice.</p>
+      <div class="kpis" id="tiltKpis"></div>
+      <div class="split" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Views and budget</h3></div>
+          <div class="panel-body controls"><div id="tiltControls" class="controls"></div><div id="viewsTable" class="views"></div></div></div>
+        <div>
+          <div class="panel"><div class="panel-head"><h3>Views as entered and sized to the budget</h3><span class="sub">Percentage points against the policy target</span></div><div class="panel-body"><div id="tiltChart"></div><p class="eval-note" id="tiltNote"></p></div></div>
+          <div class="panel"><div class="panel-head"><h3>Tactical targets</h3><span class="sub">Policy target plus the sized tilt</span></div><div class="panel-body"><div id="tiltTable"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="rebalance" hidden>
+      <p class="notice mode-note">The trades start from next quarter's cash flows. Private sleeves are never traded, so cash and the public sleeves absorb every move. When private equity sits above its range, a futures overlay on US equity carries the excess.</p>
+      <div class="kpis" id="rebKpis"></div>
+      <div class="split" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Next quarter's cash flows</h3><span class="sub">$m, Q4 2026</span></div>
+          <div class="panel-body controls">
+            <div class="control"><label for="fSpend">Spending paid to the college</label><input class="field" type="number" id="fSpend" data-k="spending" min="0" max="100" step="0.5" value="15"></div>
+            <div class="control"><label for="fPeCalls">Private equity capital calls</label><input class="field" type="number" id="fPeCalls" data-k="peCalls" min="0" max="150" step="0.5" value="24"></div>
+            <div class="control"><label for="fPeDist">Private equity distributions</label><input class="field" type="number" id="fPeDist" data-k="peDist" min="0" max="150" step="0.5" value="10"></div>
+            <div class="control"><label for="fRaCalls">Real assets capital calls</label><input class="field" type="number" id="fRaCalls" data-k="raCalls" min="0" max="100" step="0.5" value="9"></div>
+            <div class="control"><label for="fRaDist">Real assets distributions</label><input class="field" type="number" id="fRaDist" data-k="raDist" min="0" max="100" step="0.5" value="4"></div>
+            <div class="control"><label for="toTarget">Trade breaching sleeves back to</label>
+              <select class="field" id="toTarget"><option value="edge">The nearest edge of the range</option><option value="target">The tactical target</option></select></div>
+            <div id="rebControls" class="controls"></div>
+            <p class="eval-note" id="flowNote"></p>
+          </div></div>
+        <div>
+          <div class="panel"><div class="panel-head"><h3>Trade list</h3><span class="sub">Sales and purchases in $m, with costs; status follows the approvals under the hood</span></div><div class="panel-body"><div id="tradeTable"></div><p class="eval-note" id="tradeNote"></p></div></div>
+          <div class="panel"><div class="panel-head"><h3>Checks on the trade list</h3></div><div class="panel-body"><div id="checkTable"></div></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Before and after the trades</h3><span class="sub">Gap to the policy target in percentage points; after trades includes the overlay</span></div><div class="panel-body"><div id="baChart" style="max-width:900px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Weights before and after</h3><span class="sub">Before trades means after the quarter's cash flows</span></div><div class="panel-body"><div id="baTable"></div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>Each weight is a sleeve's market value over total assets. A sleeve is in breach when its weight sits outside the policy range.</li>
+        <li>Drift tracking error is the volatility of the gap between current and policy weights under the capital market assumptions below. Private equity and real assets use desmoothed volatility, because appraisal marks understate how much they move.</li>
+        <li>Tactical views are entered in percentage points and sum to zero, with cash taking the remainder. If their tracking error is above the budget, every view is scaled down by the same factor, so the shape of the views is kept.</li>
+        <li>The quarter's spending leaves cash. Capital calls move cash into the private sleeves and distributions move it back. Liquid sleeves outside their range then trade to the nearest edge, or to the tactical target if chosen.</li>
+        <li>Cash is the balancing account. When it falls below its range, the most overweight liquid sleeves are sold toward their tactical targets; when it rises above, the most underweight are bought. Trades below the minimum size are dropped unless they cure a breach.</li>
+        <li>Private sleeves are never traded to rebalance. If private equity stays above its range, an overlay sells US equity index futures for the excess, so the equity exposure counts private equity at its upper limit.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <pre class="formula">breach_i:  w_i &lt; lo_i  or  w_i &gt; hi_i
+TE_drift = sqrt(a' Sigma a),  a = w - w_policy
+sigma_private = sigma_reported sqrt((1 + rho) / (1 - rho))
+k = min(1, budget / sqrt(v' Sigma v)),  tilt = k v,  sum v = 0
+change in expected return = tilt' mu
+cash_after = cash - spending - sum(calls - distributions) - sum(trades) - costs
+costs = sum |trade_i| x cost_i / 10,000,  sum of trades including cash = 0
+overlay = (w_PE - hi_PE) x NAV_after</pre>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      <h3>Correlations</h3>
+      <p class="muted" style="font-size:.9rem;margin-bottom:8px">Fixed. They come from a four-factor view of equity, rates, credit and real assets, rounded to two decimals.</p>
+      <div id="corrHeat" style="max-width:640px"></div>
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The endowment, its managers and its holdings are made up. Holdings come from the seed, with a drift pattern that leaves private equity overweight after a year of strong private marks.</li>
+        <li>Private marks lag public markets, so the private weights are estimates until the next quarter's statements arrive.</li>
+        <li>One minimum trade size applies to every liquid sleeve. Hedge funds are treated as tradable at quarter end, which assumes the redemption notice has been given.</li>
+        <li>The overlay ignores futures basis, roll and margin. It changes the equity exposure; it does not change the private equity holding itself.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Checks log, trades for approval, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic holdings, fixed seed 42. As of 30 Sep 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">Holdings for the Kestrel Ridge College Endowment, a made-up fund of about $1.2bn, generated from the seed. Each run checks the drift, sizes the tilts and drafts the trades for the quarter. Approve or reject each trade, then try the tamper test on the audit log.</p>
+
+    <div class="ai-grid">
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+      </div>
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Each trade and the overlay</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
+    </div>
+  </details>
+
+  <section class="demo-section memo-link-sec" id="memo">
+    <a class="card memo-card" href="/memos/allocation-committee-note.html"><span class="memo-no">Memo 09</span><span class="kind">Allocation note</span><h3>Allocation committee note</h3><p>The quarter&#39;s tactical tilts and rebalancing for an endowment portfolio that has drifted from its policy ranges.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
+  </section>
+
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
+      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/ai-systems.html">AI systems</a></li>
+        <li><a href="/notes/">Notes</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics</a></li>
+      </ul>
+    </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>
+  </div>
+</footer>
+<!-- site-footer:end -->
+<script src="/assets/js/pm-math.js"></script>
+<script src="/assets/js/pm-tests.js"></script>
+<script src="/assets/js/pm-ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = UI.fmt, $ = UI.$, O = PM.opt, RB = PM.rebal;
+  var DEMO = 'Allocation and Rebalancing', ENDOW = 'Kestrel Ridge College Endowment';
+  var SLEEVES = ['US equity', 'International equity', 'Emerging markets equity', 'Core bonds', 'US Treasuries', 'High yield', 'Hedge funds', 'Private equity', 'Real assets', 'Cash'];
+  var SHORT = ['US eq', 'Intl eq', 'EM eq', 'Core bonds', 'UST', 'High yield', 'Hedge funds', 'PE', 'Real assets', 'Cash'];
+  var VEHICLE = ['Tallowmere US Index Fund', 'Brennock International Equity', 'Saltrey Emerging Markets Fund', 'Ardley Core Fixed Income', 'Treasury ladder, held directly', 'Corvane High Yield Partners', 'Halvergate Absolute Return', '14 buyout and growth funds', '6 real asset funds', 'Custodian sweep account'];
+  var N = 10, US = 0, PE = 7, RA = 8, CASH = 9, PRIV = [PE, RA];
+  /* investment policy: targets and ranges */
+  var POL = {
+    target: [0.22, 0.14, 0.06, 0.10, 0.08, 0.04, 0.12, 0.15, 0.07, 0.02],
+    lo: [0.17, 0.10, 0.03, 0.07, 0.05, 0.02, 0.08, 0.10, 0.04, 0.01],
+    hi: [0.27, 0.18, 0.09, 0.13, 0.11, 0.06, 0.16, 0.18, 0.10, 0.05]
+  };
+  var LIQUID = [true, true, true, true, true, true, true, false, false, true];
+  var COST = [2, 4, 15, 3, 1, 25, 10, 0, 0, 0];   // bps of each trade
+  /* moves since the last rebalance: private marks up, Treasuries and international equity down, cash spent on calls */
+  var DRIFT = [0.02, -0.37, -0.10, -0.04, -0.42, 0.0, 0.03, 0.32, 0.10, -0.45];
+  /* correlations from a four-factor view (equity, rates, credit, real assets), rounded */
+  var CORR = [
+    [1.00, 0.82, 0.75, -0.03, -0.14, 0.57, 0.58, 0.73, 0.42, 0.00],
+    [0.82, 1.00, 0.72, -0.03, -0.13, 0.54, 0.56, 0.71, 0.44, 0.00],
+    [0.75, 0.72, 1.00, -0.02, -0.12, 0.53, 0.53, 0.65, 0.41, 0.00],
+    [-0.03, -0.03, -0.02, 1.00, 0.94, 0.30, 0.06, -0.02, 0.09, 0.14],
+    [-0.14, -0.13, -0.12, 0.94, 1.00, 0.16, -0.04, -0.12, 0.03, 0.15],
+    [0.57, 0.54, 0.53, 0.30, 0.16, 1.00, 0.52, 0.52, 0.33, 0.04],
+    [0.58, 0.56, 0.53, 0.06, -0.04, 0.52, 1.00, 0.51, 0.31, 0.01],
+    [0.73, 0.71, 0.65, -0.02, -0.12, 0.52, 0.51, 1.00, 0.43, 0.00],
+    [0.42, 0.44, 0.41, 0.09, 0.03, 0.33, 0.31, 0.43, 1.00, 0.01],
+    [0.00, 0.00, 0.00, 0.14, 0.15, 0.04, 0.01, 0.00, 0.01, 1.00]
+  ];
+  var MU0 = [0.065, 0.072, 0.080, 0.045, 0.040, 0.058, 0.055, 0.090, 0.065, 0.037];
+  var VOL0 = [0.16, 0.17, 0.22, 0.055, 0.06, 0.10, 0.07, null, null, 0.008];
+  var DEFAULT_VIEWS = [-0.04, 0.04, 0.03, -0.03, 0.02, 0.03, -0.05, 0, 0, 0];
+
+  var AROWS = [
+    { id: 'teBudget', label: 'Tracking error budget for tactical tilts', value: 0.005, unit: '% a year', scale: 100, source: 'Investment committee setting', min: 0.0005, max: 0.03, step: 0.05 },
+    { id: 'minTrade', label: 'Minimum trade size, liquid sleeves', value: 2, unit: '$m', source: 'Trading policy', min: 0, max: 20, step: 0.5 }
+  ];
+  SLEEVES.forEach(function (s, i) { AROWS.push({ id: 'mu' + i, label: 'Expected return, ' + s, value: MU0[i], unit: '% a year', scale: 100, source: 'Capital market assumption', min: -0.05, max: 0.2, step: 0.1 }); });
+  SLEEVES.forEach(function (s, i) { if (VOL0[i] != null) AROWS.push({ id: 'vol' + i, label: 'Volatility, ' + s, value: VOL0[i], unit: '% a year', scale: 100, source: 'Capital market assumption', min: 0.001, max: 0.5, step: 0.1 }); });
+  AROWS.push({ id: 'peVol', label: 'Private equity volatility, reported', value: 0.13, unit: '% a year', scale: 100, source: 'Appraisal-based index, smoothed', min: 0.01, max: 0.5, step: 0.1 });
+  AROWS.push({ id: 'peRho', label: 'Private equity return autocorrelation', value: 0.5, unit: '', source: 'Assumption, used to desmooth', min: 0, max: 0.9, step: 0.05 });
+  AROWS.push({ id: 'raVol', label: 'Real assets volatility, reported', value: 0.09, unit: '% a year', scale: 100, source: 'Appraisal-based index, smoothed', min: 0.01, max: 0.5, step: 0.1 });
+  AROWS.push({ id: 'raRho', label: 'Real assets return autocorrelation', value: 0.55, unit: '', source: 'Assumption, used to desmooth', min: 0, max: 0.9, step: 0.05 });
+  var A = UI.A(AROWS), reg, syncers = {};
+  function setA(id, v) { A[id] = v; AROWS.filter(function (x) { return x.id === id; })[0].value = v; if (reg) reg.set(id, v); (syncers[id] || []).forEach(function (f) { f(v); }); }
+  function control(box, id, label, fmt, hint) {
+    var r = AROWS.filter(function (x) { return x.id === id; })[0], sc = r.scale || 1, wrap = UI.el('div', { class: 'control' }), inId = 'c-' + id + '-' + box.id;
+    wrap.innerHTML = '<label for="' + inId + '">' + UI.esc(label) + ' <output for="' + inId + '"></output></label><input type="range" id="' + inId + '" min="' + r.min * sc + '" max="' + r.max * sc + '" step="' + (r.step || 1) + '" value="' + r.value * sc + '">' + (hint ? '<div class="hint">' + UI.esc(hint) + '</div>' : '');
+    box.appendChild(wrap);
+    var inp = wrap.querySelector('input'), out = wrap.querySelector('output'), show = function () { out.textContent = fmt(+inp.value / sc); };
+    show();
+    inp.addEventListener('input', UI.debounce(function () { show(); setA(id, +inp.value / sc); update(); }, 60));
+    inp.addEventListener('input', show);
+    (syncers[id] = syncers[id] || []).push(function (v) { inp.value = v * sc; show(); });
+  }
+
+  /* ---------------- state ---------------- */
+  var S = { seed: 42, views: DEFAULT_VIEWS.slice(), flows: { spending: 15, peCalls: 24, peDist: 10, raCalls: 9, raDist: 4 }, toTarget: false, appr: {}, held: false, run: 0 };
+  window.ARB = S;
+  function holdings(seed) {
+    var rng = PM.mulberry32(seed), z = PM.normalGen(rng), tot = 1200 * (1 + 0.015 * z());
+    var raw = POL.target.map(function (t, i) { return t * (1 + DRIFT[i] + 0.05 * z()); }), s = PM.sum(raw);
+    return raw.map(function (x) { return Math.round(x / s * tot * 10) / 10; });
+  }
+  function cma() {
+    var mu = SLEEVES.map(function (_, i) { return A['mu' + i]; });
+    var vol = SLEEVES.map(function (_, i) { return i === PE ? PM.desmoothedVol(A.peVol, A.peRho) : i === RA ? PM.desmoothedVol(A.raVol, A.raRho) : A['vol' + i]; });
+    return { mu: mu, vol: vol, Sigma: O.covFromCorr(vol, CORR) };
+  }
+  function rangeTxt(i) { return F.pct(POL.lo[i], 0) + ' to ' + F.pct(POL.hi[i], 0); }
+  function status(w, i) { return w < POL.lo[i] - 1e-12 ? 'below range' : w > POL.hi[i] + 1e-12 ? 'above range' : 'in range'; }
+  function badCls(v) { return v === 'in range' ? '' : 'neg'; }
+  function pp(v, d) { return F.pp(v, d == null ? 1 : d); }
+  function kUsd(m, d) { return F.money(m * 1000, d || 0, 'k'); }
+
+  /* ---------------- tab 1: drift ---------------- */
+  function renderDrift() {
+    var v = holdings(S.seed), nav = PM.sum(v), w = v.map(function (x) { return x / nav; }), C = cma();
+    var br = RB.drift(w, POL.lo, POL.hi), act = PM.risk.active(w, POL.target, C.Sigma);
+    var big = br.reduce(function (b, d) { return !b || Math.abs(d.gap) > Math.abs(b.gap) ? d : b; }, null);
+    var liq = PM.sum(w.filter(function (_, i) { return LIQUID[i]; }));
+    S.D = { v: v, nav: nav, w: w, br: br, act: act, C: C };
+    UI.kpis('#driftKpis', [
+      { id: 'breaches', label: 'Range breaches', value: F.int(br.length), sub: br.length ? br.map(function (d) { return SHORT[d.i] + (d.above ? ' above' : ' below'); }).join(', ') : 'every sleeve inside its range', tone: br.length ? 'bad' : 'good',
+        explain: function () { return { title: 'Sleeves outside their policy range', formula: 'breach when w_i < lo_i or w_i > hi_i, w_i = value_i / total assets', inputs: br.map(function (d) { return { name: SLEEVES[d.i], value: F.pct(d.w, 1) + ' vs ' + rangeTxt(d.i), src: 'computed', note: F.money(v[d.i], 1) + ' of ' + F.money(nav, 1) }; }), result: F.int(br.length) + ' of ' + N }; } },
+      { id: 'driftTe', label: 'Tracking error of the drift', value: F.pct(act.te, 2), sub: 'current weights against policy, a year',
+        explain: function () { return { title: 'Tracking error of current weights against policy', formula: "sqrt(a' Sigma a), a = w - w_policy; contributions a_i (Sigma a)_i / TE sum to TE", inputs: SLEEVES.map(function (s, i) { return { name: s, value: pp(act.active[i], 2) + ', adds ' + F.pct(act.c[i], 2), src: 'computed' }; }), result: F.pct(act.te, 3) }; } },
+      { id: 'bigGap', label: 'Largest gap to a range edge', value: big ? F.num(Math.abs(big.gap) * 100, 1) + ' pp' : '0.0 pp', sub: big ? SLEEVES[big.i] + (big.above ? ', above its upper limit' : ', below its lower limit') : 'no sleeve outside its range', tone: big ? 'bad' : null },
+      { id: 'nav', label: 'Total assets', value: F.money(nav, 1), sub: F.pct(liq, 1) + ' liquid, ' + F.pct(1 - liq, 1) + ' in private funds' }
+    ]);
+    var isBr = function (i) { return br.some(function (d) { return d.i === i; }); };
+    UI.chart.bar('#driftChart', { categories: SHORT, horizontal: true, labelWidth: 86, height: 360, series: [
+      { name: 'Lower limit', values: POL.lo.map(function (x, i) { return x - POL.target[i]; }), color: 's3' },
+      { name: 'Current', values: w.map(function (x, i) { return x - POL.target[i]; }), color: 's1', colors: SHORT.map(function (_, i) { return isBr(i) ? 's5' : 's1'; }) },
+      { name: 'Upper limit', values: POL.hi.map(function (x, i) { return x - POL.target[i]; }), color: 's3' }
+    ], yFmt: function (x) { return F.pp(x, 0); }, label: 'Current weights against policy ranges, gap to target' });
+    UI.chart.bar('#teChart', { categories: SHORT, series: [{ name: 'Contribution to tracking error', values: act.c, signColors: true }], yFmt: function (x) { return F.pct(x, 2); }, height: 300, label: 'Contribution to drift tracking error' });
+    var topI = act.c.indexOf(Math.max.apply(null, act.c));
+    $('#teNote').textContent = 'The contributions add up to ' + F.pct(act.te, 2) + '. ' + SLEEVES[topI] + ' adds the most, at ' + F.pct(act.c[topI], 2) + '. A negative bar means that sleeve\'s gap offsets part of the others.';
+    UI.table('#driftTable', { id: 'drift', name: 'Sleeves, targets and ranges', columns: [{ key: 'a', label: 'Sleeve' }, { key: 'veh', label: 'Held through' }, { key: 'v', label: 'Value, $m', num: 1, fmt: function (x) { return F.num(x, 1); } }, { key: 'w', label: 'Weight', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 't', label: 'Target', num: 1, fmt: function (x) { return F.pct(x, 0); } }, { key: 'r', label: 'Range' }, { key: 'g', label: 'Gap to range', num: 1, fmt: function (x) { return x ? pp(x, 1) : ''; } }, { key: 'st', label: 'Status', cls: badCls }, { key: 'liq', label: 'Liquidity' }, { key: 'c', label: 'Trading cost', num: 1, fmt: function (x, r) { return r.liq === 'illiquid' || r.i === CASH ? '' : x + ' bps'; } }],
+      rows: SLEEVES.map(function (s, i) { var d = br.filter(function (x) { return x.i === i; })[0]; return { i: i, a: s, veh: VEHICLE[i], v: v[i], w: w[i], t: POL.target[i], r: rangeTxt(i), g: d ? -d.gap : 0, st: status(w[i], i), liq: LIQUID[i] ? (i === 6 ? 'quarterly' : 'daily') : 'illiquid', c: COST[i] }; }),
+      foot: { a: 'Total', v: nav, w: 1, t: PM.sum(POL.target) } });
+  }
+
+  /* ---------------- tab 2: tactical tilts ---------------- */
+  function viewsFull() {
+    var v = S.views.map(function (x, i) { return PRIV.indexOf(i) !== -1 || i === CASH ? 0 : x; });
+    v[CASH] = -PM.sum(v);
+    return v;
+  }
+  function renderViewsTable() {
+    var v = viewsFull(), h = '<div class="table-wrap"><table class="data"><thead><tr><th scope="col">Sleeve</th><th class="n" scope="col">View, pp</th></tr></thead><tbody>';
+    SLEEVES.forEach(function (s, i) {
+      var cell;
+      if (PRIV.indexOf(i) !== -1) cell = '<span class="muted">illiquid, no tilt</span>';
+      else if (i === CASH) cell = '<span id="cashView">' + UI.esc(F.num(v[CASH] * 100, 1)) + '</span> <span class="muted">balances</span>';
+      else cell = '<input class="field" type="number" step="0.5" min="-10" max="10" data-i="' + i + '" value="' + +(S.views[i] * 100).toFixed(2) + '" aria-label="View on ' + UI.esc(s) + ', percentage points">';
+      h += '<tr><td>' + UI.esc(SHORT[i]) + '</td><td class="n">' + cell + '</td></tr>';
+    });
+    $('#viewsTable').innerHTML = h + '</tbody></table></div><p class="eval-note">Overweight is positive, underweight negative. Cash takes the opposite of the sum.</p>';
+    UI.$$('#viewsTable input[data-i]').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var x = +inp.value; if (!isFinite(x)) x = 0; x = Math.max(-10, Math.min(10, x)); inp.value = x;
+        S.views[+inp.dataset.i] = x / 100;
+        var c = $('#cashView'); if (c) c.textContent = F.num(viewsFull()[CASH] * 100, 1);
+        update();
+      });
+    });
+  }
+  function renderTilts() {
+    var C = S.D.C, views = viewsFull(), st = RB.sizeTilts(views, C.Sigma, A.teBudget, C.mu);
+    var raw = O.portVol(views, C.Sigma), tact = POL.target.map(function (t, i) { return t + st.tilt[i]; });
+    var vp = O.portVol(POL.target, C.Sigma), vt = O.portVol(tact, C.Sigma), rp = O.portMu(POL.target, C.mu), rt = O.portMu(tact, C.mu);
+    var tac = PM.risk.active(tact, POL.target, C.Sigma), outside = tact.map(function (x, i) { return status(x, i) !== 'in range' ? i : -1; }).filter(function (i) { return i >= 0; });
+    S.T = { views: views, st: st, raw: raw, tact: tact, vp: vp, vt: vt, rp: rp, rt: rt, tac: tac, outside: outside };
+    var within = st.te <= A.teBudget + 1e-12;
+    UI.kpis('#tiltKpis', [
+      { id: 'rawTe', label: 'Tracking error of the views as entered', value: F.pct(raw, 2), sub: 'budget ' + F.pct(A.teBudget, 2), tone: raw > A.teBudget + 1e-12 ? 'bad' : null },
+      { id: 'scale', label: 'Scale applied to every view', value: F.num(st.scale, 2), sub: st.scale < 1 ? 'views cut to fit the budget' : 'views fit the budget as entered',
+        explain: function () { return { title: 'Sizing the tilts to the budget', formula: "k = min(1, budget / sqrt(v' Sigma v)), tilt = k v", inputs: [{ name: 'Tracking error of the views', value: F.pct(raw, 3), src: 'computed' }, { name: 'Budget', value: F.pct(A.teBudget, 2), src: 'assumption', note: 'investment committee setting' }], result: F.num(st.scale, 3) }; } },
+      { id: 'tiltTe', label: 'Tracking error after sizing', value: F.pct(st.te, 2), sub: within ? 'inside the budget' : 'above the budget', tone: within ? 'good' : 'bad' },
+      { id: 'dRet', label: 'Expected return added', value: F.bps(st.dRet) + ' a year', sub: 'per unit of tracking error ' + F.num(st.te > 0 ? st.dRet / st.te : 0, 2),
+        explain: function () { return { title: 'Expected return of the sized tilts', formula: "tilt' mu", inputs: SLEEVES.map(function (s, i) { return { name: s, value: pp(st.tilt[i], 2) + ' x ' + F.pct(C.mu[i], 1), src: 'assumption', note: 'capital market assumption' }; }), result: F.bps(st.dRet) }; } },
+      { id: 'volChg', label: 'Volatility, policy to tactical', value: F.pct(vp, 2) + ' to ' + F.pct(vt, 2), sub: 'expected return ' + F.pct(rp, 2) + ' to ' + F.pct(rt, 2) }
+    ]);
+    UI.chart.bar('#tiltChart', { categories: SHORT, series: [{ name: 'View as entered', values: views, color: 's4' }, { name: 'Sized to the budget', values: st.tilt, color: 's1' }], yFmt: function (x) { return F.pp(x, 1); }, height: 260, label: 'Views and sized tilts' });
+    $('#tiltNote').textContent = (st.scale < 1 ? 'The views as entered carry ' + F.pct(raw, 2) + ' of tracking error, above the ' + F.pct(A.teBudget, 2) + ' budget, so I scale each one by ' + F.num(st.scale, 2) + '.' : 'The views as entered carry ' + F.pct(raw, 2) + ' of tracking error, inside the ' + F.pct(A.teBudget, 2) + ' budget, so they stand at full size.') +
+      (outside.length ? ' ' + outside.map(function (i) { return SLEEVES[i]; }).join(' and ') + ' would end outside its range at the tactical target.' : ' Every tactical target sits inside its policy range.');
+    UI.table('#tiltTable', { id: 'tilts', name: 'Tactical targets', columns: [{ key: 'a', label: 'Sleeve' }, { key: 'p', label: 'Policy', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'v', label: 'View', num: 1, fmt: function (x) { return pp(x, 1); } }, { key: 't', label: 'Sized tilt', num: 1, fmt: function (x) { return pp(x, 2); } }, { key: 'tt', label: 'Tactical target', num: 1, fmt: function (x) { return F.pct(x, 2); } }, { key: 'r', label: 'Range' }, { key: 'mu', label: 'Exp. return', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'vol', label: 'Volatility', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'c', label: 'Adds to TE', num: 1, fmt: function (x) { return F.pct(x, 2); } }],
+      rows: SLEEVES.map(function (s, i) { return { a: s, p: POL.target[i], v: views[i], t: st.tilt[i], tt: tact[i], r: rangeTxt(i), mu: C.mu[i], vol: C.vol[i], c: tac.c[i] }; }),
+      foot: { a: 'Total', p: 1, v: PM.sum(views), t: PM.sum(st.tilt), tt: PM.sum(tact), mu: rt, vol: vt, c: tac.te } });
+  }
+
+  /* ---------------- tab 3: rebalancing ---------------- */
+  function renderRebal() {
+    var f = S.flows, calls = new Array(N).fill(0), D = S.D;
+    calls[PE] = f.peCalls - f.peDist; calls[RA] = f.raCalls - f.raDist;
+    var p = RB.plan({ value: D.v, target: S.T.tact, lo: POL.lo, hi: POL.hi, liquid: LIQUID, cost: COST, cash: CASH, minTrade: A.minTrade, calls: calls, spending: f.spending, overlay: { from: PE, proxy: US }, toTarget: S.toTarget });
+    var preBr = function (i) { return p.breachesBefore.filter(function (d) { return d.i === i; })[0]; };
+    var sumT = PM.sum(p.trades), navChk = p.navBefore - f.spending - p.costs;
+    var checks = [
+      { id: 'net', name: 'Trades net to zero after the cash flows', detail: 'sum of trades including cash ' + F.money(sumT, 2) + '; assets ' + F.money(p.navBefore, 1) + ' less spending ' + F.money(f.spending, 1) + ' less costs ' + kUsd(p.costs, 1) + ' = ' + F.money(p.navAfter, 1), ok: Math.abs(sumT) < 1e-6 && Math.abs(p.navAfter - navChk) < 1e-6 },
+      { id: 'ranges', name: 'Post-trade weights inside their ranges', detail: p.breachesAfter.length ? p.breachesAfter.map(function (d) { return SLEEVES[d.i] + ' at ' + F.pct(d.w, 1) + ' vs ' + rangeTxt(d.i); }).join('; ') : 'all ' + N + ' sleeves inside, counting the overlay', ok: p.breachesAfter.length === 0 },
+      { id: 'private', name: 'Private sleeves untouched', detail: PRIV.map(function (i) { return SLEEVES[i] + ' trade ' + F.money(p.trades[i], 1); }).join('; '), ok: PRIV.every(function (i) { return p.trades[i] === 0; }) },
+      { id: 'min', name: 'Every trade at least the minimum size, or curing a breach', detail: 'minimum ' + F.money(A.minTrade, 1), ok: p.trades.every(function (t, i) { return i === CASH || t === 0 || Math.abs(t) >= A.minTrade - 1e-9 || !!preBr(i); }) }
+    ];
+    var nTr = p.trades.filter(function (t, i) { return i !== CASH && Math.abs(t) > 1e-9; }).length;
+    S.P = { p: p, calls: calls, checks: checks, nTr: nTr, preBr: preBr };
+    var passed = checks.filter(function (c) { return c.ok; }).length;
+    var wPEafter = p.after[PE];
+    UI.kpis('#rebKpis', [
+      { id: 'trades', label: 'Trades in liquid sleeves', value: F.int(nTr), sub: 'turnover ' + F.money(p.turnover, 1) + ', ' + F.pct(p.turnover / p.nav, 1) + ' of assets' },
+      { id: 'costs', label: 'Trading costs', value: kUsd(p.costs), sub: F.num(p.costs / p.nav * 1e4, 2) + ' bps of assets',
+        explain: function () { return { title: 'Trading costs', formula: 'sum over liquid sleeves of |trade_i| x cost_i / 10,000, paid from cash', inputs: SLEEVES.map(function (s, i) { return i === CASH || !LIQUID[i] || !p.trades[i] ? null : { name: s, value: F.money(Math.abs(p.trades[i]), 1) + ' x ' + COST[i] + ' bps', src: 'assumption', note: 'trading cost' }; }).filter(Boolean), result: kUsd(p.costs, 1) }; } },
+      { id: 'overlay', label: 'Futures overlay', value: F.money(p.overlay, 1), sub: p.overlay > 0 ? 'sell US equity futures; PE at ' + F.pct(wPEafter, 1) + ' vs ' + F.pct(POL.hi[PE], 0) + ' limit' : 'not needed, private equity inside its range',
+        explain: function () { return { title: 'Overlay against private equity above its range', formula: 'overlay = (w_PE - hi_PE) x NAV after trades, sold in US equity index futures', inputs: [{ name: 'Private equity after flows and trades', value: F.pct(wPEafter, 2), src: 'computed' }, { name: 'Upper limit', value: F.pct(POL.hi[PE], 0), src: 'assumption', note: 'policy range' }, { name: 'Assets after trades', value: F.money(p.navAfter, 1), src: 'computed' }], result: F.money(p.overlay, 2) }; } },
+      { id: 'cashAfter', label: 'Cash after the quarter', value: F.money(p.after[CASH] * p.navAfter, 1), sub: F.pct(p.after[CASH], 1) + ' of assets, range ' + rangeTxt(CASH), tone: status(p.after[CASH], CASH) === 'in range' ? null : 'bad' },
+      { id: 'checks', label: 'Checks passed', value: passed + ' of ' + checks.length, sub: passed === checks.length ? 'trade list ready for approval' : 'trade list held', tone: passed === checks.length ? 'good' : 'bad',
+        explain: function () { return { title: 'Checks on the trade list', formula: 'net to zero, post-trade ranges, private sleeves untouched, minimum size', inputs: checks.map(function (c) { return { name: c.name, value: c.ok ? 'pass' : 'fail', src: 'computed', note: c.detail }; }), result: passed + ' of ' + checks.length }; } }
+    ]);
+    var cash0 = D.v[CASH], netCalls = calls[PE] + calls[RA], cashPre = cash0 - f.spending - netCalls;
+    $('#flowNote').textContent = 'Cash starts at ' + F.money(cash0, 1) + '. Spending takes ' + F.money(f.spending, 1) + ' and net capital calls take ' + F.money(netCalls, 1) + ', so cash would stand at ' + F.money(cashPre, 1) + ' (' + F.pct(p.pre[CASH], 1) + ') before any trade.';
+    renderTradeTable();
+    UI.table('#checkTable', { id: 'checks', name: 'Checks on the trade list', columns: [{ key: 'name', label: 'Check' }, { key: 'res', label: 'Result', html: 1, fmt: function (x, r) { return '<span class="' + (r.ok ? 'check-ok' : 'check-no') + '">' + x + '</span>'; } }, { key: 'detail', label: 'Detail' }],
+      rows: checks.map(function (c) { return { name: c.name, detail: c.detail, res: c.ok ? 'pass' : 'fail', ok: c.ok }; }) });
+    var outAfter = function (i) { return p.breachesAfter.some(function (d) { return d.i === i; }); };
+    UI.chart.bar('#baChart', { categories: SHORT, horizontal: true, labelWidth: 86, height: 460, series: [
+      { name: 'Lower limit', values: POL.lo.map(function (x, i) { return x - POL.target[i]; }), color: 's3' },
+      { name: 'Before trades', values: p.pre.map(function (x, i) { return x - POL.target[i]; }), color: 's4' },
+      { name: 'After trades', values: p.effective.map(function (x, i) { return x - POL.target[i]; }), color: 's1', colors: SHORT.map(function (_, i) { return outAfter(i) ? 's5' : 's1'; }) },
+      { name: 'Upper limit', values: POL.hi.map(function (x, i) { return x - POL.target[i]; }), color: 's3' }
+    ], yFmt: function (x) { return F.pp(x, 0); }, label: 'Weights before and after the trades, gap to target' });
+    UI.table('#baTable', { id: 'before-after', name: 'Weights before and after', columns: [{ key: 'a', label: 'Sleeve' }, { key: 'b', label: 'Before trades', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 't', label: 'Trade', num: 1, fmt: function (x) { return x ? pp(x, 2) : ''; } }, { key: 'af', label: 'After trades', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'e', label: 'With overlay', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'tt', label: 'Tactical target', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'r', label: 'Range' }, { key: 'st', label: 'Status after', cls: badCls }],
+      rows: SLEEVES.map(function (s, i) { return { a: s, b: p.pre[i], t: p.trades[i] / p.nav, af: p.after[i], e: p.effective[i], tt: S.T.tact[i], r: rangeTxt(i), st: status(p.effective[i], i) }; }),
+      foot: { a: 'Total', b: PM.sum(p.pre), af: PM.sum(p.after), tt: PM.sum(S.T.tact) } });
+  }
+  function tradeState(i) {
+    if (S.held) return 'held, a check failed';
+    var st = S.appr[i];
+    return st === 'approved' ? 'approved' : st === 'rejected' ? 'rejected' : 'awaiting approval';
+  }
+  function renderTradeTable() {
+    var P = S.P, p = P.p, f = S.flows, rows = SLEEVES.map(function (s, i) {
+      var t = p.trades[i], d = P.preBr(i), note, act = Math.abs(t) < 1e-9 ? 'none' : t > 0 ? 'Buy' : 'Sell', state = '';
+      if (i === CASH) { note = 'Balancing account for sales, purchases, flows and costs'; act = Math.abs(t) < 1e-9 ? 'none' : t > 0 ? 'Receives' : 'Pays'; }
+      else if (!LIQUID[i]) note = 'Never traded; net calls ' + F.money(P.calls[i], 1);
+      else if (act !== 'none' && d) { note = 'Back to the ' + (S.toTarget ? 'tactical target' : d.below ? 'lower limit' : 'upper limit') + (Math.abs(t) < A.minTrade ? '; kept below the minimum size because it cures a breach' : ''); state = tradeState(i); }
+      else if (act !== 'none') { note = t < 0 ? 'Sold to restore cash to its range' : 'Bought with surplus cash'; state = tradeState(i); }
+      else note = d ? 'Breach cured by the cash flows' : 'No trade needed';
+      return { a: s, act: act, amt: Math.abs(t), cost: i === CASH || !LIQUID[i] ? null : COST[i], cm: i === CASH || !LIQUID[i] ? 0 : Math.abs(t) * COST[i] / 1e4, note: note, st: state };
+    });
+    if (p.overlay > 0) rows.push({ a: 'US equity index futures (overlay)', act: 'Sell', amt: p.overlay, cost: null, cm: 0, note: 'Notional against private equity above its upper limit; no physical trade', st: tradeState('overlay') });
+    UI.table('#tradeTable', { id: 'trades', name: 'Trade list', columns: [{ key: 'a', label: 'Sleeve' }, { key: 'act', label: 'Action' }, { key: 'amt', label: 'Amount, $m', num: 1, fmt: function (x) { return x ? F.num(x, 1) : ''; } }, { key: 'st', label: 'Status' }, { key: 'cost', label: 'Cost, bps', num: 1, fmt: function (x) { return x == null ? '' : String(x); } }, { key: 'cm', label: 'Cost, $k', num: 1, fmt: function (x) { return x ? F.num(x * 1000, 1) : ''; } }, { key: 'note', label: 'Why' }],
+      rows: rows, foot: { a: 'Net of physical trades', amt: F.num(PM.sum(p.trades), 1), cm: p.costs } });
+    $('#tradeNote').textContent = 'Sales in the liquid sleeves raise ' + F.money(-PM.sum(p.trades.filter(function (t, i) { return i !== CASH && t < 0; })), 1) + ' and purchases use ' + F.money(PM.sum(p.trades.filter(function (t, i) { return i !== CASH && t > 0; })), 1) + '. Cash takes the difference of ' + F.money(p.trades[CASH], 1) + ' and pays ' + kUsd(p.costs, 1) + ' in costs. Spending of ' + F.money(f.spending, 1) + ' leaves the portfolio, so the trades themselves net to zero.';
+  }
+
+  /* ---------------- review run ---------------- */
+  var log, audit, apps;
+  function runReview() {
+    var token = ++S.run;
+    log.clear(); audit.clear(); S.appr = {}; S.held = false;
+    var P = S.pipe = { items: [] }, D = S.D, T = S.T, R = S.P, p = R.p;
+    var step = function (fn) { return function () { return token === S.run ? fn() : null; }; };
+    audit.push('start', 'run started', 'seed ' + S.seed);
+    UI.runSteps(log, [
+      { agent: 'start', run: step(function () { return { msg: 'Run started.' }; }) },
+      { agent: 'read', run: step(function () { audit.push('read', 'holdings read', N + ' sleeves, ' + F.money(D.nav, 1)); return { msg: 'Holdings read for ' + N + ' sleeves, ' + F.money(D.nav, 1) + ' at 30 September 2026', details: SLEEVES.reduce(function (o, s, i) { o[s] = F.money(D.v[i], 1); return o; }, {}) }; }) },
+      { agent: 'check', run: step(function () {
+        audit.push('check', 'breaches found', D.br.length + ' of ' + N);
+        return D.br.length ? { status: 'info', msg: D.br.length + ' sleeves outside their policy ranges', details: D.br.map(function (d) { return SLEEVES[d.i] + ': ' + F.pct(d.w, 1) + ' vs ' + rangeTxt(d.i) + (d.above ? ' (above)' : ' (below)'); }) } : { msg: 'Every sleeve inside its policy range' };
+      }) },
+      { agent: 'check', run: step(function () {
+        var ok = T.st.te <= A.teBudget + 1e-12;
+        audit.push('check', ok ? 'passed' : 'blocked', 'tilt tracking error ' + F.pct(T.st.te, 2) + ' vs budget ' + F.pct(A.teBudget, 2));
+        return { status: ok ? 'ok' : 'blocked', msg: 'Tilts sized within budget: tracking error ' + F.pct(T.st.te, 2) + ' against ' + F.pct(A.teBudget, 2) + (T.st.scale < 1 ? ', after scaling every view by ' + F.num(T.st.scale, 2) : ', at full size'), details: T.outside.length ? T.outside.map(function (i) { return SLEEVES[i] + ' tactical target outside its range'; }) : null };
+      }) },
+      { agent: 'draft', run: step(function () {
+        audit.push('draft', 'trade list drafted', R.nTr + ' trades, turnover ' + F.money(p.turnover, 1) + ', costs ' + kUsd(p.costs, 1));
+        return { msg: 'Trade list drafted: ' + R.nTr + ' trades in liquid sleeves, turnover ' + F.money(p.turnover, 1) + ', costs ' + kUsd(p.costs, 1), details: SLEEVES.reduce(function (o, s, i) { if (Math.abs(p.trades[i]) > 1e-9) o[s] = (p.trades[i] > 0 ? '+' : '') + F.num(p.trades[i], 1) + ' $m'; return o; }, {}) };
+      }) },
+      { agent: 'check', run: step(function () { var c = R.checks[0]; audit.push('check', c.ok ? 'passed' : 'blocked', c.name); return { status: c.ok ? 'ok' : 'blocked', msg: 'Trades net to zero after the cash flows: ' + (c.ok ? 'yes' : 'no') + ' (' + c.detail + ')' }; }) },
+      { agent: 'check', run: step(function () { var c = R.checks[1]; audit.push('check', c.ok ? 'passed' : 'blocked', c.name); return { status: c.ok ? 'ok' : 'blocked', msg: 'Post-trade weights inside ranges: ' + (c.ok ? 'yes' : 'no') + ' (' + c.detail + ')' }; }) },
+      { agent: 'check', run: step(function () { var c = R.checks[2], d = R.checks[3]; audit.push('check', c.ok && d.ok ? 'passed' : 'blocked', c.name + '; ' + d.name); return [{ status: c.ok ? 'ok' : 'blocked', msg: 'Private sleeves untouched: ' + (c.ok ? 'yes' : 'no') }, { status: d.ok ? 'ok' : 'blocked', msg: 'Minimum trade size respected: ' + (d.ok ? 'yes' : 'no') + ' (' + d.detail + ', breach cures exempt)' }]; }) },
+      { agent: 'gate', run: step(function () {
+        var failed = R.checks.filter(function (c) { return !c.ok; });
+        S.held = failed.length > 0;
+        audit.push('gate', S.held ? 'held' : 'passed', S.held ? failed.map(function (c) { return c.name; }).join('; ') : 'all ' + R.checks.length + ' checks passed');
+        var out = [{ status: S.held ? 'blocked' : 'ok', msg: S.held ? 'Trade list held: ' + failed.map(function (c) { return c.name.toLowerCase(); }).join('; ') : 'Trade list passes all ' + R.checks.length + ' checks' }];
+        if (p.overlay > 0) out.push({ status: 'info', msg: 'Private equity at ' + F.pct(p.after[PE], 1) + ' after the flows, above its ' + F.pct(POL.hi[PE], 0) + ' limit: overlay of ' + F.money(p.overlay, 1) + ' in US equity index futures' });
+        return out;
+      }) },
+      { agent: 'propose', run: step(function () {
+        if (S.held) { audit.push('propose', 'nothing sent', 'trade list held'); return { status: 'blocked', msg: 'Nothing sent for approval while a check fails' }; }
+        SLEEVES.forEach(function (s, i) {
+          var t = p.trades[i]; if (i === CASH || Math.abs(t) < 1e-9) return;
+          var d = R.preBr(i), cost = Math.abs(t) * COST[i] / 1e4;
+          P.items.push({ id: 'T-' + (P.items.length + 1), key: i, title: (t > 0 ? 'Buy ' : 'Sell ') + F.money(Math.abs(t), 1) + ' of ' + s, severity: d ? 'high' : 'med', state: 'pending',
+            evidence: UI.esc((d ? s + ' sits at ' + F.pct(d.w, 1) + ' after the flows, ' + (d.below ? 'below' : 'above') + ' its ' + rangeTxt(i) + ' range. The trade takes it back to ' + F.pct(p.after[i], 1) + '.' : 'The trade ' + (t < 0 ? 'raises cash' : 'uses surplus cash') + ' and leaves ' + s + ' at ' + F.pct(p.after[i], 1) + ', inside its ' + rangeTxt(i) + ' range.') + ' Executed through ' + VEHICLE[i] + ' at ' + COST[i] + ' bps, about ' + kUsd(cost, 1) + '.') });
+        });
+        if (p.overlay > 0) P.items.push({ id: 'O-1', key: 'overlay', title: 'Sell ' + F.money(p.overlay, 1) + ' of US equity index futures as an overlay', severity: 'med', state: 'pending',
+          evidence: UI.esc('Private equity stays at ' + F.pct(p.after[PE], 1) + ' because private sleeves are never traded. The overlay brings its equity exposure back to the ' + F.pct(POL.hi[PE], 0) + ' limit until distributions or new marks bring the weight down.') });
+        audit.push('propose', 'sent for approval', P.items.length + ' items');
+        return { status: 'approval', msg: P.items.length + ' items sent for approval (' + R.nTr + ' trades' + (p.overlay > 0 ? ' and the overlay' : '') + ')' };
+      }) }
+    ], function () { if (token === S.run) afterReview(); });
+  }
+  function afterReview() {
+    apps = UI.approvals('#approvals', S.pipe.items, { audit: audit, onChange: function (items, it) { S.appr[it.key] = it.state; renderTradeTable(); } });
+    renderTradeTable();
+  }
+
+  function evalText() { $('#evalLine').textContent = (S.seed === 42 ? 'Base case: seed ' : 'Seed ') + S.seed + ', ' + N + ' sleeves, ' + F.money(S.D.nav, 1) + ' of synthetic holdings at 30 Sep 2026, with ' + F.int(S.D.br.length) + ' range breaches before rebalancing.'; }
+  function renderAll() { renderDrift(); renderTilts(); renderRebal(); evalText(); }
+  var update = UI.debounce(function () { renderAll(); runReview(); }, 120);
+  function init() {
+    control($('#tiltControls'), 'teBudget', 'Tracking error budget', function (v) { return F.pct(v, 2); }, 'Views are scaled down until they fit.');
+    control($('#rebControls'), 'minTrade', 'Minimum trade size', function (v) { return '$' + F.num(v, 1) + 'm'; }, 'Smaller trades are dropped unless they cure a breach.');
+    renderViewsTable();
+    reg = UI.assumptions('#assumptions', AROWS, function (id, v) { setA(id, v); update(); });
+    UI.chart.heat('#corrHeat', { rows: SHORT, cols: SHORT.map(function (s) { return s.split(' ')[0]; }), matrix: CORR, cell: 46, labelWidth: 84, label: 'Correlation matrix used for risk' });
+    UI.$$('#rebalance input[data-k]').forEach(function (inp) {
+      inp.addEventListener('change', function () { var x = +inp.value, lo = +inp.min, hi = +inp.max; if (!isFinite(x)) x = 0; x = Math.max(lo, Math.min(hi, x)); inp.value = x; S.flows[inp.dataset.k] = x; update(); });
+    });
+    $('#toTarget').addEventListener('change', function () { S.toTarget = this.value === 'target'; update(); });
+    UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic holdings, seed ' + v + '. As of 30 Sep 2026.'; renderAll(); runReview(); });
+    log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
+    $('#runBtn').addEventListener('click', runReview);
+    $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
+    UI.exportMenu('#exportMenu', { demo: DEMO, slug: 'allocation-rebalancing', report: 'Allocation committee pack (PDF)', source: function () { return 'synthetic holdings for the ' + ENDOW + ', seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
+    UI.testsBadge('#testsBadge', DEMO); UI.testsBadge('.tests-badge-slot', DEMO);
+    var tabs = UI.tabs('#tabsRoot');
+    renderAll(); runReview();
+    UI.revealHash(tabs);
+  }
+  init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!S.D) return null;
+    var D = S.D, hit = function (i) { return D.br.some(function (d) { return d.i === i; }); };
+    return { value: F.int(D.br.length), label: 'Range breaches before rebalancing', chart: { type: 'bands', items: SHORT.map(function (s, i) { return { label: s, w: +D.w[i].toFixed(4), lo: POL.lo[i], hi: POL.hi[i], target: POL.target[i], breach: hit(i) }; }) } };
+  };
+})();
+</script>
+</body>
+</html>

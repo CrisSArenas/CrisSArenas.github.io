@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Portfolio Risk and Performance · Cristian Arenas</title>
+    <meta name="description" content="See where a multi-asset portfolio's risk comes from and why it beat or lagged its benchmark.">
+    <link rel="canonical" href="https://crissarenas.github.io/portfolio-risk-performance.html">
+    <meta property="og:title" content="Portfolio Risk and Performance · Cristian Arenas">
+    <meta property="og:description" content="See where a multi-asset portfolio's risk comes from and why it beat or lagged its benchmark.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#0B1A15">
+    <link rel="icon" href="/assets/images/favicon.svg?v=4" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=4" type="image/png" sizes="64x64">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/assets/css/demo-shell.css">
+    <script src="/assets/js/site.js"></script>
+    <style>
+      .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+      @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
+      .mode-note { margin-bottom: 14px; }
+      .bar-controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin-bottom: 14px; font-size: .92rem; }
+      .bar-controls label { display: inline-flex; align-items: center; gap: 8px; }
+      .bar-controls select.field { max-width: 100%; }
+      .tie-ok { color: var(--positive); font-weight: 600; }
+      .tie-no { color: var(--negative); font-weight: 600; }
+    </style>
+</head>
+<body>
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
+  <div class="container">
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#about">About</a></li>
+      <li><a href="/#work">Work</a></li>
+      <li><a href="/#ai">AI</a></li>
+      <li><a href="/#memos">Memos</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</nav>
+<!-- site-nav:end -->
+<main id="main" class="container demo-main">
+  <header class="demo-hero">
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pf">Portfolio management</span>
+    <h1>Portfolio Risk and Performance</h1>
+    <p class="lede">See where a multi-asset portfolio's risk comes from and why it beat or lagged its benchmark.</p>
+    <p class="eval-line" id="evalLine">Base case: seed 42, 15 managers, 60 months of synthetic returns to 30 Sep 2026.</p>
+  </header>
+
+  <div id="tabsRoot">
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="risk" aria-selected="true">Risk</button>
+        <button data-tab="performance">Performance</button>
+        <button data-tab="private">Private assets</button>
+      </div>
+      <div id="exportMenu"></div>
+    </div>
+
+    <section id="risk">
+      <div class="bar-controls">
+        <label><input type="checkbox" id="desmooth" checked> Desmooth private marks in the risk model</label>
+        <span class="muted" id="riskHint"></span>
+      </div>
+      <div class="kpis" id="riskKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Risk by asset class</h3><span class="sub">Share of total volatility and of tracking error</span></div><div class="panel-body"><div id="rcClass"></div><div id="rcClassTable" style="margin-top:12px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Risk by factor</h3><span class="sub">Five factors plus manager-specific risk</span></div><div class="panel-body"><div id="rcFactor"></div><p class="eval-note" id="factorNote"></p></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Risk by manager</h3><span class="sub">Weights at 30 Sep 2026; contributions add up to the totals in the last row</span></div><div class="panel-body"><div id="rcMgr"></div></div></div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Drawdown history</h3><span class="sub">Oct 2021 to Sep 2026, from the running peak</span></div><div class="panel-body"><div id="ddChart"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Stress tests</h3><span class="sub">Each episode's factor moves applied to today's betas</span></div><div class="panel-body"><div id="stressChart"></div></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Stress tests in detail</h3><span class="sub">Factor shocks over the episode and the loss they imply</span></div><div class="panel-body"><div id="stressTable"></div><p class="eval-note" id="stressNote"></p></div></div>
+    </section>
+
+    <section id="performance" hidden>
+      <div class="kpis" id="perfKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Returns against the policy benchmark</h3><span class="sub">Annualised, net of fees, to 30 Sep 2026</span></div><div class="panel-body"><div id="retChart"></div><div id="retTable" style="margin-top:12px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Brinson attribution</h3><span class="sub" id="attSub"></span></div><div class="panel-body">
+          <div class="bar-controls"><label for="attYear">Year <select class="field" id="attYear"></select></label></div>
+          <div id="attWaterfall"></div><p class="eval-note" id="attCheck"></p></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Attribution by asset class</h3></div><div class="panel-body"><div id="attTable"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Contribution by manager</h3><span class="sub">Sorted by contribution to active return</span></div><div class="panel-body"><div id="mgrPerf"></div><p class="eval-note" id="mgrPerfNote"></p></div></div>
+    </section>
+
+    <section id="private" hidden>
+      <p class="notice mode-note">Private equity, private credit and real assets report appraisal marks that move slowly. Their reported returns look calmer than the assets behind them. Here I compare each private manager's reported series with its desmoothed series, and show what the difference does to the total.</p>
+      <div class="kpis" id="privKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Volatility, reported vs desmoothed</h3><span class="sub">Per private manager, a year</span></div><div class="panel-body"><div id="privVolChart"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Private equity sleeve, growth of $100</h3><span class="sub">Reported marks, desmoothed series and the equity factor</span></div><div class="panel-body"><div id="privGrowth"></div></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Private managers</h3><span class="sub">Autocorrelation, volatility, correlation and beta, on both bases</span></div><div class="panel-body"><div id="privTable"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Effect on total risk</h3><span class="sub">The same portfolio measured with reported and with desmoothed private marks</span></div><div class="panel-body"><div id="privEffect"></div><p class="eval-note" id="privNote"></p></div></div>
+    </section>
+  </div>
+
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>Monthly returns come from a five-factor model (equity, rates, credit, inflation and currency). Each manager adds its own alpha and specific risk on top of its factor betas.</li>
+        <li>Private equity, private credit and real assets report smoothed marks. Before they enter the risk model I estimate each series' first-order autocorrelation and desmooth it with the Geltner filter.</li>
+        <li>Betas and specific risk come from a regression of each manager's monthly returns on the five factors. The covariance matrix is the factor covariance mapped through the betas, plus specific variance.</li>
+        <li>Risk contributions use the Euler split. Each manager's weight times its marginal risk gives its share, and the shares add up to total volatility. Tracking error is the volatility of the active weights (portfolio minus policy benchmark) in the same model, and it splits the same way.</li>
+        <li>Stress tests apply the factor moves of three episodes to the current betas. Private assets are shocked at their desmoothed betas.</li>
+        <li>The portfolio and the policy benchmark are both rebalanced on 1 October each year and held between rebalances. That makes each year's Brinson attribution add up exactly to the year's active return.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <pre class="formula">r_i,t = a_i + b_i' f_t + e_i,t
+Sigma = B F B' + diag(s_i^2)
+vol = sqrt(w' Sigma w),   c_i = w_i (Sigma w)_i / vol,   sum c_i = vol
+TE = sqrt(a' Sigma a),    a = w_portfolio - w_benchmark
+factor k: x_k (F x)_k / vol,  x = B' w;   specific: sum w_i^2 s_i^2 / vol
+r_true,t = (r_obs,t - rho r_obs,t-1) / (1 - rho)
+sigma_true = sigma_obs sqrt((1 + rho) / (1 - rho))
+alloc = sum (wp - wb) rb,  sel = sum wb (rp - rb),  inter = sum (wp - wb)(rp - rb)
+stress loss = sum_i w_i b_i' shock</pre>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The fund, its managers and every return are made up. The policy benchmark indices are modelled as exact combinations of the five factors, so all specific risk sits with the managers.</li>
+        <li>Sixty months is a short window for a five-factor regression. The betas of the private managers are the least certain numbers on the page.</li>
+        <li>Geltner desmoothing assumes one lag of smoothing. Marks that lag by more than a quarter still understate risk after the filter.</li>
+        <li>The stress tests are linear in the betas. They do not capture forced selling or the slow repricing of private marks after a fall.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Checks, flags for review, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="42" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic data, fixed seed 42. Oct 2021 to Sep 2026.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">Fifteen made-up managers and nine benchmark indices, with 60 months of returns. Each run checks that the risk and return numbers add up, desmooths the private marks and flags managers that need a closer look. Approve or reject each flag, then try the tamper test on the audit log.</p>
+    <div class="ai-grid">
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Needs your approval</h3><span class="sub">Approved flags go on the manager watch list</span></div><div class="panel-body"><div id="approvals"></div></div></div>
+      </div>
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Rolling 24-month exposure behind the drift flag</h3></div><div class="panel-body"><div id="driftChart"></div><p class="eval-note" id="driftNote"></p></div></div>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Reconciliation checks</h3><span class="sub">Every figure in the report has to add up before it goes out</span></div><div class="panel-body"><div id="checksTable"></div></div></div>
+    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
+    </div>
+  </details>
+
+  <section class="demo-section memo-link-sec" id="memo">
+    <a class="card memo-card" href="/memos/quarterly-portfolio-review.html"><span class="memo-no">Memo 08</span><span class="kind">Quarterly review</span><h3>Quarterly portfolio review</h3><p>A multi-asset portfolio&#39;s quarter in review, covering performance against the policy benchmark, where the risk sits and what to change.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
+  </section>
+
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
+      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/notes/">Notes</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics</a></li>
+      </ul>
+    </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>
+  </div>
+</footer>
+<!-- site-footer:end -->
+<script src="/assets/js/pm-math.js"></script>
+<script src="/assets/js/pm-tests.js"></script>
+<script src="/assets/js/pm-ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = UI.fmt, $ = UI.$, RK = PM.risk;
+  var T = 60, NF = 5, SQ12 = Math.sqrt(12);
+  var FACT = ['Equity', 'Rates', 'Credit', 'Inflation', 'Currency'];
+  var CLS = ['US equity', 'International equity', 'Emerging markets equity', 'Core fixed income', 'High yield', 'Hedge funds', 'Private equity', 'Private credit', 'Real assets'];
+  var SHORT = ['US eq', 'Intl eq', 'EM eq', 'Core FI', 'HY', 'HF', 'PE', 'PC', 'Real'];
+  var NC = CLS.length, PRIV_C = [6, 7, 8];
+  /* policy benchmark: index weights and each index's factor betas (exact combinations of the factors) */
+  var POLICY = [0.22, 0.12, 0.06, 0.18, 0.05, 0.10, 0.14, 0.06, 0.07];
+  var IDX = [
+    { n: 'US equity index', b: [1.00, 0, 0, 0, 0], spread: 0 },
+    { n: 'International equity index', b: [0.95, 0, 0, 0, 0.90], spread: 0 },
+    { n: 'Emerging markets index', b: [1.10, 0, 0.10, 0.15, 1.10], spread: 0 },
+    { n: 'Core bond index', b: [0, 1.00, 0.25, 0, 0], spread: 0 },
+    { n: 'High yield index', b: [0.30, 0.35, 1.30, 0, 0], spread: 0 },
+    { n: 'Hedge fund composite', b: [0.30, 0, 0.20, 0, 0.10], spread: 0.01 },
+    { n: 'Global equity plus spread', b: [0.97, 0, 0, 0, 0.35], spread: null },
+    { n: 'Leveraged loans plus 2%', b: [0.20, 0.05, 1.00, 0, 0], spread: 0.02 },
+    { n: 'Real assets index', b: [0.35, 0.30, 0, 1.00, 0.10], spread: 0.01 }
+  ];
+  /* managers: class, target weight, true betas, alpha and specific risk a year, mandate tracking error limit, smoothing */
+  var MGR = [
+    { n: 'Quillmere Equity Partners', c: 0, w: 0.09, b: [1.05, 0, 0, 0, 0], a: 0.008, s: 0.035, lim: 0.04 },
+    { n: 'Harrowgate US Index Fund', c: 0, w: 0.09, b: [1.00, 0, 0, 0, 0], a: -0.0003, s: 0.0015, lim: 0.005 },
+    { n: 'Bellwyn Small Cap', c: 0, w: 0.03, b: [1.20, 0, 0.10, 0, 0], a: 0.010, s: 0.060, lim: 0.10 },
+    { n: 'Ostrander Global Equity', c: 1, w: 0.06, b: [0.95, 0, 0, 0, 0.80], a: 0.006, s: 0.030, lim: 0.05 },
+    { n: 'Tidewell International Value', c: 1, w: 0.05, b: [1.00, 0, 0, 0.10, 0.90], a: -0.004, s: 0.040, lim: 0.06 },
+    { n: 'Corvane Emerging Markets', c: 2, w: 0.07, b: [1.20, 0, 0.10, 0.15, 1.20], a: 0.005, s: 0.085, lim: 0.05 },
+    { n: 'Ashcombe Fixed Income', c: 3, w: 0.09, b: [0, 1.00, 0.25, 0, 0], a: 0.003, s: 0.008, lim: 0.03, drift: { from: 36, b: [0.05, 0.95, 0.85, 0, 0] } },
+    { n: 'Merrow Core Bond Index', c: 3, w: 0.07, b: [0, 1.00, 0.25, 0, 0], a: -0.0002, s: 0.001, lim: 0.005 },
+    { n: 'Fenwright High Yield', c: 4, w: 0.05, b: [0.25, 0.35, 1.20, 0, 0], a: 0.007, s: 0.020, lim: 0.03 },
+    { n: 'Saltmarsh Global Macro', c: 5, w: 0.05, b: [0.05, 0.20, 0, 0.30, 0.20], a: 0.020, s: 0.060, lim: 0.08 },
+    { n: 'Kestrel Ridge Multi-Strategy', c: 5, w: 0.06, b: [0.25, 0, 0.20, 0, 0], a: 0.025, s: 0.035, lim: 0.06 },
+    { n: 'Larchmont Buyout Fund IV', c: 6, w: 0.10, b: [1.25, 0, 0.20, 0, 0.20], a: 0.020, s: 0.090, lim: null, rho: 0.50 },
+    { n: 'Westerly Growth Partners III', c: 6, w: 0.065, b: [1.45, 0, 0, 0, 0.10], a: 0.010, s: 0.120, lim: null, rho: 0.50 },
+    { n: 'Brookhaven Direct Lending II', c: 7, w: 0.06, b: [0.20, 0.05, 0.90, 0, 0], a: 0.035, s: 0.030, lim: null, rho: 0.40 },
+    { n: 'Granite Shoal Real Assets', c: 8, w: 0.065, b: [0.40, 0.20, 0.10, 0.90, 0.10], a: 0.020, s: 0.070, lim: null, rho: 0.55, stale: 3 }
+  ];
+  var NM = MGR.length, PRIV_M = MGR.map(function (m, i) { return m.rho ? i : -1; }).filter(function (i) { return i >= 0; });
+  var W0 = MGR.map(function (m) { return m.w; });
+  /* factors: drift and volatility a year, correlation, and the 2022 rate shock (Jan to Oct 2022) */
+  var MU_F = [0.07, 0.035, 0.015, 0.01, 0], VOL_F = [0.16, 0.06, 0.045, 0.04, 0.08];
+  var CORR_F = [[1, -0.10, 0.55, 0.20, 0.35], [-0.10, 1, -0.15, -0.35, 0.10], [0.55, -0.15, 1, 0.15, 0.25], [0.20, -0.35, 0.15, 1, 0.20], [0.35, 0.10, 0.25, 0.20, 1]];
+  var SHOCK22 = { from: 3, to: 12, f: [-0.018, -0.014, -0.003, 0.004, -0.008] };
+  var STRESS = [
+    { name: '2008 financial crisis', win: 'Sep 2008 to Feb 2009', s: [-0.45, 0.07, -0.18, -0.10, -0.12] },
+    { name: '2020 pandemic sell-off', win: 'Feb to Mar 2020', s: [-0.33, 0.04, -0.09, -0.05, -0.05] },
+    { name: '2022 rate shock', win: 'Jan to Oct 2022', s: [-0.24, -0.16, -0.04, 0.03, -0.11] }
+  ];
+  var YEARS = ['Oct 2021 to Sep 2022', 'Oct 2022 to Sep 2023', 'Oct 2023 to Sep 2024', 'Oct 2024 to Sep 2025', 'Oct 2025 to Sep 2026'];
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function monthLabel(t) { var d = new Date(Date.UTC(2021, 9 + t + 1, 0)); return MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+
+  var AROWS = [
+    { id: 'aum', label: 'Total assets', value: 2000, unit: '$m', source: 'Custodian, 30 Sep 2026', min: 100, max: 20000, step: 50 },
+    { id: 'teBudget', label: 'Tracking error budget vs the policy benchmark', value: 0.03, unit: '% a year', scale: 100, source: 'Investment policy', min: 0.005, max: 0.1, step: 0.25 },
+    { id: 'peSpread', label: 'Private equity benchmark spread over global equity', value: 0.03, unit: '% a year', scale: 100, source: 'Investment policy', min: 0, max: 0.06, step: 0.25 },
+    { id: 'rhoCap', label: 'Cap on estimated autocorrelation', value: 0.85, unit: '', source: 'Setting', min: 0.3, max: 0.95, step: 0.05 },
+    { id: 'staleN', label: 'Unchanged months before a mark counts as stale', value: 3, unit: 'months', source: 'Setting', min: 2, max: 12, step: 1 },
+    { id: 'driftZ', label: 'Style drift z threshold', value: 3.5, unit: '', source: 'Setting', min: 1.5, max: 6, step: 0.1 },
+    { id: 'driftMin', label: 'Smallest beta change that counts as drift', value: 0.3, unit: 'beta', source: 'Setting', min: 0.05, max: 1, step: 0.05 }
+  ];
+  var A = UI.A(AROWS);
+  var S = { seed: 42, desmooth: true, year: 4 };
+  window.PRP = S;
+
+  /* ---------------- data ---------------- */
+  function simulate(seed) {
+    var rng = PM.mulberry32(seed), z = PM.normalGen(rng), L = PM.cholesky(CORR_F), Fm = [];
+    for (var t = 0; t < T; t++) {
+      var e = PM.matVec(L, [z(), z(), z(), z(), z()]);
+      Fm.push(e.map(function (x, k) { return MU_F[k] / 12 + VOL_F[k] / SQ12 * x + (t >= SHOCK22.from && t <= SHOCK22.to ? SHOCK22.f[k] : 0); }));
+    }
+    var truth = MGR.map(function (m) {
+      return Fm.map(function (f, t) { var b = m.drift && t >= m.drift.from ? m.drift.b : m.b; return PM.dot(b, f) + m.a / 12 + m.s / SQ12 * z(); });
+    });
+    var rep = MGR.map(function (m, i) {
+      if (!m.rho) return truth[i];
+      var r = PM.geltnerSmooth(truth[i], m.rho);
+      if (m.stale) for (var k = T - m.stale; k < T; k++) r[k] = 0;
+      return r;
+    });
+    return { F: Fm, truth: truth, rep: rep };
+  }
+  function indexReturns(Fm) {
+    return IDX.map(function (x, c) { var sp = x.spread == null ? A.peSpread : x.spread; return Fm.map(function (f) { return PM.dot(x.b, f) + sp / 12; }); });
+  }
+  function staleRun(r) { var k = 0; for (var t = r.length - 1; t >= 0 && r[t] === 0; t--) k++; return k >= A.staleN ? k : 0; }
+  /* desmoothing: estimate rho on the months before any stale run, cap it, apply the Geltner filter */
+  function desmooth(D) {
+    return MGR.map(function (m, i) {
+      var r = D.rep[i];
+      if (!m.rho) return { r: r, rho: 0, use: T, stale: 0 };
+      var st = staleRun(r), use = T - st, rho = Math.max(0, Math.min(A.rhoCap, PM.autocorr(r.slice(0, use), 1)));
+      return { r: PM.geltnerDesmooth(r.slice(0, use), rho).concat(r.slice(use)), rho: rho, use: use, stale: st };
+    });
+  }
+
+  /* ---------------- risk model ---------------- */
+  function model(D, DS, dsOn) {
+    var Fcov = PM.covMatrix(D.F).map(function (r) { return r.map(function (v) { return v * 12; }); });
+    var fits = MGR.map(function (m, i) {
+      var y = dsOn && m.rho ? DS[i].r : D.rep[i], use = DS[i].use;
+      var fit = PM.ols(y.slice(0, use), D.F.slice(0, use));
+      return { beta: fit.beta, spec: PM.variance(fit.resid) * 12, r2: fit.r2 };
+    });
+    var B = fits.map(function (f) { return f.beta; }).concat(IDX.map(function (x) { return x.b; }));
+    var spec = fits.map(function (f) { return f.spec; }).concat(IDX.map(function () { return 0; }));
+    var Sig = RK.factorCov(B, Fcov, spec);
+    return { Fcov: Fcov, fits: fits, B: B, spec: spec, S: Sig };
+  }
+  function padM(w) { return w.concat(new Array(NC).fill(0)); }
+  function padB(wb) { return new Array(NM).fill(0).concat(wb); }
+  function byClass(cm, cb) { return CLS.map(function (_, c) { var s = 0; MGR.forEach(function (m, i) { if (m.c === c) s += cm[i]; }); return s + (cb ? cb[c] : 0); }); }
+  function riskOf(M, w) {
+    var wp = padM(w), wb = padB(POLICY), tot = RK.contrib(wp, M.S), act = RK.active(wp, wb, M.S);
+    var bench = RK.contrib(wb, M.S), fac = RK.factorContrib(wp, M.B, M.Fcov, M.spec), facA = RK.factorContrib(act.active, M.B, M.Fcov, M.spec);
+    var clsTot = byClass(tot.c.slice(0, NM)), clsAct = byClass(act.c.slice(0, NM), act.c.slice(NM));
+    var mgrTE = MGR.map(function (m, i) { var e = new Array(NM + NC).fill(0), f = e.slice(); e[i] = 1; f[NM + m.c] = 1; return RK.active(e, f, M.S).te; });
+    var stress = STRESS.map(function (s) {
+      var p = PM.sum(w.map(function (x, i) { return x * PM.dot(M.B[i], s.s); })), b = PM.sum(POLICY.map(function (x, c) { return x * PM.dot(IDX[c].b, s.s); }));
+      return { p: p, b: b };
+    });
+    return { M: M, w: w, tot: tot, act: act, bench: bench, fac: fac, facA: facA, clsTot: clsTot, clsAct: clsAct, mgrTE: mgrTE, stress: stress };
+  }
+
+  /* ---------------- holdings and performance ---------------- */
+  /* both portfolio and benchmark rebalance on 1 October and are held through the year */
+  function track(series, w0) {
+    var r = [], G = [], h, end = null;
+    for (var y = 0; y < 5; y++) {
+      h = w0.slice(); var prev = 1, g;
+      for (var t = 12 * y; t < 12 * y + 12; t++) { for (var i = 0; i < h.length; i++) h[i] *= 1 + series[i][t]; var v = PM.sum(h); r.push(v / prev - 1); prev = v; }
+      g = h.map(function (x, i) { return w0[i] > 0 ? x / w0[i] : 1; }); G.push(g);
+      end = h;
+    }
+    var tot = PM.sum(end);
+    return { r: r, G: G, wEnd: end.map(function (x) { return x / tot; }) };
+  }
+  function attribution(P, Bm) {
+    var Wc = byClass(W0);
+    return YEARS.map(function (_, y) {
+      var rp = CLS.map(function (_, c) { var num = 0, den = 0; MGR.forEach(function (m, i) { if (m.c === c) { num += W0[i] * P.G[y][i]; den += W0[i]; } }); return num / den - 1; });
+      var rb = Bm.G[y].map(function (g) { return g - 1; });
+      return { b: PM.brinson(Wc, POLICY, rp, rb), rp: rp, rb: rb, wp: Wc };
+    });
+  }
+
+  function build() {
+    var D = S.D = simulate(S.seed), IR = indexReturns(D.F), DS = desmooth(D);
+    var P = track(D.rep, W0), Bm = track(IR, POLICY), Pd = track(DS.map(function (x) { return x.r; }), W0);
+    var w = P.wEnd, Mds = model(D, DS, true), Mrep = model(D, DS, false);
+    var Rds = riskOf(Mds, w), Rrep = riskOf(Mrep, w);
+    var att = attribution(P, Bm);
+    var act = P.r.map(function (x, t) { return x - Bm.r[t]; });
+    S.B = { D: D, IR: IR, DS: DS, P: P, Bm: Bm, Pd: Pd, w: w, Rds: Rds, Rrep: Rrep, att: att, act: act };
+    return S.B;
+  }
+  function cur() { return S.desmooth ? S.B.Rds : S.B.Rrep; }
+
+  /* ---------------- tab 1: risk ---------------- */
+  function renderRisk() {
+    var B = S.B, R = cur(), vol = R.tot.vol, te = R.act.te, shares = R.clsTot.map(function (x) { return x / vol; });
+    var top = shares.indexOf(Math.max.apply(null, shares)), dd = RK.drawdown(B.P.r), ddB = RK.drawdown(B.Bm.r), ddD = RK.drawdown(B.Pd.r);
+    var topMgr = MGR.map(function (m, i) { return { i: i, c: R.tot.c[i] }; }).filter(function (x) { return MGR[x.i].c === top; }).sort(function (a, b) { return b.c - a.c; })[0];
+    S.view = { vol: vol, te: te, shares: shares, top: top, maxDD: dd.maxDD };
+    $('#riskHint').textContent = S.desmooth ? 'Private managers enter at their desmoothed betas and specific risk.' : 'Private managers enter at the betas of their reported marks, which understate their risk.';
+    UI.kpis('#riskKpis', [
+      { id: 'totVol', label: 'Total volatility', value: F.pct(vol, 1), sub: 'benchmark ' + F.pct(R.bench.vol, 1) + ', a year, ex ante', explain: function () { return { title: 'Total volatility, ex ante', formula: 'sqrt(w\' Sigma w), Sigma = B F B\' + diag(s^2); sum of contributions c_i = w_i (Sigma w)_i / vol', inputs: CLS.map(function (c, k) { return { name: c, value: F.pct(R.clsTot[k], 2) + ' of ' + F.pct(vol, 2), src: 'computed', note: 'weight ' + F.pct(byClass(B.w)[k], 1) }; }), result: F.pct(vol, 2) }; } },
+      { id: 'te', label: 'Tracking error vs policy benchmark', value: F.pct(te, 1), sub: 'budget ' + F.pct(A.teBudget, 1) + '; realised ' + F.pct(PM.std(B.act) * SQ12, 1), tone: te > A.teBudget ? 'bad' : 'good', explain: function () { return { title: 'Tracking error against the policy benchmark', formula: 'sqrt(a\' Sigma a), a = portfolio weights - policy index weights; contributions add up to TE', inputs: CLS.map(function (c, k) { return { name: c, value: F.pct(R.clsAct[k], 2), src: 'computed', note: 'active weight ' + F.pp(byClass(B.w)[k] - POLICY[k], 1) }; }).concat([{ name: 'Budget', value: F.pct(A.teBudget, 1), src: 'assumption', note: 'investment policy' }]), result: F.pct(te, 2) }; } },
+      { id: 'topRisk', label: 'Largest risk contributor', value: CLS[top], sub: F.pct(shares[top], 0) + ' of total volatility at ' + F.pct(byClass(B.w)[top], 0) + ' weight; largest single manager ' + MGR[topMgr.i].n, explain: function () { return { title: 'Share of total volatility by asset class', formula: 'sum over the class of w_i (Sigma w)_i / vol, divided by vol', inputs: CLS.map(function (c, k) { return { name: c, value: F.pct(shares[k], 1), src: 'computed', note: 'weight ' + F.pct(byClass(B.w)[k], 1) }; }), result: F.pct(shares[top], 1) }; } },
+      { id: 'maxDD', label: 'Maximum drawdown, last 5 years', value: F.pct(dd.maxDD, 1), sub: 'benchmark ' + F.pct(ddB.maxDD, 1) + '; ' + F.pct(ddD.maxDD, 1) + ' with desmoothed marks', tone: 'bad', explain: function () { return { title: 'Maximum drawdown', formula: 'min over t of growth_t / running peak - 1, monthly returns net of fees on reported marks', inputs: [{ name: 'Months', value: String(T), src: 'computed', note: 'Oct 2021 to Sep 2026' }, { name: 'Benchmark', value: F.pct(ddB.maxDD, 2), src: 'computed' }, { name: 'Desmoothed private marks', value: F.pct(ddD.maxDD, 2), src: 'computed' }], result: F.pct(dd.maxDD, 2) }; } }
+    ]);
+    UI.chart.bar('#rcClass', { categories: SHORT, series: [{ name: 'Weight', values: byClass(B.w), color: 's4' }, { name: 'Share of total volatility', values: shares, color: 's1' }, { name: 'Share of tracking error', values: R.clsAct.map(function (x) { return x / te; }), color: 's2' }], yFmt: function (v) { return F.pct(v, 0); }, height: 250, label: 'Risk contribution by asset class' });
+    UI.table('#rcClassTable', { id: 'risk-class', name: 'Risk by asset class', columns: [{ key: 'a', label: 'Asset class' }, { key: 'w', label: 'Weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'pol', label: 'Policy', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ct', label: 'To total vol', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'sh', label: 'Share', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ca', label: 'To TE', num: 1, fmt: function (v) { return F.pct(v, 2); } }],
+      rows: CLS.map(function (a, k) { return { a: a, w: byClass(B.w)[k], pol: POLICY[k], ct: R.clsTot[k], sh: shares[k], ca: R.clsAct[k] }; }), foot: { a: 'Total', w: 1, pol: 1, ct: vol, sh: 1, ca: te } });
+    var fv = R.fac.factors.concat([R.fac.specific]), fa = R.facA.factors.concat([R.facA.specific]);
+    UI.chart.bar('#rcFactor', { categories: FACT.concat(['Specific']), series: [{ name: 'Contribution to total volatility', values: fv, color: 's1' }, { name: 'Contribution to tracking error', values: fa, color: 's2' }], yFmt: function (v) { return F.pct(v, 1); }, height: 250, label: 'Risk contribution by factor' });
+    var fk = R.facA.factors.indexOf(Math.max.apply(null, R.facA.factors));
+    $('#factorNote').textContent = 'Equity explains ' + F.pct(fv[0] / vol, 0) + ' of total volatility. Manager-specific risk is ' + F.pct(fa[5] / te, 0) + ' of tracking error. The other ' + F.pct(1 - fa[5] / te, 0) + ' comes from factor tilts against the policy weights, led by ' + FACT[fk].toLowerCase() + '. Factors add ' + F.pct(PM.sum(R.fac.factors), 2) + ' and specific risk ' + F.pct(R.fac.specific, 2) + ', which sum to the ' + F.pct(vol, 2) + ' total.';
+    renderMgrRisk();
+    var xs = B.P.r.map(function (_, t) { return t; });
+    UI.chart.line('#ddChart', { xs: xs, series: [{ name: 'Portfolio, reported marks', ys: dd.dd, color: 's1', area: true }, { name: 'Policy benchmark', ys: ddB.dd, color: 's4' }, { name: 'Portfolio, desmoothed marks', ys: ddD.dd, color: 's5', dash: '4 3' }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: monthLabel, xTicks: 5, height: 250, label: 'Drawdown history' });
+    var srows = STRESS.map(function (s, k) { return { name: s.name, win: s.win, eq: s.s[0], ra: s.s[1], cr: s.s[2], inf: s.s[3], fx: s.s[4], p: R.stress[k].p, b: R.stress[k].b, a: R.stress[k].p - R.stress[k].b, rep: B.Rrep.stress[k].p, usd: R.stress[k].p * A.aum }; });
+    S.stressRows = srows;
+    UI.chart.bar('#stressChart', { categories: STRESS.map(function (s) { return s.name.replace(/ (financial crisis|pandemic sell-off|rate shock)$/, function (x) { return x === ' financial crisis' ? ' GFC' : x === ' pandemic sell-off' ? ' pandemic' : ' rates'; }); }), series: [{ name: 'Portfolio', values: srows.map(function (r) { return r.p; }), color: 's1' }, { name: 'Policy benchmark', values: srows.map(function (r) { return r.b; }), color: 's4' }], yFmt: function (v) { return F.pct(v, 0); }, height: 250, values: true, label: 'Stress losses' });
+    var pf = function (v) { return F.spct(v, 0); };
+    UI.table('#stressTable', { id: 'stress', name: 'Stress tests', columns: [{ key: 'name', label: 'Scenario' }, { key: 'win', label: 'Window' }, { key: 'eq', label: 'Equity', num: 1, fmt: pf }, { key: 'ra', label: 'Rates', num: 1, fmt: pf }, { key: 'cr', label: 'Credit', num: 1, fmt: pf }, { key: 'inf', label: 'Inflation', num: 1, fmt: pf }, { key: 'fx', label: 'Currency', num: 1, fmt: pf }, { key: 'p', label: 'Portfolio', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'b', label: 'Benchmark', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'a', label: 'Active', num: 1, fmt: function (v) { return F.pp(v, 1); } }, { key: 'rep', label: 'Portfolio, reported betas', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'usd', label: 'Portfolio, $m', num: 1, fmt: function (v) { return F.money(v, 0); } }], rows: srows });
+    var g = srows[0];
+    $('#stressNote').textContent = 'A repeat of the 2008 factor moves would cost the portfolio ' + F.money(-g.usd, 0) + ' (' + F.pct(-g.p, 1) + '). Measured on the betas of the reported marks the loss would look like ' + F.pct(-g.rep, 1) + ', which is the gap smoothing hides.';
+  }
+  function flagFor(i) { return (S.pipe ? S.pipe.items : []).filter(function (it) { return it.mgr === i; }); }
+  function statusOf(i) {
+    var f = flagFor(i); if (!f.length) return '';
+    return f.map(function (it) { return it.short + ': ' + (it.state === 'approved' ? 'on watch list' : it.state === 'rejected' ? 'dismissed' : 'for review'); }).join('; ');
+  }
+  function renderMgrRisk() {
+    var B = S.B, R = cur(), vol = R.tot.vol, te = R.act.te;
+    var rows = MGR.map(function (m, i) { return { n: m.n, a: SHORT[m.c], w: B.w[i], sv: Math.sqrt(R.M.S[i][i]), ct: R.tot.c[i], sh: R.tot.c[i] / vol, ca: R.act.c[i], mte: R.mgrTE[i], lim: m.lim, st: statusOf(i) }; });
+    UI.table('#rcMgr', { id: 'risk-manager', name: 'Risk by manager', columns: [{ key: 'n', label: 'Manager' }, { key: 'a', label: 'Class' }, { key: 'w', label: 'Weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sv', label: 'Own vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ct', label: 'To total vol', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'sh', label: 'Share', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ca', label: 'To TE', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'mte', label: 'TE vs own index', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v, r) { return r.lim != null && v > r.lim ? 'neg' : ''; } }, { key: 'lim', label: 'Mandate limit', num: 1, fmt: function (v) { return v == null ? 'none' : F.pct(v, 1); } }, { key: 'st', label: 'Flag' }],
+      rows: rows, foot: { n: 'Total, incl. benchmark legs in TE', w: PM.sum(B.w), ct: vol, sh: PM.sum(rows.map(function (r) { return r.sh; })), ca: te } });
+  }
+
+  /* ---------------- tab 2: performance ---------------- */
+  function renderPerformance() {
+    var B = S.B, P = B.P.r, Bm = B.Bm.r, per = [12, 36, 60], att = B.att[S.year], b = att.b;
+    var rows = per.map(function (m) { var p = RK.annualised(P, m), q = RK.annualised(Bm, m), ap = P.slice(-m), aq = Bm.slice(-m); var a = ap.map(function (x, t) { return x - aq[t]; }); return { per: m / 12 + (m === 12 ? ' year' : ' years'), p: p, b: q, a: p - q, te: PM.std(a) * SQ12, ir: PM.std(a) > 0 ? (p - q) / (PM.std(a) * SQ12) : 0, vol: PM.std(ap) * SQ12 }; });
+    S.ret = rows;
+    UI.kpis('#perfKpis', [
+      { id: 'ret1', label: 'Portfolio return, 1 year', value: F.pct(rows[0].p, 1), sub: 'benchmark ' + F.pct(rows[0].b, 1) + ', net of fees' },
+      { id: 'act1', label: 'Active return, 1 year', value: F.pp(rows[0].a, 2), tone: rows[0].a >= 0 ? 'good' : 'bad', sub: 'allocation ' + F.pp(B.att[4].b.alloc, 2) + ', selection ' + F.pp(B.att[4].b.sel + B.att[4].b.inter, 2) + ' incl. interaction', explain: function () { var x = B.att[4].b; return { title: 'Active return, year to Sep 2026', formula: 'sum wp rp - sum wb rb, computed directly; then split into allocation, selection and interaction', inputs: [{ name: 'Portfolio', value: F.pct(x.rpTot, 3), src: 'computed' }, { name: 'Policy benchmark', value: F.pct(x.rbTot, 3), src: 'computed' }, { name: 'Allocation', value: F.pp(x.alloc, 3), src: 'computed' }, { name: 'Selection', value: F.pp(x.sel, 3), src: 'computed' }, { name: 'Interaction', value: F.pp(x.inter, 3), src: 'computed' }, { name: 'Residual (should be 0)', value: x.resid.toExponential(1), src: 'computed' }], result: F.pp(x.total, 3) }; } },
+      { id: 'act5', label: 'Active return, 5 years', value: F.pp(rows[2].a, 2) + ' a year', tone: rows[2].a >= 0 ? 'good' : 'bad', sub: 'portfolio ' + F.pct(rows[2].p, 1) + ' vs ' + F.pct(rows[2].b, 1) },
+      { id: 'ir5', label: 'Information ratio, 5 years', value: F.num(rows[2].ir, 2), sub: 'realised tracking error ' + F.pct(rows[2].te, 1), explain: function () { return { title: 'Information ratio', formula: 'annualised active return / realised tracking error (std of monthly active returns x sqrt 12)', inputs: [{ name: 'Active return', value: F.pp(rows[2].a, 3), src: 'computed' }, { name: 'Realised tracking error', value: F.pct(rows[2].te, 3), src: 'computed', note: 'reported marks, 60 months' }], result: F.num(rows[2].ir, 3) }; } }
+    ]);
+    UI.chart.bar('#retChart', { categories: rows.map(function (r) { return r.per; }), series: [{ name: 'Portfolio', values: rows.map(function (r) { return r.p; }), color: 's1' }, { name: 'Policy benchmark', values: rows.map(function (r) { return r.b; }), color: 's4' }], yFmt: function (v) { return F.pct(v, 1); }, values: true, height: 230, label: 'Returns against the policy benchmark' });
+    UI.table('#retTable', { id: 'returns', name: 'Returns vs policy benchmark', columns: [{ key: 'per', label: 'Period' }, { key: 'p', label: 'Portfolio', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'b', label: 'Benchmark', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'a', label: 'Active', num: 1, fmt: function (v) { return F.pp(v, 2); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'vol', label: 'Volatility', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'te', label: 'Realised TE', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ir', label: 'Info ratio', num: 1, fmt: function (v) { return F.num(v, 2); } }], rows: rows });
+    $('#attSub').textContent = YEARS[S.year] + ', by asset class';
+    UI.chart.waterfall('#attWaterfall', { steps: [{ label: 'Allocation', value: b.alloc * 100 }, { label: 'Selection', value: b.sel * 100 }, { label: 'Interaction', value: b.inter * 100 }], total: true, totalLabel: 'Active', yFmt: function (v) { return F.num(v, 2) + '%'; }, height: 240, label: 'Attribution waterfall' });
+    var ok = Math.abs(b.resid) < 1e-9;
+    $('#attCheck').innerHTML = 'Check: allocation ' + UI.esc(F.pp(b.alloc, 2)) + ' + selection ' + UI.esc(F.pp(b.sel, 2)) + ' + interaction ' + UI.esc(F.pp(b.inter, 2)) + ' = ' + UI.esc(F.pp(b.alloc + b.sel + b.inter, 3)) + '. Active return computed directly from the two portfolios = ' + UI.esc(F.pp(b.total, 3)) + '. Difference ' + UI.esc(Math.abs(b.resid).toExponential(1)) + ' <span class="' + (ok ? 'tie-ok' : 'tie-no') + '">' + (ok ? 'ties' : 'does not tie') + '</span>.';
+    UI.table('#attTable', { id: 'attribution', name: 'Brinson attribution', columns: [{ key: 'a', label: 'Asset class' }, { key: 'wp', label: 'Portfolio wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'wb', label: 'Policy wt', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rp', label: 'Portfolio ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rb', label: 'Benchmark ret', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'bn', label: 'Benchmark' }, { key: 'al', label: 'Alloc', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'se', label: 'Select', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'in', label: 'Inter', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'tot', label: 'Total', num: 1, fmt: function (v) { return F.bps(v); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }],
+      rows: CLS.map(function (a, k) { var r = b.rows[k]; return { a: a, wp: att.wp[k], wb: POLICY[k], rp: att.rp[k], rb: att.rb[k], bn: benchName(k), al: r.alloc, se: r.sel, in: r.inter, tot: r.alloc + r.sel + r.inter }; }), foot: { a: 'Total', wp: 1, wb: 1, rp: b.rpTot, rb: b.rbTot, al: b.alloc, se: b.sel, in: b.inter, tot: b.total } });
+    var y = S.year, G = B.P.G[y], Gb = B.Bm.G[y];
+    var mrows = MGR.map(function (m, i) {
+      var r = G[i] - 1, rb = Gb[m.c] - 1, an = function (k) { return RK.annualised(B.D.rep[i], k); };
+      return { n: m.n, a: SHORT[m.c], w: W0[i], r: r, rb: rb, ex: r - rb, cr: W0[i] * r, ca: W0[i] * (r - rb), r3: an(36), r5: an(60) };
+    }).sort(function (p, q) { return q.ca - p.ca; });
+    S.mgrPerf = mrows;
+    UI.table('#mgrPerf', { id: 'manager-contribution', name: 'Contribution by manager', columns: [{ key: 'n', label: 'Manager' }, { key: 'a', label: 'Class' }, { key: 'w', label: 'Start weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'r', label: 'Return', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rb', label: 'Class benchmark', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'ex', label: 'Excess', num: 1, fmt: function (v) { return F.pp(v, 1); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'cr', label: 'To return', num: 1, fmt: function (v) { return F.bps(v); } }, { key: 'ca', label: 'To active', num: 1, fmt: function (v) { return F.bps(v); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'r3', label: '3y a year', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'r5', label: '5y a year', num: 1, fmt: function (v) { return F.pct(v, 1); } }],
+      rows: mrows, foot: { n: 'Total', w: 1, cr: PM.sum(mrows.map(function (r) { return r.cr; })), ca: PM.sum(mrows.map(function (r) { return r.ca; })) } });
+    var sumCa = PM.sum(mrows.map(function (r) { return r.ca; }));
+    $('#mgrPerfNote').textContent = YEARS[y] + '. Manager contributions to active return add up to ' + F.pp(sumCa, 3) + ', which equals selection plus interaction (' + F.pp(b.sel + b.inter, 3) + '). Allocation adds ' + F.pp(b.alloc, 3) + ' for a total of ' + F.pp(b.total, 3) + '. Private returns use reported marks, as the fund reports them.';
+  }
+  function benchName(c) { return c === 6 ? 'Global equity plus ' + F.pct(A.peSpread, 1) : IDX[c].n; }
+
+  /* ---------------- tab 3: private assets ---------------- */
+  function renderPrivate() {
+    var B = S.B, D = B.D, DS = B.DS, eqF = D.F.map(function (f) { return f[0]; });
+    var rows = PRIV_M.map(function (i) {
+      var m = MGR[i], use = DS[i].use, rep = D.rep[i].slice(0, use), ds = DS[i].r.slice(0, use), ef = eqF.slice(0, use), rv = PM.std(rep) * SQ12;
+      return { n: m.n, a: SHORT[m.c], w: B.w[i], rho: DS[i].rho, rv: rv, dvf: PM.desmoothedVol(rv, DS[i].rho), dv: PM.std(ds) * SQ12, cr: PM.corr(rep, ef), cd: PM.corr(ds, ef), br: B.Rrep.M.fits[i].beta[0], bd: B.Rds.M.fits[i].beta[0], st: DS[i].stale ? DS[i].stale + ' months stale, excluded' : '' };
+    });
+    S.priv = rows;
+    var sleeve = function (series) { var wp = PRIV_M.map(function (i) { return B.w[i]; }), t = PM.sum(wp); return D.rep[0].map(function (_, k) { return PM.sum(PRIV_M.map(function (i, j) { return wp[j] / t * series[i][k]; })); }); };
+    var srep = sleeve(D.rep), sds = sleeve(DS.map(function (x) { return x.r; })), Rr = B.Rrep, Rd = B.Rds;
+    var pshare = function (R) { return PM.sum(PRIV_C.map(function (c) { return R.clsTot[c]; })) / R.tot.vol; }, pshareA = function (R) { return PM.sum(PRIV_C.map(function (c) { return R.clsAct[c]; })) / R.act.te; };
+    S.privSum = { rv: PM.std(srep) * SQ12, dv: PM.std(sds) * SQ12 };
+    UI.kpis('#privKpis', [
+      { id: 'privRep', label: 'Private sleeve volatility, reported', value: F.pct(S.privSum.rv, 1), sub: 'a year, on appraisal marks' },
+      { id: 'privDs', label: 'Private sleeve volatility, desmoothed', value: F.pct(S.privSum.dv, 1), sub: F.mult(S.privSum.dv / S.privSum.rv, 1) + ' the reported figure', tone: 'bad', explain: function () { return { title: 'Desmoothed volatility', formula: 'r_true,t = (r_obs,t - rho r_obs,t-1) / (1 - rho); sigma_true = sigma_obs sqrt((1 + rho) / (1 - rho))', inputs: rows.map(function (r) { return { name: r.n, value: 'rho ' + F.num(r.rho, 2) + ', ' + F.pct(r.rv, 1) + ' to ' + F.pct(r.dv, 1), src: 'computed', note: r.st || 'lag-1 autocorrelation of reported returns' }; }), result: F.pct(S.privSum.dv, 2) }; } },
+      { id: 'privTot', label: 'Total volatility, reported vs desmoothed', value: F.pct(Rr.tot.vol, 1) + ' / ' + F.pct(Rd.tot.vol, 1), sub: 'private share of risk ' + F.pct(pshare(Rr), 0) + ' / ' + F.pct(pshare(Rd), 0) },
+      { id: 'privTE', label: 'Tracking error, reported vs desmoothed', value: F.pct(Rr.act.te, 1) + ' / ' + F.pct(Rd.act.te, 1), sub: 'private share of TE ' + F.pct(pshareA(Rr), 0) + ' / ' + F.pct(pshareA(Rd), 0) }
+    ]);
+    UI.chart.bar('#privVolChart', { categories: rows.map(function (r) { return r.n.split(' ')[0]; }), series: [{ name: 'Reported', values: rows.map(function (r) { return r.rv; }), color: 's4' }, { name: 'Desmoothed', values: rows.map(function (r) { return r.dv; }), color: 's5' }], yFmt: function (v) { return F.pct(v, 0); }, values: true, height: 240, label: 'Reported and desmoothed volatility' });
+    var pe = PRIV_M.filter(function (i) { return MGR[i].c === 6; }), pw = pe.map(function (i) { return B.w[i]; }), pt = PM.sum(pw);
+    var grow = function (series) { var x = 100; return [100].concat(D.rep[0].map(function (_, k) { x *= 1 + PM.sum(pe.map(function (i, j) { return pw[j] / pt * series[i][k]; })); return x; })); };
+    var ge = (function () { var x = 100; return [100].concat(eqF.map(function (v) { x *= 1 + v; return x; })); })();
+    UI.chart.line('#privGrowth', { xs: ge.map(function (_, k) { return k; }), series: [{ name: 'Reported marks', ys: grow(D.rep), color: 's4' }, { name: 'Desmoothed', ys: grow(DS.map(function (x) { return x.r; })), color: 's5' }, { name: 'Equity factor', ys: ge, color: 's1', dash: '4 3' }], yFmt: function (v) { return '$' + F.num(v, 0); }, xFmt: function (k) { return k === 0 ? 'Sep 2021' : monthLabel(k - 1); }, xTicks: 5, height: 240, label: 'Private equity sleeve growth' });
+    UI.table('#privTable', { id: 'private', name: 'Private managers, reported vs desmoothed', columns: [{ key: 'n', label: 'Manager' }, { key: 'a', label: 'Class' }, { key: 'w', label: 'Weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rho', label: 'Autocorr.', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'rv', label: 'Vol, reported', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'dvf', label: 'Vol, formula', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'dv', label: 'Vol, desmoothed', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'cr', label: 'Corr. to equity, reported', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'cd', label: 'Corr. to equity, desmoothed', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'br', label: 'Equity beta, reported', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'bd', label: 'Equity beta, desmoothed', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'st', label: 'Data' }], rows: rows });
+    var eff = [
+      { m: 'Total volatility', r: Rr.tot.vol, d: Rd.tot.vol, f: 'pct' },
+      { m: 'Tracking error vs policy benchmark', r: Rr.act.te, d: Rd.act.te, f: 'pct' },
+      { m: 'Private assets, share of total volatility', r: pshare(Rr), d: pshare(Rd), f: 'pct' },
+      { m: 'Private assets, share of tracking error', r: pshareA(Rr), d: pshareA(Rd), f: 'pct' },
+      { m: '2008 stress loss, portfolio', r: Rr.stress[0].p, d: Rd.stress[0].p, f: 'pct' }
+    ];
+    S.privEffect = eff;
+    UI.table('#privEffect', { id: 'private-effect', name: 'Effect of desmoothing on total risk', columns: [{ key: 'm', label: 'Measure' }, { key: 'r', label: 'Reported marks', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'd', label: 'Desmoothed', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'x', label: 'Difference', num: 1, fmt: function (v) { return F.pp(v, 2); } }], rows: eff.map(function (e) { return { m: e.m, r: e.r, d: e.d, x: e.d - e.r }; }) });
+    $('#privNote').textContent = 'On reported marks the private sleeves look like ' + F.pct(pshare(Rr), 0) + ' of total risk. Desmoothed, they are ' + F.pct(pshare(Rd), 0) + '. I size and budget risk on the desmoothed figures, since the reported ones would let private assets crowd out risk the portfolio cannot see.';
+  }
+
+  /* ---------------- checks, flags and audit ---------------- */
+  var log, audit, apps;
+  function runReview() {
+    log.clear(); audit.clear();
+    var B = S.B, D = B.D, P = S.pipe = { checks: [], items: [], drift: null };
+    audit.push('start', 'run started', 'seed ' + S.seed);
+    UI.runSteps(log, [
+      { agent: 'start', run: function () { return { msg: 'Run started.' }; } },
+      { agent: 'read', run: function () { audit.push('read', 'loaded', NM + ' managers, ' + NC + ' indices, ' + T + ' months'); return { msg: 'Loaded ' + T + ' monthly returns for ' + NM + ' managers and ' + NC + ' benchmark indices, Oct 2021 to Sep 2026', details: { managers: NM, indices: NC, months: T, aum: F.money(A.aum, 0) } }; } },
+      { agent: 'check', run: function () {
+        var res = [];
+        MGR.forEach(function (m, i) {
+          var st = B.DS[i].stale; if (!m.rho && !staleRun(D.rep[i])) return;
+          if (st) {
+            var asOf = monthLabel(T - 1 - st);
+            P.checks.push({ id: 'stale', name: 'Stale marks: ' + m.n, val: st + ' months unchanged', tgt: 'under ' + A.staleN, ok: false });
+            P.items.push({ id: 'S-1', mgr: i, short: 'stale mark', title: m.n + ': no new valuation since ' + asOf, severity: 'med', evidence: 'The last ' + st + ' monthly marks are unchanged at the ' + UI.esc(asOf) + ' value. Those months are left out of the autocorrelation and beta estimates, and the sleeve weight still uses the old mark. Approve to request an updated valuation.', state: 'pending' });
+            res.push({ status: 'approval', msg: m.n + ': last ' + st + ' marks unchanged since ' + asOf + '; those months are left out of its risk estimate' });
+          }
+        });
+        if (!res.length) res.push({ msg: 'No stale marks: every manager reported a change in the last ' + A.staleN + ' months' });
+        audit.push('check', 'stale data', P.items.length + ' stale');
+        return res;
+      } },
+      { agent: 'check', run: function () {
+        var det = {};
+        PRIV_M.forEach(function (i) { var r = B.DS[i], rv = PM.std(D.rep[i].slice(0, r.use)) * SQ12; det[MGR[i].n] = 'rho ' + F.num(r.rho, 2) + ', vol ' + F.pct(rv, 1) + ' to ' + F.pct(PM.desmoothedVol(rv, r.rho), 1); });
+        var all = PRIV_M.every(function (i) { return B.DS[i].rho > 0; });
+        P.checks.push({ id: 'desmooth', name: 'Private marks desmoothed', val: PRIV_M.length + ' of ' + PRIV_M.length, tgt: 'all private', ok: all });
+        audit.push('check', 'desmoothed', PRIV_M.length + ' private series');
+        return { status: all ? 'ok' : 'approval', msg: 'Desmoothed ' + PRIV_M.length + ' private series with the Geltner filter; reported volatility understated risk by ' + F.pct(1 - S.privSum.rv / S.privSum.dv, 0) + ' for the sleeve', details: det };
+      } },
+      { agent: 'check', run: function () {
+        var res = [];
+        [['desmoothed', B.Rds], ['reported', B.Rrep]].forEach(function (x) {
+          var R = x[1], d1 = Math.abs(PM.sum(R.tot.c) - R.tot.vol), d2 = Math.abs(PM.sum(R.fac.factors) + R.fac.specific - R.tot.vol);
+          P.checks.push({ id: 'rc', name: 'Risk contributions = total vol (' + x[0] + ')', val: F.pct(PM.sum(R.tot.c), 4), tgt: F.pct(R.tot.vol, 4), diff: d1, ok: d1 < 1e-9 });
+          P.checks.push({ id: 'fc', name: 'Factor + specific = total vol (' + x[0] + ')', val: F.pct(PM.sum(R.fac.factors) + R.fac.specific, 4), tgt: F.pct(R.tot.vol, 4), diff: d2, ok: d2 < 1e-9 });
+          res.push({ status: d1 < 1e-9 && d2 < 1e-9 ? 'ok' : 'blocked', msg: 'Risk contributions (' + x[0] + ' marks) add up to total volatility of ' + F.pct(R.tot.vol, 2) + ' by manager and by factor' });
+        });
+        audit.push('check', 'reconciled', 'risk contributions');
+        return res;
+      } },
+      { agent: 'check', run: function () {
+        var R = B.Rds, d = Math.abs(PM.sum(R.act.c) - R.act.te), dc = Math.abs(PM.sum(R.clsAct) - R.act.te);
+        P.checks.push({ id: 'te', name: 'Active contributions = tracking error', val: F.pct(PM.sum(R.act.c), 4), tgt: F.pct(R.act.te, 4), diff: Math.max(d, dc), ok: d < 1e-9 && dc < 1e-9 });
+        audit.push('check', 'reconciled', 'active risk');
+        return { status: d < 1e-9 ? 'ok' : 'blocked', msg: 'Active risk contributions add up to tracking error of ' + F.pct(R.act.te, 2) + ' by manager and by asset class' };
+      } },
+      { agent: 'check', run: function () {
+        var mx = Math.max.apply(null, B.att.map(function (a) { return Math.abs(a.b.resid); }));
+        var lastP = RK.annualised(B.P.r, 12), d2 = Math.abs(lastP - B.att[4].b.rpTot);
+        P.checks.push({ id: 'brinson', name: 'Attribution = active return, 5 years', val: 'max gap ' + mx.toExponential(1), tgt: '0', diff: mx, ok: mx < 1e-9 });
+        P.checks.push({ id: 'ret', name: 'Monthly series = yearly holdings return', val: F.pct(lastP, 4), tgt: F.pct(B.att[4].b.rpTot, 4), diff: d2, ok: d2 < 1e-9 });
+        audit.push('check', 'reconciled', 'attribution, 5 years');
+        return { status: mx < 1e-9 && d2 < 1e-9 ? 'ok' : 'blocked', msg: 'Brinson effects tie to active return in each of the 5 years (largest gap ' + mx.toExponential(1) + ')' };
+      } },
+      { agent: 'check', run: function () {
+        var res = [], R = B.Rds;
+        MGR.forEach(function (m, i) {
+          if (m.lim == null) return;
+          var te = R.mgrTE[i], br = te > m.lim;
+          P.checks.push({ id: 'mandate', name: 'Tracking error mandate: ' + m.n, val: F.pct(te, 2), tgt: 'up to ' + F.pct(m.lim, 1), ok: !br, quiet: !br });
+          if (br) {
+            var spec = Math.sqrt(R.M.spec[i]);
+            P.items.push({ id: 'M-' + (P.items.length + 1), mgr: i, short: 'TE above mandate', title: m.n + ': tracking error ' + F.pct(te, 1) + ' against a ' + F.pct(m.lim, 1) + ' mandate limit', severity: 'high', evidence: 'Ex-ante tracking error against the ' + UI.esc(IDX[m.c].n) + ' is ' + F.pct(te, 2) + '. Specific risk alone is ' + F.pct(spec, 1) + ' a year. The manager contributes ' + F.pct(R.act.c[i], 2) + ' of the fund\'s ' + F.pct(R.act.te, 2) + ' tracking error at ' + F.pct(B.w[i], 1) + ' weight. Approve to ask the manager to explain the positions and bring risk back inside the mandate.', state: 'pending' });
+            res.push({ status: 'approval', msg: m.n + ': tracking error ' + F.pct(te, 1) + ' vs mandate ' + F.pct(m.lim, 1) });
+          }
+        });
+        res.push({ msg: P.checks.filter(function (c) { return c.id === 'mandate' && c.ok; }).length + ' managers inside their tracking error mandate' });
+        var nb = res.length - 1; audit.push('check', 'mandates', nb + (nb === 1 ? ' breach' : ' breaches'));
+        return res;
+      } },
+      { agent: 'check', run: function () {
+        var res = [], best = null, n = 0;
+        MGR.forEach(function (m, i) {
+          var y = m.rho ? B.DS[i].r : D.rep[i], use = B.DS[i].use, cut = Math.max(24, use - 24);
+          var a = PM.ols(y.slice(0, cut), D.F.slice(0, cut)), b = PM.ols(y.slice(cut, use), D.F.slice(cut, use));
+          FACT.forEach(function (f, k) {
+            n++;
+            var d = b.beta[k] - a.beta[k], z = d / Math.sqrt(a.se[k + 1] * a.se[k + 1] + b.se[k + 1] * b.se[k + 1]), fl = Math.abs(z) > A.driftZ && Math.abs(d) > A.driftMin;
+            if (fl) {
+              var x = { i: i, k: k, a: a.beta[k], b: b.beta[k], z: z, cut: cut };
+              if (!best || Math.abs(z) > Math.abs(best.z)) best = x;
+              P.items.push({ id: 'D-' + (P.items.length + 1), mgr: i, short: 'style drift', title: m.n + ': ' + f.toLowerCase() + ' beta ' + F.num(a.beta[k], 2) + ' to ' + F.num(b.beta[k], 2), severity: 'med', evidence: 'Factor regression on monthly returns: ' + f.toLowerCase() + ' beta ' + F.num(a.beta[k], 2) + ' up to ' + UI.esc(monthLabel(cut - 1)) + ' and ' + F.num(b.beta[k], 2) + ' in the last ' + (use - cut) + ' months (z = ' + F.num(z, 1) + '). Its benchmark, the ' + UI.esc(IDX[m.c].n) + ', has a beta of ' + F.num(IDX[m.c].b[k], 2) + '. Approve to put the manager on the watch list and ask about the change.', state: 'pending' });
+              res.push({ status: 'approval', msg: m.n + ': ' + f.toLowerCase() + ' beta ' + F.num(a.beta[k], 2) + ' to ' + F.num(b.beta[k], 2) + ' (z ' + F.num(z, 1) + ')' });
+            }
+          });
+        });
+        P.drift = best;
+        P.checks.push({ id: 'drift', name: 'Style drift, manager and factor pairs', val: res.length + ' of ' + n + ' shifted', tgt: 'none', ok: !res.length });
+        res.push({ msg: (n - res.length) + ' of ' + n + ' manager and factor pairs stable' });
+        var ns = res.length - 1; audit.push('check', 'style drift', ns + (ns === 1 ? ' shift' : ' shifts') + ' in ' + n + ' pairs');
+        return res;
+      } },
+      { agent: 'gate', run: function () {
+        var rec = P.checks.filter(function (c) { return c.diff != null; }), bad = rec.filter(function (c) { return !c.ok; }).length;
+        audit.push('gate', bad ? 'blocked' : 'passed', (rec.length - bad) + ' of ' + rec.length + ' reconciliations');
+        return { status: bad ? 'blocked' : 'ok', msg: (rec.length - bad) + ' of ' + rec.length + ' reconciliations within 1e-9; the report figures can go out' + (bad ? ' once the breaks are fixed' : '') };
+      } },
+      { agent: 'draft', run: function () { audit.push('draft', 'waiting', P.items.length + ' flags for review'); return { status: P.items.length ? 'approval' : 'ok', msg: P.items.length ? P.items.length + ' flags sent for review; the watch list takes approved flags only' : 'No flags this run' }; } }
+    ], afterReview);
+  }
+  function afterReview() {
+    var P = S.pipe, B = S.B;
+    apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: function () { renderMgrRisk(); } });
+    renderMgrRisk();
+    UI.table('#checksTable', { id: 'checks', name: 'Reconciliation checks', columns: [{ key: 'name', label: 'Check' }, { key: 'val', label: 'Computed', num: 1 }, { key: 'tgt', label: 'Should be', num: 1 }, { key: 'res', label: 'Result', html: 1 }],
+      rows: P.checks.filter(function (c) { return !c.quiet; }).map(function (c) { return { name: c.name, val: c.val, tgt: c.tgt, res: '<span class="' + (c.ok ? 'tie-ok' : 'tie-no') + '">' + (c.ok ? 'pass' : 'flag') + '</span>' }; }) });
+    var d = P.drift;
+    if (d) {
+      var y = MGR[d.i].rho ? B.DS[d.i].r : B.D.rep[d.i], xs = [], ys = [];
+      for (var t = 24; t <= T; t++) { xs.push(t - 1); ys.push(PM.ols(y.slice(t - 24, t), B.D.F.slice(t - 24, t)).beta[d.k]); }
+      UI.chart.line('#driftChart', { xs: xs, series: [{ name: MGR[d.i].n + ', ' + FACT[d.k].toLowerCase() + ' beta', ys: ys, color: 's1' }], hlines: [{ y: IDX[MGR[d.i].c].b[d.k], label: 'Benchmark ' + F.num(IDX[MGR[d.i].c].b[d.k], 2), color: 'muted' }], yFmt: function (v) { return F.num(v, 2); }, xFmt: monthLabel, xTicks: 5, height: 230, forceLegend: true, label: 'Rolling exposure' });
+      $('#driftNote').textContent = 'Rolling 24-month regressions on the five factors, for context. The flag compares the months before ' + monthLabel(d.cut) + ' with the months after.';
+    } else { $('#driftChart').innerHTML = '<p class="muted">No style drift flagged.</p>'; $('#driftNote').textContent = ''; }
+  }
+
+  function renderAll() { build(); renderPrivate(); renderRisk(); renderPerformance(); }
+  function init() {
+    UI.assumptions('#assumptions', AROWS, function (id, v) { A[id] = v; renderAll(); runReview(); });
+    var tabs = UI.tabs('#tabsRoot');
+    $('#attYear').innerHTML = YEARS.map(function (y, i) { return '<option value="' + i + '"' + (i === S.year ? ' selected' : '') + '>' + y + '</option>'; }).join('');
+    $('#attYear').addEventListener('change', function () { S.year = +this.value; renderPerformance(); });
+    $('#desmooth').addEventListener('change', function () { S.desmooth = this.checked; renderRisk(); });
+    UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. Oct 2021 to Sep 2026.'; $('#evalLine').textContent = 'Seed ' + v + ', 15 managers, 60 months of synthetic returns to 30 Sep 2026.'; renderAll(); runReview(); });
+    log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
+    $('#runBtn').addEventListener('click', runReview);
+    $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
+    UI.exportMenu('#exportMenu', { demo: 'Portfolio Risk and Performance', slug: 'portfolio-risk-performance', report: 'Quarterly risk and performance report (PDF)', source: function () { return 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
+    UI.testsBadge('#testsBadge', 'Portfolio Risk and Performance'); UI.testsBadge('.tests-badge-slot', 'Portfolio Risk and Performance');
+    renderAll(); runReview();
+    UI.revealHash(tabs);
+  }
+  init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!S.view) return null;
+    return { value: F.pct(S.view.te, 1), label: 'Tracking error vs policy benchmark', chart: { type: 'rcbars', labels: SHORT.slice(), values: S.view.shares.map(function (x) { return +x.toFixed(4); }) } };
+  };
+})();
+</script>
+</body>
+</html>
