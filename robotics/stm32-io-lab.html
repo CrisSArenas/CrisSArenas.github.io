@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="icon" href="/assets/images/favicon.svg?v=4" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
@@ -323,7 +323,7 @@ function toggleGuide(){var g=document.getElementById('guideGrid'),b=document.get
 /* ============================================================
    FIELD COLORS
    ============================================================ */
-var FC=['#5E7C70','#1F6F4A','#8A5A00','#13294B','#13294B','#A3312B','#8A5A00','#13294B','#5E7C70','#13294B','#8A5A00','#13294B','#5E7C70','#1F6F4A','#13294B','#8A5A00'];
+var FC=['#6B7176','#1F6F4A','#C4AE84','#B39B6E','#B39B6E','#A3312B','#C4AE84','#B39B6E','#6B7176','#B39B6E','#C4AE84','#B39B6E','#6B7176','#1F6F4A','#B39B6E','#C4AE84'];
 
 /* ============================================================
    PERIPHERAL DEFINITIONS
@@ -360,7 +360,7 @@ function iserFields(names,base){
 }
 
 var PERIPHS={
-  rcc:{name:'RCC',icon:'fa-bolt',color:'#8A5A00',base:0x40023800,bus:'AHB1',
+  rcc:{name:'RCC',icon:'fa-bolt',color:'#C4AE84',base:0x40023800,bus:'AHB1',
     desc:'Reset and clock control. HSE 8 MHz through the PLL (M 8, N 336, P 2) gives SYSCLK 168 MHz; AHB /1 = 168 MHz, APB1 /4 = 42 MHz (timer clock 84 MHz), APB2 /2 = 84 MHz (timer clock 168 MHz). Every peripheral is clock-gated - until its xxxENR bit is set the registers read back 0 and writes are lost.',
     regs:[
       {name:'AHB1ENR',off:0x30,rst:0x00100000,desc:'AHB1 peripheral clock enable (+0x30). Bit 0 = GPIOAEN, 1 = GPIOBEN, 2 = GPIOCEN, 3 = GPIODEN. Reset 0x00100000 (CCM data RAM).',
@@ -388,7 +388,7 @@ var PERIPHS={
       {name:'AFRL',off:0x20,rst:0,desc:'Alternate function low (+0x20), 4 bits per pin for PA0-PA7; AFRH (+0x24) covers PA8-PA15. AF1 = TIM2, AF5 = SPI1, AF7 = USART1/USART2. MODER must be 10 for the AF to take effect.',
        fields:(function(){var f=[];for(var i=7;i>=0;i--){var bs=[];for(var b=3;b>=0;b--)bs.push(i*4+b);f.push({name:'AFRL'+i,bits:bs,desc:'PA'+i+' alternate function 0-15 (1=TIM2, 5=SPI1, 7=USART2)'})}return f})()}
     ]},
-  tim2:{name:'TIM2',icon:'fa-clock',color:'#8A5A00',base:0x40000000,bus:'APB1',clk:['APB1ENR',0],
+  tim2:{name:'TIM2',icon:'fa-clock',color:'#C4AE84',base:0x40000000,bus:'APB1',clk:['APB1ENR',0],
     desc:'General-purpose 32-bit timer on APB1 (base 0x40000000). APB1 runs at 42 MHz, but because the APB1 prescaler is greater than 1 the timer clock is doubled to 84 MHz. TIM2_CH1 is PA0, PA5 or PA15 on AF1.',
     regs:[
       {name:'CR1',off:0x00,rst:0,desc:'Control register 1 (+0x00). Counter enable, direction, alignment, auto-reload preload.',
@@ -440,7 +440,7 @@ var PERIPHS={
       {name:'CCR1',off:0x34,rst:0,desc:'Capture/compare 1 (+0x34). In PWM mode 1 the output is active while CNT < CCR1, so duty = CCR1 / (ARR+1).',
        fields:[{name:'CCR1',bits:range(31,0),desc:'Compare value; duty = CCR1/(ARR+1)'}]}
     ]},
-  usart2:{name:'USART2',icon:'fa-exchange-alt',color:'#13294B',base:0x40004400,bus:'APB1',clk:['APB1ENR',17],
+  usart2:{name:'USART2',icon:'fa-exchange-alt',color:'#B39B6E',base:0x40004400,bus:'APB1',clk:['APB1ENR',17],
     desc:'USART2 on APB1, base 0x40004400, so its PCLK1 is 42 MHz (USART1 sits on APB2 at 0x40011000 with an 84 MHz clock). Default pins PA2 = TX and PA3 = RX on AF7; on a Nucleo board these reach the ST-LINK virtual COM port.',
     regs:[
       {name:'SR',off:0x00,rst:0x00C0,desc:'Status register (+0x00). Poll TXE (bit 7) before writing DR and RXNE (bit 5) before reading it. Reset value 0x00C0: TXE and TC are already set.',
@@ -498,7 +498,7 @@ var PERIPHS={
          rsvBits(range(31,15).concat([7,4]))
        ]}
     ]},
-  spi1:{name:'SPI1',icon:'fa-right-left',color:'#13294B',base:0x40013000,bus:'APB2',clk:['APB2ENR',12],
+  spi1:{name:'SPI1',icon:'fa-right-left',color:'#B39B6E',base:0x40013000,bus:'APB2',clk:['APB2ENR',12],
     desc:'SPI1 on APB2, base 0x40013000, PCLK2 = 84 MHz. Default pins PA5 = SCK, PA6 = MISO, PA7 = MOSI on AF5. f_SCK = PCLK2 / 2^(BR+1), so /2 = 42 MHz down to /256 = 328 kHz.',
     regs:[
       {name:'CR1',off:0x00,rst:0,desc:'Control register 1 (+0x00). CPHA bit 0, CPOL bit 1, MSTR bit 2, BR[2:0] bits 5:3, SPE bit 6, LSBFIRST bit 7, DFF bit 11. Configure everything else before setting SPE.',
@@ -546,7 +546,7 @@ var PERIPHS={
       {name:'DR',off:0x0C,rst:0,desc:'Data register (+0x0C). Writing loads the Tx buffer, reading empties the Rx buffer; 8 or 16 bits wide depending on DFF.',
        fields:[{name:'DR',bits:range(15,0),desc:'Frame shifted out on MOSI (and the last frame shifted in on MISO)'},rsvBits(range(31,16))]}
     ]},
-  adc1:{name:'ADC1',icon:'fa-chart-line',color:'#13294B',base:0x40012000,bus:'APB2',clk:['APB2ENR',8],
+  adc1:{name:'ADC1',icon:'fa-chart-line',color:'#B39B6E',base:0x40012000,bus:'APB2',clk:['APB2ENR',8],
     desc:'12-bit successive-approximation ADC at 0x40012000 on APB2. ADCCLK = PCLK2 / 4 = 21 MHz (the 36 MHz maximum is respected). Conversion takes SMP + 12 ADC cycles at 12-bit resolution.',
     regs:[
       {name:'CR1',off:0x04,rst:0,desc:'Control register 1 (+0x04). Resolution, scan mode, analog watchdog and interrupt enables.',
@@ -598,7 +598,7 @@ var PERIPHS={
       {name:'DR',off:0x4C,rst:0,desc:'Regular data register (+0x4C). Read-only on hardware and written by the converter; it is editable here only so the sampling view has a value to display.',
        fields:[{name:'DATA',bits:range(15,0),desc:'Conversion result, right-aligned (0-4095 at 12-bit)'},rsvBits(range(31,16))]}
     ]},
-  core:{name:'NVIC/SysTick',icon:'fa-bolt-lightning',color:'#13294B',base:0xE000E000,bus:'Cortex-M4 PPB',
+  core:{name:'NVIC/SysTick',icon:'fa-bolt-lightning',color:'#B39B6E',base:0xE000E000,bus:'Cortex-M4 PPB',
     desc:'Cortex-M4 private peripheral bus: SysTick at 0xE000E010, NVIC set-enable at 0xE000E100 (clear-enable 0xE000E180, priority 0xE000E400) and SCB VTOR at 0xE000ED08. Interrupt n is enabled by setting bit (n mod 32) of ISER[n / 32].',
     regs:[
       {name:'SYST_CSR',off:0x010,rst:0,desc:'SysTick control and status, 0xE000E010. ENABLE bit 0, TICKINT bit 1 raises the SysTick exception on underflow, CLKSOURCE bit 2 picks AHB (168 MHz) or AHB/8 (21 MHz). COUNTFLAG bit 16 sets when the counter reaches 0 and clears when read.',
@@ -811,8 +811,8 @@ function pinState(name){
   var out=(regVals.gpio.ODR>>>num)&1;
   if(mode===0)return{color:'#94a3b8',lbl:'IN'};
   if(mode===1)return out?{color:'#1F6F4A',lbl:'HI'}:{color:'#A3312B',lbl:'LO'};
-  if(mode===2){return{color:'#13294B',lbl:num<8?('AF'+((regVals.gpio.AFRL>>>(num*4))&0xF)):'AF'}}
-  return{color:'#13294B',lbl:'AN'};
+  if(mode===2){return{color:'#B39B6E',lbl:num<8?('AF'+((regVals.gpio.AFRL>>>(num*4))&0xF)):'AF'}}
+  return{color:'#B39B6E',lbl:'AN'};
 }
 
 function drawPins(){
@@ -836,7 +836,7 @@ function drawPins(){
   // Labels
   ctx.fillStyle='#94a3b8';ctx.font='600 11px Inter,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('STM32F407',cx+cw/2,cy+ch/2-12);
-  ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.fillStyle='#7788a0';
+  ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.fillStyle='#8C9196';
   ctx.fillText('Cortex-M4F 168 MHz',cx+cw/2,cy+ch/2+4);
   ctx.fillText('port A simulated',cx+cw/2,cy+ch/2+18);
 
@@ -974,7 +974,7 @@ function drawWaveform(){
       var c=cfg.chs[ci];
       var hiY=mt+ci*(chH+gap)+chH*0.15,loY=mt+ci*(chH+gap)+chH*0.85;
       ctx.fillStyle=c.color;ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillText(c.name,ml-8,(hiY+loY)/2);
-      ctx.fillStyle='#7788a0';ctx.font='8px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle='#8C9196';ctx.font='8px JetBrains Mono,Courier New,monospace';
       ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3);
       var y=c.val?hiY:loY;
       ctx.strokeStyle=c.color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+gW,y);ctx.stroke();
@@ -996,12 +996,12 @@ function drawWaveform(){
 
     if(cfg.isPWM&&cfg.freq>0){
       var hiY=mt+gH*0.15,loY=mt+gH*0.85;
-      ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle='#8C9196';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3);ctx.fillText('CH1',ml-8,(hiY+loY)/2+3);
       var cycles=4,cycW=gW/cycles,dutyW=cycW*cfg.duty;
       var phase=(wfFrame%120)/120;
       ctx.save();ctx.beginPath();ctx.rect(ml,mt,gW,gH);ctx.clip();
-      ctx.strokeStyle='#8A5A00';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle='#C4AE84';ctx.lineWidth=2;ctx.beginPath();
       for(var c=-1;c<cycles+1;c++){
         var cx2=ml+c*cycW-phase*cycW;
         ctx.lineTo(cx2,loY);ctx.lineTo(cx2,hiY);ctx.lineTo(cx2+dutyW,hiY);ctx.lineTo(cx2+dutyW,loY);ctx.lineTo(cx2+cycW,loY);
@@ -1011,11 +1011,11 @@ function drawWaveform(){
       for(var c=-1;c<cycles+1;c++){var cx2=ml+c*cycW-phase*cycW;ctx.fillRect(cx2,hiY,dutyW,loY-hiY)}
       ctx.restore();
       // Period labels
-      ctx.fillStyle='#7788a0';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       var pStr=cfg.freq>0?(1/cfg.freq>=1e-3?((1/cfg.freq)*1e3).toFixed(2)+' ms':((1/cfg.freq)*1e6).toFixed(1)+' us'):'--';
       ctx.fillText('T = '+pStr,ml+gW/2,mt+gH+18);
     }else{
-      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.cen?'Timer running (configure OC1M=110, CC1E=1 for PWM)':'Timer disabled (CEN=0)',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--warning)"></span>TIM2 CH1</div>';
@@ -1033,22 +1033,22 @@ function drawWaveform(){
 
     if(cfg.ue&&cfg.te&&cfg.baud>0){
       var hiY=mt+gH*0.2,loY=mt+gH*0.8;
-      ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle='#8C9196';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText('MARK',ml-8,hiY+3);ctx.fillText('SPACE',ml-8,loY+3);
       var dBits=cfg.m?9:8,total=1+dBits+(cfg.pce?1:0)+1;
       var bW=gW/(total+4),data=cfg.dr&((1<<dBits)-1);
       var x=ml+bW*1.5;
-      ctx.strokeStyle='#13294B';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle='#B39B6E';ctx.lineWidth=2;ctx.beginPath();
       ctx.moveTo(ml,hiY);ctx.lineTo(x,hiY);
       // Start
       ctx.lineTo(x,loY);x+=bW;ctx.lineTo(x,loY);
-      ctx.fillStyle='#7788a0';ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       ctx.fillText('S',x-bW/2,loY+12);
       // Data LSB first
       for(var i=0;i<dBits;i++){
         var bit=(data>>>i)&1;var y=bit?hiY:loY;
         ctx.lineTo(x,y);x+=bW;ctx.lineTo(x,y);
-        ctx.fillStyle=bit?'#13294B':'#475569';
+        ctx.fillStyle=bit?'#B39B6E':'#475569';
         ctx.fillText(bit.toString(),x-bW/2,bit?hiY-6:loY+12);
       }
       // Parity
@@ -1056,16 +1056,16 @@ function drawWaveform(){
         var par=0;for(var i=0;i<dBits;i++)par^=(data>>>i)&1;
         var pb=cfg.ps?(1-par):par;var y=pb?hiY:loY;
         ctx.lineTo(x,y);x+=bW;ctx.lineTo(x,y);
-        ctx.fillStyle='#8A5A00';ctx.fillText('P',x-bW/2,pb?hiY-6:loY+12);
+        ctx.fillStyle='#C4AE84';ctx.fillText('P',x-bW/2,pb?hiY-6:loY+12);
       }
       // Stop
       ctx.lineTo(x,hiY);x+=bW;ctx.lineTo(x,hiY);
       ctx.fillStyle='#1F6F4A';ctx.fillText('STOP',x-bW/2,hiY-6);
       ctx.lineTo(ml+gW,hiY);ctx.stroke();
-      ctx.fillStyle='#7788a0';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       ctx.fillText('LSB first \u2022 1 bit = '+(1e6/cfg.baud).toFixed(2)+' us \u2022 frame = '+total+' bits = '+(total*1e6/cfg.baud).toFixed(1)+' us',ml+gW/2,mt+gH+18);
     }else{
-      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.ue?'Set TE=1 and BRR for TX waveform':'USART disabled (UE=0)',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--s1)"></span>USART1 TX</div>';
@@ -1077,7 +1077,7 @@ function drawWaveform(){
       '<span class="wf-lbl">Conv:</span><span class="wf-val">'+(cfg.cont?'Continuous':'Single')+'</span>'+
       '<span class="wf-lbl">DR:</span><span class="wf-val">'+cfg.dr+'/'+maxV+'</span>';
     if(cfg.adon){
-      ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle='#8C9196';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText(maxV.toString(),ml-8,mt+6);ctx.fillText('0',ml-8,mt+gH);
       ctx.fillText((maxV/2|0).toString(),ml-8,mt+gH/2+3);
       // Analog signal
@@ -1092,18 +1092,18 @@ function drawWaveform(){
       ctx.stroke();
       // Sample dots
       var ns=cfg.cont?20:1;
-      ctx.fillStyle='#13294B';
+      ctx.fillStyle='#B39B6E';
       for(var i=0;i<ns;i++){
         var t=(i+0.5)/ns;var x=ml+t*gW;
         var sig=0.5+0.4*Math.sin(2*Math.PI*3*t+wfFrame*0.03)+0.1*Math.sin(2*Math.PI*7*t);
         var y=mt+gH*(1-sig);
         ctx.strokeStyle='rgba(139,92,246,0.4)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
         ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,mt+gH);ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle='#13294B';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#B39B6E';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
         if(ns<=8){var dv=Math.round(sig*maxV);ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';ctx.fillText(dv.toString(),x,y-8)}
       }
     }else{
-      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText('ADC disabled (ADON=0)',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--s5)"></span>ADC1</div><div class="wf-legend-item"><span class="wf-legend-sw" style="background:color-mix(in srgb, var(--ai) 30%, transparent)"></span>Analog In</div>';
@@ -1126,27 +1126,27 @@ function drawWaveform(){
       ctx.moveTo(ml,rowY(0,1));ctx.lineTo(x0-bw*0.45,rowY(0,1));ctx.lineTo(x0-bw*0.45,rowY(0,0));
       ctx.lineTo(xE+bw*0.35,rowY(0,0));ctx.lineTo(xE+bw*0.35,rowY(0,1));ctx.lineTo(ml+gW,rowY(0,1));ctx.stroke();
       var idleY=cfg.cpol?rowY(1,1):rowY(1,0), actY=cfg.cpol?rowY(1,0):rowY(1,1);
-      ctx.strokeStyle='#5E7C70';ctx.beginPath();ctx.moveTo(ml,idleY);ctx.lineTo(x0,idleY);
+      ctx.strokeStyle='#6B7176';ctx.beginPath();ctx.moveTo(ml,idleY);ctx.lineTo(x0,idleY);
       for(var i=0;i<nb;i++){var a=x0+i*bw;
         ctx.lineTo(a,idleY);ctx.lineTo(a,actY);ctx.lineTo(a+bw/2,actY);ctx.lineTo(a+bw/2,idleY);ctx.lineTo(a+bw,idleY)}
       ctx.lineTo(ml+gW,idleY);ctx.stroke();
-      ctx.strokeStyle='#13294B';ctx.beginPath();
+      ctx.strokeStyle='#B39B6E';ctx.beginPath();
       var prevY=rowY(2,0);ctx.moveTo(ml,prevY);ctx.lineTo(x0-bw*0.45,prevY);
       for(var i=0;i<nb;i++){
         var bit=cfg.lsbfirst?((cfg.dr>>>i)&1):((cfg.dr>>>(nb-1-i))&1);
         var y=bit?rowY(2,1):rowY(2,0), xa=x0+i*bw-bw*0.45;
         ctx.lineTo(xa,prevY);ctx.lineTo(xa,y);ctx.lineTo(x0+(i+1)*bw-bw*0.45,y);prevY=y;
-        ctx.fillStyle=bit?'#13294B':'#7788a0';ctx.font='600 9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+        ctx.fillStyle=bit?'#B39B6E':'#8C9196';ctx.font='600 9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
         ctx.fillText(String(bit),x0+i*bw+bw*0.05,rowY(2,1)-7);
       }
       ctx.lineTo(ml+gW,prevY);ctx.stroke();
       ctx.strokeStyle='rgba(16,185,129,0.5)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
       for(var i=0;i<nb;i++){var sx=x0+i*bw+(cfg.cpha?bw/2:0);ctx.beginPath();ctx.moveTo(sx,mt+rh*1.05);ctx.lineTo(sx,mt+rh*2.95);ctx.stroke()}
       ctx.setLineDash([]);
-      ctx.fillStyle='#7788a0';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       ctx.fillText('green dashes = sampling edge (CPHA='+cfg.cpha+') \u2022 SCK period '+(1e9/fsk).toFixed(1)+' ns = '+Math.round(168e6/fsk)+' core cycles \u2022 '+(cfg.lsbfirst?'LSB':'MSB')+' first',ml+gW/2,mt+gH+18);
     }else{
-      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.spe?'Set MSTR=1 (CR1 bit 2) for a master transfer':'SPI disabled, set MSTR, BR, then SPE (CR1 bit 6)',ml+gW/2,mt+gH/2);
     }
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--muted)"></span>NSS</div>'+
@@ -1159,8 +1159,8 @@ function drawWaveform(){
       '<span class="wf-lbl">SYSCLK:</span><span class="wf-val">168 MHz</span>'+
       '<span class="wf-lbl">Cycle:</span><span class="wf-val">5.95 ns</span>'+
       '<span class="wf-lbl">Enabled:</span><span class="wf-val">'+cfg.on.length+'</span>';
-    var boxes=[['HSE','8 MHz','#7788a0'],['PLL','/8 x336 /2','#13294B'],['SYSCLK','168 MHz','#5E7C70'],
-               ['AHB /1','168 MHz','#1F6F4A'],['APB1 /4','42 (TIM 84)','#8A5A00'],['APB2 /2','84 (TIM 168)','#13294B']];
+    var boxes=[['HSE','8 MHz','#8C9196'],['PLL','/8 x336 /2','#B39B6E'],['SYSCLK','168 MHz','#6B7176'],
+               ['AHB /1','168 MHz','#1F6F4A'],['APB1 /4','42 (TIM 84)','#C4AE84'],['APB2 /2','84 (TIM 168)','#B39B6E']];
     var bw2=gW/boxes.length, by=mt+gH*0.14, bh2=gH*0.30;
     for(var i=0;i<boxes.length;i++){
       var bx=ml+i*bw2+7, iw=bw2-14;
@@ -1175,7 +1175,7 @@ function drawWaveform(){
     ctx.textAlign='left';ctx.fillStyle='#94a3b8';ctx.font='10px JetBrains Mono,Courier New,monospace';
     ctx.fillText('Peripheral clocks currently enabled:',ml+8,by+bh2+28);
     var txt=cfg.on.length?cfg.on.join('   '):'none, every peripheral below is gated off and would read back 0';
-    ctx.fillStyle=cfg.on.length?'#1F6F4A':'#8A5A00';
+    ctx.fillStyle=cfg.on.length?'#1F6F4A':'#C4AE84';
     ctx.font='11px JetBrains Mono,Courier New,monospace';
     ctx.fillText(txt.length>92?txt.slice(0,89)+'\u2026':txt,ml+8,by+bh2+48);
     legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--ai)"></span>Fixed 168 MHz clock tree (PLL settings are not editable here)</div>';
@@ -1192,24 +1192,24 @@ function drawWaveform(){
       '<span class="wf-lbl">NVIC:</span><span class="wf-val">'+cfg.nirq+' IRQ enabled'+(cfg.names.length?' · '+cfg.names.join(', '):'')+'</span>';
     if(cfg.en&&cfg.reload>0){
       var cyc=3, cw=gW/cyc, top=mt+gH*0.14, bot=mt+gH*0.78;
-      ctx.fillStyle='#7788a0';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle='#8C9196';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText(String(cfg.reload),ml-8,top+3);ctx.fillText('0',ml-8,bot+3);ctx.fillText('VAL',ml-8,(top+bot)/2);
-      ctx.strokeStyle='#13294B';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle='#B39B6E';ctx.lineWidth=2;ctx.beginPath();
       for(var i=0;i<cyc;i++){var a=ml+i*cw;ctx.moveTo(a,top);ctx.lineTo(a+cw,bot)}
       ctx.stroke();
       ctx.strokeStyle='rgba(168,85,247,0.35)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
       for(var i=1;i<=cyc;i++){var a=ml+i*cw;ctx.beginPath();ctx.moveTo(a,mt);ctx.lineTo(a,mt+gH);ctx.stroke()}
       ctx.setLineDash([]);
       ctx.textAlign='center';ctx.font='600 9px JetBrains Mono,Courier New,monospace';
-      ctx.fillStyle=cfg.tickint?'#1F6F4A':'#7788a0';
+      ctx.fillStyle=cfg.tickint?'#1F6F4A':'#8C9196';
       for(var i=1;i<=cyc;i++)ctx.fillText(cfg.tickint?'SysTick_Handler':'COUNTFLAG only',ml+i*cw-40,mt+gH-8);
-      ctx.fillStyle='#7788a0';ctx.font='9px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';
       ctx.fillText('underflow every '+pStr+' = '+(cfg.reload+1)+' ticks \u00d7 '+(1e9/fS).toFixed(2)+' ns \u2022 exception entry costs ~12 cycles \u2248 71 ns',ml+gW/2,mt+gH+18);
     }else{
-      ctx.fillStyle='#7788a0';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.reload>0?'SysTick stopped, set SYST_CSR ENABLE (bit 0)':'Load SYST_RVR with a non-zero RELOAD first',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#13294B"></span>SYST_CVR counts down to 0</div>'+
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#B39B6E"></span>SYST_CVR counts down to 0</div>'+
       '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--positive)"></span>Exception on underflow when TICKINT=1</div>';
     document.getElementById('wfTag').textContent=cfg.en&&cfg.reload>0?'SysTick '+pStr:'SysTick / NVIC';
   }

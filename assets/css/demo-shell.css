@@ -53,7 +53,7 @@ input.field[type=number] { width: 96px; }
 .tabs::-webkit-scrollbar { display: none; }
 .tabs button { font: 500 .88rem var(--sans); padding: 7px 16px; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .tabs button:hover { color: var(--text); }
-.tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px var(--c-lift); }
 .tab-panel[hidden] { display: none; }
 #tabsRoot > .tabs { margin-bottom: 22px; }
 
@@ -97,8 +97,8 @@ details.fold .kpi { box-shadow: none; background: var(--surface-2); }
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 24px; background: transparent; cursor: pointer; accent-color: var(--accent); }
 input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--border-strong); }
 input[type=range]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--border-strong); }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .3); margin-top: -8px; }
-input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .3); border: 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--c-white); box-shadow: 0 1px 4px var(--c-lift-2); margin-top: -8px; }
+input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--c-white); box-shadow: 0 1px 4px var(--c-lift-2); border: 0; }
 .radio-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* charts: thin lines, light grid, no borders */
@@ -111,7 +111,7 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .8rem; color: var(--muted); margin-top: 8px; }
 .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
 .chart-tip {
-  position: absolute; pointer-events: none; z-index: 5; background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+  position: absolute; pointer-events: none; z-index: 5; background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--hairline); border-radius: 10px; padding: 8px 10px; font-size: .78rem; box-shadow: var(--shadow); min-width: 120px; display: none; font-variant-numeric: tabular-nums; color: var(--text);
 }
 .chart-tip b { display: block; margin-bottom: 2px; }
@@ -194,7 +194,7 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .export { position: relative; }
 .export-menu {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: 120; min-width: 240px;
-  background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+  background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--hairline); border-radius: 14px; box-shadow: var(--shadow-hover); padding: 6px; display: none;
 }
 .export.open .export-menu { display: block; }
@@ -279,9 +279,9 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .d-kpi .value.neg { color: var(--negative); }
 .d-kpi .value.warn { color: var(--warning); }
 .d-kpi .sub { font-size: .74rem; color: var(--muted); margin-top: 4px; }
-.d-tooltip { position: fixed; z-index: 800; pointer-events: none; background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); border: 1px solid var(--hairline); border-radius: 10px; padding: 8px 10px; font: 400 .78rem var(--sans); font-variant-numeric: tabular-nums; color: var(--text); box-shadow: var(--shadow); display: none; max-width: 280px; line-height: 1.5; }
+.d-tooltip { position: fixed; z-index: 800; pointer-events: none; background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); border: 1px solid var(--hairline); border-radius: 10px; padding: 8px 10px; font: 400 .78rem var(--sans); font-variant-numeric: tabular-nums; color: var(--text); box-shadow: var(--shadow); display: none; max-width: 280px; line-height: 1.5; }
 .d-tooltip.show { display: block; }
-.d-help-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .35); z-index: 900; display: none; align-items: center; justify-content: center; padding: 24px; }
+.d-help-overlay { position: fixed; inset: 0; background: var(--c-scrim); z-index: 900; display: none; align-items: center; justify-content: center; padding: 24px; }
 .d-help-overlay.show { display: flex; }
 .d-help-modal { background: var(--surface); border-radius: var(--radius); width: min(820px, 100%); max-height: 88vh; display: flex; flex-direction: column; box-shadow: var(--shadow-hover); }
 .d-help-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; }
@@ -338,7 +338,7 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 /* chart hover: the mark under the pointer lights up, the rest steps back */
 .chart .mk { cursor: crosshair; transition: opacity .15s ease, filter .15s ease, stroke-width .15s ease; }
 .chart svg.hovering .mk:not(.on) { opacity: .35 !important; }
-.chart .mk.on { stroke: var(--text); stroke-width: 1.5; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .25)); }
+.chart .mk.on { stroke: var(--text); stroke-width: 1.5; filter: drop-shadow(0 2px 6px var(--c-lift-2)); }
 .chart .cur-dots circle { transition: cx .08s linear, cy .08s linear; }
 .chart-tip { min-width: 140px; padding: 9px 12px; font-size: .8rem; line-height: 1.45; box-shadow: var(--shadow-hover); }
 .chart-tip b:first-child { color: var(--heading); font-size: .82rem; }

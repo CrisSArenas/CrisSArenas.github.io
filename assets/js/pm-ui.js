@@ -162,8 +162,10 @@
       if (sr.dots) sr.ys.forEach(function (v, k) { if (v != null && isFinite(v)) s += '<circle cx="' + X(xs[k]) + '" cy="' + Y(v) + '" r="3" style="fill:' + col(sr.color, i) + '"/>'; });
     });
     (o.hlines || []).forEach(function (h) {
-      s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(h.y) + '" y2="' + Y(h.y) + '" style="stroke:var(--' + (h.color || 'negative') + ');stroke-dasharray:5 4"/>';
-      if (h.label) s += '<text x="' + (W - m.r - 4) + '" y="' + (Y(h.y) - 5) + '" text-anchor="end" style="fill:var(--' + (h.color || 'negative') + ')">' + UI.esc(h.label) + '</text>';
+      /* targets and reference lines are dashed graphite; limits keep their own color */
+      var ref = h.color === 'accent-text' || h.color === 'muted', lc = ref ? 'graphite' : (h.color || 'negative'), tc = ref ? 'muted' : lc;
+      s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(h.y) + '" y2="' + Y(h.y) + '" style="stroke:var(--' + lc + ');stroke-dasharray:5 4"/>';
+      if (h.label) s += '<text x="' + (W - m.r - 4) + '" y="' + (Y(h.y) - 5) + '" text-anchor="end" style="fill:var(--' + tc + ')">' + UI.esc(h.label) + '</text>';
     });
     (o.vlines || []).forEach(function (v) {
       s += '<line x1="' + X(v.x) + '" x2="' + X(v.x) + '" y1="' + m.t + '" y2="' + (H - m.b) + '" style="stroke:var(--muted);stroke-dasharray:3 3"/>';
@@ -579,19 +581,19 @@
     if (w.document.readyState === 'complete') go(); else w.addEventListener('load', go);
   };
   UI.reportCSS = function (demo) {
-    return '@page { size: A4; margin: 16mm 14mm 18mm; @bottom-left { content: "Cristian Arenas \\00B7  ' + String(demo).replace(/"/g, '') + '"; font: 8pt -apple-system, Segoe UI, sans-serif; color: #5B6676; } @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt -apple-system, Segoe UI, sans-serif; color: #5B6676; } }' +
-      'html, body.report { background: #fff !important; color: #1A2433; -webkit-print-color-adjust: exact; print-color-adjust: exact; } body.report::before { display: none; } body.report { max-width: 182mm; margin: 0 auto; padding: 24px 16px 60px; font-size: 10pt; line-height: 1.45; }' +
-      '.report .bar { position: sticky; top: 0; text-align: right; padding: 8px 0; } .report .bar button { font: 600 13px -apple-system, sans-serif; background: #0E3B2E; color: #fff; border: 0; border-radius: 999px; padding: 9px 18px; cursor: pointer; }' +
-      '.report .cover { border-top: 6px solid #0E3B2E; padding-top: 18px; margin-bottom: 18px; } .report .brand { font-size: 9pt; font-weight: 600; color: #13294B; letter-spacing: .04em; text-transform: uppercase; }' +
-      '.report h1 { font-size: 24pt; color: #0E3B2E; margin: 6px 0 8px; } .report .lede { font-size: 11pt; color: #1A2433; margin: 0 0 14px; }' +
-      '.report dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; margin: 0 0 12px; padding: 12px 14px; background: #F3F6F4; border-radius: 8px; } .report dt { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .05em; color: #5B6676; } .report dd { margin: 1px 0 0; font-size: 9.5pt; word-break: break-word; }' +
-      '.report .fict { font-size: 8pt; color: #5B6676; } .report h2 { font-size: 15pt; color: #0E3B2E; border-bottom: 1.5px solid #0E3B2E; padding-bottom: 4px; margin: 26px 0 12px; break-after: avoid; }' +
-      '.report .tab + .tab { break-before: page; } .report .rks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; } .report .rk { border: 1px solid #DFE5E2; border-radius: 8px; padding: 8px 10px; break-inside: avoid; }' +
-      '.report .rk .l { font-size: 7.5pt; color: #5B6676; } .report .rk .v { font-size: 14pt; font-weight: 600; color: #0E3B2E; font-variant-numeric: tabular-nums; } .report .rk.bad .v { color: #A3312B; } .report .rk .s { font-size: 7.5pt; color: #5B6676; }' +
-      '.report .blk { margin: 0 0 16px; break-inside: avoid; } .report h3 { font-size: 10.5pt; margin: 0 0 6px; color: #1A2433; } .report h3 span { font-weight: 400; color: #5B6676; font-size: 8.5pt; }' +
-      '.report .fig svg { width: 100%; height: auto; max-height: 82mm; } .report table.data { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 6px 0; } .report table.data th { background: #0E3B2E; color: #fff; font-weight: 600; text-align: left; padding: 4px 6px; }' +
-      '.report table.data td { padding: 3px 6px; border-bottom: 1px solid #E6ECE9; } .report table.data tbody tr:nth-child(even) td { background: #F7F9F8; } .report table.data .n { text-align: right; font-variant-numeric: tabular-nums; }' +
-      '.report .note { font-size: 8.5pt; color: #5B6676; margin: 4px 0 0; } .report .how ul { padding-left: 18px; } .report .how li { margin-bottom: 4px; } .report .formula { white-space: pre-wrap; font-size: 8pt; background: #F3F6F4; padding: 8px 10px; border-radius: 6px; }' +
+    return '@page { size: A4; margin: 16mm 14mm 18mm; @bottom-left { content: "Cristian Arenas \\00B7  ' + String(demo).replace(/"/g, '') + '"; font: 8pt -apple-system, Segoe UI, sans-serif; color: var(--c-text-2); } @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt -apple-system, Segoe UI, sans-serif; color: var(--c-text-2); } }' +
+      'html, body.report { background: var(--c-white) !important; color: var(--c-text); -webkit-print-color-adjust: exact; print-color-adjust: exact; } body.report::before { display: none; } body.report { max-width: 182mm; margin: 0 auto; padding: 24px 16px 60px; font-size: 10pt; line-height: 1.45; }' +
+      '.report .bar { position: sticky; top: 0; text-align: right; padding: 8px 0; } .report .bar button { font: 600 13px -apple-system, sans-serif; background: var(--c-green); color: var(--c-white); border: 0; border-radius: 999px; padding: 9px 18px; cursor: pointer; }' +
+      '.report .cover { border-top: 6px solid var(--c-green); padding-top: 18px; margin-bottom: 18px; } .report .brand { font-size: 9pt; font-weight: 600; color: var(--c-gold-text); letter-spacing: .04em; text-transform: uppercase; }' +
+      '.report h1 { font-size: 24pt; color: var(--c-green); margin: 6px 0 8px; } .report .lede { font-size: 11pt; color: var(--c-text); margin: 0 0 14px; }' +
+      '.report dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; margin: 0 0 12px; padding: 12px 14px; background: var(--c-tint); border-radius: 8px; } .report dt { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .05em; color: var(--c-text-2); } .report dd { margin: 1px 0 0; font-size: 9.5pt; word-break: break-word; }' +
+      '.report .fict { font-size: 8pt; color: var(--c-text-2); } .report h2 { font-size: 15pt; color: var(--c-green); border-bottom: 1.5px solid var(--c-green); padding-bottom: 4px; margin: 26px 0 12px; break-after: avoid; }' +
+      '.report .tab + .tab { break-before: page; } .report .rks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; } .report .rk { border: 1px solid var(--c-border); border-radius: 8px; padding: 8px 10px; break-inside: avoid; }' +
+      '.report .rk .l { font-size: 7.5pt; color: var(--c-text-2); } .report .rk .v { font-size: 14pt; font-weight: 600; color: var(--c-green); font-variant-numeric: tabular-nums; } .report .rk.bad .v { color: var(--c-negative); } .report .rk .s { font-size: 7.5pt; color: var(--c-text-2); }' +
+      '.report .blk { margin: 0 0 16px; break-inside: avoid; } .report h3 { font-size: 10.5pt; margin: 0 0 6px; color: var(--c-text); } .report h3 span { font-weight: 400; color: var(--c-text-2); font-size: 8.5pt; }' +
+      '.report .fig svg { width: 100%; height: auto; max-height: 82mm; } .report table.data { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 6px 0; } .report table.data th { background: var(--c-green); color: var(--c-white); font-weight: 600; text-align: left; padding: 4px 6px; }' +
+      '.report table.data td { padding: 3px 6px; border-bottom: 1px solid var(--c-border); } .report table.data tbody tr:nth-child(even) td { background: var(--c-panel); } .report table.data .n { text-align: right; font-variant-numeric: tabular-nums; }' +
+      '.report .note { font-size: 8.5pt; color: var(--c-text-2); margin: 4px 0 0; } .report .how ul { padding-left: 18px; } .report .how li { margin-bottom: 4px; } .report .formula { white-space: pre-wrap; font-size: 8pt; background: var(--c-tint); padding: 8px 10px; border-radius: 6px; }' +
       '.report a { color: inherit; text-decoration: none; } @media print { .report .bar { display: none; } body.report { padding: 0; max-width: none; } }';
   };
   UI.parseCSV = function (text) {
