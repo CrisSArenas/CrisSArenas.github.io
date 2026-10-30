@@ -4,16 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Autonomous Mobile Robot | Cristian Arenas</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
+    <meta name="theme-color" content="#07120E">
 <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Project Detail Page Specific Styles */
         .project-detail {
-            padding-top: 80px;
+            padding-top: 56px;
             min-height: 100vh;
             background: var(--dark-bg);
         }
@@ -211,18 +210,16 @@
         <div class="project-hero">
             <div class="container">
                 <a href="/robotics-embedded.html" class="back-button">
-                    <i class="fas fa-arrow-left"></i> Back to Projects
+                    &larr; Back to robotics and embedded systems
                 </a>
 
                 <h1>Autonomous Mobile Robot</h1>
 
                 <div class="project-meta">
                     <div class="meta-item">
-                        <i class="fas fa-calendar"></i>
                         <span>2025 - 2026</span>
                     </div>
                     <div class="meta-item">
-                        <i class="fas fa-microchip"></i>
                         <span>Embedded Robotics</span>
                     </div>
                 </div>
@@ -274,46 +271,7 @@
             <!-- Architecture -->
             <section class="content-section">
                 <h2>System Architecture</h2>
-                <div class="architecture-diagram">
-                    <pre>
-    ┌─────────────────────────────────────────────────────┐
-    │                  Raspberry Pi 4                      │
-    │              Ubuntu + ROS 2 Humble                   │
-    │                                                     │
-    │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-    │  │ LiDAR    │  │  IMU     │  │  Motor Control   │  │
-    │  │ Node     │  │  Node    │  │  Node            │  │
-    │  │ (C++)    │  │  (C++)   │  │  (C++)           │  │
-    │  └────┬─────┘  └────┬─────┘  └────────┬─────────┘  │
-    │       │              │                 │            │
-    │       ▼              ▼                 ▼            │
-    │  /scan          /imu/data         /cmd_vel          │
-    │       │              │                 ▲            │
-    │       ▼              ▼                 │            │
-    │  ┌──────────────────────────────┐      │            │
-    │  │      Cartographer SLAM       │      │            │
-    │  │   (map + localization)       │      │            │
-    │  └──────────────┬───────────────┘      │            │
-    │                 │                      │            │
-    │                 ▼                      │            │
-    │  ┌──────────────────────────────┐      │            │
-    │  │         Nav2 Stack           │──────┘            │
-    │  │  (planner + controller +     │                   │
-    │  │   costmaps + recovery)       │                   │
-    │  └──────────────────────────────┘                   │
-    └─────────────────────────────────────────────────────┘
-                          │
-    ┌─────────────────────┼─────────────────────┐
-    │     Hardware Layer   │                     │
-    │                     │                     │
-    │  ┌─────────┐  ┌────┴────┐  ┌───────────┐ │
-    │  │RPLiDAR  │  │ BNO055  │  │ DC Motors  │ │
-    │  │  A1     │  │  IMU    │  │ + Encoders │ │
-    │  │ (USB)   │  │ (I2C)   │  │ (GPIO/PWM) │ │
-    │  └─────────┘  └─────────┘  └───────────┘ │
-    └───────────────────────────────────────────┘
-                    </pre>
-                </div>
+                <figure class="feat-art rb-diagram"><svg class="art" viewBox="0 0 640 540" role="img"><title>ROS 2 on a Raspberry Pi 4: LiDAR, IMU and motor nodes publish scan, IMU and odometry data to Cartographer SLAM, which feeds the Nav2 stack, which sends velocity commands back to the motor node; the sensors and motors connect over USB, I2C and GPIO/PWM</title><rect class="frame" x="16" y="16" width="608" height="384" rx="10"/><text class="tx-m" x="30" y="36">Raspberry Pi 4 · Ubuntu · ROS 2 Humble · C++ nodes</text><rect class="box key" x="40" y="52" width="380" height="60" rx="7"/><text class="tx-k" x="230.0" y="79.0" text-anchor="middle">Nav2 stack</text><text class="tx-m" x="230.0" y="95.0" text-anchor="middle">planner · controller · costmaps · recovery</text><rect class="box" x="40" y="172" width="380" height="56" rx="7"/><text class="tx-t" x="230.0" y="197.0" text-anchor="middle">Cartographer SLAM</text><text class="tx-m" x="230.0" y="213.0" text-anchor="middle">map + localization</text><rect class="box" x="40" y="300" width="170" height="52" rx="7"/><text class="tx-t" x="125.0" y="330.0" text-anchor="middle">LiDAR node</text><rect class="box" x="250" y="300" width="170" height="52" rx="7"/><text class="tx-t" x="335.0" y="330.0" text-anchor="middle">IMU node</text><rect class="box" x="440" y="300" width="160" height="52" rx="7"/><text class="tx-t" x="520.0" y="330.0" text-anchor="middle">Motor control node</text><path class="flow" d="M125 300 L125 228"/><path class="ah" d="M125 228L120.5 236H129.5Z"/><text class="tx-m" x="133" y="268" text-anchor="start">/scan</text><path class="flow" d="M335 300 L335 228"/><path class="ah" d="M335 228L330.5 236H339.5Z"/><text class="tx-m" x="343" y="268" text-anchor="start">/imu/data</text><path class="flow" d="M230 172 L230 112"/><path class="ah" d="M230 112L225.5 120H234.5Z"/><text class="tx-m" x="238" y="146" text-anchor="start">map + pose</text><path class="flow g" d="M420 82 L520 82 L520 300"/><path class="ah g" d="M520 300L515.5 292H524.5Z"/><text class="tx-g" x="528" y="196" text-anchor="start">/cmd_vel</text><text class="tx-m" x="24" y="428" text-anchor="start">Hardware</text><rect class="box" x="40" y="444" width="170" height="70" rx="7"/><text class="tx-t" x="125.0" y="476.0" text-anchor="middle">RPLiDAR A1</text><text class="tx-m" x="125.0" y="492.0" text-anchor="middle">360° 2D laser · USB</text><rect class="box" x="250" y="444" width="170" height="70" rx="7"/><text class="tx-t" x="335.0" y="476.0" text-anchor="middle">BNO055 IMU</text><text class="tx-m" x="335.0" y="492.0" text-anchor="middle">9-axis · I2C</text><rect class="box" x="440" y="444" width="160" height="70" rx="7"/><text class="tx-t" x="520.0" y="476.0" text-anchor="middle">DC motors</text><text class="tx-m" x="520.0" y="492.0" text-anchor="middle">H-bridge + encoders</text><path class="flow" d="M125 444 L125 352"/><path class="ah" d="M125 352L120.5 360H129.5Z"/><text class="tx-m" x="133" y="426" text-anchor="start">USB</text><path class="flow" d="M335 444 L335 352"/><path class="ah" d="M335 352L330.5 360H339.5Z"/><text class="tx-m" x="343" y="426" text-anchor="start">I2C</text><path class="flow g" d="M500 352 L500 444"/><path class="ah g" d="M500 444L495.5 436H504.5Z"/><text class="tx-g" x="508" y="426" text-anchor="start">PWM</text><path class="flow" d="M560 444 L560 352"/><path class="ah" d="M560 352L555.5 360H564.5Z"/><text class="tx-m" x="568" y="426" text-anchor="start">ticks</text></svg></figure>
             </section>
 
             <!-- Hardware Integration -->
@@ -426,29 +384,21 @@
             <section class="content-section">
                 <h2>Technologies Used</h2>
                 <div class="tech-list">
-                    <div class="tech-item">
-                        <i class="fas fa-robot"></i> ROS 2 Humble
+                    <div class="tech-item"> ROS 2 Humble
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-map"></i> Nav2 / Cartographer
+                    <div class="tech-item"> Nav2 / Cartographer
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-code"></i> C++ / Python
+                    <div class="tech-item"> C++ / Python
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-microchip"></i> Raspberry Pi 4
+                    <div class="tech-item"> Raspberry Pi 4
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-satellite-dish"></i> RPLiDAR A1
+                    <div class="tech-item"> RPLiDAR A1
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-compass"></i> BNO055 IMU (I2C)
+                    <div class="tech-item"> BNO055 IMU (I2C)
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-cog"></i> PID Control
+                    <div class="tech-item"> PID Control
                     </div>
-                    <div class="tech-item">
-                        <i class="fab fa-linux"></i> Ubuntu / Linux
+                    <div class="tech-item"> Ubuntu / Linux
                     </div>
                 </div>
             </section>

@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
+<meta name="theme-color" content="#07120E">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
@@ -50,6 +53,8 @@ a{color:var(--cyan);text-decoration:none}
 .panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
 .panel-body{padding:16px 18px;position:relative;flex:1;overflow-y:auto}
 canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+/* fixed drawing heights; without them the canvas takes its height from the default 300px width ratio */
+#wfCanvas{height:260px}#pinCanvas{height:380px}
 
 /* Peripheral tabs */
 .periph-tabs{display:flex;gap:6px;flex-wrap:wrap}
@@ -79,7 +84,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .bit-cell.b0{background:var(--card2);color:var(--dim);border:1px solid var(--border)}
 .bit-cell.b1{background:color-mix(in srgb, var(--positive) 20%, transparent);color:var(--green);border:1px solid color-mix(in srgb, var(--positive) 40%, transparent)}
 .bit-cell:hover{transform:scale(1.15);z-index:2;box-shadow:none}
-.bit-cell.reserved{background:rgba(30,41,59,.3);color:rgba(148,163,184,.25);cursor:default;border:1px solid rgba(30,41,59,.5)}
+.bit-cell.reserved{background:rgba(46,52,56,.3);color:rgba(140,145,150,.25);cursor:default;border:1px solid rgba(46,52,56,.5)}
 .bit-cell.reserved:hover{transform:none;box-shadow:none}
 .field-bar{display:flex;gap:1px;margin-top:2px;min-width:fit-content}
 .field-bar-seg{width:20px;height:3px;border-radius:1px;flex-shrink:0}
@@ -99,7 +104,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .code-block{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre;color:var(--dim);max-height:380px;overflow-y:auto}
 .code-block .kw{color:var(--cyan)}
 .code-block .hex{color:var(--green)}
-.code-block .cmt{color:#546178;font-style:italic}
+.code-block .cmt{color:#6B7176;font-style:italic}
 .code-block .fn{color:var(--yellow)}
 .code-block .op{color:var(--text)}
 .code-block .reg{color:var(--orange)}
@@ -160,7 +165,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <button type="button" class="d-btn sm btn-preset" id="prAdc" onclick="loadPreset('adc')"><i class="fas fa-chart-line"></i> ADC</button>
     <button type="button" class="d-btn sm btn-preset" id="prTick" onclick="loadPreset('tick')"><i class="fas fa-stopwatch"></i> SysTick 1 kHz</button>
     <button type="button" class="d-btn sm" id="resetBtn" onclick="resetAll()"><i class="fas fa-rotate-left"></i> Reset</button>
-    <button type="button" class="d-btn sm icon" id="helpBtn" onclick="toggleHelp()" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button></div></div></div>
+    <button type="button" class="d-btn sm icon" id="helpBtn" onclick="toggleHelp()" title="Guide" aria-label="Open guide"><span class="ico" aria-hidden="true">?</span></button></div></div></div>
 <div class="demo-status">
   <span id="statusL">initialising&hellip;</span>
   <span id="statusR"><b>STM32F407</b> Cortex-M4F 168 MHz &middot; AHB 168 / APB1 42 (TIM 84) / APB2 84 MHz &middot; 1 cycle = 5.95 ns &middot; <b>Browser simulation</b>, deterministic, idealised timings</span>
@@ -173,7 +178,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="d-help-modal">
     <div class="d-help-head">
       <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: STM32 Memory-Mapped I/O Lab</h2>
-      <button type="button" class="d-help-close" id="helpClose" onclick="toggleHelp()" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
+      <button type="button" class="d-help-close" id="helpClose" onclick="toggleHelp()" aria-label="Close guide"><span class="ico" aria-hidden="true">&times;</span></button>
     </div>
     <div class="d-help-body">
       <div class="d-help-section">
@@ -805,11 +810,11 @@ var PIN48=[
 ];
 
 function pinState(name){
-  if(!name.startsWith('PA'))return{color:'#334155',lbl:''};
-  var num=parseInt(name.substring(2));if(isNaN(num)||num>15)return{color:'#334155',lbl:''};
+  if(!name.startsWith('PA'))return{color:'#3A4044',lbl:''};
+  var num=parseInt(name.substring(2));if(isNaN(num)||num>15)return{color:'#3A4044',lbl:''};
   var mode=(regVals.gpio.MODER>>>(num*2))&0x3;
   var out=(regVals.gpio.ODR>>>num)&1;
-  if(mode===0)return{color:'#94a3b8',lbl:'IN'};
+  if(mode===0)return{color:'#8C9196',lbl:'IN'};
   if(mode===1)return out?{color:'#1F6F4A',lbl:'HI'}:{color:'#A3312B',lbl:'LO'};
   if(mode===2){return{color:'#B39B6E',lbl:num<8?('AF'+((regVals.gpio.AFRL>>>(num*4))&0xF)):'AF'}}
   return{color:'#B39B6E',lbl:'AN'};
@@ -829,12 +834,12 @@ function drawPins(){
   // Shadow
   ctx.fillStyle='rgba(0,0,0,0.25)';ctx.beginPath();ctx.roundRect(cx+3,cy+3,cw,ch,8);ctx.fill();
   // Body
-  ctx.fillStyle='#1a2332';ctx.strokeStyle='#334155';ctx.lineWidth=1.5;
+  ctx.fillStyle='#151B19';ctx.strokeStyle='#3A4044';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.roundRect(cx,cy,cw,ch,8);ctx.fill();ctx.stroke();
   // Pin 1 dot
-  ctx.fillStyle='rgba(6,182,212,0.4)';ctx.beginPath();ctx.arc(cx+14,cy+ch-14,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(111,181,154,0.4)';ctx.beginPath();ctx.arc(cx+14,cy+ch-14,5,0,Math.PI*2);ctx.fill();
   // Labels
-  ctx.fillStyle='#94a3b8';ctx.font='600 11px Inter,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#8C9196';ctx.font='600 11px Inter,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('STM32F407',cx+cw/2,cy+ch/2-12);
   ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.fillStyle='#8C9196';
   ctx.fillText('Cortex-M4F 168 MHz',cx+cw/2,cy+ch/2+4);
@@ -890,7 +895,7 @@ function wfConfig(){
       var m=(regVals.gpio.MODER>>>(i*2))&3;
       if(m===1){var v=(regVals.gpio.ODR>>>i)&1;chs.push({name:'PA'+i,val:v,color:v?'#1F6F4A':'#A3312B'})}
     }
-    if(!chs.length)chs.push({name:'PA0',val:0,color:'#94a3b8'});
+    if(!chs.length)chs.push({name:'PA0',val:0,color:'#8C9196'});
     return{type:'gpio',chs:chs};
   }
   if(pk==='tim2'){
@@ -954,12 +959,12 @@ function drawWaveform(){
   var gW=W-ml-mr,gH=H-mt-mb;
 
   // Grid
-  ctx.strokeStyle='rgba(30,41,59,0.5)';ctx.lineWidth=0.5;
+  ctx.strokeStyle='rgba(46,52,56,0.5)';ctx.lineWidth=0.5;
   for(var i=0;i<=10;i++){var x=ml+(gW/10)*i;ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+gH);ctx.stroke()}
   for(var i=0;i<=5;i++){var y=mt+(gH/5)*i;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+gW,y);ctx.stroke()}
 
   // Center crosshair
-  ctx.strokeStyle='rgba(6,182,212,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.strokeStyle='rgba(111,181,154,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
   ctx.beginPath();ctx.moveTo(ml+gW/2,mt);ctx.lineTo(ml+gW/2,mt+gH);ctx.stroke();
   ctx.beginPath();ctx.moveTo(ml,mt+gH/2);ctx.lineTo(ml+gW,mt+gH/2);ctx.stroke();
   ctx.setLineDash([]);
@@ -1007,7 +1012,7 @@ function drawWaveform(){
         ctx.lineTo(cx2,loY);ctx.lineTo(cx2,hiY);ctx.lineTo(cx2+dutyW,hiY);ctx.lineTo(cx2+dutyW,loY);ctx.lineTo(cx2+cycW,loY);
       }
       ctx.stroke();
-      ctx.fillStyle='rgba(245,158,11,0.06)';
+      ctx.fillStyle='rgba(196,174,132,0.06)';
       for(var c=-1;c<cycles+1;c++){var cx2=ml+c*cycW-phase*cycW;ctx.fillRect(cx2,hiY,dutyW,loY-hiY)}
       ctx.restore();
       // Period labels
@@ -1048,7 +1053,7 @@ function drawWaveform(){
       for(var i=0;i<dBits;i++){
         var bit=(data>>>i)&1;var y=bit?hiY:loY;
         ctx.lineTo(x,y);x+=bW;ctx.lineTo(x,y);
-        ctx.fillStyle=bit?'#B39B6E':'#475569';
+        ctx.fillStyle=bit?'#B39B6E':'#6B7176';
         ctx.fillText(bit.toString(),x-bW/2,bit?hiY-6:loY+12);
       }
       // Parity
@@ -1082,7 +1087,7 @@ function drawWaveform(){
       ctx.fillText((maxV/2|0).toString(),ml-8,mt+gH/2+3);
       // Analog signal
       var pts=200;
-      ctx.strokeStyle='rgba(139,92,246,0.3)';ctx.lineWidth=1.5;ctx.beginPath();
+      ctx.strokeStyle='rgba(179,155,110,0.3)';ctx.lineWidth=1.5;ctx.beginPath();
       for(var i=0;i<=pts;i++){
         var t=i/pts;var x=ml+t*gW;
         var sig=0.5+0.4*Math.sin(2*Math.PI*3*t+wfFrame*0.03)+0.1*Math.sin(2*Math.PI*7*t);
@@ -1097,7 +1102,7 @@ function drawWaveform(){
         var t=(i+0.5)/ns;var x=ml+t*gW;
         var sig=0.5+0.4*Math.sin(2*Math.PI*3*t+wfFrame*0.03)+0.1*Math.sin(2*Math.PI*7*t);
         var y=mt+gH*(1-sig);
-        ctx.strokeStyle='rgba(139,92,246,0.4)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
+        ctx.strokeStyle='rgba(179,155,110,0.4)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
         ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,mt+gH);ctx.stroke();ctx.setLineDash([]);
         ctx.fillStyle='#B39B6E';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
         if(ns<=8){var dv=Math.round(sig*maxV);ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';ctx.fillText(dv.toString(),x,y-8)}
@@ -1120,9 +1125,9 @@ function drawWaveform(){
     if(cfg.spe&&cfg.mstr){
       var rh=gH/3, rowY=function(r,hi){return mt+r*rh+(hi?rh*0.28:rh*0.72)};
       var x0=ml+gW*0.09, xE=ml+gW*0.95, bw=(xE-x0)/nb;
-      ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillStyle='#94a3b8';
+      ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillStyle='#8C9196';
       ctx.fillText('NSS',ml-8,mt+rh*0.5);ctx.fillText('SCK',ml-8,mt+rh*1.5);ctx.fillText('MOSI',ml-8,mt+rh*2.5);
-      ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle='#8C9196';ctx.lineWidth=2;ctx.beginPath();
       ctx.moveTo(ml,rowY(0,1));ctx.lineTo(x0-bw*0.45,rowY(0,1));ctx.lineTo(x0-bw*0.45,rowY(0,0));
       ctx.lineTo(xE+bw*0.35,rowY(0,0));ctx.lineTo(xE+bw*0.35,rowY(0,1));ctx.lineTo(ml+gW,rowY(0,1));ctx.stroke();
       var idleY=cfg.cpol?rowY(1,1):rowY(1,0), actY=cfg.cpol?rowY(1,0):rowY(1,1);
@@ -1140,7 +1145,7 @@ function drawWaveform(){
         ctx.fillText(String(bit),x0+i*bw+bw*0.05,rowY(2,1)-7);
       }
       ctx.lineTo(ml+gW,prevY);ctx.stroke();
-      ctx.strokeStyle='rgba(16,185,129,0.5)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      ctx.strokeStyle='rgba(111,181,154,0.5)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
       for(var i=0;i<nb;i++){var sx=x0+i*bw+(cfg.cpha?bw/2:0);ctx.beginPath();ctx.moveTo(sx,mt+rh*1.05);ctx.lineTo(sx,mt+rh*2.95);ctx.stroke()}
       ctx.setLineDash([]);
       ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
@@ -1164,15 +1169,15 @@ function drawWaveform(){
     var bw2=gW/boxes.length, by=mt+gH*0.14, bh2=gH*0.30;
     for(var i=0;i<boxes.length;i++){
       var bx=ml+i*bw2+7, iw=bw2-14;
-      ctx.strokeStyle=boxes[i][2];ctx.lineWidth=1.5;ctx.fillStyle='rgba(26,35,50,0.85)';
+      ctx.strokeStyle=boxes[i][2];ctx.lineWidth=1.5;ctx.fillStyle='rgba(46,52,56,0.85)';
       ctx.beginPath();ctx.roundRect(bx,by,iw,bh2,6);ctx.fill();ctx.stroke();
       ctx.fillStyle=boxes[i][2];ctx.font='600 10px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       ctx.fillText(boxes[i][0],bx+iw/2,by+bh2*0.4);
-      ctx.fillStyle='#94a3b8';ctx.font='9px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';
       ctx.fillText(boxes[i][1],bx+iw/2,by+bh2*0.76);
-      if(i<boxes.length-1){ctx.strokeStyle='#334155';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx+iw,by+bh2/2);ctx.lineTo(bx+bw2,by+bh2/2);ctx.stroke()}
+      if(i<boxes.length-1){ctx.strokeStyle='#3A4044';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx+iw,by+bh2/2);ctx.lineTo(bx+bw2,by+bh2/2);ctx.stroke()}
     }
-    ctx.textAlign='left';ctx.fillStyle='#94a3b8';ctx.font='10px JetBrains Mono,Courier New,monospace';
+    ctx.textAlign='left';ctx.fillStyle='#8C9196';ctx.font='10px JetBrains Mono,Courier New,monospace';
     ctx.fillText('Peripheral clocks currently enabled:',ml+8,by+bh2+28);
     var txt=cfg.on.length?cfg.on.join('   '):'none, every peripheral below is gated off and would read back 0';
     ctx.fillStyle=cfg.on.length?'#1F6F4A':'#C4AE84';
@@ -1197,7 +1202,7 @@ function drawWaveform(){
       ctx.strokeStyle='#B39B6E';ctx.lineWidth=2;ctx.beginPath();
       for(var i=0;i<cyc;i++){var a=ml+i*cw;ctx.moveTo(a,top);ctx.lineTo(a+cw,bot)}
       ctx.stroke();
-      ctx.strokeStyle='rgba(168,85,247,0.35)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      ctx.strokeStyle='rgba(179,155,110,0.35)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
       for(var i=1;i<=cyc;i++){var a=ml+i*cw;ctx.beginPath();ctx.moveTo(a,mt);ctx.lineTo(a,mt+gH);ctx.stroke()}
       ctx.setLineDash([]);
       ctx.textAlign='center';ctx.font='600 9px JetBrains Mono,Courier New,monospace';
@@ -1219,7 +1224,7 @@ function drawWaveform(){
   }
 
   // Scope border
-  ctx.strokeStyle='rgba(6,182,212,0.2)';ctx.lineWidth=1;ctx.strokeRect(ml,mt,gW,gH);
+  ctx.strokeStyle='rgba(111,181,154,0.2)';ctx.lineWidth=1;ctx.strokeRect(ml,mt,gW,gH);
 }
 
 var reduceMotion=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)').matches:false;

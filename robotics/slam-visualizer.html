@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
+<meta name="theme-color" content="#07120E">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
@@ -57,6 +60,9 @@ a{color:var(--cyan);text-decoration:none}
 @media(max-width:1200px){.kpi-row{grid-template-columns:repeat(5,1fr)}}
 @media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:500px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+/* nine tiles: let the last one fill the row where the column count leaves a gap */
+@media(max-width:1200px) and (min-width:901px){.kpi-row .kpi-cell:last-child{grid-column:span 2}}
+@media(max-width:500px){.kpi-row .kpi-cell:last-child{grid-column:span 2}}
 .kpi-cell .unit{font-size:9px;color:var(--faint);font-family:var(--mono);margin-top:3px}
 
 /* CONTROLS */
@@ -94,7 +100,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
 /* TELEMETRY TABLE */
 .telem-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-.telem-table td{padding:6px 10px;font-family:var(--mono);border-bottom:1px solid rgba(30,41,59,.4)}
+.telem-table td{padding:6px 10px;font-family:var(--mono);border-bottom:1px solid rgba(46,52,56,.4)}
 .telem-table td:first-child{color:var(--dim);font-family:inherit;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:50%}
 .telem-table td:last-child{text-align:right;color:var(--cyan);font-weight:600}
 .telem-section{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;padding:10px 10px 4px;border-bottom:1px solid var(--border)}
@@ -108,8 +114,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .code-scroll pre{margin:0;font-family:var(--mono);font-size:11.2px;line-height:1.72;color:var(--text);white-space:pre}
 .cl{display:block;padding:0 6px;border-left:2px solid transparent;border-radius:0 3px 3px 0}
 .cl.on{background:color-mix(in srgb, var(--ai) 13%, transparent);border-left-color:var(--cyan)}
-.cl.on .cm{color:#7dd3fc}
-.k{color:var(--s5)}.ty{color:var(--ai)}.fn{color:#93c5fd}.nu{color:var(--warning)}.st{color:var(--positive)}.cm{color:var(--muted);font-style:italic}
+.cl.on .cm{color:#6FB59A}
+.k{color:var(--s5)}.ty{color:var(--ai)}.fn{color:#6FB59A}.nu{color:var(--warning)}.st{color:var(--positive)}.cm{color:var(--muted);font-style:italic}
 .code-live{display:flex;flex-wrap:wrap;gap:14px;padding:9px 14px;border-top:1px solid var(--border);
   font-family:var(--mono);font-size:10.5px;color:var(--dim)}
 .code-live b{color:var(--cyan);font-weight:600}
@@ -140,7 +146,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <!-- site-nav:end -->
 <div id="main" tabindex="-1"></div>
 <div class="demo-bar"><div class="container"><a class="back-link" href="/robotics-embedded.html">&larr; Back to Robotics</a><h1 class="demo-title"><i class="fas fa-map"></i> SLAM Mapping Visualizer</h1><div class="demo-actions"><button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
-    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button></div></div></div>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><span class="ico" aria-hidden="true">?</span></button></div></div></div>
 <div class="demo-status">
   <span id="statusBar">initialising&hellip;</span>
   <span><b>Simulated sensors</b> &middot; seeded PRNG (mulberry32) &middot; idealised LiDAR &amp; odometry models &middot; not hardware-validated</span>
@@ -153,7 +159,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="d-help-modal">
     <div class="d-help-head">
       <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: SLAM Mapping Visualizer</h2>
-      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><span class="ico" aria-hidden="true">&times;</span></button>
     </div>
     <div class="d-help-body">
       <div class="d-help-section">
@@ -174,7 +180,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       </div>
       <div class="d-help-section">
         <h3>4 &middot; Occupancy grid (mapping)</h3>
-        <p>A <strong>150 &times; 150</strong> grid of <strong>5 cm</strong> cells stores log-odds <code>l = log(p / (1 &minus; p))</code>, initialised at 0 (p = 0.5, unknown). For every beam the cells along the free portion are updated with <code>l += l_free = &minus;0.40</code> (inverse-sensor probability 0.40) and the endpoint cell with <code>l += l_occ = +0.85</code> (probability 0.70); values are clamped to <strong>[&minus;5, +5]</strong>, i.e. p &isin; [0.007, 0.993]. The map panel renders <code>p = 1 &minus; 1/(1 + e&#8319;)</code> directly as a grey scale, dark grey is confidently free, light grey confidently occupied, and slate blue is a cell that has never been observed.</p>
+        <p>A <strong>150 &times; 150</strong> grid of <strong>5 cm</strong> cells stores log-odds <code>l = log(p / (1 &minus; p))</code>, initialised at 0 (p = 0.5, unknown). For every beam the cells along the free portion are updated with <code>l += l_free = &minus;0.40</code> (inverse-sensor probability 0.40) and the endpoint cell with <code>l += l_occ = +0.85</code> (probability 0.70); values are clamped to <strong>[&minus;5, +5]</strong>, i.e. p &isin; [0.007, 0.993]. The map panel renders <code>p = 1 &minus; 1/(1 + e&#8319;)</code> directly as a grey scale, dark grey is confidently free, light grey confidently occupied, and the panel colour marks a cell that has never been observed.</p>
       </div>
       <div class="d-help-section">
         <h3>5 &middot; Odometry drift &amp; the particle filter</h3>
@@ -188,7 +194,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="d-help-section">
         <h3>7 &middot; Panels</h3>
         <dl>
-          <dt>World View</dt><dd>Ground truth: walls, LiDAR beams (cyan), the particle cloud (purple), the true robot (cyan, filled) and the filter estimate (amber, outline). A 1 m scale bar is drawn bottom-left.</dd>
+          <dt>World View</dt><dd>Ground truth: walls, LiDAR beams (green), the particle cloud (purple), the true robot (cyan, filled) and the filter estimate (amber, outline). A 1 m scale bar is drawn bottom-left.</dd>
           <dt>Occupancy Grid</dt><dd>The map as the robot believes it, in the estimate frame. Grey scale = occupancy probability.</dd>
           <dt>LiDAR Scan</dt><dd>Polar plot in the robot body frame, 0&deg; = forward, rings at 2 / 4 / 6 m. Max-range returns are omitted.</dd>
           <dt>Charts</dt><dd>Position error (m) for the filter and for raw odometry, and map coverage (%), both sampled once per scan at 10 Hz.</dd>
@@ -214,7 +220,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="guide-card">
         <span class="step">STEP 2</span>
         <h3>Watch LiDAR Scan</h3>
-        <p>Watch LiDAR beams (<strong>cyan</strong>) scan surroundings in real-time</p>
+        <p>Watch the LiDAR beams (<strong>green</strong>) scan the surroundings in real time</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 3</span>
@@ -292,7 +298,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
     <div class="panel-body" style="padding:8px">
       <canvas id="worldCanvas" style="height:420px" aria-label="Top-down view of the true environment showing walls, LiDAR beams, the particle cloud, the true robot pose and the estimated pose"></canvas>
-      <div class="cap"><span><i class="sw" style="background:#4b5563"></i> True walls</span><span><i class="sw" style="background:var(--cyan)"></i> LiDAR beams</span><span><i class="sw" style="background:#f4faff;border:1px solid #0a0e1a"></i> True robot</span><span><i class="sw" style="background:var(--purple)"></i> Particles (300)</span><span><i class="sw" style="background:var(--amber)"></i> Filter estimate</span><span><i class="sw" style="background:var(--green)"></i> Path travelled</span></div>
+      <div class="cap"><span><i class="sw" style="background:#6B7176"></i> True walls</span><span><i class="sw" style="background:var(--cyan)"></i> LiDAR beams</span><span><i class="sw" style="background:#EEF2EF;border:1px solid #07120E"></i> True robot</span><span><i class="sw" style="background:var(--purple)"></i> Particles (300)</span><span><i class="sw" style="background:var(--amber)"></i> Filter estimate</span><span><i class="sw" style="background:var(--green)"></i> Path travelled</span></div>
     </div>
   </div>
 
@@ -304,7 +310,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
     <div class="panel-body" style="padding:8px">
       <canvas id="mapCanvas" style="height:420px" aria-label="Occupancy grid map rendered as a grey scale of occupancy probability, 150 by 150 cells of 5 centimetres"></canvas>
-      <div class="cap"><span><i class="bx" style="background:var(--surface-2)"></i> Unknown (p = 0.50)</span><span><i class="bx" style="background:#20232a"></i> Free (p &rarr; 0.01)</span><span><i class="bx" style="background:#e8e8e8"></i> Occupied (p &rarr; 0.99)</span><span>5 cm cells &middot; log-odds clamped to &plusmn;5</span></div>
+      <div class="cap"><span><i class="bx" style="background:var(--surface-2)"></i> Unknown (p = 0.50)</span><span><i class="bx" style="background:#0E1610"></i> Free (p &rarr; 0.01)</span><span><i class="bx" style="background:#B2B8B6"></i> Occupied (p &rarr; 0.99)</span><span>5 cm cells &middot; log-odds clamped to &plusmn;5</span></div>
     </div>
   </div>
 
@@ -1074,7 +1080,7 @@ function drawWorld(){
   const offY=(worldH-ENV_SIZE*s)/2;
 
   ctx.clearRect(0,0,worldW,worldH);
-  ctx.fillStyle='#0a0e1a';
+  ctx.fillStyle='#07120E';
   ctx.fillRect(0,0,worldW,worldH);
 
   ctx.save();
@@ -1083,7 +1089,7 @@ function drawWorld(){
 
   // Walls
   const walls=ENVS[currentEnv].walls;
-  ctx.strokeStyle='#4b5563';
+  ctx.strokeStyle='#6B7176';
   ctx.lineWidth=3;
   ctx.lineCap='round';
   for(const w of walls){
@@ -1099,7 +1105,7 @@ function drawWorld(){
     const age=(now-trail[i].t)/8000;
     const alpha=Math.max(0,1-age);
     if(alpha<=0)continue;
-    ctx.fillStyle=`rgba(16,185,129,${alpha*0.6})`;
+    ctx.fillStyle=`rgba(111,181,154,${alpha*0.6})`;
     ctx.beginPath();
     ctx.arc(trail[i].x,trail[i].y,2,0,Math.PI*2);
     ctx.fill();
@@ -1109,14 +1115,14 @@ function drawWorld(){
   for(const sc of scanData){
     const a=robot.angle+sc.angle;
     const alpha=sc.hit?0.22*(1-sc.dist/LIDAR_RANGE)+0.04:0.03;
-    ctx.strokeStyle=`rgba(6,182,212,${alpha})`;
+    ctx.strokeStyle=`rgba(111,181,154,${alpha})`;
     ctx.lineWidth=0.8;
     ctx.beginPath();
     ctx.moveTo(robot.x,robot.y);
     ctx.lineTo(sc.hx,sc.hy);
     ctx.stroke();
     if(sc.hit){
-      ctx.fillStyle=`rgba(6,182,212,${0.6*(1-sc.dist/LIDAR_RANGE)+0.2})`;
+      ctx.fillStyle=`rgba(111,181,154,${0.6*(1-sc.dist/LIDAR_RANGE)+0.2})`;
       ctx.beginPath();
       ctx.arc(sc.hx,sc.hy,2,0,Math.PI*2);
       ctx.fill();
@@ -1125,7 +1131,7 @@ function drawWorld(){
 
   // Particle cloud (localisation hypotheses) - opt-in, off by default
   if(showParticles){
-    ctx.fillStyle='rgba(139,92,246,0.5)';
+    ctx.fillStyle='rgba(179,155,110,0.5)';
     for(let i=0;i<particles.length;i++){
       ctx.fillRect(particles[i].x-0.9,particles[i].y-0.9,1.8,1.8);
     }
@@ -1137,7 +1143,7 @@ function drawWorld(){
   ctx.save();
   ctx.translate(est.x,est.y);
   ctx.rotate(est.angle);
-  ctx.strokeStyle='rgba(245,158,11,0.95)';
+  ctx.strokeStyle='rgba(196,174,132,0.95)';
   ctx.lineWidth=1.6;
   ctx.beginPath();
   ctx.moveTo(12,0);ctx.lineTo(-7,-6);ctx.lineTo(-4,0);ctx.lineTo(-7,6);
@@ -1152,17 +1158,17 @@ function drawWorld(){
   ctx.save();
   ctx.translate(robot.x,robot.y);
   const halo=ctx.createRadialGradient(0,0,6,0,0,26);
-  halo.addColorStop(0,'rgba(5,10,22,0.92)');
-  halo.addColorStop(1,'rgba(5,10,22,0)');
+  halo.addColorStop(0,'rgba(7,18,14,0.92)');
+  halo.addColorStop(1,'rgba(7,18,14,0)');
   ctx.fillStyle=halo;
   ctx.beginPath();ctx.arc(0,0,26,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='rgba(5,10,22,0.9)';
+  ctx.fillStyle='rgba(7,18,14,0.9)';
   ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(232,245,255,0.5)';
+  ctx.strokeStyle='rgba(238,242,239,0.5)';
   ctx.lineWidth=1.2;
   ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.stroke();
   ctx.rotate(robot.angle);
-  ctx.fillStyle='#f4faff';
+  ctx.fillStyle='#EEF2EF';
   ctx.beginPath();
   ctx.moveTo(15,0);
   ctx.lineTo(-8,-7.5);
@@ -1170,7 +1176,7 @@ function drawWorld(){
   ctx.lineTo(-8,7.5);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle='#0a0e1a';
+  ctx.strokeStyle='#07120E';
   ctx.lineWidth=1.8;
   ctx.lineJoin='round';
   ctx.stroke();
@@ -1180,14 +1186,14 @@ function drawWorld(){
 
   // 1 m scale bar (screen space)
   const oneM=U_PER_M*s;
-  ctx.strokeStyle='rgba(148,163,184,0.75)';
+  ctx.strokeStyle='rgba(140,145,150,0.75)';
   ctx.lineWidth=1;
   ctx.beginPath();
   ctx.moveTo(12,worldH-14);ctx.lineTo(12+oneM,worldH-14);
   ctx.moveTo(12,worldH-18);ctx.lineTo(12,worldH-10);
   ctx.moveTo(12+oneM,worldH-18);ctx.lineTo(12+oneM,worldH-10);
   ctx.stroke();
-  ctx.fillStyle='rgba(148,163,184,0.9)';
+  ctx.fillStyle='rgba(140,145,150,0.9)';
   ctx.font="10px 'JetBrains Mono',monospace";
   ctx.textAlign='left';ctx.textBaseline='bottom';
   ctx.fillText('1 m',12,worldH-20);
@@ -1220,15 +1226,15 @@ function drawMap(){
         const pi=idx*4;
         if(v===0){
           // Never observed
-          d[pi]=0x1a; d[pi+1]=0x23; d[pi+2]=0x32; d[pi+3]=255;
+          d[pi]=0x15; d[pi+1]=0x1B; d[pi+2]=0x19; d[pi+3]=255;
         }else{
           // Occupancy probability p = 1 - 1/(1+e^l).
-          // Cool-toned ramp rather than a white one: pure white occupied cells
+          // Graphite ramp in the site palette rather than pure white, which
           // glared badly against the dark page.
           const p=1-1/(1+Math.exp(v));
-          d[pi]=Math.round(18+p*150);
-          d[pi+1]=Math.round(26+p*158);
-          d[pi+2]=Math.round(44+p*156);
+          d[pi]=Math.round(10+p*168);
+          d[pi+1]=Math.round(16+p*170);
+          d[pi+2]=Math.round(14+p*168);
           d[pi+3]=255;
         }
       }
@@ -1242,7 +1248,7 @@ function drawMap(){
   ctx.drawImage(mapTmpCanvas,0,0,mapW,mapH);
 
   // Grid lines (faint)
-  ctx.strokeStyle='rgba(30,41,59,0.3)';
+  ctx.strokeStyle='rgba(46,52,56,0.3)';
   ctx.lineWidth=0.5;
   const step=Math.max(1,Math.floor(gridW/30));
   for(let x=0;x<gridW;x+=step){
@@ -1258,7 +1264,7 @@ function drawMap(){
   ctx.save();
   ctx.translate(robot.x/ENV_SIZE*mapW,robot.y/ENV_SIZE*mapH);
   ctx.rotate(robot.angle);
-  ctx.strokeStyle='rgba(16,185,129,0.75)';
+  ctx.strokeStyle='rgba(111,181,154,0.75)';
   ctx.lineWidth=1;
   ctx.beginPath();
   ctx.moveTo(6,0);ctx.lineTo(-4,-3.5);ctx.lineTo(-2,0);ctx.lineTo(-4,3.5);
@@ -1270,7 +1276,7 @@ function drawMap(){
   ctx.save();
   ctx.translate(est.x/ENV_SIZE*mapW,est.y/ENV_SIZE*mapH);
   ctx.rotate(est.angle);
-  ctx.fillStyle='rgba(239,68,68,0.9)';
+  ctx.fillStyle='rgba(224,122,122,0.9)';
   ctx.beginPath();
   ctx.moveTo(6,0);
   ctx.lineTo(-4,-3.5);
@@ -1288,11 +1294,11 @@ function drawLidar(){
   const maxR=Math.min(cx,cy)-30;
 
   ctx.clearRect(0,0,lidarW,lidarH);
-  ctx.fillStyle='#0a0e1a';
+  ctx.fillStyle='#07120E';
   ctx.fillRect(0,0,lidarW,lidarH);
 
   // Range rings
-  ctx.strokeStyle='rgba(30,41,59,0.5)';
+  ctx.strokeStyle='rgba(46,52,56,0.5)';
   ctx.lineWidth=0.7;
   const numRings=3;
   for(let i=1;i<=numRings;i++){
@@ -1301,14 +1307,14 @@ function drawLidar(){
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.stroke();
     // Label
-    ctx.fillStyle='rgba(148,163,184,0.5)';
+    ctx.fillStyle='rgba(140,145,150,0.5)';
     ctx.font="9px 'JetBrains Mono',monospace";
     ctx.textAlign='center';
     ctx.fillText((LIDAR_RANGE_M*i/numRings).toFixed(0)+' m',cx,cy-r+10);
   }
 
   // Angular sector labels
-  ctx.fillStyle='rgba(148,163,184,0.6)';
+  ctx.fillStyle='rgba(140,145,150,0.6)';
   ctx.font="10px 'JetBrains Mono',monospace";
   ctx.textAlign='center';
   ctx.textBaseline='middle';
@@ -1320,7 +1326,7 @@ function drawLidar(){
   }
 
   // Cross lines
-  ctx.strokeStyle='rgba(30,41,59,0.3)';
+  ctx.strokeStyle='rgba(46,52,56,0.3)';
   ctx.beginPath();ctx.moveTo(cx,cy-maxR);ctx.lineTo(cx,cy+maxR);ctx.stroke();
   ctx.beginPath();ctx.moveTo(cx-maxR,cy);ctx.lineTo(cx+maxR,cy);ctx.stroke();
 
@@ -1332,19 +1338,19 @@ function drawLidar(){
     const px=cx+Math.cos(plotA)*r;
     const py=cy+Math.sin(plotA)*r;
     const alpha=0.5+0.5*(1-s.dist/LIDAR_RANGE);
-    ctx.fillStyle=`rgba(6,182,212,${alpha})`;
+    ctx.fillStyle=`rgba(111,181,154,${alpha})`;
     ctx.beginPath();
     ctx.arc(px,py,2.5,0,Math.PI*2);
     ctx.fill();
   }
 
   // Center dot (robot)
-  ctx.fillStyle='rgba(239,68,68,0.9)';
+  ctx.fillStyle='rgba(224,122,122,0.9)';
   ctx.beginPath();
   ctx.arc(cx,cy,4,0,Math.PI*2);
   ctx.fill();
   // Direction indicator
-  ctx.strokeStyle='rgba(239,68,68,0.6)';
+  ctx.strokeStyle='rgba(224,122,122,0.6)';
   ctx.lineWidth=1.5;
   ctx.beginPath();
   ctx.moveTo(cx,cy);
@@ -1366,7 +1372,7 @@ function niceMax(v){
 
 function drawChart(ctx,W,H,id,cfg){
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#0a0e1a';
+  ctx.fillStyle='#07120E';
   ctx.fillRect(0,0,W,H);
   const pad={l:52,r:14,t:12,b:36};
   const pw=Math.max(10,W-pad.l-pad.r), ph=Math.max(10,H-pad.t-pad.b);
@@ -1384,24 +1390,24 @@ function drawChart(ctx,W,H,id,cfg){
   ctx.textAlign='right';ctx.textBaseline='middle';
   for(let i=0;i<=4;i++){
     const y=pad.t+ph-ph*i/4;
-    ctx.strokeStyle='rgba(30,41,59,0.85)';
+    ctx.strokeStyle='rgba(46,52,56,0.85)';
     ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();
-    ctx.fillStyle='rgba(148,163,184,0.85)';
+    ctx.fillStyle='rgba(140,145,150,0.85)';
     ctx.fillText((ymax*i/4).toFixed(cfg.yDec),pad.l-7,y);
   }
   // axes
-  ctx.strokeStyle='rgba(51,65,85,1)';
+  ctx.strokeStyle='rgba(58,64,68,1)';
   ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ph);ctx.lineTo(pad.l+pw,pad.t+ph);ctx.stroke();
   // x ticks
   ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.fillStyle='rgba(148,163,184,0.85)';
+  ctx.fillStyle='rgba(140,145,150,0.85)';
   for(let i=0;i<=4;i++){
     const x=pad.l+pw*i/4;
     ctx.fillText((t0+(t1-t0)*i/4).toFixed(0),x,pad.t+ph+6);
   }
   // axis labels
-  ctx.fillStyle='rgba(148,163,184,0.95)';
+  ctx.fillStyle='rgba(140,145,150,0.95)';
   ctx.fillText(cfg.xLabel,pad.l+pw/2,pad.t+ph+20);
   ctx.save();
   ctx.translate(12,pad.t+ph/2);
@@ -1423,7 +1429,7 @@ function drawChart(ctx,W,H,id,cfg){
       ctx.stroke();
     }
   }else{
-    ctx.fillStyle='rgba(148,163,184,0.55)';
+    ctx.fillStyle='rgba(140,145,150,0.55)';
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('drive with WASD to record samples',pad.l+pw/2,pad.t+ph/2);
   }

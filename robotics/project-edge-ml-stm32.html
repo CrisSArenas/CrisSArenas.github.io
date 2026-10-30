@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edge ML Inference on STM32 | Cristian Arenas</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
+    <meta name="theme-color" content="#07120E">
 <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .project-detail {
-            padding-top: 80px;
+            padding-top: 56px;
             min-height: 100vh;
             background: var(--dark-bg);
         }
@@ -210,18 +209,16 @@
         <div class="project-hero">
             <div class="container">
                 <a href="/robotics-embedded.html" class="back-button">
-                    <i class="fas fa-arrow-left"></i> Back to Projects
+                    &larr; Back to robotics and embedded systems
                 </a>
 
                 <h1>Edge ML Inference on STM32</h1>
 
                 <div class="project-meta">
                     <div class="meta-item">
-                        <i class="fas fa-calendar"></i>
                         <span>2025 - 2026</span>
                     </div>
                     <div class="meta-item">
-                        <i class="fas fa-microchip"></i>
                         <span>Embedded ML</span>
                     </div>
                 </div>
@@ -272,42 +269,7 @@
             <!-- Architecture -->
             <section class="content-section">
                 <h2>System Architecture</h2>
-                <div class="architecture-diagram">
-                    <pre>
-    ┌──────────────────────────────────────────────────┐
-    │               STM32H7 (Cortex-M7)                │
-    │            480 MHz, 512KB SRAM, 2MB Flash         │
-    │                                                  │
-    │  ┌──────────┐      ┌─────────────────────────┐   │
-    │  │  OV7670  │─DCMI→│  Frame Buffer (DMA)     │   │
-    │  │  Camera  │      │  160x120 RGB565          │   │
-    │  │ (8-bit)  │      │  ~38KB per frame         │   │
-    │  └──────────┘      └──────────┬──────────────┘   │
-    │                               │                  │
-    │                    ┌──────────▼──────────────┐    │
-    │                    │   Image Preprocessing   │    │
-    │                    │  Resize → Grayscale →   │    │
-    │                    │  Normalize to INT8      │    │
-    │                    └──────────┬──────────────┘    │
-    │                               │                  │
-    │                    ┌──────────▼──────────────┐    │
-    │                    │   TF Lite Micro Engine  │    │
-    │                    │   INT8 Quantized CNN    │    │
-    │                    │   ~120KB model + arena  │    │
-    │                    └──────────┬──────────────┘    │
-    │                               │                  │
-    │                    ┌──────────▼──────────────┐    │
-    │                    │   Result Processing     │    │
-    │                    │   argmax → label lookup  │    │
-    │                    └──────────┬──────────────┘    │
-    │                               │                  │
-    │  ┌────────────┐    ┌──────────▼──────────────┐   │
-    │  │ SPI TFT   │←SPI│   Display Driver        │   │
-    │  │ Display   │    │   (bare-metal SPI TX)    │   │
-    │  └────────────┘    └─────────────────────────┘   │
-    └──────────────────────────────────────────────────┘
-                    </pre>
-                </div>
+                <figure class="feat-art rb-diagram"><svg class="art" viewBox="0 0 640 520" role="img"><title>Data path on the STM32H743: camera frames move by DMA into a frame buffer, are preprocessed, classified by the INT8 model in TensorFlow Lite Micro, and drawn on an SPI display</title><rect class="frame" x="16" y="16" width="608" height="488" rx="10"/><text class="tx-m" x="30" y="36">STM32H743 · Cortex-M7 · 480 MHz · 512 KB SRAM · 2 MB flash</text><rect class="box" x="40" y="52" width="170" height="58" rx="7"/><text class="tx-t" x="125.0" y="78.0" text-anchor="middle">OV7670 camera</text><text class="tx-m" x="125.0" y="94.0" text-anchor="middle">8-bit parallel</text><rect class="box" x="300" y="52" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="78.0" text-anchor="middle">Frame buffer</text><text class="tx-m" x="442.0" y="94.0" text-anchor="middle">160×120 RGB565 · ~38 KB, DMA</text><rect class="box" x="300" y="152" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="178.0" text-anchor="middle">Preprocessing</text><text class="tx-m" x="442.0" y="194.0" text-anchor="middle">resize → grayscale → INT8</text><rect class="box key" x="300" y="252" width="284" height="58" rx="7"/><text class="tx-k" x="442.0" y="278.0" text-anchor="middle">TF Lite Micro engine</text><text class="tx-m" x="442.0" y="294.0" text-anchor="middle">INT8 CNN · ~120 KB model + arena</text><rect class="box" x="300" y="352" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="378.0" text-anchor="middle">Result processing</text><text class="tx-m" x="442.0" y="394.0" text-anchor="middle">argmax → label</text><rect class="box" x="300" y="432" width="284" height="52" rx="7"/><text class="tx-t" x="442.0" y="455.0" text-anchor="middle">Display driver</text><text class="tx-m" x="442.0" y="471.0" text-anchor="middle">bare-metal SPI TX</text><rect class="box" x="40" y="432" width="170" height="52" rx="7"/><text class="tx-t" x="125.0" y="455.0" text-anchor="middle">SPI TFT display</text><text class="tx-m" x="125.0" y="471.0" text-anchor="middle">1.8 in · ST7735</text><path class="flow g" d="M210 81 L300 81"/><path class="ah g" d="M300 81L292 76.5V85.5Z"/><text class="tx-g" x="255" y="72" text-anchor="middle">DCMI</text><path class="flow g" d="M442 110 L442 152"/><path class="ah g" d="M442 152L437.5 144H446.5Z"/><path class="flow g" d="M442 210 L442 252"/><path class="ah g" d="M442 252L437.5 244H446.5Z"/><path class="flow g" d="M442 310 L442 352"/><path class="ah g" d="M442 352L437.5 344H446.5Z"/><path class="flow g" d="M442 410 L442 432"/><path class="ah g" d="M442 432L437.5 424H446.5Z"/><path class="flow g" d="M300 459 L210 459"/><path class="ah g" d="M210 459L218 454.5V463.5Z"/><text class="tx-g" x="255" y="450" text-anchor="middle">SPI</text></svg></figure>
             </section>
 
             <!-- Hardware Layer -->
@@ -422,32 +384,7 @@
                 <h2>Memory Management</h2>
 
                 <h3>SRAM Layout</h3>
-                <div class="architecture-diagram">
-                    <pre>
-    512KB SRAM Memory Map (STM32H743)
-    ┌────────────────────────────────┐ 0x24080000
-    │  Stack (4KB)                   │
-    ├────────────────────────────────┤
-    │  Heap / globals (16KB)         │
-    ├────────────────────────────────┤
-    │  Firmware .bss + .data (20KB)  │
-    ├────────────────────────────────┤
-    │  TFLite Tensor Arena (80KB)    │
-    ├────────────────────────────────┤
-    │  Model weights (120KB)         │
-    ├────────────────────────────────┤
-    │  Frame Buffer B (38KB)         │
-    ├────────────────────────────────┤
-    │  Frame Buffer A (38KB)         │
-    ├────────────────────────────────┤
-    │  Preprocessed buffer (2.3KB)   │
-    ├────────────────────────────────┤
-    │  Display TX buffer (38KB)      │
-    ├────────────────────────────────┤
-    │  Reserved / alignment (155KB)  │
-    └────────────────────────────────┘ 0x24000000
-                    </pre>
-                </div>
+                <figure class="feat-art rb-diagram"><svg class="art" viewBox="0 0 640 386" role="img"><title>Static SRAM map of the STM32H743, 512 KB: stack, heap, firmware data, the TensorFlow Lite tensor arena, model weights, two frame buffers, a preprocessed buffer, a display buffer and reserved space</title><text class="tx-m" x="20" y="24" text-anchor="start">512 KB SRAM · all buffers static, placed by the linker</text><text class="tx-m" x="430" y="38" text-anchor="start">0x24080000</text><rect class="box" x="20" y="46" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="65" text-anchor="start">Stack</text><text class="tx-m" x="406" y="65" text-anchor="end">4 KB</text><rect class="bar" x="440" y="55" width="4.4" height="12" rx="2"/><rect class="box" x="20" y="76" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="95" text-anchor="start">Heap / globals</text><text class="tx-m" x="406" y="95" text-anchor="end">16 KB</text><rect class="bar" x="440" y="85" width="17.5" height="12" rx="2"/><rect class="box" x="20" y="106" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="125" text-anchor="start">Firmware .bss + .data</text><text class="tx-m" x="406" y="125" text-anchor="end">20 KB</text><rect class="bar" x="440" y="115" width="21.9" height="12" rx="2"/><rect class="box key" x="20" y="136" width="400" height="30" rx="0"/><text class="tx-k" x="34" y="155" text-anchor="start">TFLite tensor arena</text><text class="tx-m" x="406" y="155" text-anchor="end">80 KB</text><rect class="bar-k" x="440" y="145" width="87.7" height="12" rx="2"/><rect class="box key" x="20" y="166" width="400" height="30" rx="0"/><text class="tx-k" x="34" y="185" text-anchor="start">Model weights</text><text class="tx-m" x="406" y="185" text-anchor="end">120 KB</text><rect class="bar-k" x="440" y="175" width="131.6" height="12" rx="2"/><rect class="box" x="20" y="196" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="215" text-anchor="start">Frame buffer B</text><text class="tx-m" x="406" y="215" text-anchor="end">38 KB</text><rect class="bar-g" x="440" y="205" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="226" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="245" text-anchor="start">Frame buffer A</text><text class="tx-m" x="406" y="245" text-anchor="end">38 KB</text><rect class="bar-g" x="440" y="235" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="256" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="275" text-anchor="start">Preprocessed buffer</text><text class="tx-m" x="406" y="275" text-anchor="end">2.3 KB</text><rect class="bar" x="440" y="265" width="2.5" height="12" rx="2"/><rect class="box" x="20" y="286" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="305" text-anchor="start">Display TX buffer</text><text class="tx-m" x="406" y="305" text-anchor="end">38 KB</text><rect class="bar" x="440" y="295" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="316" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="335" text-anchor="start">Reserved / alignment</text><text class="tx-m" x="406" y="335" text-anchor="end">155 KB</text><rect class="bar" x="440" y="325" width="170.0" height="12" rx="2"/><text class="tx-m" x="430" y="362" text-anchor="start">0x24000000</text><text class="tx-m" x="20" y="376" text-anchor="start">bar length is size; gold is the model, green the camera buffers</text></svg></figure>
                 <p>
                     All buffers are statically allocated at compile time with explicit linker section placement.
                     No dynamic memory allocation (malloc/free) is used at runtime, eliminating fragmentation
@@ -481,29 +418,21 @@
             <section class="content-section">
                 <h2>Technologies Used</h2>
                 <div class="tech-list">
-                    <div class="tech-item">
-                        <i class="fas fa-brain"></i> TF Lite Micro
+                    <div class="tech-item"> TF Lite Micro
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-microchip"></i> STM32H7 (Cortex-M7)
+                    <div class="tech-item"> STM32H7 (Cortex-M7)
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-code"></i> Bare-Metal C
+                    <div class="tech-item"> Bare-Metal C
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-camera"></i> OV7670 (DCMI)
+                    <div class="tech-item"> OV7670 (DCMI)
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-exchange-alt"></i> DMA Transfers
+                    <div class="tech-item"> DMA Transfers
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-desktop"></i> SPI Display
+                    <div class="tech-item"> SPI Display
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-compress-arrows-alt"></i> INT8 Quantization
+                    <div class="tech-item"> INT8 Quantization
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-tools"></i> GDB / Make
+                    <div class="tech-item"> GDB / Make
                     </div>
                 </div>
             </section>

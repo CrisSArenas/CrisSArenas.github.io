@@ -3,123 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robotics & Embedded Systems | Cristian Arenas</title>
+    <title>Robotics and embedded systems · Cristian Arenas</title>
     <meta name="description" content="Robotics and embedded-systems work by Cristian Arenas: ROS 2 navigation, FreeRTOS scheduling, SLAM, STM32 bare-metal I/O and TinyML quantization, each as an interactive in-browser simulator.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
+    <meta name="theme-color" content="#07120E">
+    <link rel="canonical" href="https://crissarenas.github.io/robotics-embedded.html">
+    <meta property="og:title" content="Robotics and embedded systems · Cristian Arenas">
+    <meta property="og:description" content="Robotics and embedded-systems work by Cristian Arenas: ROS 2 navigation, FreeRTOS scheduling, SLAM, STM32 bare-metal I/O and TinyML quantization, each as an interactive in-browser simulator.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .robotics-hero {
-            padding: 140px 0 60px;
-            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .robotics-hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                linear-gradient(90deg, color-mix(in srgb, var(--accent) 3%, transparent) 1px, transparent 1px),
-                linear-gradient(color-mix(in srgb, var(--accent) 3%, transparent) 1px, transparent 1px);
-            background-size: 50px 50px;
-            
-            z-index: 0;
-        }
-
-        .robotics-hero .container {
-            position: relative;
-            z-index: 1;
-        }
-
-        .robotics-hero .section-subtitle {
-            color: var(--text-secondary);
-            font-size: 1.15rem;
-            max-width: 750px;
-            line-height: 1.8;
-            margin-bottom: 2rem;
-        }
-
-        .robotics-hero .section-subtitle strong {
-            color: var(--primary-cyan);
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.95rem;
-            margin-bottom: 2rem;
-            transition: all 0.3s ease;
-        }
-
-        .back-link:hover {
-            color: var(--primary-cyan);
-        }
-
-        .back-link:hover i {
-            transform: translateX(-4px);
-        }
-
-        .back-link i {
-            transition: transform 0.3s ease;
-        }
-
-        .category-label {
-            display: inline-block;
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            color: var(--primary-green);
-            margin-bottom: 0.5rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .category-section {
-            padding: 60px 0;
-        }
-
-        .category-section:nth-child(odd) {
-            background: var(--dark-bg);
-        }
-
-        .category-section:nth-child(even) {
-            background: var(--darker-bg);
-        }
-
-        .category-heading {
-            font-size: 1.6rem;
-            color: var(--text-primary);
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .category-heading i {
-            color: var(--primary-cyan);
-        }
-
-        .category-heading::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--border-color), transparent);
-            margin-left: 1rem;
-        }
-
-        .project-card .project-description {
-            display: block;
-        }
+        .rb-hero { padding-top: 120px; }
+        .rb-eyebrow { margin: 28px 0 10px; font: 600 .78rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-text); }
+        .rb-hero h1 { margin: 0 0 16px; font-size: clamp(2.2rem, 5vw, 3.4rem); }
+        .rb-lede { max-width: 68ch; margin: 0; font-size: 1.12rem; line-height: 1.7; color: var(--muted); }
+        .rb-lede strong { font-weight: 500; color: var(--wc-g); }
+        .rb-stats { list-style: none; display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0 0; padding: 0; }
+        .rb-stats li { display: flex; align-items: baseline; gap: 10px; padding: 12px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--glass-card); }
+        .rb-stats .v { font: 600 1.5rem/1 var(--sans); color: var(--wc-num); font-variant-numeric: tabular-nums; }
+        .rb-stats .l { font-size: .9rem; color: var(--muted); }
+        .rb-grid { gap: 20px; }
+        .rb-card, a.rb-card { display: flex; flex-direction: column; gap: 10px; padding: 26px; border-radius: 18px; color: var(--text); text-decoration: none; }
+        a.rb-card:hover { transform: translateY(-2px); border-color: var(--wc-hover); }
+        a.rb-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+        .rb-kind { font: 600 .74rem/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--gold-text); }
+        .rb-card h3 { margin: 0; font-size: 1.15rem; color: var(--heading); transition: color .2s ease; }
+        a.rb-card:hover h3 { color: var(--ui-accent); }
+        .rb-card p { margin: 0; font-size: .95rem; line-height: 1.6; color: var(--text); }
+        .rb-chips { margin: 4px 0 0; }
+        .rb-chips li { font-size: .78rem; }
+        .rb-card .wc-link { margin-top: auto; padding-top: 6px; }
+        a.rb-card:hover .wc-link span { transform: translateX(5px); }
+        @media (prefers-reduced-motion: reduce) { a.rb-card:hover { transform: none; } }
+        @media (max-width: 680px) { .rb-hero { padding-top: 96px; } .rb-card { padding: 22px; } }
     </style>
 <script src="/assets/js/site.js"></script>
 </head>
@@ -144,263 +63,101 @@
   </div>
 </nav>
 <!-- site-nav:end -->
-<div id="main" tabindex="-1"></div>
+<main id="main">
+<section class="section rb-hero">
+  <div class="container">
+    <a class="back-link" href="/">&larr; Back to the homepage</a>
+    <p class="rb-eyebrow">Hardware and software</p>
+    <h1>Robotics and embedded systems</h1>
+    <p class="rb-lede">Projects across the embedded stack: <strong>RTOS kernel scheduling</strong>, <strong>autonomous navigation with ROS 2</strong>, <strong>SLAM and sensor fusion</strong>, <strong>edge ML on microcontrollers</strong> and <strong>bare-metal register-level I/O</strong>. Each simulator runs in the browser with no setup.</p>
+    <ul class="rb-stats" aria-label="At a glance">
+      <li><span class="v">5</span><span class="l">Interactive simulators</span></li>
+      <li><span class="v">3</span><span class="l">Technical write-ups</span></li>
+      <li><span class="v">0</span><span class="l">Installs needed</span></li>
+    </ul>
+  </div>
+</section>
 
-    <!-- Hero / Header -->
-    <section class="robotics-hero">
-        <div class="container">
-            <a href="/" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to Portfolio
-            </a>
-            <span class="category-label">// hardware + software</span>
-            <h1 class="section-title" style="margin-bottom: 1.5rem;">
-                <span class="title-number"><i class="fas fa-microchip"></i></span> Robotics & Embedded Systems
-            </h1>
-            <p class="section-subtitle">
-                Projects across the full embedded stack: <strong>RTOS kernel scheduling</strong>,
-                <strong>autonomous navigation with ROS 2</strong>, <strong>SLAM and sensor fusion</strong>,
-                <strong>edge ML deployment on MCUs</strong>, and <strong>bare-metal register-level I/O</strong>.
-                Each project is a working interactive simulator you can run in the browser, no setup required.
-            </p>
-        </div>
-    </section>
+<section class="section alt" id="simulators">
+  <div class="container">
+    <div class="section-head"><h2>Interactive simulators</h2><p>Each one models the real algorithm and states what it simplifies.</p></div>
+    <div class="grid-3 rb-grid">
+      <a class="card rb-card" href="/robotics/ROS2_Nav2_Simulator.html">
+        <span class="rb-kind">Autonomous Navigation</span>
+        <h3>ROS 2 Nav2 Simulator</h3>
+        <p>Full-stack ROS 2 Navigation Stack (Nav2) simulator implementing A* path planning, costmap inflation layers, behavior tree execution, and AMCL-based localization. Demonstrates the complete autonomous navigation pipeline from goal pose to velocity commands with real-time obstacle handling and recovery behaviors.</p>
+        <ul class="chips rb-chips"><li>ROS 2</li><li>Nav2</li><li>A* Path Planning</li><li>Behavior Trees</li></ul>
+        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
+      </a>
+      <a class="card rb-card" href="/robotics/freertos-simulator.html">
+        <span class="rb-kind">Real-Time Operating Systems</span>
+        <h3>FreeRTOS Kernel Simulator</h3>
+        <p>Implements the FreeRTOS fixed-priority preemptive scheduler with round-robin time slicing, a configurable tick rate, and running, ready, blocked and suspended state transitions. Presets walk through unbounded priority inversion, the mutex priority inheritance that fixes it, and an overloaded task set that misses deadlines, with CPU utilization shown against the rate-monotonic bound and a Gantt view that matches the kernel log line for line.</p>
+        <ul class="chips rb-chips"><li>FreeRTOS</li><li>Preemptive Scheduling</li><li>Context Switching</li><li>RTOS Internals</li></ul>
+        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
+      </a>
+      <a class="card rb-card" href="/robotics/slam-visualizer.html">
+        <span class="rb-kind">Perception & Mapping</span>
+        <h3>SLAM Mapping Simulator</h3>
+        <p>Simultaneous localization and mapping driven by a simulated 360-beam LiDAR at 10 Hz with realistic range and bearing noise. Builds a log-odds occupancy grid at 5 cm resolution from a 300-particle Monte Carlo localization estimate, so you can drive the robot and watch the filter hold its track while raw odometry drifts away. Live position error and map coverage are charted. No loop closure or pose-graph back end, and the page is explicit about what that costs.</p>
+        <ul class="chips rb-chips"><li>SLAM</li><li>LiDAR Simulation</li><li>Monte Carlo Localization</li><li>Occupancy Grids</li></ul>
+        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
+      </a>
+      <a class="card rb-card" href="/robotics/stm32-io-lab.html">
+        <span class="rb-kind">Bare-Metal Embedded</span>
+        <h3>STM32 Memory-Mapped I/O Lab</h3>
+        <p>Register-level STM32 peripheral control without HAL abstractions. Directly manipulate GPIO MODER/ODR/IDR registers, configure alternate function mappings, set up interrupt vectors via NVIC, and control USART/SPI peripherals through raw memory-mapped addresses on the ARM Cortex-M bus.</p>
+        <ul class="chips rb-chips"><li>STM32</li><li>ARM Cortex-M</li><li>Register-Level I/O</li><li>Bare Metal C</li></ul>
+        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
+      </a>
+      <a class="card rb-card" href="/robotics/tinyml-quantization-lab.html">
+        <span class="rb-kind">Edge ML Deployment</span>
+        <h3>TinyML Model Quantization Lab</h3>
+        <p>Neural network compression pipeline for microcontroller targets. Apply post-training INT8/INT4 quantization, analyze per-layer accuracy degradation, compare FP32 vs quantized inference latency, and validate that models fit within SRAM/Flash constraints of Cortex-M class devices before deployment.</p>
+        <ul class="chips rb-chips"><li>TinyML</li><li>INT8 Quantization</li><li>Model Compression</li><li>MCU Deployment</li></ul>
+        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
+      </a>
+      <a class="card rb-card" href="/terminal-heist.html">
+        <span class="rb-kind">Systems & CLI</span>
+        <h3>Terminal Heist</h3>
+        <p>Interactive terminal emulator showcasing Linux shell mechanics, process navigation, and systems-level problem solving. Built from scratch to simulate realistic CLI workflows including file system traversal, permission handling, and command parsing within a fully event-driven architecture.</p>
+        <ul class="chips rb-chips"><li>Linux CLI</li><li>Systems Design</li><li>Shell Emulation</li><li>Event Architecture</li></ul>
+        <span class="wc-link">Open the game <span aria-hidden="true">&rarr;</span></span>
+      </a>
+    </div>
+  </div>
+</section>
 
-    <!-- Interactive Demos & Simulators -->
-    <section class="category-section">
-        <div class="container">
-            <h2 class="category-heading">
-                <i class="fas fa-play-circle"></i> Interactive Demos & Simulators
-            </h2>
-            <div class="projects-grid">
+<section class="section" id="projects">
+  <div class="container">
+    <div class="section-head"><h2>Technical write-ups</h2><p>Architecture, design choices and results for three hardware builds.</p></div>
+    <div class="grid-3 rb-grid">
+      <a class="card rb-card" href="/robotics/project-autonomous-robot.html">
+        <span class="rb-kind">Full-Stack Robotics</span>
+        <h3>Autonomous Mobile Robot</h3>
+        <p>Differential-drive robot built from scratch on a Raspberry Pi 4 running ROS 2 Humble. C++ nodes for an RPLiDAR A1, a BNO055 IMU and encoder-fed motor control feed Cartographer SLAM, and Nav2 plans and drives with live obstacle avoidance.</p>
+        <ul class="chips rb-chips"><li>ROS 2</li><li>Nav2</li><li>Cartographer</li><li>RPLiDAR A1</li><li>BNO055</li></ul>
+        <span class="wc-link">Read the technical write-up <span aria-hidden="true">&rarr;</span></span>
+      </a>
+      <a class="card rb-card" href="/robotics/project-edge-ml-stm32.html">
+        <span class="rb-kind">On-Device AI</span>
+        <h3>Edge ML Inference on STM32</h3>
+        <p>INT8 image classifier on an STM32H743 (Cortex-M7, 480 MHz) with TensorFlow Lite Micro. Bare-metal C drivers capture OV7670 frames over DCMI with double-buffered DMA and draw results on an SPI display, all inside 512 KB of SRAM.</p>
+        <ul class="chips rb-chips"><li>TF Lite Micro</li><li>STM32H7</li><li>DCMI + DMA</li><li>INT8 quantization</li><li>Bare-metal C</li></ul>
+        <span class="wc-link">Read the technical write-up <span aria-hidden="true">&rarr;</span></span>
+      </a>
+      <a class="card rb-card" href="/robotics/project-sensor-fusion-controller.html">
+        <span class="rb-kind">Control Systems</span>
+        <h3>Real-Time Sensor Fusion & Balance Controller</h3>
+        <p>Self-balancing platform on an ESP32 under FreeRTOS. Complementary and Kalman filters fuse MPU-6050 gyro and accelerometer data, and a cascaded PID controller runs the angle loop at 100 Hz and the position loop at 20 Hz from ultrasonic distance.</p>
+        <ul class="chips rb-chips"><li>ESP32</li><li>FreeRTOS</li><li>Kalman filter</li><li>Cascaded PID</li><li>MPU-6050</li></ul>
+        <span class="wc-link">Read the technical write-up <span aria-hidden="true">&rarr;</span></span>
+      </a>
+    </div>
+  </div>
+</section>
+</main>
 
-                <!-- ROS 2 Nav2 Simulator -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/ROS2_Nav2_Simulator.html'">
-                    <div class="project-header">
-                        <h3>ROS 2 Nav2 Simulator</h3>
-                        <span class="project-type">Autonomous Navigation</span>
-                    </div>
-                    <p class="project-description">
-                        Full-stack ROS 2 Navigation Stack (Nav2) simulator implementing A* path planning,
-                        costmap inflation layers, behavior tree execution, and AMCL-based localization.
-                        Demonstrates the complete autonomous navigation pipeline from goal pose to
-                        velocity commands with real-time obstacle handling and recovery behaviors.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">ROS 2</span>
-                        <span class="tag">Nav2</span>
-                        <span class="tag">A* Path Planning</span>
-                        <span class="tag">Behavior Trees</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-play"></i> Launch Simulator
-                    </div>
-                </div>
-
-                <!-- FreeRTOS Simulator -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/freertos-simulator.html'">
-                    <div class="project-header">
-                        <h3>FreeRTOS Kernel Simulator</h3>
-                        <span class="project-type">Real-Time Operating Systems</span>
-                    </div>
-                    <p class="project-description">
-                        Implements the FreeRTOS fixed-priority preemptive scheduler with round-robin time
-                        slicing, a configurable tick rate, and running, ready, blocked and suspended state
-                        transitions. Presets walk through unbounded priority inversion, the mutex priority
-                        inheritance that fixes it, and an overloaded task set that misses deadlines, with
-                        CPU utilization shown against the rate-monotonic bound and a Gantt view that matches
-                        the kernel log line for line.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">FreeRTOS</span>
-                        <span class="tag">Preemptive Scheduling</span>
-                        <span class="tag">Context Switching</span>
-                        <span class="tag">RTOS Internals</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-play"></i> Launch Simulator
-                    </div>
-                </div>
-
-                <!-- SLAM Simulator -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/slam-visualizer.html'">
-                    <div class="project-header">
-                        <h3>SLAM Mapping Simulator</h3>
-                        <span class="project-type">Perception & Mapping</span>
-                    </div>
-                    <p class="project-description">
-                        Simultaneous localization and mapping driven by a simulated 360-beam LiDAR at
-                        10 Hz with realistic range and bearing noise. Builds a log-odds occupancy grid at
-                        5 cm resolution from a 300-particle Monte Carlo localization estimate, so you can
-                        drive the robot and watch the filter hold its track while raw odometry drifts away.
-                        Live position error and map coverage are charted. No loop closure or pose-graph
-                        back end, and the page is explicit about what that costs.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">SLAM</span>
-                        <span class="tag">LiDAR Simulation</span>
-                        <span class="tag">Monte Carlo Localization</span>
-                        <span class="tag">Occupancy Grids</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-play"></i> Launch Simulator
-                    </div>
-                </div>
-
-                <!-- STM32 I/O Lab -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/stm32-io-lab.html'">
-                    <div class="project-header">
-                        <h3>STM32 Memory-Mapped I/O Lab</h3>
-                        <span class="project-type">Bare-Metal Embedded</span>
-                    </div>
-                    <p class="project-description">
-                        Register-level STM32 peripheral control without HAL abstractions. Directly manipulate
-                        GPIO MODER/ODR/IDR registers, configure alternate function mappings, set up
-                        interrupt vectors via NVIC, and control USART/SPI peripherals through raw
-                        memory-mapped addresses on the ARM Cortex-M bus.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">STM32</span>
-                        <span class="tag">ARM Cortex-M</span>
-                        <span class="tag">Register-Level I/O</span>
-                        <span class="tag">Bare Metal C</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-play"></i> Launch Lab
-                    </div>
-                </div>
-
-                <!-- TinyML Quantization Lab -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/tinyml-quantization-lab.html'">
-                    <div class="project-header">
-                        <h3>TinyML Model Quantization Lab</h3>
-                        <span class="project-type">Edge ML Deployment</span>
-                    </div>
-                    <p class="project-description">
-                        Neural network compression pipeline for microcontroller targets. Apply post-training
-                        INT8/INT4 quantization, analyze per-layer accuracy degradation, compare FP32 vs
-                        quantized inference latency, and validate that models fit within SRAM/Flash
-                        constraints of Cortex-M class devices before deployment.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">TinyML</span>
-                        <span class="tag">INT8 Quantization</span>
-                        <span class="tag">Model Compression</span>
-                        <span class="tag">MCU Deployment</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-play"></i> Launch Lab
-                    </div>
-                </div>
-
-                <!-- Terminal Heist -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/terminal-heist.html'">
-                    <div class="project-header">
-                        <h3>Terminal Heist</h3>
-                        <span class="project-type">Systems & CLI</span>
-                    </div>
-                    <p class="project-description">
-                        Interactive terminal emulator showcasing Linux shell mechanics, process navigation,
-                        and systems-level problem solving. Built from scratch to simulate realistic CLI
-                        workflows including file system traversal, permission handling, and command parsing
-                        within a fully event-driven architecture.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">Linux CLI</span>
-                        <span class="tag">Systems Design</span>
-                        <span class="tag">Shell Emulation</span>
-                        <span class="tag">Event Architecture</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-terminal"></i> Launch Terminal
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- Project Deep-Dives -->
-    <section class="category-section">
-        <div class="container">
-            <h2 class="category-heading">
-                <i class="fas fa-file-code"></i> Technical Project Deep-Dives
-            </h2>
-            <div class="projects-grid">
-
-                <!-- Autonomous Mobile Robot -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/project-autonomous-robot.html'">
-                    <div class="project-header">
-                        <h3>Autonomous Mobile Robot</h3>
-                        <span class="project-type">Full-Stack Robotics</span>
-                    </div>
-                    <p class="project-description">
-                        Autonomous mobile robot architecture: ROS 2 node graph design, LiDAR-based
-                        obstacle detection with costmap integration, Dijkstra/A* global planning, DWA local
-                        planner for dynamic obstacle avoidance, and odometry fusion from wheel encoders
-                        and IMU for reliable state estimation.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">ROS 2</span>
-                        <span class="tag">LiDAR</span>
-                        <span class="tag">DWA Planner</span>
-                        <span class="tag">Odometry Fusion</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-arrow-right"></i> View Technical Details
-                    </div>
-                </div>
-
-                <!-- Edge ML on STM32 -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/project-edge-ml-stm32.html'">
-                    <div class="project-header">
-                        <h3>Edge ML Inference on STM32</h3>
-                        <span class="project-type">On-Device AI</span>
-                    </div>
-                    <p class="project-description">
-                        TensorFlow Lite Micro deployment on STM32F4 (Cortex-M4F, 1MB Flash, 192KB SRAM).
-                        Full pipeline from model training through post-training quantization, CMSIS-NN
-                        operator fusion, memory arena sizing, and deterministic inference at 168MHz
-                        with sub-millisecond latency for real-time classification tasks.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">TFLite Micro</span>
-                        <span class="tag">CMSIS-NN</span>
-                        <span class="tag">STM32F4</span>
-                        <span class="tag">On-Device Inference</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-arrow-right"></i> View Technical Details
-                    </div>
-                </div>
-
-                <!-- Sensor Fusion & Balance Controller -->
-                <div class="project-card clickable-card" onclick="window.location.href='robotics/project-sensor-fusion-controller.html'">
-                    <div class="project-header">
-                        <h3>Real-Time Sensor Fusion & Balance Controller</h3>
-                        <span class="project-type">Control Systems</span>
-                    </div>
-                    <p class="project-description">
-                        Extended Kalman Filter fusing 6-axis IMU (accelerometer + gyroscope) data at 1kHz
-                        for real-time attitude estimation. Drives a cascaded PID controller with
-                        sub-10ms deterministic loop timing on bare-metal firmware, achieving stable
-                        inverted pendulum balancing with tunable gain scheduling and anti-windup logic.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">Extended Kalman Filter</span>
-                        <span class="tag">PID Control</span>
-                        <span class="tag">6-Axis IMU</span>
-                        <span class="tag">Real-Time Firmware</span>
-                    </div>
-                    <div class="project-link">
-                        <i class="fas fa-arrow-right"></i> View Technical Details
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
     <!-- site-footer:start -->
 <footer class="site-footer">
   <div class="container">

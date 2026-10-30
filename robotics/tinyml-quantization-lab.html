@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
+<meta name="theme-color" content="#07120E">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
@@ -84,7 +87,7 @@ a{color:var(--cyan);text-decoration:none}
 .model-select:focus{outline:none;border-color:var(--cyan)}
 .action-btn{padding:7px 18px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;font-family:inherit;display:flex;align-items:center;gap:6px}
 .action-btn.primary{background:var(--cyan);color:#000}
-.action-btn.primary:hover{background:#00e5ff;box-shadow:none}
+.action-btn.primary:hover{background:#6FB59A;box-shadow:none}
 .action-btn.secondary{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
 .action-btn.secondary:hover{border-color:var(--green);color:var(--green)}
 .action-btn.run{background:var(--green);color:#000}
@@ -105,6 +108,8 @@ a{color:var(--cyan);text-decoration:none}
 .panel-head select:focus{outline:none;border-color:var(--cyan)}
 .panel-body{padding:16px 18px;position:relative}
 canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+/* fixed drawing heights; without them the canvas takes its height from the default 300px width ratio */
+#heatmapCanvas{height:340px}#tradeoffCanvas{height:300px}#histCanvas{height:230px}
 
 /* WEIGHT STATS */
 .weight-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin-top:12px}
@@ -221,7 +226,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <div id="main" tabindex="-1"></div>
 <div class="demo-bar"><div class="container"><a class="back-link" href="/robotics-embedded.html">&larr; Back to Robotics</a><h1 class="demo-title"><i class="fas fa-compress"></i> TinyML Model Quantization Lab</h1><div class="demo-actions"><span class="d-pill cyan" id="quantPill">FP32</span>
     <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
-    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><i class="fas fa-question"></i></button></div></div></div>
+    <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><span class="ico" aria-hidden="true">?</span></button></div></div></div>
 <div class="demo-status">
   <span id="statusBar">initialising&hellip;</span>
   <span><b>Synthetic weights</b> &middot; deterministic seed &middot; CMSIS-NN MAC-throughput model &middot; not hardware-validated</span>
@@ -234,7 +239,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="d-help-modal">
     <div class="d-help-head">
       <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: TinyML Model Quantization Lab</h2>
-      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><span class="ico" aria-hidden="true">&times;</span></button>
     </div>
     <div class="d-help-body">
       <div class="d-help-section">
@@ -657,8 +662,8 @@ const ARENA_SCRATCH_F = 0.08;    // CMSIS-NN im2col / buffer allowance
 var CSSV = getComputedStyle(document.documentElement);
 function cv(nm, fb){ var v = CSSV.getPropertyValue(nm); v = v ? v.trim() : ''; return v || fb; }
 const COL = {
-  bg:cv('--surface','#0f1629'), grid:cv('--border','#1e293b'), faint:cv('--faint','#8C9196'),
-  text:cv('--text','#f1f5f9'), muted:cv('--muted','#94a3b8'), cyan:cv('--cyan','#6B7176'),
+  bg:cv('--surface','#0E1C16'), grid:cv('--border','#2E3438'), faint:cv('--faint','#8C9196'),
+  text:cv('--text','#f1f5f9'), muted:cv('--muted','#8C9196'), cyan:cv('--cyan','#6B7176'),
   green:cv('--green','#1F6F4A'), red:cv('--red','#A3312B'), blue:cv('--blue','#B39B6E'),
   orange:cv('--orange','#C4AE84'), purple:cv('--purple','#B39B6E')
 };
@@ -890,21 +895,12 @@ function setupCanvas(canvas){
 
 // ─── HEATMAP ──────────────────────────────────────────────────────
 function weightToColor(v, mn, mx){
+  // diverging map in the site palette: gold for negative weights, graphite at zero, green for positive
   const range = Math.max(Math.abs(mn), Math.abs(mx));
-  const norm = range===0 ? 0 : v/range;
-  let r,g,b;
-  if(norm < 0){
-    const t = Math.min(1, Math.abs(norm));
-    r = Math.round(255*(1-t*0.85));
-    g = Math.round(255*(1-t*0.85));
-    b = Math.round(100 + 155*t);
-  } else {
-    const t = Math.min(1, norm);
-    r = Math.round(100 + 155*t);
-    g = Math.round(255*(1-t*0.85));
-    b = Math.round(255*(1-t*0.85));
-  }
-  return `rgb(${r},${g},${b})`;
+  const t = range===0 ? 0 : Math.max(-1, Math.min(1, v/range));
+  const mid = [58,64,68], neg = [196,174,132], pos = [111,181,154], end = t < 0 ? neg : pos, k = Math.abs(t);
+  const c = mid.map((m,i) => Math.round(m + (end[i]-m)*k));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
 
 let prevHeatWeights = null;
@@ -999,15 +995,15 @@ function drawHeatmap(timestamp){
   const barW = Math.min(220, w-80);
   const barX = (w-barW)/2;
   const grad = ctx.createLinearGradient(barX,0,barX+barW,0);
-  grad.addColorStop(0, '#B39B6E');
-  grad.addColorStop(0.5, '#ffffff');
-  grad.addColorStop(1, '#A3312B');
+  grad.addColorStop(0, '#C4AE84');
+  grad.addColorStop(0.5, '#3A4044');
+  grad.addColorStop(1, '#6FB59A');
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.roundRect(barX, barY, barW, 8, 3);
   ctx.fill();
 
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = '#8C9196';
   ctx.font = '9px Courier New, monospace';
   ctx.textAlign = 'left';
   ctx.fillText(mn.toFixed(2), barX, barY+20);
@@ -1107,7 +1103,7 @@ function drawHistogram(){
   for(let b=0;b<NB;b++){
     const x = pad.left + b*bwPx;
     const hq = hQ[b]/peak*ch;
-    if(hq > 0){ ctx.fillStyle = 'rgba(6,182,212,.55)'; ctx.fillRect(x+0.4, pad.top+ch-hq, bwPx-0.8, hq); }
+    if(hq > 0){ ctx.fillStyle = 'rgba(111,181,154,.55)'; ctx.fillRect(x+0.4, pad.top+ch-hq, bwPx-0.8, hq); }
   }
   ctx.strokeStyle = COL.muted; ctx.lineWidth = 1.2; ctx.beginPath();
   for(let b=0;b<NB;b++){
@@ -1149,7 +1145,7 @@ function drawArchitecture(){
   addArchBlock(body, {
     name: 'Input tensor',
     sub: model.inputName,
-    color: '#475569',
+    color: '#6B7176',
     right: model.inAct.toLocaleString() + ' values' + (currentQuant==='fp32' ? '' :
       ' &middot; s=' + inQ.scale.toExponential(2) + ' z=' + inQ.zp),
     rightColor: 'var(--dim)',
@@ -1267,7 +1263,7 @@ function drawTradeoffChart(){
   ctx.clearRect(0,0,w,h);
 
   // Grid lines
-  ctx.strokeStyle = 'rgba(30,41,59,.5)';
+  ctx.strokeStyle = 'rgba(46,52,56,.5)';
   ctx.lineWidth = 0.5;
   for(let i=0;i<=5;i++){
     const y = pad.top + (chartH/5)*i;
@@ -1280,7 +1276,7 @@ function drawTradeoffChart(){
   // Accuracy axis (left)
   const accMin = Math.floor(Math.min.apply(null,accData)-2);
   const accMax = Math.ceil(Math.max.apply(null,accData)+1);
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = '#8C9196';
   ctx.font = '9px Courier New, monospace';
   ctx.textAlign = 'right';
   for(let i=0;i<=5;i++){
@@ -1300,7 +1296,7 @@ function drawTradeoffChart(){
   // Size axis (right)
   const sizeMax = Math.max(1, Math.max.apply(null,sizeData)*1.15);
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = '#8C9196';
   ctx.font = '9px Courier New, monospace';
   for(let i=0;i<=5;i++){
     const val = sizeMax*(1-i/5);
@@ -1321,7 +1317,7 @@ function drawTradeoffChart(){
   levels.forEach((level,i)=>{
     const x = pad.left + barGroupW*i + barGroupW/2;
     const isActive = level===currentQuant;
-    ctx.fillStyle = isActive ? '#6B7176' : '#94a3b8';
+    ctx.fillStyle = isActive ? '#6B7176' : '#8C9196';
     ctx.font = (isActive?'bold ':'') + '11px Courier New, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(labels[i], x, h-pad.bottom+18);
@@ -1336,7 +1332,7 @@ function drawTradeoffChart(){
     const y = pad.top + chartH - barH;
     const isActive = level===currentQuant;
 
-    ctx.fillStyle = isActive ? 'rgba(6,182,212,.65)' : 'rgba(6,182,212,.25)';
+    ctx.fillStyle = isActive ? 'rgba(111,181,154,.65)' : 'rgba(111,181,154,.25)';
     ctx.beginPath();
     ctx.roundRect(x, y, barW, barH, [4,4,0,0]);
     ctx.fill();
@@ -1346,7 +1342,7 @@ function drawTradeoffChart(){
       ctx.stroke();
     }
 
-    ctx.fillStyle = isActive ? '#6B7176' : '#64748b';
+    ctx.fillStyle = isActive ? '#6B7176' : '#6B7176';
     ctx.font = (isActive?'bold ':'') + '10px Courier New, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(accData[i].toFixed(1)+'%', x+barW/2, y-6);
@@ -1377,7 +1373,7 @@ function drawTradeoffChart(){
     ctx.fill();
     if(isActive){ ctx.strokeStyle=COL.bg; ctx.lineWidth=2; ctx.stroke(); }
 
-    ctx.fillStyle = isActive ? '#1F6F4A' : '#64748b';
+    ctx.fillStyle = isActive ? '#1F6F4A' : '#6B7176';
     ctx.font = (isActive?'bold ':'') + '9px Courier New, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(sizeData[i].toFixed(1)+'KB', x, y-10);
@@ -1397,7 +1393,7 @@ function drawTradeoffChart(){
     ctx.fill();
     if(isActive){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke(); }
 
-    ctx.fillStyle = isActive ? '#C4AE84' : '#64748b';
+    ctx.fillStyle = isActive ? '#C4AE84' : '#6B7176';
     ctx.font = (isActive?'bold ':'') + '9px Courier New, monospace';
     ctx.textAlign = 'left';
     ctx.fillText(fmtMs(infData[i])+'ms', x+10, y+4);
@@ -2047,7 +2043,7 @@ function runInference(){
       const isWrongTop = (i === topIdx && topIdx !== trueClass);
       bar.className = 'pred-bar' + (i === topIdx ? ' top' : '');
       const pct = preds[i]*100;
-      const color = isWrongTop ? 'var(--red)' : i === topIdx ? 'var(--green)' : 'rgba(6,182,212,.35)';
+      const color = isWrongTop ? 'var(--red)' : i === topIdx ? 'var(--green)' : 'rgba(111,181,154,.35)';
       bar.innerHTML = '<span class="pred-label" title="'+model.classes[i]+'">'+model.classes[i]+'</span>'+
         '<div class="pred-track"><div class="pred-fill" style="width:'+pct.toFixed(1)+'%;background:'+color+'"></div></div>'+
         '<span class="pred-pct">'+pct.toFixed(1)+'%</span>';

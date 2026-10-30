@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real-Time Sensor Fusion & Balance Controller | Cristian Arenas</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
+    <meta name="theme-color" content="#07120E">
 <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .project-detail {
-            padding-top: 80px;
+            padding-top: 56px;
             min-height: 100vh;
             background: var(--dark-bg);
         }
@@ -210,18 +209,16 @@
         <div class="project-hero">
             <div class="container">
                 <a href="/robotics-embedded.html" class="back-button">
-                    <i class="fas fa-arrow-left"></i> Back to Projects
+                    &larr; Back to robotics and embedded systems
                 </a>
 
                 <h1>Real-Time Sensor Fusion & Balance Controller</h1>
 
                 <div class="project-meta">
                     <div class="meta-item">
-                        <i class="fas fa-calendar"></i>
                         <span>2025</span>
                     </div>
                     <div class="meta-item">
-                        <i class="fas fa-microchip"></i>
                         <span>Real-Time Control</span>
                     </div>
                 </div>
@@ -272,53 +269,7 @@
             <!-- Architecture -->
             <section class="content-section">
                 <h2>System Architecture</h2>
-                <div class="architecture-diagram">
-                    <pre>
-    ┌──────────────────────────────────────────────────────┐
-    │                   ESP32 + FreeRTOS                    │
-    │                                                      │
-    │  Task: SensorRead (1ms period, Priority HIGH)        │
-    │  ┌──────────┐    ┌──────────┐                        │
-    │  │ MPU-6050 │───→│  Raw     │                        │
-    │  │ Gyro +   │I2C │  Accel + │                        │
-    │  │ Accel    │    │  Gyro    │                        │
-    │  └──────────┘    └────┬─────┘                        │
-    │                       │                              │
-    │  Task: SensorFusion (10ms period, Priority HIGH)     │
-    │                  ┌────▼─────────────┐                │
-    │                  │ Complementary    │                │
-    │                  │ Filter (alpha)   │                │
-    │                  └────┬─────────────┘                │
-    │                  ┌────▼─────────────┐                │
-    │                  │ Kalman Filter    │                │
-    │                  │ (predict/update) │                │
-    │                  └────┬─────────────┘                │
-    │                       │ filtered_angle               │
-    │                       ▼                              │
-    │  Task: AngleControl (10ms period, Priority MED)      │
-    │  ┌────────────────────────────────┐                  │
-    │  │  PID Inner Loop (100 Hz)      │                  │
-    │  │  setpoint: target_angle       │                  │
-    │  │  input:    filtered_angle     │                  │
-    │  │  output:   motor_command      │──→ PWM → Motors  │
-    │  └────────────────────────────────┘                  │
-    │                       ▲                              │
-    │                       │ target_angle                 │
-    │  Task: PositionControl (50ms period, Priority LOW)   │
-    │  ┌────────────────────────────────┐                  │
-    │  │  PID Outer Loop (20 Hz)       │                  │
-    │  │  setpoint: target_position    │                  │
-    │  │  input:    measured_distance  │                  │
-    │  │  output:   target_angle       │                  │
-    │  └────────────────────┬───────────┘                  │
-    │                       ▲                              │
-    │  ┌──────────┐         │                              │
-    │  │ HC-SR04  │─────────┘                              │
-    │  │Ultrasonic│  distance_cm                           │
-    │  └──────────┘                                        │
-    └──────────────────────────────────────────────────────┘
-                    </pre>
-                </div>
+                <figure class="feat-art rb-diagram"><svg class="art" viewBox="0 0 640 576" role="img"><title>Cascaded balance controller on an ESP32 under FreeRTOS: the MPU-6050 is read every millisecond, a complementary filter and a Kalman filter estimate the tilt angle, an inner PID loop at 100 Hz drives the motors, and an outer PID loop at 20 Hz uses the ultrasonic distance to set the target angle</title><rect class="frame" x="16" y="16" width="608" height="544" rx="10"/><text class="tx-m" x="30" y="36">ESP32 · FreeRTOS · four tasks</text><text class="tx-m" x="40" y="58" text-anchor="start">SensorRead task · 1 ms · high</text><rect class="box" x="40" y="66" width="140" height="54" rx="7"/><text class="tx-t" x="110.0" y="90.0" text-anchor="middle">MPU-6050</text><text class="tx-m" x="110.0" y="106.0" text-anchor="middle">gyro + accel</text><rect class="box" x="220" y="66" width="210" height="54" rx="7"/><text class="tx-t" x="325.0" y="97.0" text-anchor="middle">Raw accel + gyro</text><path class="flow" d="M180 93 L220 93"/><path class="ah" d="M220 93L212 88.5V97.5Z"/><text class="tx-m" x="200" y="86" text-anchor="middle">I2C</text><text class="tx-t" x="40" y="228" text-anchor="start">SensorFusion task</text><text class="tx-m" x="40" y="244" text-anchor="start">10 ms · high priority</text><rect class="box" x="220" y="166" width="210" height="54" rx="7"/><text class="tx-t" x="325.0" y="190.0" text-anchor="middle">Complementary filter</text><text class="tx-m" x="325.0" y="206.0" text-anchor="middle">fast tilt estimate</text><rect class="box" x="220" y="248" width="210" height="54" rx="7"/><text class="tx-t" x="325.0" y="272.0" text-anchor="middle">Kalman filter</text><text class="tx-m" x="325.0" y="288.0" text-anchor="middle">predict / update</text><path class="flow" d="M325 120 L325 166"/><path class="ah" d="M325 166L320.5 158H329.5Z"/><path class="flow" d="M325 220 L325 248"/><path class="ah" d="M325 248L320.5 240H329.5Z"/><text class="tx-t" x="40" y="374" text-anchor="start">AngleControl task</text><text class="tx-m" x="40" y="390" text-anchor="start">10 ms · medium priority</text><rect class="box key" x="220" y="348" width="210" height="60" rx="7"/><text class="tx-k" x="325.0" y="375.0" text-anchor="middle">Inner PID loop, 100 Hz</text><text class="tx-m" x="325.0" y="391.0" text-anchor="middle">angle → motor command</text><rect class="box" x="470" y="348" width="130" height="60" rx="7"/><text class="tx-t" x="535.0" y="375.0" text-anchor="middle">Motors</text><text class="tx-m" x="535.0" y="391.0" text-anchor="middle">H-bridge</text><path class="flow" d="M325 302 L325 348"/><path class="ah" d="M325 348L320.5 340H329.5Z"/><text class="tx-m" x="333" y="330" text-anchor="start">filtered_angle</text><path class="flow g" d="M430 378 L470 378"/><path class="ah g" d="M470 378L462 373.5V382.5Z"/><text class="tx-g" x="450" y="370" text-anchor="middle">PWM</text><text class="tx-m" x="40" y="470" text-anchor="start">PositionControl · 50 ms · low</text><rect class="box" x="220" y="478" width="210" height="60" rx="7"/><text class="tx-t" x="325.0" y="505.0" text-anchor="middle">Outer PID loop, 20 Hz</text><text class="tx-m" x="325.0" y="521.0" text-anchor="middle">distance → target angle</text><rect class="box" x="40" y="478" width="140" height="60" rx="7"/><text class="tx-t" x="110.0" y="505.0" text-anchor="middle">HC-SR04</text><text class="tx-m" x="110.0" y="521.0" text-anchor="middle">ultrasonic</text><path class="flow" d="M180 508 L220 508"/><path class="ah" d="M220 508L212 503.5V512.5Z"/><text class="tx-m" x="200" y="501" text-anchor="middle">cm</text><path class="flow k" d="M325 478 L325 408"/><path class="ah k" d="M325 408L320.5 416H329.5Z"/><text class="tx-k" x="333" y="448" text-anchor="start">target_angle</text></svg></figure>
             </section>
 
             <!-- Hardware Integration -->
@@ -482,29 +433,21 @@
             <section class="content-section">
                 <h2>Technologies Used</h2>
                 <div class="tech-list">
-                    <div class="tech-item">
-                        <i class="fas fa-code"></i> C++
+                    <div class="tech-item"> C++
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-tasks"></i> FreeRTOS
+                    <div class="tech-item"> FreeRTOS
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-microchip"></i> ESP32
+                    <div class="tech-item"> ESP32
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-compass"></i> MPU-6050 IMU
+                    <div class="tech-item"> MPU-6050 IMU
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-satellite-dish"></i> HC-SR04 Ultrasonic
+                    <div class="tech-item"> HC-SR04 Ultrasonic
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-sliders-h"></i> PID Control
+                    <div class="tech-item"> PID Control
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-wave-square"></i> Kalman Filter
+                    <div class="tech-item"> Kalman Filter
                     </div>
-                    <div class="tech-item">
-                        <i class="fas fa-tools"></i> Logic Analyzer
+                    <div class="tech-item"> Logic Analyzer
                     </div>
                 </div>
             </section>
