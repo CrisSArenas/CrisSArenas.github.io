@@ -11,12 +11,16 @@ const CHECK = process.argv.includes('--check');
 const DEMOS = {
   pcl: 'private-capital-lab.html', fta: 'fund-terms-auditor.html', coi: 'co-invest-underwriter.html', sec: 'secondaries-desk.html',
   alloc: 'allocation-lab.html', msb: 'multi-strategy-builder.html', msc: 'manager-selection-copilot.html', apm: 'agentic-portfolio-monitor.html',
-  prp: 'portfolio-risk-performance.html', arb: 'allocation-rebalancing.html'
+  prp: 'portfolio-risk-performance.html', arb: 'allocation-rebalancing.html',
+  sys: 'systematic-research-lab.html', ail: 'ai-engineering-lab.html'
 };
+/* the cards appear on the homepage (selected work) and on the library page (every application) */
+const PAGES = ['index.html', 'library.html'];
 
 const b = await chromium.launch(), cards = {};
 let recon = null;
 for (const [id, page] of Object.entries(DEMOS)) {
+  if (!fs.existsSync(root + page)) { console.log('skipping ' + id + ': ' + page + ' not found'); continue; }
   const ctx = await b.newContext({ reducedMotion: 'reduce' }), pg = await ctx.newPage();
   await pg.goto('http://localhost:8765/' + page, { waitUntil: 'networkidle' });
   await pg.waitForFunction(() => window.cardStat && window.cardStat(), null, { timeout: 30000 });
@@ -41,6 +45,14 @@ const jsonPath = root + 'assets/data/card-stats.json';
 if (CHECK) {
   const file = JSON.parse(fs.readFileSync(jsonPath, 'utf8')), old = file.cards, oldAi = file.ai || {}, bad = Object.keys(cards).filter(k => !old[k] || old[k].value !== cards[k].value);
   bad.forEach(k => console.log(k + ': card ' + (old[k] && old[k].value) + ', demo ' + cards[k].value));
+  for (const pg of PAGES) {
+    const html = fs.readFileSync(root + pg, 'utf8');
+    for (const [k, c] of Object.entries(cards)) {
+      const m = html.match(new RegExp(`<!-- card:${k}:start --><div class="wc-kpi"><span class="wc-num">([^<]*)</span>`));
+      const has = html.includes(`<!-- card:${k}:start -->`);
+      if ((has || pg === 'library.html') && (!m || m[1] !== c.value)) { console.log(pg + ' card ' + k + ': shows ' + (m && m[1]) + ', demo ' + c.value); bad.push(k); }
+    }
+  }
   const home = fs.readFileSync(root + 'index.html', 'utf8');
   const badAi = Object.keys(ai).filter(k => { const m = home.match(new RegExp(`<!-- ai:${k}:start --><span class="feat-num">([^<]*)</span>`)); return !oldAi[k] || oldAi[k].value !== ai[k].value || !m || m[1] !== ai[k].value; });
   badAi.forEach(k => console.log('AI card ' + k + ': card ' + (oldAi[k] && oldAi[k].value) + ', demo ' + ai[k].value));
@@ -114,6 +126,16 @@ const DRAW = {
           `<line class="k-n" x1="${f(x0 - 2)}" x2="${f(x0 + bw + 2)}" y1="${Y(x.target)}" y2="${Y(x.target)}" style="stroke-width:1"/>` +
           `<circle class="${x.breach ? 'f-r' : 'f-g'}" cx="${f(x0 + bw / 2)}" cy="${Y(x.w)}" r="2.8"/>`; }).join('') };
   },
+  equity(c) {
+    const all = c.s.concat(c.b), X = sx(0, c.s.length - 1), Y = sy(Math.min(...all), Math.max(...all)), xo = X(c.oos);
+    return { desc: 'Growth of $1 for the strategy net of costs against its benchmark; the dashed line marks where out-of-sample testing starts',
+      svg: `<line class="k-n dash" x1="${xo}" x2="${xo}" y1="${P}" y2="${H - P}"/><path class="k-b" d="${path(c.b.map((v, i) => [X(i), Y(v)]))}"/><path class="k-g" d="${path(c.s.map((v, i) => [X(i), Y(v)]))}"/>` };
+  },
+  evalbars(c) {
+    const Y = sy(0, 1), g = (W - 2 * P) / c.values.length, bw = g * 0.62;
+    return { desc: 'Share of evaluation cases passed by category: ' + c.labels.map((l, i) => l + ' ' + Math.round(c.values[i] * 100) + '%').join(', '),
+      svg: c.values.map((v, i) => rect(P + i * g + (g - bw) / 2, Y(0), bw, Y(v) - Y(0), v >= 0.999 ? 'f-g' : 'f-n')).join('') };
+  },
   timeline(c) {
     const X = sx(0, c.span), mid = 34, stack = {};
     const dot = (t, up, cls, shape) => { const k = (up ? 'a' : 'f') + t, n = stack[k] = (stack[k] || 0) + 1, x = X(t), y = up ? mid - 7 - (n - 1) * 8 : mid + 7 + (n - 1) * 8;
@@ -123,19 +145,23 @@ const DRAW = {
   }
 };
 
-let html = fs.readFileSync(root + 'index.html', 'utf8');
-for (const [id, c] of Object.entries(cards)) {
-  const d = DRAW[c.chart.type](c.chart);
-  const block = `<div class="wc-kpi"><span class="wc-num">${c.value}</span><span class="wc-lbl">${c.label}</span></div>` +
-    `<svg class="wc-chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${d.desc}">${d.svg}</svg>`;
-  const re = new RegExp(`(<!-- card:${id}:start -->)[\\s\\S]*?(<!-- card:${id}:end -->)`);
-  if (!re.test(html)) { console.log('no markers for ' + id); continue; }
-  html = html.replace(re, `$1${block}$2`);
+for (const pg of PAGES) {
+  let html = fs.readFileSync(root + pg, 'utf8');
+  for (const [id, c] of Object.entries(cards)) {
+    const d = DRAW[c.chart.type](c.chart);
+    const block = `<div class="wc-kpi"><span class="wc-num">${c.value}</span><span class="wc-lbl">${c.label}</span></div>` +
+      `<svg class="wc-chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${d.desc}">${d.svg}</svg>`;
+    const re = new RegExp(`(<!-- card:${id}:start -->)[\\s\\S]*?(<!-- card:${id}:end -->)`);
+    if (!re.test(html)) { if (pg === 'library.html') console.log('no markers for ' + id + ' on ' + pg); continue; }
+    html = html.replace(re, `$1${block}$2`);
+  }
+  if (pg === 'index.html') {
+    for (const [id, c] of Object.entries(ai)) {
+      const re = new RegExp(`(<!-- ai:${id}:start -->)[\\s\\S]*?(<!-- ai:${id}:end -->)`);
+      if (!re.test(html)) { console.log('no markers for AI card ' + id); continue; }
+      html = html.replace(re, `$1<span class="feat-num${recon || id !== 'data' ? '' : ' feat-txt'}">${c.value}</span>$2`);
+    }
+  }
+  fs.writeFileSync(root + pg, html);
 }
-for (const [id, c] of Object.entries(ai)) {
-  const re = new RegExp(`(<!-- ai:${id}:start -->)[\\s\\S]*?(<!-- ai:${id}:end -->)`);
-  if (!re.test(html)) { console.log('no markers for AI card ' + id); continue; }
-  html = html.replace(re, `$1<span class="feat-num${recon || id !== 'data' ? '' : ' feat-txt'}">${c.value}</span>$2`);
-}
-fs.writeFileSync(root + 'index.html', html);
 console.log(Object.entries(cards).map(([k, c]) => k + ' ' + c.value).join(' | ') + ' || AI ' + Object.entries(ai).map(([k, c]) => k + ' ' + c.value).join(' | '));
