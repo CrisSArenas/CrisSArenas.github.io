@@ -2,6 +2,7 @@
 // Usage: node tests/run.js [filter]
 global.window = undefined;
 const PM = require('../assets/js/pm-math.js');
+require('../assets/js/ai-lab.js');
 globalThis.PM = PM;
 const T = require('../assets/js/pm-tests.js');
 const r = T.run(process.argv[2]);

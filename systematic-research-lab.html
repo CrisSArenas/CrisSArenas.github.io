@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Systematic Investment Research Lab · Cristian Arenas</title>
+    <meta name="description" content="Research systematic equity signals on a synthetic panel with known premia, then test the result for look-ahead, survivorship, data snooping, overfitting and costs.">
+    <link rel="canonical" href="https://crissarenas.github.io/systematic-research-lab.html">
+    <meta property="og:title" content="Systematic Investment Research Lab · Cristian Arenas">
+    <meta property="og:description" content="Research systematic equity signals on a synthetic panel with known premia, then test the result for look-ahead, survivorship, data snooping, overfitting and costs.">
+    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#07120E">
+    <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
+    <link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/assets/css/demo-shell.css">
+    <script src="/assets/js/site.js"></script>
+    <style>
+      .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+      @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
+      .mode-note { margin-bottom: 14px; }
+      .controls select.field { width: 100%; max-width: 100%; }
+      .control input[type="range"] { width: 100%; }
+      .tie-ok { color: var(--positive); font-weight: 600; }
+      .tie-no { color: var(--negative); font-weight: 600; }
+      .heat-wrap { max-width: 460px; }
+      .sweep-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<!-- site-nav:start -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav class="site-nav" aria-label="Site">
+  <div class="container">
+    <a class="brand" href="/">Cristian Arenas</a>
+    <ul class="nav-links">
+      <li><a href="/#about">About</a></li>
+      <li><a href="/#portfolio">Portfolio</a></li>
+      <li><a href="/#ai">AI</a></li>
+      <li><a href="/#work">Work</a></li>
+      <li><a href="/#memos">Memos</a></li>
+      <li><a href="/#research">Research</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</nav>
+<!-- site-nav:end -->
+<main id="main" class="container demo-main">
+  <header class="demo-hero">
+    <a class="back-link" href="/#work">&larr; All work</a>
+    <span class="group-label pf">Quantitative research</span>
+    <h1>Systematic Investment Research Lab</h1>
+    <p class="lede">I research systematic equity signals here on a synthetic panel whose true premia are known. Because the truth is known, the page can show how much of each premium the research recovers and how much of the in-sample result holds up out of sample, after costs.</p>
+    <p class="eval-line" id="evalLine"></p>
+  </header>
+
+  <div id="tabsRoot">
+    <div class="demo-bar2">
+      <div class="tabs">
+        <button data-tab="research" aria-selected="true">Signal research</button>
+        <button data-tab="backtest">Backtest</button>
+        <button data-tab="validation">Validation</button>
+        <button data-tab="robustness">Robustness</button>
+      </div>
+      <div id="exportMenu"></div>
+    </div>
+
+    <section id="research">
+      <p class="notice mode-note" id="researchNote"></p>
+      <div class="kpis" id="resKpis"></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Signals in sample</h3><span class="sub" id="sigSub"></span></div><div class="panel-body"><div id="sigTable"></div><p class="eval-note" id="sigNote"></p></div></div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Growth of $1, net of costs</h3><span class="sub">Raw long-short books, one long and one short, in sample</span></div><div class="panel-body"><div id="sigGrowth"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Information coefficient by horizon</h3><span class="sub">Mean rank correlation of the signal with the return h months later</span></div><div class="panel-body"><div id="icDecay"></div></div></div>
+      </div>
+      <div class="split">
+        <div class="panel"><div class="panel-head"><h3>Your blend</h3></div><div class="panel-body controls" id="blendControls"></div></div>
+        <div>
+          <div class="panel"><div class="panel-head"><h3>Recovering the true premia</h3><span class="sub">Fama-MacBeth slopes per 1 sd of each signal, % a month, in sample</span></div><div class="panel-body"><div id="premiaChart"></div><div id="premiaTable" style="margin-top:12px"></div><p class="eval-note" id="premiaNote"></p></div></div>
+          <div class="panel"><div class="panel-head"><h3>Correlation of signal returns</h3><span class="sub">Monthly net returns, in sample</span></div><div class="panel-body"><div class="heat-wrap" id="corrHeat"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="backtest" hidden>
+      <div class="split">
+        <div class="panel"><div class="panel-head"><h3>Portfolio construction</h3></div>
+          <div class="panel-body controls">
+            <div class="control"><label for="strat">Strategy</label>
+              <select class="field" id="strat"><option value="wf">Walk-forward combination</option><option value="mom_12_1">Momentum 12-1</option><option value="tsm">Time-series momentum</option><option value="rev">Short-term reversal</option><option value="val">Value</option><option value="lv">Low volatility</option><option value="blend">Your blend</option></select></div>
+            <div class="control"><label for="scheme">Weighting</label>
+              <select class="field" id="scheme"><option value="rank">Rank-weighted long-short</option><option value="quintile">Top minus bottom quintile</option></select></div>
+            <div class="control"><label for="method">Combination across signals</label>
+              <select class="field" id="method"><option value="mv">Mean-variance, in-sample fit</option><option value="erc">Equal risk contribution</option><option value="ew">Equal weight</option></select><div class="hint">Fitted on each training window and applied to the next test window.</div></div>
+            <div class="control"><label for="benchSel">Benchmark</label>
+              <select class="field" id="benchSel"><option value="ew">Equal-weight universe</option><option value="cap">Cap-weight proxy</option></select></div>
+            <div class="control"><label><span><input type="checkbox" id="vtOn" checked> Volatility targeting</span></label><div class="hint">Scales the book by target volatility over its trailing realised volatility, using months before t only.</div></div>
+            <div id="btControls" class="controls"></div>
+          </div></div>
+        <div>
+          <div class="kpis" id="btKpis"></div>
+          <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Growth of $1</h3><span class="sub" id="growthSub"></span></div><div class="panel-body"><div id="growth"></div></div></div>
+          <div class="panel"><div class="panel-head"><h3>Drawdown</h3><span class="sub">From the running peak, net of costs</span></div><div class="panel-body"><div id="ddChart"></div></div></div>
+        </div>
+      </div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Rolling 36-month return</h3><span class="sub">Annualised, net of costs</span></div><div class="panel-body"><div id="rollRet"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Rolling 36-month Sharpe ratio</h3><span class="sub">Net of costs</span></div><div class="panel-body"><div id="rollSharpe"></div></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Performance against the benchmark</h3><span class="sub" id="perfSub"></span></div><div class="panel-body"><div id="perfTable"></div><p class="eval-note" id="perfNote"></p></div></div>
+      <h3 class="sub-h">Regimes</h3>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Ex-ante volatility regime</h3><span class="sub">Trailing benchmark volatility against its expanding threshold; shaded months are high volatility</span></div><div class="panel-body"><div id="regChart"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Sharpe ratio by regime</h3><span class="sub">Net of costs, whole backtest</span></div><div class="panel-body"><div id="regBars"></div></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Performance by regime</h3></div><div class="panel-body"><div id="regTable"></div><p class="eval-note" id="regNote"></p></div></div>
+    </section>
+
+    <section id="validation" hidden>
+      <div class="kpis" id="valKpis"></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Walk-forward folds</h3><span class="sub">Each fold selects and fits on its training window, then trades the test window it has not seen</span></div><div class="panel-body"><div id="foldTable"></div><p class="eval-note" id="foldNote"></p></div></div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>In sample against out of sample</h3><span class="sub">Net Sharpe ratio of each strategy in the two windows</span></div><div class="panel-body"><div id="isoosBars"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Does the in-sample ranking carry over?</h3><span class="sub">Every trial: in-sample against out-of-sample net Sharpe</span></div><div class="panel-body"><div id="trialScatter"></div><p class="eval-note" id="trialNote"></p></div></div>
+      </div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Deflated Sharpe ratio</h3><span class="sub">Bailey and Lopez de Prado, for the in-sample result of the first fold</span></div><div class="panel-body"><div id="dsrTable"></div><p class="eval-note" id="dsrNote"></p></div></div>
+        <div class="panel"><div class="panel-head"><h3>How much of the gap is real decay</h3><span class="sub">True premia from the generator against the estimates, % a month per 1 sd</span></div><div class="panel-body"><div id="decayTable"></div><p class="eval-note" id="decayNote"></p></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Bias audit</h3><span class="sub">What each bias would have done to the result, computed on the same data</span></div><div class="panel-body"><div id="biasTable"></div></div></div>
+    </section>
+
+    <section id="robustness" hidden>
+      <div class="kpis" id="robKpis"></div>
+      <div class="split-2" style="margin-top:18px">
+        <div class="panel"><div class="panel-head"><h3>Momentum grid, in sample</h3><span class="sub">Net Sharpe by lookback (rows) and holding period in months (columns)</span></div><div class="panel-body"><div class="heat-wrap" id="gridIS"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Momentum grid, out of sample</h3><span class="sub">The same cells on the later window</span></div><div class="panel-body"><div class="heat-wrap" id="gridOOS"></div><p class="eval-note" id="gridNote"></p><details style="margin-top:12px"><summary style="cursor:pointer;font-weight:500">Every grid cell</summary><div id="gridTable" style="margin-top:10px"></div></details></div></div>
+      </div>
+      <div class="split-2">
+        <div class="panel"><div class="panel-head"><h3>Block bootstrap of the out-of-sample Sharpe</h3><span class="sub" id="bootSub"></span></div><div class="panel-body"><div id="bootChart"></div><p class="eval-note" id="bootNote"></p></div></div>
+        <div class="panel"><div class="panel-head"><h3>Placebo signals</h3><span class="sub" id="placeboSub"></span></div><div class="panel-body"><div id="placeboChart"></div><p class="eval-note" id="placeboNote"></p></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Multiple testing across the signal set</h3><span class="sub">HAC t-statistics of the mean net return; Bonferroni and Holm adjust for testing six signals at once</span></div><div class="panel-body"><div id="mtTable"></div><p class="eval-note" id="mtNote"></p></div></div>
+      <div class="panel"><div class="panel-head"><h3>Cost sensitivity</h3><span class="sub">Out-of-sample net Sharpe with the same portfolios at other cost levels</span></div><div class="panel-body"><div id="costChart"></div><p class="eval-note" id="costNote"></p></div></div>
+      <div class="panel"><div class="panel-head"><h3>The same research on other synthetic histories</h3><span class="sub">Every step repeated on seeds 1 to 20 with the current settings</span></div><div class="panel-body">
+        <div class="sweep-bar"><button class="btn btn-primary btn-sm" id="sweepBtn" type="button">Run 20 seeds</button><span class="muted" id="sweepStatus">Takes a few seconds; the page stays usable.</span></div>
+        <div id="sweepChart"></div><div id="sweepTable" style="margin-top:12px"></div><p class="eval-note" id="sweepNote"></p></div></div>
+    </section>
+  </div>
+
+  <details class="fold how" id="how">
+    <summary><div><h2>How it works</h2><div class="sum-sub">Data-generating process, method, formulas, assumptions and limits</div></div></summary>
+    <div class="fold-body">
+      <ul>
+        <li>The data is synthetic. Sixty fictional stocks in six sectors start in January 1996 and run for 360 months. Each month's excess return is a market factor times the stock's beta, a sector shock, an idiosyncratic shock and an expected return built from four known premia. The market switches between a calm and a turbulent volatility state with fixed transition probabilities.</li>
+        <li>The premia are set in the assumptions register, per 1 cross-sectional standard deviation of the characteristic. Momentum pays on the 12-1 return, falls to a quarter of its size in turbulent months, and reverses sharply in turbulent months when the market rebounds. A market-level trend term gives time-series momentum, with the same weakening. Value pays on a true valuation spread that the researcher sees only with measurement noise. Low volatility pays on true idiosyncratic volatility, and reversal on last month's return. All premia shrink linearly by the decay setting over the 30 years, as crowding would shrink them.</li>
+        <li>Stocks delist. A stock that has fallen more than 40% in a year faces a high monthly hazard and leaves with a -25% delisting return; others leave through takeovers at +15%. A new stock lists in the same sector the next month. Delisted stocks stay in the history up to their last month, delisting return included.</li>
+        <li>Every signal for month t uses data through month t-1. A stock is eligible if it has 13 months of history and is still listed at the start of month t. Rank weighting holds every eligible stock, in proportion to its centred rank; quintile weighting holds the top and bottom fifths equally. Each raw book is one long and one short. Holding periods above one month average the last H monthly formations.</li>
+        <li>The combination fits weights across five strategies on each training window: momentum (the grid variant with the best training Sharpe), time-series momentum, reversal, value and low volatility. Mean-variance uses inverse covariance times mean, with the covariance shrunk halfway to its diagonal and negative weights dropped. The book is then scaled to the volatility target with a leverage cap, and each position is capped.</li>
+        <li>Costs are charged on turnover, measured against the weights the book drifted to over the month. A borrow fee is charged on the short side. Net returns are gross returns less both.</li>
+        <li>Validation is walk-forward: expanding training windows from 1999, refitted every five years, each tested on the following five years. Robustness adds the momentum grid, a circular block bootstrap of the out-of-sample Sharpe, the deflated Sharpe ratio for the number of trials, Holm and Bonferroni adjustments across the signals, placebo signals built on pure noise, a cost sweep, and a rerun on 20 seeds.</li>
+      </ul>
+      <h3>Biases the page guards against</h3>
+      <ul>
+        <li>Look-ahead: signals, regimes, volatility scaling and the walk-forward fits read only earlier months. A model test changes every return after month t and checks that the weights at t do not move; the activity log repeats the check on the live data. The bias audit shows what a momentum signal that includes the current month would report.</li>
+        <li>Survivorship: stocks that delist stay in the universe until they leave, with their delisting return. The bias audit reruns the research on only the stocks alive at the end, the dataset a careless download would give.</li>
+        <li>Data snooping: the page counts every trial it ran in sample and deflates the best Sharpe ratio for that number. Holm and Bonferroni adjust the signal tests, and the placebo signals show how good pure noise can look.</li>
+        <li>Overfitting: selection and fitting happen on training windows only, and the out-of-sample record is kept apart. The in-sample figure and the gap are shown next to it.</li>
+        <li>Unrealistic costs: every figure is net of a stated trading cost and borrow fee unless labelled gross, and the cost sweep shows the break-even cost.</li>
+      </ul>
+      <h3>Formulas</h3>
+      <pre class="formula">r_i,t = a_i,t + beta_i m_t + s_sector,t + sigma_i,t e_i,t
+a_i,t = lam_mom,t z(MOM_i,t-1) - lam_rev z(r_i,t-1) + lam_val z(V*_i,t-1) - lam_lv z(sigma_i,t-1)
+lam_mom,t = lam_mom (calm), 0.25 lam_mom (turbulent), lam_crash (turbulent month with market shock above +1 sd)
+MOM(L)_i,t = sum over s = t-L .. t-2 of ln(1 + r_i,s)
+rank weight w_i = (rank_i - (n+1)/2) / sum over rank_j > (n+1)/2 of (rank_j - (n+1)/2)
+scale k_t = min(k_max, target / (sd(raw_t-36 .. raw_t-1) sqrt 12)),  |w_i,t| &lt;= cap
+turnover_t = sum_i |w_i,t - w_i,t-1 (1 + r_i,t-1)|
+net_t = gross_t - c turnover_t - (b / 12) short_t
+Sharpe = mean(net) / sd(net) sqrt 12,  Sortino = 12 mean / (sqrt(mean(min(r, 0)^2)) sqrt 12)
+Calmar = annual return / |max drawdown|
+r_t = alpha + beta b_t + e_t,  IR = 12 alpha / (sd(e) sqrt 12),  t = HAC t-stat of r_t - beta b_t
+Fama-MacBeth: r_i,t = g_0,t + sum_k g_k,t z_k,i,t + u_i,t,  premium_k = mean_t g_k,t
+PSR(SR*) = Phi((SR - SR*) sqrt(n - 1) / sqrt(1 - g3 SR + (g4 - 1) / 4 SR^2)),  SR monthly
+SR0 = sqrt(V[SR_trials]) ((1 - gamma) Phi^-1(1 - 1/N) + gamma Phi^-1(1 - 1/(N e))),  DSR = PSR(SR0)
+Holm: p_(k) adjusted = max over j &lt;= k of min(1, (m - j + 1) p_(j));  Bonferroni: min(1, m p)
+high-vol regime at t: sd(b_t-6 .. b_t-1) sqrt 12 &gt; expanding q-quantile of its own past values</pre>
+      <h3>Assumptions</h3>
+      <div id="assumptions"></div>
+      <h3>Data and limits</h3>
+      <ul>
+        <li>The stocks, sectors and returns are made up and the dates are labels. One seed is one history. The seed rerun on the Robustness tab shows how much the results move from one history to the next.</li>
+        <li>Sixty names is a small universe, so the books are concentrated and idiosyncratic risk is large. A real equity universe would give higher Sharpe ratios for the same premia.</li>
+        <li>Costs are linear in turnover. Real impact grows with trade size, so the cost drag at larger capital would be higher than shown.</li>
+        <li>Part of the measured momentum premium can come from the delisting returns of distressed losers, a channel the stated momentum premium does not include. The low-volatility signal uses trailing total volatility, which mixes in beta, so it recovers less of its premium.</li>
+        <li>The deflated Sharpe ratio uses the raw count of trials. The momentum variants are correlated, so the effective number of independent trials is smaller and the deflation is on the conservative side.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="fold" id="under-the-hood">
+    <summary><div><h2>Under the hood</h2><div class="sum-sub">Automated checks, audit log and seed</div></div></summary>
+    <div class="fold-body" id="ai">
+      <div class="toolbar">
+        <label for="seed">Seed <input class="field" id="seed" type="number" value="19" min="1" max="999999"></label>
+        <span class="muted" id="dataSrc">Synthetic panel, seed 19. Jan 1996 to Dec 2025.</span>
+        <span class="grow"></span>
+        <span id="testsBadge"></span>
+      </div>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">Each run checks the research before anything is proposed: that delisted stocks stay in the data, that changing later data leaves today's weights alone, that the walk-forward windows never overlap, that costs reconcile, and that the result clears the deflated Sharpe and placebo tests. Then try the tamper test on the audit log.</p>
+    <div class="ai-grid">
+      <div class="panel"><div class="panel-head"><h3>Activity log</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Automated checks</h3><span class="sub">Every check reruns on each change</span></div><div class="panel-body"><div id="checksTable"></div></div></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
+    </div>
+  </details>
+
+  <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <div class="f-brand">Cristian Arenas</div>
+        <div class="f-role">Quantitative Investment Professional and AI Engineer</div>
+      </div>
+      <ul>
+        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
+        <li><a href="/ai-systems.html">AI systems</a></li>
+        <li><a href="/notes/">Notes</a></li>
+        <li><a href="/tests.html">Model tests</a></li>
+        <li><a href="/arcade.html">Games</a></li>
+        <li><a href="/robotics-embedded.html">Robotics</a></li>
+      </ul>
+    </div>
+    <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>
+  </div>
+</footer>
+<!-- site-footer:end -->
+<script src="/assets/js/pm-math.js"></script>
+<script src="/assets/js/pm-tests.js"></script>
+<script src="/assets/js/pm-ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = UI.fmt, $ = UI.$, SY = PM.sys, SQ12 = Math.sqrt(12);
+  var T = 360, T0 = 36, FROM = 24, Y0 = 1996;
+  var LOOKBACKS = [3, 6, 9, 12, 18, 24], HOLDS = [1, 3, 6, 12];
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function ml(t) { return MON[((t % 12) + 12) % 12] + ' ' + (Y0 + Math.floor(t / 12)); }
+  /* the signal set; momentum 12-1 is the grid cell with a 12-month lookback and a 1-month hold */
+  var SIG = [
+    { key: 'mom_12_1', name: 'Momentum 12-1', short: 'Momentum', def: 'Return from t-12 to t-2, skipping the latest month' },
+    { key: 'tsm', name: 'Time-series momentum', short: 'TS momentum', def: 'Long each name with a positive 12-1 return, short each with a negative one' },
+    { key: 'rev', name: 'Short-term reversal', short: 'Reversal', def: 'Minus the return of month t-1' },
+    { key: 'val', name: 'Value', short: 'Value', def: 'Valuation spread at the end of t-1, observed with noise' },
+    { key: 'lv', name: 'Low volatility', short: 'Low vol', def: 'Minus the volatility of the last 24 monthly returns' },
+    { key: 'blend', name: 'Your blend', short: 'Blend', def: 'Weighted sum of the z-scores of momentum, reversal, value and low volatility' }
+  ];
+  var SNAME = {}; SIG.forEach(function (s) { SNAME[s.key] = s; });
+  var BASE = [{ key: 'tsm', spec: { k: 'tsm' } }, { key: 'rev', spec: { k: 'rev' } }, { key: 'val', spec: { k: 'val' } }, { key: 'lv', spec: { k: 'lv' } }, { key: 'leak', spec: { k: 'leak' } }];
+  var FMB_SPECS = [{ k: 'mom' }, { k: 'rev' }, { k: 'val' }, { k: 'lv' }];
+  var COLORS = { mom_12_1: 's1', tsm: 's2', rev: 's3', val: 's4', lv: 's5', blend: 's6' };
+
+  var AROWS = [
+    { id: 'cost', label: 'Trading cost per unit of turnover', value: 15, unit: 'bps', source: 'Assumption: spread, commission and impact for mid-cap stocks', min: 0, max: 100, step: 1 },
+    { id: 'borrow', label: 'Borrow fee on the short side', value: 50, unit: 'bps a year', source: 'Assumption: general collateral', min: 0, max: 500, step: 5 },
+    { id: 'volTarget', label: 'Volatility target', value: 0.08, unit: '% a year', scale: 100, source: 'Setting', min: 0.02, max: 0.2, step: 0.5 },
+    { id: 'maxLev', label: 'Largest scaling of the unscaled book', value: 2, unit: 'x', source: 'Setting', min: 0.5, max: 4, step: 0.1 },
+    { id: 'cap', label: 'Position limit per stock', value: 0.06, unit: '% of capital', scale: 100, source: 'Setting', min: 0.01, max: 0.5, step: 0.5 },
+    { id: 'volWin', label: 'Window for realised volatility', value: 36, unit: 'months', source: 'Setting', min: 12, max: 60, step: 1 },
+    { id: 'shrink', label: 'Covariance shrinkage toward the diagonal', value: 0.5, unit: '0 to 1', source: 'Setting', min: 0, max: 1, step: 0.05 },
+    { id: 'oosYear', label: 'First out-of-sample year', value: 2011, unit: 'year', source: 'Setting', min: 2005, max: 2018, step: 1 },
+    { id: 'step', label: 'Refit every', value: 60, unit: 'months', source: 'Setting', min: 12, max: 120, step: 12 },
+    { id: 'regWin', label: 'Regime volatility window', value: 6, unit: 'months', source: 'Setting', min: 3, max: 24, step: 1 },
+    { id: 'regQ', label: 'Regime threshold, quantile of past volatility', value: 0.75, unit: '0 to 1', source: 'Setting', min: 0.5, max: 0.95, step: 0.05 },
+    { id: 'bootBlock', label: 'Bootstrap block length', value: 6, unit: 'months', source: 'Setting', min: 1, max: 24, step: 1 },
+    { id: 'bootN', label: 'Bootstrap resamples', value: 2000, unit: '', source: 'Setting', min: 200, max: 10000, step: 100 },
+    { id: 'nPlacebo', label: 'Placebo signals', value: 50, unit: '', source: 'Setting', min: 10, max: 200, step: 10 },
+    { id: 'placeboPhi', label: 'Placebo persistence (monthly autocorrelation)', value: 0.95, unit: '', source: 'Setting', min: 0, max: 0.99, step: 0.01 },
+    { id: 'dsrMin', label: 'Deflated Sharpe needed to propose', value: 0.95, unit: 'probability', source: 'Research policy', min: 0.5, max: 0.99, step: 0.01 },
+    { id: 'lamMom', label: 'True momentum premium, calm months', value: 0.0028, unit: '% a month per sd', scale: 100, source: 'Data-generating process', min: 0, max: 0.01, step: 0.01 },
+    { id: 'lamCrash', label: 'True momentum premium in crash months', value: -0.022, unit: '% a month per sd', scale: 100, source: 'Data-generating process', min: -0.06, max: 0, step: 0.1 },
+    { id: 'momTurb', label: 'Momentum and trend in turbulent months, share of calm', value: 0.25, unit: '0 to 1', source: 'Data-generating process', min: 0, max: 1, step: 0.05 },
+    { id: 'lamTsm', label: 'True market trend premium', value: 0.002, unit: '% a month', scale: 100, source: 'Data-generating process', min: 0, max: 0.01, step: 0.01 },
+    { id: 'lamRev', label: 'True reversal premium', value: 0.0012, unit: '% a month per sd', scale: 100, source: 'Data-generating process', min: 0, max: 0.01, step: 0.01 },
+    { id: 'lamVal', label: 'True value premium', value: 0.002, unit: '% a month per sd', scale: 100, source: 'Data-generating process', min: 0, max: 0.01, step: 0.01 },
+    { id: 'lamLv', label: 'True low-volatility premium', value: 0.0018, unit: '% a month per sd', scale: 100, source: 'Data-generating process', min: 0, max: 0.01, step: 0.01 },
+    { id: 'decay', label: 'Premium decay over the 30 years', value: 0.3, unit: '0 to 1', source: 'Data-generating process', min: 0, max: 1, step: 0.05 },
+    { id: 'valNoise', label: 'Noise in the observed value signal', value: 0.6, unit: 'sd', source: 'Data-generating process', min: 0, max: 2, step: 0.1 },
+    { id: 'dretDistress', label: 'Delisting return after distress', value: -0.25, unit: '%', scale: 100, source: 'Data-generating process', min: -0.9, max: 0, step: 1 }
+  ];
+  var A = UI.A(AROWS), reg, syncers = {};
+  var S = { seed: 19, scheme: 'rank', method: 'mv', strat: 'wf', bench: 'ew', vt: true, blend: { mom: 1, rev: 0, val: 1, lv: 1 } };
+  window.SRL = S;
+  function setA(id, v) { A[id] = v; AROWS.filter(function (x) { return x.id === id; })[0].value = v; if (reg) reg.set(id, v); (syncers[id] || []).forEach(function (f) { f(v); }); }
+  function oos() { return Math.max(T0 + 48, Math.min(T - 36, (A.oosYear - Y0) * 12)); }
+  function dgp() { return { lamMom: A.lamMom, lamCrash: A.lamCrash, momTurb: A.momTurb, lamTsm: A.lamTsm, lamRev: -A.lamRev, lamVal: A.lamVal, lamLv: -A.lamLv, decay: A.decay, valNoise: A.valNoise, dretDistress: A.dretDistress }; }
+  function blendSpec() { return { k: 'blend', w: Object.assign({}, S.blend) }; }
+  function sl(bt, arr, a, b) { return SY.slice(bt, arr, a, b); }
+  function netOf(bt) { return SY.net(bt, A.cost, A.borrow); }
+  function shp(r) { return SY.perf(r).sharpe; }
+  function cfgWF(extra) { return Object.assign({ t0: T0, oos: oos(), step: A.step, method: S.method, shrink: A.shrink, cost: A.cost, borrow: A.borrow, volTarget: S.vt ? A.volTarget : 0, volWin: A.volWin, maxLev: A.maxLev, cap: A.cap }, extra || {}); }
+
+  /* ---------------- data, library and research (cached by what they depend on) ---------------- */
+  var D = null, L = null, R = null;
+  function ensureData() {
+    var key = S.seed + '|' + JSON.stringify(dgp());
+    if (D && D.key === key) return false;
+    var P = SY.simulate(S.seed, dgp()), Ps = SY.survivorsOnly(P);
+    D = { key: key, P: P, Ps: Ps, bench: { ew: SY.benchmark(P, 'ew'), cap: SY.benchmark(P, 'cap') }, benchSurv: SY.benchmark(Ps, 'ew') };
+    L = null; return true;
+  }
+  function ensureLib() {
+    var key = D.key + '|' + S.scheme + '|' + A.nPlacebo + '|' + A.placeboPhi;
+    if (L && L.key === key) { if (L.blendKey !== JSON.stringify(S.blend)) { L.lib.add('blend', blendSpec()); L.blendKey = JSON.stringify(S.blend); } return; }
+    var lib = SY.library(D.P, { from: FROM, scheme: S.scheme, lookbacks: LOOKBACKS, holds: HOLDS, base: BASE });
+    lib.add('blend', blendSpec());
+    var libS = SY.library(D.Ps, { from: FROM, scheme: S.scheme, lookbacks: [12], holds: [1], base: BASE.slice(0, 4) });
+    L = { key: key, lib: lib, libS: libS, blendKey: JSON.stringify(S.blend), placebo: SY.placebo(D.P, A.nPlacebo, S.seed, A.placeboPhi, S.scheme, FROM) };
+  }
+  /* Fama-MacBeth premia and information coefficients depend only on the data and the split */
+  var FM = null;
+  function ensureFM() {
+    var key = D.key + '|' + oos() + '|' + A.regWin + '|' + A.regQ;
+    if (FM && FM.key === key) return;
+    var P = D.P, o = oos(), regime = SY.regimes(D.bench.ew, A.regWin, A.regQ, 24);
+    var fIS = SY.fmb(P, T0, o, FMB_SPECS), fOOS = SY.fmb(P, o, T, FMB_SPECS);
+    var specs = [{ k: 'mom', L: 12 }, { k: 'tsm' }, { k: 'rev' }, { k: 'val' }, { k: 'lv' }];
+    var H = 12, ic = specs.map(function () { var a = []; for (var h = 0; h < H; h++) a.push([]); return a; });
+    for (var t = T0; t < o; t++) {
+      specs.forEach(function (s, k) {
+        var sc = SY.score(P, t, s);
+        for (var h = 1; h <= H; h++) { if (t + h - 1 >= o) break; var c = SY.spearman(sc, P.R[t + h - 1]); if (isFinite(c)) ic[k][h - 1].push(c); }
+      });
+    }
+    FM = { key: key, regime: regime, fIS: fIS, fOOS: fOOS, ic: ic.map(function (a) { return a.map(PM.mean); }), ic1: ic.map(function (a) { return a[0]; }) };
+  }
+  function blendIC() {
+    var P = D.P, o = oos(), sp = blendSpec(), out = [];
+    for (var h = 1; h <= 12; h++) out.push([]);
+    for (var t = T0; t < o; t++) { var sc = SY.score(P, t, sp); for (h = 1; h <= 12; h++) { if (t + h - 1 >= o) break; var c = SY.spearman(sc, P.R[t + h - 1]); if (isFinite(c)) out[h - 1].push(c); } }
+    return { mean: out.map(PM.mean), first: out[0] };
+  }
+
+  function research() {
+    var P = D.P, lib = L.lib, o = oos();
+    var wf = SY.walkForward(P, lib, cfgWF({ keep: true }));
+    var alt = {}; ['mv', 'erc', 'ew'].forEach(function (m) { alt[m] = m === S.method ? wf : SY.walkForward(P, lib, cfgWF({ method: m })); });
+    var wfFix = SY.walkForward(P, lib, cfgWF({ fixedMom: 'mom_12_1' })), wfSurv = SY.walkForward(D.Ps, L.libS, cfgWF({ fixedMom: 'mom_12_1' }));
+    var single = function (key) { return SY.backtest(P, { start: T0, rawFrom: FROM, volTarget: S.vt ? A.volTarget : 0, volWin: A.volWin, maxLev: A.maxLev, cap: A.cap, keep: true, weights: function (t) { return lib.items[key].W[t]; } }); };
+    var cur = S.strat === 'wf' ? { bt: wf.bt, net: wf.net } : (function () { var b = single(S.strat); return { bt: b, net: netOf(b) }; })();
+    R = { o: o, wf: wf, alt: alt, wfFix: wfFix, wfSurv: wfSurv, cur: cur, bench: D.bench[S.bench] };
+    /* raw signal statistics by window */
+    R.sig = SIG.map(function (s) {
+      var it = lib.items[s.key], n = netOf(it.bt), g = it.bt.gross;
+      var w = function (a, b) { return { net: sl(it.bt, n, a, b), gross: sl(it.bt, g, a, b), turn: sl(it.bt, it.bt.turn, a, b) }; };
+      return { s: s, is: w(T0, o), oos: w(o, T), full: w(T0, T) };
+    });
+    /* trials run in sample, for the deflated Sharpe ratio and the scatter */
+    var trials = [];
+    lib.grid.forEach(function (g) { var it = lib.items[g.key], n = netOf(it.bt); trials.push({ name: 'Momentum ' + g.L + 'm lookback, ' + g.H + 'm hold', kind: 'grid', is: sl(it.bt, n, T0, o), oos: sl(it.bt, n, o, T) }); });
+    SIG.slice(1).forEach(function (s) { var it = lib.items[s.key], n = netOf(it.bt); trials.push({ name: s.name, kind: 'signal', is: sl(it.bt, n, T0, o), oos: sl(it.bt, n, o, T) }); });
+    ['mv', 'erc', 'ew'].forEach(function (m) { var x = alt[m]; trials.push({ name: 'Combination, ' + methodName(m).toLowerCase(), kind: 'combo', method: m, is: x.folds[0].isNet, oos: sl(x.bt, x.net, o, T) }); });
+    trials.forEach(function (x) { x.isS = shp(x.is); x.oosS = shp(x.oos); x.isM = PM.mean(x.is) / PM.std(x.is); });
+    R.trials = trials;
+    var f0 = wf.folds[0].isNet, mo = SY.moments(f0), srM = PM.mean(f0) / PM.std(f0), varSR = PM.variance(trials.map(function (x) { return x.isM; }));
+    var best = trials.slice().sort(function (a, b) { return b.isS - a.isS; })[0], mb = SY.moments(best.is);
+    var rho = (function () { var c = [], ts = trials.map(function (x) { return x.is; }); for (var i = 0; i < ts.length; i++) for (var j = i + 1; j < ts.length; j++) c.push(PM.corr(ts[i], ts[j])); return PM.mean(c); })();
+    R.dsr = { n: f0.length, N: trials.length, varSR: varSR, sr: srM, skew: mo.skew, kurt: mo.kurt, res: SY.dsr(srM, f0.length, mo.skew, mo.kurt, trials.length, varSR), best: best, bestRes: SY.dsr(best.isM, best.is.length, mb.skew, mb.kurt, trials.length, varSR), rho: rho, nEff: rho + (1 - rho) * trials.length };
+    /* headline validation numbers */
+    var oosNet = sl(wf.bt, wf.net, o, T);
+    R.isS = PM.mean(wf.folds.map(function (f) { return f.isPerf.sharpe; }));
+    R.oosP = SY.perf(oosNet); R.oosNet = oosNet; R.gap = R.isS - R.oosP.sharpe;
+    R.boot = SY.bootSharpe(oosNet, A.bootBlock, A.bootN, S.seed);
+    /* multiple testing on the in-sample window */
+    R.mt = R.sig.map(function (x) { var t = SY.tStat(x.is.net); return { s: x.s, isS: shp(x.is.net), t: t, p: SY.pValue(t), oosS: shp(x.oos.net), tO: SY.tStat(x.oos.net) }; });
+    var ps = R.mt.map(function (x) { return x.p; }), hb = SY.holm(ps), bb = SY.bonferroni(ps);
+    R.mt.forEach(function (x, i) { x.holm = hb[i]; x.bonf = bb[i]; });
+    /* placebo distribution, in sample */
+    R.plIS = L.placebo.map(function (b) { return shp(sl(b, netOf(b), T0, o)); }).sort(function (a, b) { return a - b; });
+    return R;
+  }
+  function methodName(m) { return { mv: 'Mean-variance', erc: 'Equal risk contribution', ew: 'Equal weight' }[m]; }
+  function momName(key) { var g = key.split('_'); return g[1] + '-month lookback, ' + g[2] + '-month hold'; }
+
+  /* ---------------- tab 1: signal research (in sample only) ---------------- */
+  function renderResearch() {
+    var o = R.o, P = D.P, fm = FM, bic = blendIC();
+    $('#researchNote').textContent = 'Signal research uses the in-sample window only, ' + ml(T0) + ' to ' + ml(o - 1) + '. The later years stay locked until the Validation tab. All books here are raw: one long and one short, no scaling, no position limit, net of ' + A.cost + ' bps trading cost and ' + A.borrow + ' bps borrow.';
+    $('#sigSub').textContent = ml(T0) + ' to ' + ml(o - 1) + ', ' + (S.scheme === 'rank' ? 'rank-weighted' : 'quintile') + ' books';
+    var mom = R.sig[0].is.net, rows = R.sig.map(function (x, k) {
+      var pg = SY.perf(x.is.gross), pn = SY.perf(x.is.net), icm = k < 5 ? fm.ic[k][0] : bic.mean[0], icv = k < 5 ? fm.ic1[k] : bic.first;
+      return { n: x.s.name, d: x.s.def, ic: icm, ict: SY.tStat(icv), gs: pg.sharpe, ns: pn.sharpe, ret: pn.ann, turn: PM.mean(x.is.turn), drag: PM.mean(x.is.gross) * 12 - PM.mean(x.is.net) * 12, cm: k ? PM.corr(x.is.net, mom) : 1 };
+    });
+    S.sigRows = rows;
+    UI.table('#sigTable', { id: 'signals', name: 'Signals in sample', columns: [{ key: 'n', label: 'Signal' }, { key: 'd', label: 'Definition at month t' }, { key: 'ic', label: 'Mean IC', num: 1, fmt: function (v) { return F.num(v, 3); } }, { key: 'ict', label: 'IC t-stat', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'gs', label: 'Sharpe, gross', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'ns', label: 'Sharpe, net', num: 1, fmt: function (v) { return F.num(v, 2); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'ret', label: 'Net return a year', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'turn', label: 'Turnover a month', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'drag', label: 'Cost drag a year', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'cm', label: 'Corr. with momentum', num: 1, fmt: function (v) { return F.num(v, 2); } }], rows: rows });
+    var rv = rows[2];
+    $('#sigNote').textContent = 'Turnover is the sum of absolute weight changes against the drifted weights, as a share of capital, for a book with one long and one short. Short-term reversal earns ' + F.num(rv.gs, 2) + ' gross but turns over ' + F.pct(rv.turn, 0) + ' a month, so costs take it to ' + F.num(rv.ns, 2) + ' net. Value and momentum returns correlate at ' + F.num(rows[3].cm, 2) + ', which is why combining them helps.';
+    var xs = [T0 - 1]; for (var t = T0; t < o; t++) xs.push(t);
+    UI.chart.line('#sigGrowth', { xs: xs, series: R.sig.map(function (x) { var g = 1; return { name: x.s.short, ys: [1].concat(x.is.net.map(function (r) { g *= 1 + r; return g; })), color: COLORS[x.s.key], dash: x.s.key === 'blend' ? '4 3' : null }; }), yFmt: function (v) { return '$' + F.num(v, 2); }, xFmt: ml, xTicks: 5, height: 260, zero: false, label: 'Growth of $1 by signal, in sample' });
+    var hs = []; for (var h = 1; h <= 12; h++) hs.push(h);
+    UI.chart.line('#icDecay', { xs: hs, series: R.sig.map(function (x, k) { return { name: x.s.short, ys: k < 5 ? fm.ic[k] : bic.mean, color: COLORS[x.s.key], dots: true, dash: x.s.key === 'blend' ? '4 3' : null }; }), yFmt: function (v) { return F.num(v, 3); }, xFmt: function (h) { return h + 'm'; }, xTicks: 12, height: 260, label: 'IC decay' });
+    /* premia recovery */
+    var lam = P.lam, avg = function (arr, ms) { return PM.mean(ms.map(function (t) { return arr[t]; })); }, f = fm.fIS, ms = f.months;
+    var trueIS = [avg(lam.mom, ms), -avg(lam.rev, ms), avg(lam.val, ms), -avg(lam.lv, ms)], sgn = [1, 1, 1, 1];
+    var names = ['Momentum 12-1', 'Short-term reversal', 'Value', 'Low volatility'];
+    var prow = names.map(function (n, k) { var e = f.mean[k] * sgn[k], se = Math.abs(f.t[k]) > 0 ? Math.abs(f.mean[k] / f.t[k]) : 0; return { n: n, tr: trueIS[k], est: e, t: f.t[k], lo: e - 1.96 * se, hi: e + 1.96 * se, inCI: trueIS[k] >= e - 1.96 * se && trueIS[k] <= e + 1.96 * se }; });
+    var st = fm.regime.state, momSl = f.slopes[0], byReg = function (s) { var e = [], tr = []; ms.forEach(function (t, k) { if (st[t] === s) { e.push(momSl[k]); tr.push(lam.mom[t]); } }); return { e: e, tr: tr }; };
+    [0, 1].forEach(function (s) { var b = byReg(s); if (b.e.length > 2) { var tt = SY.tStat(b.e), m = PM.mean(b.e), se = tt ? Math.abs(m / tt) : 0; prow.push({ n: 'Momentum, ' + (s ? 'high' : 'low') + '-volatility months (' + b.e.length + ')', tr: PM.mean(b.tr), est: m, t: tt, lo: m - 1.96 * se, hi: m + 1.96 * se, inCI: PM.mean(b.tr) >= m - 1.96 * se && PM.mean(b.tr) <= m + 1.96 * se, sub: true }); } });
+    S.premia = prow;
+    var pf = function (v) { return F.num(v * 100, 3); };
+    UI.chart.bar('#premiaChart', { categories: ['Momentum', 'Reversal', 'Value', 'Low vol'], series: [{ name: 'True premium', values: trueIS.map(function (v) { return v * 100; }), color: 's4' }, { name: 'Estimated', values: prow.slice(0, 4).map(function (r) { return r.est * 100; }), color: 's1' }], yFmt: function (v) { return F.num(v, 2) + '%'; }, height: 220, label: 'True against estimated premia' });
+    UI.table('#premiaTable', { id: 'premia', name: 'True and estimated premia, in sample', columns: [{ key: 'n', label: 'Signal' }, { key: 'tr', label: 'True', num: 1, fmt: pf }, { key: 'est', label: 'Estimated', num: 1, fmt: pf }, { key: 't', label: 't-stat', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'lo', label: '95% from', num: 1, fmt: pf }, { key: 'hi', label: '95% to', num: 1, fmt: pf }, { key: 'inCI', label: 'Truth inside', fmt: function (v) { return v ? 'yes' : 'no'; } }], rows: prow });
+    var nin = prow.slice(0, 4).filter(function (r) { return r.inCI; }).length, hiR = prow.filter(function (r) { return r.sub; });
+    $('#premiaNote').textContent = 'The true premium is the generator\'s coefficient averaged over the same months, so it includes crash months and the decay. ' + nin + ' of 4 true premia fall inside the 95% interval of the estimate. Value is estimated below its true premium because the signal sees the valuation spread with noise, and low volatility because trailing total volatility mixes in beta.' + (hiR.length === 2 ? ' Momentum earns ' + pf(hiR[0].est) + '% a month in low-volatility months and ' + pf(hiR[1].est) + '% in high-volatility months, against true values of ' + pf(hiR[0].tr) + '% and ' + pf(hiR[1].tr) + '%.' : '');
+    var keys = R.sig.map(function (x) { return x.s.short; }), C = R.sig.map(function (a) { return R.sig.map(function (b) { return PM.corr(a.is.net, b.is.net); }); });
+    UI.chart.heat('#corrHeat', { rows: keys, cols: keys.map(function (k) { return k.replace('TS momentum', 'TS mom.').replace('Momentum', 'Mom.').replace('Reversal', 'Rev.'); }), matrix: C, min: -1, max: 1, cell: 52, labelWidth: 96, label: 'Signal return correlations' });
+    /* KPIs */
+    var bestSig = rows.slice().sort(function (a, b) { return b.ns - a.ns; })[0], pos = rows.filter(function (r) { return r.ns > 0; }).length, m0 = prow[0];
+    UI.kpis('#resKpis', [
+      { id: 'bestSig', label: 'Best single signal, net Sharpe', value: F.num(bestSig.ns, 2), sub: bestSig.n + ', in sample', explain: function () { return { title: 'Best single signal in sample', formula: 'mean(net) / sd(net) x sqrt 12 on ' + ml(T0) + ' to ' + ml(o - 1) + ' for each raw long-short book', inputs: rows.map(function (r) { return { name: r.n, value: F.num(r.ns, 3), src: 'computed', note: 'gross ' + F.num(r.gs, 2) }; }).concat([{ name: 'Trading cost', value: A.cost + ' bps', src: 'assumption' }, { name: 'Borrow fee', value: A.borrow + ' bps a year', src: 'assumption' }]), result: F.num(bestSig.ns, 2) }; } },
+      { id: 'posSig', label: 'Signals with a positive net Sharpe', value: pos + ' of ' + rows.length, sub: 'in sample, before any adjustment for testing six' },
+      { id: 'momPrem', label: 'Momentum premium, estimated vs true', value: pf(m0.est) + '% / ' + pf(m0.tr) + '%', sub: 'a month per 1 sd; t-stat ' + F.num(m0.t, 1), explain: function () { return { title: 'Momentum premium recovered by Fama-MacBeth', formula: 'each month: r_i = g0 + g_mom z(MOM) + g_rev z(-r_t-1) + g_val z(V) + g_lv z(-vol) + u; premium = mean of g_mom; t from HAC standard errors', inputs: [{ name: 'Months', value: String(ms.length), src: 'computed', note: ml(ms[0]) + ' to ' + ml(ms[ms.length - 1]) }, { name: 'True premium (generator average)', value: pf(m0.tr) + '%', src: 'assumption', note: 'calm ' + F.num(A.lamMom * 100, 2) + '%, turbulent x ' + A.momTurb + ', crash ' + F.num(A.lamCrash * 100, 1) + '%, decay ' + A.decay }, { name: '95% interval', value: pf(m0.lo) + '% to ' + pf(m0.hi) + '%', src: 'computed' }], result: pf(m0.est) + '%' }; } },
+      { id: 'valMom', label: 'Value and momentum correlation', value: F.num(rows[3].cm, 2), sub: 'monthly net returns, in sample' }
+    ]);
+  }
+
+  /* ---------------- tab 2: backtest ---------------- */
+  function curLabel() { return S.strat === 'wf' ? 'Walk-forward combination' : SNAME[S.strat].name; }
+  function renderBacktest() {
+    var o = R.o, bt = R.cur.bt, net = R.cur.net, gross = bt.gross, b = Array.prototype.slice.call(R.bench, T0, T);
+    var w = function (arr, a, c) { return sl(bt, arr, a, c); };
+    var pO = SY.perf(w(net, o, T)), pOg = SY.perf(w(gross, o, T)), pI = SY.perf(w(net, T0, o)), pF = SY.perf(net), bO = SY.perf(b.slice(o - T0)), bF = SY.perf(b);
+    var aO = SY.alpha(w(net, o, T), b.slice(o - T0)), aI = SY.alpha(w(net, T0, o), b.slice(0, o - T0)), aF = SY.alpha(net, b), aOg = SY.alpha(w(gross, o, T), b.slice(o - T0));
+    var drag = function (a, c) { return PM.mean(w(gross, a, c)) * 12 - PM.mean(w(net, a, c)) * 12; };
+    S.view = { oosSharpe: pO.sharpe, oosRet: pO.ann, mdd: pF.mdd, ir: aO.ir, t: aO.t };
+    var bn = S.bench === 'ew' ? 'equal-weight universe' : 'cap-weight proxy';
+    UI.kpis('#btKpis', [
+      { id: 'oosSharpe', label: 'Out-of-sample Sharpe ratio, net', value: F.num(pO.sharpe, 2), sub: 'gross ' + F.num(pOg.sharpe, 2) + ', in sample ' + F.num(pI.sharpe, 2), tone: pO.sharpe > 0 ? 'good' : 'bad', explain: function () { var r = w(net, o, T); return { title: 'Out-of-sample Sharpe ratio, net of costs', formula: 'mean(net monthly) / sd(net monthly) x sqrt 12, ' + ml(o) + ' to ' + ml(T - 1) + '; returns are excess of cash', inputs: [{ name: 'Months', value: String(r.length), src: 'computed' }, { name: 'Mean net return a month', value: F.pct(PM.mean(r), 3), src: 'computed' }, { name: 'Volatility a month', value: F.pct(PM.std(r), 3), src: 'computed' }, { name: 'Gross Sharpe', value: F.num(pOg.sharpe, 3), src: 'computed' }, { name: 'Trading cost', value: A.cost + ' bps per unit of turnover', src: 'assumption' }, { name: 'Borrow fee', value: A.borrow + ' bps a year', src: 'assumption' }], result: F.num(pO.sharpe, 2) }; } },
+      { id: 'oosRet', label: 'Net return a year, out of sample', value: F.pct(pO.ann, 1), sub: 'volatility ' + F.pct(pO.vol, 1) + '; cost drag ' + F.pct(drag(o, T), 1), explain: function () { return { title: 'Annualised net return, out of sample', formula: '(prod (1 + net_t))^(12 / n) - 1', inputs: [{ name: 'Gross return a year', value: F.pct(pOg.ann, 2), src: 'computed' }, { name: 'Average turnover a month', value: F.pct(PM.mean(w(bt.turn, o, T)), 1), src: 'computed' }, { name: 'Trading cost and borrow a year', value: F.pct(drag(o, T), 2), src: 'computed' }], result: F.pct(pO.ann, 2) }; } },
+      { id: 'mdd', label: 'Maximum drawdown, net', value: F.pct(pF.mdd, 1), sub: 'whole backtest; benchmark ' + F.pct(bF.mdd, 1), tone: 'bad', explain: function () { return { title: 'Maximum drawdown', formula: 'min over t of growth_t / running peak - 1, net monthly returns ' + ml(T0) + ' to ' + ml(T - 1), inputs: [{ name: 'In sample', value: F.pct(pI.mdd, 2), src: 'computed' }, { name: 'Out of sample', value: F.pct(pO.mdd, 2), src: 'computed' }, { name: 'Benchmark', value: F.pct(bF.mdd, 2), src: 'computed' }], result: F.pct(pF.mdd, 2) }; } },
+      { id: 'ir', label: 'Information ratio vs benchmark, out of sample', value: F.num(aO.ir, 2), sub: 't-stat ' + F.num(aO.t, 1) + ', beta ' + F.num(aO.beta, 2), explain: function () { return { title: 'Information ratio against the ' + bn, formula: 'r_t = alpha + beta b_t + e_t; IR = 12 alpha / (sd(e) sqrt 12); t = HAC t-stat of r_t - beta b_t', inputs: [{ name: 'Alpha a year', value: F.pct(aO.alpha, 2), src: 'computed' }, { name: 'Beta', value: F.num(aO.beta, 3), src: 'computed' }, { name: 'Residual volatility a year', value: F.pct(aO.te, 2), src: 'computed' }, { name: 'HAC t-stat of alpha', value: F.num(aO.t, 2), src: 'computed' }], result: F.num(aO.ir, 2) }; } }
+    ]);
+    $('#growthSub').textContent = curLabel() + ', ' + ml(T0) + ' to ' + ml(T - 1) + '; the dashed line marks the start of the out-of-sample window';
+    var xs = [T0 - 1]; for (var t = T0; t < T; t++) xs.push(t);
+    var grow = function (r) { var g = 1; return [1].concat(r.map(function (x) { g *= 1 + x; return g; })); };
+    UI.chart.line('#growth', { xs: xs, series: [{ name: 'Net of costs', ys: grow(net), color: 's1', width: 2 }, { name: 'Gross', ys: grow(gross), color: 's1', dash: '4 3', width: 1.25 }, { name: 'Benchmark, ' + bn, ys: grow(b), color: 's4' }], vlines: [{ x: o - 1, label: 'Out of sample' }], yFmt: function (v) { return '$' + F.num(v, 1); }, xFmt: ml, xTicks: 6, height: 270, zero: false, label: 'Growth of $1' });
+    var dd = SY.perf(net).dd, ddb = SY.perf(b).dd;
+    UI.chart.line('#ddChart', { xs: xs.slice(1), series: [{ name: curLabel(), ys: dd, color: 's1', area: true }, { name: 'Benchmark', ys: ddb, color: 's4' }], vlines: [{ x: o - 1 }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: ml, xTicks: 6, height: 220, label: 'Drawdown' });
+    var rs = SY.rolling(net, 36), rb = SY.rolling(b, 36);
+    UI.chart.line('#rollRet', { xs: xs.slice(1), series: [{ name: curLabel(), ys: rs.ret, color: 's1' }, { name: 'Benchmark', ys: rb.ret, color: 's4' }], vlines: [{ x: o - 1 }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: ml, xTicks: 5, height: 230, label: 'Rolling 36-month return' });
+    UI.chart.line('#rollSharpe', { xs: xs.slice(1), series: [{ name: curLabel(), ys: rs.sharpe, color: 's1' }, { name: 'Benchmark', ys: rb.sharpe, color: 's4' }], vlines: [{ x: o - 1 }], yFmt: function (v) { return F.num(v, 1); }, xFmt: ml, xTicks: 5, height: 230, label: 'Rolling 36-month Sharpe' });
+    var pBg = SY.perf(b.slice(0, o - T0));
+    var cols = [{ k: 'is', p: pI, a: aI, tr: w(bt.turn, T0, o), dr: drag(T0, o) }, { k: 'oosg', p: pOg, a: aOg, tr: w(bt.turn, o, T), dr: 0 }, { k: 'oos', p: pO, a: aO, tr: w(bt.turn, o, T), dr: drag(o, T) }, { k: 'full', p: pF, a: aF, tr: bt.turn, dr: drag(T0, T) }, { k: 'b', p: bO, a: null, tr: null, dr: null }];
+    var metric = function (label, fn, fmt) { var r = { m: label, fmt: fmt }; cols.forEach(function (c) { r[c.k] = fn(c); }); return r; };
+    var pc1 = function (v) { return v == null ? '' : F.pct(v, 1); }, n2 = function (v) { return v == null ? '' : F.num(v, 2); };
+    var mrows = [
+      metric('Annual return', function (c) { return c.p.ann; }, pc1), metric('Volatility', function (c) { return c.p.vol; }, pc1), metric('Sharpe ratio', function (c) { return c.p.sharpe; }, n2),
+      metric('Sortino ratio', function (c) { return c.p.sortino; }, n2), metric('Maximum drawdown', function (c) { return c.p.mdd; }, pc1), metric('Calmar ratio', function (c) { return c.p.calmar; }, n2),
+      metric('Hit rate (months up)', function (c) { return c.p.hit; }, function (v) { return v == null ? '' : F.pct(v, 0); }), metric('Turnover a month', function (c) { return c.tr ? PM.mean(c.tr) : null; }, function (v) { return v == null ? '' : F.pct(v, 0); }),
+      metric('Cost drag a year', function (c) { return c.dr; }, function (v) { return v == null ? '' : F.pct(v, 2); }), metric('Beta to benchmark', function (c) { return c.a ? c.a.beta : null; }, n2),
+      metric('Alpha a year', function (c) { return c.a ? c.a.alpha : null; }, pc1), metric('Information ratio', function (c) { return c.a ? c.a.ir : null; }, n2), metric('t-stat of alpha (HAC)', function (c) { return c.a ? c.a.t : null; }, function (v) { return v == null ? '' : F.num(v, 1); })
+    ];
+    S.metricRows = mrows;
+    var fm = function (v, r) { return r.fmt(v); };
+    UI.table('#perfTable', { id: 'performance', name: 'Performance against the benchmark', columns: [{ key: 'm', label: 'Measure' }, { key: 'is', label: 'In sample, net', num: 1, fmt: fm }, { key: 'oosg', label: 'Out of sample, gross', num: 1, fmt: fm }, { key: 'oos', label: 'Out of sample, net', num: 1, fmt: fm }, { key: 'full', label: 'Whole period, net', num: 1, fmt: fm }, { key: 'b', label: 'Benchmark, out of sample', num: 1, fmt: fm }], rows: mrows });
+    $('#perfSub').textContent = 'In sample ' + ml(T0) + ' to ' + ml(o - 1) + ', out of sample ' + ml(o) + ' to ' + ml(T - 1) + '; benchmark ' + bn;
+    $('#perfNote').textContent = 'The book is long-short, so its beta to the benchmark is small and the information ratio measures its alpha against the ' + bn + ' (benchmark Sharpe ' + F.num(bO.sharpe, 2) + ' out of sample, ' + F.num(pBg.sharpe, 2) + ' in sample). Average gross exposure is ' + F.pct(PM.mean(bt.long.map(function (x, k) { return x + bt.short[k]; })), 0) + ' of capital, and the position limit binds on ' + F.num(PM.mean(bt.bound), 1) + ' names a month on average.';
+    renderRegimes(net, b);
+  }
+  function renderRegimes(net, b) {
+    var rg = FM.regime, st = rg.state, xs = [], vol = [], thr = [], shade = [];
+    for (var t = T0; t < T; t++) { xs.push(t); vol.push(rg.vol[t]); thr.push(rg.thr[t]); shade.push(st[t] === 1 ? 's5' : false); }
+    UI.chart.line('#regChart', { xs: xs, series: [{ name: 'Trailing ' + A.regWin + '-month volatility', ys: vol, color: 's4' }, { name: 'Threshold, ' + F.pct(A.regQ, 0) + ' quantile of the past', ys: thr, color: 's2', dash: '4 3' }], shade: shade, yFmt: function (v) { return F.pct(v, 0); }, xFmt: ml, xTicks: 5, height: 230, label: 'Ex-ante regime' });
+    var lib = L.lib, split = function (r) { var lo = [], hi = []; r.forEach(function (x, k) { var s = st[T0 + k]; if (s === 1) hi.push(x); else if (s === 0) lo.push(x); }); return { lo: lo, hi: hi }; };
+    var series = [{ n: curLabel(), r: net }].concat(['mom_12_1', 'tsm', 'val', 'lv'].map(function (k) { var it = lib.items[k]; return { n: SNAME[k].short, r: sl(it.bt, netOf(it.bt), T0, T) }; })).concat([{ n: 'Benchmark', r: b }]);
+    var sp = series.map(function (x) { var s = split(x.r); return { n: x.n, lo: SY.perf(s.lo), hi: SY.perf(s.hi) }; });
+    UI.chart.bar('#regBars', { categories: sp.map(function (x) { return x.n.replace('Walk-forward combination', 'Combination'); }), series: [{ name: 'Low volatility regime', values: sp.map(function (x) { return x.lo.sharpe; }), color: 's1' }, { name: 'High volatility regime', values: sp.map(function (x) { return x.hi.sharpe; }), color: 's5' }], yFmt: function (v) { return F.num(v, 1); }, height: 230, label: 'Sharpe by regime' });
+    var rows = [];
+    sp.forEach(function (x) { [['Low', x.lo], ['High', x.hi]].forEach(function (q) { rows.push({ n: x.n, r: q[0], m: q[1].n, ret: q[1].mean, vol: q[1].vol, sh: q[1].sharpe, hit: q[1].hit, mdd: q[1].mdd }); }); });
+    S.regRows = rows;
+    UI.table('#regTable', { id: 'regimes', name: 'Performance by regime', columns: [{ key: 'n', label: 'Strategy' }, { key: 'r', label: 'Regime' }, { key: 'm', label: 'Months', num: 1 }, { key: 'ret', label: 'Mean return a year', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'vol', label: 'Volatility', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sh', label: 'Sharpe', num: 1, fmt: function (v) { return F.num(v, 2); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'hit', label: 'Hit rate', num: 1, fmt: function (v) { return F.pct(v, 0); } }], rows: rows });
+    var agree = 0, n = 0, hiT = 0, hiN = 0; for (t = T0; t < T; t++) { if (st[t] < 0) continue; n++; if (st[t] === D.P.state[t]) agree++; if (D.P.state[t]) { hiT++; if (st[t] === 1) hiN++; } }
+    var crashM = []; for (t = T0; t < T; t++) if (D.P.crash[t]) crashM.push(t);
+    var mr = sl(lib.items.mom_12_1.bt, netOf(lib.items.mom_12_1.bt), T0, T), cr = crashM.map(function (t) { return mr[t - T0]; });
+    $('#regNote').textContent = 'The regime is set at the start of each month from trailing volatility, so it can be traded. It matches the generator\'s true state in ' + F.pct(agree / n, 0) + ' of months and flags ' + hiN + ' of the ' + hiT + ' truly turbulent months. The generator had ' + crashM.length + ' momentum crash months' + (cr.length ? ', in which momentum 12-1 returned ' + F.pct(PM.mean(cr), 1) + ' on average, worst ' + F.pct(Math.min.apply(null, cr), 1) + '.' : '.');
+  }
+
+  /* ---------------- tab 3: validation ---------------- */
+  function renderValidation() {
+    var o = R.o, wf = R.wf, dz = R.dsr;
+    UI.kpis('#valKpis', [
+      { id: 'isSharpe', label: 'In-sample Sharpe ratio, net', value: F.num(R.isS, 2), sub: 'average of the ' + wf.folds.length + ' fitted training windows', explain: function () { return { title: 'In-sample Sharpe ratio', formula: 'mean over folds of the Sharpe ratio of the combination fitted on the training window, evaluated on that same window', inputs: wf.folds.map(function (f, k) { return { name: 'Fold ' + (k + 1) + ', ' + ml(f.trainStart) + ' to ' + ml(f.trainEnd - 1), value: F.num(f.isPerf.sharpe, 3), src: 'computed' }; }), result: F.num(R.isS, 2) }; } },
+      { id: 'oosSharpe2', label: 'Out-of-sample Sharpe ratio, net', value: F.num(R.oosP.sharpe, 2), sub: ml(o) + ' to ' + ml(T - 1), tone: R.oosP.sharpe > 0 ? 'good' : 'bad' },
+      { id: 'gap', label: 'In-sample minus out-of-sample', value: F.num(R.gap, 2), sub: 'Sharpe points; ' + F.pct(R.isS > 0 ? R.gap / R.isS : 0, 0) + ' of the in-sample figure', tone: R.gap > 0 ? 'bad' : 'good', explain: function () { return { title: 'Gap between in-sample and out-of-sample Sharpe', formula: 'average fitted in-sample Sharpe - out-of-sample Sharpe of the walk-forward record', inputs: [{ name: 'In sample', value: F.num(R.isS, 3), src: 'computed' }, { name: 'Out of sample', value: F.num(R.oosP.sharpe, 3), src: 'computed' }, { name: 'True premium decay setting', value: F.pct(A.decay, 0) + ' over 30 years', src: 'assumption' }], result: F.num(R.gap, 2) }; } },
+      { id: 'dsr', label: 'Deflated Sharpe ratio', value: F.num(dz.res.dsr, 2), sub: 'probability the true Sharpe is above zero after ' + dz.N + ' trials', tone: dz.res.dsr >= A.dsrMin ? 'good' : 'bad', explain: function () { return { title: 'Deflated Sharpe ratio (Bailey and Lopez de Prado)', formula: 'SR0 = sqrt(V) ((1 - gamma) Phi^-1(1 - 1/N) + gamma Phi^-1(1 - 1/(N e))); DSR = Phi((SR - SR0) sqrt(n - 1) / sqrt(1 - g3 SR + (g4 - 1)/4 SR^2))', inputs: [{ name: 'Sharpe, monthly (first fold in sample)', value: F.num(dz.sr, 4), src: 'computed', note: 'annualised ' + F.num(dz.sr * SQ12, 2) }, { name: 'Months', value: String(dz.n), src: 'computed' }, { name: 'Skewness', value: F.num(dz.skew, 2), src: 'computed' }, { name: 'Kurtosis', value: F.num(dz.kurt, 2), src: 'computed' }, { name: 'Trials N', value: String(dz.N), src: 'computed', note: '24 momentum cells, 5 other signals, 3 combinations' }, { name: 'Variance of trial Sharpe (monthly)', value: F.num(dz.varSR, 5), src: 'computed' }, { name: 'Expected maximum under no skill, SR0', value: F.num(dz.res.sr0, 4), src: 'computed', note: 'annualised ' + F.num(dz.res.sr0 * SQ12, 2) }], result: F.num(dz.res.dsr, 3) }; } }
+    ]);
+    var frows = wf.folds.map(function (f, k) { var r = { fold: k + 1, train: ml(f.trainStart) + ' to ' + ml(f.trainEnd - 1), test: ml(f.testStart) + ' to ' + ml(f.testEnd - 1), sel: momName(f.sel), is: f.isPerf.sharpe, oos: f.oosPerf.sharpe, gap: f.isPerf.sharpe - f.oosPerf.sharpe }; f.keys.forEach(function (key, j) { r['a' + j] = f.a[j]; }); return r; });
+    S.foldRows = frows;
+    var ap = function (v) { return F.pct(v, 0); };
+    UI.table('#foldTable', { id: 'folds', name: 'Walk-forward folds', columns: [{ key: 'fold', label: 'Fold', num: 1 }, { key: 'train', label: 'Training window' }, { key: 'test', label: 'Test window' }, { key: 'sel', label: 'Momentum selected' }, { key: 'a0', label: 'Momentum', num: 1, fmt: ap }, { key: 'a1', label: 'TS mom.', num: 1, fmt: ap }, { key: 'a2', label: 'Reversal', num: 1, fmt: ap }, { key: 'a3', label: 'Value', num: 1, fmt: ap }, { key: 'a4', label: 'Low vol', num: 1, fmt: ap }, { key: 'is', label: 'Sharpe in sample', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'oos', label: 'Sharpe out of sample', num: 1, fmt: function (v) { return F.num(v, 2); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'gap', label: 'Gap', num: 1, fmt: function (v) { return F.num(v, 2); } }], rows: frows });
+    $('#foldNote').textContent = 'Weights are the ' + methodName(S.method).toLowerCase() + ' fit across the five strategies on each training window. ' + (S.method === 'mv' ? 'Mean-variance drops any strategy with a negative fitted weight, which is how reversal leaves the mix after costs. ' : '') + 'The test windows join into one out-of-sample record of ' + R.oosNet.length + ' months.';
+    var cats = R.sig.map(function (x) { return x.s.short; }).concat(['Combination']);
+    UI.chart.bar('#isoosBars', { categories: cats, series: [{ name: 'In sample', values: R.sig.map(function (x) { return shp(x.is.net); }).concat([R.isS]), color: 's4' }, { name: 'Out of sample', values: R.sig.map(function (x) { return shp(x.oos.net); }).concat([R.oosP.sharpe]), color: 's1' }], yFmt: function (v) { return F.num(v, 1); }, height: 250, label: 'In sample against out of sample' });
+    var pts = R.trials.map(function (x) { return { x: x.isS, y: x.oosS, label: x.name, color: x.kind === 'grid' ? 's4' : x.kind === 'signal' ? 's2' : 's1', r: x.kind === 'combo' ? 7 : 5 }; });
+    var lo = Math.min.apply(null, pts.map(function (p) { return Math.min(p.x, p.y); })), hi = Math.max.apply(null, pts.map(function (p) { return Math.max(p.x, p.y); }));
+    UI.chart.scatter('#trialScatter', { points: pts, line: [{ x: lo, y: lo }, { x: hi, y: hi }], xMin: lo, xMax: hi, yMin: lo, yMax: hi, xLabel: 'In-sample net Sharpe', xFmt: function (v) { return F.num(v, 1); }, yFmt: function (v) { return F.num(v, 1); }, height: 260, label: 'Trials, in sample against out of sample' });
+    var isv = R.trials.map(function (x) { return x.isS; }), oov = R.trials.map(function (x) { return x.oosS; }), below = R.trials.filter(function (x) { return x.oosS < x.isS; }).length;
+    $('#trialNote').textContent = 'Grey: the 24 momentum cells; second colour: the other signals; large dots: the three combinations. The line is where out of sample equals in sample. ' + below + ' of ' + R.trials.length + ' trials fall below it, and the rank correlation between the two windows is ' + F.num(SY.spearman(isv, oov), 2) + '.';
+    var dr = [
+      { m: 'Trials run in sample', v: String(dz.N) }, { m: 'Average correlation between trials', v: F.num(dz.rho, 2) }, { m: 'Effective number of independent trials', v: F.num(dz.nEff, 1) },
+      { m: 'Variance of the trials\' Sharpe, annualised', v: F.num(dz.varSR * 12, 3) }, { m: 'Expected best Sharpe from no skill, annualised', v: F.num(dz.res.sr0 * SQ12, 2) },
+      { m: 'Selected combination, in-sample Sharpe', v: F.num(dz.sr * SQ12, 2) }, { m: 'Probabilistic Sharpe ratio against zero', v: F.num(dz.res.psr, 3) }, { m: 'Deflated Sharpe ratio', v: F.num(dz.res.dsr, 3) },
+      { m: 'Best single trial: ' + dz.best.name, v: F.num(dz.best.isS, 2) + ' in sample, DSR ' + F.num(dz.bestRes.dsr, 3) }
+    ];
+    UI.table('#dsrTable', { id: 'dsr', name: 'Deflated Sharpe ratio', columns: [{ key: 'm', label: 'Measure' }, { key: 'v', label: 'Value', num: 1 }], rows: dr });
+    $('#dsrNote').textContent = 'With ' + dz.N + ' trials, pure luck would be expected to produce a best Sharpe of about ' + F.num(dz.res.sr0 * SQ12, 2) + '. The deflated Sharpe ratio asks how likely the selected result is to beat that bar, given ' + dz.n + ' months, its skewness and its fat tails. ' + (dz.res.dsr >= A.dsrMin ? 'It clears the ' + F.num(A.dsrMin, 2) + ' bar set in the research policy.' : 'It falls short of the ' + F.num(A.dsrMin, 2) + ' bar set in the research policy.');
+    /* true decay */
+    var lam = D.P.lam, mean = function (arr, a, b) { return PM.mean(Array.prototype.slice.call(arr, a, b)); };
+    var drows = ['Momentum 12-1', 'Short-term reversal', 'Value', 'Low volatility'].map(function (n, k) {
+      var key = ['mom', 'rev', 'val', 'lv'][k], sg = k === 1 || k === 3 ? -1 : 1;
+      return { n: n, ti: sg * mean(lam[key], T0, o), to: sg * mean(lam[key], o, T), ei: FM.fIS.mean[k], eo: FM.fOOS.mean[k] };
+    });
+    S.decayRows = drows;
+    var pf = function (v) { return F.num(v * 100, 3); };
+    UI.table('#decayTable', { id: 'decay', name: 'True and estimated premia by window', columns: [{ key: 'n', label: 'Signal' }, { key: 'ti', label: 'True, in sample', num: 1, fmt: pf }, { key: 'to', label: 'True, out of sample', num: 1, fmt: pf }, { key: 'ei', label: 'Estimated, in sample', num: 1, fmt: pf }, { key: 'eo', label: 'Estimated, out of sample', num: 1, fmt: pf }], rows: drows });
+    var tShare = PM.mean(drows.map(function (r) { return r.ti > 0 ? 1 - r.to / r.ti : 0; }));
+    $('#decayNote').textContent = 'The generator shrinks every premium by ' + F.pct(A.decay, 0) + ' over the 30 years, so the true premia are on average ' + F.pct(tShare, 0) + ' lower out of sample. That part of the gap is real. The rest is selection and fitting on noise, which only a known truth lets you separate.';
+    /* bias audit */
+    var lk = L.lib.items.leak, lkS = shp(sl(lk.bt, netOf(lk.bt), T0, T)), mS = shp(R.sig[0].full.net);
+    var bS = SY.perf(Array.prototype.slice.call(D.benchSurv, T0, T)).ann, bE = SY.perf(Array.prototype.slice.call(D.bench.ew, T0, T)).ann;
+    var fx = R.wfFix, fs = R.wfSurv, fxS = shp(sl(fx.bt, fx.net, o, T)), fsS = shp(sl(fs.bt, fs.net, o, T));
+    var g0 = R.wf.bt, oosC = function (c) { return shp(sl(g0, SY.net(g0, c, c ? A.borrow : 0), o, T)); };
+    var brows = [
+      { b: 'Look-ahead', naive: 'Momentum including month t: Sharpe ' + F.num(lkS, 2), guard: 'Momentum 12-1 through t-1: Sharpe ' + F.num(mS, 2), how: 'Signals read months before t only; a model test and the activity log change later data and check the weights do not move' },
+      { b: 'Survivorship, benchmark', naive: 'Survivors only: ' + F.pct(bS, 1) + ' a year', guard: 'Full history: ' + F.pct(bE, 1) + ' a year', how: 'Delisted stocks stay in the data to their last month, delisting return included' },
+      { b: 'Survivorship, strategy', naive: 'Survivors only: out-of-sample Sharpe ' + F.num(fsS, 2), guard: 'Full history: ' + F.num(fxS, 2), how: 'Same process with momentum fixed at 12-1 on both datasets' },
+      { b: 'Data snooping', naive: 'Best of ' + R.dsr.N + ' trials in sample: Sharpe ' + F.num(R.dsr.best.isS, 2), guard: 'Deflated Sharpe ' + F.num(R.dsr.bestRes.dsr, 2) + '; Holm-adjusted p ' + F.num(Math.min.apply(null, R.mt.map(function (x) { return x.holm; })), 3), how: 'Counts every trial, deflates the best Sharpe and adjusts the signal tests' },
+      { b: 'Overfitting', naive: 'Fitted in sample: Sharpe ' + F.num(R.isS, 2), guard: 'Walk-forward out of sample: ' + F.num(R.oosP.sharpe, 2), how: 'Selection and weights come from training windows only' },
+      { b: 'Unrealistic costs', naive: 'No costs: out-of-sample Sharpe ' + F.num(oosC(0), 2), guard: 'At ' + A.cost + ' bps: ' + F.num(oosC(A.cost), 2) + '; at ' + 2 * A.cost + ' bps: ' + F.num(oosC(2 * A.cost), 2), how: 'Costs on drifted turnover plus a borrow fee; the cost sweep gives the break-even' }
+    ];
+    S.biasRows = brows;
+    UI.table('#biasTable', { id: 'bias', name: 'Bias audit', columns: [{ key: 'b', label: 'Bias' }, { key: 'naive', label: 'With the bias' }, { key: 'guard', label: 'With the guard' }, { key: 'how', label: 'How the page guards' }], rows: brows });
+  }
+
+  /* ---------------- tab 4: robustness ---------------- */
+  function renderRobustness() {
+    var o = R.o, lib = L.lib;
+    var mat = function (a, b) { return LOOKBACKS.map(function (Lb) { return HOLDS.map(function (H) { var it = lib.items['mom_' + Lb + '_' + H]; return shp(sl(it.bt, netOf(it.bt), a, b)); }); }); };
+    var mi = mat(T0, o), mo = mat(o, T), mx = Math.max.apply(null, mi.concat(mo).map(function (r) { return Math.max.apply(null, r.map(Math.abs)); })) || 1;
+    var rl = LOOKBACKS.map(function (x) { return x + '-month'; }), cl = HOLDS.map(function (h) { return h + 'm hold'; });
+    UI.chart.heat('#gridIS', { rows: rl, cols: cl, matrix: mi, min: -mx, max: mx, cell: 76, labelWidth: 92, label: 'Momentum grid in sample' });
+    UI.chart.heat('#gridOOS', { rows: rl, cols: cl, matrix: mo, min: -mx, max: mx, cell: 76, labelWidth: 92, label: 'Momentum grid out of sample' });
+    var flat = function (m) { return [].concat.apply([], m); }, fi = flat(mi), fo = flat(mo), bi = fi.indexOf(Math.max.apply(null, fi)), sel = R.wf.folds[0].sel;
+    var posO = fo.filter(function (v) { return v > 0; }).length;
+    $('#gridNote').textContent = 'The best cell in sample is the ' + LOOKBACKS[Math.floor(bi / HOLDS.length)] + '-month lookback with a ' + HOLDS[bi % HOLDS.length] + '-month hold at ' + F.num(fi[bi], 2) + '; out of sample the same cell gives ' + F.num(fo[bi], 2) + ', where the best cell gives ' + F.num(Math.max.apply(null, fo), 2) + '. ' + posO + ' of ' + fo.length + ' cells are positive out of sample. The rank correlation of the cells across the two windows is ' + F.num(SY.spearman(fi, fo), 2) + '. The first fold selected ' + momName(sel) + '.';
+    S.grid = { is: mi, oos: mo };
+    UI.table('#gridTable', { id: 'grid', name: 'Momentum grid', columns: [{ key: 'L', label: 'Lookback, months', num: 1 }, { key: 'H', label: 'Holding period, months', num: 1 }, { key: 'is', label: 'Net Sharpe in sample', num: 1, fmt: function (v) { return F.num(v, 3); } }, { key: 'oos', label: 'Net Sharpe out of sample', num: 1, fmt: function (v) { return F.num(v, 3); } }], rows: flat(LOOKBACKS.map(function (Lb, i) { return HOLDS.map(function (H, j) { return { L: Lb, H: H, is: mi[i][j], oos: mo[i][j] }; }); })) });
+    /* bootstrap */
+    var bs = R.boot, lo = PM.quantile(bs, 0.025), hi = PM.quantile(bs, 0.975), pNeg = bs.filter(function (x) { return x <= 0; }).length / bs.length;
+    S.bootCI = [lo, hi];
+    $('#bootSub').textContent = A.bootN + ' resamples of ' + A.bootBlock + '-month blocks, walk-forward combination, ' + ml(o) + ' to ' + ml(T - 1);
+    var hist = function (vals, w, a, b) { var lo0 = Math.floor(a / w) * w, n = Math.max(1, Math.ceil((b - lo0) / w + 1e-9)), c = new Array(n).fill(0); vals.forEach(function (v) { var k = Math.min(n - 1, Math.max(0, Math.floor((v - lo0) / w))); c[k]++; }); return { lo: lo0, w: w, c: c }; };
+    var hb = hist(bs, 0.1, bs[0], bs[bs.length - 1]);
+    UI.chart.bar('#bootChart', { categories: hb.c.map(function (_, k) { return F.num(hb.lo + hb.w * (k + 0.5), 2); }), series: [{ name: 'Resamples', values: hb.c.map(function (c, k) { return c / bs.length; }), colors: hb.c.map(function (_, k) { var m = hb.lo + hb.w * (k + 0.5); return m < lo || m > hi ? 's4' : 's1'; }) }], yFmt: function (v) { return F.pct(v, 0); }, height: 230, label: 'Bootstrap distribution of the Sharpe ratio' });
+    $('#bootNote').textContent = 'The 95% interval for the out-of-sample Sharpe ratio is ' + F.num(lo, 2) + ' to ' + F.num(hi, 2) + ' around the point estimate of ' + F.num(R.oosP.sharpe, 2) + '. ' + F.pct(pNeg, 0) + ' of resamples are at or below zero. Blocks keep the autocorrelation and the volatility clustering of the monthly returns.';
+    /* placebo */
+    var pl = R.plIS, real = R.sig.map(function (x) { return { n: x.s.short, s: shp(x.is.net) }; }), p95 = PM.quantile(pl, 0.95);
+    var all = pl.concat(real.map(function (x) { return x.s; })), hp = hist(all, 0.1, Math.min.apply(null, all), Math.max.apply(null, all));
+    var cnt = function (vals) { var c = new Array(hp.c.length).fill(0); vals.forEach(function (v) { c[Math.min(c.length - 1, Math.max(0, Math.floor((v - hp.lo) / hp.w)))]++; }); return c; };
+    $('#placeboSub').textContent = A.nPlacebo + ' long-short books on persistent noise, in sample, same universe and costs';
+    UI.chart.bar('#placeboChart', { categories: hp.c.map(function (_, k) { return F.num(hp.lo + hp.w * (k + 0.5), 2); }), series: [{ name: 'Placebo signals', values: cnt(pl), color: 's4' }, { name: 'Real signals', values: cnt(real.map(function (x) { return x.s; })), color: 's1' }], yFmt: function (v) { return F.num(v, 0); }, height: 230, label: 'Placebo distribution' });
+    var beat = real.map(function (x) { return x.n + ' ' + F.num(x.s, 2) + ' (' + F.pct(pl.filter(function (v) { return v >= x.s; }).length / pl.length, 0) + ' of placebos higher)'; });
+    S.placebo = { p95: p95, max: pl[pl.length - 1], median: PM.quantile(pl, 0.5) };
+    $('#placeboNote').textContent = 'Noise signals have no premium by construction. Net of costs their median Sharpe is ' + F.num(S.placebo.median, 2) + ', the 95th percentile ' + F.num(p95, 2) + ' and the best ' + F.num(S.placebo.max, 2) + ': that is what a spurious discovery looks like. Real signals: ' + beat.join('; ') + '.';
+    /* multiple testing */
+    var p3 = function (v) { return v < 0.001 ? '<0.001' : F.num(v, 3); };
+    UI.table('#mtTable', { id: 'multiple-testing', name: 'Multiple testing across the signal set', columns: [{ key: 'n', label: 'Signal' }, { key: 'isS', label: 'Sharpe in sample', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 't', label: 't-stat', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'p', label: 'p-value', num: 1, fmt: p3 }, { key: 'bonf', label: 'Bonferroni', num: 1, fmt: p3 }, { key: 'holm', label: 'Holm', num: 1, fmt: p3 }, { key: 'sig', label: 'Holm below 5%' }, { key: 'oosS', label: 'Sharpe out of sample', num: 1, fmt: function (v) { return F.num(v, 2); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'tO', label: 't-stat out of sample', num: 1, fmt: function (v) { return F.num(v, 2); } }],
+      rows: R.mt.map(function (x) { return { n: x.s.name, isS: x.isS, t: x.t, p: x.p, bonf: x.bonf, holm: x.holm, sig: x.holm < 0.05 ? 'yes' : 'no', oosS: x.oosS, tO: x.tO }; }) });
+    var raw5 = R.mt.filter(function (x) { return x.p < 0.05; }).length, holm5 = R.mt.filter(function (x) { return x.holm < 0.05; }).length;
+    $('#mtNote').textContent = raw5 + ' of 6 signals have a raw p-value below 5% in sample; after Holm, ' + holm5 + '. Twelve years of monthly data give a t-statistic of about Sharpe x 3.5, so a true Sharpe of 0.4 is hard to tell from luck on one signal alone.';
+    /* cost sensitivity */
+    var cs = []; for (var c = 0; c <= 60; c += 5) cs.push(c);
+    var lines = [{ n: 'Walk-forward combination', bt: R.wf.bt, col: 's1' }].concat(['mom_12_1', 'rev', 'val', 'lv'].map(function (k) { return { n: SNAME[k].short, bt: lib.items[k].bt, col: COLORS[k] }; }));
+    UI.chart.line('#costChart', { xs: cs, series: lines.map(function (x) { return { name: x.n, ys: cs.map(function (c) { return shp(sl(x.bt, SY.net(x.bt, c, A.borrow), o, T)); }), color: x.col, width: x.n === 'Walk-forward combination' ? 2.25 : 1.5 }; }), vlines: [{ x: A.cost, label: 'Assumed' }], yFmt: function (v) { return F.num(v, 1); }, xFmt: function (c) { return c + ' bps'; }, xTicks: 7, height: 240, label: 'Cost sensitivity' });
+    var be = function (bt) { var g = sl(bt, bt.gross, o, T), tr = sl(bt, bt.turn, o, T), sh = sl(bt, bt.short, o, T), m = PM.mean(g) - A.borrow / 1e4 / 12 * PM.mean(sh); return PM.mean(tr) > 0 ? m / PM.mean(tr) * 1e4 : Infinity; };
+    S.breakeven = be(R.wf.bt);
+    $('#costNote').textContent = 'Holding the portfolios fixed, the combination breaks even out of sample at ' + (isFinite(S.breakeven) && S.breakeven > 0 ? F.num(S.breakeven, 0) + ' bps per unit of turnover' : 'no positive cost level') + ', against ' + A.cost + ' bps assumed. Reversal breaks even at ' + F.num(Math.max(0, be(lib.items.rev.bt)), 0) + ' bps, which is why a fast signal needs cheap execution.';
+    UI.kpis('#robKpis', [
+      { id: 'bootCI', label: 'Bootstrap 95% interval, out-of-sample Sharpe', value: F.num(lo, 2) + ' to ' + F.num(hi, 2), sub: F.pct(pNeg, 0) + ' of resamples at or below zero', explain: function () { return { title: 'Circular block bootstrap', formula: 'resample ' + A.bootBlock + '-month blocks with replacement to ' + R.oosNet.length + ' months, ' + A.bootN + ' times; Sharpe of each; 2.5% and 97.5% quantiles', inputs: [{ name: 'Point estimate', value: F.num(R.oosP.sharpe, 3), src: 'computed' }, { name: 'Block length', value: A.bootBlock + ' months', src: 'assumption' }, { name: 'Median resample', value: F.num(PM.quantile(bs, 0.5), 3), src: 'computed' }], result: F.num(lo, 2) + ' to ' + F.num(hi, 2) }; } },
+      { id: 'holm', label: 'Smallest Holm-adjusted p-value', value: p3(Math.min.apply(null, R.mt.map(function (x) { return x.holm; }))), sub: R.mt.slice().sort(function (a, b) { return a.holm - b.holm; })[0].s.name + ', in sample' },
+      { id: 'placebo95', label: 'Placebo 95th percentile Sharpe', value: F.num(p95, 2), sub: 'best of ' + A.nPlacebo + ' noise signals ' + F.num(S.placebo.max, 2), explain: function () { return { title: 'Placebo distribution', formula: 'rank-weighted books on AR(1) noise with autocorrelation ' + A.placeboPhi + ', same eligibility, timing and costs; net Sharpe in sample', inputs: [{ name: 'Placebos', value: String(A.nPlacebo), src: 'assumption' }, { name: 'Median', value: F.num(S.placebo.median, 3), src: 'computed' }, { name: 'Best', value: F.num(S.placebo.max, 3), src: 'computed' }], result: F.num(p95, 2) }; } },
+      { id: 'breakeven', label: 'Break-even trading cost', value: isFinite(S.breakeven) && S.breakeven > 0 ? F.num(S.breakeven, 0) + ' bps' : 'none', sub: 'out of sample, against ' + A.cost + ' bps assumed' }
+    ]);
+  }
+
+  /* ---------------- seed rerun ---------------- */
+  var sweep = null;
+  function runSweep() {
+    var btn = $('#sweepBtn'), st = $('#sweepStatus'), rows = [], s = 1, key = D.key + L.key + JSON.stringify(cfgWF());
+    btn.disabled = true; sweep = { key: key, rows: rows };
+    function one() {
+      if (sweep.key !== key) { btn.disabled = false; return; }
+      var P = SY.simulate(s, dgp()), lib = SY.library(P, { from: FROM, scheme: S.scheme, lookbacks: LOOKBACKS, holds: HOLDS, base: BASE.slice(0, 4) }), wf = SY.walkForward(P, lib, cfgWF());
+      var isS = PM.mean(wf.folds.map(function (f) { return f.isPerf.sharpe; })), oo = SY.perf(sl(wf.bt, wf.net, oos(), T)), m = lib.items.mom_12_1;
+      rows.push({ seed: s, is: isS, oos: oo.sharpe, gap: isS - oo.sharpe, mdd: oo.mdd, mom: shp(sl(m.bt, netOf(m.bt), oos(), T)), base: s === S.seed ? 'current' : '' });
+      st.textContent = 'Seed ' + s + ' of 20 done.';
+      s++;
+      if (s <= 20) setTimeout(one, 0); else { btn.disabled = false; renderSweep(); }
+    }
+    setTimeout(one, 0);
+  }
+  function renderSweep() {
+    if (!sweep || sweep.rows.length < 20) return;
+    var rows = sweep.rows, med = function (k) { return PM.quantile(rows.map(function (r) { return r[k]; }), 0.5); };
+    UI.chart.scatter('#sweepChart', { points: rows.map(function (r) { return { x: r.is, y: r.oos, label: 'Seed ' + r.seed, color: r.seed === S.seed ? 's2' : 's1', r: r.seed === S.seed ? 7 : 5 }; }), xLabel: 'In-sample Sharpe, net', xFmt: function (v) { return F.num(v, 1); }, yFmt: function (v) { return F.num(v, 1); }, height: 240, label: 'Seeds, in sample against out of sample' });
+    UI.table('#sweepTable', { id: 'seeds', name: 'Research repeated on 20 seeds', columns: [{ key: 'seed', label: 'Seed', num: 1 }, { key: 'is', label: 'Sharpe in sample', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'oos', label: 'Sharpe out of sample', num: 1, fmt: function (v) { return F.num(v, 2); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'gap', label: 'Gap', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'mdd', label: 'Max drawdown out of sample', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'mom', label: 'Momentum 12-1 out of sample', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'base', label: '' }], rows: rows });
+    var pos = rows.filter(function (r) { return r.oos > 0; }).length, dec = rows.filter(function (r) { return r.gap > 0; }).length;
+    $('#sweepNote').textContent = 'Median in-sample Sharpe ' + F.num(med('is'), 2) + ', median out-of-sample ' + F.num(med('oos'), 2) + ', median gap ' + F.num(med('gap'), 2) + '. Out of sample is positive on ' + pos + ' of 20 seeds and below in sample on ' + dec + '. The larger dot is the seed on display.';
+    $('#sweepStatus').textContent = 'Done for the current settings.';
+  }
+  function clearSweep() { if (sweep && sweep.rows.length === 20) { sweep = null; $('#sweepChart').innerHTML = ''; $('#sweepTable').innerHTML = ''; $('#sweepNote').textContent = ''; delete UI.tables.seeds; $('#sweepStatus').textContent = 'Settings changed; run again to repeat the research.'; } else if (sweep) sweep.key = null; }
+
+  /* ---------------- checks, gate and audit ---------------- */
+  var log, audit;
+  function runReview() {
+    log.clear(); audit.clear();
+    var P = D.P, wf = R.wf, o = R.o, C = S.checks = [];
+    audit.push('start', 'run started', 'seed ' + S.seed);
+    UI.runSteps(log, [
+      { agent: 'start', run: function () { return { msg: 'Run started.' }; } },
+      { agent: 'read', run: function () {
+        var dist = P.delist.filter(function (d) { return d.kind === 'distress'; }).length;
+        audit.push('read', 'loaded', P.N + ' securities, ' + T + ' months, ' + P.delist.length + ' delistings');
+        return { msg: 'Loaded ' + P.N + ' synthetic securities over ' + T + ' months (' + ml(0) + ' to ' + ml(T - 1) + '), including ' + P.delist.length + ' that delisted (' + dist + ' after distress, ' + (P.delist.length - dist) + ' in takeovers)', details: { startingStocks: 60, everListed: P.N, delistings: P.delist.length, turbulentMonths: PM.sum(Array.from(P.state)), crashMonths: PM.sum(Array.from(P.crash)) } };
+      } },
+      { agent: 'check', run: function () {
+        var ok = P.delist.every(function (d) { return isFinite(P.R[d.month][d.id]) && (d.month + 1 >= T || !isFinite(P.R[d.month + 1][d.id])); }), held = 0;
+        Object.keys(wf.bt.W).forEach(function (t) { var w = wf.bt.W[t]; P.delist.forEach(function (d) { if (w[d.id] && +t <= d.month) held++; }); });
+        C.push({ name: 'Delisted stocks kept to their last month', val: P.delist.length + ' of ' + P.delist.length, tgt: 'all', ok: ok });
+        audit.push('check', 'survivorship', held + ' position-months in names that later delisted');
+        return { status: ok ? 'ok' : 'blocked', msg: 'Every delisted stock keeps its returns to its last month, delisting return included; the strategy held ' + held + ' position-months in names that later delisted' };
+      } },
+      { agent: 'check', run: function () {
+        var t = Math.min(T - 2, o + 17), q = SY.perturbFrom(P, t, S.seed + 1), f = null;
+        wf.folds.forEach(function (x) { if (t >= x.testStart) f = x; });
+        var sigOk = f.keys.every(function (k) { var sp = L.lib.items[k].spec; var a = SY.weightsAt(q, t, sp, S.scheme), b = L.lib.items[k].W[t]; return a.every(function (v, i) { return Math.abs(v - b[i]) < 1e-15; }); });
+        var spec = {}; f.keys.forEach(function (k) { spec[k] = L.lib.items[k].spec; });
+        var bt = SY.backtest(q, { start: T0, end: t + 1, rawFrom: FROM, volTarget: S.vt ? A.volTarget : 0, volWin: A.volWin, maxLev: A.maxLev, cap: A.cap, keep: true, weights: function (s) {
+          var g = null; wf.folds.forEach(function (x) { if (s >= x.testStart) g = x; }); g = g || wf.folds[0];
+          var w = new Array(P.N).fill(0); g.keys.forEach(function (k, j) { var x = SY.weightsAt(q, s, L.lib.items[k].spec, S.scheme); for (var i = 0; i < P.N; i++) w[i] += g.a[j] * x[i]; }); return w; } });
+        var d = 0; bt.W[t].forEach(function (v, i) { d = Math.max(d, Math.abs(v - wf.bt.W[t][i])); });
+        var leak = SY.weightsAt(q, t, { k: 'leak' }, S.scheme), lkd = 0; leak.forEach(function (v, i) { lkd = Math.max(lkd, Math.abs(v - L.lib.items.leak.W[t][i])); });
+        var ok = sigOk && d < 1e-12;
+        C.push({ name: 'No look-ahead: weights at ' + ml(t) + ' after changing later data', val: 'max change ' + d.toExponential(1), tgt: '0', ok: ok });
+        audit.push('check', 'look-ahead', 'max weight change ' + d.toExponential(1) + ' at ' + ml(t));
+        return { status: ok ? 'ok' : 'blocked', msg: 'Replaced every return and value from ' + ml(t) + ' on with noise and rebuilt the book: weights at ' + ml(t) + ' moved by ' + d.toExponential(1) + '; the leaky momentum signal moved by ' + F.num(lkd, 3) + ', so the test can see a leak' };
+      } },
+      { agent: 'check', run: function () {
+        var ok = wf.folds.every(function (f, k) { return f.trainEnd <= f.testStart && (k === 0 || f.testStart === wf.folds[k - 1].testEnd); }) && wf.folds[wf.folds.length - 1].testEnd === T;
+        C.push({ name: 'Walk-forward: training ends before testing, tests tile the out-of-sample window', val: wf.folds.length + ' folds', tgt: 'no overlap', ok: ok });
+        audit.push('check', 'walk-forward', wf.folds.length + ' folds');
+        return { status: ok ? 'ok' : 'blocked', msg: wf.folds.length + ' folds; each training window ends where its test window starts, and the tests cover ' + ml(o) + ' to ' + ml(T - 1) + ' once', details: wf.folds.map(function (f) { return ml(f.trainStart) + ' to ' + ml(f.trainEnd - 1) + ' | ' + ml(f.testStart) + ' to ' + ml(f.testEnd - 1) + ' | ' + momName(f.sel); }).join('\n') };
+      } },
+      { agent: 'check', run: function () {
+        var bt = wf.bt, diff = 0; bt.gross.forEach(function (g, k) { diff = Math.max(diff, Math.abs((g - wf.net[k]) - (A.cost / 1e4 * bt.turn[k] + A.borrow / 1e4 / 12 * bt.short[k]))); });
+        var mx = 0; Object.keys(bt.W).forEach(function (t) { bt.W[t].forEach(function (v) { mx = Math.max(mx, Math.abs(v)); }); });
+        var neu = 0; ['mom_12_1', 'rev', 'val', 'lv'].forEach(function (k) { var W = L.lib.items[k].W; for (var t = T0; t < T; t++) neu = Math.max(neu, Math.abs(PM.sum(W[t]))); });
+        C.push({ name: 'Gross minus net equals costs plus borrow', val: 'max gap ' + diff.toExponential(1), tgt: '0', ok: diff < 1e-12 });
+        C.push({ name: 'Largest position against the limit', val: F.pct(mx, 2), tgt: 'up to ' + F.pct(A.cap, 1), ok: mx <= A.cap + 1e-12 });
+        C.push({ name: 'Raw cross-sectional books dollar neutral', val: 'max net ' + neu.toExponential(1), tgt: '0', ok: neu < 1e-9 });
+        audit.push('check', 'accounting', 'costs, limits and neutrality');
+        return [{ status: diff < 1e-12 ? 'ok' : 'blocked', msg: 'Gross minus net equals trading cost plus borrow in every month (largest gap ' + diff.toExponential(1) + ')' }, { status: mx <= A.cap + 1e-12 ? 'ok' : 'blocked', msg: 'Largest position ' + F.pct(mx, 2) + ' of capital against a limit of ' + F.pct(A.cap, 1) + '; raw cross-sectional books net to zero' }];
+      } },
+      { agent: 'check', run: function () {
+        var pr = S.premia.slice(0, 4), n = pr.filter(function (r) { return r.inCI; }).length;
+        C.push({ name: 'True premia inside the 95% interval of the estimate', val: n + ' of 4', tgt: '4 of 4', ok: n === 4, soft: true });
+        audit.push('check', 'premia recovered', n + ' of 4 inside the interval');
+        return { status: n === 4 ? 'ok' : 'info', msg: n + ' of 4 true premia fall inside the 95% interval of their Fama-MacBeth estimate in sample', details: pr.map(function (r) { return r.n + ': true ' + F.num(r.tr * 100, 3) + '%, estimated ' + F.num(r.est * 100, 3) + '% (' + F.num(r.lo * 100, 3) + ' to ' + F.num(r.hi * 100, 3) + ')'; }).join('\n') };
+      } },
+      { agent: 'check', run: function () {
+        var p95 = PM.quantile(R.plIS, 0.95), c0 = R.wf.folds[0].isPerf.sharpe, share = R.plIS.filter(function (v) { return v >= c0; }).length / R.plIS.length;
+        C.push({ name: 'In-sample combination against the placebo 95th percentile', val: F.num(c0, 2), tgt: 'above ' + F.num(p95, 2), ok: c0 > p95 });
+        audit.push('check', 'placebo', F.pct(share, 0) + ' of placebos above the combination');
+        return { status: c0 > p95 ? 'ok' : 'approval', msg: 'In-sample combination Sharpe ' + F.num(c0, 2) + ' against a placebo 95th percentile of ' + F.num(p95, 2) + '; ' + F.pct(share, 0) + ' of ' + R.plIS.length + ' noise signals did as well' };
+      } },
+      { agent: 'gate', run: function () {
+        var dz = R.dsr.res.dsr, lo = S.bootCI[0], pass = dz >= A.dsrMin && R.oosP.sharpe > 0 && lo > 0;
+        C.push({ name: 'Deflated Sharpe ratio', val: F.num(dz, 3), tgt: 'at least ' + F.num(A.dsrMin, 2), ok: dz >= A.dsrMin });
+        C.push({ name: 'Out-of-sample Sharpe and its bootstrap lower bound', val: F.num(R.oosP.sharpe, 2) + ' (' + F.num(lo, 2) + ')', tgt: 'both above 0', ok: R.oosP.sharpe > 0 && lo > 0 });
+        S.gate = pass;
+        audit.push('gate', pass ? 'passed' : 'held', 'DSR ' + F.num(dz, 3) + ', OOS Sharpe ' + F.num(R.oosP.sharpe, 2) + ', bootstrap low ' + F.num(lo, 2));
+        return { status: pass ? 'ok' : 'blocked', msg: pass ? 'Gate passed: deflated Sharpe ' + F.num(dz, 2) + ', out-of-sample Sharpe ' + F.num(R.oosP.sharpe, 2) + ' with a bootstrap lower bound above zero' : 'Gate held: deflated Sharpe ' + F.num(dz, 2) + ' (needs ' + F.num(A.dsrMin, 2) + '), out-of-sample Sharpe ' + F.num(R.oosP.sharpe, 2) + ', bootstrap lower bound ' + F.num(lo, 2) };
+      } },
+      { agent: 'draft', run: function () {
+        audit.push('draft', 'research note', 'in sample ' + F.num(R.isS, 2) + ', out of sample ' + F.num(R.oosP.sharpe, 2));
+        return { msg: 'Drafted the research summary: in-sample Sharpe ' + F.num(R.isS, 2) + ', out of sample ' + F.num(R.oosP.sharpe, 2) + ' net, gap ' + F.num(R.gap, 2) + ', ' + R.dsr.N + ' trials disclosed' };
+      } },
+      { agent: 'propose', run: function () {
+        audit.push('propose', S.gate ? 'paper trading proposed' : 'not proposed', methodName(S.method));
+        return S.gate ? { status: 'approval', msg: 'Proposed for paper trading: ' + methodName(S.method).toLowerCase() + ' combination at ' + F.pct(A.volTarget, 0) + ' target volatility, for review before any capital' } : { status: 'info', msg: 'Not proposed for capital. The evidence does not clear the research policy; the next step is a longer history or fewer trials' };
+      } }
+    ], afterReview);
+  }
+  function afterReview() {
+    UI.table('#checksTable', { id: 'checks', name: 'Automated checks', columns: [{ key: 'name', label: 'Check' }, { key: 'val', label: 'Computed', num: 1 }, { key: 'tgt', label: 'Should be', num: 1 }, { key: 'res', label: 'Result', html: 1 }],
+      rows: S.checks.map(function (c) { return { name: c.name, val: c.val, tgt: c.tgt, res: '<span class="' + (c.ok ? 'tie-ok' : 'tie-no') + '">' + (c.ok ? 'pass' : c.soft ? 'note' : 'flag') + '</span>' }; }) });
+  }
+
+  function evalLine() {
+    $('#evalLine').textContent = 'Base case: seed ' + S.seed + ', ' + D.P.N + ' synthetic stocks over 360 months with delistings, ' + (S.scheme === 'rank' ? 'rank-weighted' : 'quintile') + ' long-short books, ' + A.cost + ' bps trading cost, walk-forward from ' + ml(R.o) + '. Out-of-sample Sharpe ' + F.num(R.oosP.sharpe, 2) + ' net. The data is synthetic with known premia, and every figure is computed in this page.';
+    $('#dataSrc').textContent = 'Synthetic panel, seed ' + S.seed + '. ' + ml(0) + ' to ' + ml(T - 1) + '.';
+  }
+  function renderAll(review) {
+    ensureData(); ensureLib(); ensureFM(); research();
+    renderResearch(); renderBacktest(); renderValidation(); renderRobustness(); evalLine();
+    if (review !== false) runReview();
+  }
+  var rerender = UI.debounce(function () { clearSweep(); renderAll(); }, 120);
+
+  function control(box, id, label, fmt, hint) {
+    var r = AROWS.filter(function (x) { return x.id === id; })[0], sc = r.scale || 1, wrap = UI.el('div', { class: 'control' }), inId = 'c-' + id;
+    wrap.innerHTML = '<label for="' + inId + '">' + UI.esc(label) + ' <output for="' + inId + '"></output></label><input type="range" id="' + inId + '" min="' + r.min * sc + '" max="' + r.max * sc + '" step="' + (r.step || 1) + '" value="' + r.value * sc + '">' + (hint ? '<div class="hint">' + UI.esc(hint) + '</div>' : '');
+    box.appendChild(wrap);
+    var inp = wrap.querySelector('input'), out = wrap.querySelector('output'), show = function () { out.textContent = fmt(+inp.value / sc); };
+    show();
+    inp.addEventListener('input', function () { show(); setA(id, +inp.value / sc); rerender(); });
+    (syncers[id] = syncers[id] || []).push(function (v) { inp.value = v * sc; show(); });
+  }
+  function blendControl(box, k, label) {
+    var wrap = UI.el('div', { class: 'control' }), inId = 'b-' + k;
+    wrap.innerHTML = '<label for="' + inId + '">' + UI.esc(label) + ' <output for="' + inId + '"></output></label><input type="range" id="' + inId + '" min="-1" max="2" step="0.25" value="' + S.blend[k] + '">';
+    box.appendChild(wrap);
+    var inp = wrap.querySelector('input'), out = wrap.querySelector('output'), show = function () { out.textContent = F.num(+inp.value, 2); };
+    show();
+    inp.addEventListener('input', function () { show(); S.blend[k] = +inp.value; rerender(); });
+  }
+  function init() {
+    blendControl($('#blendControls'), 'mom', 'Momentum 12-1');
+    blendControl($('#blendControls'), 'rev', 'Short-term reversal');
+    blendControl($('#blendControls'), 'val', 'Value');
+    blendControl($('#blendControls'), 'lv', 'Low volatility');
+    $('#blendControls').appendChild(UI.el('div', { class: 'hint', text: 'Weights on each signal\'s cross-sectional z-score. The blend is one more trial: choosing it after seeing the in-sample results is data snooping, and the deflated Sharpe ratio counts it.' }));
+    control($('#btControls'), 'cost', 'Trading cost', function (v) { return F.num(v, 0) + ' bps'; }, 'Per unit of turnover.');
+    control($('#btControls'), 'volTarget', 'Volatility target', function (v) { return F.pct(v, 1); });
+    control($('#btControls'), 'cap', 'Position limit', function (v) { return F.pct(v, 1); }, 'Largest absolute weight in one stock.');
+    reg = UI.assumptions('#assumptions', AROWS, function (id, v) { setA(id, v); clearSweep(); renderAll(); });
+    var tabs = UI.tabs('#tabsRoot');
+    [['strat', 'strat'], ['scheme', 'scheme'], ['method', 'method'], ['benchSel', 'bench']].forEach(function (x) { $('#' + x[0]).addEventListener('change', function () { S[x[1]] = this.value; clearSweep(); renderAll(); }); });
+    $('#vtOn').addEventListener('change', function () { S.vt = this.checked; clearSweep(); renderAll(); });
+    UI.seed('#seed', function (v) { S.seed = v; clearSweep(); renderAll(); });
+    log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
+    $('#runBtn').addEventListener('click', runReview);
+    $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
+    $('#sweepBtn').addEventListener('click', runSweep);
+    UI.exportMenu('#exportMenu', { demo: 'Systematic Investment Research Lab', slug: 'systematic-research-lab', report: 'Systematic research report (PDF)', source: function () { return 'synthetic panel with known premia, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
+    UI.testsBadge('#testsBadge', 'Systematic research'); UI.testsBadge('.tests-badge-slot', 'Systematic research');
+    renderAll();
+    UI.revealHash(tabs);
+  }
+  init();
+  /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */
+  window.cardStat = function () {
+    if (!UI.runsDone) return null;
+    if (!R) return null;
+    var wf = R.wf, g = 1, s = [1], b = [1], gb = 1, bench = R.bench;
+    wf.net.forEach(function (x, k) { g *= 1 + x; s.push(g); gb *= 1 + bench[T0 + k]; b.push(gb); });
+    var n = s.length, m = Math.min(120, n), idx = [];
+    for (var k = 0; k < m; k++) idx.push(Math.round(k * (n - 1) / (m - 1)));
+    var start = R.o - T0, oi = 0; while (oi < idx.length && idx[oi] < start) oi++;
+    return { value: F.num(R.oosP.sharpe, 2), label: 'Out-of-sample Sharpe ratio, net of costs', chart: { type: 'equity', s: idx.map(function (i) { return +s[i].toFixed(4); }), b: idx.map(function (i) { return +b[i].toFixed(4); }), oos: oi } };
+  };
+})();
+</script>
+</body>
+</html>

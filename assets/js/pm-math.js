@@ -1868,3 +1868,497 @@
       turnover: tr.reduce(function (s, t, i) { return i === c ? s : s + Math.abs(t); }, 0), breachesBefore: RB.drift(pre, o.lo, o.hi), breachesAfter: RB.drift(eff, o.lo, o.hi) };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* ------------------------------------------------------------------
+   Systematic research (Systematic Investment Research Lab).
+   A synthetic monthly panel with known factor premia, causal signals
+   (data through t-1 only), long-short construction, a backtest with
+   costs, walk-forward validation and robustness statistics.
+   Returns in the panel are monthly excess returns over cash.
+   ------------------------------------------------------------------ */
+(function (root) {
+  'use strict';
+  var PM = root.PM, SY = PM.sys = {};
+  var SQ12 = Math.sqrt(12);
+  function arr(n, v) { return new Array(n).fill(v == null ? 0 : v); }   /* plain arrays: far cheaper to allocate than typed arrays in hot loops */
+
+  /** data-generating process defaults (monthly units). Premia are expected return per 1 cross-sectional sd. */
+  SY.DGP = {
+    T: 360, N0: 60, nSec: 6,
+    muM: 0.005, volCalm: 0.038, volTurb: 0.068, pCT: 0.03, pTC: 0.12,
+    secVol: 0.022, turbMult: 1.35, idioMed: 0.07, idioDisp: 0.3, idioPhi: 0.98, idioVov: 0.04,
+    betaSd: 0.25, betaVolCorr: 0.3,
+    lamMom: 0.0028, momTurb: 0.25, crashZ: 1.0, lamCrash: -0.022, lamTsm: 0.002,
+    lamRev: -0.0012, lamVal: 0.002, lamLv: -0.0018,
+    valPhi: 0.985, valRetCorr: 0.3, valNoise: 0.6, noisePhi: 0.98,
+    h0: 0.0008, hDistress: 0.015, distressCut: -0.4, dretDistress: -0.25, dretMerger: 0.15,
+    decay: 0.3
+  };
+
+  function zscore(x) {
+    var s = 0, q = 0, n = 0, i, out = arr(x.length);
+    for (i = 0; i < x.length; i++) if (isFinite(x[i])) { s += x[i]; n++; }
+    var m = n ? s / n : 0;
+    for (i = 0; i < x.length; i++) if (isFinite(x[i])) q += (x[i] - m) * (x[i] - m);
+    var sd = n > 1 ? Math.sqrt(q / (n - 1)) : 0;
+    for (i = 0; i < x.length; i++) out[i] = isFinite(x[i]) && sd > 0 ? (x[i] - m) / sd : (isFinite(x[i]) ? 0 : NaN);
+    return out;
+  }
+  SY.zscore = zscore;
+
+  /** simulate(seed, o) -> panel. Securities that delist keep their history up to their last month,
+      including the delisting return; a new security in the same sector lists the next month. */
+  SY.simulate = function (seed, o) {
+    o = Object.assign({}, SY.DGP, o || {});
+    var rng = PM.mulberry32(seed), z = PM.normalGen(rng), T = o.T, ids = [], k, j;
+    function add(sec, t) {
+      var zv = z(), zb = z(), sb = o.idioMed * Math.exp(o.idioDisp * zv);
+      var beta = Math.max(0.4, Math.min(1.8, 1 + o.betaSd * (o.betaVolCorr * zv + Math.sqrt(1 - o.betaVolCorr * o.betaVolCorr) * zb)));
+      var s = { sec: sec, beta: beta, sb: sb, ls: Math.log(sb) + 0.1 * z(), v: z(), vn: o.valNoise * z(), cap: Math.exp(0.8 * z()) * (t > 0 ? 0.6 : 1), first: t, last: T - 1, r: {}, vo: {}, sg: {}, cp: {} };
+      ids.push(s); return s;
+    }
+    var live = [];
+    for (k = 0; k < o.N0; k++) live.push(add(k % o.nSec, 0));
+    var mkt = arr(T), state = new Int8Array(T), crash = new Int8Array(T), delist = [];
+    var lam = { mom: arr(T), rev: arr(T), val: arr(T), lv: arr(T), tsm: arr(T) };
+    var st = 0;
+    for (var t = 0; t < T; t++) {
+      if (t > 0) st = st ? (rng() < o.pTC ? 0 : 1) : (rng() < o.pCT ? 1 : 0);
+      state[t] = st;
+      var dec = 1 - o.decay * t / Math.max(1, T - 1), trend = 0;
+      if (t >= 12) { var cm = 0; for (k = t - 12; k <= t - 2; k++) cm += mkt[k]; trend = cm > 0 ? 1 : -1; }
+      var zm = z();
+      crash[t] = st && zm > o.crashZ ? 1 : 0;
+      lam.tsm[t] = o.lamTsm * dec * (st ? o.momTurb : 1);
+      mkt[t] = o.muM + lam.tsm[t] * trend + (st ? o.volTurb : o.volCalm) * zm;
+      lam.mom[t] = crash[t] ? o.lamCrash : o.lamMom * dec * (st ? o.momTurb : 1);
+      lam.rev[t] = o.lamRev * dec; lam.val[t] = o.lamVal * dec; lam.lv[t] = o.lamLv * dec;
+      var secR = []; for (k = 0; k < o.nSec; k++) secR.push(o.secVol * (st ? o.turbMult : 1) * z());
+      /* characteristics known at the end of t-1, z-scored across the live names */
+      var mom = live.map(function (s) {
+        if (s.first > t - 12) return NaN;
+        var c = 0; for (var q = t - 12; q <= t - 2; q++) c += Math.log(1 + s.r[q]); return c;
+      });
+      var rev = live.map(function (s) { return s.first <= t - 1 ? s.r[t - 1] : NaN; });
+      var zMom = zscore(mom), zRev = zscore(rev), zVal = zscore(live.map(function (s) { return s.v; })), zLv = zscore(live.map(function (s) { return Math.exp(s.ls); }));
+      var next = [];
+      for (j = 0; j < live.length; j++) {
+        var s = live[j], sig = Math.exp(s.ls) * (st ? o.turbMult : 1), e = z();
+        var a = lam.mom[t] * (zMom[j] || 0) + lam.rev[t] * (zRev[j] || 0) + lam.val[t] * zVal[j] + lam.lv[t] * zLv[j];
+        var r = a + s.beta * mkt[t] + secR[s.sec] + sig * e;
+        s.cp[t] = s.cap; s.sg[t] = Math.exp(s.ls);
+        s.v = o.valPhi * s.v + Math.sqrt(1 - o.valPhi * o.valPhi) * (-o.valRetCorr * e + Math.sqrt(1 - o.valRetCorr * o.valRetCorr) * z());
+        s.vn = o.noisePhi * s.vn + Math.sqrt(1 - o.noisePhi * o.noisePhi) * o.valNoise * z();
+        s.ls = (1 - o.idioPhi) * Math.log(s.sb) + o.idioPhi * s.ls + o.idioVov * z();
+        var c12 = Math.log(1 + Math.max(-0.95, r)), have = 1;
+        for (k = t - 11; k < t; k++) { if (s.r[k] === undefined) { have = 0; break; } c12 += Math.log(1 + s.r[k]); }
+        var distress = have && Math.exp(c12) - 1 < o.distressCut, h = o.h0 + (distress ? o.hDistress : 0), u = rng();
+        var gone = t < T - 1 && u < h;
+        if (gone) {
+          var dr = distress ? o.dretDistress : o.dretMerger;
+          r = (1 + r) * (1 + dr) - 1; s.last = t;
+          delist.push({ month: t, kind: distress ? 'distress' : 'merger', ret: dr });
+        }
+        r = Math.max(-0.95, r);
+        s.r[t] = r; s.vo[t] = s.v + s.vn; s.cap *= 1 + r;
+        if (gone) { var nw = add(s.sec, t + 1); delist[delist.length - 1].id = ids.indexOf(s); delist[delist.length - 1].replacement = ids.length - 1; next.push(nw); }
+        else next.push(s);
+      }
+      live = next;
+    }
+    var N = ids.length, R = [], V = [], CAP = [], SIG = [];
+    for (t = 0; t < T; t++) {
+      var rr = arr(N, NaN), vv = arr(N, NaN), cc = arr(N, NaN), sg = arr(N, NaN);
+      for (j = 0; j < N; j++) { var x = ids[j]; if (x.r[t] !== undefined) { rr[j] = x.r[t]; vv[j] = x.vo[t]; cc[j] = x.cp[t]; sg[j] = x.sg[t]; } }
+      R.push(rr); V.push(vv); CAP.push(cc); SIG.push(sg);
+    }
+    return { seed: seed, T: T, N: N, nSec: o.nSec, R: R, V: V, CAP: CAP, SIG: SIG,
+      first: Int32Array.from(ids.map(function (x) { return x.first; })), last: Int32Array.from(ids.map(function (x) { return x.last; })),
+      sector: Int8Array.from(ids.map(function (x) { return x.sec; })), beta: Float64Array.from(ids.map(function (x) { return x.beta; })),
+      mkt: mkt, state: state, crash: crash, lam: lam, delist: delist, dgp: o };
+  };
+
+  /** copy of a panel restricted to the securities still listed in the last month (the biased dataset) */
+  SY.survivorsOnly = function (p) {
+    var keep = []; for (var i = 0; i < p.N; i++) keep.push(p.last[i] === p.T - 1);
+    var mask = function (rows) { return rows.map(function (r) { var c = Float64Array.from(r); for (var i = 0; i < c.length; i++) if (!keep[i]) c[i] = NaN; return c; }); };
+    var q = Object.assign({}, p, { R: mask(p.R), V: mask(p.V), CAP: mask(p.CAP), SIG: mask(p.SIG), first: Int32Array.from(p.first), last: Int32Array.from(p.last), survivorsOnly: true });
+    for (i = 0; i < p.N; i++) if (!keep[i]) { q.first[i] = p.T; q.last[i] = -1; }
+    return q;
+  };
+
+  /** copy of a panel with every return and value observation from month t on replaced by noise (for look-ahead tests) */
+  SY.perturbFrom = function (p, t, seed) {
+    var z = PM.normalGen(PM.mulberry32(seed || 99)), cp = function (rows, sc) { return rows.map(function (r, s) { var c = Float64Array.from(r); if (s >= t) for (var i = 0; i < c.length; i++) if (isFinite(c[i])) c[i] = sc * z(); return c; }); };
+    return Object.assign({}, p, { R: cp(p.R, 0.2), V: cp(p.V, 3) });
+  };
+
+  /** monthly benchmark return: equal weight or start-of-month cap weight over the names listed in month t */
+  SY.benchmark = function (p, kind) {
+    var out = arr(p.T);
+    for (var t = 0; t < p.T; t++) {
+      var s = 0, w = 0, r = p.R[t], c = p.CAP[t];
+      for (var i = 0; i < p.N; i++) if (isFinite(r[i])) { var x = kind === 'cap' ? c[i] : 1; s += x * r[i]; w += x; }
+      out[t] = w > 0 ? s / w : 0;
+    }
+    return out;
+  };
+
+  /** score(p, t, spec) -> array of signal values at the decision for month t, NaN where not eligible.
+      Reads only months before t. Eligible: listed in month t (not delisted by the end of t-1) with enough history. */
+  SY.minHist = function (spec) { return spec.k === 'mom' ? Math.max(13, spec.L || 12) : 13; };
+  SY.score = function (p, t, spec) {
+    var out = arr(p.N, NaN), mh = SY.minHist(spec), i, s;
+    if (spec.k === 'blend') {
+      var parts = ['mom', 'rev', 'val', 'lv'].map(function (k) { return spec.w[k] ? { w: spec.w[k], z: zscore(SY.score(p, t, { k: k })) } : null; }).filter(Boolean);
+      for (i = 0; i < p.N; i++) { var v = 0, okk = parts.length > 0; parts.forEach(function (q) { if (!isFinite(q.z[i])) okk = false; else v += q.w * q.z[i]; }); if (okk) out[i] = v; }
+      return out;
+    }
+    for (i = 0; i < p.N; i++) {
+      if (p.first[i] > t - mh || p.last[i] < t) continue;
+      if (spec.k === 'mom' || spec.k === 'tsm') {
+        var L = spec.k === 'tsm' ? 12 : (spec.L || 12), sk = spec.skip == null ? 1 : spec.skip, c = 0;
+        for (s = t - L; s <= t - 1 - sk; s++) c += Math.log(1 + p.R[s][i]);
+        out[i] = c;
+      } else if (spec.k === 'leak') {          /* deliberately wrong: includes month t, used only to show look-ahead bias */
+        var c2 = 0; for (s = t - 10; s <= t; s++) c2 += Math.log(1 + p.R[s][i]); out[i] = c2;
+      } else if (spec.k === 'rev') out[i] = -p.R[t - 1][i];
+      else if (spec.k === 'val') out[i] = p.V[t - 1][i];
+      else if (spec.k === 'lv') {
+        var a = []; for (s = Math.max(p.first[i], t - 24); s <= t - 1; s++) a.push(p.R[s][i]);
+        out[i] = -PM.std(a);
+      }
+    }
+    return out;
+  };
+
+  /** rank weights: centred ranks, long side +1 and short side -1 (ties share the average rank) */
+  SY.rankWeights = function (sc) {
+    var n = 0, i, w = arr(sc.length);
+    for (i = 0; i < sc.length; i++) if (sc[i] === sc[i]) n++;
+    if (n < 2) return w;
+    var srt = arr(n), k = 0;
+    for (i = 0; i < sc.length; i++) if (sc[i] === sc[i]) {      /* insertion sort: fast for cross-sections of this size */
+      var v0 = sc[i], q = k++;
+      while (q > 0 && srt[q - 1] > v0) { srt[q] = srt[q - 1]; q--; }
+      srt[q] = v0;
+    }
+    var mid = (n + 1) / 2, pos = 0, rk = arr(sc.length);
+    for (i = 0; i < sc.length; i++) {
+      if (sc[i] !== sc[i]) continue;
+      var v = sc[i], lo = 0, hi = n;
+      while (lo < hi) { var m = (lo + hi) >> 1; if (srt[m] < v) lo = m + 1; else hi = m; }
+      var a = lo; hi = n;
+      while (lo < hi) { m = (lo + hi) >> 1; if (srt[m] <= v) lo = m + 1; else hi = m; }
+      rk[i] = (a + lo - 1) / 2 + 1 - mid;          /* average rank of the tied block, centred */
+      if (rk[i] > 0) pos += rk[i];
+    }
+    if (pos <= 0) return w;
+    for (i = 0; i < sc.length; i++) if (sc[i] === sc[i]) w[i] = rk[i] / pos;
+    return w;
+  };
+  /** quintile weights: equal weight long the top fifth and short the bottom fifth, each side 1 */
+  SY.quintileWeights = function (sc, q) {
+    var idx = [], i, w = arr(sc.length);
+    for (i = 0; i < sc.length; i++) if (isFinite(sc[i])) idx.push(i);
+    var n = idx.length, m = Math.max(1, Math.floor(n * (q || 0.2))); if (n < 2) return w;
+    idx.sort(function (a, b) { return sc[a] - sc[b]; });
+    for (i = 0; i < m; i++) { w[idx[i]] = -1 / m; w[idx[n - 1 - i]] = 1 / m; }
+    return w;
+  };
+  /** time-series weights: each name long or short by the sign of its own score, gross 1 */
+  SY.tsWeights = function (sc) {
+    var n = 0, i, w = arr(sc.length);
+    for (i = 0; i < sc.length; i++) if (isFinite(sc[i])) n++;
+    for (i = 0; i < sc.length; i++) if (isFinite(sc[i]) && n) w[i] = (sc[i] > 0 ? 1 : sc[i] < 0 ? -1 : 0) / n;
+    return w;
+  };
+  SY.formation = function (p, t, spec, scheme) {
+    var sc = SY.score(p, t, spec);
+    return spec.k === 'tsm' ? SY.tsWeights(sc) : scheme === 'quintile' ? SY.quintileWeights(sc) : SY.rankWeights(sc);
+  };
+  /** target weights for month t with a holding period of H months (overlapping portfolios, Jegadeesh-Titman) */
+  SY.weightsAt = function (p, t, spec, scheme) {
+    var H = spec.H || 1, w = arr(p.N), n = 0;
+    for (var j = 0; j < H; j++) {
+      var tf = t - j; if (tf < SY.minHist(spec)) break;
+      var f = SY.formation(p, tf, spec, scheme); n++;
+      for (var i = 0; i < p.N; i++) if (f[i] && p.last[i] >= t) w[i] += f[i];
+    }
+    if (n > 1) for (i = 0; i < p.N; i++) w[i] /= n;
+    return w;
+  };
+
+  /** cap each absolute weight at c, keeping each side's gross where that is possible */
+  SY.capWeights = function (w, c) {
+    var out = Array.prototype.slice.call(w), bound = 0;
+    if (!(c < Infinity)) return { w: out, bound: 0 };
+    [1, -1].forEach(function (sg) {
+      var idx = [], tot = 0, i;
+      for (i = 0; i < out.length; i++) if (sg * out[i] > 0) { idx.push(i); tot += sg * out[i]; }
+      if (!idx.length) return;
+      if (idx.length * c <= tot) { idx.forEach(function (i) { out[i] = sg * c; }); bound += idx.length; return; }
+      var capped = {};
+      for (var it = 0; it < 50; it++) {
+        var free = idx.filter(function (i) { return !capped[i]; }), fs = 0, nc = idx.length - free.length;
+        free.forEach(function (i) { fs += sg * out[i]; });
+        var target = tot - nc * c, sc = fs > 0 ? target / fs : 1, any = false;
+        free.forEach(function (i) { out[i] *= sc; if (sg * out[i] > c + 1e-15) { out[i] = sg * c; capped[i] = 1; any = true; } });
+        if (!any) break;
+      }
+      bound += Object.keys(capped).length;
+    });
+    return { w: out, bound: bound };
+  };
+
+  /** backtest(p, o): o.weights(t) -> target weights; months [o.start, o.end).
+      Optional volatility targeting scales by target / trailing realised vol of the unscaled rule (data before t).
+      Turnover is sum |w_t - drifted w_t-1|; a delisted position closes at its delisting return without a trading cost.
+      Costs: o.cost bps per unit of turnover; o.borrow bps a year on the short gross. Net = gross - costs - borrow. */
+  SY.backtest = function (p, o) {
+    var start = o.start, end = o.end == null ? p.T : o.end, from = o.rawFrom == null ? start : Math.min(start, o.rawFrom);
+    var vt = o.volTarget || 0, vw = o.volWin || 36, vmin = o.volMin || 12, lev = o.maxLev || 2, cap = o.cap == null ? Infinity : o.cap;
+    var raw = [], res = { start: start, end: end, gross: [], turn: [], short: [], long: [], scale: [], bound: [], W: o.keep ? {} : null };
+    var prev = arr(p.N), t, i;
+    for (t = from; t < end; t++) {
+      var tw = o.weights(t), r = p.R[t], g = 0;
+      for (i = 0; i < p.N; i++) if (tw[i] !== 0) g += tw[i] * r[i];
+      if (t < start) { raw.push(g); continue; }
+      var k = 1;
+      if (vt > 0) {
+        var win = raw.slice(Math.max(0, raw.length - vw));
+        if (win.length >= vmin) { var sd = PM.std(win) * SQ12; k = sd > 0 ? Math.min(lev, vt / sd) : 1; }
+      }
+      raw.push(g);
+      var w, nb = 0;
+      if (k === 1 && !(cap < Infinity)) w = tw;
+      else { w = arr(p.N); for (i = 0; i < p.N; i++) w[i] = tw[i] * k; if (cap < Infinity) { var cw = SY.capWeights(w, cap); w = cw.w; nb = cw.bound; } }
+      var to = 0, gr = 0, sh = 0, lo = 0, rp = t > 0 ? p.R[t - 1] : null;
+      for (i = 0; i < p.N; i++) {
+        var pv = prev[i], wi = w[i], d = pv !== 0 && p.last[i] >= t ? pv * (1 + rp[i]) : 0;
+        to += Math.abs(wi - d);
+        if (wi !== 0) { gr += wi * r[i]; if (wi < 0) sh -= wi; else lo += wi; }
+      }
+      res.gross.push(gr); res.turn.push(to); res.short.push(sh); res.long.push(lo); res.scale.push(k); res.bound.push(nb);
+      if (o.keep) res.W[t] = w;
+      prev = w;
+    }
+    return res;
+  };
+  /** net returns of a backtest for given costs */
+  SY.net = function (bt, cost, borrow) {
+    var c = (cost || 0) / 1e4, b = (borrow || 0) / 1e4 / 12;
+    return bt.gross.map(function (g, k) { return g - c * bt.turn[k] - b * bt.short[k]; });
+  };
+  SY.slice = function (bt, arr, from, to) { return arr.slice(Math.max(0, from - bt.start), Math.max(0, to - bt.start)); };
+
+  /** performance statistics of monthly (excess) returns */
+  SY.perf = function (r) {
+    var n = r.length, m = PM.mean(r), sd = PM.std(r), g = 1, dn = 0;
+    r.forEach(function (x) { g *= 1 + x; dn += Math.min(0, x) * Math.min(0, x); });
+    var ann = Math.pow(g, 12 / n) - 1, dd = PM.risk.drawdown(r), dsd = Math.sqrt(dn / n) * SQ12;
+    return { n: n, ann: ann, mean: m * 12, vol: sd * SQ12, sharpe: sd > 0 ? m / sd * SQ12 : 0, sortino: dsd > 0 ? m * 12 / dsd : 0, mdd: dd.maxDD, calmar: dd.maxDD < 0 ? ann / -dd.maxDD : 0,
+      hit: r.filter(function (x) { return x > 0; }).length / n, dd: dd.dd, cum: dd.cum };
+  };
+  SY.moments = function (r) {
+    var n = r.length, m = PM.mean(r), m2 = 0, m3 = 0, m4 = 0;
+    r.forEach(function (x) { var d = x - m; m2 += d * d; m3 += d * d * d; m4 += d * d * d * d; });
+    m2 /= n; m3 /= n; m4 /= n;
+    return { skew: m2 > 0 ? m3 / Math.pow(m2, 1.5) : 0, kurt: m2 > 0 ? m4 / (m2 * m2) : 3 };
+  };
+  /** regression of strategy on benchmark: alpha, beta, information ratio (alpha / residual vol) and HAC t-stat of alpha */
+  SY.alpha = function (r, b) {
+    var f = PM.ols(r, b.map(function (x) { return [x]; })), beta = f.beta[0], a = r.map(function (x, k) { return x - beta * b[k]; });
+    var te = PM.std(f.resid) * SQ12, se = PM.hacSE(a, PM.hacLag(a.length, 1));
+    return { alpha: f.alpha * 12, beta: beta, te: te, ir: te > 0 ? f.alpha * 12 / te : 0, t: se > 0 ? PM.mean(a) / se : 0, tOls: f.t[0], corr: PM.corr(r, b) };
+  };
+  /** rolling w-month annualised return and Sharpe; null until w months are available */
+  SY.rolling = function (r, w) {
+    var ret = [], sh = [];
+    for (var k = 0; k < r.length; k++) {
+      if (k < w - 1) { ret.push(null); sh.push(null); continue; }
+      var s = r.slice(k - w + 1, k + 1), g = s.reduce(function (a, x) { return a * (1 + x); }, 1), sd = PM.std(s);
+      ret.push(Math.pow(g, 12 / w) - 1); sh.push(sd > 0 ? PM.mean(s) / sd * SQ12 : 0);
+    }
+    return { ret: ret, sharpe: sh };
+  };
+  /** circular block bootstrap of the annualised Sharpe ratio; returns the sorted draws */
+  SY.bootSharpe = function (r, block, nBoot, seed) {
+    var rng = PM.mulberry32(seed || 7), n = r.length, out = [];
+    for (var b = 0; b < nBoot; b++) {
+      var s = 0, q = 0, k = 0;
+      while (k < n) { var st = Math.floor(rng() * n); for (var j = 0; j < block && k < n; j++, k++) { var x = r[(st + j) % n]; s += x; q += x * x; } }
+      var m = s / n, v = (q - n * m * m) / (n - 1);
+      out.push(v > 0 ? m / Math.sqrt(v) * SQ12 : 0);
+    }
+    return out.sort(function (a, b) { return a - b; });
+  };
+  /** probabilistic Sharpe ratio (Bailey and Lopez de Prado): P(true SR > sr0) given n monthly observations.
+      sr and sr0 are monthly (not annualised); kurt is raw kurtosis (3 for normal). */
+  SY.psr = function (sr, n, skew, kurt, sr0) {
+    var d = 1 - skew * sr + (kurt - 1) / 4 * sr * sr;
+    return PM.normCdf((sr - (sr0 || 0)) * Math.sqrt(n - 1) / Math.sqrt(Math.max(1e-12, d)));
+  };
+  /** expected maximum Sharpe ratio of nTrials unskilled trials whose Sharpe estimates have variance varSR */
+  SY.expMaxSR = function (nTrials, varSR) {
+    if (nTrials <= 1) return 0;
+    var g = 0.5772156649;
+    return Math.sqrt(varSR) * ((1 - g) * PM.normInv(1 - 1 / nTrials) + g * PM.normInv(1 - 1 / (nTrials * Math.E)));
+  };
+  /** deflated Sharpe ratio: the PSR against the expected maximum Sharpe of the trials */
+  SY.dsr = function (sr, n, skew, kurt, nTrials, varSR) {
+    var sr0 = SY.expMaxSR(nTrials, varSR);
+    return { sr0: sr0, dsr: SY.psr(sr, n, skew, kurt, sr0), psr: SY.psr(sr, n, skew, kurt, 0) };
+  };
+  /** Holm step-down and Bonferroni adjusted p-values (same order as the input) */
+  SY.holm = function (p) {
+    var m = p.length, ord = p.map(function (x, i) { return i; }).sort(function (a, b) { return p[a] - p[b]; }), out = new Array(m), run = 0;
+    ord.forEach(function (i, k) { run = Math.max(run, Math.min(1, (m - k) * p[i])); out[i] = run; });
+    return out;
+  };
+  SY.bonferroni = function (p) { return p.map(function (x) { return Math.min(1, x * p.length); }); };
+  SY.pValue = function (t) { return 2 * (1 - PM.normCdf(Math.abs(t))); };
+  /** HAC t-statistic of the mean of a series */
+  SY.tStat = function (r) { var se = PM.hacSE(r, PM.hacLag(r.length, 1)); return se > 0 ? PM.mean(r) / se : 0; };
+
+  /** equal risk contribution weights (cyclical coordinate descent, then normalised to sum 1) */
+  SY.erc = function (C) {
+    var n = C.length, x = C.map(function (r, i) { return 1 / Math.sqrt(r[i]); });
+    for (var it = 0; it < 500; it++) {
+      var mx = 0;
+      for (var i = 0; i < n; i++) {
+        var c = 0; for (var j = 0; j < n; j++) if (j !== i) c += C[i][j] * x[j];
+        var nx = (-c + Math.sqrt(c * c + 4 * C[i][i] / n)) / (2 * C[i][i]);
+        mx = Math.max(mx, Math.abs(nx - x[i])); x[i] = nx;
+      }
+      if (mx < 1e-12) break;
+    }
+    var s = PM.sum(x); return x.map(function (v) { return v / s; });
+  };
+  /** long-only mean-variance weights proportional to inv(S) mu, with S shrunk toward its diagonal; sum 1.
+      Assets with a negative weight are dropped and the rest re-solved. Equal weight if no mean is positive. */
+  SY.mv = function (mu, C, shrink) {
+    var n = mu.length, d = shrink == null ? 0.5 : shrink, act = mu.map(function (m, i) { return i; }), w = new Array(n).fill(0);
+    var S = C.map(function (r, i) { return r.map(function (v, j) { return i === j ? v : (1 - d) * v; }); });
+    for (var it = 0; it < n; it++) {
+      if (!act.length) break;
+      var sub = act.map(function (i) { return act.map(function (j) { return S[i][j]; }); }), x = PM.solve(sub, act.map(function (i) { return mu[i]; }));
+      if (!x) break;
+      var neg = act.filter(function (i, k) { return x[k] <= 0; });
+      if (!neg.length) { act.forEach(function (i, k) { w[i] = x[k]; }); break; }
+      act = act.filter(function (i, k) { return x[k] > 0; });
+    }
+    var s = PM.sum(w);
+    return s > 0 ? w.map(function (v) { return v / s; }) : mu.map(function () { return 1 / n; });
+  };
+  /** Spearman rank correlation over the pairs where both are finite */
+  SY.spearman = function (a, b) {
+    var x = [], y = [];
+    for (var i = 0; i < a.length; i++) if (isFinite(a[i]) && isFinite(b[i])) { x.push(a[i]); y.push(b[i]); }
+    if (x.length < 3) return NaN;
+    return PM.corr(SY.rankWeights(x), SY.rankWeights(y));   /* centred ranks (ties averaged), an affine map of the ranks */
+  };
+  /** Fama-MacBeth: each month regress returns on the z-scored signals; slopes are premia per 1 sd */
+  SY.fmb = function (p, t0, t1, specs) {
+    var sl = specs.map(function () { return []; }), months = [];
+    for (var t = t0; t < t1; t++) {
+      var zs = specs.map(function (s) { return zscore(SY.score(p, t, s)); }), y = [], X = [];
+      for (var i = 0; i < p.N; i++) {
+        if (!isFinite(p.R[t][i])) continue;
+        var row = zs.map(function (z) { return z[i]; }); if (row.some(function (v) { return !isFinite(v); })) continue;
+        y.push(p.R[t][i]); X.push(row);
+      }
+      if (y.length < specs.length + 5) continue;
+      var f = PM.ols(y, X); f.beta.forEach(function (b, k) { sl[k].push(b); }); months.push(t);
+    }
+    return { months: months, slopes: sl, mean: sl.map(PM.mean), t: sl.map(SY.tStat) };
+  };
+  /** ex-ante regimes: trailing w-month volatility of b against the expanding q-quantile of its own past values.
+      state[t] is 1 (high), 0 (low) or -1 (not enough history); uses b before t only. */
+  SY.regimes = function (b, w, q, minPast) {
+    var T = b.length, vol = arr(T, NaN), thr = arr(T, NaN), state = new Int8Array(T).fill(-1), past = [];
+    minPast = minPast || 12;
+    for (var t = w; t < T; t++) {
+      var s = []; for (var k = t - w; k < t; k++) s.push(b[k]);
+      vol[t] = PM.std(s) * SQ12;
+      if (past.length >= minPast) { thr[t] = PM.quantile(past, q); state[t] = vol[t] > thr[t] ? 1 : 0; }
+      past.push(vol[t]);
+    }
+    return { vol: vol, thr: thr, state: state };
+  };
+  /** walk-forward folds: expanding training windows from start, test windows of step months from oos to end */
+  SY.folds = function (start, oos, end, step) {
+    var f = [];
+    for (var s = oos; s < end; s += step) f.push({ trainStart: start, trainEnd: s, testStart: s, testEnd: Math.min(end, s + step) });
+    return f;
+  };
+  /** library of raw long-short strategies (no scaling, no limits): the base signals and the momentum grid.
+      Each keeps its target weights by month and a raw backtest from month cfg.from. */
+  SY.library = function (p, cfg) {
+    var from = cfg.from || 24, lib = { from: from, scheme: cfg.scheme, items: {}, grid: [] };
+    var fc = {};
+    function forms(spec) {
+      var id = JSON.stringify(Object.assign({}, spec, { H: 1 }));
+      if (fc[id]) return fc[id];
+      var F = {}, mh = SY.minHist(spec); for (var t = Math.max(mh, from - 12); t < p.T; t++) F[t] = SY.formation(p, t, spec, cfg.scheme);
+      return (fc[id] = F);
+    }
+    function addS(key, spec) {
+      var F = forms(spec), H = spec.H || 1, W = {};
+      for (var t = from; t < p.T; t++) {
+        var w = arr(p.N), n = 0;
+        for (var j = 0; j < H; j++) { var f = F[t - j]; if (!f) break; n++; for (var i = 0; i < p.N; i++) if (f[i] && p.last[i] >= t) w[i] += f[i]; }
+        if (n > 1) for (i = 0; i < p.N; i++) w[i] /= n;
+        W[t] = w;
+      }
+      lib.items[key] = { key: key, spec: spec, W: W, bt: SY.backtest(p, { start: from, weights: function (t) { return W[t]; } }) };
+    }
+    (cfg.lookbacks || []).forEach(function (L) { (cfg.holds || []).forEach(function (H) { var k = 'mom_' + L + '_' + H; addS(k, { k: 'mom', L: L, H: H }); lib.grid.push({ key: k, L: L, H: H }); }); });
+    (cfg.base || []).forEach(function (b) { addS(b.key, b.spec); });
+    lib.add = addS;
+    return lib;
+  };
+  /** walk-forward research: in each fold, pick the momentum variant with the best training net Sharpe,
+      fit the allocation across the base strategies on training net returns only, and apply it to the test window.
+      Months before the first test window use the first fold's fit (that segment is in sample). */
+  SY.walkForward = function (p, lib, cfg) {
+    var folds = SY.folds(cfg.t0, cfg.oos, p.T, cfg.step), others = cfg.others || ['tsm', 'rev', 'val', 'lv'];
+    var nr = function (key, a, b) { var it = lib.items[key]; return SY.slice(it.bt, SY.net(it.bt, cfg.cost, cfg.borrow), a, b); };
+    folds.forEach(function (f) {
+      var best = null, bs = -Infinity;
+      lib.grid.forEach(function (g) { var s = SY.perf(nr(g.key, f.trainStart, f.trainEnd)).sharpe; if (s > bs) { bs = s; best = g.key; } });
+      f.sel = best || cfg.momKey; f.selSharpe = bs;
+      if (cfg.fixedMom) f.sel = cfg.fixedMom;
+      f.keys = [f.sel].concat(others);
+      var R = f.keys.map(function (k) { return nr(k, f.trainStart, f.trainEnd); }), rows = R[0].map(function (_, t) { return R.map(function (r) { return r[t]; }); });
+      var C = PM.covMatrix(rows), mu = R.map(PM.mean);
+      f.a = cfg.method === 'erc' ? SY.erc(C) : cfg.method === 'ew' ? f.keys.map(function () { return 1 / f.keys.length; }) : SY.mv(mu, C, cfg.shrink);
+    });
+    function foldAt(t) { for (var k = folds.length - 1; k >= 0; k--) if (t >= folds[k].testStart) return folds[k]; return folds[0]; }
+    function comb(f) { return function (t) { var w = arr(p.N); f.keys.forEach(function (k, j) { var x = lib.items[k].W[t]; for (var i = 0; i < p.N; i++) if (x[i]) w[i] += f.a[j] * x[i]; }); return w; }; }
+    var bo = { start: cfg.t0, rawFrom: lib.from, volTarget: cfg.volTarget, volWin: cfg.volWin, maxLev: cfg.maxLev, cap: cfg.cap, keep: cfg.keep };
+    var bt = SY.backtest(p, Object.assign({}, bo, { weights: function (t) { return comb(foldAt(t))(t); } }));
+    folds.forEach(function (f) {
+      f.isBt = SY.backtest(p, Object.assign({}, bo, { end: f.trainEnd, keep: false, weights: comb(f) }));
+      f.isNet = SY.net(f.isBt, cfg.cost, cfg.borrow); f.isPerf = SY.perf(f.isNet);
+      f.oosNet = SY.slice(bt, SY.net(bt, cfg.cost, cfg.borrow), f.testStart, f.testEnd); f.oosPerf = SY.perf(f.oosNet);
+    });
+    return { folds: folds, bt: bt, net: SY.net(bt, cfg.cost, cfg.borrow), weightsFn: function (t) { return comb(foldAt(t))(t); } };
+  };
+
+  /** placebo strategies: rank-weighted long-short books on persistent noise characteristics (AR(1), phi),
+      with the same universe, timing and costs as the real signals. Returns raw backtests. */
+  SY.placebo = function (p, n, seed, phi, scheme, from) {
+    var out = [];
+    for (var k = 0; k < n; k++) {
+      var z = PM.normalGen(PM.mulberry32((seed * 7919 + k * 104729) >>> 0)), x = arr(p.N), a = Math.sqrt(1 - phi * phi), i;
+      for (i = 0; i < p.N; i++) x[i] = z();
+      var sc = arr(p.N);
+      out.push(SY.backtest(p, { start: from, weights: function (t) {
+        for (i = 0; i < p.N; i++) { sc[i] = p.first[i] <= t - 13 && p.last[i] >= t ? x[i] : NaN; x[i] = phi * x[i] + a * z(); }
+        return scheme === 'quintile' ? SY.quintileWeights(sc) : SY.rankWeights(sc);
+      } }));
+    }
+    return out;
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
