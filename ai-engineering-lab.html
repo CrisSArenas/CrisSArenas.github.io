@@ -738,7 +738,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       rows: s.cats, foot: { cat: 'All', n: s.n, pass: s.pass, rate: s.passRate, viol: s.violCases, p95: s.p95, cost: s.costPer } });
     UI.table('#caseTable', { id: 'cases', name: 'Evaluation cases', columns: caseCols(true), rows: caseRows(ev) });
     renderRegression();
-    $('#evalLine').textContent = 'Retrieval, permission checks, the injection screen, the approval gate, retries and scoring run as real code here. The model\'s outputs come from a rule-based stand-in, the tool backends are simulated, and latency and cost come from assumed prices. At seed ' + S.seed + ', ' + ofN(sb.pass, sb.n) + ' evaluation cases pass in the baseline configuration.';
+    $('#evalLine').textContent = 'Base case: seed ' + S.seed + ', 11 fictional documents, 38 evaluation cases, no language model. ' + ofN(sb.pass, sb.n) + ' cases pass in the baseline configuration.';
   }
   function candCfg() {
     var p = PRESETS.filter(function (x) { return x.id === S.cand; })[0];
