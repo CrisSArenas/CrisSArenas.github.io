@@ -101,7 +101,7 @@
         groups[g].map(function (x) { return '<tr><td class="nm">' + esc(x.name) + (x.ok ? '' : '<div class="err">' + esc(x.error) + '</div>') + '</td><td>' + esc(x.demo === 'Core' ? 'All demos' : x.demo) + '</td><td class="' + (x.ok ? 'res-pass">Pass' : 'res-fail">Fail') + '</td></tr>'; }).join('') + '</tbody></table></div>';
     }).join('');
   }
-  /* application cards: the number on each card (library.html, which shows every application, and assets/data/card-stats.json) must equal
+  /* application cards: the number in assets/data/card-stats.json, and on the homepage card where the demo is featured, must equal
      what its demo computes now at its base case (window.cardStat in the demo page) */
   function liveStat(page) {
     return new Promise(function (res) {
@@ -121,12 +121,13 @@
     out.innerHTML = '<h2 class="t-group">Application cards <span class="muted" style="font-weight:500;font-size:.85rem">(checking each demo)</span></h2>';
     try {
       var stats = (await (await fetch('/assets/data/card-stats.json', { cache: 'no-store' })).json()).cards;
-      var home = await (await fetch('/library.html', { cache: 'no-store' })).text();
+      var home = await (await fetch('/', { cache: 'no-store' })).text();
       for (var id in stats) {
         var c = stats[id], m = home.match(new RegExp('<!-- card:' + id + ':start --><div class="wc-kpi"><span class="wc-num">([^<]*)</span>'));
         var live = await liveStat(c.demo), shown = m ? m[1] : null;
-        var ok = !!live && live.value === c.value && shown === c.value;
-        rows.push({ ok: ok, name: c.label + ': card ' + (shown || 'missing') + ', demo ' + (live ? live.value : 'did not load'), demo: c.demo });
+        var onHome = home.indexOf('<!-- card:' + id + ':start -->') >= 0;
+        var ok = !!live && live.value === c.value && (!onHome || shown === c.value);
+        rows.push({ ok: ok, name: c.label + ': ' + (onHome ? 'homepage card ' + (shown || 'missing') : 'card data ' + c.value) + ', demo ' + (live ? live.value : 'did not load'), demo: c.demo });
       }
     } catch (e) { rows.push({ ok: false, name: 'Could not load card data: ' + e.message, demo: '' }); }
     cardRes = rows;

@@ -14,8 +14,8 @@ const DEMOS = {
   prp: 'portfolio-risk-performance.html', arb: 'allocation-rebalancing.html',
   sys: 'systematic-research-lab.html', ail: 'ai-engineering-lab.html'
 };
-/* the cards appear on the homepage (selected work) and on the library page (every application) */
-const PAGES = ['index.html', 'library.html'];
+/* preview cards appear on the homepage for the selected work; every demo's value is still checked against its card data */
+const PAGES = ['index.html'];
 
 const b = await chromium.launch(), cards = {};
 let recon = null;
@@ -50,7 +50,7 @@ if (CHECK) {
     for (const [k, c] of Object.entries(cards)) {
       const m = html.match(new RegExp(`<!-- card:${k}:start --><div class="wc-kpi"><span class="wc-num">([^<]*)</span>`));
       const has = html.includes(`<!-- card:${k}:start -->`);
-      if ((has || pg === 'library.html') && (!m || m[1] !== c.value)) { console.log(pg + ' card ' + k + ': shows ' + (m && m[1]) + ', demo ' + c.value); bad.push(k); }
+      if (has && (!m || m[1] !== c.value)) { console.log(pg + ' card ' + k + ': shows ' + (m && m[1]) + ', demo ' + c.value); bad.push(k); }
     }
   }
   const home = fs.readFileSync(root + 'index.html', 'utf8');
@@ -152,7 +152,7 @@ for (const pg of PAGES) {
     const block = `<div class="wc-kpi"><span class="wc-num">${c.value}</span><span class="wc-lbl">${c.label}</span></div>` +
       `<svg class="wc-chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${d.desc}">${d.svg}</svg>`;
     const re = new RegExp(`(<!-- card:${id}:start -->)[\\s\\S]*?(<!-- card:${id}:end -->)`);
-    if (!re.test(html)) { if (pg === 'library.html') console.log('no markers for ' + id + ' on ' + pg); continue; }
+    if (!re.test(html)) continue;
     html = html.replace(re, `$1${block}$2`);
   }
   if (pg === 'index.html') {

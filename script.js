@@ -77,6 +77,24 @@
   var tocM = document.querySelector('.dd-toc-m');
   if (tocM) tocM.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { tocM.open = false; }); });
 
+  /* library index: filter by type and search titles and descriptions */
+  var lxRows = document.querySelectorAll('.lx-row');
+  if (lxRows.length) {
+    var lxKind = 'all', lxQ = '', lxInput = document.getElementById('lxSearch'), lxCount = document.getElementById('lxCount'), lxEmpty = document.getElementById('lxEmpty');
+    var lxApply = function () {
+      var shown = 0;
+      lxRows.forEach(function (r) { var ok = (lxKind === 'all' || r.getAttribute('data-kind') === lxKind) && (!lxQ || r.textContent.toLowerCase().indexOf(lxQ) >= 0); r.hidden = !ok; if (ok) shown++; });
+      document.querySelectorAll('.lx-group').forEach(function (g) { g.hidden = !g.querySelector('.lx-row:not([hidden])'); });
+      if (lxCount) lxCount.textContent = shown === lxRows.length ? lxRows.length + ' items' : shown + ' of ' + lxRows.length + ' items';
+      if (lxEmpty) lxEmpty.hidden = shown > 0;
+    };
+    document.querySelectorAll('.lx-filter button').forEach(function (b) {
+      b.addEventListener('click', function () { lxKind = b.getAttribute('data-f'); document.querySelectorAll('.lx-filter button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); lxApply(); });
+    });
+    if (lxInput) lxInput.addEventListener('input', function () { lxQ = lxInput.value.trim().toLowerCase(); lxApply(); });
+    lxApply();
+  }
+
   /* AI systems results, from the evaluation panels of every demo (assets/data/eval-results.js) */
   var box = document.getElementById('aiResults');
   if (box && window.EVAL_RESULTS && window.EVAL_RESULTS.length) {
