@@ -52,7 +52,7 @@ a{color:var(--cyan);text-decoration:none}
 .panel-head h3 i{color:var(--cyan);font-size:13px}
 .panel-head .tag{font-size:10px;color:var(--dim);font-style:italic}
 .panel-body{padding:16px 18px;position:relative;flex:1;overflow-y:auto}
-canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+canvas{display:block;width:100%;border-radius:6px;background:var(--card2)}
 /* fixed drawing heights; without them the canvas takes its height from the default 300px width ratio */
 #wfCanvas{height:260px}#pinCanvas{height:380px}
 
@@ -76,18 +76,36 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .reg-cline{margin-top:7px;overflow-x:auto;padding-bottom:2px}
 .reg-cline .rbin{display:block;font-family:var(--mono);font-size:9px;color:var(--faint);white-space:nowrap;letter-spacing:.4px}
 .reg-cline .rc{display:block;font-family:var(--mono);font-size:10px;color:var(--green);white-space:nowrap;margin-top:2px}
-.bit-row-wrap{overflow-x:auto;padding-bottom:4px}
-.bit-num-row{display:flex;gap:1px;min-width:fit-content}
-.bit-num{width:20px;height:12px;text-align:center;font-size:7px;color:var(--dim);font-family:var(--mono);flex-shrink:0}
-.bit-row{display:flex;gap:1px;min-width:fit-content}
-.bit-cell{width:20px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--mono);font-weight:700;cursor:pointer;border-radius:2px;transition:all .15s;flex-shrink:0;user-select:none}
+.bit-row-wrap{display:flex;flex-wrap:wrap;gap:6px 5px;padding-bottom:4px;--bw:19px;--bh:22px}
+.bit-grp{display:flex;flex-direction:column}
+.bit-num-row{display:flex;gap:1px}
+.bit-num{width:var(--bw);height:12px;text-align:center;font-size:8px;color:var(--dim);font-family:var(--mono);flex-shrink:0}
+.bit-row{display:flex;gap:1px}
+.bit-cell{width:var(--bw);height:var(--bh);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--mono);font-weight:700;cursor:pointer;border-radius:2px;transition:all .15s;flex-shrink:0;user-select:none}
 .bit-cell.b0{background:var(--card2);color:var(--dim);border:1px solid var(--border)}
 .bit-cell.b1{background:color-mix(in srgb, var(--positive) 20%, transparent);color:var(--green);border:1px solid color-mix(in srgb, var(--positive) 40%, transparent)}
 .bit-cell:hover{transform:scale(1.15);z-index:2;box-shadow:none}
-.bit-cell.reserved{background:rgba(46,52,56,.3);color:rgba(140,145,150,.25);cursor:default;border:1px solid rgba(46,52,56,.5)}
+.bit-cell.reserved{background:transparent;color:color-mix(in srgb, var(--dim) 45%, transparent);cursor:default;border:1px dashed var(--border)}
 .bit-cell.reserved:hover{transform:none;box-shadow:none}
-.field-bar{display:flex;gap:1px;margin-top:2px;min-width:fit-content}
-.field-bar-seg{width:20px;height:3px;border-radius:1px;flex-shrink:0}
+.bit-cell.ro{cursor:default;border-style:dotted}
+.bit-cell.ro:hover{transform:none}
+.field-bar{display:flex;gap:1px;margin-top:2px}
+.reg-body{max-height:560px;overflow-y:auto}
+.last-edit{font-size:11px;color:var(--dim);background:var(--card2);border-radius:8px;padding:8px 12px;margin-bottom:14px;line-height:1.5;min-height:2.6em}
+.last-edit b{color:var(--text)}
+@media(max-width:600px){
+  .bit-row-wrap{--bh:36px;gap:8px 0;flex-direction:column}
+  .bit-grp{width:100%}
+  .bit-grp.all-rsv{display:none}
+  .bit-num,.bit-cell,.field-bar-seg{flex:1 1 0;width:auto;min-width:0}
+  .bit-num{font-size:9px}
+  .bit-cell{font-size:12px}
+  .bit-cell:hover{transform:none}
+  .reg-body{max-height:none;overflow:visible}
+  .periph-tab{min-height:40px}
+  .guide-toggle{min-height:36px}
+}
+.field-bar-seg{width:var(--bw);height:3px;border-radius:1px;flex-shrink:0}
 .field-legend{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .field-tag{font-size:8px;padding:1px 6px;border-radius:3px;font-family:var(--mono);font-weight:600;border:1px solid;display:flex;align-items:center;gap:3px}
 
@@ -101,14 +119,14 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .wf-legend-sw{width:14px;height:3px;border-radius:1px}
 
 /* Code preview */
-.code-block{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre;color:var(--dim);max-height:380px;overflow-y:auto}
+.code-block{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre;color:var(--dim);max-height:380px;overflow-y:auto}
 .code-block .kw{color:var(--cyan)}
 .code-block .hex{color:var(--green)}
 .code-block .cmt{color:#6B7176;font-style:italic}
 .code-block .fn{color:var(--yellow)}
 .code-block .op{color:var(--text)}
 .code-block .reg{color:var(--orange)}
-.code-block .tp{color:var(--purple)}
+.code-block .tp{color:var(--text);font-weight:600}
 .code-block .str{color:var(--green)}
 .code-block .num{color:var(--cyan)}
 
@@ -232,7 +250,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         <h3>8 &middot; Using the lab</h3>
         <dl>
           <dt>Peripheral tabs</dt><dd>Load that block's registers into the editor. Tabs are buttons: Tab and Enter work.</dd>
-          <dt>Bit cells</dt><dd>Click (or focus and press Enter/Space) to toggle. Reserved bits are inert. Hover for the field name, bit range, current value and meaning.</dd>
+          <dt>Bit cells</dt><dd>Click or tap (or focus and press Enter/Space) to toggle. Reserved bits are dashed and inert. Hover for the field name, bit range, current value and meaning; after a write the same details appear in the line above the registers. On a phone each register is shown one byte per row and fully reserved bytes are hidden.</dd>
           <dt>Under each register</dt><dd>The value in hex, the same value in binary, and the C statement that would produce it.</dd>
           <dt>BSRR</dt><dd>Clicking a BSRR bit performs the write: the low half sets an ODR bit, the high half clears it, and BSRR itself falls straight back to 0, the real hardware behaviour.</dd>
           <dt>Presets</dt><dd>Six worked configurations, each of which also sets the RCC clock-enable and alternate-function bits it needs.</dd>
@@ -272,7 +290,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <!-- Register Editor -->
   <div class="panel">
     <div class="panel-head"><h3><i class="fas fa-th"></i> Register Editor</h3><span class="tag" id="regTag">GPIOA Registers</span></div>
-    <div class="panel-body" id="regEditor" style="max-height:500px;overflow-y:auto"></div>
+    <div class="panel-body reg-body">
+      <div class="last-edit" id="lastEdit" aria-live="polite">Click or tap a bit to write it. The field it belongs to is explained here.</div>
+      <div id="regEditor"></div>
+    </div>
   </div>
 
   <!-- Waveform Viewer (full width) -->
@@ -291,11 +312,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="panel-body">
       <canvas id="pinCanvas" height="380" role="img" aria-label="Package pin map showing the configured mode of each port A pin"></canvas>
       <div class="pin-legend">
-        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--green)"></span> Output HIGH</div>
-        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--red)"></span> Output LOW</div>
-        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--dim)"></span> Input</div>
-        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--blue)"></span> Alt Function</div>
-        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--purple)"></span> Analog</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--green)"></span> Output HIGH (HI)</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--red)"></span> Output LOW (LO)</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--dim)"></span> Input (IN)</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:var(--gold)"></span> Alternate function (AFn)</div>
+        <div class="pin-legend-item"><span class="pin-legend-sw" style="background:color-mix(in srgb, var(--gold) 20%, transparent);border:1px solid var(--gold)"></span> Analog (AN)</div>
       </div>
     </div>
   </div>
@@ -328,7 +349,20 @@ function toggleGuide(){var g=document.getElementById('guideGrid'),b=document.get
 /* ============================================================
    FIELD COLORS
    ============================================================ */
-var FC=['#6B7176','#1F6F4A','#C4AE84','#B39B6E','#B39B6E','#A3312B','#C4AE84','#B39B6E','#6B7176','#B39B6E','#C4AE84','#B39B6E','#6B7176','#1F6F4A','#B39B6E','#C4AE84'];
+/* Canvas and field colours come from the site palette tokens, re-read on every
+   refresh and on a theme change, so both themes stay legible. */
+var C={},FC=[];
+function readPal(){
+  var s=getComputedStyle(document.documentElement);
+  function g(n,d){var v=s.getPropertyValue(n).trim();return /^#[0-9a-fA-F]{6}$/.test(v)?v:d}
+  C.pos=g('--c-positive','#6FB59A');C.neg=g('--c-negative','#E07A7A');
+  C.gold=g('--c-gold','#B39B6E');C.goldT=g('--c-gold-text','#C4AE84');
+  C.graph=g('--c-graphite','#6B7176');C.dim=g('--c-text-2','#A7ACB0');
+  C.line=g('--c-chip-border','#3A4044');C.body=g('--c-card','#0E1C16');C.text=g('--c-text','#EEF2EF');
+  FC=[C.graph,C.pos,C.goldT,C.gold,C.dim,C.neg,C.goldT,C.pos,C.graph,C.gold,C.goldT,C.neg,C.dim,C.pos,C.gold,C.goldT];
+}
+function A(hex,a){var h=hex.replace('#','');return 'rgba('+parseInt(h.substr(0,2),16)+','+parseInt(h.substr(2,2),16)+','+parseInt(h.substr(4,2),16)+','+a+')'}
+readPal();
 
 /* ============================================================
    PERIPHERAL DEFINITIONS
@@ -369,7 +403,7 @@ var PERIPHS={
     desc:'Reset and clock control. HSE 8 MHz through the PLL (M 8, N 336, P 2) gives SYSCLK 168 MHz; AHB /1 = 168 MHz, APB1 /4 = 42 MHz (timer clock 84 MHz), APB2 /2 = 84 MHz (timer clock 168 MHz). Every peripheral is clock-gated - until its xxxENR bit is set the registers read back 0 and writes are lost.',
     regs:[
       {name:'AHB1ENR',off:0x30,rst:0x00100000,desc:'AHB1 peripheral clock enable (+0x30). Bit 0 = GPIOAEN, 1 = GPIOBEN, 2 = GPIOCEN, 3 = GPIODEN. Reset 0x00100000 (CCM data RAM).',
-       fields:enrFields({0:'GPIOAEN',1:'GPIOBEN',2:'GPIOCEN',3:'GPIODEN',4:'GPIOEEN',5:'GPIOFEN',6:'GPIOGEN',7:'GPIOHEN',8:'GPIOIEN',12:'CRCEN',18:'BKPSRAMEN',20:'CCMDATARAMEN',21:'DMA1EN',22:'DMA2EN'},'AHB1')},
+       fields:enrFields({0:'GPIOAEN',1:'GPIOBEN',2:'GPIOCEN',3:'GPIODEN',4:'GPIOEEN',5:'GPIOFEN',6:'GPIOGEN',7:'GPIOHEN',8:'GPIOIEN',12:'CRCEN',18:'BKPSRAMEN',20:'CCMDATARAMEN',21:'DMA1EN',22:'DMA2EN',25:'ETHMACEN',26:'ETHMACTXEN',27:'ETHMACRXEN',28:'ETHMACPTPEN',29:'OTGHSEN',30:'OTGHSULPIEN'},'AHB1')},
       {name:'APB1ENR',off:0x40,rst:0,desc:'APB1 peripheral clock enable (+0x40). Bit 0 = TIM2EN, bit 17 = USART2EN.',
        fields:enrFields({0:'TIM2EN',1:'TIM3EN',2:'TIM4EN',3:'TIM5EN',4:'TIM6EN',5:'TIM7EN',6:'TIM12EN',7:'TIM13EN',8:'TIM14EN',11:'WWDGEN',14:'SPI2EN',15:'SPI3EN',17:'USART2EN',18:'USART3EN',19:'UART4EN',20:'UART5EN',21:'I2C1EN',22:'I2C2EN',23:'I2C3EN',25:'CAN1EN',26:'CAN2EN',28:'PWREN',29:'DACEN'},'APB1')},
       {name:'APB2ENR',off:0x44,rst:0,desc:'APB2 peripheral clock enable (+0x44). Bit 4 = USART1EN, bit 8 = ADC1EN, bit 12 = SPI1EN, bit 14 = SYSCFGEN (needed before any EXTI pin interrupt).',
@@ -382,11 +416,13 @@ var PERIPHS={
        fields:mkGPIOFields('MODER',function(i){return 'PA'+i+' mode: 00=Input, 01=Output, 10=Alternate function, 11=Analog'},2)},
       {name:'OTYPER',off:0x04,rst:0,desc:'Output type (+0x04), 1 bit per pin: 0 = push-pull, 1 = open-drain (bits 15:0).',
        fields:mkGPIOFields('OT',function(i){return 'PA'+i+' output type: 0=Push-pull, 1=Open-drain'},1)},
-      {name:'OSPEEDR',off:0x08,rst:0,desc:'Output speed (+0x08), 2 bits per pin: 00 = low, 01 = medium, 10 = fast, 11 = high. Faster slew costs EMI and ground bounce.',
+      {name:'OSPEEDR',off:0x08,rst:0x0C000000,desc:'Output speed (+0x08), 2 bits per pin: 00 = low, 01 = medium, 10 = fast, 11 = high. Reset 0x0C000000 leaves PA13 (SWDIO) at very high speed. Faster slew costs EMI and ground bounce.',
        fields:mkGPIOFields('OSPEED',function(i){return 'PA'+i+' speed: 00=Low, 01=Medium, 10=Fast, 11=High'},2)},
       {name:'PUPDR',off:0x0C,rst:0x64000000,desc:'Pull-up/pull-down (+0x0C), 2 bits per pin: 00 = none, 01 = pull-up, 10 = pull-down. Reset 0x64000000 for the SWD/JTAG pins.',
        fields:mkGPIOFields('PUPDR',function(i){return 'PA'+i+' pull: 00=None, 01=Pull-up, 10=Pull-down'},2)},
-      {name:'ODR',off:0x14,rst:0,desc:'Output data register (+0x14): 1 = HIGH, 0 = LOW per pin (bits 15:0). IDR (+0x10) is the read-only input side. A read-modify-write of ODR is not atomic - use BSRR instead.',
+      {name:'IDR',off:0x10,rst:0,ro:true,desc:'Input data register (+0x10), read-only: the level sampled on each pin every AHB1 clock (bits 15:0). Here it is derived from the other registers: an output pin reads back its ODR bit, an input pin reads 1 with a pull-up and 0 with a pull-down or no pull (a floating pin is shown as 0), and analog pins always read 0 because their Schmitt trigger is off. Alternate-function pins follow their peripheral, which is not simulated, so they are shown at their pull level (at reset PA13 and PA15 read 1, PA14 reads 0).',
+       fields:mkGPIOFields('IDR',function(i){return 'PA'+i+' input level (read-only): 1=HIGH, 0=LOW'},1)},
+      {name:'ODR',off:0x14,rst:0,desc:'Output data register (+0x14): 1 = HIGH, 0 = LOW per pin (bits 15:0). A read-modify-write of ODR is not atomic - use BSRR instead.',
        fields:mkGPIOFields('ODR',function(i){return 'PA'+i+' output level: 1=HIGH (3.3 V), 0=LOW (0 V)'},1)},
       {name:'BSRR',off:0x18,rst:0,desc:'Bit set/reset register (+0x18), write-only and always reads 0. Writing 1 to BS[x] in the LOW half word sets ODR[x]; writing 1 to BR[x] in the HIGH half word clears it. Atomic, so no read-modify-write race against an interrupt. Clicking a bit here performs the write and BSRR drops straight back to 0.',
        fields:(function(){var f=[];for(var i=15;i>=0;i--)f.push({name:'BR'+i,bits:[i+16],desc:'BR'+i+' (bit '+(i+16)+', high half word): write 1 to CLEAR ODR'+i+' - drives PA'+i+' LOW'});for(var i=15;i>=0;i--)f.push({name:'BS'+i,bits:[i],desc:'BS'+i+' (bit '+i+', low half word): write 1 to SET ODR'+i+' - drives PA'+i+' HIGH'});return f})()},
@@ -557,7 +593,7 @@ var PERIPHS={
       {name:'CR1',off:0x04,rst:0,desc:'Control register 1 (+0x04). Resolution, scan mode, analog watchdog and interrupt enables.',
        fields:[
          {name:'OVRIE',bits:[26],desc:'Overrun interrupt enable'},
-         {name:'RES',bits:[25,24],desc:'Resolution: 00=12-bit (15 ADC cycles), 01=10-bit (13), 10=8-bit (11), 11=6-bit (9)'},
+         {name:'RES',bits:[25,24],desc:'Resolution: 00=12-bit, 01=10-bit, 10=8-bit, 11=6-bit. Conversion adds 12, 10, 8 or 6 ADC cycles to the sampling time (15, 13, 11 or 9 in total with the minimum 3-cycle sample)'},
          {name:'AWDEN',bits:[23],desc:'Analog watchdog enable on regular channels'},
          {name:'JAWDEN',bits:[22],desc:'Analog watchdog enable on injected channels'},
          {name:'DISCNUM',bits:[15,14,13],desc:'Number of channels converted per discontinuous trigger'},
@@ -614,7 +650,7 @@ var PERIPHS={
          {name:'ENABLE',bits:[0],desc:'1 = the counter is running'},
          rsvBits(range(31,17).concat(range(15,3)))
        ]},
-      {name:'SYST_RVR',off:0x014,rst:0,desc:'SysTick reload value, 0xE000E014, 24 bits. Tick period = (RELOAD + 1) / f. For a 1 kHz RTOS tick from 168 MHz, RELOAD = 168000 - 1 = 167999 (0x00028FFF).',
+      {name:'SYST_RVR',off:0x014,rst:0,desc:'SysTick reload value, 0xE000E014, 24 bits. Tick period = (RELOAD + 1) / f. For a 1 kHz RTOS tick from 168 MHz, RELOAD = 168000 - 1 = 167999 (0x0002903F).',
        fields:[{name:'RELOAD',bits:range(23,0),desc:'Value loaded into the counter on underflow; period = (RELOAD+1)/f_SysTick'},rsvBits(range(31,24))]},
       {name:'SYST_CVR',off:0x018,rst:0,desc:'SysTick current value, 0xE000E018. Reads the live down-counter; any write clears it and clears COUNTFLAG.',
        fields:[{name:'CURRENT',bits:range(23,0),desc:'Current counter value (counts down to 0, then reloads)'},rsvBits(range(31,24))]},
@@ -631,6 +667,7 @@ function clkOn(pk){var p=PERIPHS[pk];if(!p||!p.clk)return true;return ((regVals.
 function popcnt(v){var c=0;v=v>>>0;while(v){c+=v&1;v=v>>>1}return c}
 function cLine(p,reg,v){
   var w=p.name.replace('/','_')+'->'+reg.name;
+  if(reg.ro)return 'uint32_t in = '+w+';  /* read-only, reads '+hex32(v)+' */';
   if(reg.name==='BSRR'){
     if(!v)return w+' = 0;  /* write-only: low half sets ODR, high half clears it */';
     var t=[];for(var b=0;b<32;b++)if((v>>>b)&1)t.push('(1U << '+b+')');
@@ -662,6 +699,17 @@ function initRegs(){
 }
 initRegs();
 
+/* GPIOA->IDR is read-only, so it is recomputed from MODER, OTYPER, PUPDR and ODR before every redraw */
+function computeIDR(){
+  var g=regVals.gpio,v=0;
+  for(var i=0;i<16;i++){
+    var mode=(g.MODER>>>(i*2))&3,pull=(g.PUPDR>>>(i*2))&3,od=(g.OTYPER>>>i)&1,o=(g.ODR>>>i)&1,lvl=0;
+    if(mode===1)lvl=(od&&o)?(pull===1?1:0):o;   // open-drain '1' releases the pin: it reads the pull level
+    else if(mode!==3)lvl=pull===1?1:0;            // input, or AF with the peripheral not simulated: the pull sets the level
+    v|=lvl<<i;
+  }
+  g.IDR=v>>>0;
+}
 function gBit(pk,rn,b){return(regVals[pk][rn]>>>b)&1}
 function tBit(pk,rn,b){
   if(rn==='BSRR'){                       // write-only: low half sets ODR, high half clears it
@@ -723,58 +771,52 @@ function buildRegEditor(){
     var desc=document.createElement('div');desc.className='reg-desc-text';desc.textContent=reg.desc;
     sec.appendChild(desc);
 
-    // Bit rows
+    // Bit rows, in four byte groups (31-24 ... 7-0) that wrap on narrow screens
     var wrap=document.createElement('div');wrap.className='bit-row-wrap';
-
-    // Bit numbers
-    var numR=document.createElement('div');numR.className='bit-num-row';
-    for(var b=31;b>=0;b--){var n=document.createElement('div');n.className='bit-num';n.textContent=b;numR.appendChild(n)}
-    wrap.appendChild(numR);
-
-    // Bit cells
-    var bitR=document.createElement('div');bitR.className='bit-row';
-    for(var b=31;b>=0;b--){
-      var cell=document.createElement('div');
-      var v=gBit(curPeriph,reg.name,b);
-      var fm=bfMap[b];
-      var isRsv=fm&&fm.ci===-1;
-      cell.className='bit-cell'+(isRsv?' reserved':(v?' b1':' b0'));
-      cell.textContent=v;
-      cell.dataset.b=b;cell.dataset.r=reg.name;cell.dataset.p=curPeriph;
-      if(fm&&!isRsv){var col=FC[fm.ci%FC.length];cell.style.borderBottomColor=col;cell.style.borderBottomWidth='2px'}
-      if(!isRsv){
-        cell.tabIndex=0;cell.setAttribute('role','button');
-        cell.setAttribute('aria-label',reg.name+' bit '+b+(fm?' ('+fm.f.name+')':'')+' = '+v);
-        cell.onclick=function(){tBit(this.dataset.p,this.dataset.r,parseInt(this.dataset.b));refreshAll()};
-        cell.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();this.click()}};
-        cell.onfocus=function(){this.scrollIntoView({block:'nearest',inline:'nearest'})};
+    for(var gi=3;gi>=0;gi--){
+      var grp=document.createElement('div');grp.className='bit-grp';
+      var numR=document.createElement('div');numR.className='bit-num-row';
+      var bitR=document.createElement('div');bitR.className='bit-row';
+      var fbar=document.createElement('div');fbar.className='field-bar';
+      for(var b=gi*8+7;b>=gi*8;b--){
+        var n=document.createElement('div');n.className='bit-num';n.textContent=b;numR.appendChild(n);
+        var cell=document.createElement('div');
+        var v=gBit(curPeriph,reg.name,b);
+        var fm=bfMap[b];
+        var isRsv=fm&&fm.ci===-1,isRO=!!reg.ro;
+        cell.className='bit-cell'+(isRsv?' reserved':(v?' b1':' b0'))+(isRO&&!isRsv?' ro':'');
+        cell.textContent=v;
+        cell.dataset.b=b;cell.dataset.r=reg.name;cell.dataset.p=curPeriph;
+        if(fm&&!isRsv){var col=FC[fm.ci%FC.length];cell.style.borderBottomColor=col;cell.style.borderBottomWidth='2px'}
+        if(!isRsv&&!isRO){
+          cell.tabIndex=0;cell.setAttribute('role','button');
+          cell.setAttribute('aria-label',reg.name+' bit '+b+(fm?' ('+fm.f.name+')':'')+' = '+v);
+          cell.onclick=function(){var pk=this.dataset.p,rn=this.dataset.r,bb=parseInt(this.dataset.b,10);tBit(pk,rn,bb);lastEdit={pk:pk,rn:rn,b:bb};refreshAll()};
+          cell.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();this.click()}};
+          cell.onfocus=function(){this.scrollIntoView({block:'nearest',inline:'nearest'})};
+        }
+        (function(cell,fm,reg){
+          cell.onmouseenter=function(e){
+            if(!fm||matchMedia('(hover: none)').matches)return;
+            var fv=getFieldVal(curPeriph,reg.name,fm.f.bits);
+            showTT(e,'<div class="tt-title">'+fm.f.name+'</div>'+
+              '<div class="tt-row"><span class="tt-lbl">Bit(s)</span><span class="tt-val">['+fm.f.bits.join(',')+']</span></div>'+
+              '<div class="tt-row"><span class="tt-lbl">Value</span><span class="tt-val" style="color:var(--cyan)">'+fv+' (0b'+fv.toString(2).padStart(fm.f.bits.length,'0')+')</span></div>'+
+              '<div class="tt-divider"></div><div style="font-size:11px;color:var(--dim)">'+fm.f.desc+'</div>');
+          };
+          cell.onmousemove=function(e){if(fm&&ttEl.classList.contains('show'))showTT(e,ttEl.innerHTML)};
+          cell.onmouseleave=hideTT;
+        })(cell,fm,reg);
+        bitR.appendChild(cell);
+        var seg=document.createElement('div');seg.className='field-bar-seg';
+        if(fm&&fm.ci>=0){seg.style.background=FC[fm.ci%FC.length];seg.style.opacity='0.6'}
+        else{seg.style.background='var(--border)';seg.style.opacity='0.3'}
+        fbar.appendChild(seg);
       }
-      (function(cell,fm,reg){
-        cell.onmouseenter=function(e){
-          if(!fm)return;
-          var fv=getFieldVal(curPeriph,reg.name,fm.f.bits);
-          showTT(e,'<div class="tt-title">'+fm.f.name+'</div>'+
-            '<div class="tt-row"><span class="tt-lbl">Bit(s)</span><span class="tt-val">['+fm.f.bits.join(',')+']</span></div>'+
-            '<div class="tt-row"><span class="tt-lbl">Value</span><span class="tt-val" style="color:var(--cyan)">'+fv+' (0b'+fv.toString(2).padStart(fm.f.bits.length,'0')+')</span></div>'+
-            '<div class="tt-divider"></div><div style="font-size:11px;color:var(--dim)">'+fm.f.desc+'</div>');
-        };
-        cell.onmousemove=function(e){if(fm)showTT(e,ttEl.innerHTML)};
-        cell.onmouseleave=hideTT;
-      })(cell,fm,reg);
-      bitR.appendChild(cell);
+      var allR=true;for(var bb=gi*8;bb<gi*8+8;bb++){var q=bfMap[bb];if(!q||q.ci!==-1)allR=false}
+      if(allR)grp.classList.add('all-rsv');
+      grp.appendChild(numR);grp.appendChild(bitR);grp.appendChild(fbar);wrap.appendChild(grp);
     }
-    wrap.appendChild(bitR);
-
-    // Field color bar
-    var fbar=document.createElement('div');fbar.className='field-bar';
-    for(var b=31;b>=0;b--){
-      var seg=document.createElement('div');seg.className='field-bar-seg';
-      var fm=bfMap[b];
-      if(fm&&fm.ci>=0){seg.style.background=FC[fm.ci%FC.length];seg.style.opacity='0.6'}
-      else{seg.style.background='var(--border)';seg.style.opacity='0.3'}
-      fbar.appendChild(seg);
-    }
-    wrap.appendChild(fbar);
     sec.appendChild(wrap);
 
     // Field legend
@@ -810,14 +852,14 @@ var PIN48=[
 ];
 
 function pinState(name){
-  if(!name.startsWith('PA'))return{color:'#3A4044',lbl:''};
-  var num=parseInt(name.substring(2));if(isNaN(num)||num>15)return{color:'#3A4044',lbl:''};
+  if(!name.startsWith('PA'))return{color:C.line,lbl:''};
+  var num=parseInt(name.substring(2));if(isNaN(num)||num>15)return{color:C.line,lbl:''};
   var mode=(regVals.gpio.MODER>>>(num*2))&0x3;
   var out=(regVals.gpio.ODR>>>num)&1;
-  if(mode===0)return{color:'#8C9196',lbl:'IN'};
-  if(mode===1)return out?{color:'#1F6F4A',lbl:'HI'}:{color:'#A3312B',lbl:'LO'};
-  if(mode===2){return{color:'#B39B6E',lbl:num<8?('AF'+((regVals.gpio.AFRL>>>(num*4))&0xF)):'AF'}}
-  return{color:'#B39B6E',lbl:'AN'};
+  if(mode===0)return{color:C.dim,lbl:'IN'};
+  if(mode===1)return out?{color:C.pos,lbl:'HI'}:{color:C.neg,lbl:'LO'};
+  if(mode===2){return{color:C.gold,lbl:num<8?('AF'+((regVals.gpio.AFRL>>>(num*4))&0xF)):'AF'}}
+  return{color:C.gold,lbl:'AN',hollow:true};
 }
 
 function drawPins(){
@@ -829,55 +871,57 @@ function drawPins(){
   var ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
   var W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);
 
-  var cx=W*0.2,cy=H*0.12,cw=W*0.6,ch=H*0.76;
+  var cx=W*0.22,cy=H*0.13,cw=W*0.56,ch=H*0.74;
 
-  // Shadow
-  ctx.fillStyle='rgba(0,0,0,0.25)';ctx.beginPath();ctx.roundRect(cx+3,cy+3,cw,ch,8);ctx.fill();
   // Body
-  ctx.fillStyle='#151B19';ctx.strokeStyle='#3A4044';ctx.lineWidth=1.5;
+  ctx.fillStyle=C.body;ctx.strokeStyle=C.graph;ctx.lineWidth=1.5;
   ctx.beginPath();ctx.roundRect(cx,cy,cw,ch,8);ctx.fill();ctx.stroke();
   // Pin 1 dot
-  ctx.fillStyle='rgba(111,181,154,0.4)';ctx.beginPath();ctx.arc(cx+14,cy+ch-14,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=A(C.pos,0.4);ctx.beginPath();ctx.arc(cx+14,cy+ch-14,5,0,Math.PI*2);ctx.fill();
   // Labels
-  ctx.fillStyle='#8C9196';ctx.font='600 11px Inter,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle=C.dim;ctx.font='600 11px Inter,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('STM32F407',cx+cw/2,cy+ch/2-12);
-  ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.fillStyle='#8C9196';
+  ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.fillStyle=C.dim;
   ctx.fillText('Cortex-M4F 168 MHz',cx+cw/2,cy+ch/2+4);
   ctx.fillText('port A simulated',cx+cw/2,cy+ch/2+18);
 
-  var pLen=16,pW=5,nSide=12;
+  var pLen=14,pW=5,nSide=12;
   var sides=[
     {pins:PIN48.slice(0,12),s:'bottom'},
     {pins:PIN48.slice(12,24),s:'right'},
     {pins:PIN48.slice(24,36),s:'top'},
     {pins:PIN48.slice(36,48),s:'left'}
   ];
+  function pin(x,y,w,h,st){
+    if(st.hollow){ctx.fillStyle=A(st.color,0.2);ctx.fillRect(x,y,w,h);ctx.strokeStyle=st.color;ctx.lineWidth=1;ctx.strokeRect(x+0.5,y+0.5,w-1,h-1)}
+    else{ctx.fillStyle=st.color;ctx.fillRect(x,y,w,h)}
+    ctx.fillStyle=st.lbl?st.color:C.dim;
+  }
+  ctx.font='600 8px JetBrains Mono,Courier New,monospace';
   for(var si=0;si<sides.length;si++){
     var sd=sides[si];
     var sp=(sd.s==='bottom'||sd.s==='top')?cw/(nSide+1):ch/(nSide+1);
     for(var i=0;i<sd.pins.length;i++){
-      var p=sd.pins[i],st=pinState(p.n);
+      var p=sd.pins[i],st=pinState(p.n),txt=p.n+(st.lbl?' '+st.lbl:'');
       var px,py;
-      ctx.fillStyle=st.color;
       if(sd.s==='bottom'){
         px=cx+sp*(i+1);py=cy+ch;
-        ctx.fillRect(px-pW/2,py,pW,pLen);
-        ctx.font='600 7px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
-        ctx.save();ctx.translate(px,py+pLen+4);ctx.rotate(Math.PI/2.5);ctx.fillText(p.n,0,0);ctx.restore();
+        pin(px-pW/2,py,pW,pLen,st);ctx.globalAlpha=st.lbl?1:0.75;
+        ctx.textAlign='left';ctx.save();ctx.translate(px-2,py+pLen+4);ctx.rotate(Math.PI/2.5);ctx.fillText(txt,0,0);ctx.restore();
       }else if(sd.s==='right'){
         px=cx+cw;py=cy+ch-sp*(i+1);
-        ctx.fillRect(px,py-pW/2,pLen,pW);
-        ctx.font='600 7px JetBrains Mono,Courier New,monospace';ctx.textAlign='left';ctx.fillText(p.n,px+pLen+4,py+3);
+        pin(px,py-pW/2,pLen,pW,st);ctx.globalAlpha=st.lbl?1:0.75;
+        ctx.textAlign='left';ctx.fillText(txt,px+pLen+4,py);
       }else if(sd.s==='top'){
         px=cx+cw-sp*(i+1);py=cy;
-        ctx.fillRect(px-pW/2,py-pLen,pW,pLen);
-        ctx.font='600 7px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
-        ctx.save();ctx.translate(px,py-pLen-4);ctx.rotate(-Math.PI/2.5);ctx.fillText(p.n,0,0);ctx.restore();
+        pin(px-pW/2,py-pLen,pW,pLen,st);ctx.globalAlpha=st.lbl?1:0.75;
+        ctx.textAlign='left';ctx.save();ctx.translate(px+2,py-pLen-4);ctx.rotate(-Math.PI/2.5);ctx.fillText(txt,0,0);ctx.restore();
       }else{
         px=cx;py=cy+sp*(i+1);
-        ctx.fillRect(px-pLen,py-pW/2,pLen,pW);
-        ctx.font='600 7px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillText(p.n,px-pLen-4,py+3);
+        pin(px-pLen,py-pW/2,pLen,pW,st);ctx.globalAlpha=st.lbl?1:0.75;
+        ctx.textAlign='right';ctx.fillText(txt,px-pLen-4,py);
       }
+      ctx.globalAlpha=1;
     }
   }
 }
@@ -886,25 +930,34 @@ function drawPins(){
    WAVEFORM VIEWER (Canvas, animated)
    ============================================================ */
 var wfFrame=0,wfAnim=null;
+/* caption under the scope: one line when it fits, otherwise split at the bullets over two lines */
+function capt(ctx,t,x,y,maxW){
+  if(ctx.measureText(t).width<=maxW){ctx.fillText(t,x,y);return}
+  var parts=t.split(' \u2022 '),h=Math.ceil(parts.length/2);
+  ctx.fillText(parts.slice(0,h).join(' \u2022 '),x,y-6);ctx.fillText(parts.slice(h).join(' \u2022 '),x,y+6);
+}
 
 function wfConfig(){
   var pk=curPeriph;
   if(pk==='gpio'){
     var chs=[];
-    for(var i=0;i<8;i++){
+    for(var i=0;i<16;i++){
       var m=(regVals.gpio.MODER>>>(i*2))&3;
-      if(m===1){var v=(regVals.gpio.ODR>>>i)&1;chs.push({name:'PA'+i,val:v,color:v?'#1F6F4A':'#A3312B'})}
+      if(m===1){var v=(regVals.gpio.ODR>>>i)&1;chs.push({name:'PA'+i,val:v,color:v?C.pos:C.neg})}
     }
-    if(!chs.length)chs.push({name:'PA0',val:0,color:'#8C9196'});
     return{type:'gpio',chs:chs};
   }
   if(pk==='tim2'){
     var cr1=regVals.tim2.CR1,psc=regVals.tim2.PSC&0xFFFF,arr=regVals.tim2.ARR,ccr1=regVals.tim2.CCR1;
     var ccmr1=regVals.tim2.CCMR1,ccer=regVals.tim2.CCER;
-    var cen=cr1&1,oc1m=(ccmr1>>>4)&7,cc1e=ccer&1;
-    var fTim=84e6/(psc+1),freq=arr>0?fTim/(arr+1):0,duty=arr>0?Math.min(ccr1/(arr+1),1):0;
+    var cen=cr1&1,oc1m=(ccmr1>>>4)&7,cc1e=ccer&1,cc1p=(ccer>>>1)&1;
+    var fTim=84e6/(psc+1),freq=arr>0?fTim/(arr+1):0;
+    // PWM mode 1: OC1REF active while CNT < CCR1; mode 2 is the complement. CC1P = 1 inverts the pin.
+    var act=arr>0?Math.min(ccr1/(arr+1),1):0;
+    if(oc1m===7)act=1-act;
+    var duty=cc1p?1-act:act;
     var isPWM=(oc1m===6||oc1m===7)&&cc1e&&cen;
-    return{type:'tim',cen:cen,psc:psc,arr:arr,ccr1:ccr1,freq:freq,duty:duty,isPWM:isPWM};
+    return{type:'tim',cen:cen,psc:psc,arr:arr,ccr1:ccr1,freq:freq,duty:duty,isPWM:isPWM,oc1m:oc1m,cc1p:cc1p};
   }
   if(pk==='usart2'){
     var cr1=regVals.usart2.CR1,brr=regVals.usart2.BRR;
@@ -913,8 +966,8 @@ function wfConfig(){
     var mant=(brr>>>4)&0xFFF,frac=over8?(brr&0x7):(brr&0xF);
     var div2=over8?8:16,uDiv=mant+frac/div2;
     var baud=uDiv>0?Math.round(42e6/(div2*uDiv)):0;   // USART2 is on APB1: PCLK1 = 42 MHz
-    var dr=regVals.usart2.DR&0x1FF;
-    return{type:'uart',ue:ue,te:te,m:m,pce:pce,ps:ps,baud:baud,dr:dr,over8:over8,uDiv:uDiv,mant:mant,frac:frac};
+    var dr=regVals.usart2.DR&0x1FF,stop=[1,0.5,2,1.5][(regVals.usart2.CR2>>>12)&3];
+    return{type:'uart',ue:ue,te:te,m:m,pce:pce,ps:ps,baud:baud,dr:dr,over8:over8,uDiv:uDiv,mant:mant,frac:frac,stop:stop};
   }
   if(pk==='spi1'){
     var c1=regVals.spi1.CR1,br=(c1>>>3)&7;
@@ -959,12 +1012,12 @@ function drawWaveform(){
   var gW=W-ml-mr,gH=H-mt-mb;
 
   // Grid
-  ctx.strokeStyle='rgba(46,52,56,0.5)';ctx.lineWidth=0.5;
+  ctx.strokeStyle=A(C.line,0.5);ctx.lineWidth=0.5;
   for(var i=0;i<=10;i++){var x=ml+(gW/10)*i;ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+gH);ctx.stroke()}
   for(var i=0;i<=5;i++){var y=mt+(gH/5)*i;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+gW,y);ctx.stroke()}
 
   // Center crosshair
-  ctx.strokeStyle='rgba(111,181,154,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.strokeStyle=A(C.pos,0.12);ctx.lineWidth=1;ctx.setLineDash([4,4]);
   ctx.beginPath();ctx.moveTo(ml+gW/2,mt);ctx.lineTo(ml+gW/2,mt+gH);ctx.stroke();
   ctx.beginPath();ctx.moveTo(ml,mt+gH/2);ctx.lineTo(ml+gW,mt+gH/2);ctx.stroke();
   ctx.setLineDash([]);
@@ -973,62 +1026,67 @@ function drawWaveform(){
   var legEl=document.getElementById('wfLegend');
 
   if(cfg.type==='gpio'){
-    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">GPIO Digital Output</span><span class="wf-lbl">Channels:</span><span class="wf-val">'+cfg.chs.length+'</span>';
-    var chH=Math.min(gH/Math.max(cfg.chs.length,1),45),gap=6;
-    for(var ci=0;ci<cfg.chs.length;ci++){
+    var nOut=cfg.chs.length;
+    infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">GPIO digital output</span><span class="wf-lbl">Output pins:</span><span class="wf-val">'+nOut+'</span>';
+    if(!nOut){
+      ctx.fillStyle=C.dim;ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillText('No port A pin is an output (set MODERx = 01)',ml+gW/2,mt+gH/2);
+    }
+    var slot=gH/Math.max(nOut,1),chH=Math.min(slot*0.82,45),gap=slot-chH,big=chH>=24;
+    for(var ci=0;ci<nOut;ci++){
       var c=cfg.chs[ci];
-      var hiY=mt+ci*(chH+gap)+chH*0.15,loY=mt+ci*(chH+gap)+chH*0.85;
-      ctx.fillStyle=c.color;ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillText(c.name,ml-8,(hiY+loY)/2);
-      ctx.fillStyle='#8C9196';ctx.font='8px JetBrains Mono,Courier New,monospace';
-      ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3);
+      var hiY=mt+ci*slot+chH*0.15,loY=mt+ci*slot+chH*0.85;
+      ctx.fillStyle=c.color;ctx.font=(big?'10px':'8px')+' JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillText(c.name,ml-8,(hiY+loY)/2+3);
+      if(big){ctx.fillStyle=C.dim;ctx.font='8px JetBrains Mono,Courier New,monospace';
+        ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3)}
       var y=c.val?hiY:loY;
       ctx.strokeStyle=c.color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+gW,y);ctx.stroke();
-      ctx.fillStyle=c.color+'15';ctx.fillRect(ml,Math.min(y,loY),gW,Math.abs(loY-y)||1);
-      ctx.fillStyle=c.color;ctx.font='600 10px JetBrains Mono,Courier New,monospace';ctx.textAlign='left';
-      ctx.fillText(c.val?'HIGH (3.3V)':'LOW (0V)',ml+gW-80,(hiY+loY)/2+3);
+      ctx.fillStyle=A(c.color,0.08);ctx.fillRect(ml,Math.min(y,loY),gW,Math.abs(loY-y)||1);
+      ctx.fillStyle=c.color;ctx.font='600 '+(big?'10px':'8px')+' JetBrains Mono,Courier New,monospace';ctx.textAlign='right';
+      ctx.fillText(c.val?'HIGH (3.3V)':'LOW (0V)',ml+gW-6,(hiY+loY)/2+3);
     }
-    legEl.innerHTML=cfg.chs.map(function(c){return '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+c.color+'"></span>'+c.name+'</div>'}).join('');
+    legEl.innerHTML=nOut?cfg.chs.map(function(c){return '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+c.color+'"></span>'+c.name+(c.val?' high':' low')+'</div>'}).join(''):'';
     document.getElementById('wfTag').textContent='GPIO Output States';
   }
   else if(cfg.type==='tim'){
     var fStr=cfg.freq>=1e6?(cfg.freq/1e6).toFixed(2)+' MHz':cfg.freq>=1e3?(cfg.freq/1e3).toFixed(2)+' kHz':cfg.freq.toFixed(1)+' Hz';
     infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">'+(cfg.isPWM?'PWM':'Timer')+'</span>'+
       '<span class="wf-lbl">Freq:</span><span class="wf-val">'+fStr+'</span>'+
-      '<span class="wf-lbl">Duty:</span><span class="wf-val">'+(cfg.duty*100).toFixed(1)+'%</span>'+
+      '<span class="wf-lbl">Duty (pin high):</span><span class="wf-val">'+(cfg.duty*100).toFixed(1)+'%</span>'+
       '<span class="wf-lbl">PSC:</span><span class="wf-val">'+cfg.psc+'</span>'+
       '<span class="wf-lbl">ARR:</span><span class="wf-val">'+cfg.arr+'</span>'+
       '<span class="wf-lbl">CCR1:</span><span class="wf-val">'+cfg.ccr1+'</span>';
 
     if(cfg.isPWM&&cfg.freq>0){
       var hiY=mt+gH*0.15,loY=mt+gH*0.85;
-      ctx.fillStyle='#8C9196';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle=C.dim;ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText('3.3V',ml-8,hiY+3);ctx.fillText('0V',ml-8,loY+3);ctx.fillText('CH1',ml-8,(hiY+loY)/2+3);
       var cycles=4,cycW=gW/cycles,dutyW=cycW*cfg.duty;
       var phase=(wfFrame%120)/120;
       ctx.save();ctx.beginPath();ctx.rect(ml,mt,gW,gH);ctx.clip();
-      ctx.strokeStyle='#C4AE84';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle=C.goldT;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ml-cycW,loY);
       for(var c=-1;c<cycles+1;c++){
         var cx2=ml+c*cycW-phase*cycW;
         ctx.lineTo(cx2,loY);ctx.lineTo(cx2,hiY);ctx.lineTo(cx2+dutyW,hiY);ctx.lineTo(cx2+dutyW,loY);ctx.lineTo(cx2+cycW,loY);
       }
       ctx.stroke();
-      ctx.fillStyle='rgba(196,174,132,0.06)';
+      ctx.fillStyle=A(C.goldT,0.06);
       for(var c=-1;c<cycles+1;c++){var cx2=ml+c*cycW-phase*cycW;ctx.fillRect(cx2,hiY,dutyW,loY-hiY)}
       ctx.restore();
       // Period labels
-      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillStyle=C.dim;ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       var pStr=cfg.freq>0?(1/cfg.freq>=1e-3?((1/cfg.freq)*1e3).toFixed(2)+' ms':((1/cfg.freq)*1e6).toFixed(1)+' us'):'--';
       ctx.fillText('T = '+pStr,ml+gW/2,mt+gH+18);
     }else{
-      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle=C.dim;ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.cen?'Timer running (configure OC1M=110, CC1E=1 for PWM)':'Timer disabled (CEN=0)',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--warning)"></span>TIM2 CH1</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.goldT+'"></span>TIM2 CH1'+(cfg.isPWM?' (PWM mode '+(cfg.oc1m===6?1:2)+(cfg.cc1p?', active low':'')+')':'')+'</div>';
     document.getElementById('wfTag').textContent=cfg.isPWM?'PWM: '+fStr+', '+(cfg.duty*100).toFixed(1)+'% duty':'Timer';
   }
   else if(cfg.type==='uart'){
     var bStr=cfg.baud>0?cfg.baud.toLocaleString():'0';
-    var cfgStr=(cfg.m?'9':'8')+(cfg.pce?(cfg.ps?'O':'E'):'N')+'1';
+    var cfgStr=((cfg.m?9:8)-(cfg.pce?1:0))+(cfg.pce?(cfg.ps?'O':'E'):'N')+cfg.stop;
     infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">USART2 TX &middot; PCLK1 42 MHz</span>'+
       '<span class="wf-lbl">Baud:</span><span class="wf-val">'+bStr+'</span>'+
       '<span class="wf-lbl">Config:</span><span class="wf-val">'+cfgStr+'</span>'+
@@ -1038,22 +1096,23 @@ function drawWaveform(){
 
     if(cfg.ue&&cfg.te&&cfg.baud>0){
       var hiY=mt+gH*0.2,loY=mt+gH*0.8;
-      ctx.fillStyle='#8C9196';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle=C.dim;ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText('MARK',ml-8,hiY+3);ctx.fillText('SPACE',ml-8,loY+3);
-      var dBits=cfg.m?9:8,total=1+dBits+(cfg.pce?1:0)+1;
+      // M sets the word length (8 or 9 bits) and, with PCE = 1, the parity bit replaces the MSB of that word
+      var wBits=cfg.m?9:8,dBits=wBits-(cfg.pce?1:0),total=1+wBits+cfg.stop;
       var bW=gW/(total+4),data=cfg.dr&((1<<dBits)-1);
       var x=ml+bW*1.5;
-      ctx.strokeStyle='#B39B6E';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle=C.gold;ctx.lineWidth=2;ctx.beginPath();
       ctx.moveTo(ml,hiY);ctx.lineTo(x,hiY);
       // Start
       ctx.lineTo(x,loY);x+=bW;ctx.lineTo(x,loY);
-      ctx.fillStyle='#8C9196';ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      ctx.fillStyle=C.dim;ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       ctx.fillText('S',x-bW/2,loY+12);
       // Data LSB first
       for(var i=0;i<dBits;i++){
         var bit=(data>>>i)&1;var y=bit?hiY:loY;
         ctx.lineTo(x,y);x+=bW;ctx.lineTo(x,y);
-        ctx.fillStyle=bit?'#B39B6E':'#6B7176';
+        ctx.fillStyle=bit?C.gold:C.graph;
         ctx.fillText(bit.toString(),x-bW/2,bit?hiY-6:loY+12);
       }
       // Parity
@@ -1061,33 +1120,33 @@ function drawWaveform(){
         var par=0;for(var i=0;i<dBits;i++)par^=(data>>>i)&1;
         var pb=cfg.ps?(1-par):par;var y=pb?hiY:loY;
         ctx.lineTo(x,y);x+=bW;ctx.lineTo(x,y);
-        ctx.fillStyle='#C4AE84';ctx.fillText('P',x-bW/2,pb?hiY-6:loY+12);
+        ctx.fillStyle=C.goldT;ctx.fillText('P',x-bW/2,pb?hiY-6:loY+12);
       }
       // Stop
-      ctx.lineTo(x,hiY);x+=bW;ctx.lineTo(x,hiY);
-      ctx.fillStyle='#1F6F4A';ctx.fillText('STOP',x-bW/2,hiY-6);
+      ctx.lineTo(x,hiY);x+=bW*cfg.stop;ctx.lineTo(x,hiY);
+      ctx.fillStyle=C.pos;ctx.fillText('STOP',x-bW*cfg.stop/2,hiY-6);
       ctx.lineTo(ml+gW,hiY);ctx.stroke();
-      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
-      ctx.fillText('LSB first \u2022 1 bit = '+(1e6/cfg.baud).toFixed(2)+' us \u2022 frame = '+total+' bits = '+(total*1e6/cfg.baud).toFixed(1)+' us',ml+gW/2,mt+gH+18);
+      ctx.fillStyle=C.dim;ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      capt(ctx,'LSB first \u2022 1 bit = '+(1e6/cfg.baud).toFixed(2)+' us \u2022 frame = '+total+' bits = '+(total*1e6/cfg.baud).toFixed(1)+' us',ml+gW/2,mt+gH+18,gW);
     }else{
-      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle=C.dim;ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.ue?'Set TE=1 and BRR for TX waveform':'USART disabled (UE=0)',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--s1)"></span>USART1 TX</div>';
-    document.getElementById('wfTag').textContent=cfg.ue&&cfg.te?'UART '+bStr+' baud '+cfgStr:'USART1';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.gold+'"></span>USART2 TX (PA2)</div>';
+    document.getElementById('wfTag').textContent=cfg.ue&&cfg.te?'UART '+bStr+' baud '+cfgStr:'USART2';
   }
   else if(cfg.type==='adc'){
     var maxV=(1<<cfg.resBits)-1;
     infoEl.innerHTML='<span class="wf-lbl">Mode:</span><span class="wf-chip">'+(cfg.adon?cfg.resBits+'-bit ADC':'ADC OFF')+'</span>'+
       '<span class="wf-lbl">Conv:</span><span class="wf-val">'+(cfg.cont?'Continuous':'Single')+'</span>'+
-      '<span class="wf-lbl">DR:</span><span class="wf-val">'+cfg.dr+'/'+maxV+'</span>';
+      '<span class="wf-lbl">DR:</span><span class="wf-val">'+Math.min(cfg.dr,maxV)+' / '+maxV+' = '+(Math.min(cfg.dr,maxV)/maxV*3.3).toFixed(3)+' V at VREF+ 3.3 V</span>';
     if(cfg.adon){
-      ctx.fillStyle='#8C9196';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle=C.dim;ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText(maxV.toString(),ml-8,mt+6);ctx.fillText('0',ml-8,mt+gH);
       ctx.fillText((maxV/2|0).toString(),ml-8,mt+gH/2+3);
       // Analog signal
       var pts=200;
-      ctx.strokeStyle='rgba(179,155,110,0.3)';ctx.lineWidth=1.5;ctx.beginPath();
+      ctx.strokeStyle=A(C.gold,0.3);ctx.lineWidth=1.5;ctx.beginPath();
       for(var i=0;i<=pts;i++){
         var t=i/pts;var x=ml+t*gW;
         var sig=0.5+0.4*Math.sin(2*Math.PI*3*t+wfFrame*0.03)+0.1*Math.sin(2*Math.PI*7*t);
@@ -1097,21 +1156,25 @@ function drawWaveform(){
       ctx.stroke();
       // Sample dots
       var ns=cfg.cont?20:1;
-      ctx.fillStyle='#B39B6E';
+      ctx.fillStyle=C.gold;
       for(var i=0;i<ns;i++){
         var t=(i+0.5)/ns;var x=ml+t*gW;
         var sig=0.5+0.4*Math.sin(2*Math.PI*3*t+wfFrame*0.03)+0.1*Math.sin(2*Math.PI*7*t);
         var y=mt+gH*(1-sig);
-        ctx.strokeStyle='rgba(179,155,110,0.4)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
+        ctx.strokeStyle=A(C.gold,0.4);ctx.lineWidth=1;ctx.setLineDash([2,2]);
         ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,mt+gH);ctx.stroke();ctx.setLineDash([]);
-        ctx.fillStyle='#B39B6E';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
-        if(ns<=8){var dv=Math.round(sig*maxV);ctx.font='8px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';ctx.fillText(dv.toString(),x,y-8)}
+        ctx.fillStyle=C.gold;ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
       }
+      // the value held in ADC1->DR, drawn as a level on the same scale
+      var drY=mt+gH*(1-Math.min(cfg.dr,maxV)/maxV);
+      ctx.strokeStyle=C.pos;ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(ml,drY);ctx.lineTo(ml+gW,drY);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=C.pos;ctx.font='600 10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';
+      ctx.fillText('DR = '+Math.min(cfg.dr,maxV),ml+gW-6,drY>mt+14?drY-5:drY+13);
     }else{
-      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle=C.dim;ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText('ADC disabled (ADON=0)',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--s5)"></span>ADC1</div><div class="wf-legend-item"><span class="wf-legend-sw" style="background:color-mix(in srgb, var(--ai) 30%, transparent)"></span>Analog In</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+A(C.gold,0.5)+'"></span>Analog input (illustrative)</div><div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.gold+'"></span>Sample instants ('+(cfg.cont?'continuous':'one per SWSTART')+')</div><div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.pos+'"></span>ADC1-&gt;DR value</div>';
     document.getElementById('wfTag').textContent=cfg.adon?cfg.resBits+'-bit '+(cfg.cont?'Continuous':'Single'):'ADC1';
   }
   else if(cfg.type==='spi'){
@@ -1125,38 +1188,40 @@ function drawWaveform(){
     if(cfg.spe&&cfg.mstr){
       var rh=gH/3, rowY=function(r,hi){return mt+r*rh+(hi?rh*0.28:rh*0.72)};
       var x0=ml+gW*0.09, xE=ml+gW*0.95, bw=(xE-x0)/nb;
-      ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillStyle='#8C9196';
+      ctx.font='10px JetBrains Mono,Courier New,monospace';ctx.textAlign='right';ctx.fillStyle=C.dim;
       ctx.fillText('NSS',ml-8,mt+rh*0.5);ctx.fillText('SCK',ml-8,mt+rh*1.5);ctx.fillText('MOSI',ml-8,mt+rh*2.5);
-      ctx.strokeStyle='#8C9196';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle=C.dim;ctx.lineWidth=2;ctx.beginPath();
       ctx.moveTo(ml,rowY(0,1));ctx.lineTo(x0-bw*0.45,rowY(0,1));ctx.lineTo(x0-bw*0.45,rowY(0,0));
       ctx.lineTo(xE+bw*0.35,rowY(0,0));ctx.lineTo(xE+bw*0.35,rowY(0,1));ctx.lineTo(ml+gW,rowY(0,1));ctx.stroke();
       var idleY=cfg.cpol?rowY(1,1):rowY(1,0), actY=cfg.cpol?rowY(1,0):rowY(1,1);
-      ctx.strokeStyle='#6B7176';ctx.beginPath();ctx.moveTo(ml,idleY);ctx.lineTo(x0,idleY);
+      ctx.strokeStyle=C.graph;ctx.beginPath();ctx.moveTo(ml,idleY);ctx.lineTo(x0,idleY);
       for(var i=0;i<nb;i++){var a=x0+i*bw;
         ctx.lineTo(a,idleY);ctx.lineTo(a,actY);ctx.lineTo(a+bw/2,actY);ctx.lineTo(a+bw/2,idleY);ctx.lineTo(a+bw,idleY)}
       ctx.lineTo(ml+gW,idleY);ctx.stroke();
-      ctx.strokeStyle='#B39B6E';ctx.beginPath();
+      ctx.strokeStyle=C.gold;ctx.beginPath();
       var prevY=rowY(2,0);ctx.moveTo(ml,prevY);ctx.lineTo(x0-bw*0.45,prevY);
       for(var i=0;i<nb;i++){
         var bit=cfg.lsbfirst?((cfg.dr>>>i)&1):((cfg.dr>>>(nb-1-i))&1);
-        var y=bit?rowY(2,1):rowY(2,0), xa=x0+i*bw-bw*0.45;
-        ctx.lineTo(xa,prevY);ctx.lineTo(xa,y);ctx.lineTo(x0+(i+1)*bw-bw*0.45,y);prevY=y;
-        ctx.fillStyle=bit?'#B39B6E':'#8C9196';ctx.font='600 9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
-        ctx.fillText(String(bit),x0+i*bw+bw*0.05,rowY(2,1)-7);
+        // CPHA = 0: data is set up half a clock before the first (sampling) edge; CPHA = 1: it changes on the first edge
+        var sh=cfg.cpha?0:-bw*0.45, y=bit?rowY(2,1):rowY(2,0), xa=x0+i*bw+sh;
+        ctx.lineTo(xa,prevY);ctx.lineTo(xa,y);ctx.lineTo(x0+(i+1)*bw+sh,y);prevY=y;
+        ctx.fillStyle=bit?C.gold:C.dim;ctx.font='600 9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+        ctx.fillText(String(bit),xa+bw/2,rowY(2,1)-7);
       }
       ctx.lineTo(ml+gW,prevY);ctx.stroke();
-      ctx.strokeStyle='rgba(111,181,154,0.5)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      ctx.strokeStyle=A(C.pos,0.5);ctx.lineWidth=1;ctx.setLineDash([3,3]);
       for(var i=0;i<nb;i++){var sx=x0+i*bw+(cfg.cpha?bw/2:0);ctx.beginPath();ctx.moveTo(sx,mt+rh*1.05);ctx.lineTo(sx,mt+rh*2.95);ctx.stroke()}
       ctx.setLineDash([]);
-      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
-      ctx.fillText('green dashes = sampling edge (CPHA='+cfg.cpha+') \u2022 SCK period '+(1e9/fsk).toFixed(1)+' ns = '+Math.round(168e6/fsk)+' core cycles \u2022 '+(cfg.lsbfirst?'LSB':'MSB')+' first',ml+gW/2,mt+gH+18);
+      ctx.fillStyle=C.dim;ctx.font='9px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
+      capt(ctx,'dashes = sampling edge (CPHA='+cfg.cpha+') \u2022 SCK period '+(1e9/fsk).toFixed(1)+' ns = '+Math.round(168e6/fsk)+' core cycles \u2022 '+(cfg.lsbfirst?'LSB':'MSB')+' first',ml+gW/2,mt+gH+18,gW);
     }else{
-      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle=C.dim;ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.spe?'Set MSTR=1 (CR1 bit 2) for a master transfer':'SPI disabled, set MSTR, BR, then SPE (CR1 bit 6)',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--muted)"></span>NSS</div>'+
-      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--ai)"></span>SCK</div>'+
-      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--s5)"></span>MOSI</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.dim+'"></span>NSS</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.graph+'"></span>SCK</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.gold+'"></span>MOSI</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+A(C.pos,0.5)+'"></span>Sampling edge</div>';
     document.getElementById('wfTag').textContent=cfg.spe&&cfg.mstr?('SPI master '+fsStr+' mode '+(cfg.cpol*2+cfg.cpha)):'SPI1';
   }
   else if(cfg.type==='rcc'){
@@ -1164,26 +1229,26 @@ function drawWaveform(){
       '<span class="wf-lbl">SYSCLK:</span><span class="wf-val">168 MHz</span>'+
       '<span class="wf-lbl">Cycle:</span><span class="wf-val">5.95 ns</span>'+
       '<span class="wf-lbl">Enabled:</span><span class="wf-val">'+cfg.on.length+'</span>';
-    var boxes=[['HSE','8 MHz','#8C9196'],['PLL','/8 x336 /2','#B39B6E'],['SYSCLK','168 MHz','#6B7176'],
-               ['AHB /1','168 MHz','#1F6F4A'],['APB1 /4','42 (TIM 84)','#C4AE84'],['APB2 /2','84 (TIM 168)','#B39B6E']];
+    var boxes=[['HSE','8 MHz',C.dim],['PLL','/8 x336 /2',C.gold],['SYSCLK','168 MHz',C.graph],
+               ['AHB /1','168 MHz',C.pos],['APB1 /4','42 (TIM 84)',C.goldT],['APB2 /2','84 (TIM 168)',C.gold]];
     var bw2=gW/boxes.length, by=mt+gH*0.14, bh2=gH*0.30;
     for(var i=0;i<boxes.length;i++){
       var bx=ml+i*bw2+7, iw=bw2-14;
-      ctx.strokeStyle=boxes[i][2];ctx.lineWidth=1.5;ctx.fillStyle='rgba(46,52,56,0.85)';
+      ctx.strokeStyle=boxes[i][2];ctx.lineWidth=1.5;ctx.fillStyle=C.body;
       ctx.beginPath();ctx.roundRect(bx,by,iw,bh2,6);ctx.fill();ctx.stroke();
       ctx.fillStyle=boxes[i][2];ctx.font='600 10px JetBrains Mono,Courier New,monospace';ctx.textAlign='center';
       ctx.fillText(boxes[i][0],bx+iw/2,by+bh2*0.4);
-      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle=C.dim;ctx.font='9px JetBrains Mono,Courier New,monospace';
       ctx.fillText(boxes[i][1],bx+iw/2,by+bh2*0.76);
-      if(i<boxes.length-1){ctx.strokeStyle='#3A4044';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx+iw,by+bh2/2);ctx.lineTo(bx+bw2,by+bh2/2);ctx.stroke()}
+      if(i<boxes.length-1){ctx.strokeStyle=C.line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx+iw,by+bh2/2);ctx.lineTo(bx+bw2,by+bh2/2);ctx.stroke()}
     }
-    ctx.textAlign='left';ctx.fillStyle='#8C9196';ctx.font='10px JetBrains Mono,Courier New,monospace';
+    ctx.textAlign='left';ctx.fillStyle=C.dim;ctx.font='10px JetBrains Mono,Courier New,monospace';
     ctx.fillText('Peripheral clocks currently enabled:',ml+8,by+bh2+28);
     var txt=cfg.on.length?cfg.on.join('   '):'none, every peripheral below is gated off and would read back 0';
-    ctx.fillStyle=cfg.on.length?'#1F6F4A':'#C4AE84';
+    ctx.fillStyle=cfg.on.length?C.pos:C.goldT;
     ctx.font='11px JetBrains Mono,Courier New,monospace';
     ctx.fillText(txt.length>92?txt.slice(0,89)+'\u2026':txt,ml+8,by+bh2+48);
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--ai)"></span>Fixed 168 MHz clock tree (PLL settings are not editable here)</div>';
+    legEl.innerHTML='<div class="wf-legend-item">Fixed 168 MHz clock tree (PLL settings are not editable here)</div>';
     document.getElementById('wfTag').textContent='Clock tree \u2022 '+cfg.on.length+' enabled';
   }
   else if(cfg.type==='core'){
@@ -1197,25 +1262,25 @@ function drawWaveform(){
       '<span class="wf-lbl">NVIC:</span><span class="wf-val">'+cfg.nirq+' IRQ enabled'+(cfg.names.length?' · '+cfg.names.join(', '):'')+'</span>';
     if(cfg.en&&cfg.reload>0){
       var cyc=3, cw=gW/cyc, top=mt+gH*0.14, bot=mt+gH*0.78;
-      ctx.fillStyle='#8C9196';ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
+      ctx.fillStyle=C.dim;ctx.textAlign='right';ctx.font='10px JetBrains Mono,Courier New,monospace';
       ctx.fillText(String(cfg.reload),ml-8,top+3);ctx.fillText('0',ml-8,bot+3);ctx.fillText('VAL',ml-8,(top+bot)/2);
-      ctx.strokeStyle='#B39B6E';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle=C.gold;ctx.lineWidth=2;ctx.beginPath();
       for(var i=0;i<cyc;i++){var a=ml+i*cw;ctx.moveTo(a,top);ctx.lineTo(a+cw,bot)}
       ctx.stroke();
-      ctx.strokeStyle='rgba(179,155,110,0.35)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      ctx.strokeStyle=A(C.gold,0.35);ctx.lineWidth=1;ctx.setLineDash([3,3]);
       for(var i=1;i<=cyc;i++){var a=ml+i*cw;ctx.beginPath();ctx.moveTo(a,mt);ctx.lineTo(a,mt+gH);ctx.stroke()}
       ctx.setLineDash([]);
       ctx.textAlign='center';ctx.font='600 9px JetBrains Mono,Courier New,monospace';
-      ctx.fillStyle=cfg.tickint?'#1F6F4A':'#8C9196';
+      ctx.fillStyle=cfg.tickint?C.pos:C.dim;
       for(var i=1;i<=cyc;i++)ctx.fillText(cfg.tickint?'SysTick_Handler':'COUNTFLAG only',ml+i*cw-40,mt+gH-8);
-      ctx.fillStyle='#8C9196';ctx.font='9px JetBrains Mono,Courier New,monospace';
-      ctx.fillText('underflow every '+pStr+' = '+(cfg.reload+1)+' ticks \u00d7 '+(1e9/fS).toFixed(2)+' ns \u2022 exception entry costs ~12 cycles \u2248 71 ns',ml+gW/2,mt+gH+18);
+      ctx.fillStyle=C.dim;ctx.font='9px JetBrains Mono,Courier New,monospace';
+      capt(ctx,'underflow every '+pStr+' = '+(cfg.reload+1)+' ticks \u00d7 '+(1e9/fS).toFixed(2)+' ns \u2022 exception entry costs ~12 cycles \u2248 71 ns',ml+gW/2,mt+gH+18,gW);
     }else{
-      ctx.fillStyle='#8C9196';ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle=C.dim;ctx.font='13px Inter,Segoe UI,sans-serif';ctx.textAlign='center';
       ctx.fillText(cfg.reload>0?'SysTick stopped, set SYST_CSR ENABLE (bit 0)':'Load SYST_RVR with a non-zero RELOAD first',ml+gW/2,mt+gH/2);
     }
-    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:#B39B6E"></span>SYST_CVR counts down to 0</div>'+
-      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:var(--positive)"></span>Exception on underflow when TICKINT=1</div>';
+    legEl.innerHTML='<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.gold+'"></span>SYST_CVR counts down to 0</div>'+
+      '<div class="wf-legend-item"><span class="wf-legend-sw" style="background:'+C.pos+'"></span>Exception on underflow when TICKINT=1</div>';
     document.getElementById('wfTag').textContent=cfg.en&&cfg.reload>0?'SysTick '+pStr:'SysTick / NVIC';
   }
 
@@ -1224,7 +1289,7 @@ function drawWaveform(){
   }
 
   // Scope border
-  ctx.strokeStyle='rgba(111,181,154,0.2)';ctx.lineWidth=1;ctx.strokeRect(ml,mt,gW,gH);
+  ctx.strokeStyle=A(C.pos,0.2);ctx.lineWidth=1;ctx.strokeRect(ml,mt,gW,gH);
 }
 
 var reduceMotion=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)').matches:false;
@@ -1297,16 +1362,17 @@ function genCode(){
     lines.push('  '+S('reg','TIM2->ARR')+' '+S('op','=')+' '+S('num',arr.toString())+';');
     lines.push('');
     if(oc1m===6||oc1m===7){
-      var d=arr>0?(ccr1/(arr+1)*100).toFixed(1):'0';
-      lines.push('  '+S('cmt','// PWM Mode '+(oc1m===6?'1':'2')+' on CH1'));
+      var act=arr>0?Math.min(ccr1/(arr+1),1):0,cc1p=(ccer>>>1)&1;
+      var hi=(oc1m===7?1-act:act);if(cc1p)hi=1-hi;
+      lines.push('  '+S('cmt','// PWM Mode '+(oc1m===6?'1 (active while CNT &lt; CCR1)':'2 (inactive while CNT &lt; CCR1)')+' on CH1'));
       lines.push('  '+S('reg','TIM2->CCMR1')+' '+S('op','=')+' '+S('hex',hex32(ccmr1))+';');
       lines.push('');
-      lines.push('  '+S('cmt','// Duty = CCR1/(ARR+1) = '+d+'%'));
+      lines.push('  '+S('cmt','// CCR1/(ARR+1) = '+(act*100).toFixed(1)+'%; pin high '+(hi*100).toFixed(1)+'% of the period'+(cc1p?' (CC1P = 1, active low)':'')));
       lines.push('  '+S('reg','TIM2->CCR1')+' '+S('op','=')+' '+S('num',ccr1.toString())+';');
       lines.push('');
     }
-    if(ccer&1){lines.push('  '+S('cmt','// Enable CH1 output'));lines.push('  '+S('reg','TIM2->CCER')+' '+S('op','|=')+' '+S('hex','TIM_CCER_CC1E')+';');lines.push('')}
-    if(cr1&1){lines.push('  '+S('cmt','// Start counter'));lines.push('  '+S('reg','TIM2->CR1')+' '+S('op','|=')+' '+S('hex','TIM_CR1_CEN')+';')}
+    if(ccer){lines.push('  '+S('cmt','// Capture/compare enable (+0x20)'+((ccer&1)?': CH1 output on':'')));lines.push('  '+S('reg','TIM2->CCER')+' '+S('op','=')+' '+S('hex',hex32(ccer))+';');lines.push('')}
+    if(cr1){lines.push('  '+S('cmt','// Control register 1 (+0x00)'+((cr1&1)?', CEN last: start the counter':'')));lines.push('  '+S('reg','TIM2->CR1')+' '+S('op','=')+' '+S('hex',hex32(cr1))+';')}
     lines.push('}');
   }
   else if(pk==='usart2'){
@@ -1322,8 +1388,8 @@ function genCode(){
     lines.push('  '+S('reg','RCC->AHB1ENR')+' '+S('op','|=')+' '+S('hex','RCC_AHB1ENR_GPIOAEN')+';');
     lines.push('');
     lines.push('  '+S('cmt','// PA2 = USART2_TX and PA3 = USART2_RX, both alternate function 7'));
-    lines.push('  '+S('reg','GPIOA->MODER')+' '+S('op','|=')+' ('+S('num','2U')+' '+S('op','&lt;&lt;')+' ('+S('num','2')+S('op','*')+S('num','2')+'));');
-    lines.push('  '+S('reg','GPIOA->AFRL')+'  '+S('op','|=')+' ('+S('num','7U')+' '+S('op','&lt;&lt;')+' ('+S('num','2')+S('op','*')+S('num','4')+'));');
+    lines.push('  '+S('reg','GPIOA->MODER')+' '+S('op','|=')+' ('+S('num','2U')+' '+S('op','&lt;&lt;')+' ('+S('num','2')+S('op','*')+S('num','2')+')) '+S('op','|')+' ('+S('num','2U')+' '+S('op','&lt;&lt;')+' ('+S('num','3')+S('op','*')+S('num','2')+'));');
+    lines.push('  '+S('reg','GPIOA->AFRL')+'  '+S('op','|=')+' ('+S('num','7U')+' '+S('op','&lt;&lt;')+' ('+S('num','2')+S('op','*')+S('num','4')+')) '+S('op','|')+' ('+S('num','7U')+' '+S('op','&lt;&lt;')+' ('+S('num','3')+S('op','*')+S('num','4')+'));');
     lines.push('');
     lines.push('  '+S('cmt','// BRR (+0x08): USARTDIV = 42e6 / ('+div2+' x baud)'));
     if(baud>0){
@@ -1334,7 +1400,8 @@ function genCode(){
     }
     lines.push('  '+S('reg','USART2->BRR')+' '+S('op','=')+' '+S('hex','0x'+(brr&0xFFFF).toString(16).toUpperCase().padStart(4,'0'))+';');
     lines.push('');
-    var cfgStr=(m?'9':'8')+(pce?(ps?'O':'E'):'N')+'1';
+    var stopB=[1,0.5,2,1.5][(regVals.usart2.CR2>>>12)&3];
+    var cfgStr=((m?9:8)-(pce?1:0))+(pce?(ps?'O':'E'):'N')+stopB;
     lines.push('  '+S('cmt','// Frame format '+cfgStr+'; CR1 is at +0x0C, enable UE last'));
     var flags=[];
     if(over8)flags.push('USART_CR1_OVER8');
@@ -1452,7 +1519,7 @@ function genCode(){
     var cont=(cr2>>>1)&1;
     lines.push(S('tp','void')+' '+S('fn','ADC1_Config')+'('+S('tp','void')+') {');
     var smp0=regVals.adc1.SMPR2&7,SMPCY=[3,15,28,56,84,112,144,480];
-    var resCy=[15,13,11,9][res],tconv=(SMPCY[smp0]+resCy);
+    var resCy=[12,10,8,6][res],tconv=(SMPCY[smp0]+resCy);   // RM0090: t_conv = sampling time + 12 cycles at 12-bit
     lines.push('  '+S('cmt','// ADC1 is on APB2 (base 0x40012000); ADCCLK = PCLK2/4 = 21 MHz (36 MHz max)'));
     lines.push('  '+S('reg','RCC->APB2ENR')+' '+S('op','|=')+' '+S('hex','RCC_APB2ENR_ADC1EN')+';'+S('cmt','   // (1U &lt;&lt; 8)'));
     lines.push('');
@@ -1485,7 +1552,7 @@ function setMode(pin,mode){setBits('gpio','MODER',3<<(pin*2),mode<<(pin*2))}
 function setAF(pin,af){setBits('gpio','AFRL',0xF<<(pin*4),af<<(pin*4))}
 
 function loadPreset(name){
-  initRegs();
+  initRegs();lastEdit=null;
   document.querySelectorAll('.btn-preset').forEach(function(b){b.classList.remove('active')});
   if(name==='led'){
     // Nucleo user LED LD2 on PA5: push-pull output, medium speed, driven HIGH via BSRR
@@ -1557,7 +1624,7 @@ function loadPreset(name){
 }
 
 function resetAll(){
-  initRegs();curPeriph='gpio';
+  initRegs();curPeriph='gpio';lastEdit=null;
   document.querySelectorAll('.btn-preset').forEach(function(b){b.classList.remove('active')});
   refreshAll();
 }
@@ -1565,12 +1632,24 @@ function resetAll(){
 /* ============================================================
    MASTER REFRESH
    ============================================================ */
+var lastEdit=null;
+function showLastEdit(){
+  var el=document.getElementById('lastEdit');if(!el)return;
+  if(!lastEdit||lastEdit.pk!==curPeriph){el.textContent='Click or tap a bit to write it. The field it belongs to is explained here.';return}
+  var p=PERIPHS[lastEdit.pk],reg=null;for(var i=0;i<p.regs.length;i++)if(p.regs[i].name===lastEdit.rn)reg=p.regs[i];
+  var f=null;for(var j=0;reg&&j<reg.fields.length;j++)if(reg.fields[j].bits.indexOf(lastEdit.b)>=0)f=reg.fields[j];
+  if(!f){el.textContent='';return}
+  var fv=getFieldVal(lastEdit.pk,lastEdit.rn,f.bits);
+  el.innerHTML='<b>'+p.name+'-&gt;'+lastEdit.rn+'</b> bit '+lastEdit.b+' &middot; <b>'+f.name+'</b> ['+f.bits[0]+(f.bits.length>1?':'+f.bits[f.bits.length-1]:'')+'] = '+fv+' (0b'+fv.toString(2).padStart(f.bits.length,'0')+'). '+f.desc;
+}
 function refreshAll(){
+  hideTT();readPal();computeIDR();
   buildTabs();
   buildRegEditor();
   drawPins();
   drawWaveform();
   genCode();
+  showLastEdit();
 }
 
 /* ============================================================
@@ -1578,6 +1657,8 @@ function refreshAll(){
    ============================================================ */
 var rzT=null;
 window.addEventListener('resize',function(){if(rzT)clearTimeout(rzT);rzT=setTimeout(function(){drawPins();drawWaveform()},120)});
+document.addEventListener('themechange',function(){setTimeout(refreshAll,0)});
+window.addEventListener('scroll',hideTT,{passive:true});
 refreshAll();
 animWF();
 </script>

@@ -65,7 +65,7 @@ sum of CTR_i = active risk
 sigma_true   = sigma_rep sqrt((1 + rho) / (1 - rho))
 
 a change passes if
-  d(return) / d(vol) &gt; (mu_p - r_f) / sigma_p
+  d(return) &gt; d(vol) x (mu_p - r_f) / sigma_p
   and active risk stays within budget, or falls</pre>
 <p>The first block is tracking error and its Euler split. The second is the Geltner adjustment, with rho the autocorrelation of the reported series. The last is the test I care about. A change has to beat the fund's own Sharpe ratio, 0.26 in the base case, or it dilutes the fund.</p>
 <h2>The base case</h2>
@@ -89,14 +89,14 @@ a change passes if
 <div class="table-wrap"><table class="memo-table">
 <thead><tr><th>Change</th><th class="n">Return</th><th class="n">Total vol</th><th class="n">Active risk</th><th>SAA verdict</th><th>Total portfolio verdict</th></tr></thead>
 <tbody>
-<tr><td>+3% EM equity, from US equity</td><td class="n">+0.03 pp</td><td class="n">+0.07 pp</td><td class="n">-0.01 pp</td><td>Breaks a range</td><td>Improves the total portfolio</td></tr>
-<tr><td>+3% hedge funds, from US Treasuries</td><td class="n">+0.04 pp</td><td class="n">+0.14 pp</td><td class="n">-0.04 pp</td><td>Breaks a range</td><td>Adds risk for too little return</td></tr>
-<tr><td>+2% private equity, from US equity</td><td class="n">+0.05 pp</td><td class="n">+0.14 pp</td><td class="n">+0.25 pp</td><td>Breaks a range</td><td>Leaves active risk over the budget</td></tr>
-<tr><td>+3% US Treasuries, from cash</td><td class="n">+0.02 pp</td><td class="n">+0.03 pp</td><td class="n">0.00 pp</td><td>Breaks a range</td><td>Improves the total portfolio</td></tr>
-<tr><td>+2% real estate, from international equity</td><td class="n">-0.01 pp</td><td class="n">-0.05 pp</td><td class="n">+0.18 pp</td><td>Breaks a range</td><td>Leaves active risk over the budget</td></tr>
+<tr><td>+3% EM equity, from US equity</td><td class="n">+0.03 pp</td><td class="n">+0.07 pp</td><td class="n">-0.01 pp</td><td>Ends outside a range</td><td>Improves the total portfolio</td></tr>
+<tr><td>+3% hedge funds, from US Treasuries</td><td class="n">+0.04 pp</td><td class="n">+0.14 pp</td><td class="n">-0.04 pp</td><td>Ends outside a range</td><td>Adds risk for too little return</td></tr>
+<tr><td>+2% private equity, from US equity</td><td class="n">+0.05 pp</td><td class="n">+0.14 pp</td><td class="n">+0.25 pp</td><td>Ends outside a range</td><td>Leaves active risk over the budget</td></tr>
+<tr><td>+3% US Treasuries, from cash</td><td class="n">+0.02 pp</td><td class="n">+0.03 pp</td><td class="n">0.00 pp</td><td>Ends outside a range</td><td>Improves the total portfolio</td></tr>
+<tr><td>+2% real estate, from international equity</td><td class="n">-0.01 pp</td><td class="n">-0.05 pp</td><td class="n">+0.18 pp</td><td>Ends outside a range</td><td>Leaves active risk over the budget</td></tr>
 <tr><td>+3% US equity, from US Treasuries</td><td class="n">+0.07 pp</td><td class="n">+0.40 pp</td><td class="n">-0.21 pp</td><td>Fits ranges</td><td>Adds risk for too little return</td></tr>
 </tbody></table></div>
-<p>The approaches disagree on 3 of 6. Five changes break a range because US equity already sits below its floor, and any change that leaves it there fails the SAA test. The only change that fits every range is the move from Treasuries into US equity, and that is the one the total portfolio test rejects. It cuts active risk by 0.21 pp but adds 0.40 pp of volatility for 0.07 pp of return, well under the 0.26 hurdle. The hedge fund trade fails the same test by a narrower margin.</p>
+<p>The approaches disagree on 3 of 6. Five changes end outside a range because US equity already sits below its floor, and any change that leaves it there fails the SAA test. The only change that fits every range is the move from Treasuries into US equity, and that is the one the total portfolio test rejects. It cuts active risk by 0.21 pp but adds 0.40 pp of volatility for 0.07 pp of return, well under the 0.26 hurdle. The hedge fund trade fails the same test by a narrower margin.</p>
 <p>The move from cash into Treasuries shows active risk at zero after rounding. It edges active risk down, so it passes. Had it edged active risk up it would fail, because a fund already over budget gets no credit for a trade that does not bring it back.</p>
 <div class="callout"><p>T-1, the $7.0m trade list I support, is a small move in the direction the total portfolio test rejects. I release it because the IPS requires the range repair. That is why I keep the ranges as guardrails and use the reference portfolio and the budget to decide which trades go first.</p></div>
 <p>Reoptimizing does little. The best Sharpe ratio rounds to 0.26, the same as today. The optimizer gets there by taking hedge funds to their 14% ceiling and private equity to 21.6%, close to its 22% ceiling, and staff cannot trade either class to rebalance. Liquidity does not bind. After a GFC-sized stress the fund holds $416m of liquid assets against $254m required.</p>
@@ -106,7 +106,7 @@ a change passes if
 <h3>Desmoothing private risk</h3>
 <p>Switch desmoothing off and total volatility falls, as you would expect. Active risk rises. On reported correlations the private book stops offsetting the listed equity underweight. Smoothing flatters the total risk number and distorts the active one.</p>
 <h3>The size of the budget</h3>
-<p>Raise the budget just above 4.23% and the verdicts do not move. The two trades that add active risk add a lot of it, 0.18 pp for real estate and 0.25 pp for private equity. The move from US equity into private equity passes only once the budget reaches 4.5%.</p>
+<p>Raise the budget just above 4.23% and no verdict turns from fail to pass. The two trades that add active risk add a lot of it, 0.18 pp for real estate and 0.25 pp for private equity. Both pass once the budget reaches 4.5%. The real estate move only just clears the return test: it gives up 0.25 pp of return for each point of volatility it cuts, slightly less than the fund's own 0.26.</p>
 <h2>Pitfalls</h2>
 <ul>
 <li>Treating the reference portfolio as a return target. I use it to measure risk. The return test is the Sharpe hurdle.</li>

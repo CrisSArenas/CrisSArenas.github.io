@@ -28,6 +28,9 @@
       .bar-controls select.field { max-width: 100%; }
       .tie-ok { color: var(--positive); font-weight: 600; }
       .tie-no { color: var(--negative); font-weight: 600; }
+      /* wide tables: let headers wrap so the columns fit the panel on a desktop */
+      #rcMgr th, #stressTable th, #attTable th, #mgrPerf th, #privTable th { white-space: normal; vertical-align: bottom; min-width: 4.5em; }
+      #privTable td:last-child, #stressTable td:nth-child(2) { white-space: normal; min-width: 7em; }
     </style>
 </head>
 <body>
@@ -395,9 +398,11 @@ stress loss = sum_i w_i b_i' shock</pre>
     S.stressRows = srows;
     UI.chart.bar('#stressChart', { categories: STRESS.map(function (s) { return s.name.replace(/ (financial crisis|pandemic sell-off|rate shock)$/, function (x) { return x === ' financial crisis' ? ' GFC' : x === ' pandemic sell-off' ? ' pandemic' : ' rates'; }); }), series: [{ name: 'Portfolio', values: srows.map(function (r) { return r.p; }), color: 's1' }, { name: 'Policy benchmark', values: srows.map(function (r) { return r.b; }), color: 's4' }], yFmt: function (v) { return F.pct(v, 0); }, height: 250, values: true, label: 'Stress losses' });
     var pf = function (v) { return F.spct(v, 0); };
-    UI.table('#stressTable', { id: 'stress', name: 'Stress tests', columns: [{ key: 'name', label: 'Scenario' }, { key: 'win', label: 'Window' }, { key: 'eq', label: 'Equity', num: 1, fmt: pf }, { key: 'ra', label: 'Rates', num: 1, fmt: pf }, { key: 'cr', label: 'Credit', num: 1, fmt: pf }, { key: 'inf', label: 'Inflation', num: 1, fmt: pf }, { key: 'fx', label: 'Currency', num: 1, fmt: pf }, { key: 'p', label: 'Portfolio', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'b', label: 'Benchmark', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'a', label: 'Active', num: 1, fmt: function (v) { return F.pp(v, 1); } }, { key: 'rep', label: 'Portfolio, reported betas', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'usd', label: 'Portfolio, $m', num: 1, fmt: function (v) { return F.money(v, 0); } }], rows: srows });
+    UI.table('#stressTable', { id: 'stress', name: 'Stress tests', columns: [{ key: 'name', label: 'Scenario' }, { key: 'win', label: 'Window' }, { key: 'eq', label: 'Equity', num: 1, fmt: pf }, { key: 'ra', label: 'Rates', num: 1, fmt: pf }, { key: 'cr', label: 'Credit', num: 1, fmt: pf }, { key: 'inf', label: 'Inflation', num: 1, fmt: pf }, { key: 'fx', label: 'Currency', num: 1, fmt: pf }, { key: 'p', label: 'Portfolio', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'b', label: 'Benchmark', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'a', label: 'Active', num: 1, fmt: function (v) { return F.pp(v, 1); } }, { key: 'rep', label: 'Portfolio, reported betas', num: 1, fmt: function (v) { return F.spct(v, 1); } }, { key: 'usd', label: 'Loss, $m', num: 1, fmt: function (v) { return F.money(v, 0); } }], rows: srows });
     var g = srows[0];
-    $('#stressNote').textContent = 'A repeat of the 2008 factor moves would cost the portfolio ' + F.money(-g.usd, 0) + ' (' + F.pct(-g.p, 1) + '). Measured on the betas of the reported marks the loss would look like ' + F.pct(-g.rep, 1) + ', which is the gap smoothing hides.';
+    $('#stressNote').textContent = S.desmooth
+      ? 'A repeat of the 2008 factor moves would cost the portfolio ' + F.money(-g.usd, 0) + ' (' + F.pct(-g.p, 1) + '). Measured on the betas of the reported marks the loss would look like ' + F.pct(-g.rep, 1) + ', which is the gap smoothing hides.'
+      : 'On the betas of the reported marks a repeat of the 2008 factor moves would cost the portfolio ' + F.money(-g.usd, 0) + ' (' + F.pct(-g.p, 1) + '). With desmoothed private betas the loss would be ' + F.pct(-B.Rds.stress[0].p, 1) + ', so these figures understate the risk.';
   }
   function flagFor(i) { return (S.pipe ? S.pipe.items : []).filter(function (it) { return it.mgr === i; }); }
   function statusOf(i) {
@@ -466,7 +471,7 @@ stress loss = sum_i w_i b_i' shock</pre>
     var pe = PRIV_M.filter(function (i) { return MGR[i].c === 6; }), pw = pe.map(function (i) { return B.w[i]; }), pt = PM.sum(pw);
     var grow = function (series) { var x = 100; return [100].concat(D.rep[0].map(function (_, k) { x *= 1 + PM.sum(pe.map(function (i, j) { return pw[j] / pt * series[i][k]; })); return x; })); };
     var ge = (function () { var x = 100; return [100].concat(eqF.map(function (v) { x *= 1 + v; return x; })); })();
-    UI.chart.line('#privGrowth', { xs: ge.map(function (_, k) { return k; }), series: [{ name: 'Reported marks', ys: grow(D.rep), color: 's4' }, { name: 'Desmoothed', ys: grow(DS.map(function (x) { return x.r; })), color: 's5' }, { name: 'Equity factor', ys: ge, color: 's1', dash: '4 3' }], yFmt: function (v) { return '$' + F.num(v, 0); }, xFmt: function (k) { return k === 0 ? 'Sep 2021' : monthLabel(k - 1); }, xTicks: 5, height: 240, label: 'Private equity sleeve growth' });
+    UI.chart.line('#privGrowth', { xs: ge.map(function (_, k) { return k; }), series: [{ name: 'Reported marks', ys: grow(D.rep), color: 's4' }, { name: 'Desmoothed', ys: grow(DS.map(function (x) { return x.r; })), color: 's5' }, { name: 'Equity factor', ys: ge, color: 's1', dash: '4 3' }], yFmt: function (v) { return '$' + F.num(v, 0); }, xFmt: function (k) { return k === 0 ? 'Sep 2021' : monthLabel(k - 1); }, xTicks: 5.5, height: 240, label: 'Private equity sleeve growth' });
     UI.table('#privTable', { id: 'private', name: 'Private managers, reported vs desmoothed', columns: [{ key: 'n', label: 'Manager' }, { key: 'a', label: 'Class' }, { key: 'w', label: 'Weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rho', label: 'Autocorr.', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'rv', label: 'Vol, reported', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'dvf', label: 'Vol, formula', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'dv', label: 'Vol, desmoothed', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'cr', label: 'Corr. to equity, reported', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'cd', label: 'Corr. to equity, desmoothed', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'br', label: 'Equity beta, reported', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'bd', label: 'Equity beta, desmoothed', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'st', label: 'Data' }], rows: rows });
     var eff = [
       { m: 'Total volatility', r: Rr.tot.vol, d: Rd.tot.vol, f: 'pct' },
@@ -501,7 +506,7 @@ stress loss = sum_i w_i b_i' shock</pre>
             res.push({ status: 'approval', msg: m.n + ': last ' + st + ' marks unchanged since ' + asOf + '; those months are left out of its risk estimate' });
           }
         });
-        if (!res.length) res.push({ msg: 'No stale marks; every manager reported a change in the last ' + A.staleN + ' months' });
+        if (!res.length) res.push({ msg: 'No stale marks; no manager has gone ' + A.staleN + ' months or more without a new mark' });
         audit.push('check', 'stale data', P.items.length + ' stale');
         return res;
       } },
@@ -594,8 +599,8 @@ stress loss = sum_i w_i b_i' shock</pre>
     if (d) {
       var y = MGR[d.i].rho ? B.DS[d.i].r : B.D.rep[d.i], xs = [], ys = [];
       for (var t = 24; t <= T; t++) { xs.push(t - 1); ys.push(PM.ols(y.slice(t - 24, t), B.D.F.slice(t - 24, t)).beta[d.k]); }
-      UI.chart.line('#driftChart', { xs: xs, series: [{ name: MGR[d.i].n + ', ' + FACT[d.k].toLowerCase() + ' beta', ys: ys, color: 's1' }], hlines: [{ y: IDX[MGR[d.i].c].b[d.k], label: 'Benchmark ' + F.num(IDX[MGR[d.i].c].b[d.k], 2), color: 'muted' }], yFmt: function (v) { return F.num(v, 2); }, xFmt: monthLabel, xTicks: 5, height: 230, forceLegend: true, label: 'Rolling exposure' });
-      $('#driftNote').textContent = 'Rolling 24-month regressions on the five factors, for context. The flag compares the months before ' + monthLabel(d.cut) + ' with the months after.';
+      UI.chart.line('#driftChart', { xs: xs, series: [{ name: MGR[d.i].n + ', ' + FACT[d.k].toLowerCase() + ' beta', ys: ys, color: 's1' }], hlines: [{ y: IDX[MGR[d.i].c].b[d.k], label: 'Benchmark ' + F.num(IDX[MGR[d.i].c].b[d.k], 2), color: 'muted' }], yFmt: function (v) { return F.num(v, 2); }, xFmt: monthLabel, xTicks: 3.2, height: 230, forceLegend: true, label: 'Rolling exposure' });
+      $('#driftNote').textContent = 'Rolling 24-month regressions on the five factors, for context. The flag compares the months to ' + monthLabel(d.cut - 1) + ' with the ' + (B.DS[d.i].use - d.cut) + ' months from ' + monthLabel(d.cut) + '.';
     } else { $('#driftChart').innerHTML = '<p class="muted">No style drift flagged.</p>'; $('#driftNote').textContent = ''; }
   }
 
@@ -606,7 +611,7 @@ stress loss = sum_i w_i b_i' shock</pre>
     $('#attYear').innerHTML = YEARS.map(function (y, i) { return '<option value="' + i + '"' + (i === S.year ? ' selected' : '') + '>' + y + '</option>'; }).join('');
     $('#attYear').addEventListener('change', function () { S.year = +this.value; renderPerformance(); });
     $('#desmooth').addEventListener('change', function () { S.desmooth = this.checked; renderRisk(); });
-    UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, seed ' + v + '. Oct 2021 to Sep 2026.'; $('#evalLine').textContent = 'Seed ' + v + ', 15 managers, 60 months of synthetic returns to 30 Sep 2026.'; renderAll(); runReview(); });
+    UI.seed('#seed', function (v) { S.seed = v; $('#dataSrc').textContent = 'Synthetic data, ' + (v === 42 ? 'fixed seed 42' : 'seed ' + v) + '. Oct 2021 to Sep 2026.'; $('#evalLine').textContent = (v === 42 ? 'Base case: seed ' : 'Seed ') + v + ', 15 managers, 60 months of synthetic returns to 30 Sep 2026.'; renderAll(); runReview(); });
     log = new UI.AgentLog('#agentLog'); audit = new UI.Audit('#audit');
     $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });

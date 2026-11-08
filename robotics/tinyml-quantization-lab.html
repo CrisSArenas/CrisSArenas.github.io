@@ -69,6 +69,9 @@ a{color:var(--cyan);text-decoration:none}
   .model-select{width:100%;white-space:normal}
   .slider-row input[type=range]{width:100%}
   .guide,.kpi-strip,.controls,.grid{padding:0 12px}
+  .q-btn,.draw-btn,.action-btn,.model-select,.panel-head select{min-height:40px}
+  .q-btn{flex:1}
+  .panel-head{flex-wrap:wrap;gap:8px}
 }
 
 /* CONTROLS */
@@ -86,12 +89,12 @@ a{color:var(--cyan);text-decoration:none}
 .model-select{padding:6px 14px;border:1px solid var(--border);border-radius:5px;background:var(--card2);color:var(--text);font-family:inherit;font-size:12px;cursor:pointer}
 .model-select:focus{outline:none;border-color:var(--cyan)}
 .action-btn{padding:7px 18px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;font-family:inherit;display:flex;align-items:center;gap:6px}
-.action-btn.primary{background:var(--cyan);color:#000}
-.action-btn.primary:hover{background:#6FB59A;box-shadow:none}
+.action-btn.primary{background:var(--accent);color:var(--on-accent)}
+.action-btn.primary:hover{opacity:.88;box-shadow:none}
 .action-btn.secondary{background:var(--card2);border:1px solid var(--border);color:var(--dim)}
 .action-btn.secondary:hover{border-color:var(--green);color:var(--green)}
-.action-btn.run{background:var(--green);color:#000}
-.action-btn.run:hover{background:var(--positive);box-shadow:none}
+.action-btn.run{background:var(--positive);color:var(--bg)}
+.action-btn.run:hover{opacity:.88;box-shadow:none}
 .action-btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* GRID */
@@ -107,9 +110,9 @@ a{color:var(--cyan);text-decoration:none}
 .panel-head select{padding:4px 10px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:4px;font-family:inherit;cursor:pointer}
 .panel-head select:focus{outline:none;border-color:var(--cyan)}
 .panel-body{padding:16px 18px;position:relative}
-canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
+canvas{display:block;width:100%;border-radius:6px;background:var(--card2)}
 /* fixed drawing heights; without them the canvas takes its height from the default 300px width ratio */
-#heatmapCanvas{height:340px}#tradeoffCanvas{height:300px}#histCanvas{height:230px}
+#heatmapCanvas{height:340px}#tradeoffCanvas{height:320px}#histCanvas{height:230px}
 
 /* WEIGHT STATS */
 .weight-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin-top:12px}
@@ -136,12 +139,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .flash-bar-label .fl-pct{font-family:var(--mono);font-weight:700}
 .flash-bar{height:28px;background:var(--bg);border-radius:6px;overflow:hidden;display:flex;position:relative;border:1px solid var(--border)}
 .flash-seg{height:100%;transition:width .6s ease;position:relative;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:color-mix(in srgb, var(--text) 70%, transparent);overflow:hidden;white-space:nowrap}
-.flash-seg.boot{background:var(--border-strong)}
-.flash-seg.app{background:var(--blue)}
-.flash-seg.model{background:var(--cyan)}
+.flash-seg.boot{background:var(--border-strong);color:var(--text)}
+.flash-seg.app{background:var(--graphite);color:#FFFFFF}
+.flash-seg.model{background:var(--gold);color:#1A2421}
 .flash-seg.free{background:color-mix(in srgb, var(--text) 3%, transparent)}
-.flash-seg.arena{background:var(--purple)}
-.flash-seg.overflow{background:var(--red);animation:flash-warn 1s infinite}
+.flash-seg.arena{background:var(--s1);color:var(--bg)}
+.flash-seg.overflow{background:var(--red);color:var(--bg);animation:flash-warn 1s infinite}
+@media (prefers-reduced-motion: reduce){.flash-seg.overflow{animation:none}}
 @keyframes flash-warn{0%,100%{opacity:1}50%{opacity:.5}}
 
 .full{grid-column:1/-1}
@@ -250,15 +254,15 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         <h3>2 &middot; The quantisation arithmetic</h3>
         <p><strong>Weights, symmetric, per output channel.</strong> For each output channel <code>c</code>: <code>s_c = max|w_c| / 127</code> (INT8) or <code>/ 7</code> (INT4), zero-point is exactly <strong>0</strong>. Quantise with <code>q = clamp(round(w / s_c), -127, +127)</code>, dequantise with <code>w&#770; = q &middot; s_c</code>, so dequantisation is the exact inverse of the rounding step. A symmetric zero-point is what lets CMSIS-NN skip the cross-term in the accumulator.</p>
         <p><strong>Activations, asymmetric, per tensor.</strong> From a calibration pass: <code>s = (max &minus; min) / 255</code>, <code>z = round(&minus;min / s)</code>. Post-ReLU tensors have <code>min = 0</code>, so <code>z = 0</code>; tensors that can go negative (the input MFCC/image, the logits) get a non-zero zero-point. The lab shows the uint8 convention; int8 kernels use the same scale with the zero-point shifted by &minus;128.</p>
-        <p><strong>Clip percentile.</strong> The slider replaces <code>max|w_c|</code> with the <em>p</em>-th percentile of <code>|w_c|</code>: outliers then saturate at &plusmn;127 while every other weight gets a finer step. Drag it and watch SQNR fall, for <em>weights</em> that trade almost always loses, which is exactly why TensorFlow Lite calibrates weights with plain max-abs (p = 100%) and reserves percentile and KL calibration for <em>activation</em> ranges, where one outlier frame really can wreck the scale. The reported accuracy drop is clamped to the INT8/INT4 bands, so below roughly 99.4% it stops moving even though the SQNR keeps dropping.</p>
+        <p><strong>Clip percentile.</strong> The slider replaces <code>max|w_c|</code> with the <em>p</em>-th percentile of <code>|w_c|</code>: outliers then saturate at &plusmn;127 while every other weight gets a finer step. Drag it and watch SQNR fall, for <em>weights</em> that trade almost always loses, which is exactly why TensorFlow Lite calibrates weights with plain max-abs (p = 100%) and reserves percentile and KL calibration for <em>activation</em> ranges, where one outlier frame really can wreck the scale. The reported accuracy drop is clamped to the INT8/INT4 bands, so it can stop moving while the SQNR keeps changing: at INT8 the DS-CNN and MobileNet reach the 1.5 pp ceiling at about 99.4%, and the MNIST CNN at INT4 stays on the 3 pp floor at every setting.</p>
       </div>
       <div class="d-help-section">
         <h3>3 &middot; Size, arena and latency</h3>
         <dl>
           <dt>Model size</dt>
-          <dd><code>params &times; bytes-per-weight + 8 &times; output-channels + 8 &times; tensors</code>. FP32 is 4 B/weight, INT8 1 B, INT4 0.5 B (two nibbles per byte). The overhead is the int32 multiplier and shift stored per channel plus the scale/zero-point per tensor, which is why the size ratio is a little under 4&times; and 8&times;.</dd>
+          <dd><code>params &times; bytes-per-weight + 8 &times; output-channels + 8 &times; tensors</code>. FP32 is 4 B/weight, INT8 1 B, INT4 0.5 B (two nibbles per byte). The overhead is the int32 multiplier and shift stored per channel plus the scale/zero-point per tensor, which is why the size ratio stays below 4&times; and 8&times;: about 3.8&times; and 7.4&times; for the MNIST CNN, but only 3.3&times; and 5.6&times; for the DS-CNN, whose 716 output channels each carry 8 bytes against 27.4 k weights.</dd>
           <dt>Tensor arena</dt>
-          <dd><code>max over operators of (input tensor + output tensor) + scratch</code>, where scratch is 2 KB of interpreter bookkeeping plus 8% for the CMSIS-NN im2col buffer. Buffers are reused, so the peak activation pair, not the sum of all activations, sets the requirement. Under FP32 the arena is 4&times; larger, which is usually what actually blocks deployment.</dd>
+          <dd><code>max over operators of (input tensor + output tensor) + scratch</code>, pooling operators included, where scratch is 2 KB of interpreter bookkeeping plus 8% for the CMSIS-NN im2col buffer. Buffers are reused, so the peak activation pair, not the sum of all activations, sets the requirement. Under FP32 the arena is 4&times; larger, which is usually what actually blocks deployment.</dd>
           <dt>Latency</dt>
           <dd>An explicit MAC-throughput model: <code>cycles = MACs / (r &middot; e)</code> with <code>r</code> = 0.32 MAC/cycle for FP32 (FPU present but load/store bound), 1.55 for INT8 (SMLAD dual-MAC), 0.50 for INT4 (no native kernel: nibbles are unpacked to int8 first). <code>e</code> is a kernel-efficiency factor: 1.0 for regular and 1&times;1 convolutions, 0.35 for depthwise (one MAC per weight load), 0.80 for fully connected (memory bound). 10&nbsp;&micro;s per operator is added for setup and requantisation.</dd>
         </dl>
@@ -284,7 +288,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         <h3>6 &middot; Reading the panels</h3>
         <ul>
           <li><strong>Heatmap</strong>: one row per sampled output channel, one column per sampled weight in that channel. Because quantisation is per channel, each row has its own scale; hover any cell for the FP32 value, its dequantised value and the error.</li>
-          <li><strong>Histogram</strong>: the FP32 distribution (outline) against the quantised one (filled). INT8 leaves 254 usable levels and the shape survives; INT4 leaves 14 and the distribution collapses into visible spikes.</li>
+          <li><strong>Histogram</strong>: the FP32 distribution (outline) against the quantised one (filled). INT8 keeps 255 levels per channel (&minus;127..127) and the shape survives; INT4 keeps 15 (&minus;7..7) and the distribution collapses into visible spikes.</li>
           <li><strong>Trade-off chart</strong>: accuracy bars against size and latency for all three precisions of the current model on the current target.</li>
           <li><strong>Target panel</strong>: flash and SRAM budgets with a pass/fail margin. Change the target to see the same model fit or fail.</li>
         </ul>
@@ -314,7 +318,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="guide-card">
         <span class="step">STEP 3</span>
         <h3>Check the fit</h3>
-        <p>Flash holds the weights, SRAM holds the tensor arena. The margin bars show pass or fail, try MobileNet in FP32 on the STM32L4 to see what actually blocks deployment.</p>
+        <p>Flash holds the weights, SRAM holds the tensor arena. The margin bars show pass or fail. Try MobileNet in FP32 on the STM32F407: the weights still fit in flash, but the FP32 tensor arena does not fit in SRAM.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 4</span>
@@ -443,11 +447,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <span class="tag" id="tradeoffTag">-</span>
     </div>
     <div class="panel-body">
-      <canvas id="tradeoffCanvas" height="300" aria-label="Bar and line chart of accuracy, model size and latency across FP32, INT8 and INT4"></canvas>
+      <canvas id="tradeoffCanvas" height="300" aria-label="Chart of accuracy levels, model size and latency across FP32, INT8 and INT4; the values are written under each precision"></canvas>
       <div class="legend">
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan)"></span> Accuracy / AUC (%)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--green)"></span> Model size (KB)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--orange);height:8px;width:8px;border-radius:50%"></span> Latency (ms)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--s3);height:5px;width:14px;border-radius:3px"></span> Accuracy / AUC (%), left axis (does not start at zero)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--positive)"></span> Model size (KB), right axis, value under each bar</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--gold-text);height:8px;width:8px;border-radius:50%"></span> Latency (ms), relative height, value under each bar</div>
       </div>
       <div class="lat-note" id="latNote">-</div>
     </div>
@@ -501,9 +505,9 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
       <div class="legend" style="margin-top:0;margin-bottom:12px">
         <div class="legend-item"><span class="legend-swatch" style="background:var(--border-strong);height:8px;width:16px;border-radius:2px"></span> Bootloader</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--blue);height:8px;width:16px;border-radius:2px"></span> App + TFLite Micro + CMSIS-NN</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan);height:8px;width:16px;border-radius:2px"></span> Model weights</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--purple);height:8px;width:16px;border-radius:2px"></span> Tensor arena</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--graphite);height:8px;width:16px;border-radius:2px"></span> App + TFLite Micro + CMSIS-NN (flash), static + I/O buffer (SRAM)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--gold);height:8px;width:16px;border-radius:2px"></span> Model weights</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--s1);height:8px;width:16px;border-radius:2px"></span> Tensor arena</div>
         <div class="legend-item"><span class="legend-swatch" style="background:color-mix(in srgb, var(--text) 8%, transparent);height:8px;width:16px;border-radius:2px"></span> Free</div>
       </div>
 
@@ -540,7 +544,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <canvas id="histCanvas" height="230" aria-label="Histogram of sampled layer weights before and after quantisation"></canvas>
       <div class="legend">
         <div class="legend-item"><span class="legend-swatch" style="background:transparent;border:1.5px solid var(--muted);height:9px;width:16px;border-radius:2px"></span> FP32 (before)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan);height:9px;width:16px;border-radius:2px"></span> Dequantised (after)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:color-mix(in srgb, var(--positive) 55%, transparent);height:9px;width:16px;border-radius:2px"></span> Dequantised (after)</div>
       </div>
     </div>
   </div>
@@ -575,7 +579,7 @@ const MODELS = {
       {name:'PWConv5 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
       {name:'DWConv6 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
       {name:'PWConv6 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
-      {name:'GAP + Dense',    type:'dense',  dims:'25x5x64 -> 64 -> 12', color:'#1F6F4A', params:780, macs:768,    dwMacs:0,     inAct:8000, outAct:12,   outCh:12, gridW:16, gridH:12}
+      {name:'GAP + Dense',    type:'dense',  dims:'25x5x64 -> 64 -> 12', color:'var(--positive)', params:780, macs:768,    dwMacs:0,     inAct:8000, outAct:12,   outCh:12, gridW:16, gridH:12}
     ]
   },
   person: {
@@ -596,7 +600,7 @@ const MODELS = {
       {name:'DS7-11 128->128 (x5)',type:'dsblock',dims:'6x6x128 -> 6x6x128',   color:'#C4AE84', params:88960, macs:3156480, dwMacs:207360, inAct:4608,  outAct:4608,  outCh:1280, gridW:28, gridH:22},
       {name:'DS12 dw+pw 128->256/s2',type:'dsblock',dims:'6x6x128 -> 3x3x256', color:'#C4AE84', params:34304, macs:305280,  dwMacs:10368,  inAct:4608,  outAct:2304,  outCh:384,  gridW:26, gridH:20},
       {name:'DS13 dw+pw 256->256',type:'dsblock', dims:'3x3x256 -> 3x3x256',   color:'#C4AE84', params:68352, macs:610560,  dwMacs:20736,  inAct:2304,  outAct:2304,  outCh:512,  gridW:28, gridH:22},
-      {name:'GAP + Dense',        type:'dense',   dims:'3x3x256 -> 256 -> 2',  color:'#1F6F4A', params:514,   macs:512,     dwMacs:0,      inAct:2304,  outAct:2,     outCh:2,    gridW:16, gridH:10}
+      {name:'GAP + Dense',        type:'dense',   dims:'3x3x256 -> 256 -> 2',  color:'var(--positive)', params:514,   macs:512,     dwMacs:0,      inAct:2304,  outAct:2,     outCh:2,    gridW:16, gridH:10}
     ]
   },
   ae: {
@@ -612,7 +616,7 @@ const MODELS = {
       {name:'Bottleneck 32->8',    type:'dense', dims:'32 -> 8',   color:'#B39B6E', params:264,   macs:256,   dwMacs:0, inAct:32,  outAct:8,   outCh:8,   gridW:16, gridH:8},
       {name:'Dense4 8->32',        type:'dense', dims:'8 -> 32',   color:'#B39B6E', params:288,   macs:256,   dwMacs:0, inAct:8,   outAct:32,  outCh:32,  gridW:8,  gridH:16},
       {name:'Dense5 32->96',       type:'dense', dims:'32 -> 96',  color:'#B39B6E', params:3168,  macs:3072,  dwMacs:0, inAct:32,  outAct:96,  outCh:96,  gridW:24, gridH:16},
-      {name:'Dense6 96->128 recon',type:'dense', dims:'96 -> 128', color:'#1F6F4A', params:12416, macs:12288, dwMacs:0, inAct:96,  outAct:128, outCh:128, gridW:28, gridH:20}
+      {name:'Dense6 96->128 recon',type:'dense', dims:'96 -> 128', color:'var(--positive)', params:12416, macs:12288, dwMacs:0, inAct:96,  outAct:128, outCh:128, gridW:28, gridH:20}
     ]
   },
   mnist: {
@@ -627,7 +631,7 @@ const MODELS = {
       {name:'Conv2 3x3',     type:'conv',  dims:'13x13x8 -> 11x11x16', color:'#B39B6E', params:1168,  macs:139392, dwMacs:0, inAct:1352, outAct:1936, outCh:16, gridW:18, gridH:16},
       {name:'Conv3 3x3',     type:'conv',  dims:'5x5x16 -> 3x3x32',    color:'#B39B6E', params:4640,  macs:41472,  dwMacs:0, inAct:400,  outAct:288,  outCh:32, gridW:24, gridH:16},
       {name:'Dense1 288->64',type:'dense', dims:'288 -> 64',           color:'#C4AE84', params:18496, macs:18432,  dwMacs:0, inAct:288,  outAct:64,   outCh:64, gridW:28, gridH:20},
-      {name:'Dense2 64->10', type:'dense', dims:'64 -> 10',            color:'#1F6F4A', params:650,   macs:640,    dwMacs:0, inAct:64,   outAct:10,   outCh:10, gridW:16, gridH:10}
+      {name:'Dense2 64->10', type:'dense', dims:'64 -> 10',            color:'var(--positive)', params:650,   macs:640,    dwMacs:0, inAct:64,   outAct:10,   outCh:10, gridW:16, gridH:10}
     ]
   }
 };
@@ -637,7 +641,7 @@ const MODELS = {
 const TARGETS = {
   f407: {name:'STM32F407VG', core:'Cortex-M4F', mhz:168, simd:1.0, flashKB:1024, sramKB:128, extraRamKB:64, extraRamName:'CCM',
     bootKB:16, appKB:96, staticKB:24,
-    note:'1 MB flash, 192 KB SRAM total = 128 KB SRAM1/2 + 64 KB CCM. The tensor arena is budgeted against SRAM1/2 only: CCM is not reachable by DMA, so it holds stack and static data instead.'},
+    note:'1 MB flash, 192 KB SRAM total = 128 KB SRAM1/2 + 64 KB CCM. The arena, static data and the DMA-fed input buffer are all budgeted against the 128 KB of SRAM1/2: CCM is not reachable by DMA, so it is left for the stack and RTOS data and is not counted here.'},
   l432: {name:'STM32L432KC (L4)', core:'Cortex-M4F', mhz:80, simd:1.0, flashKB:256, sramKB:64, extraRamKB:0, extraRamName:'',
     bootKB:16, appKB:88, staticKB:20,
     note:'Low-power L4: 256 KB flash, 64 KB SRAM. Same M4F core and CMSIS-NN kernels at less than half the clock, so latency roughly doubles versus the F407.'},
@@ -658,15 +662,24 @@ const OP_OVERHEAD_US  = 10;      // kernel setup + requantisation per operator
 const ARENA_FIXED_B   = 2048;    // TFLM interpreter bookkeeping
 const ARENA_SCRATCH_F = 0.08;    // CMSIS-NN im2col / buffer allowance
 
-// --- palette read from the shell stylesheet so canvases match the CSS
+// --- palette read from the site's palette tokens so canvases match the CSS in both
+// --- themes; re-read and redrawn on every theme change
 var CSSV = getComputedStyle(document.documentElement);
-function cv(nm, fb){ var v = CSSV.getPropertyValue(nm); v = v ? v.trim() : ''; return v || fb; }
-const COL = {
-  bg:cv('--surface','#0E1C16'), grid:cv('--border','#2E3438'), faint:cv('--faint','#8C9196'),
-  text:cv('--text','#f1f5f9'), muted:cv('--muted','#8C9196'), cyan:cv('--cyan','#6B7176'),
-  green:cv('--green','#1F6F4A'), red:cv('--red','#A3312B'), blue:cv('--blue','#B39B6E'),
-  orange:cv('--orange','#C4AE84'), purple:cv('--purple','#B39B6E')
-};
+function cv(nm, fb){ var v = CSSV.getPropertyValue(nm); v = v ? v.trim() : ''; return /^#[0-9a-fA-F]{6}$/.test(v) ? v : fb; }
+let COL = {};
+function readCol(){
+  CSSV = getComputedStyle(document.documentElement);
+  COL = {
+    bg:cv('--c-card','#0E1C16'), grid:cv('--c-border','#2E3438'), mid:cv('--c-chip-border','#3A4044'),
+    text:cv('--c-text','#EEF2EF'), muted:cv('--c-text-2','#A7ACB0'), faint:cv('--c-text-3','#8A9094'),
+    green:cv('--c-positive','#6FB59A'), red:cv('--c-negative','#E07A7A'),
+    gold:cv('--c-gold','#B39B6E'), goldT:cv('--c-gold-text','#C4AE84'),
+    graph:cv('--c-graphite','#6B7176'), graph2:cv('--c-graphite-2','#8C9196')
+  };
+}
+readCol();
+function hexA(hex, a){ const h = hex.replace('#',''); return 'rgba('+parseInt(h.substr(0,2),16)+','+parseInt(h.substr(2,2),16)+','+parseInt(h.substr(4,2),16)+','+a+')'; }
+function hexRgb(hex){ const h = hex.replace('#',''); return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)]; }
 
 // --- STATE
 let currentModel   = 'kws';
@@ -836,9 +849,13 @@ function modelMetrics(quant){
   const model = MODELS[currentModel], tgt = TARGETS[currentTarget];
 
   let params=0, macs=0, chans=0, peakAct=0;
-  model.layers.forEach(l=>{
+  model.layers.forEach((l,i)=>{
     params += l.params; macs += l.macs; chans += l.outCh;
     peakAct = Math.max(peakAct, l.inAct + l.outAct);
+    // a pooling operator sits between layers whose shapes do not chain (MNIST CNN):
+    // its input and output tensors are live together as well
+    const nx = model.layers[i+1];
+    if(nx && nx.inAct !== l.outAct) peakAct = Math.max(peakAct, l.outAct + nx.inAct);
   });
 
   // weights + per-channel int32 multiplier/shift + per-tensor scale & zero-point
@@ -898,7 +915,7 @@ function weightToColor(v, mn, mx){
   // diverging map in the site palette: gold for negative weights, graphite at zero, green for positive
   const range = Math.max(Math.abs(mn), Math.abs(mx));
   const t = range===0 ? 0 : Math.max(-1, Math.min(1, v/range));
-  const mid = [58,64,68], neg = [196,174,132], pos = [111,181,154], end = t < 0 ? neg : pos, k = Math.abs(t);
+  const mid = hexRgb(COL.mid), neg = hexRgb(COL.gold), pos = hexRgb(COL.green), end = t < 0 ? neg : pos, k = Math.abs(t);
   const c = mid.map((m,i) => Math.round(m + (end[i]-m)*k));
   return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
@@ -974,7 +991,7 @@ function drawHeatmap(timestamp){
 
   // Grid overlay for quantized (more visible borders)
   if(currentQuant !== 'fp32'){
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.strokeStyle = hexA(COL.text, 0.06);
     ctx.lineWidth = 0.5;
     for(let r=0;r<=gh;r++){
       ctx.beginPath();
@@ -995,22 +1012,24 @@ function drawHeatmap(timestamp){
   const barW = Math.min(220, w-80);
   const barX = (w-barW)/2;
   const grad = ctx.createLinearGradient(barX,0,barX+barW,0);
-  grad.addColorStop(0, '#C4AE84');
-  grad.addColorStop(0.5, '#3A4044');
-  grad.addColorStop(1, '#6FB59A');
+  grad.addColorStop(0, COL.gold);
+  grad.addColorStop(0.5, COL.mid);
+  grad.addColorStop(1, COL.green);
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.roundRect(barX, barY, barW, 8, 3);
   ctx.fill();
 
-  ctx.fillStyle = '#8C9196';
+  // the colour scale is symmetric about zero, so its ends are -max|w| and +max|w|
+  const rng = Math.max(Math.abs(mn), Math.abs(mx));
+  ctx.fillStyle = COL.muted;
   ctx.font = '9px Courier New, monospace';
   ctx.textAlign = 'left';
-  ctx.fillText(mn.toFixed(2), barX, barY+20);
+  ctx.fillText((-rng).toFixed(2), barX, barY+20);
   ctx.textAlign = 'center';
   ctx.fillText('0.00', barX+barW/2, barY+20);
   ctx.textAlign = 'right';
-  ctx.fillText(mx.toFixed(2), barX+barW, barY+20);
+  ctx.fillText('+'+rng.toFixed(2), barX+barW, barY+20);
 
   // Axis labels + caption
   ctx.fillStyle = COL.faint;
@@ -1021,9 +1040,10 @@ function drawHeatmap(timestamp){
   ctx.fillText('cols = weights within channel', w-6, 12);
   ctx.textAlign = 'center';
   const uniqueVals = new Set(Array.from(drawWeights).map(v=>v.toFixed(6))).size;
-  const lv = currentQuant==='fp32' ? 'continuous' : (currentQuant==='int8'?'255':'15')+' levels';
-  ctx.fillText(layer.name+'  |  '+gw+' x '+gh+' sampled weights  |  '+currentQuant.toUpperCase()+
-               ' ('+lv+')  |  '+uniqueVals+' unique values', w/2, h-4);
+  const lv = currentQuant==='fp32' ? 'continuous' : (currentQuant==='int8'?'255':'15')+' levels per channel';
+  const cap1 = layer.name+'  |  '+gw+' x '+gh+' sampled weights', cap2 = currentQuant.toUpperCase()+' ('+lv+')  |  '+uniqueVals+' unique values';
+  if(ctx.measureText(cap1+'  |  '+cap2).width <= w-12) ctx.fillText(cap1+'  |  '+cap2, w/2, h-4);
+  else { ctx.fillText(cap1, w/2, h-16); ctx.fillText(cap2, w/2, h-4); }
 
   // geometry for the hover tooltip
   heatGeom = { offX:offX, offY:offY, cell:cellSize, gw:gw, gh:gh };
@@ -1103,7 +1123,7 @@ function drawHistogram(){
   for(let b=0;b<NB;b++){
     const x = pad.left + b*bwPx;
     const hq = hQ[b]/peak*ch;
-    if(hq > 0){ ctx.fillStyle = 'rgba(111,181,154,.55)'; ctx.fillRect(x+0.4, pad.top+ch-hq, bwPx-0.8, hq); }
+    if(hq > 0){ ctx.fillStyle = hexA(COL.green, 0.55); ctx.fillRect(x+0.4, pad.top+ch-hq, bwPx-0.8, hq); }
   }
   ctx.strokeStyle = COL.muted; ctx.lineWidth = 1.2; ctx.beginPath();
   for(let b=0;b<NB;b++){
@@ -1128,7 +1148,7 @@ function drawHistogram(){
   document.getElementById('histTag').textContent =
     layer.name + ' \u00b7 ' + orig.length + ' sampled weights \u00b7 ' +
     (currentQuant==='fp32' ? 'FP32 (no quantisation)'
-      : currentQuant.toUpperCase()+' step = per-channel scale, ' + (currentQuant==='int8'?254:14) + ' usable levels');
+      : currentQuant.toUpperCase()+' step = per-channel scale, ' + (currentQuant==='int8'?'255 levels (-127..127)':'15 levels (-7..7)') + ' per channel');
 
   histGeom = { pad:pad, cw:cw, ch:ch, NB:NB, lo:lo, bw:bw, hO:hO, hQ:hQ };
 }
@@ -1191,7 +1211,7 @@ function drawArchitecture(){
   addArchBlock(body, {
     name: outName,
     sub: currentModel==='ae' ? '128-bin reconstruction, error vs input' : model.classes.length + ' classes',
-    color: '#1F6F4A',
+    color: 'var(--positive)',
     right: currentModel==='ae' ? 'MSE score' : 'Predictions',
     rightColor: 'var(--green)',
     clickable: false
@@ -1256,14 +1276,14 @@ function drawTradeoffChart(){
   const sizeData = mets.map(m=>m.sizeKB);
   const infData  = mets.map(m=>m.latMs);
 
-  const pad = { top:30, right:58, bottom:38, left:52 };
+  const pad = { top:24, right:58, bottom:76, left:52 };
   const chartW = w - pad.left - pad.right;
   const chartH = h - pad.top - pad.bottom;
 
   ctx.clearRect(0,0,w,h);
 
   // Grid lines
-  ctx.strokeStyle = 'rgba(46,52,56,.5)';
+  ctx.strokeStyle = COL.grid;
   ctx.lineWidth = 0.5;
   for(let i=0;i<=5;i++){
     const y = pad.top + (chartH/5)*i;
@@ -1276,7 +1296,7 @@ function drawTradeoffChart(){
   // Accuracy axis (left)
   const accMin = Math.floor(Math.min.apply(null,accData)-2);
   const accMax = Math.ceil(Math.max.apply(null,accData)+1);
-  ctx.fillStyle = '#8C9196';
+  ctx.fillStyle = COL.muted;
   ctx.font = '9px Courier New, monospace';
   ctx.textAlign = 'right';
   for(let i=0;i<=5;i++){
@@ -1287,7 +1307,7 @@ function drawTradeoffChart(){
   ctx.save();
   ctx.translate(12, pad.top+chartH/2);
   ctx.rotate(-Math.PI/2);
-  ctx.fillStyle = '#6B7176';
+  ctx.fillStyle = COL.muted;
   ctx.font = '10px Inter, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(MODELS[currentModel].accLabel + ' (%)', 0, 0);
@@ -1296,7 +1316,7 @@ function drawTradeoffChart(){
   // Size axis (right)
   const sizeMax = Math.max(1, Math.max.apply(null,sizeData)*1.15);
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#8C9196';
+  ctx.fillStyle = COL.muted;
   ctx.font = '9px Courier New, monospace';
   for(let i=0;i<=5;i++){
     const val = sizeMax*(1-i/5);
@@ -1306,7 +1326,7 @@ function drawTradeoffChart(){
   ctx.save();
   ctx.translate(w-6, pad.top+chartH/2);
   ctx.rotate(Math.PI/2);
-  ctx.fillStyle = '#1F6F4A';
+  ctx.fillStyle = COL.green;
   ctx.font = '10px Inter, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Size (KB)', 0, 0);
@@ -1317,40 +1337,34 @@ function drawTradeoffChart(){
   levels.forEach((level,i)=>{
     const x = pad.left + barGroupW*i + barGroupW/2;
     const isActive = level===currentQuant;
-    ctx.fillStyle = isActive ? '#6B7176' : '#8C9196';
+    ctx.fillStyle = isActive ? COL.text : COL.muted;
     ctx.font = (isActive?'bold ':'') + '11px Courier New, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(labels[i], x, h-pad.bottom+18);
+    // size and latency are written under each precision, so they never collide with the marks
+    ctx.font = (isActive?'bold ':'') + '10px Courier New, monospace';
+    ctx.fillStyle = isActive ? COL.text : COL.muted;  ctx.fillText(accData[i].toFixed(1)+'%', x, h-pad.bottom+33);
+    ctx.fillStyle = COL.green;  ctx.fillText(sizeData[i].toFixed(1)+' KB', x, h-pad.bottom+47);
+    ctx.fillStyle = COL.goldT;  ctx.fillText(fmtMs(infData[i])+' ms', x, h-pad.bottom+61);
   });
 
-  // Accuracy bars
-  const barW = barGroupW * 0.32;
+  // Accuracy level markers: the accuracy axis does not start at zero, so the values are
+  // drawn as levels rather than bars whose length would overstate the differences
+  const barW = barGroupW * 0.42;
   levels.forEach((level,i)=>{
     const x = pad.left + barGroupW*i + barGroupW/2 - barW/2;
-    const accNorm = (accData[i]-accMin)/(accMax-accMin);
-    const barH = accNorm * chartH;
-    const y = pad.top + chartH - barH;
+    const y = pad.top + chartH - (accData[i]-accMin)/(accMax-accMin) * chartH;
     const isActive = level===currentQuant;
-
-    ctx.fillStyle = isActive ? 'rgba(111,181,154,.65)' : 'rgba(111,181,154,.25)';
+    if(isActive){ ctx.fillStyle = hexA(COL.text, 0.05); ctx.fillRect(pad.left + barGroupW*i + 4, pad.top, barGroupW - 8, chartH); }
+    ctx.fillStyle = isActive ? COL.text : COL.graph2;
     ctx.beginPath();
-    ctx.roundRect(x, y, barW, barH, [4,4,0,0]);
+    ctx.roundRect(x, y-3, barW, 6, 3);
     ctx.fill();
-    if(isActive){
-      ctx.strokeStyle = '#6B7176';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = isActive ? '#6B7176' : '#6B7176';
-    ctx.font = (isActive?'bold ':'') + '10px Courier New, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(accData[i].toFixed(1)+'%', x+barW/2, y-6);
   });
 
   // Size line
   ctx.beginPath();
-  ctx.strokeStyle = '#1F6F4A';
+  ctx.strokeStyle = COL.green;
   ctx.lineWidth = 2;
   ctx.setLineDash([]);
   levels.forEach((level,i)=>{
@@ -1369,14 +1383,10 @@ function drawTradeoffChart(){
     const isActive = level===currentQuant;
     ctx.beginPath();
     ctx.arc(x, y, isActive?5:3.5, 0, Math.PI*2);
-    ctx.fillStyle = '#1F6F4A';
+    ctx.fillStyle = COL.green;
     ctx.fill();
     if(isActive){ ctx.strokeStyle=COL.bg; ctx.lineWidth=2; ctx.stroke(); }
 
-    ctx.fillStyle = isActive ? '#1F6F4A' : '#6B7176';
-    ctx.font = (isActive?'bold ':'') + '9px Courier New, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(sizeData[i].toFixed(1)+'KB', x, y-10);
   });
 
   // Inference dots (orange)
@@ -1389,14 +1399,10 @@ function drawTradeoffChart(){
 
     ctx.beginPath();
     ctx.arc(x, y, isActive?6:4, 0, Math.PI*2);
-    ctx.fillStyle = '#C4AE84';
+    ctx.fillStyle = COL.goldT;
     ctx.fill();
-    if(isActive){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke(); }
+    if(isActive){ ctx.strokeStyle=COL.bg; ctx.lineWidth=1.5; ctx.stroke(); }
 
-    ctx.fillStyle = isActive ? '#C4AE84' : '#6B7176';
-    ctx.font = (isActive?'bold ':'') + '9px Courier New, monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(fmtMs(infData[i])+'ms', x+10, y+4);
   });
 
   tradeGeom = { padLeft:pad.left, padTop:pad.top, chartW:chartW, chartH:chartH,
@@ -1405,11 +1411,17 @@ function drawTradeoffChart(){
 let tradeGeom = null;
 
 // --- TARGET MEMORY BUDGET ----------------------------------------------------
+// a segment shows its label only when the label fits in the segment's final width
+function segFits(el, pct, label){
+  const W = el.parentElement ? el.parentElement.clientWidth : 0;
+  return W * pct/100 >= label.length*6 + 10;
+}
 function setSeg(id, pct, label){
   const el = document.getElementById(id);
   if(!el) return;
   el.style.width = Math.max(0, pct)+'%';
-  el.textContent = pct > 9 ? label : '';
+  el.textContent = segFits(el, pct, label) ? label : '';
+  el.title = label;
 }
 function updateFlashBar(){
   const model = MODELS[currentModel], tgt = TARGETS[currentTarget];
@@ -1432,7 +1444,8 @@ function updateFlashBar(){
   const modelSeg = document.getElementById('flashModel');
   modelSeg.style.width = modelPct+'%';
   modelSeg.className = 'flash-seg model' + (flashOver ? ' overflow' : '');
-  modelSeg.textContent = modelPct > 9 ? m.sizeKB.toFixed(0)+'KB' : '';
+  modelSeg.textContent = segFits(modelSeg, modelPct, m.sizeKB.toFixed(0)+'KB') ? m.sizeKB.toFixed(0)+'KB' : '';
+  modelSeg.title = 'Model '+m.sizeKB.toFixed(1)+' KB';
   setSeg('flashFree', freePct, Math.round(F-m.flashKB)+'KB free');
 
   const fPct = m.flashKB/F*100;
@@ -1454,7 +1467,8 @@ function updateFlashBar(){
   const arenaSeg = document.getElementById('sramArena');
   arenaSeg.style.width = arenaPct+'%';
   arenaSeg.className = 'flash-seg arena' + (sramOver ? ' overflow' : '');
-  arenaSeg.textContent = arenaPct > 9 ? 'Arena '+m.arenaKB.toFixed(0)+'KB' : '';
+  arenaSeg.textContent = segFits(arenaSeg, arenaPct, 'Arena '+m.arenaKB.toFixed(0)+'KB') ? 'Arena '+m.arenaKB.toFixed(0)+'KB' : '';
+  arenaSeg.title = 'Arena '+m.arenaKB.toFixed(1)+' KB';
   setSeg('sramStatic', staticPct, 'Static+I/O');
   setSeg('sramFree',   sFree, Math.round(S-m.sramKB)+'KB free');
 
@@ -2043,7 +2057,7 @@ function runInference(){
       const isWrongTop = (i === topIdx && topIdx !== trueClass);
       bar.className = 'pred-bar' + (i === topIdx ? ' top' : '');
       const pct = preds[i]*100;
-      const color = isWrongTop ? 'var(--red)' : i === topIdx ? 'var(--green)' : 'rgba(111,181,154,.35)';
+      const color = isWrongTop ? 'var(--red)' : i === topIdx ? 'var(--green)' : 'color-mix(in srgb, var(--positive) 35%, transparent)';
       bar.innerHTML = '<span class="pred-label" title="'+model.classes[i]+'">'+model.classes[i]+'</span>'+
         '<div class="pred-track"><div class="pred-fill" style="width:'+pct.toFixed(1)+'%;background:'+color+'"></div></div>'+
         '<span class="pred-pct">'+pct.toFixed(1)+'%</span>';
@@ -2053,8 +2067,8 @@ function runInference(){
     const jitter = 1 + (rng()-0.5)*0.06;   // +/-3% cycle-count variation
     document.getElementById('inferTime').textContent = fmtMs(m.latMs*jitter) + ' ms';
     document.getElementById('inferNote').textContent = model.interactive
-      ? 'Reference label from a nearest-template match over the eight stroke templates. The confidence vector is seeded and its flip probability tracks the modelled '+m.drop.toFixed(2)+' pp loss at '+currentQuant.toUpperCase()+'.'
-      : model.task.charAt(0).toUpperCase()+model.task.slice(1)+'. This input is audio features or a camera frame, so it cannot be drawn: a seeded example is scored instead, with a flip probability tracking the modelled '+m.drop.toFixed(2)+' pp loss at '+currentQuant.toUpperCase()+'.';
+      ? 'Reference label from a nearest-template match over eight stroke templates (digits 2 and 6 have none, so they cannot be recognised). The confidence vector is seeded; the chance that a run flips to a confusable class is 12 times the modelled '+m.drop.toFixed(2)+' pp loss at '+currentQuant.toUpperCase()+' (capped at 35%, here '+(flipP*100).toFixed(1)+'%), exaggerated so the effect shows within a few runs.'
+      : model.task.charAt(0).toUpperCase()+model.task.slice(1)+'. This input is audio features or a camera frame, so it cannot be drawn: a seeded example is scored instead. The chance that a run flips to another class is 12 times the modelled '+m.drop.toFixed(2)+' pp loss at '+currentQuant.toUpperCase()+' (capped at 35%, here '+(flipP*100).toFixed(1)+'%), exaggerated so the effect shows within a few runs.';
 
     document.getElementById('inferBtn').disabled = false;
     if(icb) icb.disabled = false;
@@ -2079,7 +2093,7 @@ function updateAll(){
 
   const pill = document.getElementById('quantPill');
   pill.textContent = currentQuant.toUpperCase();
-  pill.className = 'd-pill ' + (currentQuant === 'fp32' ? 'amber' : currentQuant === 'int8' ? 'cyan' : 'purple');
+  pill.className = 'd-pill ' + (currentQuant === 'fp32' ? '' : currentQuant === 'int8' ? 'green' : 'amber');
 
   document.getElementById('tradeoffTag').textContent = model.short + ' \u00b7 ' + tgt.name + ' @ ' + tgt.mhz + ' MHz';
 
@@ -2131,7 +2145,8 @@ function startHeatmapTransition(){
   const oldQ = quantWeights[selectedLayer];
   prevHeatWeights = oldQ ? new Float32Array(oldQ) : null;
   applyQuantization();
-  if(prevHeatWeights && prevHeatWeights.length === quantWeights[selectedLayer].length){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce && prevHeatWeights && prevHeatWeights.length === quantWeights[selectedLayer].length){
     heatAnimProgress = 0;
     heatAnimStart = null;
     animFrame = requestAnimationFrame(drawHeatmap);
@@ -2299,6 +2314,11 @@ function hideTip(){ TIP.classList.remove('show'); }
   hc.addEventListener('mouseleave', hideTip);
 })();
 
+// --- THEME -------------------------------------------------------------------
+document.addEventListener('themechange', function(){
+  setTimeout(function(){ readCol(); drawArchitecture(); drawTradeoffChart(); drawHistogram(); requestAnimationFrame(drawHeatmap); }, 0);
+});
+
 // --- RESIZE ------------------------------------------------------------------
 let resizeTimer;
 window.addEventListener('resize', function(){
@@ -2307,6 +2327,7 @@ window.addEventListener('resize', function(){
     requestAnimationFrame(drawHeatmap);
     drawTradeoffChart();
     drawHistogram();
+    updateFlashBar();
   }, 120);
 });
 
@@ -2346,10 +2367,10 @@ requestAnimationFrame(drawHeatmap);
       <div>
         <h3>Key assumptions</h3>
         <ul>
-          <li>Weights: symmetric per channel, <code>s_c = P&middot;max|w_c| / 127</code> (INT8) or <code>/ 7</code> (INT4), zero-point 0, clamped to &plusmn;127 / &plusmn;7. <code>P</code> is the clip percentile (default 100%).</li>
+          <li>Weights: symmetric per channel, <code>s_c = pct_P(|w_c|) / 127</code> (INT8) or <code>/ 7</code> (INT4), where <code>pct_P</code> is the <code>P</code>-th percentile of the channel's absolute weights (the clip percentile; at the default 100% it is <code>max|w_c|</code>). Zero-point 0, codes clamped to &plusmn;127 / &plusmn;7.</li>
           <li>Activations: asymmetric per tensor, <code>s = (max &minus; min)/255</code>, <code>z = round(&minus;min/s)</code>. Post-ReLU tensors give <code>z = 0</code>; input and logit tensors do not.</li>
-          <li>Size overhead: 8 bytes per output channel (int32 multiplier + shift) and 8 bytes per tensor (activation scale + zero-point), so the reduction is slightly under 4&times; / 8&times;.</li>
-          <li>Arena = <code>max(input + output tensor)</code> over operators + 2 KB interpreter bookkeeping + 8% CMSIS-NN scratch. Activations are int8 when quantised, float32 under FP32.</li>
+          <li>Size overhead: 8 bytes per output channel (int32 multiplier + shift) and 8 bytes per tensor (activation scale + zero-point), so the reduction stays below 4&times; / 8&times;: from 3.8&times; / 7.4&times; (MNIST CNN) down to 3.3&times; / 5.6&times; (DS-CNN, 716 channels on 27.4 k weights).</li>
+          <li>Arena = <code>max(input + output tensor)</code> over operators, pooling included, + 2 KB interpreter bookkeeping + 8% CMSIS-NN scratch. Activations are int8 when quantised, float32 under FP32.</li>
           <li>Latency at 0.32 MAC/cycle FP32, 1.55 INT8, 0.50 INT4, scaled by kernel efficiency (conv/pointwise 1.0, depthwise 0.35, fully connected 0.80) and 10 &micro;s setup per operator. INT4 has no native CMSIS-NN kernel; nibbles are unpacked to int8 first, so it is slower than INT8 per MAC.</li>
           <li>Default target STM32F407VG: Cortex-M4F at 168 MHz, 1 MB flash, 128 KB SRAM1/2 plus 64 KB CCM (CCM excluded from the arena budget because it is not DMA-accessible). Bootloader 16 KB, app + TFLite Micro + CMSIS-NN 96 KB, static RAM 24 KB.</li>
           <li>Baselines: DS-CNN-S 94.4% (Speech Commands, 12 classes), MobileNetV1 0.25 96&times;96 84.9% (Visual Wake Words), autoencoder 0.889 AUC (MIMII-style), MNIST CNN 99.1%.</li>

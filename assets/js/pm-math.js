@@ -1151,14 +1151,16 @@
       subscriptions: [share of NAV], facilityRate (annual)}
       Each quarter: new requests join the queue; paid = min(queue, limitPct x NAV); paid from the
       sleeve, then the facility, then forced sales of private assets at the discount. Unpaid requests
-      stay queued (the fund is gated). Returns per-quarter rows and totals. */
+      stay queued (the fund is gated). Facility interest is paid from the sleeve after the quarter's
+      subscriptions; any part the sleeve cannot pay is added to the amount drawn. Returns per-quarter rows and totals. */
   P.evergreen = function (o) {
     var priv = o.nav0 * (1 - o.sleevePct), sleeve = o.nav0 * o.sleevePct, drawn = 0, queue = 0, rows = [], forcedTot = 0, lossTot = 0;
     for (var q = 0; q < o.requests.length; q++) {
       priv *= 1 + o.returns[q]; sleeve *= 1 + (o.sleeveReturn || 0) / 4;
-      var interest = drawn * (o.facilityRate || 0) / 4; sleeve -= interest;
-      var nav = priv + sleeve - drawn;
-      var subs = (o.subscriptions ? o.subscriptions[q] || 0 : 0) * nav; sleeve += subs; nav += subs;
+      var interest = drawn * (o.facilityRate || 0) / 4;
+      var nav = priv + sleeve - interest - drawn;
+      var subs = (o.subscriptions ? o.subscriptions[q] || 0 : 0) * nav; sleeve += subs - interest; nav += subs;
+      if (sleeve < 0) { drawn -= sleeve; sleeve = 0; }   // interest the sleeve cannot pay is added to the facility balance, so the sleeve never goes negative
       var req = o.requests[q] * nav; queue += req;
       var cap = o.limitPct * nav, pay = Math.min(queue, cap), need = pay;
       var fromSleeve = Math.min(sleeve, need); sleeve -= fromSleeve; need -= fromSleeve;
@@ -1366,7 +1368,7 @@
       events: [{date, contribution} | {date, distribution}] (positive amounts). t = {pref, carry, catchUp}
       Tiers on each distribution: (1) return of contributed capital; (2) preferred return, compounding
       annually on unreturned capital and unpaid pref; (3) GP catch-up at rate catchUp (1 = full) until the
-      GP holds carry x (pref paid + catch-up); (4) split (1 - carry) / carry.
+      GP holds carry x (pref paid + catch-up), skipped when catchUp is 0; (4) split (1 - carry) / carry.
       Returns {lp, gp, rows: [{date, amount, lp, gp, tiers}], unreturned, prefOwed}. */
   TR.european = function (events, t) {
     var ev = events.slice().sort(function (a, b) { return a.date - b.date; });
@@ -1379,8 +1381,8 @@
       var b = Math.min(d, prefDue); prefDue -= b; prefPaid += b; d -= b;
       /* catch-up: GP receives k of each dollar (LP the rest) until the GP holds carry x all profit paid so far,
          gpCU = carry x (prefPaid + lpCU + gpCU); a take of x moves that gap by x (k - carry) */
-      var k = t.catchUp || 1, c = 0;
-      if (d > 0) {
+      var k = t.catchUp == null ? 1 : t.catchUp, c = 0;   // catchUp 0 means no catch-up tier: straight to the split
+      if (d > 0 && k > 0) {
         var gap = t.carry * (prefPaid + lpCU + gpCU) - gpCU, take = k > t.carry ? Math.min(d, Math.max(0, gap / (k - t.carry))) : d;
         c = take * k; gpCU += c; lpCU += take - c; lp += take - c; d -= take;
       }
@@ -1504,10 +1506,13 @@
     });
     return { net: net, mgmt: tm, pass: tp, perf: tf };
   };
-  /** netting(R, w, terms): fee netting risk. Each sleeve pays its own performance fee on its own gains,
-      so a year where winners and losers offset still pays fees on the winners. Compares performance
-      fees paid by sleeves with those owed on the combined book under one average fee.
-      Returns per-year {paid, aggregate, cost} in fractions of portfolio NAV, and totals. */
+  /** netting(R, w, terms): fee netting risk, year by year. Each sleeve pays its own performance fee on its
+      own gains, so a year where winners and losers offset still pays fees on the winners. Compares the
+      performance fees on each sleeve's calendar-year gain (after management fee and pass-through, above
+      its hurdle) with one weight-averaged fee on the combined book's gain. High-water marks are left out
+      on both sides, so this isolates the offsetting within each year; it is not the fee the sleeves
+      actually paid (MS.fees). Returns per-year {paid, aggregate, cost} in fractions of portfolio NAV, and
+      yearly averages. */
   MS.netting = function (R, w, terms) {
     var years = Math.floor(R.length / 12), rows = [], paid = 0, agg = 0;
     var avgPerf = PM.sum(terms.map(function (t, i) { return (t.perf || 0) * w[i]; }));
@@ -1726,7 +1731,7 @@
       var g = Array.isArray(o.growth) ? o.growth[Math.min(t - 1, o.growth.length - 1)] : o.growth, prev = rev;
       rev = rev * (1 + g);
       var margin = o.margin + (o.exitMargin - o.margin) * t / o.hold, up = 0, cost = 0;
-      inits.forEach(function (x) { var k = t < x.start ? 0 : Math.min(1, (t - x.start + 1) / Math.max(1, x.ramp)); up += x.prob * x.uplift * k; if (t === x.start) cost += x.prob * x.cost; });
+      inits.forEach(function (x) { up += x.prob * x.uplift * L.ramp(x, t); if (t === x.start) cost += x.prob * x.cost; });
       var ebitda = rev * margin + up, interest = o.rate * debt, da = o.da * rev, tax = Math.max(0, (ebitda - da - interest) * o.tax);
       var fcf = ebitda - o.capex * rev - o.nwc * (rev - prev) - interest - tax - cost, pay = Math.min(debt, Math.max(0, o.sweep * fcf));
       debt -= pay; cash += fcf - pay;
@@ -1735,6 +1740,9 @@
     var last = rows[rows.length - 1], evH = o.exitMultiple * last.ebitda, equityH = evH - last.netDebt, moic = equityH / equity0;
     return { years: rows, ev0: ev0, debt0: o.leverage * e0, equity0: equity0, ebitda0: e0, ebitdaH: last.ebitda, upliftH: last.uplift, evH: evH, netDebtH: last.netDebt, equityH: equityH, moic: moic, irr: moic > 0 ? Math.pow(moic, 1 / o.hold) - 1 : -1 };
   };
+  /** ramp(x, t): share of an initiative's run-rate uplift in place in year t (1 = first year after entry):
+      0 before its start year, then rising in equal steps over x.ramp years to 1. */
+  L.ramp = function (x, t) { return t < x.start ? 0 : Math.min(1, (t - x.start + 1) / Math.max(1, x.ramp)); };
   /** bridge(r, o): equity value creation from entry to exit, split so the parts add up exactly to
       exit equity - equity invested:
         EBITDA growth (organic) = (E_H - uplift - E_0) x m_0

@@ -224,7 +224,7 @@
                 </div>
 
                 <p class="hero-description">
-                    Deployed a quantized image classification model on an STM32H7 microcontroller (512KB RAM)
+                    Deployed a quantized image classification model on an STM32H743 microcontroller, inside its 512 KB AXI SRAM,
                     using TensorFlow Lite for Microcontrollers. Wrote bare-metal C drivers for OV7670 camera
                     capture over DCMI with DMA transfers and SPI display output. Direct register access throughout, no HAL abstraction. Full pipeline from model training to INT8 quantization to on-board validation.
                 </p>
@@ -262,14 +262,14 @@
                     <li>Image capture: OV7670 camera via DCMI with DMA double-buffering</li>
                     <li>Inference: TensorFlow Lite Micro with INT8 quantized model</li>
                     <li>Output: Classification results on SPI TFT display</li>
-                    <li>Constraint: Everything fits in 512KB SRAM + 2MB Flash</li>
+                    <li>Constraint: everything fits in the 512 KB AXI SRAM and 2 MB of flash</li>
                 </ul>
             </section>
 
             <!-- Architecture -->
             <section class="content-section">
                 <h2>System Architecture</h2>
-                <figure class="feat-art rb-diagram"><svg class="art" viewBox="0 0 640 520" role="img"><title>Data path on the STM32H743: camera frames move by DMA into a frame buffer, are preprocessed, classified by the INT8 model in TensorFlow Lite Micro, and drawn on an SPI display</title><rect class="frame" x="16" y="16" width="608" height="488" rx="10"/><text class="tx-m" x="30" y="36">STM32H743 · Cortex-M7 · 480 MHz · 512 KB SRAM · 2 MB flash</text><rect class="box" x="40" y="52" width="170" height="58" rx="7"/><text class="tx-t" x="125.0" y="78.0" text-anchor="middle">OV7670 camera</text><text class="tx-m" x="125.0" y="94.0" text-anchor="middle">8-bit parallel</text><rect class="box" x="300" y="52" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="78.0" text-anchor="middle">Frame buffer</text><text class="tx-m" x="442.0" y="94.0" text-anchor="middle">160×120 RGB565 · ~38 KB, DMA</text><rect class="box" x="300" y="152" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="178.0" text-anchor="middle">Preprocessing</text><text class="tx-m" x="442.0" y="194.0" text-anchor="middle">resize → grayscale → INT8</text><rect class="box key" x="300" y="252" width="284" height="58" rx="7"/><text class="tx-k" x="442.0" y="278.0" text-anchor="middle">TF Lite Micro engine</text><text class="tx-m" x="442.0" y="294.0" text-anchor="middle">INT8 CNN · ~120 KB model + arena</text><rect class="box" x="300" y="352" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="378.0" text-anchor="middle">Result processing</text><text class="tx-m" x="442.0" y="394.0" text-anchor="middle">argmax → label</text><rect class="box" x="300" y="432" width="284" height="52" rx="7"/><text class="tx-t" x="442.0" y="455.0" text-anchor="middle">Display driver</text><text class="tx-m" x="442.0" y="471.0" text-anchor="middle">bare-metal SPI TX</text><rect class="box" x="40" y="432" width="170" height="52" rx="7"/><text class="tx-t" x="125.0" y="455.0" text-anchor="middle">SPI TFT display</text><text class="tx-m" x="125.0" y="471.0" text-anchor="middle">1.8 in · ST7735</text><path class="flow g" d="M210 81 L300 81"/><path class="ah g" d="M300 81L292 76.5V85.5Z"/><text class="tx-g" x="255" y="72" text-anchor="middle">DCMI</text><path class="flow g" d="M442 110 L442 152"/><path class="ah g" d="M442 152L437.5 144H446.5Z"/><path class="flow g" d="M442 210 L442 252"/><path class="ah g" d="M442 252L437.5 244H446.5Z"/><path class="flow g" d="M442 310 L442 352"/><path class="ah g" d="M442 352L437.5 344H446.5Z"/><path class="flow g" d="M442 410 L442 432"/><path class="ah g" d="M442 432L437.5 424H446.5Z"/><path class="flow g" d="M300 459 L210 459"/><path class="ah g" d="M210 459L218 454.5V463.5Z"/><text class="tx-g" x="255" y="450" text-anchor="middle">SPI</text></svg></figure>
+                <figure class="feat-art rb-diagram"><svg class="art" viewBox="0 0 640 520" role="img"><title>Data path on the STM32H743: camera frames move by DMA into a frame buffer, are preprocessed, classified by the INT8 model in TensorFlow Lite Micro, and drawn on an SPI display</title><rect class="frame" x="16" y="16" width="608" height="488" rx="10"/><text class="tx-m" x="30" y="36">STM32H743 · Cortex-M7 · 480 MHz · 512 KB AXI SRAM · 2 MB flash</text><rect class="box" x="40" y="52" width="170" height="58" rx="7"/><text class="tx-t" x="125.0" y="78.0" text-anchor="middle">OV7670 camera</text><text class="tx-m" x="125.0" y="94.0" text-anchor="middle">8-bit parallel</text><rect class="box" x="300" y="52" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="78.0" text-anchor="middle">Frame buffer</text><text class="tx-m" x="442.0" y="94.0" text-anchor="middle">160×120 RGB565 · ~38 KB, DMA</text><rect class="box" x="300" y="152" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="178.0" text-anchor="middle">Preprocessing</text><text class="tx-m" x="442.0" y="194.0" text-anchor="middle">resize → grayscale → INT8</text><rect class="box key" x="300" y="252" width="284" height="58" rx="7"/><text class="tx-k" x="442.0" y="278.0" text-anchor="middle">TF Lite Micro engine</text><text class="tx-m" x="442.0" y="294.0" text-anchor="middle">INT8 CNN · ~120 KB model + arena</text><rect class="box" x="300" y="352" width="284" height="58" rx="7"/><text class="tx-t" x="442.0" y="378.0" text-anchor="middle">Result processing</text><text class="tx-m" x="442.0" y="394.0" text-anchor="middle">argmax → label</text><rect class="box" x="300" y="432" width="284" height="52" rx="7"/><text class="tx-t" x="442.0" y="455.0" text-anchor="middle">Display driver</text><text class="tx-m" x="442.0" y="471.0" text-anchor="middle">bare-metal SPI TX</text><rect class="box" x="40" y="432" width="170" height="52" rx="7"/><text class="tx-t" x="125.0" y="455.0" text-anchor="middle">SPI TFT display</text><text class="tx-m" x="125.0" y="471.0" text-anchor="middle">1.8 in · ST7735</text><path class="flow g" d="M210 81 L300 81"/><path class="ah g" d="M300 81L292 76.5V85.5Z"/><text class="tx-g" x="255" y="72" text-anchor="middle">DCMI</text><path class="flow g" d="M442 110 L442 152"/><path class="ah g" d="M442 152L437.5 144H446.5Z"/><path class="flow g" d="M442 210 L442 252"/><path class="ah g" d="M442 252L437.5 244H446.5Z"/><path class="flow g" d="M442 310 L442 352"/><path class="ah g" d="M442 352L437.5 344H446.5Z"/><path class="flow g" d="M442 410 L442 432"/><path class="ah g" d="M442 432L437.5 424H446.5Z"/><path class="flow g" d="M300 459 L210 459"/><path class="ah g" d="M210 459L218 454.5V463.5Z"/><text class="tx-g" x="255" y="450" text-anchor="middle">SPI</text></svg></figure>
             </section>
 
             <!-- Hardware Layer -->
@@ -279,14 +279,14 @@
                 <h3>STM32H7 Microcontroller</h3>
                 <p>
                     The STM32H743 runs at 480 MHz with a Cortex-M7 core featuring an FPU and DSP instructions.
-                    All clock tree configuration (HSE, PLL1, PLL3 for DCMI pixel clock) is done by writing
+                    All clock tree configuration (HSE, PLL1 for the core, MCO1 for the camera's XCLK input) is done by writing
                     directly to RCC registers. No HAL or LL drivers are used, this provides precise control
                     over peripheral timing and eliminates abstraction overhead.
                 </p>
 
                 <h3>OV7670 Camera: DCMI Interface</h3>
                 <p>
-                    The OV7670 is configured over SCCB (I2C-like) for QVGA resolution (160x120) in RGB565 format.
+                    The OV7670 is configured over SCCB (I2C-like) for QQVGA resolution (160x120) in RGB565 format.
                     The DCMI peripheral captures frames using its hardware synchronization (VSYNC, HSYNC, PIXCLK).
                     Frame data is transferred directly to SRAM via DMA in double-buffer mode, allowing one buffer
                     to be processed while the other receives the next frame.
@@ -327,9 +327,9 @@
                     Every peripheral is configured through direct register writes. Examples:
                 </p>
                 <ul>
-                    <li>RCC->AHB1ENR for enabling GPIO and DMA clocks</li>
+                    <li>RCC->AHB4ENR for the GPIO port clocks and RCC->AHB1ENR for the DMA clocks</li>
                     <li>DCMI->CR for capture mode, crop, and embedded sync configuration</li>
-                    <li>DMA2_Stream1->CR for channel selection, direction, and double-buffer enable</li>
+                    <li>DMAMUX1 to route the DCMI request to DMA2 Stream 1, and DMA2_Stream1->CR for direction and double-buffer enable</li>
                     <li>SPI1->CR1 for baud rate, CPOL/CPHA, and DMA TX enable</li>
                 </ul>
                 <p>
@@ -350,7 +350,7 @@
                 <ul>
                     <li>Depthwise separable convolutions to reduce parameter count</li>
                     <li>Small input resolution (48x48 grayscale)</li>
-                    <li>Total parameters under 50K for minimal memory footprint</li>
+                    <li>About 120K parameters, so the INT8 weights take about 120 KB</li>
                     <li>Training with data augmentation (rotation, flip, brightness) to handle variation</li>
                 </ul>
 
@@ -363,7 +363,7 @@
                     <li>Weights: float32 → int8 (4x size reduction)</li>
                     <li>Activations: quantized at inference time using calibrated scale/zero-point</li>
                     <li>Model size: ~120KB (down from ~480KB float32)</li>
-                    <li>Accuracy loss: less than 2% compared to float32 baseline</li>
+                    <li>Accuracy loss: less than 2 percentage points compared to the float32 baseline</li>
                 </ul>
 
                 <h3>TF Lite Micro Deployment</h3>
@@ -374,8 +374,10 @@
                 </p>
 
                 <div class="highlight-box">
-                    <strong>Memory budget:</strong> ~120KB model + ~80KB tensor arena + ~76KB frame buffers
-                    + ~20KB firmware code = ~296KB total, fitting within the 512KB SRAM constraint.
+                    The SRAM budget adds up to about 356 KB of the 512 KB AXI SRAM: ~120 KB of model weights,
+                    an ~80 KB tensor arena, ~76 KB for the two camera frame buffers, a ~38 KB display buffer and
+                    ~42 KB for stack, heap, firmware data and the 2.3 KB preprocessed input. The remaining ~155 KB is
+                    reserved, as the map below shows.
                 </div>
             </section>
 
@@ -384,7 +386,7 @@
                 <h2>Memory Management</h2>
 
                 <h3>SRAM Layout</h3>
-                <figure class="feat-art rb-diagram"><svg class="art" viewBox="0 0 640 386" role="img"><title>Static SRAM map of the STM32H743, 512 KB: stack, heap, firmware data, the TensorFlow Lite tensor arena, model weights, two frame buffers, a preprocessed buffer, a display buffer and reserved space</title><text class="tx-m" x="20" y="24" text-anchor="start">512 KB SRAM · all buffers static, placed by the linker</text><text class="tx-m" x="430" y="38" text-anchor="start">0x24080000</text><rect class="box" x="20" y="46" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="65" text-anchor="start">Stack</text><text class="tx-m" x="406" y="65" text-anchor="end">4 KB</text><rect class="bar" x="440" y="55" width="4.4" height="12" rx="2"/><rect class="box" x="20" y="76" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="95" text-anchor="start">Heap / globals</text><text class="tx-m" x="406" y="95" text-anchor="end">16 KB</text><rect class="bar" x="440" y="85" width="17.5" height="12" rx="2"/><rect class="box" x="20" y="106" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="125" text-anchor="start">Firmware .bss + .data</text><text class="tx-m" x="406" y="125" text-anchor="end">20 KB</text><rect class="bar" x="440" y="115" width="21.9" height="12" rx="2"/><rect class="box key" x="20" y="136" width="400" height="30" rx="0"/><text class="tx-k" x="34" y="155" text-anchor="start">TFLite tensor arena</text><text class="tx-m" x="406" y="155" text-anchor="end">80 KB</text><rect class="bar-k" x="440" y="145" width="87.7" height="12" rx="2"/><rect class="box key" x="20" y="166" width="400" height="30" rx="0"/><text class="tx-k" x="34" y="185" text-anchor="start">Model weights</text><text class="tx-m" x="406" y="185" text-anchor="end">120 KB</text><rect class="bar-k" x="440" y="175" width="131.6" height="12" rx="2"/><rect class="box" x="20" y="196" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="215" text-anchor="start">Frame buffer B</text><text class="tx-m" x="406" y="215" text-anchor="end">38 KB</text><rect class="bar-g" x="440" y="205" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="226" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="245" text-anchor="start">Frame buffer A</text><text class="tx-m" x="406" y="245" text-anchor="end">38 KB</text><rect class="bar-g" x="440" y="235" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="256" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="275" text-anchor="start">Preprocessed buffer</text><text class="tx-m" x="406" y="275" text-anchor="end">2.3 KB</text><rect class="bar" x="440" y="265" width="2.5" height="12" rx="2"/><rect class="box" x="20" y="286" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="305" text-anchor="start">Display TX buffer</text><text class="tx-m" x="406" y="305" text-anchor="end">38 KB</text><rect class="bar" x="440" y="295" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="316" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="335" text-anchor="start">Reserved / alignment</text><text class="tx-m" x="406" y="335" text-anchor="end">155 KB</text><rect class="bar" x="440" y="325" width="170.0" height="12" rx="2"/><text class="tx-m" x="430" y="362" text-anchor="start">0x24000000</text><text class="tx-m" x="20" y="376" text-anchor="start">bar length is size; gold is the model, green the camera buffers</text></svg></figure>
+                <figure class="feat-art rb-diagram"><svg class="art" viewBox="0 0 640 386" role="img"><title>Static map of the STM32H743's 512 KB AXI SRAM: stack, heap, firmware data, the TensorFlow Lite tensor arena, model weights, two frame buffers, a preprocessed buffer, a display buffer and reserved space</title><text class="tx-m" x="20" y="24" text-anchor="start">512 KB AXI SRAM · all buffers static, placed by the linker</text><text class="tx-m" x="430" y="38" text-anchor="start">0x24080000</text><rect class="box" x="20" y="46" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="65" text-anchor="start">Stack</text><text class="tx-m" x="406" y="65" text-anchor="end">4 KB</text><rect class="bar" x="440" y="55" width="4.4" height="12" rx="2"/><rect class="box" x="20" y="76" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="95" text-anchor="start">Heap / globals</text><text class="tx-m" x="406" y="95" text-anchor="end">16 KB</text><rect class="bar" x="440" y="85" width="17.5" height="12" rx="2"/><rect class="box" x="20" y="106" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="125" text-anchor="start">Firmware .bss + .data</text><text class="tx-m" x="406" y="125" text-anchor="end">20 KB</text><rect class="bar" x="440" y="115" width="21.9" height="12" rx="2"/><rect class="box key" x="20" y="136" width="400" height="30" rx="0"/><text class="tx-k" x="34" y="155" text-anchor="start">TFLite tensor arena</text><text class="tx-m" x="406" y="155" text-anchor="end">80 KB</text><rect class="bar-k" x="440" y="145" width="87.7" height="12" rx="2"/><rect class="box key" x="20" y="166" width="400" height="30" rx="0"/><text class="tx-k" x="34" y="185" text-anchor="start">Model weights</text><text class="tx-m" x="406" y="185" text-anchor="end">120 KB</text><rect class="bar-k" x="440" y="175" width="131.6" height="12" rx="2"/><rect class="box" x="20" y="196" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="215" text-anchor="start">Frame buffer B</text><text class="tx-m" x="406" y="215" text-anchor="end">38 KB</text><rect class="bar-g" x="440" y="205" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="226" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="245" text-anchor="start">Frame buffer A</text><text class="tx-m" x="406" y="245" text-anchor="end">38 KB</text><rect class="bar-g" x="440" y="235" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="256" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="275" text-anchor="start">Preprocessed buffer</text><text class="tx-m" x="406" y="275" text-anchor="end">2.3 KB</text><rect class="bar" x="440" y="265" width="2.5" height="12" rx="2"/><rect class="box" x="20" y="286" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="305" text-anchor="start">Display TX buffer</text><text class="tx-m" x="406" y="305" text-anchor="end">38 KB</text><rect class="bar" x="440" y="295" width="41.7" height="12" rx="2"/><rect class="box" x="20" y="316" width="400" height="30" rx="0"/><text class="tx-t" x="34" y="335" text-anchor="start">Reserved / alignment</text><text class="tx-m" x="406" y="335" text-anchor="end">155 KB</text><rect class="bar" x="440" y="325" width="170.0" height="12" rx="2"/><text class="tx-m" x="430" y="362" text-anchor="start">0x24000000</text><text class="tx-m" x="20" y="376" text-anchor="start">bar length is size; gold is the model and its tensor arena, green the camera buffers</text></svg></figure>
                 <p>
                     All buffers are statically allocated at compile time with explicit linker section placement.
                     No dynamic memory allocation (malloc/free) is used at runtime, eliminating fragmentation
@@ -397,19 +399,19 @@
                 <h2>Performance & Validation</h2>
 
                 <div class="highlight-box">
-                    <p>System performance metrics:</p>
+                    <p>System performance metrics (approximate; the timing and power figures are rounded, marked with ~):</p>
                     <ul>
                         <li><strong>Inference time:</strong> ~45ms per frame (INT8 on Cortex-M7 at 480 MHz)</li>
                         <li><strong>Frame rate:</strong> ~15 FPS for the full loop (capture + preprocess + infer + display)</li>
-                        <li><strong>Classification accuracy:</strong> 94% on test set (less than 2% drop from float32)</li>
+                        <li><strong>Classification accuracy:</strong> 94% on the test set (less than 2 percentage points below float32)</li>
                         <li><strong>Power consumption:</strong> ~350mW during active inference</li>
-                        <li><strong>Memory usage:</strong> ~296KB of 512KB SRAM utilized</li>
+                        <li><strong>Memory usage:</strong> ~356 KB of the 512 KB AXI SRAM allocated (about 155 KB left in reserve)</li>
                     </ul>
                 </div>
 
                 <p>
-                    Validation was performed by comparing on-device inference results against the host
-                    TensorFlow model across 500+ test images, confirming bit-exact INT8 agreement and
+                    Validation was performed by comparing on-device inference results against the same INT8
+                    model run in TensorFlow Lite on the host across 500+ test images, confirming bit-exact INT8 agreement and
                     verifying no quantization artifacts in edge cases.
                 </p>
             </section>

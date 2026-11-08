@@ -673,7 +673,8 @@
     if (beh !== gold.expect) why.push('expected ' + gold.expect + ', got ' + beh);
     if (correct === false) why.push('answer wrong');
     if (cp.recall != null && cp.recall < 1) why.push('missing citation');
-    if (toolOK === false) why.push('tool call wrong');
+    /* say why the tool check failed: no call at all, the right call that did not run, a call the reviewer would reject that ran anyway, or the wrong call */
+    if (toolOK === false) why.push(!userCall ? 'no tool call' : L.toolMatch(userCall, gold.tool) ? (userCall.executed ? 'ran a call the reviewer rejects' : 'tool call did not run') : 'tool call wrong');
     viol.forEach(function (x) { why.push(x); });
     return { behaviour: beh, correct: correct, cite: cp, predDocs: predDocs, toolOK: toolOK, refusalOK: refusalOK, violations: viol, pass: pass, why: why.join('; ') };
   };

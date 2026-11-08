@@ -953,7 +953,7 @@
           <tr><td class="p">inflation_radius</td><td class="p">0.55 m</td><td>cost decays to 0 beyond this</td></tr>
           <tr><td class="p">cost_scaling_factor</td><td class="p">3.0</td><td>exponential decay rate</td></tr>
         </table>
-        <p style="margin-top:8px"><code>cost = 253 &middot; exp(&minus;3.0 &middot; (d &minus; 0.22))</code> for 0.22&nbsp;m &lt; d &lt; 0.55&nbsp;m; cells inside an obstacle are <strong>lethal (254)</strong>. Walls (static layer) and obstacles (obstacle layer) are rasterised into one 8-bit grid, and <code>d</code> comes from a <strong>3&times;3 chamfer distance transform</strong> over that grid, the same O(cells) trick <code>nav2_costmap_2d</code> uses instead of a brute-force distance query, which is what makes every planner and controller lookup O(1). The whole grid is rebuilt at <strong>5&nbsp;Hz</strong>, so moving obstacles genuinely change the cost the planner sees. The <em>Global Costmap</em> button draws the entire grid; the <em>Local Costmap</em> button draws the 3&nbsp;m&nbsp;&times;&nbsp;3&nbsp;m rolling window the controller actually checks, with its live count of cells at or above the inscribed cost.</p>
+        <p style="margin-top:8px"><code>cost = 252 &middot; exp(&minus;3.0 &middot; (d &minus; 0.22))</code> for 0.22&nbsp;m &lt; d &lt; 0.55&nbsp;m (252 is <code>INSCRIBED_INFLATED_OBSTACLE &minus; 1</code>, as in <code>nav2_costmap_2d</code>), so cost falls from 252 at the inscribed radius to about 94 at the inflation radius and is 0 beyond it; cells within the inscribed radius are <strong>253</strong> and cells inside an obstacle are <strong>lethal (254)</strong>. Walls (static layer) and obstacles (obstacle layer) are rasterised into one 8-bit grid, and <code>d</code> comes from a <strong>3&times;3 chamfer distance transform</strong> over that grid, an O(cells) pass in the spirit of the wavefront expansion in the <code>nav2_costmap_2d</code> inflation layer, so every planner and controller lookup is O(1). The whole grid is rebuilt at <strong>5&nbsp;Hz</strong>, so moving obstacles genuinely change the cost the planner sees. The <em>Global Costmap</em> button draws the entire grid; the <em>Local Costmap</em> button draws the 3&nbsp;m&nbsp;&times;&nbsp;3&nbsp;m rolling window the controller actually checks, with its live count of cells at or above the inscribed cost.</p>
       </div>
 
       <div class="d-help-section">
@@ -1077,23 +1077,27 @@
                     </div>
                     <div class="legend-body">
                         <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, var(--ai), #1F6F4A); box-shadow: 0 0 8px var(--ai);"></div>
+                        <div class="legend-color" style="background: #151B19; border: 2px solid #6B7176; border-radius: 50%;"></div>
                         <span>Robot</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, var(--warning), var(--warning)); box-shadow: 0 0 8px var(--warning);"></div>
+                        <div class="legend-color" style="background: #C4AE84; border-radius: 50%;"></div>
                         <span>Goal</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, var(--s1), #6FB59A);"></div>
-                        <span>Path</span>
+                        <div class="legend-color" style="background: #B39B6E; height: 4px; align-self: center;"></div>
+                        <span>Global path</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, #8b4513, #6b3410);"></div>
+                        <div class="legend-color" style="background: linear-gradient(135deg, #8F7A52, #5E4F33);"></div>
                         <span>Furniture</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: linear-gradient(135deg, var(--s1), #B39B6E); border-radius: 50%;"></div>
+                        <div class="legend-color" style="background: linear-gradient(135deg, #C4AE84, #9C8457);"></div>
+                        <span>Box</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #B39B6E; border-radius: 50%;"></div>
                         <span>Person</span>
                     </div>
                     <div class="legend-item">
@@ -1101,8 +1105,12 @@
                         <span>Walls</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: var(--s5); border-radius: 50%;"></div>
+                        <div class="legend-color" style="background: #B39B6E; width: 6px; height: 6px; margin: 0 3px;"></div>
                         <span>AMCL particles</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(90deg, #6FB59A, #C4AE84 70%, #E07A7A);"></div>
+                        <span>Cost: low, inscribed, lethal</span>
                     </div>
                     </div>
                 </div>
@@ -1360,7 +1368,7 @@
       <div>
         <h3>Formulas &amp; references</h3>
         <ul>
-          <li>Inflation layer: <code>cost = 253 &middot; exp(&minus;cost_scaling_factor &middot; (d &minus; inscribed_radius))</code> for <code>inscribed_radius &lt; d &lt; inflation_radius</code>, with <code>d</code> from a two-sweep 3&times;3 chamfer distance transform (1, &radic;2 weights), within a few percent of the exact Euclidean distance.</li>
+          <li>Inflation layer: <code>cost = 252 &middot; exp(&minus;cost_scaling_factor &middot; (d &minus; inscribed_radius))</code> for <code>inscribed_radius &lt; d &lt; inflation_radius</code>, with <code>d</code> from a two-sweep 3&times;3 chamfer distance transform (1, &radic;2 weights), within a few percent of the exact Euclidean distance.</li>
           <li>Octile heuristic: <code>h = (dx + dy) + (&radic;2 &minus; 2)&middot;min(dx, dy)</code>, admissible and consistent for 8-connected grids with unit/&radic;2 step costs.</li>
           <li>Pure pursuit: <code>&kappa; = 2&middot;sin(&alpha;) / L_d</code>, <code>&omega; = &kappa;&middot;v</code>, with curvature, proximity and approach regulation (Macenski, Moore, Lu, Merzlyakov &amp; Ferguson, 2023, <em>From the desks of ROS maintainers: a survey of modern &amp; capable mobile robotics algorithms in the robot operating system 2</em>).</li>
           <li>Particle filter: sampled odometry motion model and likelihood-field range model, low-variance resampling, <code>N_eff = 1 / &Sigma;w&sup2;</code> (Thrun, Burgard &amp; Fox, 2005, <em>Probabilistic Robotics</em>, ch. 5, 6 and 8).</li>
@@ -2271,13 +2279,15 @@
         // A pose the robot footprint may occupy: never lethal, never inside the inscribed band.
         function isTraversable(x, y) { return cellCost(x, y) < INSCRIBED_COST; }
 
+        // Site palette: inflation cost ramps from green (low) to gold (high), the
+        // inscribed band is gold and lethal cells are red.
         function costColour(cost, data, k) {
-            if (cost >= LETHAL_COST) { data[k] = 236; data[k + 1] = 72; data[k + 2] = 153; data[k + 3] = 165; }
-            else if (cost >= INSCRIBED_COST) { data[k] = 239; data[k + 1] = 68; data[k + 2] = 68; data[k + 3] = 120; }
+            if (cost >= LETHAL_COST) { data[k] = 224; data[k + 1] = 122; data[k + 2] = 122; data[k + 3] = 175; }
+            else if (cost >= INSCRIBED_COST) { data[k] = 196; data[k + 1] = 174; data[k + 2] = 132; data[k + 3] = 150; }
             else if (cost > 0) {
                 const t = cost / (INSCRIBED_COST - 1);
-                data[k] = Math.round(6 + t * 50); data[k + 1] = Math.round(182 - t * 70); data[k + 2] = 212;
-                data[k + 3] = Math.round(16 + t * 90);
+                data[k] = Math.round(111 + t * 68); data[k + 1] = Math.round(181 - t * 26); data[k + 2] = Math.round(154 - t * 44);
+                data[k + 3] = Math.round(18 + t * 92);
             } else { data[k + 3] = 0; }
         }
 
@@ -3201,7 +3211,7 @@
 
                 // Inflation layer
                 if (showInflation) {
-                    ctx.fillStyle = 'rgba(248, 113, 113, 0.12)';
+                    ctx.fillStyle = 'rgba(224, 122, 122, 0.12)';
                     if (obs.shape === 'rect') {
                         const hw = obs.width / 2;
                         const hh = obs.height / 2;
@@ -3241,13 +3251,13 @@
                     switch(obs.type) {
                         case 'furniture':
                             grad = ctx.createLinearGradient(x, y, x + w, y + h);
-                            grad.addColorStop(0, '#a0522d');
-                            grad.addColorStop(0.5, '#8b4513');
-                            grad.addColorStop(1, '#6b3410');
+                            grad.addColorStop(0, '#8F7A52');
+                            grad.addColorStop(0.5, '#7D6A45');
+                            grad.addColorStop(1, '#5E4F33');
                             ctx.fillStyle = grad;
                             ctx.fillRect(x, y, w, h);
                             // Wood grain effect
-                            ctx.strokeStyle = 'rgba(101, 67, 33, 0.3)';
+                            ctx.strokeStyle = 'rgba(7, 18, 14, 0.3)';
                             ctx.lineWidth = 1;
                             for (let i = 0; i < 3; i++) {
                                 ctx.beginPath();
@@ -3258,12 +3268,12 @@
                             break;
                         case 'box':
                             grad = ctx.createLinearGradient(x, y, x + w, y + h);
-                            grad.addColorStop(0, '#cd853f');
-                            grad.addColorStop(1, '#8b6534');
+                            grad.addColorStop(0, '#C4AE84');
+                            grad.addColorStop(1, '#9C8457');
                             ctx.fillStyle = grad;
                             ctx.fillRect(x, y, w, h);
                             // Box tape lines
-                            ctx.strokeStyle = '#d2691e';
+                            ctx.strokeStyle = '#DCCBA6';
                             ctx.lineWidth = 2;
                             ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
                             break;
@@ -3556,7 +3566,7 @@
                 );
                 bodyGrad.addColorStop(0, '#2E3438');
                 bodyGrad.addColorStop(0.7, '#151B19');
-                bodyGrad.addColorStop(1, '#0d1117');
+                bodyGrad.addColorStop(1, '#07120E');
                 ctx.fillStyle = bodyGrad;
                 ctx.beginPath();
                 ctx.arc(robotX, robotY, robotR * 0.8, 0, Math.PI * 2);
@@ -3641,7 +3651,7 @@
                     goalX, goalY, 0,
                     goalX, goalY, 0.3 * SCALE
                 );
-                goalGrad.addColorStop(0, 'rgba(251, 191, 36, 0.4)');
+                goalGrad.addColorStop(0, 'rgba(196, 174, 132, 0.45)');
                 goalGrad.addColorStop(1, 'rgba(196,174,132, 0.2)');
                 ctx.fillStyle = goalGrad;
                 ctx.beginPath();

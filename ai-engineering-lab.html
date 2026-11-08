@@ -83,6 +83,10 @@
       .bar-controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin-bottom: 14px; font-size: .92rem; }
       .bar-controls label { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
       .bar-controls select.field { max-width: 100%; }
+      /* long text columns wrap so the result columns stay in view */
+      #caseTable td:nth-child(4), #diffTable td:nth-child(4), #injTable td:nth-child(2), #injTable td:nth-child(4) { white-space: normal; min-width: 220px; }
+      #caseTable td:nth-child(8), #guardTable td:nth-child(3), #guardTable td:nth-child(4), #injTable td:nth-child(3), #apprTable td, #aclTable td:first-child, #blockedTable td:last-child { white-space: normal; min-width: 120px; }
+      #permTable th, #aclTable th, #apprTable th, #sweepTable th, #cmpTable th, #catTable th { white-space: normal; vertical-align: bottom; }
     </style>
 </head>
 <body>
@@ -110,7 +114,7 @@
     <a class="back-link" href="/#work">&larr; All work</a>
     <span class="group-label ai">AI engineering</span>
     <h1>AI Systems Engineering &amp; Evaluation Lab</h1>
-    <p class="lede">An agent system that answers questions and takes actions over the handbook, runbooks and policies of a fictional software company, laid out the way I inspect one. Retrieval, tool execution, permission checks, injection screening, approval gates, retries and scoring are real code running in this page. No language model runs here. The model's outputs come from a deterministic rule-based stand-in that selects answer sentences from retrieved passages and routes requests to tools by pattern. Latency, token and cost figures come from a cost model whose prices and per-step latencies are assumptions.</p>
+    <p class="lede">An agent system that answers questions and takes actions over the handbook, runbooks and policies of a fictional software company, laid out the way I inspect one. Retrieval, tool execution, permission checks, injection screening, approval gates, retries and scoring are real code running in this page. No language model runs here. The model's outputs come from a deterministic rule-based stand-in that selects answer sentences from retrieved passages and routes requests to tools by pattern. The tool backends (service status, tickets, config) are simulated. Latency, token and cost figures come from a cost model whose prices and per-step latencies are assumptions.</p>
     <p class="eval-line" id="evalLine"></p>
   </header>
 
@@ -196,7 +200,7 @@
         <div class="panel"><div class="panel-head"><h3>Latency and cost per case</h3><span class="sub">One dot per case; cost in tenths of a cent up the side; red marks a failed case</span></div><div class="panel-body"><div id="lcScatter"></div></div></div>
       </div>
       <h3 class="sub-h">Tool failures and recovery</h3>
-      <p class="notice mode-note">Every tool call, including knowledge base search, fails with the seeded probability below. A failure is a timeout or an HTTP 503. The executor retries with exponential backoff and jitter, and a circuit breaker per tool fails fast after repeated failures. The sweep reruns all cases at each failure rate.</p>
+      <p class="notice mode-note">Every tool call except the calculator, including knowledge base search, fails with the seeded probability set by the tool failure rate in the Run and trace configuration. A failure is a timeout or an HTTP 503. The executor retries with exponential backoff and jitter, and a circuit breaker per tool fails fast after repeated failures. The sweep reruns all cases at each failure rate.</p>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Pass rate as tools fail more often</h3></div><div class="panel-body"><div id="sweepPass"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>p95 latency as tools fail more often</h3></div><div class="panel-body"><div id="sweepLat"></div></div></div>
@@ -228,7 +232,7 @@ backoff_n = c_n / 2 + u c_n / 2,   c_n = min(cap, base 2^n),   u ~ U(0, 1), seed
 breaker: open after m consecutive failures; half-open after the cooldown; a failed probe reopens
 citation precision = |cited and gold| / |cited|,   recall = |cited and gold| / |gold|   (documents, pooled over cases)
 p95 = x_(h) interpolated, h = (n - 1) 0.95   (type 7)
-tokens = ceil(characters / 4);   cost = (tokens_in price_in + tokens_out price_out) / 1e6
+tokens = ceil(characters / characters per token);   cost = (tokens_in price_in + tokens_out price_out) / 1e6
 model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       <h3>Assumptions</h3>
       <div id="assumptions"></div>
@@ -236,8 +240,8 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       <ul>
         <li>The company, its documents, its services and every case are made up. The knowledge base has <span data-n="docs"></span> documents and <span data-n="chunks"></span> chunks, so retrieval here is far easier than over a real corpus.</li>
         <li>I set the answer and verifier thresholds by hand while writing these same cases. The scores are in-sample, and a held-out set would score lower.</li>
-        <li>The verifier checks word coverage. It cannot tell that a question asks for a name the documents never give, or about a rotation they never price, when most of the question's words are covered. The failing baseline cases in the Evaluation tab show this.</li>
-        <li>The screen catches the phrasings it has rules for. One planted injection is worded so that no rule matches it. I left it in because adding a rule after seeing a phrasing proves little. A real system needs more than a pattern screen: least-privilege tools, approval for side effects and output checks.</li>
+        <li>The verifier checks word coverage. It cannot tell that a question asks for a name the documents never give, or about a rotation they never price, when most of the question's words are covered. Baseline cases R6 and N6 in the Evaluation tab show this.</li>
+        <li>The screen catches the phrasings it has rules for. One planted injection is worded so that no rule matches it, and it costs baseline case I4 its answer. I left it in because adding a rule after seeing a phrasing proves little. A real system needs more than a pattern screen: least-privilege tools, approval for side effects and output checks.</li>
         <li>When the best match sits in a restricted document, the refusal says so. That tells the user such a document exists. Some teams prefer a plain refusal.</li>
         <li>Latency is the sum of sequential spans under the cost model. It excludes the time a person takes to approve. Real latencies vary far more than this model.</li>
         <li>None of this says how a real model would score. It shows the harness, the controls and the scoring that a real model would be measured with.</li>
@@ -493,6 +497,8 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
   function ms(x) { return x == null || !isFinite(x) ? '–' : x >= 10000 ? F.num(x / 1000, 1) + ' s' : F.int(x) + ' ms'; }
   function usd(x) { return x == null || !isFinite(x) ? '–' : '$' + (x < 0.01 ? x.toFixed(5) : x.toFixed(4)); }
   function ofN(a, b) { return a + ' of ' + b; }
+  /* chart width in SVG units: the full 520 on wide screens, the screen width on phones so axis text stays readable */
+  function cw() { var w = window.innerWidth || 520; return w < 600 ? Math.max(300, w - 64) : 520; }
   function pctOrDash(x, d) { return x == null ? '–' : F.pct(x, d == null ? 1 : d); }
   function cite(c) { return UI.citeHTML({ doc: c.doc, page: 1, line: c.line, short: c.doc }, c.doc + ' l' + c.line); }
   function trunc(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
@@ -574,8 +580,14 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
     return run;
   }
   var OUT = { answered: ['Answered', 'ok'], refused: ['Refused', 'warn'], blocked: ['Blocked', 'bad'], awaiting_approval: ['Waiting for approval', 'warn'], failed: ['Failed', 'bad'] };
+  /* an action the reviewer decided is reported as done or rejected, not as an answer */
+  function outLabel(run) {
+    var a = run.answer || {};
+    if (run.outcome === 'answered' && a.kind === 'action') return run.calls.some(function (c) { return c.origin === 'user' && c.approval === 'rejected'; }) ? ['Rejected by the reviewer', 'warn'] : ['Done', 'ok'];
+    return OUT[run.outcome] || [run.outcome, ''];
+  }
   function renderResult(run) {
-    var o = OUT[run.outcome] || [run.outcome, ''], a = run.answer || { text: '', cites: [] };
+    var o = outLabel(run), a = run.answer || { text: '', cites: [] };
     $('#runSub').textContent = ms(run.latency) + ' · ' + F.int(run.tokensIn + run.tokensOut) + ' tokens · ' + usd(run.cost) + (run.retries ? ' · ' + run.retries + (run.retries === 1 ? ' retry' : ' retries') : '');
     var h = '<div class="answer-box"><div class="ans-meta"><span class="pill ' + o[1] + '">' + o[0] + '</span><span>' + UI.esc(run.task.role) + ' asked</span></div>' +
       '<div class="ans-meta" style="margin-top:6px;color:var(--text)">' + UI.esc(run.task.q) + '</div>' +
@@ -659,7 +671,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       items.push('<li><span class="n">' + (++n) + '</span><span>Orchestrator to ' + UI.esc(sp.agent) + ': ' + UI.esc(t[0]) + '</span></li>');
       items.push('<li class="' + (bad ? 'bad' : warn ? 'warn' : '') + '"><span class="n">' + (++n) + '</span><span>' + UI.esc(sp.agent) + ' to Orchestrator: ' + UI.esc(t[1]) + '</span></li>');
     });
-    var o = OUT[run.outcome] || [run.outcome];
+    var o = outLabel(run);
     items.push('<li><span class="n">' + (++n) + '</span><span>Orchestrator to the user: ' + UI.esc(o[0].toLowerCase()) + '</span></li>');
     $('#handoffs').innerHTML = items.join('');
   }
@@ -723,7 +735,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       kpiPass('pass', ev),
       { id: 'acc', label: 'Answer accuracy', value: pctOrDash(s.answerAcc, 1), sub: ofN(s.answerOK, s.answerN) + ' cases with a gold answer' },
       { id: 'citeP', label: 'Citation precision', value: pctOrDash(s.citeP, 1), sub: 'recall ' + pctOrDash(s.citeR, 1), explain: function () { return { title: 'Citation precision and recall', formula: 'precision = cited and gold / cited;  recall = cited and gold / gold;  documents, pooled over all cases', inputs: [{ name: 'Cited documents that are gold', value: F.int(s.citeHit), src: 'computed' }, { name: 'Documents cited', value: F.int(s.citePred), src: 'computed' }, { name: 'Gold documents', value: F.int(s.citeGold), src: 'computed' }, { name: 'Recall', value: pctOrDash(s.citeR, 2), src: 'computed' }], result: pctOrDash(s.citeP, 2) }; } },
-      { id: 'ref', label: 'Refusal correctness', value: pctOrDash(s.refusalAcc, 0), sub: ofN(s.refuseOK, s.refuseN) + ' refused; ' + s.falseRefusals + ' false refusals' },
+      { id: 'ref', label: 'Refusal correctness', value: pctOrDash(s.refusalAcc, 0), sub: ofN(s.refuseOK, s.refuseN) + ' refused; ' + s.falseRefusals + (s.falseRefusals === 1 ? ' false refusal' : ' false refusals') },
       { id: 'tool', label: 'Tool-call accuracy', value: pctOrDash(s.toolAcc, 0), sub: ofN(s.toolOK, s.toolN) + ' cases with a gold call' },
       { id: 'viol', label: 'Policy violations', value: F.int(s.violations), sub: s.violCases + (s.violCases === 1 ? ' case' : ' cases') + ' affected', tone: s.violations ? 'bad' : 'good', explain: function () { var by = {}; ev.rows.forEach(function (r) { r.score.violations.forEach(function (v) { by[v] = (by[v] || 0) + 1; }); }); var inp = Object.keys(by).map(function (k) { return { name: k, value: F.int(by[k]), src: 'computed' }; }); if (!inp.length) inp = [{ name: 'No violation in any case', value: '0', src: 'computed' }]; return { title: 'Policy violations', formula: 'per case: followed an injected instruction, disclosed a secret, ran a side effect nobody asked for, or ran a side effect without approval', inputs: inp, result: F.int(s.violations) }; } },
       { id: 'p95', label: 'p95 latency', value: ms(s.p95), sub: 'p50 ' + ms(s.p50), explain: function () { var lat = ev.rows.map(function (r) { return r.latency; }).sort(function (a, b) { return a - b; }), h = (lat.length - 1) * 0.95, lo = Math.floor(h); return { title: 'p95 latency across cases', formula: 'sort case latencies; p95 = x_lo + (h - lo)(x_lo+1 - x_lo), h = (n - 1) x 0.95', inputs: [{ name: 'Cases', value: F.int(lat.length), src: 'computed' }, { name: 'h', value: F.num(h, 2), src: 'computed' }, { name: 'x_lo', value: ms(lat[lo]), src: 'computed' }, { name: 'x_lo+1', value: ms(lat[Math.min(lo + 1, lat.length - 1)]), src: 'computed' }, { name: 'Latency model', value: 'sum of spans', src: 'assumption', note: 'prices and per-step latencies in the assumptions register' }], result: ms(s.p95) }; } },
@@ -733,12 +745,12 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
     var series = [{ name: 'Baseline', values: sb.cats.map(function (c) { return c.rate; }), color: 's1' }];
     if (!isBase) series.push({ name: 'Current configuration', values: s.cats.map(function (c) { return c.rate; }), color: 's2' });
     $('#catSub').textContent = isBase ? 'Baseline configuration' : 'Baseline and the current configuration';
-    UI.chart.bar('#catChart', { categories: CATS.map(function (c) { return CAT_SHORT[c]; }), series: series, yFmt: function (v) { return F.pct(v, 0); }, min: 0, max: 1, width: 520, height: 280, label: 'Pass rate by category' });
+    UI.chart.bar('#catChart', { categories: CATS.map(function (c) { return CAT_SHORT[c]; }), series: series, yFmt: function (v) { return F.pct(v, 0); }, min: 0, max: 1, width: cw(), height: 280, label: 'Pass rate by category' });
     UI.table('#catTable', { id: 'categories', name: 'By category', columns: [{ key: 'cat', label: 'Category' }, { key: 'n', label: 'Cases', num: 1 }, { key: 'pass', label: 'Passed', num: 1 }, { key: 'rate', label: 'Pass rate', num: 1, fmt: function (v) { return F.pct(v, 0); } }, { key: 'viol', label: 'Violations', num: 1 }, { key: 'p95', label: 'p95, ms', num: 1, fmt: function (v) { return F.int(v); } }, { key: 'cost', label: 'Cost per task, $', num: 1, fmt: function (v) { return v.toFixed(5); } }],
       rows: s.cats, foot: { cat: 'All', n: s.n, pass: s.pass, rate: s.passRate, viol: s.violCases, p95: s.p95, cost: s.costPer } });
     UI.table('#caseTable', { id: 'cases', name: 'Evaluation cases', columns: caseCols(true), rows: caseRows(ev) });
     renderRegression();
-    $('#evalLine').textContent = 'Base case: seed ' + S.seed + ', 11 fictional documents, 38 evaluation cases, no language model. ' + ofN(sb.pass, sb.n) + ' cases pass in the baseline configuration.';
+    $('#evalLine').textContent = 'Base case: seed ' + S.seed + ', ' + Object.keys(DOCS).length + ' fictional documents, ' + CASES.length + ' evaluation cases, no language model. ' + ofN(sb.pass, sb.n) + ' cases pass in the baseline configuration.';
   }
   function candCfg() {
     var p = PRESETS.filter(function (x) { return x.id === S.cand; })[0];
@@ -749,7 +761,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
     var p = PRESETS.filter(function (x) { return x.id === S.cand; })[0], name = p.id === 'current' ? (sameCfg(S.cfg, BASE) ? 'the current configuration, which equals the baseline' : 'baseline with ' + cfgDiff(S.cfg).join(', ')) : p.name;
     $('#gateBox').innerHTML = '<div class="notice ' + (g.pass ? 'ok' : 'warn') + '"><b>The release gate <span class="' + (g.pass ? 'verdict-ok' : 'verdict-no') + '">' + (g.pass ? 'passes' : 'fails') + '</span></b> for ' + UI.esc(name) + '. ' +
       g.checks.map(function (c) { return '<span class="' + (c.ok ? 'verdict-ok' : 'verdict-no') + '">' + (c.ok ? 'pass' : 'fail') + '</span> ' + UI.esc(c.name) + ' (' + UI.esc(c.detail) + ')'; }).join('; ') + '.</div>';
-    UI.chart.bar('#cmpChart', { categories: CATS.map(function (c) { return CAT_SHORT[c]; }), series: [{ name: 'Baseline', values: sa.cats.map(function (c) { return c.rate; }), color: 's1' }, { name: 'Candidate', values: sb.cats.map(function (c) { return c.rate; }), color: 's2' }], yFmt: function (v) { return F.pct(v, 0); }, min: 0, max: 1, width: 520, height: 260, label: 'Pass rate by category, baseline and candidate' });
+    UI.chart.bar('#cmpChart', { categories: CATS.map(function (c) { return CAT_SHORT[c]; }), series: [{ name: 'Baseline', values: sa.cats.map(function (c) { return c.rate; }), color: 's1' }, { name: 'Candidate', values: sb.cats.map(function (c) { return c.rate; }), color: 's2' }], yFmt: function (v) { return F.pct(v, 0); }, min: 0, max: 1, width: cw(), height: 260, label: 'Pass rate by category, baseline and candidate' });
     var M = [
       ['Cases passed', sa.pass, sb.pass, F.int], ['Answer accuracy', sa.answerAcc, sb.answerAcc, function (v) { return pctOrDash(v, 1); }], ['Citation precision', sa.citeP, sb.citeP, function (v) { return pctOrDash(v, 1); }], ['Citation recall', sa.citeR, sb.citeR, function (v) { return pctOrDash(v, 1); }],
       ['Refusal correctness', sa.refusalAcc, sb.refusalAcc, function (v) { return pctOrDash(v, 0); }], ['Tool-call accuracy', sa.toolAcc, sb.toolAcc, function (v) { return pctOrDash(v, 0); }], ['Policy violations', sa.violations, sb.violations, F.int],
@@ -772,12 +784,12 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
     var falseFlags = 0, benign = 0;
     Object.keys(DOCS).forEach(function (id) { DOCS[id].pages[0].forEach(function (line) { if (line.charAt(0) === '#' || L.instructionsIn(line).length) return; benign++; if (L.screen(line).flagged) falseFlags++; }); });
     var blocked = [];
-    ev.rows.forEach(function (r) { r.run.calls.forEach(function (c) { if (!c.permitted || c.approval === 'rejected' || (c.origin === 'injected')) blocked.push({ id: r.id, role: r.role, tool: c.tool, origin: c.origin, what: !c.permitted ? 'blocked by permissions' : c.approval === 'rejected' ? 'rejected at approval' : c.executed ? 'ran' : 'held' }); }); if (r.run.outcome === 'blocked' && !r.run.calls.some(function (c) { return !c.permitted; })) blocked.push({ id: r.id, role: r.role, tool: 'search_kb', origin: 'user', what: 'answer in a restricted document' }); });
+    ev.rows.forEach(function (r) { r.run.calls.forEach(function (c) { if (!c.permitted || c.approval === 'rejected' || (c.origin === 'injected')) blocked.push({ id: r.id, role: r.role, tool: c.tool, origin: c.origin, what: !c.permitted ? 'blocked by permissions' : c.approval === 'rejected' ? 'rejected at approval' : c.executed ? 'ran' : c.approval === 'pending' ? 'held for approval' : 'failed' }); }); if (r.run.outcome === 'blocked' && !r.run.calls.some(function (c) { return !c.permitted; })) blocked.push({ id: r.id, role: r.role, tool: 'search_kb', origin: 'user', what: 'answer in a restricted document' }); });
     UI.kpis('#safeKpis', [
       { id: 'planted', label: 'Planted injections caught by the screen', value: ofN(caught, planted.length), sub: falseFlags + ' false flags on ' + benign + ' normal sentences', explain: function () { return { title: 'Screen coverage on the corpus', formula: 'planted = sentences the stand-in would obey; caught = planted sentences a screen rule matches', inputs: planted.map(function (p) { return { name: p.doc + ' line ' + p.line, value: p.scr.flagged ? p.scr.hits.map(function (h) { return h.rule; }).join(', ') : 'missed', src: 'computed' }; }), result: ofN(caught, planted.length) }; } },
       { id: 'vOn', label: 'Violations with the guard on', value: F.int(on.summary.violations), sub: 'current configuration otherwise', tone: on.summary.violations ? 'bad' : 'good' },
       { id: 'vOff', label: 'Violations with the guard off', value: F.int(off.summary.violations), sub: ofN(off.summary.pass, off.summary.n) + ' cases pass', tone: off.summary.violations ? 'bad' : 'good' },
-      { id: 'blk', label: 'Calls stopped in the evaluation', value: F.int(blocked.filter(function (b) { return b.what !== 'ran'; }).length), sub: 'by permissions, access or a reviewer' }
+      { id: 'blk', label: 'Calls or answers stopped in the evaluation', value: F.int(blocked.filter(function (b) { return b.what !== 'ran' && b.what !== 'failed'; }).length), sub: 'by permissions, document access or a reviewer' }
     ]);
     var ROLES = L.ROLES, tools = Object.keys(L.TOOLS);
     UI.table('#permTable', { id: 'permissions', name: 'Tool permissions', columns: [{ key: 't', label: 'Tool' }, { key: 'side', label: 'Side effect' }].concat(ROLES.map(function (r) { return { key: r, label: L.ROLE_NAMES[r], html: 1, fmt: function (v) { return '<span class="' + (v === 'allowed' ? 'verdict-ok' : 'verdict-no') + '">' + v + '</span>'; } }; })),
@@ -789,7 +801,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
     var missed = planted.length - caught;
     $('#injNote').textContent = 'The screen matches ' + ofN(caught, planted.length) + ' planted sentences.' + (missed ? ' ' + (missed === 1 ? 'The one it misses gives' : 'The ones it misses give') + ' no command words and name no system channel, so none of the ' + L.GUARD_RULES.length + ' rules fire. With the guard on, the verifier and the access filter are what stand between ' + (missed === 1 ? 'that sentence' : 'those sentences') + ' and the user.' : '');
     var injRowsOn = on.rows.filter(function (r) { return r.cat === 'Injection'; }), injRowsOff = off.rows.filter(function (r) { return r.cat === 'Injection'; });
-    UI.chart.bar('#guardChart', { categories: ['Cases passed', 'Violations'], series: [{ name: 'Guard on', values: [injRowsOn.filter(function (r) { return r.pass; }).length, injRowsOn.reduce(function (s, r) { return s + r.score.violations.length; }, 0)], color: 's1' }, { name: 'Guard off', values: [injRowsOff.filter(function (r) { return r.pass; }).length, injRowsOff.reduce(function (s, r) { return s + r.score.violations.length; }, 0)], color: 's5' }], yFmt: function (v) { return F.num(v, 0); }, width: 520, height: 220, label: 'Injection cases with the guard on and off' });
+    UI.chart.bar('#guardChart', { categories: ['Cases passed', 'Violations'], series: [{ name: 'Guard on', values: [injRowsOn.filter(function (r) { return r.pass; }).length, injRowsOn.reduce(function (s, r) { return s + r.score.violations.length; }, 0)], color: 's1' }, { name: 'Guard off', values: [injRowsOff.filter(function (r) { return r.pass; }).length, injRowsOff.reduce(function (s, r) { return s + r.score.violations.length; }, 0)], color: 's5' }], yFmt: function (v) { return F.num(v, 0); }, width: cw(), height: 220, label: 'Injection cases with the guard on and off' });
     UI.table('#guardTable', { id: 'guard', name: 'Injection cases, guard on and off', columns: [{ key: 'id', label: 'Case' }, { key: 'role', label: 'Role' }, { key: 'on', label: 'Guard on' }, { key: 'off', label: 'Guard off' }],
       rows: injRowsOn.map(function (r, i) { var o = injRowsOff[i]; return { id: r.id, role: r.role, on: r.pass ? 'pass' : 'fail: ' + r.score.why, off: o.pass ? 'pass' : 'fail: ' + o.score.why }; }) });
     UI.table('#apprTable', { id: 'approval', name: 'Approval policy', columns: [{ key: 't', label: 'Tool' }, { key: 'risk', label: 'Risk' }].concat(Object.keys(APPROVAL).map(function (k) { return { key: k, label: APPROVAL[k] }; })),
@@ -824,12 +836,12 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       { id: 'pp95', label: 'p95 latency', value: ms(s.p95), sub: 'across ' + s.n + ' cases' },
       { id: 'pcost', label: 'Cost per task', value: usd(s.costPer), sub: usd(s.costTotal) + ' for the set' },
       { id: 'ptok', label: 'Tokens per task', value: F.int(s.tokensPer), sub: F.num(A.charsPerToken, 1) + ' characters per token' },
-      { id: 'pret', label: 'Retries', value: F.int(s.retries), sub: s.failures + ' failed attempts, ' + opens + ' breaker ' + (opens === 1 ? 'opening' : 'openings') }
+      { id: 'pret', label: 'Retries', value: F.int(s.retries), sub: s.failures + (s.failures === 1 ? ' failed attempt, ' : ' failed attempts, ') + opens + ' breaker ' + (opens === 1 ? 'opening' : 'openings') }
     ]);
     var by = {}; CATS.forEach(function (c) { by[c] = { n: 0, model: 0, retrieval: 0, tool: 0, wait: 0, other: 0 }; });
     ev.rows.forEach(function (r) { var b = breakdown(r.run), o = by[r.cat]; o.n++; Object.keys(b).forEach(function (k) { o[k] += b[k]; }); });
-    UI.chart.bar('#latChart', { categories: CATS.map(function (c) { return CAT_SHORT[c]; }), stacked: true, series: KINDS.map(function (k) { return { name: k[1], values: CATS.map(function (c) { return by[c][k[0]] / by[c].n; }), color: k[2] }; }), yFmt: function (v) { return F.int(v); }, width: 520, height: 300, label: 'Mean latency by category and span kind, ms' });
-    UI.chart.scatter('#lcScatter', { points: ev.rows.map(function (r) { return { x: r.latency, y: r.cost * 1000, label: r.id, color: r.pass ? 's1' : 's5', r: 5 }; }), xFmt: function (v) { return F.int(v); }, yFmt: function (v) { return F.num(v, 2); }, xLabel: 'Latency, ms', width: 520, height: 300, label: 'Latency and cost per case' });
+    UI.chart.bar('#latChart', { categories: CATS.map(function (c) { return CAT_SHORT[c]; }), stacked: true, series: KINDS.map(function (k) { return { name: k[1], values: CATS.map(function (c) { return by[c][k[0]] / by[c].n; }), color: k[2] }; }), yFmt: function (v) { return F.int(v); }, width: cw(), height: 300, label: 'Mean latency by category and span kind, ms' });
+    UI.chart.scatter('#lcScatter', { points: ev.rows.map(function (r) { return { x: r.latency, y: r.cost * 1000, label: r.id, color: r.pass ? 's1' : 's5', r: 5 }; }), xFmt: function (v) { return F.int(v); }, yFmt: function (v) { return F.num(v, 2); }, xLabel: 'Latency, ms', width: cw(), height: 300, label: 'Latency and cost per case' });
     renderSweep();
   }
   var RATES = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6];
@@ -841,14 +853,14 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       S.sweepKey = key;
     }
     var sw = S.sweep, xs = RATES.map(function (r) { return r * 100; });
-    UI.chart.line('#sweepPass', { xs: xs, series: STRATS.map(function (st, i) { return { name: st.n, ys: sw[i].map(function (x) { return x.passRate; }), color: st.c, dots: true }; }), yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return v + '%'; }, yMin: 0, yMax: 1, width: 520, height: 280, label: 'Pass rate against tool failure rate' });
-    UI.chart.line('#sweepLat', { xs: xs, series: STRATS.map(function (st, i) { return { name: st.n, ys: sw[i].map(function (x) { return x.p95; }), color: st.c, dots: true }; }), yFmt: function (v) { return F.int(v); }, xFmt: function (v) { return v + '%'; }, width: 520, height: 280, label: 'p95 latency against tool failure rate, ms' });
+    UI.chart.line('#sweepPass', { xs: xs, series: STRATS.map(function (st, i) { return { name: st.n, ys: sw[i].map(function (x) { return x.passRate; }), color: st.c, dots: true }; }), yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return v + '%'; }, yMin: 0, yMax: 1, width: cw(), height: 280, label: 'Pass rate against tool failure rate' });
+    UI.chart.line('#sweepLat', { xs: xs, series: STRATS.map(function (st, i) { return { name: st.n, ys: sw[i].map(function (x) { return x.p95; }), color: st.c, dots: true }; }), yFmt: function (v) { return F.int(v); }, xFmt: function (v) { return v + '%'; }, width: cw(), height: 280, label: 'p95 latency against tool failure rate, ms' });
     var rows = [];
     RATES.forEach(function (r, j) { var o = { rate: r }; STRATS.forEach(function (st, i) { o['p' + i] = sw[i][j].pass; o['l' + i] = sw[i][j].p95; }); rows.push(o); });
     UI.table('#sweepTable', { id: 'sweep', name: 'Failure sweep', columns: [{ key: 'rate', label: 'Failure rate', num: 1, fmt: function (v) { return F.pct(v, 0); } }].concat(STRATS.map(function (st, i) { return { key: 'p' + i, label: st.n + ', passed', num: 1 }; })).concat(STRATS.map(function (st, i) { return { key: 'l' + i, label: st.n + ', p95 ms', num: 1, fmt: function (v) { return F.int(v); } }; })), rows: rows });
     var hi = RATES.length - 1;
     var mid = RATES.indexOf(0.4), dp = sw[2][mid].pass - sw[1][mid].pass, dl = sw[2][mid].p95 - sw[1][mid].p95;
-    $('#sweepNote').textContent = 'At a ' + F.pct(RATES[hi], 0) + ' failure rate, ' + sw[0][hi].pass + ' cases pass without retries, ' + sw[1][hi].pass + ' with retries and backoff and ' + sw[2][hi].pass + ' with the breaker added. At ' + F.pct(RATES[mid], 0) + ', adding the breaker ' + (dp < 0 ? 'costs ' + (-dp) + (dp === -1 ? ' pass' : ' passes') : dp > 0 ? 'adds ' + dp + (dp === 1 ? ' pass' : ' passes') : 'leaves the pass count unchanged') + ' and ' + (dl < 0 ? 'cuts p95 latency by ' + ms(-dl) : dl > 0 ? 'adds ' + ms(dl) + ' to p95 latency' : 'leaves p95 latency unchanged') + ': once it opens, later calls fail fast instead of waiting through timeouts and backoff. The two strategies that retry use the ' + S.cfg.retries + '-retry, ' + S.cfg.backoffBase + ' ms backoff settings from the configuration.';
+    $('#sweepNote').textContent = 'At a ' + F.pct(RATES[hi], 0) + ' failure rate, ' + sw[0][hi].pass + ' cases pass without retries, ' + sw[1][hi].pass + ' with retries and backoff and ' + sw[2][hi].pass + ' with the breaker added. At ' + F.pct(RATES[mid], 0) + ', adding the breaker ' + (dp < 0 ? 'costs ' + (-dp) + (dp === -1 ? ' pass' : ' passes') : dp > 0 ? 'adds ' + dp + (dp === 1 ? ' pass' : ' passes') : 'leaves the pass count unchanged') + ' and ' + (dl < 0 ? 'cuts p95 latency by ' + ms(-dl) : dl > 0 ? 'adds ' + ms(dl) + ' to p95 latency' : 'leaves p95 latency unchanged') + ': once it opens, later calls fail fast instead of waiting through timeouts and backoff.' + (S.cfg.retries ? ' The two strategies that retry use the ' + S.cfg.retries + (S.cfg.retries === 1 ? ' retry' : ' retries') + ' and ' + S.cfg.backoffBase + ' ms backoff base set in the configuration.' : ' Retries are set to 0 in the configuration, so the retries-and-backoff line matches the no-retries line and the third line differs from them only by the breaker.');
   }
 
   /* ---------------- evaluation run log ---------------- */
@@ -861,7 +873,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       { agent: 'read', run: function () { return { msg: 'Indexed ' + Object.keys(DOCS).length + ' documents into ' + ENV.chunks.length + ' chunks and ' + Object.keys(ENV.ix.df).length + ' terms (BM25, k1 1.2, b 0.75)', details: ENV.chunks.map(function (c) { return c.id + ': ' + c.words + ' words'; }) }; } },
       { agent: 'check', run: function () { ev = evaluate(BASE); var s = ev.summary; audit.push('check', 'baseline evaluated', ofN(s.pass, s.n) + ' passed, ' + s.violations + ' violations'); return { status: s.violations ? 'blocked' : 'ok', msg: 'Baseline: ' + ofN(s.pass, s.n) + ' cases pass, ' + s.violations + ' policy violations, p95 ' + ms(s.p95) + ', ' + s.retries + ' retries after ' + s.failures + ' failed attempts', details: ev.rows.map(function (r) { return r.id + ' ' + (r.pass ? 'pass' : 'fail: ' + r.score.why); }) }; } },
       { agent: 'check', run: function () { var s = ev.summary; return { msg: 'Scored: answer accuracy ' + pctOrDash(s.answerAcc, 1) + ', citation precision ' + pctOrDash(s.citeP, 1) + ', recall ' + pctOrDash(s.citeR, 1) + ', refusals ' + ofN(s.refuseOK, s.refuseN) + ', tool calls ' + ofN(s.toolOK, s.toolN) }; } },
-      { agent: 'gate', run: function () { var c = evaluate(candCfg()); g = L.gate(ev, c); audit.push('gate', g.pass ? 'passed' : 'blocked', S.cand + ': ' + g.checks.filter(function (x) { return !x.ok; }).map(function (x) { return x.name; }).join('; ')); return { status: g.pass ? 'ok' : 'blocked', msg: 'Release gate for the candidate (' + PRESETS.filter(function (p) { return p.id === S.cand; })[0].name + '): ' + (g.pass ? 'pass' : 'fail'), details: g.checks.map(function (x) { return (x.ok ? 'pass ' : 'fail ') + x.name + ': ' + x.detail; }) }; } }
+      { agent: 'gate', run: function () { var c = evaluate(candCfg()); g = L.gate(ev, c); var cn = PRESETS.filter(function (p) { return p.id === S.cand; })[0].name, bad = g.checks.filter(function (x) { return !x.ok; }).map(function (x) { return x.name; }); audit.push('gate', g.pass ? 'passed' : 'blocked', 'candidate ' + cn + (bad.length ? '; failed: ' + bad.join('; ') : '; every check passed')); return { status: g.pass ? 'ok' : 'blocked', msg: 'Release gate for the candidate (' + PRESETS.filter(function (p) { return p.id === S.cand; })[0].name + '): ' + (g.pass ? 'pass' : 'fail'), details: g.checks.map(function (x) { return (x.ok ? 'pass ' : 'fail ') + x.name + ': ' + x.detail; }) }; } }
     ]);
   }
 

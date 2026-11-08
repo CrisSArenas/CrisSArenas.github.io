@@ -151,6 +151,12 @@
     ok(e.rows.some(function (r) { return r.gated; }), 'stress should gate');
     near(PM.sum(e.rows.map(function (r) { return r.requested; })), PM.sum(e.rows.map(function (r) { return r.paid; })) + e.rows[e.rows.length - 1].queue, 1e-9);
   }, 'Private Capital Lab');
+  T.add('Pacing', 'Evergreen sleeve never goes negative when facility interest exceeds it', function () {
+    var req = [], ret = [], sub = [];
+    for (var q = 0; q < 12; q++) { req.push(q >= 3 && q <= 5 ? 0.4 : 0.02); ret.push(q === 3 ? -0.06 : q === 4 ? -0.03 : 0.018); sub.push(q >= 3 && q <= 7 ? 0.005 : 0.02); }
+    var e = PM.priv.evergreen({ nav0: 1000, sleevePct: 0.4, facility: 250, limitPct: 0.25, requests: req, returns: ret, sleeveReturn: 0.04, saleDiscount: 0, facilityRate: 0.07, subscriptions: sub });
+    e.rows.forEach(function (r) { ok(r.fromSleeve >= -1e-12 && r.sleeve >= -1e-12, 'quarter ' + r.q + ': sleeve ' + r.sleeve + ', paid from sleeve ' + r.fromSleeve); near(r.navAfter, r.nav - r.paid - r.saleLoss, 1e-9); });
+  }, 'Private Capital Lab');
   /* ---------------- Allocation ---------------- */
   var SIG4 = [[0.0256, 0.0112, 0.0048, 0.0010], [0.0112, 0.0324, 0.0060, 0.0015], [0.0048, 0.0060, 0.0225, 0.0020], [0.0010, 0.0015, 0.0020, 0.0036]];
   var MU4 = [0.07, 0.08, 0.075, 0.04];
@@ -256,6 +262,10 @@
     var y = 365 * 86400000, r = PM.terms.european([{ date: 0, contribution: 100 }, { date: y, distribution: 110 }], { pref: 0.08, carry: 0.2, catchUp: 1 });
     near(r.lp, 108, 1e-9); near(r.gp, 2, 1e-9);
   }, 'Fund Terms Auditor');
+  T.add('Fund terms', 'European waterfall with no catch-up goes straight to the split', function () {
+    var y = 365 * 86400000, r = PM.terms.european([{ date: 0, contribution: 100 }, { date: y, distribution: 150 }], { pref: 0.08, carry: 0.2, catchUp: 0 });
+    near(r.rows[0].tiers.catchUp, 0, 1e-12); near(r.gp, 0.2 * 42, 1e-9); near(r.lp, 100 + 8 + 0.8 * 42, 1e-9);
+  }, 'Fund Terms Auditor');
   T.add('Fund terms', 'American waterfall pays carry on winners without netting losers', function () {
     var a = PM.terms.american([{ invested: 50, proceeds: 100, years: 1 }, { invested: 50, proceeds: 30, years: 2 }], { pref: 0.08, carry: 0.2, catchUp: 1 });
     near(a.gp, 10, 1e-9);
@@ -347,6 +357,11 @@
   T.add('Co-investment', 'LBO with no growth, no leverage and flat multiples returns the fee drag only', function () {
     var o = Object.assign({}, LBO, { growth: 0, exitMargin: LBO.margin, leverage: 0, exitMultiple: 12, capex: 0, da: 0, nwc: 0, tax: 0, sweep: 0, initiatives: [], hold: 1 });
     var r = PM.lbo.model(o); near(r.equityH, r.ev0 + r.years[0].fcf, 1e-9); near(r.moic, (r.ev0 + 66) / (r.ev0 * 1.02), 1e-9);
+  }, 'Co-Investment Underwriter');
+  T.add('Co-investment', 'Initiative ramp: zero before the start year, partial while ramping, full after', function () {
+    var x = { start: 3, ramp: 2 };
+    near(PM.lbo.ramp(x, 2), 0, 0); near(PM.lbo.ramp(x, 3), 0.5, 1e-12); near(PM.lbo.ramp(x, 4), 1, 1e-12); near(PM.lbo.ramp(x, 9), 1, 1e-12); near(PM.lbo.ramp({ start: 3, ramp: 1 }, 3), 1, 1e-12);
+    var r = PM.lbo.model(Object.assign({}, LBO, { hold: 2 })); near(r.upliftH, 0.6 * 5 * 0.5, 1e-12);
   }, 'Co-Investment Underwriter');
   T.add('Co-investment', 'Fee-free co-investment lifts the blended net IRR', function () {
     var a = PM.lbo.blend({ fundGross: 2, fundHold: 5, fee: 0.015, carry: 0.2, pref: 0.08, coGross: 2, coHold: 5, ratio: 0 }), b = PM.lbo.blend({ fundGross: 2, fundHold: 5, fee: 0.015, carry: 0.2, pref: 0.08, coGross: 2, coHold: 5, ratio: 0.5 });
@@ -487,6 +502,10 @@
     var c = L.citationPR(['A', 'B', 'B'], ['A', 'C']); near(c.precision, 0.5, 1e-12); near(c.recall, 0.5, 1e-12);
     var e = L.citationPR([], []); ok(e.precision === null && e.recall === null, 'undefined when empty');
     ok(L.toolMatch({ tool: 'set_config', args: { key: 'k', value: 5 } }, { tool: 'set_config', args: { value: 5 } }) && !L.toolMatch({ tool: 'set_config', args: { value: 6 } }, { tool: 'set_config', args: { value: 5 } }), 'tool match');
+    var gold = { expect: 'approval', tool: { tool: 'set_config', args: { value: 5 } }, reviewer: 'approve' }, call = { tool: 'set_config', args: { value: 5 }, origin: 'user', approval: 'approved', executed: false, orgNeedsApproval: true };
+    var run = { outcome: 'failed', calls: [call], answer: { text: '', cites: [] } };
+    ok(L.scoreCase(run, gold).why.indexOf('tool call did not run') !== -1, 'a matching call that failed is not reported as a wrong call');
+    ok(L.scoreCase({ outcome: 'failed', calls: [], answer: { text: '', cites: [] } }, { expect: 'tool', tool: { tool: 'calculator' } }).why.indexOf('no tool call') !== -1, 'no call reported as such');
   });
   T.add('AI evaluation lab', 'Percentiles interpolate between order statistics', function () {
     var L = AL(), x = [7, 1, 3, 2, 10, 4, 6, 5, 9, 8];

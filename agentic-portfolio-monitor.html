@@ -39,16 +39,16 @@ b,strong{color:var(--text);font-weight:600}
   display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);
   border-bottom:1px solid var(--border)}
 .stepper::-webkit-scrollbar{display:none}
-.st{flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+.stepper .st{flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);
   background:var(--card);color:var(--muted);font:600 12.5px var(--sans);cursor:pointer;transition:all .18s;white-space:nowrap}
-.st:hover:not(:disabled){border-color:var(--border-strong);color:var(--text)}
+.stepper .st:hover:not(:disabled){border-color:var(--border-strong);color:var(--text)}
 .st-n{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 11.5px var(--mono);
   background:var(--card2);border:1px solid var(--border-strong);color:var(--muted)}
 .st-l{overflow:hidden;text-overflow:ellipsis}
-.st.active{border-color:color-mix(in srgb, var(--ai) 60%, transparent);background:color-mix(in srgb, var(--ai) 10%, transparent);color:var(--text)}
-.st.active .st-n{background:var(--cyan);border-color:var(--cyan);color:var(--on-primary)}
-.st.done .st-n{background:color-mix(in srgb, var(--positive) 15%, transparent);border-color:color-mix(in srgb, var(--positive) 50%, transparent);color:var(--green)}
-.st:disabled{opacity:.42;cursor:not-allowed}
+.stepper .st.active{border-color:color-mix(in srgb, var(--ai) 60%, transparent);background:color-mix(in srgb, var(--ai) 10%, transparent);color:var(--text)}
+.stepper .st.active .st-n{background:var(--cyan);border-color:var(--cyan);color:var(--on-primary)}
+.stepper .st.done .st-n{background:color-mix(in srgb, var(--positive) 15%, transparent);border-color:color-mix(in srgb, var(--positive) 50%, transparent);color:var(--green)}
+.stepper .st:disabled{opacity:.42;cursor:not-allowed}
 
 /* --------------------------------------------------------------- steps */
 .steps{max-width:1128px;margin:0 auto;padding:6px 18px 10px}
@@ -151,7 +151,7 @@ b,strong{color:var(--text);font-weight:600}
 
 @media(max-width:980px){.cols,.grid2{grid-template-columns:1fr}.keys{grid-template-columns:1fr}}
 @media(max-width:760px){.tiles,.strip{grid-template-columns:1fr 1fr}.headline{grid-template-columns:1fr}
-  .st-l{display:none}.st.active .st-l{display:inline}.st{flex:none}}
+  .stepper .st-l{display:none}.stepper .st.active .st-l{display:inline}.stepper .st{flex:none}}
 @media(max-width:520px){.regimes{grid-template-columns:1fr}.csum{grid-template-columns:1fr}
   .lrow,.lhd{grid-template-columns:64px 1fr 58px 1fr 64px}.run-wrap .hint{text-align:left}}
 
@@ -176,16 +176,16 @@ b,strong{color:var(--text);font-weight:600}
 .slv .nm small{display:block;color:var(--faint);font-size:10.5px}
 .slv .rail{position:relative;height:22px;background:var(--card2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
 .slv .band{position:absolute;top:0;bottom:0;background:color-mix(in srgb, var(--positive) 10%, transparent);border-left:1px solid color-mix(in srgb, var(--positive) 40%, transparent);border-right:1px solid color-mix(in srgb, var(--positive) 40%, transparent)}
-.slv .pol{position:absolute;top:0;bottom:0;width:2px;background:var(--border-strong)}
+.slv .pol{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ai);z-index:2}
 .slv .act{position:absolute;top:5px;height:12px;border-radius:3px;background:var(--cyan);transition:width .35s ease}
-.slv .ghost{position:absolute;top:9px;height:4px;border-radius:2px;background:var(--border)}
+.slv .ghost{position:absolute;top:-1px;bottom:-1px;width:3px;margin-left:-1.5px;border-radius:1px;background:var(--muted);opacity:.85;z-index:3}
 .slv.bad .act{background:var(--red)}
 .slv .nums{font-family:var(--mono);font-size:11.5px;text-align:right;color:var(--muted);white-space:nowrap}
 .slv .nums b{color:var(--cyan)}
 .slv.bad .nums b{color:var(--negative)}
 .slv .nums small{display:block;color:var(--faint);font-size:10.5px}
 .compact .slv{grid-template-columns:minmax(0,92px) minmax(0,1fr) 62px;margin-bottom:6px}
-.compact .slv .rail{height:16px}.compact .slv .act{top:3px;height:9px}.compact .slv .ghost{top:6px;height:3px}
+.compact .slv .rail{height:16px}.compact .slv .act{top:3px;height:9px}.compact .slv .ghost{top:1px;bottom:1px}
 
 .rules td:nth-child(2),.rules td:nth-child(3){font-size:12px}
 .ok{color:var(--positive)}.bad{color:var(--negative)}.warn{color:var(--warning)}
@@ -202,7 +202,7 @@ b,strong{color:var(--text);font-weight:600}
 .ecard .tests b{color:var(--warning);font-weight:600}
 .ecard.done{border-color:color-mix(in srgb, var(--warning) 50%, transparent);background:color-mix(in srgb, var(--warning) 6%, transparent);cursor:default}
 .ecard.done .et::after{content:'applied';margin-left:auto;font:700 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--yellow);border:1px solid color-mix(in srgb, var(--warning) 40%, transparent);border-radius:4px;padding:1px 6px}
-.diff{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.diff{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .diff .dv{font:700 16px var(--mono);color:var(--text)}
 .diff .dv small{font-size:11.5px;color:var(--faint);font-weight:600;margin-left:4px}
 .diff .dv .up{color:var(--warning)}
@@ -211,7 +211,7 @@ b,strong{color:var(--text);font-weight:600}
 
 /* -------------------------------------------------------------- autonomy */
 .autos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.acard{text-align:left;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;font:inherit;color:var(--muted);transition:all .16s}
+.acard{text-align:left;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;font:inherit;color:var(--muted);transition:all .16s;display:flex;flex-direction:column;justify-content:flex-start}
 .acard:hover{border-color:var(--border-strong);color:var(--text)}
 .acard.on{border-color:color-mix(in srgb, var(--ai) 60%, transparent);background:color-mix(in srgb, var(--ai) 9%, transparent)}
 .acard .at{font-weight:600;color:var(--text);font-size:13px;display:flex;align-items:center;gap:7px}
@@ -279,7 +279,7 @@ b,strong{color:var(--text);font-weight:600}
 /* ---------------------------------------------------------------- audit */
 .audit{font:500 11px var(--mono);line-height:1.75;max-height:420px;overflow-y:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
 .audit .ar{display:grid;grid-template-columns:72px 32px minmax(0,1fr);gap:8px;padding:2px 4px;border-radius:4px}
-.audit .ar .h{color:var(--s5)}.audit .ar .n{color:var(--faint)}
+.audit .ar .h{color:var(--muted)}.audit .ar .n{color:var(--faint)}
 .audit .ar .m{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
 .audit .ar .m .a{color:var(--cyan)}
 .audit .ar.e .m span.x{color:var(--negative)}.audit .ar.w .m span.x{color:var(--warning)}.audit .ar.g .m span.x{color:var(--positive)}
@@ -291,10 +291,13 @@ b,strong{color:var(--text);font-weight:600}
 .verdict.good{background:color-mix(in srgb, var(--positive) 8%, transparent);border:1px solid color-mix(in srgb, var(--positive) 30%, transparent);color:var(--positive)}
 .verdict.badv{background:color-mix(in srgb, var(--negative) 8%, transparent);border:1px solid color-mix(in srgb, var(--negative) 30%, transparent);color:var(--negative)}
 .econ td:first-child{font-family:var(--mono);font-size:12px}
+/* the shared .approval card style also matches the feed's "finding" status pill */
+.agent-log .st.approval{border:0;background:none;padding:0;border-radius:0}
 .bigrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
 
 @media(max-width:980px){.autos{grid-template-columns:1fr}}
 @media(max-width:560px){.slv{grid-template-columns:minmax(0,84px) minmax(0,1fr) 96px}.bigrow{grid-template-columns:1fr}
+  #rulesTable{min-width:0!important}.rules td:first-child,.rules td:nth-child(2){white-space:normal}.rules th,.rules td{padding:8px 4px;font-size:11px;letter-spacing:0}
   
   .audit .ar{grid-template-columns:62px 26px minmax(0,1fr)}}
 </style>
@@ -359,8 +362,8 @@ b,strong{color:var(--text);font-weight:600}
       <div id="sleeves"></div>
       <div class="legend">
         <span><i class="dot" style="background:color-mix(in srgb, var(--positive) 40%, transparent)"></i> allowed range</span>
-        <span><i class="dot" style="background:var(--text)"></i> target</span>
-        <span><i class="dot" style="background:var(--ai)"></i> actual, in range</span>
+        <span><i class="dot" style="background:var(--ai)"></i> target</span>
+        <span><i class="dot" style="background:var(--cyan)"></i> actual, in range</span>
         <span><i class="dot" style="background:var(--negative)"></i> actual, outside</span>
       </div>
     </div>
@@ -383,21 +386,21 @@ b,strong{color:var(--text);font-weight:600}
   <div class="step-head">
     <span class="step-badge">Step 2 of 6</span>
     <h2 id="h2">What happened today</h2>
-    <p>Monitoring earns its keep when something changes. Hit the portfolio with one or more of these events, each is a
-    real situation institutional investors deal with, or skip ahead and check the book as it stands.</p>
+    <p>Monitoring earns its keep when something changes. Hit the portfolio with one or more of these events. Each is a
+    situation institutional investors deal with. You can also skip ahead and check the book as it stands.</p>
   </div>
   <div class="events" id="eventCards"></div>
   <div class="grid2" style="margin-top:16px">
     <div class="card">
       <div class="card-head"><h3><i class="fas fa-newspaper"></i> Today so far</h3>
-        <button type="button" class="d-btn sm" id="undoBtn"><i class="fas fa-rotate-left"></i> Undo today&rsquo;s events</button></div>
+        <button type="button" class="d-btn sm" id="undoBtn"><i class="fas fa-rotate-left"></i> Undo today&rsquo;s events and trades</button></div>
       <div class="today" id="todayList"></div>
       <div class="diff" id="diffTiles"></div>
     </div>
     <div class="card compact">
       <h3><i class="fas fa-ruler-combined"></i> The book now</h3>
       <div id="sleeves2"></div>
-      <p class="hint">Grey ticks show where each asset class stood this morning.</p>
+      <p class="hint">Gold lines mark each target. Grey ticks show where each asset class stood this morning.</p>
     </div>
   </div>
   <div class="step-nav">
@@ -421,11 +424,9 @@ b,strong{color:var(--text);font-weight:600}
     <span class="hint" style="margin:0" id="runHint"></span>
     <button type="button" class="d-btn primary big" id="runBtn"><i class="fas fa-play"></i> Run the monitoring cycle</button>
   </div>
-  <div class="grid2">
-    <div class="card">
-      <div class="card-head"><h3><i class="fas fa-comments"></i> What the checks found</h3></div>
-      <div id="feed"></div>
-    </div>
+  <div class="card">
+    <div class="card-head"><h3><i class="fas fa-comments"></i> What the checks found</h3></div>
+    <div id="feed"></div>
   </div>
   <div class="step-nav">
     <button type="button" class="d-btn" data-go="2"><i class="fas fa-arrow-left"></i> Back</button>
@@ -474,7 +475,7 @@ b,strong{color:var(--text);font-weight:600}
   <div class="step-head">
     <span class="step-badge">Step 5 of 6</span>
     <h2 id="h5">You decide</h2>
-    <p>Each finding comes with a fix, its cost and the portfolio as it would look after the trade. A fix that breaks another rule never reaches you. Stale prices block automatic trading at every setting, and private assets are never sold to fix a range, so those go to the investment committee.</p>
+    <p>Each finding that a trade or an action can address comes with a proposed fix, its cost and the tracking error after the trade. A fix that would break another hard rule is blocked before you can approve it. Stale prices block automatic trading at every setting, and private assets are never sold to fix a range, so those go to the investment committee.</p>
   </div>
   <div class="stale" id="stale5"></div>
   <div class="cols">
@@ -487,14 +488,12 @@ b,strong{color:var(--text);font-weight:600}
       <div class="card compact">
         <h3><i class="fas fa-ruler-combined"></i> The book after your decisions</h3>
         <div id="sleeves3"></div>
-        <p class="hint">Grey ticks show where each asset class stood before this cycle&rsquo;s fixes.</p>
+        <p class="hint">Gold lines mark each target. Grey ticks show where each asset class stood before this cycle&rsquo;s fixes.</p>
       </div>
       <div class="tiles" id="afterTiles" style="grid-template-columns:1fr 1fr"></div>
     </div>
   </div>
-  <div class="try"><i class="fas fa-lightbulb"></i>Approve the emerging-markets trade first. The cash fix turns to <em>superseded</em>,
-  because selling EM already lifted cash above its floor. Then go back to step 3, let small trades run on their own, and run
-  the cycle again.</div>
+  <div class="try" id="tip5"></div>
   <div class="step-nav">
     <button type="button" class="d-btn" data-go="4"><i class="fas fa-arrow-left"></i> Back</button>
     <button type="button" class="d-btn primary big" data-go="6">Next: the audit trail <i class="fas fa-arrow-right"></i></button>
@@ -510,7 +509,7 @@ b,strong{color:var(--text);font-weight:600}
     Every finding, decision and trade is written to a hash-chained log: each line&rsquo;s fingerprint is computed from the line
     <em>and the fingerprint before it</em>, so changing any entry breaks every fingerprint after it. Try tampering with one.</p>
   </div>
-  <div class="grid2">
+  <div>
     <div class="card">
       <div class="card-head"><h3><i class="fas fa-fingerprint"></i> Audit log</h3>
         <div class="card-tools">
@@ -524,7 +523,7 @@ b,strong{color:var(--text);font-weight:600}
   </div>
   <div class="step-nav">
     <button type="button" class="d-btn" data-go="5"><i class="fas fa-arrow-left"></i> Back</button>
-    <button type="button" class="d-btn" data-go="1"><i class="fas fa-rotate-left"></i> Start again</button>
+    <button type="button" class="d-btn" id="restartBtn"><i class="fas fa-rotate-left"></i> Start again</button>
   </div>
 </section>
 
@@ -538,7 +537,7 @@ b,strong{color:var(--text);font-weight:600}
   <div class="d-help-modal">
     <div class="d-help-head">
       <h2 id="helpTitle"><i class="fas fa-book-open"></i> Guide: Agentic Portfolio Monitoring</h2>
-      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><i class="fas fa-xmark"></i></button>
+      <button type="button" class="d-help-close" id="helpClose" aria-label="Close guide"><span aria-hidden="true" style="font-size:22px;line-height:1">&times;</span></button>
     </div>
     <div class="d-help-body">
 
@@ -553,7 +552,7 @@ b,strong{color:var(--text);font-weight:600}
       </div>
       <div class="d-help-section">
         <h3>After each approval</h3>
-        <p>The book changes, so it gets checked again. Fixes that are no longer needed are withdrawn and the rest are resized.</p>
+        <p>The book changes, so it gets checked again. Fixes that are no longer needed are withdrawn and the rest are resized. With small trades set to run automatically, a fix that becomes eligible after the re-check runs on its own. If the book changes for any other reason, such as a new event or an undo, approvals wait until the checks run again.</p>
       </div>
       <div class="d-help-section">
         <h3>The rules</h3>
@@ -588,7 +587,7 @@ b,strong{color:var(--text);font-weight:600}
       <ul>
         <li>The book has eight asset classes, including private equity and real assets carried at quarterly marks.</li>
         <li>Each cycle checks policy ranges, drift, tracking error, two-week liquidity, capital call coverage, issuer concentration across stocks and bonds, and price freshness.</li>
-        <li>Each finding comes with a proposed fix, its trades, its cost and the tracking error after the trade.</li>
+        <li>Each finding that a trade or an action can address comes with a proposed fix, its trades, its cost and the tracking error after the trade. Drift and tracking error are reported without a trade.</li>
         <li>Small fixes can run on their own if you allow it. Stale prices block automatic trading at every setting, and private assets are never sold to fix a range.</li>
         <li>Every action goes into a hash-chained log, so any later edit shows up.</li>
       </ul>
@@ -686,6 +685,9 @@ let B,DAY0,CYCLE0,findings,proposals,auditLog,lastHash,cycleNo,running,bookVer,c
 const el=id=>document.getElementById(id);
 const fmt=n=>Math.round(n).toLocaleString('en-US');
 const pp=v=>v.toFixed(2);
+const usdm=v=>'$'+fmt(v)+'m';                     // $1,000m
+// A weight to one decimal, or two when one decimal would round a breach onto its bound (0.99% is not 1.0%).
+function wtxt(i,w){const s=SLEEVE[i];w=w==null?B.w[i]:w;const bad=w>s.hi+1e-9||w<s.lo-1e-9;return bad&&(+w.toFixed(1)===s.lo||+w.toFixed(1)===s.hi)?w.toFixed(2):w.toFixed(1);}
 
 function resetAll(){
   cycleTimers.forEach(clearTimeout);cycleTimers=[];
@@ -693,7 +695,7 @@ function resetAll(){
   findings=[];proposals=[];auditLog=[];lastHash='00000000';cycleNo=0;running=false;
   bookVer=0;checkedVer=-1;pid=0;fid=0;tamper=null;FEED=[];LANES={};
   S.auto='propose';S.visited=new Set([1]);
-  push('system','book loaded · $'+B.nav.toFixed(0)+'m','a');
+  push('system','book loaded · '+usdm(B.nav),'a');
 }
 
 /* ============================ HASH CHAIN ===============================
@@ -708,6 +710,7 @@ function push(actor,msg,cls){
   const seq=auditLog.length+1;
   lastHash=fnv(lastHash+seq+'|'+actor+'|'+msg);
   auditLog.push({seq,actor,msg,cls:cls||'t',hash:lastHash});
+  verified=false;broken=-1;                        // a verdict covers only the entries it checked
 }
 // Recompute every digest from the start; the first entry whose stored digest
 // no longer matches is where the record was altered.
@@ -796,7 +799,7 @@ function sellPro(idx,pts){                         // sell `pts` of NAV pro-rata
 }
 const EVENTS={
   call:{icon:'fa-hand-holding-dollar',title:'Capital call',
-    desc:'Two private-equity funds the endowment committed to call a combined $15m, due in ten business days. It is paid from cash first, then, if cash falls short, by selling. That shortfall is the risk this checks.',
+    desc:'Two private-equity funds the endowment committed to call a combined $15m, payable today. It is paid from cash first, then, if cash falls short, by selling. That shortfall is the risk this checks.',
     tests:'forced selling and the cash floor',
     apply(){
       const amt=15,pct=amt/B.nav*100;
@@ -806,6 +809,7 @@ const EVENTS={
       w[5]+=pct;B.uncalled-=amt;setWeights(w);
       push('market','capital calls $'+amt+'m to private equity · $'+(fromCash/100*B.nav).toFixed(0)+'m from cash'
         +(rest>1e-9?', $'+(rest/100*B.nav).toFixed(0)+'m raised by selling public assets':'')+' · uncalled now $'+B.uncalled+'m','w');
+      if(rest<=1e-9)return '$'+amt+'m wired to the private-equity funds, all of it from cash. Cash is now <b>$'+(B.w[CASH]/100*B.nav).toFixed(0)+'m</b>.';
       return '$'+amt+'m wired to the private-equity funds. Cash covered only <b>$'+(fromCash/100*B.nav).toFixed(0)+'m</b>, so <b>$'
         +(rest/100*B.nav).toFixed(0)+'m</b> of stocks and bonds had to be sold to meet it, and cash is now empty.';
     }},
@@ -832,8 +836,8 @@ const EVENTS={
       const shock=[-14,-14,-17,2.5,-6,-2,-3,0];
       const mv=B.w.map((x,i)=>x*(1+shock[i]/100)),tot=mv.reduce((a,b)=>a+b,0);
       B.nav=B.nav*tot/100;setWeights(mv);
-      push('market','equity sell-off: developed −14%, EM −17%, HY −6%, core bonds +2.5%, private marks −2 to −3% · NAV $'+B.nav.toFixed(0)+'m','w');
-      return 'Public markets fell hard while private valuations barely moved, so privates are now a bigger slice of a smaller portfolio, the <b>denominator effect</b>. NAV is now <b>$'+B.nav.toFixed(0)+'m</b>.';
+      push('market','equity sell-off: developed −14%, EM −17%, HY −6%, core bonds +2.5%, private marks −2 to −3% · NAV '+usdm(B.nav),'w');
+      return 'Public markets fell hard while private valuations barely moved, so privates are now a bigger slice of a smaller portfolio, the <b>denominator effect</b>. NAV is now <b>'+usdm(B.nav)+'</b>.';
     }},
   downgrade:{icon:'fa-ranking-star',title:'Credit downgrade',
     desc:'Issuer 04 is cut from BBB- to BB+, a “fallen angel”. The core bond sleeve may only hold investment-grade debt.',
@@ -895,7 +899,7 @@ function detect(){
     if(t>LIMIT.issuer+1e-9)F('concentration','high','issuer:'+x.n,'issuer','Too much in one company: '+x.n,
       x.n+' ('+x.s+') is '+pp(t)+'% of NAV: '+pp(x.eq)+'% in its stock'+(x.fi>0?' and '+pp(x.fi)+'% in its bonds':'')+', against a '+LIMIT.issuer+'% limit.',{issuer:x.n});
     if(IG.indexOf(x.rating)<0&&x.fi>1e-9)F('corporate-actions','high','elig:'+x.n,'elig','Bond no longer eligible: '+x.n,
-      x.n+' was cut to '+x.rating+', below investment grade. The core bond sleeve still holds '+pp(x.fi)+'% of NAV of its bonds.',{issuer:x.n});
+      x.n+' was cut to '+x.rating+', below investment grade. The core bond sleeve still holds its bonds, '+pp(x.fi)+'% of NAV.',{issuer:x.n});
   });
   const st=staleNames();
   if(st.length)F('data-quality','medium','stale','stale','Prices out of date',
@@ -940,9 +944,9 @@ function planFor(f){
   }
   if(f.rule==='issuer'){
     const x=B.issuers.find(y=>y.n===f.issuer),target=LIMIT.issuer-0.5,trim=exposure(x)-target,fromEq=Math.min(x.eq,trim);
-    const notional=trim/100*B.nav;
-    return Object.assign(base,{kind:'trade',title:'Trim '+x.n+' by '+pp(trim)+' pts',issuerAct:{n:x.n,field:'eq',amount:fromEq},notional,
-      cost:2*tradeCostBps(USEQ,trim)/1e4*notional,
+    const notional=fromEq/100*B.nav;               // only the stock can be sold inside US equity
+    return Object.assign(base,{kind:'trade',title:'Trim '+x.n+' by '+pp(fromEq)+' pts',issuerAct:{n:x.n,field:'eq',amount:fromEq},notional,
+      cost:2*tradeCostBps(USEQ,fromEq)/1e4*notional,
       why:'Sells '+x.n+' shares until the company is '+target.toFixed(1)+'% of the portfolio, half a point under the limit, and reinvests across the '
         +'rest of US equity, so no asset-class weight moves and no other rule is touched.'});
   }
@@ -1033,7 +1037,7 @@ function execute(p,who){
     B.staleHrs=START.staleHrs.slice();B.incident=false;bookVer++;
     push(who,'#'+p.id+' switched to the backup pricing vendor · all public marks refreshed','g');
   }
-  p.state=who.indexOf('routing')===0?'auto':'approved';p.by=who;
+  p.state=/router/.test(who)?'auto':'approved';p.by=who;
   recheck();
   return true;
 }
@@ -1058,6 +1062,13 @@ function recheck(){
   });
   push('guidelines','re-check after the change · '+findings.length+' finding'+(findings.length===1?'':'s')+' open',findings.length?'w':'g');
 }
+// After a person approves a fix the book is re-checked; in the small-trades setting the router then
+// releases any fix that has become eligible, so a WILL RUN AUTOMATICALLY tag is never left waiting.
+function approve(p){
+  if(isStale()||!execute(p,'human: portfolio manager'))return false;
+  autoRun();
+  return true;
+}
 function autoRun(){
   let n=0;
   for(let guard=0;guard<20;guard++){
@@ -1077,10 +1088,10 @@ function reports(){
   const modes=m=>proposals.filter(p=>p.route.mode===m).length;
   const tx=topIssuer(),inel=by('corporate-actions');
   return{
-    ingest:'Loaded prices for 8 asset classes, 8 company look-throughs and the position file. NAV <b>$'+B.nav.toFixed(0)+'m</b>.',
+    ingest:'Loaded prices for 8 asset classes, 8 company look-throughs and the position file. NAV <b>'+usdm(B.nav)+'</b>.',
     dq:st.length?'<b>'+st.length+' asset class'+(st.length>1?'es':'')+' on stale prices</b> (oldest '+maxStale()+'h). Checks carry on; automatic trading is blocked.'
       :'All public prices fresh (oldest '+maxStale()+'h). Private funds on their quarterly valuations, as expected.',
-    guideline:g.length?'<b>'+g.length+' range breach'+(g.length>1?'es':'')+'</b>: '+g.map(f=>SLEEVE[f.sleeve].k+' at '+B.w[f.sleeve].toFixed(1)+'%').join(', ')+'.'
+    guideline:g.length?'<b>'+g.length+' range breach'+(g.length>1?'es':'')+'</b>: '+g.map(f=>SLEEVE[f.sleeve].k+' at '+wtxt(f.sleeve)+'%').join(', ')+'.'
       :'All eight asset classes inside their ranges.',
     risk:'Tracking error <b>'+te.toFixed(0)+' bps</b> against a '+LIMIT.te+' bps limit'+(te>LIMIT.te?', <b>breach</b>':'')+'. Volatility '+portVol().toFixed(1)+'% a year.',
     liquidity:liquidWithin(10).toFixed(0)+'% of NAV sellable within 10 days; commitments covered '+coverage().toFixed(1)+'×'
@@ -1144,13 +1155,14 @@ function sleevesHTML(ghost,compact){
   const SC=40,pc=v=>Math.min(100,Math.max(0,v/SC*100));
   return SLEEVE.map((s,i)=>{
     const w=B.w[i],bad=w>s.hi+1e-9||w<s.lo-1e-9,g=ghost?ghost[i]:null;
+    const ws=wtxt(i,w);
     return '<div class="slv'+(bad?' bad':'')+'" title="'+s.k+': allowed '+s.lo+'–'+s.hi+'%, target '+s.pol+'%'+(s.priv?' · cannot be sold quickly':'')+'">'
       +'<div class="nm">'+s.k+(compact?'':'<small>'+s.lo+'–'+s.hi+'% allowed</small>')+'</div>'
       +'<div class="rail"><div class="band" style="left:'+pc(s.lo)+'%;width:'+(pc(s.hi)-pc(s.lo))+'%"></div>'
       +'<div class="pol" style="left:'+pc(s.pol)+'%"></div>'
-      +(g!==null&&Math.abs(g-w)>0.005?'<div class="ghost" style="left:0;width:'+pc(g)+'%"></div>':'')
+      +(g!==null&&Math.abs(g-w)>0.005?'<div class="ghost" style="left:'+pc(g)+'%"></div>':'')
       +'<div class="act" style="left:0;width:'+pc(w)+'%"></div></div>'
-      +'<div class="nums"><b>'+w.toFixed(1)+'%</b>'+(compact?'':' <span style="color:var(--faint)">/ '+s.pol+'%</span><small>'+(bad?(w>s.hi?'above':'below')+' range':'in range')+'</small>')+'</div></div>';
+      +'<div class="nums"><b>'+ws+'%</b>'+(compact?'':' <span style="color:var(--faint)">/ '+s.pol+'%</span><small>'+(bad?(w>s.hi?'above':'below')+' range':'in range')+'</small>')+'</div></div>';
   }).join('');
 }
 function ruleRows(){
@@ -1161,8 +1173,8 @@ function ruleRows(){
     ['Cash floor','≥ '+LIMIT.cash+'%',B.w[CASH].toFixed(2)+'%',B.w[CASH]>=LIMIT.cash-1e-9],
     ['Illiquid assets','≤ '+LIMIT.illiq+'%',illiqPct().toFixed(1)+'%',illiqPct()<=LIMIT.illiq],
     ['Tracking error','≤ '+LIMIT.te+' bps',trackingError().toFixed(0)+' bps',trackingError()<=LIMIT.te],
-    ['Sellable within 10 days','≥ '+LIMIT.liqMin+'%',liquidWithin(10).toFixed(0)+'%',liquidWithin(10)>=LIMIT.liqMin],
-    ['Commitments covered','≥ '+LIMIT.cover+'×',coverage().toFixed(1)+'×',coverage()>=LIMIT.cover],
+    ['Sellable within 10 days','≥ '+LIMIT.liqMin+'%',liquidWithin(10).toFixed(1)+'%',liquidWithin(10)>=LIMIT.liqMin],
+    ['Commitments covered','≥ '+LIMIT.cover+'×',coverage().toFixed(2)+'×',coverage()>=LIMIT.cover],
     ['Spending payout funded','cash ready',B.pending>0?'$'+(B.w[CASH]/100*B.nav).toFixed(0)+'m of $'+(cashNeed()/100*B.nav).toFixed(0)+'m':'none due',B.w[CASH]>=cashNeed()-1e-9],
     ['Largest single company','≤ '+LIMIT.issuer+'%',pp(exposure(tx))+'%',exposure(tx)<=LIMIT.issuer+1e-9],
     ['Bonds investment grade','all',inel?inel+' not':'all',inel===0],
@@ -1170,7 +1182,7 @@ function ruleRows(){
 }
 function renderBook(){
   el('sleeves').innerHTML=sleevesHTML(null,false);
-  el('bookTiles').innerHTML=tile('$'+B.nav.toFixed(0)+'m','Portfolio value','8 asset classes')
+  el('bookTiles').innerHTML=tile(usdm(B.nav),'Portfolio value','8 asset classes')
     +tile(trackingError().toFixed(0),'Tracking error, bps','limit '+LIMIT.te,trackingError()>LIMIT.te?'r':'')
     +tile(illiqPct().toFixed(1)+'%','In private assets','limit '+LIMIT.illiq+'%',illiqPct()>LIMIT.illiq?'r':'')
     +tile(B.w[CASH].toFixed(2)+'%','Cash','floor '+LIMIT.cash+'%',B.w[CASH]<LIMIT.cash?'r':'');
@@ -1189,15 +1201,16 @@ function renderEvents(){
   }).join('');
   const ev=B.events.map(k=>'<div><b>'+EVENTS[k].title+'.</b> '+B.eventMsgs[k]+'</div>');
   el('todayList').innerHTML=ev.length?ev.join(''):'<div style="border-left-color:var(--border-strong)">A quiet morning so far. Pick an event above, or skip ahead and check the book as it is.</div>';
-  const d=(a,b,f,sfx,warnUp)=>{const ch=b-a,show=Math.abs(ch)>1e-6;
-    return '<div class="tile"><div class="dv">'+f(b)+(sfx||'')+(show?'<small class="'+((warnUp?ch>0:ch<0)?'up':'')+'">'+(ch>0?'+':'−')+f(Math.abs(ch))+'</small>':'')+'</div>';};
+  const d=(a,b,f,sfx,warnUp,chSfx)=>{const ch=b-a,show=Math.abs(ch)>1e-6;
+    return '<div class="tile"><div class="dv">'+f(b)+(sfx||'')+(show?'<small class="'+((warnUp?ch>0:ch<0)?'up':'')+'">'+(ch>0?'+':'−')+f(Math.abs(ch))+(chSfx==null?(sfx||''):chSfx)+'</small>':'')+'</div>';};
   const nowTE=trackingError();
   const B0=B;B=DAY0;const te0=trackingError(),il0=illiqPct(),c0=B.w[CASH],n0=B.nav,iss0=exposure(topIssuer());B=B0;
   el('diffTiles').innerHTML=
-     d(n0,B.nav,v=>'$'+v.toFixed(0),'m',false)+'<div class="l">Portfolio value</div></div>'
+     d(n0,B.nav,v=>'$'+fmt(v),'m',false)+'<div class="l">Portfolio value</div></div>'
     +d(te0,nowTE,v=>v.toFixed(0),'',true)+'<div class="l">Tracking error, bps</div></div>'
-    +d(c0,B.w[CASH],v=>v.toFixed(2),'%',false)+'<div class="l">Cash</div></div>'
-    +d(il0,illiqPct(),v=>v.toFixed(1),'%',true)+'<div class="l">In private assets</div></div>';
+    +d(c0,B.w[CASH],v=>v.toFixed(2),'%',false,' pts')+'<div class="l">Cash</div></div>'
+    +d(il0,illiqPct(),v=>v.toFixed(1),'%',true,' pts')+'<div class="l">In private assets</div></div>';
+  el('undoBtn').disabled=running||JSON.stringify(B)===JSON.stringify(DAY0);
   el('sleeves2').innerHTML=sleevesHTML(DAY0.w,true);
 }
 
@@ -1272,11 +1285,11 @@ function renderProposals(){
     }
     if(p.state==='open')checks.push([p.route.mode==='auto'?'g':p.route.mode==='blocked'?'r':'y','routing: '+p.route.why]);
     if(p.resized&&p.state==='open')checks.push(['y','re-sized after an earlier approval']);
-    const open=p.state==='open',canOk=open&&(p.route.mode==='manual'||p.route.mode==='auto');
+    const open=p.state==='open',fresh=!isStale(),canOk=open&&fresh&&(p.route.mode==='manual'||p.route.mode==='auto');
     const btns=p.kind==='escalate'
-      ?'<button type="button" class="btn btn-primary btn-sm" data-ap="'+p.id+'" '+(open&&S.auto!=='observe'?'':'disabled')+'>Send to committee</button>'
+      ?'<button type="button" class="btn btn-primary btn-sm" data-ap="'+p.id+'" '+(open&&fresh&&S.auto!=='observe'?'':'disabled')+'>Send to committee</button>'
       :'<button type="button" class="btn btn-primary btn-sm" data-ap="'+p.id+'" '+(canOk?'':'disabled')+'>Approve</button>'
-       +'<button type="button" class="btn btn-ghost btn-sm" data-rj="'+p.id+'" '+(open?'':'disabled')+'>Reject</button>';
+       +'<button type="button" class="btn btn-ghost btn-sm" data-rj="'+p.id+'" '+(open&&fresh?'':'disabled')+'>Reject</button>';
     return '<div class="approval sev-'+(/crit|high/i.test(p.sev)?'high':'med')+(p.state!=='open'?' '+p.state:'')+'">'
       +'<div class="ap-head"><span class="ap-title">#'+p.id+' &middot; '+p.title+'</span><span class="ap-state">'+p.sev+' &middot; '+tag[1]+'</span></div>'
       +'<div class="ap-ev"><div class="legs">'+legs+'</div><div class="why">'+p.why+'</div>'
@@ -1284,11 +1297,26 @@ function renderProposals(){
       +'<div class="ap-acts">'+btns+(p.by?'<span class="hint" style="margin:0">by '+p.by+'</span>':'')+'</div></div>';
   }).join('');
     el('proposals').classList.add('approvals');
-  el('approveAll').disabled=!proposals.some(p=>p.state==='open'&&(p.route.mode==='manual'||p.route.mode==='auto'));
+  el('approveAll').disabled=isStale()||!proposals.some(p=>p.state==='open'&&p.route.mode==='manual');
+  renderTip();
   el('sleeves3').innerHTML=sleevesHTML(CYCLE0.w,true);
   const c=findings.filter(f=>f.sev==='critical'||f.sev==='high').length;
   el('afterTiles').innerHTML=tile(findings.length,'Findings still open',c+' critical or high',findings.length?(c?'r':'y'):'g')
     +tile(trackingError().toFixed(0),'Tracking error, bps','limit '+LIMIT.te,trackingError()>LIMIT.te?'r':'');
+}
+
+// The hint under the proposals follows the queue actually on screen.
+function renderTip(){
+  const open=proposals.filter(p=>p.state==='open'&&p.kind==='trade'&&p.pre&&p.pre.ok);
+  const multi=open.find(p=>p.pre.cleared&&p.pre.cleared.length>1);
+  const other=multi&&open.find(q=>q!==multi&&q.pre.cleared&&q.pre.cleared.some(k=>multi.pre.cleared.indexOf(k)>=0));
+  const next=S.auto==='assisted'?' Then add an event in step 2 and run the cycle again, and the small fixes run on their own.':' Then go back to step 3, let small trades run on their own, and run the cycle again.';
+  let t;
+  if(!cycleNo)t='Run the checks in step 3 first. The proposed fixes appear here.';
+  else if(multi&&other)t='Approve #'+multi.id+' first. #'+other.id+' turns to <em>no longer needed</em>, because #'+multi.id+' already fixes '+other.pre.cleared.filter(k=>multi.pre.cleared.indexOf(k)>=0).join(' and ')+'.'+next;
+  else if(open.length)t='Approve a fix and the book is checked again. Fixes that are no longer needed are withdrawn and the rest are resized.'+next;
+  else t='Nothing is waiting for your approval in this cycle. Add an event in step 2 or change the autonomy setting in step 3, then run the checks again.';
+  el('tip5').innerHTML='<i class="fas fa-lightbulb"></i>'+t;
 }
 
 /* ------------------------------------------------------------- step 6 */
@@ -1300,8 +1328,8 @@ function renderAudit(){
     +'<span class="m" title="'+e.msg.replace(/"/g,'&quot;').replace(/<[^>]+>/g,'')+'"><span class="a">'+e.actor+'</span> <span class="x">'+e.msg+'</span></span></div>').join('');
   const v=el('verdict');
   if(tamper&&!verified){v.className='verdict show badv';v.innerHTML='Entry <b>#'+(tamper.i+1)+'</b> was quietly edited: &ldquo;'+tamper.from+'&rdquo; now reads &ldquo;'+tamper.to+'&rdquo;. Nothing else changed. Press <b>Verify</b> to see whether the chain notices.';}
-  else if(verified&&broken>=0){v.className='verdict show badv';v.innerHTML='<b>Chain broken at entry #'+(broken+1)+'.</b> Its fingerprint no longer matches its contents, and because every later fingerprint was built on it, all '
-    +(auditLog.length-broken)+' entries from there on fail too. An edit cannot hide. A fake entry would need every later fingerprint rewritten.';}
+  else if(verified&&broken>=0){const nf=auditLog.length-broken;v.className='verdict show badv';v.innerHTML='<b>Chain broken at entry #'+(broken+1)+'.</b> Its fingerprint no longer matches its contents'
+    +(nf>1?', and because every later fingerprint was built on it, all '+nf+' entries from there on fail.':'. It is the latest entry, so any entry added after it would fail too.')+' An edit cannot hide. A fake entry would need every later fingerprint rewritten.';}
   else if(verified){v.className='verdict show good';v.innerHTML='<b>All '+auditLog.length+' entries verified.</b> Every fingerprint recomputes from its own contents and the one before it.';}
   else v.className='verdict';
   el('tamperBtn').disabled=!!tamper||auditLog.length<3;el('restoreBtn').disabled=!tamper;
@@ -1339,7 +1367,7 @@ function renderStep(n){
 }
 function refreshStatus(){
   const c=findings.filter(f=>f.sev==='critical'||f.sev==='high').length;
-  el('statusBar').innerHTML='step <b>'+S.step+'</b> of 6 &middot; NAV <b>$'+B.nav.toFixed(0)+'m</b> &middot; cycle <b>'+cycleNo+'</b> &middot; '
+  el('statusBar').innerHTML='step <b>'+S.step+'</b> of 6 &middot; NAV <b>'+usdm(B.nav)+'</b> &middot; cycle <b>'+cycleNo+'</b> &middot; '
     +(cycleNo?'findings <b>'+findings.length+'</b> ('+c+' critical/high) &middot; ':'')+'tracking error <b>'+trackingError().toFixed(0)+' bps</b> &middot; autonomy <b>'
     +AUTO_LABEL[S.auto]+'</b>'+(staleNames().length?' &middot; <span style="color:var(--negative)">automatic trading gated: stale prices</span>':'');
   const b=el('stateBadge');
@@ -1370,9 +1398,10 @@ el('undoBtn').addEventListener('click',()=>{
   rerenderAll();
 });
 el('autoCards').addEventListener('click',e=>{
-  const b=e.target.closest('.acard');if(!b||b.dataset.a===S.auto)return;
+  const b=e.target.closest('.acard');if(!b||b.dataset.a===S.auto||running)return;
   S.auto=b.dataset.a;
-  proposals.filter(p=>p.state==='open').forEach(p=>{p.route=route(p);});
+  // The new setting governs the next cycle; nothing is released by flipping the switch.
+  proposals.filter(p=>p.state==='open').forEach(p=>{p.route=route(p);if(p.route.mode==='auto'){p.route.mode='manual';p.route.why='eligible to run automatically from the next cycle; until then it needs your approval';}});
   push('routing','autonomy changed to: '+AUTO_LABEL[S.auto],'a');
   rerenderAll();
 });
@@ -1381,14 +1410,15 @@ el('proposals').addEventListener('click',e=>{
   const ap=e.target.closest('[data-ap]'),rj=e.target.closest('[data-rj]');
   const p=proposals.find(x=>x.id===+((ap||rj)||{dataset:{}}).dataset[ap?'ap':'rj']);
   if(!p||p.state!=='open')return;
-  if(ap)execute(p,'human: portfolio manager');
+  if(isStale())return;
+  if(ap)approve(p);
   else{p.state='rejected';p.by='human: portfolio manager';push('human: portfolio manager','#'+p.id+' '+p.title+', rejected; the finding stays open','w');}
   rerenderAll();
 });
 el('approveAll').addEventListener('click',()=>{
   for(let guard=0;guard<20;guard++){
-    const p=proposals.find(x=>x.state==='open'&&(x.route.mode==='manual'||x.route.mode==='auto'));
-    if(!p||!execute(p,'human: portfolio manager'))break;
+    const p=proposals.find(x=>x.state==='open'&&x.route.mode==='manual');
+    if(!p||!approve(p))break;
   }
   rerenderAll();
 });
@@ -1410,6 +1440,7 @@ el('restoreBtn').addEventListener('click',()=>{
   if(!tamper)return;auditLog[tamper.i].msg=tamper.from;tamper=null;broken=-1;verified=false;renderAudit();
 });
 el('resetBtn').addEventListener('click',()=>{resetAll();broken=-1;verified=false;goStep(1);});
+el('restartBtn').addEventListener('click',()=>{resetAll();broken=-1;verified=false;goStep(1);});
 
 /* -------------------------------- HELP ---------------------------------- */
 const helpOverlay=el('helpOverlay');

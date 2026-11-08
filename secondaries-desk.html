@@ -23,6 +23,8 @@
       .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
       @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
       .memo-inputs li { font-family: var(--sans); font-size: .9rem; }
+      #cvHeatPanel .chart, #sensHeat { max-width: 520px; }
+      #fundTable table.data th { white-space: normal; vertical-align: bottom; }
     </style>
 </head>
 <body>
@@ -66,26 +68,26 @@
 
     <section id="pricing">
       <div class="kpis" id="prKpis"></div>
-      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Price by fund interest</h3><span class="sub">$ millions; price at each strategy's target IRR, quoted on 31 March NAV</span></div><div class="panel-body"><div id="fundTable"></div></div></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Price by fund interest</h3><span class="sub">$ millions; price at each strategy's target IRR, quoted on 31 March NAV; duration is the distribution-weighted average years to cash</span></div><div class="panel-body"><div id="fundTable"></div></div></div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Projected net cash flows to the buyer</h3><span class="sub">Distributions less calls, $m, years from 30 June 2026</span></div><div class="panel-body"><div id="cfChart"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Range of outcomes at the bid</h3><span class="sub">Seeded growth shocks by fund</span></div><div class="panel-body"><div id="mcChart"></div><p class="eval-note" id="mcNote"></p></div></div>
       </div>
       <h3 class="sub-h">Sensitivity</h3>
       <div class="split-2">
-        <div class="panel"><div class="panel-head"><h3>Portfolio price, % of 31 March NAV</h3><span class="sub">Buyout target IRR (other strategies at their spreads) by NAV haircut</span></div><div class="panel-body"><div id="sensHeat" style="max-width:520px"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Portfolio price, % of 31 March NAV</h3><span class="sub">Buyout target IRR (other strategies at their spreads) by NAV haircut</span></div><div class="panel-body"><div id="sensHeat"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Price by fund age</h3><span class="sub">A buyout interest, 10% unfunded, at the target IRR</span></div><div class="panel-body"><div id="ageChart"></div><p class="eval-note" id="ageNote"></p></div></div>
       </div>
-      <div class="panel"><div class="panel-head"><h3>Price by unfunded commitment</h3><span class="sub">A three-year-old buyout interest, at the target IRR</span></div><div class="panel-body"><div id="unfChart" style="max-width:900px"></div><p class="eval-note" id="unfNote"></p></div></div>
+      <div class="panel"><div class="panel-head"><h3>Price by unfunded commitment</h3><span class="sub">A three-year-old buyout interest, at the target IRR; unfunded as a share of NAV</span></div><div class="panel-body"><div id="unfChart"></div><p class="eval-note" id="unfNote"></p></div></div>
     </section>
 
     <section id="cv" hidden>
       <div class="kpis" id="cvKpis"></div>
       <div class="split-2" style="margin-top:18px">
         <div class="panel"><div class="panel-head"><h3>Value at the end of the hold, per $1 of sale price</h3><span class="sub">Rolling vs selling and reinvesting</span></div><div class="panel-body"><div id="rollChart"></div><p class="eval-note" id="rollNote"></p></div></div>
-        <div class="panel"><div class="panel-head"><h3>Scenarios</h3></div><div class="panel-body"><div id="scenTable"></div></div></div>
+        <div class="panel" id="cvHeatPanel"><div class="panel-head"><h3>Hold and multiple: rolling minus selling</h3><span class="sub">Per $1 of sale price, at the end of each hold</span></div><div class="panel-body"><div id="holdHeat"></div></div></div>
       </div>
-      <div class="panel"><div class="panel-head"><h3>Hold and multiple: rolling minus selling</h3><span class="sub">Per $1 of sale price, at the end of each hold</span></div><div class="panel-body"><div id="holdHeat" style="max-width:620px"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Scenarios</h3><span class="sub">Per $1 of sale price</span></div><div class="panel-body"><div id="scenTable"></div></div></div>
     </section>
   </div>
 
@@ -214,6 +216,12 @@ sell = (1 + opp)^hold</div>
     { id: 'mDown', label: 'CV gross multiple, downside', value: 1.2, unit: 'x', source: 'Assumption', min: 0.3, max: 5, step: 0.05 }
   ];
   var A = UI.A(AROWS), reg;
+  /* on a phone the charts draw on a narrower canvas so their labels stay readable */
+  function narrow() { return window.innerWidth < 640; }
+  function cw() { return narrow() ? Math.max(320, Math.min(420, window.innerWidth - 40)) : undefined; }
+  /* axis ticks in whole percents unless the step is finer; a share shown with one decimal below 1% so a few paths never read as none */
+  function pctTick(v) { return F.pct(v, Math.abs(v * 100 - Math.round(v * 100)) > 1e-6 ? 1 : 0); }
+  function shareText(x) { return x > 0 && x < 0.005 ? F.pct(x, 1) : F.pct(x, 0); }
   var S = { seed: 21, user: null };
   window.SECS = S;
   var AS_OF = 2026.5;
@@ -258,28 +266,31 @@ sell = (1 + opp)^hold</div>
   }
   function renderPricing() {
     var B = S.book = priceBook(A.target, A.haircut), rows = B.rows;
-    var unf = PM.sum(rows.map(function (r) { return r.f.unfunded; })), rolled = PM.sum(rows.map(function (r) { return r.rolled; })), dur = PM.sum(rows.map(function (r) { return r.dur * r.cash; })) / B.cash;
+    var unf = PM.sum(rows.map(function (r) { return r.f.unfunded; })), rolled = PM.sum(rows.map(function (r) { return r.rolled; })), dur = (function () { var td = 0, d = 0; rows.forEach(function (r) { r.flows.forEach(function (x) { td += x.t * x.dist; d += x.dist; }); }); return d ? td / d : 0; })();
     var mcFunds = rows.map(function (r) { return { nav: r.rolled, unfunded: r.f.unfunded, age: r.age, model: r.m, vol: r.m.vol }; });
     var irrs = SEC.outcomes(mcFunds, B.cash, { n: Math.round(A.mcN), seed: S.seed, haircut: A.haircut });
     S.irrBid = SEC.irr(B.cash, (function () { var tot = {}; rows.forEach(function (r) { r.flows.forEach(function (x) { tot[x.t] = (tot[x.t] || 0) + x.dist - x.call; }); }); return Object.keys(tot).map(function (t) { return { t: +t, dist: Math.max(0, tot[t]), call: Math.max(0, -tot[t]) }; }); })());
     S.mc = { p10: PM.quantile(irrs, 0.1), p50: PM.quantile(irrs, 0.5), p90: PM.quantile(irrs, 0.9), below10: irrs.filter(function (x) { return x < 0.10; }).length / irrs.length };
     UI.kpis('#prKpis', [
-      { id: 'bidPct', label: 'Bid, % of 31 March NAV', value: F.pct(B.pct, 1), sub: 'discount ' + F.pct(1 - B.pct, 1), explain: function () { return { title: 'Portfolio price', formula: 'sum over interests of (present value of projected distributions less calls at the strategy target IRR + distributions since 31 March - calls since 31 March), over the sum of 31 March NAVs', inputs: [{ name: 'Buyout target IRR', value: F.pct(A.target, 1), src: 'assumption', note: 'other strategies at their spreads' }, { name: 'Reported NAV', value: F.money(B.nav, 1), src: 'data' }, { name: 'NAV rolled to 30 June', value: F.money(rolled, 1), src: 'computed' }, { name: 'Cash at closing', value: F.money(B.cash, 1), src: 'computed' }], result: F.money(B.price, 2) + ' = ' + F.pct(B.pct, 2) }; } },
+      { id: 'bidPct', label: 'Bid, % of 31 March NAV', value: F.pct(B.pct, 1), sub: 'discount ' + F.pct(1 - B.pct, 1), explain: function () { return { title: 'Portfolio price', formula: 'sum over interests of (present value of projected distributions less calls at the strategy target IRR + distributions since 31 March - calls since 31 March), over the sum of 31 March NAVs', inputs: [{ name: 'Buyout target IRR', value: F.pct(A.target, 1), src: 'assumption', note: 'other strategies at their spreads' }, { name: 'Reported NAV', value: F.money(B.nav, 1), src: 'Data' }, { name: 'NAV rolled to 30 June', value: F.money(rolled, 1), src: 'computed' }, { name: 'Cash at closing', value: F.money(B.cash, 1), src: 'computed' }], result: F.money(B.price, 2) + ' = ' + F.pct(B.pct, 2) }; } },
       { id: 'bidTotal', label: 'Bid', value: F.money(B.price, 1), sub: 'on ' + F.money(B.nav, 1) + ' of 31 March NAV; ' + F.money(B.cash, 1) + ' cash at closing' },
       { id: 'rolledNav', label: 'NAV rolled to 30 June', value: F.money(rolled, 1), sub: F.spct(rolled / B.nav - 1, 1) + ' vs reported', tone: rolled < B.nav ? 'bad' : null },
       { id: 'unfunded', label: 'Unfunded the buyer takes on', value: F.money(unf, 1), sub: F.pct(unf / B.nav, 0) + ' of NAV' },
-      { id: 'irrRange', label: 'Buyer IRR at the bid, 10th to 90th', value: F.pct(S.mc.p10, 1) + ' to ' + F.pct(S.mc.p90, 1), sub: 'base case ' + F.pct(S.irrBid, 1) + '; ' + F.pct(S.mc.below10, 0) + ' of paths below 10%' }
+      { id: 'irrRange', label: 'Buyer IRR at the bid, 10th to 90th', value: F.pct(S.mc.p10, 1) + ' to ' + F.pct(S.mc.p90, 1), sub: 'base case ' + F.pct(S.irrBid, 1) + '; ' + shareText(S.mc.below10) + ' of paths below 10%' }
     ]);
-    UI.table('#fundTable', { id: 'interests', name: 'Price by fund interest', columns: [{ key: 'fund', label: 'Fund (fictional)' }, { key: 'st', label: 'Strategy' }, { key: 'vintage', label: 'Vintage', num: 1 }, { key: 'nav', label: 'NAV 31 Mar', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'rolled', label: 'NAV 30 Jun', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'target', label: 'Target IRR', num: 1, fmt: function (v) { return v == null ? '' : F.pct(v, 0); } }, { key: 'price', label: 'Price', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'pct', label: '% of NAV', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0.85 ? 'neg' : ''; } }, { key: 'cash', label: 'Cash at closing', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'dur', label: 'Distribution duration, years', num: 1, fmt: function (v) { return F.num(v, 1); } }],
+    UI.table('#fundTable', { id: 'interests', name: 'Price by fund interest', columns: [{ key: 'fund', label: 'Fund (fictional)' }, { key: 'st', label: 'Strategy' }, { key: 'vintage', label: 'Vintage', num: 1 }, { key: 'nav', label: 'NAV 31 Mar', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'rolled', label: 'NAV 30 Jun', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'unfunded', label: 'Unfunded', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'target', label: 'Target IRR', num: 1, fmt: function (v) { return v == null ? '' : F.pct(v, 0); } }, { key: 'price', label: 'Price', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'pct', label: '% of NAV', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0.85 ? 'neg' : ''; } }, { key: 'cash', label: 'Cash at closing', num: 1, fmt: function (v) { return F.num(v, 1); } }, { key: 'dur', label: 'Duration, years', num: 1, fmt: function (v) { return F.num(v, 1); } }],
       rows: rows.map(function (r) { return { fund: r.f.fund, st: r.m.label, vintage: r.f.vintage, nav: r.f.nav, rolled: r.rolled, unfunded: r.f.unfunded, target: r.target, price: r.price, pct: r.pctNav, cash: r.cash, dur: r.dur }; }), foot: { fund: 'Portfolio', nav: B.nav, rolled: rolled, unfunded: unf, price: B.price, pct: B.pct, cash: B.cash, dur: dur },
-      footExplain: { pct: function () { return { title: 'Portfolio % of NAV', formula: 'total price / total reported NAV', inputs: [{ name: 'Price', value: F.money(B.price, 2), src: 'computed' }, { name: 'NAV', value: F.money(B.nav, 2), src: 'data' }], result: F.pct(B.pct, 2) }; } } });
+      footExplain: { pct: function () { return { title: 'Portfolio % of NAV', formula: 'total price / total reported NAV', inputs: [{ name: 'Price', value: F.money(B.price, 2), src: 'computed' }, { name: 'NAV', value: F.money(B.nav, 2), src: 'Data' }], result: F.pct(B.pct, 2) }; } } });
     var byYear = {}; rows.forEach(function (r) { r.flows.forEach(function (x) { var y = Math.ceil(x.t - 1e-9); byYear[y] = (byYear[y] || 0) + x.dist - x.call; }); });
     var ys = Object.keys(byYear).map(Number).sort(function (a, b) { return a - b; }).filter(function (y) { return y <= 12; });
-    UI.chart.bar('#cfChart', { categories: ys.map(function (y) { return 'Yr ' + y; }), series: [{ name: 'Net cash flow', values: ys.map(function (y) { return byYear[y]; }), signColors: true }], yFmt: function (v) { return F.num(v, 0); }, height: 220, label: 'Projected net cash flows' });
-    var lo = Math.min.apply(null, irrs), hi = Math.max.apply(null, irrs), bins = 24, w = (hi - lo) / bins || 0.01, h = new Array(bins).fill(0);
-    irrs.forEach(function (v) { h[Math.min(bins - 1, Math.floor((v - lo) / w))]++; });
-    UI.chart.bar('#mcChart', { categories: h.map(function (_, i) { return F.pct(lo + (i + 0.5) * w, 0); }), series: [{ name: 'Paths', values: h.map(function (x) { return x / irrs.length; }), colors: h.map(function (_, i) { return lo + (i + 1) * w <= 0.10 ? 's5' : 's1'; }) }], yFmt: function (v) { return F.pct(v, 0); }, height: 220, label: 'Distribution of buyer IRR' });
-    $('#mcNote').textContent = irrs.length + ' paths, seed ' + S.seed + '. The median path earns ' + F.pct(S.mc.p50, 1) + ' at the bid; ' + F.pct(S.mc.below10, 0) + ' of paths earn less than 10% (highlighted).';
+    UI.chart.bar('#cfChart', { categories: ys.map(function (y) { return (narrow() ? '' : 'Yr ') + y; }), series: [{ name: 'Net cash flow', values: ys.map(function (y) { return byYear[y]; }), signColors: true }], yFmt: function (v) { return F.num(v, 0); }, width: cw(), height: 220, label: 'Projected net cash flows' });
+    /* round bin widths so one bin edge falls exactly on 10% and the highlighted bins are exactly the paths below it */
+    var lo0 = irrs[0], hi0 = irrs[irrs.length - 1], target = narrow() ? 12 : 26, w = [0.0025, 0.005, 0.01, 0.02, 0.025, 0.05, 0.1].filter(function (x) { return (hi0 - lo0) / x <= target; })[0] || 0.1;
+    var lo = Math.floor(lo0 / w + 1e-9) * w, bins = Math.max(1, Math.floor((hi0 - lo) / w + 1e-9) + 1), h = new Array(bins).fill(0);
+    irrs.forEach(function (v) { h[Math.min(bins - 1, Math.floor((v - lo) / w + 1e-9))]++; });
+    UI.chart.bar('#mcChart', { categories: h.map(function (_, i) { return F.pct(lo + i * w, w < 0.01 ? 1 : 0); }), series: [{ name: 'Share of paths', values: h.map(function (x) { return x / irrs.length; }), colors: h.map(function (_, i) { return lo + (i + 1) * w <= 0.10 + 1e-9 ? 's5' : 's1'; }) }], yFmt: pctTick, width: cw(), height: 220, label: 'Distribution of buyer IRR' });
+    var nBelow = irrs.filter(function (x) { return x < 0.10; }).length;
+    $('#mcNote').textContent = F.num(irrs.length, 0) + ' paths, seed ' + S.seed + '. Each bar is ' + F.pct(w, w < 0.01 ? 1 : 0) + ' wide and labelled by its lower edge. The median path earns ' + F.pct(S.mc.p50, 1) + ' at the bid; ' + F.num(nBelow, 0) + ' ' + (nBelow === 1 ? 'path' : 'paths') + ' (' + shareText(S.mc.below10) + ') earn' + (nBelow === 1 ? 's' : '') + ' less than 10%' + (nBelow ? ' (highlighted).' : '.');
   }
 
   /* ---------------- sensitivity ---------------- */
@@ -288,10 +299,10 @@ sell = (1 + opp)^hold</div>
     $('#sensHeat').innerHTML = '';
     UI.chart.heat('#sensHeat', { rows: irrs.map(function (r) { return F.pct(r, 0) + ' IRR'; }), cols: hcs.map(function (x) { return F.pct(x, 0) + ' cut'; }), matrix: irrs.map(function (r) { return hcs.map(function (h) { return priceBook(r, h).pct; }); }), min: 0.6, max: 1.05, fmt: function (x) { return F.pct(x, 0); }, cell: 80, labelWidth: 90, label: 'Price sensitivity' });
     var m = MODELS.buyout, ages = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], pr = ages.map(function (a) { return SEC.price(SEC.stakeFlows({ nav: 100, unfunded: 10, age: a, model: m }, { haircut: A.haircut }), A.target, 100).pctNav; });
-    UI.chart.line('#ageChart', { xs: ages, series: [{ name: '% of NAV', ys: pr, dots: true }], yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return v + 'y'; }, height: 220, zero: false, label: 'Price by fund age' });
+    UI.chart.line('#ageChart', { xs: ages, series: [{ name: '% of NAV', ys: pr, dots: true }], yFmt: pctTick, tipFmt: function (v) { return F.pct(v, 1); }, xFmt: function (v) { return v + 'y'; }, xTicks: narrow() ? ages.length / 2 + 1e-6 : 11, width: cw(), height: 220, zero: false, label: 'Price by fund age' });
     $('#ageNote').textContent = 'Younger interests wait longer for distributions and carry more calls, so the same target IRR buys them at a deeper discount: ' + F.pct(pr[0], 0) + ' of NAV at two years against ' + F.pct(pr[pr.length - 1], 0) + ' at twelve, on this model. In the market, tail-end funds often trade wider than this, because the few assets left are harder to value and buyers price that risk.';
     var us = [0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40], pu = us.map(function (u) { return SEC.price(SEC.stakeFlows({ nav: 100, unfunded: 100 * u, age: 3, model: m }, { haircut: A.haircut }), A.target, 100).pctNav; });
-    UI.chart.bar('#unfChart', { categories: us.map(function (u) { return F.pct(u, 0) + ' of NAV'; }), series: [{ name: '% of NAV', values: pu }], yFmt: function (v) { return F.pct(v, 0); }, height: 200, values: true, label: 'Price by unfunded commitment' });
+    UI.chart.line('#unfChart', { xs: us, series: [{ name: 'Price, % of NAV', ys: pu, dots: true }], yFmt: function (v) { return F.pct(v, 1); }, xFmt: function (v) { return F.pct(v, 0); }, xTicks: 8, width: cw(), height: narrow() ? 220 : 170, zero: false, label: 'Price by unfunded commitment' });
     $('#unfNote').textContent = 'Unfunded commitment is money the buyer must still pay in, at par, for assets that earn the fund\'s growth rate. When that growth is below the target IRR, every dollar of unfunded costs the buyer price. Here the price moves from ' + F.pct(pu[0], 1) + ' of NAV with no unfunded to ' + F.pct(pu[pu.length - 1], 1) + ' at 40% unfunded.';
   }
 
@@ -305,15 +316,15 @@ sell = (1 + opp)^hold</div>
       { id: 'rollBase', label: 'Roll, house case (' + F.mult(A.mBase, 2) + ')', value: F.mult(base.net) + ' net', sub: F.pct(base.irr, 1) + ' a year vs ' + F.pct(A.opp, 0) + ' from selling', tone: base.net < sell ? 'bad' : 'good' },
       { id: 'rollEdge', label: 'Rolling minus selling, house case', value: F.money((base.net - sell) * n.saleProceeds.value, 2), sub: 'at the end of the hold, on our stake' }
     ]);
-    var ms = []; for (var m = 0.8; m <= 3.001; m += 0.05) ms.push(+m.toFixed(2));
-    UI.chart.line('#rollChart', { xs: ms, series: [{ name: 'Roll, net to LP', ys: ms.map(function (x) { return SEC.rollValue(x, t).net; }), color: 's1' }, { name: 'Sell and reinvest', ys: ms.map(function () { return sell; }), color: 's4', dash: '5 4' }], vlines: [{ x: be, label: 'break-even ' + F.mult(be) }], xFmt: function (v) { return F.num(v, 1) + 'x'; }, yFmt: function (v) { return F.num(v, 1) + 'x'; }, xTicks: 6, height: 240, label: 'Roll vs sell' });
+    var mMax = narrow() ? 3.2 : 3.0, every = narrow() ? 8 : 4, ms = []; for (var m = 0.8; m <= mMax + 0.001; m += 0.05) ms.push(+m.toFixed(2));
+    UI.chart.line('#rollChart', { xs: ms, series: [{ name: 'Roll, net to LP', ys: ms.map(function (x) { return SEC.rollValue(x, t).net; }), color: 's1' }, { name: 'Sell and reinvest', ys: ms.map(function () { return sell; }), color: 's4', dash: '5 4' }], vlines: [{ x: be, label: 'break-even ' + F.mult(be) }], xFmt: function (v) { return F.num(v, 1) + 'x'; }, yFmt: function (v) { return F.num(v, 1) + 'x'; }, tipFmt: function (v) { return F.mult(v); }, xTicks: ms.length / every + 1e-6, width: cw(), height: 240, label: 'Roll vs sell' });
     $('#rollNote').textContent = 'Selling turns $1 into ' + F.mult(sell) + ' over ' + t.hold + ' years at ' + F.pct(A.opp, 0) + '. Rolling beats that only if the CV\'s companies return more than ' + F.mult(be) + ' gross, after the ' + F.pct(t.fee, 1) + ' fee and the carry that restarts at the transaction price.';
     var sc = [['GP case', A.mGP, t.hold], ['House case', A.mBase, t.hold], ['Downside', A.mDown, t.hold], ['House case, both extensions', A.mBase, t.hold + 2]].map(function (r) { var tt = Object.assign({}, t, { hold: r[2] }), v = SEC.rollValue(r[1], tt), sv = SEC.sellValue(tt, A.opp); return { s: r[0], m: r[1], h: r[2], net: v.net, irr: v.irr, carry: v.carry, sell: sv, d: v.net - sv }; });
     S.scen = sc;
     UI.table('#scenTable', { id: 'scenarios', name: 'Roll or sell scenarios', columns: [{ key: 's', label: 'Scenario' }, { key: 'm', label: 'Gross', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'h', label: 'Years', num: 1 }, { key: 'net', label: 'Roll, net', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'irr', label: 'Roll IRR', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sell', label: 'Sell', num: 1, fmt: function (v) { return F.mult(v); } }, { key: 'd', label: 'Roll minus sell', num: 1, fmt: function (v) { return (v >= 0 ? '+' : '') + F.num(v, 2) + 'x'; }, cls: function (v) { return v < 0 ? 'neg' : ''; } }], rows: sc });
     var mults = [1.2, 1.5, 1.7, 2.0, 2.3], holds = [3, 4, 5, 6];
     $('#holdHeat').innerHTML = '';
-    UI.chart.heat('#holdHeat', { rows: holds.map(function (hh) { return hh + ' years'; }), cols: mults.map(function (x) { return F.mult(x, 1); }), matrix: holds.map(function (hh) { var tt = Object.assign({}, t, { hold: hh }); return mults.map(function (x) { return SEC.rollValue(x, tt).net - SEC.sellValue(tt, A.opp); }); }), min: -0.8, max: 0.8, fmt: function (x) { return (x >= 0 ? '+' : '') + F.num(x, 2); }, cell: 80, labelWidth: 80, label: 'Roll minus sell' });
+    UI.chart.heat('#holdHeat', { rows: holds.map(function (hh) { return hh + ' years'; }), cols: mults.map(function (x) { return F.mult(x, 1); }), matrix: holds.map(function (hh) { var tt = Object.assign({}, t, { hold: hh }); return mults.map(function (x) { return SEC.rollValue(x, tt).net - SEC.sellValue(tt, A.opp); }); }), min: -1.1, max: 1.1, fmt: function (x) { return (x >= 0 ? '+' : '') + F.num(x, 2); }, cell: 80, labelWidth: 80, label: 'Roll minus sell' });
   }
 
   /* ---------------- review run ---------------- */
@@ -416,10 +427,12 @@ sell = (1 + opp)^hold</div>
     $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzPortfolio', { title: 'Use your own fund interests', template: '/assets/templates/lp-portfolio.csv', columns: [{ name: 'fund' }, { name: 'strategy', desc: 'buyout, growth, venture, credit or infrastructure' }, { name: 'vintage' }, { name: 'nav', desc: '$m at nav_date' }, { name: 'nav_date', required: false }, { name: 'unfunded', desc: '$m' }, { name: 'calls_since', required: false }, { name: 'dists_since', required: false }],
-      parse: parsePortfolio, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your fund interests, processed locally.'; renderPricing(); renderSensitivity(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderPricing(); renderSensitivity(); } });
+      parse: parsePortfolio, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your fund interests, processed locally.'; renderPricing(); renderSensitivity(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '. NAVs at 31 Mar 2026, priced at 30 Jun 2026.'; renderPricing(); renderSensitivity(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Secondaries Desk', slug: 'secondaries-desk', report: 'Bid memo and CV election memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Secondaries Desk'); UI.testsBadge('.tests-badge-slot', 'Secondaries Desk');
     renderAll(); runReview();
+    var wasNarrow = narrow();
+    window.addEventListener('resize', UI.debounce(function () { if (narrow() !== wasNarrow) { wasNarrow = narrow(); renderAll(); } }, 200));
     UI.revealHash(tabs);
   }
   init();

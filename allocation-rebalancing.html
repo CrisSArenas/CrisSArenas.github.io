@@ -28,6 +28,11 @@
       .controls select.field, .controls input[type="number"].field { width: 100%; max-width: 100%; }
       .check-ok { color: var(--positive); font-weight: 600; }
       .check-no { color: var(--negative); font-weight: 600; }
+      /* wide tables: wrap headers and the long text columns so they fit the panel on a desktop */
+      #tiltTable th, #tradeTable th, #baTable th, #driftTable th { white-space: normal; vertical-align: bottom; min-width: 4.5em; }
+      #checkTable td:last-child { white-space: normal; min-width: 14em; }
+      #tradeTable td:not(.n) { white-space: normal; }
+      #tradeTable td:last-child { min-width: 10em; }
     </style>
 </head>
 <body>
@@ -103,7 +108,7 @@
             <div class="control"><label for="fRaCalls">Real assets capital calls</label><input class="field" type="number" id="fRaCalls" data-k="raCalls" min="0" max="100" step="0.5" value="6"></div>
             <div class="control"><label for="fRaDist">Real assets distributions</label><input class="field" type="number" id="fRaDist" data-k="raDist" min="0" max="100" step="0.5" value="4"></div>
             <div class="control"><label for="toTarget">Trade breaching sleeves back to</label>
-              <select class="field" id="toTarget"><option value="edge">The nearest edge of the range</option><option value="target">The tactical target</option></select></div>
+              <select class="field" id="toTarget"><option value="edge">Nearest range edge</option><option value="target">Tactical target</option></select></div>
             <div id="rebControls" class="controls"></div>
             <p class="eval-note" id="flowNote"></p>
           </div></div>
@@ -364,7 +369,7 @@ overlay = beta_PE x (w_PE - hi_PE) x NAV_after,  beta_PE = rho_PE,US sigma_PE / 
     ]);
     UI.chart.bar('#tiltChart', { categories: SHORT, series: [{ name: 'View as entered', values: views, color: 's4' }, { name: 'Sized to the budget', values: st.tilt, color: 's1' }], yFmt: function (x) { return F.pp(x, 1); }, height: 260, label: 'Views and sized tilts' });
     $('#tiltNote').textContent = (st.scale < 1 ? 'The views as entered carry ' + F.pct(raw, 2) + ' of tracking error, above the ' + F.pct(A.teBudget, 2) + ' budget, so I scale each one by ' + F.num(st.scale, 2) + '.' : 'The views as entered carry ' + F.pct(raw, 2) + ' of tracking error, inside the ' + F.pct(A.teBudget, 2) + ' budget, so they stand at full size.') +
-      (outside.length ? ' ' + outside.map(function (i) { return SLEEVES[i]; }).join(' and ') + ' would end outside its range at the tactical target.' : ' Every tactical target sits inside its policy range.');
+      (outside.length ? ' ' + outside.map(function (i) { return SLEEVES[i]; }).join(' and ') + ' would end outside ' + (outside.length > 1 ? 'their ranges' : 'its range') + ' at the tactical target.' : ' Every tactical target sits inside its policy range.');
     UI.table('#tiltTable', { id: 'tilts', name: 'Tactical targets', columns: [{ key: 'a', label: 'Sleeve' }, { key: 'p', label: 'Policy', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'v', label: 'View', num: 1, fmt: function (x) { return pp(x, 1); } }, { key: 't', label: 'Sized tilt', num: 1, fmt: function (x) { return pp(x, 2); } }, { key: 'tt', label: 'Tactical target', num: 1, fmt: function (x) { return F.pct(x, 2); } }, { key: 'r', label: 'Range' }, { key: 'mu', label: 'Exp. return', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'vol', label: 'Volatility', num: 1, fmt: function (x) { return F.pct(x, 1); } }, { key: 'c', label: 'Adds to TE', num: 1, fmt: function (x) { return F.pct(x, 2); } }],
       rows: SLEEVES.map(function (s, i) { return { a: s, p: POL.target[i], v: views[i], t: st.tilt[i], tt: tact[i], r: rangeTxt(i), mu: C.mu[i], vol: C.vol[i], c: tac.c[i] }; }),
       foot: { a: 'Total', p: 1, v: PM.sum(views), t: PM.sum(st.tilt), tt: PM.sum(tact), mu: rt, vol: vt, c: tac.te } });
@@ -405,7 +410,7 @@ overlay = beta_PE x (w_PE - hi_PE) x NAV_after,  beta_PE = rho_PE,US sigma_PE / 
     var outAfter = function (i) { return p.breachesAfter.some(function (d) { return d.i === i; }); };
     UI.chart.bar('#baChart', { categories: SHORT, horizontal: true, labelWidth: 86, height: 460, series: [
       { name: 'Lower limit', values: POL.lo.map(function (x, i) { return x - POL.target[i]; }), color: 's3' },
-      { name: 'Before trades', values: p.pre.map(function (x, i) { return x - POL.target[i]; }), color: 's4' },
+      { name: 'Before trades', values: p.pre.map(function (x, i) { return x - POL.target[i]; }), color: 's2' },
       { name: 'After trades', values: p.effective.map(function (x, i) { return x - POL.target[i]; }), color: 's1', colors: SHORT.map(function (_, i) { return outAfter(i) ? 's5' : 's1'; }) },
       { name: 'Upper limit', values: POL.hi.map(function (x, i) { return x - POL.target[i]; }), color: 's3' }
     ], yFmt: function (x) { return F.pp(x, 0); }, label: 'Weights before and after the trades, gap to target' });
@@ -426,12 +431,14 @@ overlay = beta_PE x (w_PE - hi_PE) x NAV_after,  beta_PE = rho_PE,US sigma_PE / 
       else if (act !== 'none' && d) { note = 'Back to the ' + (S.toTarget ? 'tactical target' : d.below ? 'lower limit' : 'upper limit') + (Math.abs(t) < A.minTrade ? '; kept below the minimum size because it cures a breach' : ''); state = tradeState(i); }
       else if (act !== 'none') { note = t < 0 ? 'Sold to restore cash to its range' : 'Bought with surplus cash'; state = tradeState(i); }
       else note = d ? 'Breach cured by the cash flows' : 'No trade needed';
-      return { a: s, act: act, amt: Math.abs(t), cost: i === CASH || !LIQUID[i] ? null : COST[i], cm: i === CASH || !LIQUID[i] ? 0 : Math.abs(t) * COST[i] / 1e4, note: note, st: state };
+      return { a: s, act: act, amt: Math.abs(t), cost: i === CASH || !LIQUID[i] || act === 'none' ? null : COST[i], cm: i === CASH || !LIQUID[i] ? 0 : Math.abs(t) * COST[i] / 1e4, note: note, st: state };
     });
     if (p.overlay > 0) rows.push({ a: 'US equity index futures (overlay)', act: 'Sell', amt: p.overlay, cost: null, cm: 0, note: 'Beta-adjusted notional against private equity above its upper limit; no physical trade', st: tradeState('overlay') });
     UI.table('#tradeTable', { id: 'trades', name: 'Trade list', columns: [{ key: 'a', label: 'Sleeve' }, { key: 'act', label: 'Action' }, { key: 'amt', label: 'Amount, $m', num: 1, fmt: function (x) { return x ? F.num(x, 1) : ''; } }, { key: 'st', label: 'Status' }, { key: 'cost', label: 'Cost, bps', num: 1, fmt: function (x) { return x == null ? '' : String(x); } }, { key: 'cm', label: 'Cost, $k', num: 1, fmt: function (x) { return x ? F.num(x * 1000, 1) : ''; } }, { key: 'note', label: 'Why' }],
       rows: rows, foot: { a: 'Net of physical trades', amt: F.num(PM.sum(p.trades), 1), cm: p.costs } });
-    $('#tradeNote').textContent = 'Sales in the liquid sleeves raise ' + F.money(-PM.sum(p.trades.filter(function (t, i) { return i !== CASH && t < 0; })), 1) + ' and purchases use ' + F.money(PM.sum(p.trades.filter(function (t, i) { return i !== CASH && t > 0; })), 1) + '. Cash takes the difference of ' + F.money(p.trades[CASH], 1) + ' and pays ' + kUsd(p.costs, 1) + ' in costs. Spending of ' + F.money(f.spending, 1) + ' leaves the portfolio, so the trades themselves net to zero.';
+    var tc = p.trades[CASH];
+    $('#tradeNote').textContent = P.nTr === 0 ? 'No trade is needed this quarter. Spending of ' + F.money(f.spending, 1) + ' and the net capital calls are paid from cash, which stays inside its range.' :
+      'Sales in the liquid sleeves raise ' + F.money(-PM.sum(p.trades.filter(function (t, i) { return i !== CASH && t < 0; })), 1) + ' and purchases use ' + F.money(PM.sum(p.trades.filter(function (t, i) { return i !== CASH && t > 0; })), 1) + '. ' + (tc >= 0 ? 'Cash receives the net ' + F.money(tc, 1) : 'Cash pays the net ' + F.money(-tc, 1)) + ' and pays ' + kUsd(p.costs, 1) + ' in costs. Spending of ' + F.money(f.spending, 1) + ' leaves the portfolio, so the trades themselves net to zero.';
   }
 
   /* ---------------- review run ---------------- */

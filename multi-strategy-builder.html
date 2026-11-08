@@ -23,9 +23,9 @@
       .ai-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
       @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
       .controls select.field { width: 100%; }
-      .pa-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px 14px; }
+      .pa-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px 14px; align-items: end; }
       .pa-inputs label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--muted); }
-      .pa-inputs .field { width: 100%; }
+      .pa-inputs input.field { width: 100%; }
       .pa-inputs h4 { grid-column: 1 / -1; margin: 6px 0 0; font: 600 .82rem/1.3 var(--sans); color: var(--text); }
       .health { display: grid; gap: 6px; }
       .health-row { display: grid; grid-template-columns: 14px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); gap: 8px; align-items: baseline; font-size: .86rem; }
@@ -89,10 +89,8 @@
         <div class="panel"><div class="panel-head"><h3>Growth of $100, net of fees</h3><span class="sub">Shaded: stress months</span></div><div class="panel-body"><div id="growthChart"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Weight vs share of risk</h3></div><div class="panel-body"><div id="rcChart"></div><p class="eval-note" id="rcNote"></p></div></div>
       </div>
-      <div class="split-2">
-        <div class="panel"><div class="panel-head"><h3>Sleeves, net of fees</h3></div><div class="panel-body"><div id="sleeveTable"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Risk controls compared</h3></div><div class="panel-body"><div id="ctrlTable"></div><p class="eval-note" id="ctrlNote"></p></div></div>
-      </div>
+      <div class="panel"><div class="panel-head"><h3>Sleeves, net of fees</h3></div><div class="panel-body"><div id="sleeveTable"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Risk controls compared</h3></div><div class="panel-body"><div id="ctrlTable"></div><p class="eval-note" id="ctrlNote"></p></div></div>
     </section>
 
     <section id="crowding" hidden>
@@ -103,17 +101,15 @@
       </div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Worst stress episode, replayed on today's weights</h3></div><div class="panel-body"><div id="episodeChart"></div><p class="eval-note" id="episodeNote"></p></div></div>
-        <div class="panel"><div class="panel-head"><h3>Factor loadings, first seven years</h3></div><div class="panel-body"><div id="loadHeat"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3 id="loadTitle">Factor loadings, first seven years</h3></div><div class="panel-body"><div id="loadHeat"></div></div></div>
       </div>
       <div class="panel"><div class="panel-head"><h3>Factor overlap between sleeves</h3><span class="sub">Shared factor bets and the correlation they explain</span></div><div class="panel-body"><div id="overlapTable"></div></div></div>
     </section>
 
     <section id="fees" hidden>
       <div class="kpis" id="feeKpis"></div>
-      <div class="split-2" style="margin-top:18px">
-        <div class="panel"><div class="panel-head"><h3>Gross to net by sleeve</h3><span class="sub">A year, average over the period</span></div><div class="panel-body"><div id="feeTable"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Performance fees: paid by sleeves vs owed on the combined book</h3><span class="sub">% of portfolio NAV</span></div><div class="panel-body"><div id="nettingChart"></div><p class="eval-note" id="nettingNote"></p></div></div>
-      </div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Gross to net by sleeve</h3><span class="sub">A year, average over the period</span></div><div class="panel-body"><div id="feeTable"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Performance fees on each year's gain: sleeve by sleeve vs on the combined book</h3><span class="sub">% of portfolio NAV, before high-water marks</span></div><div class="panel-body"><div id="nettingChart"></div><p class="eval-note" id="nettingNote"></p></div></div>
     </section>
 
     <section id="pa" hidden>
@@ -127,10 +123,8 @@
         <div class="panel"><div class="panel-head"><h3>Performance comparison</h3><span class="sub">Benchmark vs portable alpha, 180 months</span></div><div class="panel-body"><div id="paKpis"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Return decomposition</h3><span class="sub">Arithmetic annualised contributions, % of NAV</span></div><div class="panel-body"><div id="paDecomp"></div></div></div>
       </div>
-      <div class="split-2">
-        <div class="panel"><div class="panel-head"><h3>Simulation health</h3></div><div class="panel-body"><div class="health" id="paHealth"></div></div></div>
-        <div class="panel"><div class="panel-head"><h3>Stress scenarios</h3><span class="sub">One-month stylised shocks</span></div><div class="panel-body"><div id="paStress"></div></div></div>
-      </div>
+      <div class="panel"><div class="panel-head"><h3>Stress scenarios</h3><span class="sub">One-month stylised shocks</span></div><div class="panel-body"><div id="paStress"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>Simulation health</h3></div><div class="panel-body"><div class="health" id="paHealth"></div></div></div>
     </section>
   </div>
 
@@ -139,9 +133,9 @@
     <div class="fold-body">
       <ul>
         <li>Sleeve and factor returns are simulated over ten years with calm and stress regimes. In stress months crowded trades fall together.</li>
-        <li>Equal risk contribution sets weights so each sleeve adds the same share of variance. Volatility targeting scales each sleeve to its mandate's target. A drawdown stop halves a sleeve for six months after a 10% fall. Capital the controls take out earns the cash rate, and capital they add above 1x is financed at it.</li>
+        <li>Equal risk contribution sets weights so each sleeve adds the same share of variance. Volatility targeting scales each sleeve to its mandate's target. With the default settings a drawdown stop halves a sleeve for six months after a 10% fall. Capital the controls take out earns the cash rate, and capital they add above 1x is financed at it.</li>
         <li>Style drift is a change in a sleeve's factor loadings between the first seven years and the last 30 months. Correlation shifts are tested on calm months only.</li>
-        <li>Fees are charged monthly and performance fees crystallise once a year above the high-water mark. Netting cost is what sleeves pay in performance fees minus what one fee on the whole book would cost.</li>
+        <li>Fees are charged monthly and performance fees crystallise once a year above the high-water mark. Netting cost compares, year by year, performance fees on each sleeve's own gain with one weight-averaged fee on the whole book's gain. High-water marks are left out on both sides, so it isolates winners and losers offsetting within a year; the fee table shows what the sleeves actually paid.</li>
         <li>The portable alpha tab runs the original simulator's engine unchanged.</li>
       </ul>
       <h3>Formulas</h3>
@@ -150,7 +144,7 @@ vol target: scale_t = min(cap, target / vol_12m),  r_t = scale_t r_sleeve + (1 -
 drift z = (b_recent - b_base) / sqrt(se_r^2 + se_b^2)
 Fisher z = (atanh r1 - atanh r0) / sqrt(1/(n0-3) + 1/(n1-3))
 overlap = b_A' S_f b_B / (vol_A vol_B)
-netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
+netting cost = sum_i w_i perf_i g_i [g_i &gt; hurdle_i] - perf max(sum_i w_i g_i, 0), g = calendar-year gain</div>
       <h3>Assumptions</h3>
       <div id="assumptions"></div>
       
@@ -248,6 +242,13 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
   function ann(r) { return PM.mean(r) * 12; }
   function vol(r) { return PM.std(r) * Math.sqrt(12); }
   function cagr(r) { var g = 1; r.forEach(function (v) { g *= 1 + v; }); return Math.pow(g, 12 / r.length) - 1; }
+  /* chart width in CSS pixels of the column the chart sits in ('half' = one side of a two-column row), so
+     axis labels render at their stated size on a phone as well as on a desktop */
+  function cw(kind) { var W = $('#tabsRoot').clientWidth, vw = window.innerWidth, pad = vw <= 640 ? 32 : 48, c = kind === 'half' && vw > 960 ? (W - 20) / 2 : W; return Math.max(280, Math.round(c - pad)); }
+  function heatCell(n, lw) { return Math.max(44, Math.min(64, Math.floor((cw('half') - lw - 6) / n))); }
+  function monthLabel(ms) { var d = new Date(ms); return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function span(n) { var w = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']; return n % 12 === 0 && n / 12 <= 10 ? w[n / 12] + ' year' + (n === 12 ? '' : 's') : n + ' months'; }
 
   /* ---------------- mandates (shared by the tabs and the review) ---------------- */
   function find(id, re) { var out = null; DOCS[id].pages.forEach(function (pg, pi) { pg.forEach(function (l, li) { var m = re.exec(l); if (m && !out) out = { m: m, cite: { doc: id, page: pi + 1, line: li + 1, short: id.replace('mandate-', '') } }; }); }); return out; }
@@ -297,25 +298,26 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
   /* ---------------- tab 1: sleeves ---------------- */
   function renderSleeves() {
     var B = build(), p = B.cur.r, st = stats(p), top = B.rc.indexOf(Math.max.apply(null, B.rc));
+    var even = Math.max.apply(null, B.rc) - Math.min.apply(null, B.rc) < 0.005;
     S.port = st;
     UI.kpis('#slKpis', [
       { id: 'portRet', label: 'Portfolio return, net', value: F.pct(st.ret, 1), sub: 'a year, compound' },
       { id: 'portVol', label: 'Volatility', value: F.pct(st.vol, 1) },
       { id: 'portSharpe', label: 'Sharpe ratio', value: F.num(st.sharpe, 2), sub: 'cash at ' + F.pct(A.rf, 1) },
       { id: 'portDD', label: 'Maximum drawdown', value: F.pct(st.dd, 1), tone: st.dd < -0.15 ? 'bad' : null },
-      { id: 'topRisk', label: 'Largest share of risk', value: F.pct(B.rc[top], 0), sub: NAMES[top] + ' at ' + F.pct(B.w[top], 0) + ' weight', explain: function () { return { title: 'Risk contribution', formula: 'w_i (S w)_i / (w\' S w), covariance of net monthly returns over the full period', inputs: NAMES.map(function (n, i) { return { name: n, value: F.pct(B.w[i], 1) + ' weight', src: 'computed' }; }), result: F.pct(B.rc[top], 1) }; } }
+      { id: 'topRisk', label: even ? 'Share of risk per sleeve' : 'Largest share of risk', value: F.pct(B.rc[top], 0), sub: even ? 'equal across the five sleeves' : NAMES[top] + ' at ' + F.pct(B.w[top], 0) + ' weight', explain: function () { return { title: 'Risk contribution', formula: 'w_i (S w)_i / (w\' S w), covariance of net monthly returns over the full period', inputs: NAMES.map(function (n, i) { return { name: n, value: F.pct(B.w[i], 1) + ' weight, ' + F.pct(B.rc[i], 1) + ' of risk', src: 'computed' }; }), result: F.pct(B.rc[top], 1) }; } }
     ]);
     var g = function (r) { var x = 100; return [100].concat(r.map(function (v) { x *= 1 + v; return x; })); };
     var xs = [B.D.dates[0] - 31 * 864e5].concat(B.D.dates), shade = [false].concat(B.D.regimes.map(function (x) { return x === 'stress' ? 's5' : false; }));
-    UI.chart.line('#growthChart', { xs: xs, series: [{ name: 'Book, as set', ys: g(p), color: 's1' }].concat(S.vt || S.dd ? [{ name: 'No risk controls', ys: g(B.V.none.r), color: 's4', dash: '4 3' }] : []), shade: shade, yFmt: function (v) { return F.num(v, 0); }, xFmt: function (v) { return new Date(v).getUTCFullYear(); }, xTicks: 6, height: 240, label: 'Growth of 100 dollars' });
-    UI.chart.bar('#rcChart', { categories: SN, series: [{ name: 'Weight', values: B.w }, { name: 'Share of risk', values: B.rc }], yFmt: function (v) { return F.pct(v, 0); }, height: 240, label: 'Weights and risk contributions' });
+    UI.chart.line('#growthChart', { xs: xs, series: [{ name: 'Book, as set', ys: g(p), color: 's1' }].concat(S.vt || S.dd ? [{ name: 'No risk controls', ys: g(B.V.none.r), color: 's4', dash: '4 3' }] : []), shade: shade, yFmt: function (v) { return F.num(v, 0); }, xFmt: function (v) { return new Date(v).getUTCFullYear(); }, xTicks: xs.length / 23.95, width: cw('half'), height: 240, label: 'Growth of 100 dollars' });
+    UI.chart.bar('#rcChart', { categories: SN, series: [{ name: 'Weight', values: B.w }, { name: 'Share of risk', values: B.rc }], yFmt: function (v) { return F.pct(v, 0); }, width: cw('half'), height: 240, label: 'Weights and risk contributions' });
     $('#rcNote').textContent = S.scheme === 'erc' ? 'Equal risk contribution: each sleeve adds a fifth of the variance, so the low-volatility sleeves get the larger weights.' : 'Weights and risk shares differ: the most volatile and most correlated sleeves take more of the risk than their weight suggests.';
     UI.table('#sleeveTable', { id: 'sleeves', name: 'Sleeves', columns: [{ key: 'n', label: 'Sleeve' }, { key: 'ret', label: 'Return', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'vol', label: 'Vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sharpe', label: 'Sharpe', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'dd', label: 'Max DD', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < -0.2 ? 'neg' : ''; } }, { key: 'w', label: 'Weight', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'rc', label: 'Risk share', num: 1, fmt: function (v) { return F.pct(v, 1); } }],
       rows: NAMES.map(function (n, i) { var s = stats(B.net[i]); return { n: n, ret: s.ret, vol: s.vol, sharpe: s.sharpe, dd: s.dd, w: B.w[i], rc: B.rc[i] }; }), foot: { n: 'Book', ret: st.ret, vol: st.vol, sharpe: st.sharpe, dd: st.dd, w: 1, rc: 1 } });
     var rows = [['No risk controls', 'none'], ['Volatility targeting', 'vt'], ['Drawdown stops', 'dd'], ['Both', 'both']].map(function (r) { var v = B.V[r[1]], s = stats(v.r); return { n: r[0], ret: s.ret, vol: s.vol, sharpe: s.sharpe, dd: s.dd, stops: r[1] === 'dd' || r[1] === 'both' ? v.stops : '' }; });
     S.ctrl = rows;
     UI.table('#ctrlTable', { id: 'controls', name: 'Risk controls compared', columns: [{ key: 'n', label: 'Controls' }, { key: 'ret', label: 'Return', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'vol', label: 'Vol', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'sharpe', label: 'Sharpe', num: 1, fmt: function (v) { return F.num(v, 2); } }, { key: 'dd', label: 'Max DD', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'stops', label: 'Stops fired', num: 1 }], rows: rows });
-    $('#ctrlNote').textContent = 'Stops act after the loss. They help only when a fall keeps going. In a crowded unwind that snaps back, they sell near the low. Volatility targeting looks at the last 12 months, so it reacts late.';
+    $('#ctrlNote').textContent = 'Stops act after the loss. They help only when a fall keeps going. In a crowded unwind that snaps back, they sell near the low. Volatility targeting looks at the last ' + A.vtLook + ' months, so it reacts late.';
   }
 
   /* ---------------- tab 2: crowding and overlap ---------------- */
@@ -324,32 +326,38 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
   function renderCrowding() {
     var B = S.B, D = B.D, rows = D.R.map(function (_, t) { return B.net.map(function (s) { return s[t]; }); });
     var cr = rows.filter(function (_, t) { return B.calm[t]; }), sr = rows.filter(function (_, t) { return !B.calm[t]; });
-    var Cc = PM.covMatrix(cr), Cs = sr.length > 6 ? PM.covMatrix(sr) : Cc, Rc = PM.corrFromCov(Cc), Rs = PM.corrFromCov(Cs);
+    /* a 5 x 5 stress covariance needs more stress months than sleeves; with fewer, the stress figures are not shown */
+    var enough = sr.length > 6, Cc = PM.covMatrix(cr), Cs = enough ? PM.covMatrix(sr) : Cc, Rc = PM.corrFromCov(Cc), Rs = PM.corrFromCov(Cs), na = 'n/a';
     var pv = function (C) { return Math.sqrt(PM.dot(B.w, PM.matVec(C, B.w)) * 12); }, dr = function (C) { return PM.sum(B.w.map(function (w, i) { return w * Math.sqrt(C[i][i] * 12); })) / pv(C); };
     /* worst stress episode: contiguous stress months with the worst cumulative book return */
     var best = null, t = 0;
     while (t < D.R.length) { if (!B.calm[t]) { var s = t; while (t < D.R.length && !B.calm[t]) t++; var g = 1; for (var k = s; k < t; k++) g *= 1 + B.cur.r[k]; if (!best || g - 1 < best.loss) best = { from: s, to: t, loss: g - 1 }; } else t++; }
-    var contrib = best ? B.net.map(function (sr2, i) { var c = 0; for (var k = best.from; k < best.to; k++) c += B.w[i] * sr2[k]; return c; }) : B.w.map(function () { return 0; });
+    /* each sleeve's weighted return, compounded with the book's growth before it, so the parts add up to the
+       book's loss over the episode; the sleeves are taken with the same risk controls as the book */
+    var contrib = best ? B.cur.cols.map(function (sr2, i) { var c = 0, gb = 1; for (var k = best.from; k < best.to; k++) { c += gb * B.w[i] * sr2[k]; gb *= 1 + B.cur.r[k]; } return c; }) : B.w.map(function () { return 0; });
     S.crowd = { calmAvg: avgOff(Rc), stressAvg: avgOff(Rs), volCalm: pv(Cc), volStress: pv(Cs), drCalm: dr(Cc), drStress: dr(Cs), episode: best, stressN: sr.length, Rs: Rs };
     UI.kpis('#crKpis', [
       { id: 'corrCalm', label: 'Average correlation between sleeves, calm', value: F.num(S.crowd.calmAvg, 2) },
-      { id: 'corrStress', label: 'Average correlation, stress', value: F.num(S.crowd.stressAvg, 2), sub: sr.length + ' stress months', tone: S.crowd.stressAvg - S.crowd.calmAvg > 0.2 ? 'bad' : null },
-      { id: 'volStress', label: 'Book volatility, calm vs stress covariance', value: F.pct(S.crowd.volCalm, 1) + ' / ' + F.pct(S.crowd.volStress, 1), sub: 'same weights', explain: function () { return { title: 'Book volatility under each regime', formula: 'sqrt(12 w\' S w) with S estimated on calm months, then on stress months', inputs: [{ name: 'Calm months', value: cr.length, src: 'computed' }, { name: 'Stress months', value: sr.length, src: 'computed' }], result: F.pct(S.crowd.volStress, 2) }; } },
-      { id: 'divRatio', label: 'Diversification ratio, calm vs stress', value: F.num(S.crowd.drCalm, 2) + ' / ' + F.num(S.crowd.drStress, 2), sub: 'sum of weighted vols / book vol' },
-      { id: 'episodeLoss', label: 'Worst stress episode on today\'s weights', value: best ? F.pct(best.loss, 1) : 'n/a', sub: best ? (best.to - best.from) + ' months from ' + new Date(D.dates[best.from]).toISOString().slice(0, 7) : '', tone: 'bad' }
+      { id: 'corrStress', label: 'Average correlation, stress', value: enough ? F.num(S.crowd.stressAvg, 2) : na, sub: plural(sr.length, 'stress month', 'stress months') + (enough ? '' : ', too few to estimate'), tone: enough && S.crowd.stressAvg - S.crowd.calmAvg > 0.2 ? 'bad' : null },
+      { id: 'volStress', label: 'Book volatility, calm vs stress covariance', value: F.pct(S.crowd.volCalm, 1) + ' / ' + (enough ? F.pct(S.crowd.volStress, 1) : na), sub: 'same weights', explain: function () { return { title: 'Book volatility under each regime', formula: 'sqrt(12 w\' S w) with S estimated on calm months, then on stress months', inputs: [{ name: 'Calm months', value: cr.length, src: 'computed' }, { name: 'Stress months', value: sr.length, src: 'computed' }], result: enough ? F.pct(S.crowd.volStress, 2) : na }; } },
+      { id: 'divRatio', label: 'Diversification ratio, calm vs stress', value: F.num(S.crowd.drCalm, 2) + ' / ' + (enough ? F.num(S.crowd.drStress, 2) : na), sub: 'sum of weighted vols / book vol' },
+      { id: 'episodeLoss', label: 'Worst stress episode on today\'s weights', value: best ? F.pct(best.loss, 1) : 'n/a', sub: best ? plural(best.to - best.from, 'month', 'months') + ' from ' + monthLabel(D.dates[best.from]) : '', tone: 'bad' }
     ]);
     var short = SN;
     $('#corrCalm').innerHTML = ''; $('#corrStress').innerHTML = '';
-    UI.chart.heat('#corrCalm', { rows: short, cols: short, matrix: Rc, fmt: function (x) { return F.num(x, 2); }, cell: 64, labelWidth: 90, label: 'Calm correlation' });
-    UI.chart.heat('#corrStress', { rows: short, cols: short, matrix: Rs, fmt: function (x) { return F.num(x, 2); }, cell: 64, labelWidth: 90, label: 'Stress correlation' });
-    UI.chart.bar('#episodeChart', { categories: short, series: [{ name: 'Contribution', values: contrib, signColors: true }], yFmt: function (v) { return F.pct(v, 1); }, height: 220, label: 'Sleeve contributions in the worst stress episode', values: true });
-    var worst = contrib.indexOf(Math.min.apply(null, contrib));
-    $('#episodeNote').textContent = best ? 'The book lost ' + F.pct(-best.loss, 1) + ' over ' + (best.to - best.from) + ' stress months. ' + NAMES[worst] + ' contributed most of it. The sleeves that look uncorrelated in calm months fell together: that is the crowding the calm-month correlation hides.' : 'No stress months in this data.';
+    var hc = heatCell(5, 60);
+    UI.chart.heat('#corrCalm', { rows: short, cols: short, matrix: Rc, fmt: function (x) { return F.num(x, 2); }, cell: hc, labelWidth: 60, label: 'Calm correlation' });
+    if (enough) UI.chart.heat('#corrStress', { rows: short, cols: short, matrix: Rs, fmt: function (x) { return F.num(x, 2); }, cell: hc, labelWidth: 60, label: 'Stress correlation' });
+    else $('#corrStress').innerHTML = '<p class="muted">Only ' + plural(sr.length, 'stress month', 'stress months') + ' in this history, too few to estimate a correlation matrix for five sleeves.</p>';
+    UI.chart.bar('#episodeChart', { categories: short, series: [{ name: 'Contribution', values: contrib }], signColors: true, yFmt: function (v) { return F.pct(v, 1); }, width: cw('half'), height: 220, label: 'Sleeve contributions in the worst stress episode', values: true });
+    var worst = contrib.indexOf(Math.min.apply(null, contrib)), lost = contrib.filter(function (c) { return c < 0; }).length;
+    $('#episodeNote').textContent = best ? (best.loss < 0 ? 'The book lost ' + F.pct(-best.loss, 1) : 'The book returned ' + F.pct(best.loss, 1)) + ' over ' + plural(best.to - best.from, 'stress month', 'stress months') + '. ' + NAMES[worst] + ' contributed the largest loss, ' + F.pct(contrib[worst], 1) + (lost > 1 ? ', and ' + (lost - 1) + ' other ' + (lost === 2 ? 'sleeve' : 'sleeves') + ' lost money at the same time. Sleeves that look uncorrelated in calm months fell together, which is the crowding a calm-month correlation hides.' : '.') + ' The contributions add up to the book\'s result.' : 'No stress months in this data.';
     var W = windows(D.R.length);
     if (!D.F) { $('#loadHeat').innerHTML = '<p class="muted">Add factor columns to your file to see loadings and overlap.</p>'; $('#overlapTable').innerHTML = ''; S.overlap = []; return; }
     var fit = B.net.map(function (s) { return PM.ols(s.slice(W.base[0], W.base[1]), D.F.slice(W.base[0], W.base[1])); });
     $('#loadHeat').innerHTML = '';
-    UI.chart.heat('#loadHeat', { rows: short, cols: ['Equity', 'Mom', 'Value', 'Credit', 'Rates'], matrix: fit.map(function (f) { return f.beta; }), fmt: function (x) { return F.num(x, 2); }, cell: 64, labelWidth: 90, label: 'Factor loadings' });
+    UI.chart.heat('#loadHeat', { rows: short, cols: ['Equity', 'Mom', 'Value', 'Credit', 'Rates'], matrix: fit.map(function (f) { return f.beta; }), fmt: function (x) { return F.num(x, 2); }, cell: hc, labelWidth: 60, label: 'Factor loadings' });
+    $('#loadTitle').textContent = 'Factor loadings, first ' + span(W.base[1] - W.base[0]);
     var Sf = PM.covMatrix(D.F.slice(W.base[0], W.base[1])), ov = [];
     for (var a = 0; a < 5; a++) for (var b = a + 1; b < 5; b++) {
       var shared = FN.map(function (_, k) { return Math.abs(fit[a].beta[k]) >= 0.2 && Math.abs(fit[b].beta[k]) >= 0.2 && Math.abs(fit[a].t[k + 1]) >= 3 && Math.abs(fit[b].t[k + 1]) >= 3 ? k : -1; }).filter(function (k) { return k >= 0; });
@@ -369,16 +377,16 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     });
     var pg = ann(B.D.R.map(function (r) { return PM.dot(r, B.w); })), pn = ann(B.V.none.r), nett = MS.netting(B.D.R, B.w, B.tm);
     var ptRows = rows.filter(function (r) { return r.pt; }), ptExtra = PM.sum(ptRows.map(function (r) { var i = NAMES.indexOf(r.n); return B.w[i] * (r.drag - r.std); }));
-    S.feeSum = { gross: pg, net: pn, drag: pg - pn, netting: nett.cost, rows: rows, ptExtra: ptExtra, share: pg > 0 ? (pg - pn) / pg : NaN };
+    S.feeSum = { gross: pg, net: pn, drag: pg - pn, netting: nett.cost, rows: rows, ptExtra: ptExtra, share: pg > 0 ? (pg - pn) / pg : NaN, perfPaid: PM.sum(rows.map(function (r, i) { return B.w[i] * r.perf; })) };
     UI.kpis('#feeKpis', [
       { id: 'feeDrag', label: 'Total fee drag', value: F.bps(pg - pn) + ' a year', sub: 'gross ' + F.pct(pg, 1) + ', net ' + F.pct(pn, 1), tone: 'bad' },
       { id: 'feeShare', label: 'Share of gross return paid in fees', value: F.pct(S.feeSum.share, 0) },
-      { id: 'nettingCost', label: 'Netting cost', value: F.bps(nett.cost) + ' a year', sub: 'fees on winners while losers lose', explain: function () { return { title: 'Netting cost', formula: 'performance fees paid sleeve by sleeve - one weighted-average fee on the combined book\'s yearly gain', inputs: [{ name: 'Paid by sleeves', value: F.bps(nett.paid), src: 'computed' }, { name: 'Owed on the combined book', value: F.bps(nett.aggregate), src: 'computed' }], result: F.bps(nett.cost) }; } },
+      { id: 'nettingCost', label: 'Netting cost', value: F.bps(nett.cost) + ' a year', sub: 'fees on winners while losers lose', explain: function () { return { title: 'Netting cost', formula: 'performance fees on each sleeve\'s calendar-year gain - one weighted-average fee on the combined book\'s calendar-year gain, high-water marks left out', inputs: [{ name: 'Sleeve by sleeve, on each year\'s gains', value: F.bps(nett.paid) + ' a year', src: 'computed', note: 'before high-water marks' }, { name: 'On the combined book\'s yearly gain', value: F.bps(nett.aggregate) + ' a year', src: 'computed' }], result: F.bps(nett.cost) }; } },
       { id: 'passThrough', label: 'Extra cost of pass-through vs standard fees', value: F.bps(ptExtra) + ' a year', sub: 'pass-through sleeves vs ' + F.pct(A.stdFee, 1) + ' and 20%' }
     ]);
-    UI.table('#feeTable', { id: 'fees', name: 'Gross to net by sleeve', columns: [{ key: 'n', label: 'Sleeve' }, { key: 'terms', label: 'Terms (from mandate)' }, { key: 'gross', label: 'Gross (average)', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'mgmt', label: 'Mgmt', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'pass', label: 'Pass-through', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'perf', label: 'Perf', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'net', label: 'Net (average)', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'std', label: 'Drag at standard fees', num: 1, fmt: function (v) { return F.pct(v, 2); } }], rows: rows });
-    UI.chart.bar('#nettingChart', { categories: nett.rows.map(function (r) { return 'Y' + r.year; }), series: [{ name: 'Paid by sleeves', values: nett.rows.map(function (r) { return r.paid; }) }, { name: 'Owed on combined book', values: nett.rows.map(function (r) { return r.aggregate; }) }], yFmt: function (v) { return F.pct(v, 1); }, height: 220, label: 'Performance fees by year' });
-    $('#nettingNote').textContent = 'Each sleeve charges on its own gains. In years when some sleeves win and others lose, the book pays fees on the winners even if the whole book barely moves. Over the period that costs ' + F.bps(nett.cost) + ' a year.';
+    UI.table('#feeTable', { id: 'fees', name: 'Gross to net by sleeve', columns: [{ key: 'n', label: 'Sleeve' }, { key: 'terms', label: 'Terms (from mandate)' }, { key: 'gross', label: 'Gross (average)', num: 1, fmt: function (v) { return F.pct(v, 1); } }, { key: 'mgmt', label: 'Mgmt', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'pass', label: 'Pass-through', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'perf', label: 'Perf', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'net', label: 'Net (average)', num: 1, fmt: function (v) { return F.pct(v, 1); }, cls: function (v) { return v < 0 ? 'neg' : ''; } }, { key: 'drag', label: 'Fee drag', num: 1, fmt: function (v) { return F.pct(v, 2); } }, { key: 'std', label: 'Drag at standard fees', num: 1, fmt: function (v) { return F.pct(v, 2); } }], rows: rows });
+    UI.chart.bar('#nettingChart', { categories: nett.rows.map(function (r) { return 'Y' + r.year; }), series: [{ name: 'Sleeve by sleeve', values: nett.rows.map(function (r) { return r.paid; }) }, { name: 'On the combined book', values: nett.rows.map(function (r) { return r.aggregate; }) }], yFmt: function (v) { return F.pct(v, 1); }, width: cw('full'), height: 220, label: 'Performance fees by year' });
+    $('#nettingNote').textContent = 'Each sleeve charges on its own gains. In years when some sleeves win and others lose, the book pays fees on the winners even if the whole book barely moves. Before high-water marks, fees sleeve by sleeve come to ' + F.bps(nett.paid) + ' a year against ' + F.bps(nett.aggregate) + ' on the combined book, a netting cost of ' + F.bps(nett.cost) + ' a year. After high-water marks the sleeves paid ' + F.bps(S.feeSum.perfPaid) + ' a year, the weighted Perf column of the table.';
   }
 
   /* ---------------- tab 4: portable alpha (engine unchanged, in PM.pa) ---------------- */
@@ -390,7 +398,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     ['Collateral', [['marginReq', 'Initial margin (% notional)', 100, 1, 1, 25], ['haircut', 'Collateral haircut (%)', 100, 1, 0, 10], ['buffer', 'Liquidity buffer and credit line (% NAV)', 100, 1, 0, 30], ['sleeveLiq', 'Months between sleeve redemptions', 1, 0, 1, 12]]]
   ];
   function paForm() {
-    var h = ''; PA_IN.forEach(function (g) { h += '<h4>' + g[0] + '</h4>'; g[1].forEach(function (x) { var v = x[0] === 'seed' ? S.seed : S.pa[x[0]] * x[2]; h += '<label for="pa-' + x[0] + '">' + x[1] + '<input class="field" type="number" id="pa-' + x[0] + '" data-k="' + x[0] + '" data-s="' + x[2] + '" value="' + (+v.toFixed(x[3] + 2)) + '" min="' + x[4] + '" max="' + x[5] + '" step="any"></label>'; }); });
+    var h = ''; PA_IN.forEach(function (g) { h += '<h4>' + g[0] + '</h4>'; g[1].forEach(function (x) { var v = x[0] === 'seed' ? (S.pa.seed || S.seed) : S.pa[x[0]] * x[2]; h += '<label for="pa-' + x[0] + '">' + x[1] + '<input class="field" type="number" id="pa-' + x[0] + '" data-k="' + x[0] + '" data-s="' + x[2] + '" value="' + (+v.toFixed(x[3] + 2)) + '" min="' + x[4] + '" max="' + x[5] + '" step="any"></label>'; }); });
     $('#paInputs').innerHTML = h;
   }
   function paRead() {
@@ -402,20 +410,21 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     S.paOut = { baseS: baseS, paS: paS, sim: sim };
     var xs = baseS.cum.map(function (_, i) { return i; }), shade = sim.regimes.map(function (r) { return r === 'crisis' ? 's5' : r === 'rate' ? 's3' : false; });
     var lbl = 'Benchmark ' + Math.round(p.eqWeight * 100) + '/' + Math.round((1 - p.eqWeight) * 100);
-    UI.chart.line('#paGrowth', { xs: xs, series: [{ name: lbl, ys: baseS.cum.map(function (v) { return v * 100; }), color: 's4' }, { name: 'Portable alpha', ys: paS.cum.map(function (v) { return v * 100; }), color: 's1' }], shade: shade, yFmt: function (v) { return '$' + F.num(v, 0); }, xFmt: function (v) { return 'yr ' + Math.round(v / 12); }, xTicks: 6, height: 240, label: 'Growth of 100 dollars' });
-    UI.chart.line('#paDD', { xs: baseS.ddSeries.map(function (_, i) { return i; }), series: [{ name: lbl, ys: baseS.ddSeries, color: 's4', area: true }, { name: 'Portable alpha', ys: paS.ddSeries, color: 's1', area: true }], shade: shade, yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return 'yr ' + Math.round(v / 12); }, xTicks: 6, height: 240, label: 'Drawdown' });
+    UI.chart.line('#paGrowth', { xs: xs, series: [{ name: lbl, ys: baseS.cum.map(function (v) { return v * 100; }), color: 's4' }, { name: 'Portable alpha', ys: paS.cum.map(function (v) { return v * 100; }), color: 's1' }], shade: shade, yFmt: function (v) { return '$' + F.num(v, 0); }, xFmt: function (v) { return 'yr ' + Math.round(v / 12); }, xTicks: xs.length / 35.95, width: cw('half'), height: 240, label: 'Growth of 100 dollars' });
+    UI.chart.line('#paDD', { xs: baseS.ddSeries.map(function (_, i) { return i; }), series: [{ name: lbl, ys: baseS.ddSeries, color: 's4', area: true }, { name: 'Portable alpha', ys: paS.ddSeries, color: 's1', area: true }], shade: shade, yFmt: function (v) { return F.pct(v, 0); }, xFmt: function (v) { return 'yr ' + Math.round(v / 12); }, xTicks: baseS.ddSeries.length / 35.95, width: cw('half'), height: 240, label: 'Drawdown' });
     var pct = function (v, d) { d = d != null ? d : 2; return (v * 100).toFixed(d) + '%'; }, spct = function (v, d) { d = d != null ? d : 2; return (v >= 0 ? '+' : '') + (v * 100).toFixed(d) + '%'; };
     var kr = [['Ann. return (CAGR)', pct(baseS.cagr), pct(paS.cagr), spct(paS.cagr - baseS.cagr)], ['Volatility', pct(baseS.vol), pct(paS.vol), spct(paS.vol - baseS.vol)], ['Sharpe ratio', baseS.sharpe.toFixed(2), paS.sharpe.toFixed(2), (paS.sharpe - baseS.sharpe >= 0 ? '+' : '') + (paS.sharpe - baseS.sharpe).toFixed(2)], ['Max drawdown', pct(baseS.maxDD), pct(paS.maxDD), spct(paS.maxDD - baseS.maxDD)], ['Worst 12 months', pct(baseS.worst12), pct(paS.worst12), spct(paS.worst12 - baseS.worst12)], ['Active return', '-', spct(paS.active), '-'], ['Tracking error', '-', pct(paS.te), '-'], ['Information ratio', '-', (paS.ir >= 0 ? '+' : '') + paS.ir.toFixed(2), '-'], ['Beta to benchmark', '1.00', paS.beta.toFixed(2), '-']];
     UI.table('#paKpis', { id: 'pa-performance', name: 'Portable alpha performance', columns: [{ key: 'm', label: 'Metric' }, { key: 'b', label: 'Benchmark', num: 1 }, { key: 'p', label: 'Port. alpha', num: 1 }, { key: 'd', label: 'Delta', num: 1 }], rows: kr.map(function (r) { return { m: r[0], b: r[1], p: r[2], d: r[3] }; }) });
     var c = sim.comp, items = [['Collateral yield', c.cash], ['Beta (index - Rf)', c.betaEx], ['Financing spread', c.fin], ['Roll cost', c.roll], ['Basis noise', c.basis], ['Alpha sleeve gross', c.alphaGross], ['Fees and drag', c.fees], ['Liquidity cost', c.liq]];
     var dv = items.map(function (x) { return PA.annComp(x[1]); }); dv.push(PM.sum(dv));
-    UI.chart.bar('#paDecomp', { categories: items.map(function (x) { return x[0]; }).concat(['Net return']), series: [{ name: 'Contribution', values: dv, signColors: true }], horizontal: true, labelWidth: 130, values: true, height: 320, yFmt: function (v) { return F.spct(v, 2); }, label: 'Return decomposition' });
+    var dLo = Math.min.apply(null, dv.concat([0])), dHi = Math.max.apply(null, dv.concat([0]));
+    UI.chart.bar('#paDecomp', { categories: items.map(function (x) { return x[0]; }).concat(['Net return']), series: [{ name: 'Contribution', values: dv }], signColors: true, horizontal: true, labelWidth: 122, values: true, width: cw('half'), height: 320, min: dLo < 0 ? dLo - 0.3 * (dHi - dLo) : 0, max: dHi + 0.15 * (dHi - dLo), yFmt: function (v) { return F.spct(v, 1); }, label: 'Return decomposition' });
     var hl = PA.health(sim, p, paS.active);
     $('#paHealth').innerHTML = hl.map(function (it) { return '<div class="health-row"><span class="health-dot ' + (it.ok ? '' : 'warn') + '" aria-label="' + (it.ok ? 'within range' : 'outside range') + '"></span><span>' + UI.esc(it.label) + '</span><span class="health-val">' + UI.esc(it.val) + '</span><span class="health-tgt">' + UI.esc(it.tgt) + '</span></div>'; }).join('');
     var sr = PA.stress(p);
     UI.table('#paStress', { id: 'pa-stress', name: 'Portable alpha stress', columns: [{ key: 'name', label: 'Scenario' }, { key: 'b', label: 'Bench', num: 1 }, { key: 'p', label: 'PA', num: 1 }, { key: 'd', label: 'Delta', num: 1, cls: function (v) { return v.charAt(0) === '-' ? 'neg' : ''; } }, { key: 'note', label: 'Variation margin and liquidity' }],
       rows: sr.map(function (s) { var note = s.vm >= 0 ? 'No variation margin due' : s.forced ? 'VM ' + pct(-s.vm, 1) + ' and margin raised to ' + pct(s.imRate, 1) + ': notional cut to ' + pct(s.nNew, 0) + ' NAV (beta sold at the low)' : s.call ? 'VM ' + pct(-s.vm, 1) + ' takes cash below margin; ' + pct(s.draw, 1) + ' drawn on the credit line' : 'VM ' + pct(-s.vm, 1) + ' of NAV met from cash; cushion left ' + pct(s.cashLow - s.reqIM, 1); return { name: s.name, b: pct(s.bench, 1), p: pct(s.pa, 1), d: spct(s.delta, 1), note: note }; }) });
-    $('#paSrc').textContent = S.paSrc === 'book' ? 'Alpha sleeve set from the book above (net of fees, so manager fees are set to zero here). Every other input is the original default.' : 'Original simulator defaults.';
+    $('#paSrc').textContent = S.paSrc === 'book' ? 'Alpha sleeve set from the book above (net of fees, so manager fees are set to zero here). The other inputs are unchanged.' : 'Original simulator defaults.';
   }
   function bookToPA() {
     var B = S.B, r = B.cur.r, D = B.D, eq = D.F ? col(D.F, 0) : null, f = eq ? PM.ols(r, eq.map(function (v) { return [v]; })) : null;
@@ -454,14 +463,14 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
               var lim = find('mandate-' + s, FACTOR_LINE[FS[k]]), ex = P.ex['mandate-' + s];
               var breach = FS[k] === 'rates' && ex.ratesMax ? ' The mandate caps rates beta at ' + F.num(ex.ratesMax.value, 1) + '.' : '';
               P.drift.push({ i: i, k: k, x: x });
-              P.items.push({ id: 'D-' + (P.items.length + 1), check: id, title: NAMES[i] + ': ' + FN[k].toLowerCase() + ' loading ' + F.num(x.base, 2) + ' to ' + F.num(x.recent, 2), severity: 'high', evidence: 'Calm-month factor regression: ' + FN[k].toLowerCase() + ' loading ' + F.num(x.base, 2) + ' in the first seven years, ' + F.num(x.recent, 2) + ' in the last 30 months (z = ' + F.num(x.z, 1) + ').' + breach + (lim ? ' The cited mandate line says otherwise.' : ''), cites: lim ? [lim.cite] : [{ doc: 'mandate-' + s, page: 1, line: 2, short: s }], state: 'pending',
+              P.items.push({ id: 'D-' + (P.items.length + 1), check: id, title: NAMES[i] + ': ' + FN[k].toLowerCase() + ' loading ' + F.num(x.base, 2) + ' to ' + F.num(x.recent, 2), severity: 'high', evidence: 'Calm-month factor regression: ' + FN[k].toLowerCase() + ' loading ' + F.num(x.base, 2) + ' in the first ' + span(W.base[1] - W.base[0]) + ', ' + F.num(x.recent, 2) + ' in the last ' + span(W.recent[1] - W.recent[0]) + ' (z = ' + F.num(x.z, 1) + ').' + breach + (lim ? ' The cited mandate line says otherwise.' : ''), cites: lim ? [lim.cite] : [{ doc: 'mandate-' + s, page: 1, line: 2, short: s }], state: 'pending',
                 note: NAMES[i] + ' has moved its ' + FN[k].toLowerCase() + ' exposure from ' + F.num(x.base, 2) + ' to ' + F.num(x.recent, 2) + (breach ? ', outside its mandate limit of ' + F.num(ex.ratesMax.value, 1) : ', against what its mandate describes') + '. Ask the manager to explain and to confirm the position will come back inside the mandate.' });
               res.push({ status: 'approval', msg: NAMES[i] + ': ' + FN[k].toLowerCase() + ' loading ' + F.num(x.base, 2) + ' to ' + F.num(x.recent, 2) + ' (z ' + F.num(x.z, 1) + ')' });
             }
           });
         });
         res.push({ msg: P.checks.filter(function (c) { return !c.flag; }).length + ' sleeve and factor pairs stable' });
-        audit.push('check', 'checked', P.drift.length + ' drifts in ' + SH.length * FS.length + ' pairs');
+        audit.push('check', 'checked', plural(P.drift.length, 'drift', 'drifts') + ' in ' + SH.length * FS.length + ' pairs');
         return res;
       } },
       { agent: 'check', run: function () {
@@ -472,7 +481,7 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
           if (flag) { n++; P.items.push({ id: 'C-' + (P.items.length + 1), check: id, title: NAMES[a] + ' and ' + NAMES[b] + ': correlation ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2), severity: 'med', evidence: 'Calm-month correlation rose from ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2) + ' (Fisher z = ' + F.num(c.z, 1) + '). Stress months are excluded, so this is not a crowding episode: the two sleeves now move together in ordinary months.', cites: [{ doc: 'mandate-' + SH[a], page: 1, line: 2, short: SH[a] }, { doc: 'mandate-' + SH[b], page: 1, line: 2, short: SH[b] }], state: 'pending', note: NAMES[a] + ' and ' + NAMES[b] + ' now move together in calm months (correlation ' + F.num(c.rRecent, 2) + ', from ' + F.num(c.rBase, 2) + '). The diversification the book was sized on is smaller than it was.' }); res.push({ status: 'approval', msg: NAMES[a] + ' / ' + NAMES[b] + ': ' + F.num(c.rBase, 2) + ' to ' + F.num(c.rRecent, 2) }); }
         }
         res.push({ msg: (10 - n) + ' of 10 sleeve pairs stable in calm months' });
-        audit.push('check', 'checked', n + ' shifts in 10 pairs');
+        audit.push('check', 'checked', plural(n, 'shift', 'shifts') + ' in 10 pairs');
         return res;
       } },
       { agent: 'check', run: function () {
@@ -486,24 +495,28 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
           }
         });
         res.push({ msg: (S.overlap || []).filter(function (o) { return !o.flag; }).length + ' sleeve pairs with no shared factor bet' });
-        audit.push('check', 'checked', (S.overlap || []).filter(function (o) { return o.flag; }).length + ' overlaps');
+        audit.push('check', 'checked', plural((S.overlap || []).filter(function (o) { return o.flag; }).length, 'overlap', 'overlaps'));
         return res;
       } },
       { agent: 'draft', run: function () { audit.push('draft', 'waiting', 'drafts from approved flags only'); return { status: 'approval', msg: 'Waiting for approvals; only approved flags go into the risk note' }; } }
     ], afterReview);
   }
   function afterReview() {
-    var P = S.pipe, B = S.B, D = B.D;
+    var P = S.pipe;
     apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderNote });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.checks.filter(function (c) { return c.flag; }).length, review: P.items.length });
-    if (P.drift.length && D.F) {
-      var xs = [], series = P.drift.map(function (d) { return { name: NAMES[d.i].split(' ')[0] + ': ' + FN[d.k].toLowerCase(), ys: [] }; });
-      for (var t = 24; t <= D.R.length; t++) { xs.push(D.dates[t - 1]); P.drift.forEach(function (d, j) { series[j].ys.push(PM.ols(B.net[d.i].slice(t - 24, t), D.F.slice(t - 24, t)).beta[d.k]); }); }
-      UI.chart.line('#driftChart', { xs: xs, series: series, hlines: P.ex['mandate-rv'] && P.ex['mandate-rv'].ratesMax ? [{ y: P.ex['mandate-rv'].ratesMax.value, label: 'RV rates limit' }] : [], yFmt: function (v) { return F.num(v, 1); }, xFmt: function (v) { return new Date(v).getUTCFullYear(); }, xTicks: 6, height: 240, label: 'Rolling exposures' });
-      $('#driftNote').textContent = 'Rolling 24-month regressions on all months, for context. The flags themselves compare calm months only.';
-    } else { $('#driftChart').innerHTML = '<p class="muted">No drift flagged.</p>'; $('#driftNote').textContent = ''; }
+    afterCharts();
     renderNote(); renderEval();
     UI.$$('#runSteps span').forEach(function (s) { s.className = 'done'; });
+  }
+  function afterCharts() {
+    var P = S.pipe, B = S.B, D = B.D;
+    if (P.drift.length && D.F) {
+      var xs = [], series = P.drift.map(function (d) { return { name: SN[d.i] + ': ' + FN[d.k].toLowerCase(), ys: [] }; });
+      for (var t = 24; t <= D.R.length; t++) { xs.push(D.dates[t - 1]); P.drift.forEach(function (d, j) { series[j].ys.push(PM.ols(B.net[d.i].slice(t - 24, t), D.F.slice(t - 24, t)).beta[d.k]); }); }
+      UI.chart.line('#driftChart', { xs: xs, series: series, hlines: P.ex['mandate-rv'] && P.ex['mandate-rv'].ratesMax ? [{ y: P.ex['mandate-rv'].ratesMax.value, label: 'RV rates limit' }] : [], yFmt: function (v) { return F.num(v, 1); }, xFmt: function (v) { return new Date(v).getUTCFullYear(); }, xTicks: xs.length / 23.95, width: cw('half'), height: 240, label: 'Rolling exposures' });
+      $('#driftNote').textContent = 'Rolling 24-month regressions on all months, for context. The flags themselves compare calm months only.';
+    } else { $('#driftChart').innerHTML = '<p class="muted">No drift flagged.</p>'; $('#driftNote').textContent = ''; }
   }
   function renderNote() {
     var ap = S.pipe.items.filter(function (it) { return it.state === 'approved'; });
@@ -558,11 +571,13 @@ netting cost = sum_i w_i perf_i max(g_i, 0) - perf max(sum_i w_i g_i, 0)</div>
     $('#runBtn').addEventListener('click', runReview);
     $('#tamperBtn').addEventListener('click', function () { if (audit.entries[2]) { audit.entries[2].detail = 'edited after the fact'; audit.render(); } });
     UI.dropZone('#dzSleeves', { title: 'Use your own sleeve returns', template: '/assets/templates/sleeve-returns.csv', columns: [{ name: 'date' }].concat(SH.map(function (s) { return { name: s, desc: s === 'els' ? 'monthly return, decimal, gross of fees' : null }; })).concat(['equity', 'momentum', 'value', 'credit_spread', 'rates'].map(function (c) { return { name: c, required: false }; })).concat([{ name: 'regime', required: false, desc: 'calm or stress' }]),
-      parse: parseSleeves, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your sleeve returns, processed locally. Fees from the mandates.'; renderAll(); runReview(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '.'; renderAll(); runReview(); } });
+      parse: parseSleeves, onData: function (d) { S.user = d; $('#dataSrc').textContent = 'Your sleeve returns, processed locally. Fees from the mandates.'; renderAll(); runReview(); }, onReset: function () { S.user = null; $('#dataSrc').textContent = 'Synthetic data, seed ' + S.seed + '. Jul 2016 to Jun 2026.'; renderAll(); runReview(); } });
     UI.exportMenu('#exportMenu', { byod: '#byod', demo: 'Multi-Strategy Builder', slug: 'multi-strategy-builder', report: 'Risk note and sleeve sizing memo (PDF)', source: function () { return S.user ? 'user file, processed locally' : 'synthetic, seed ' + S.seed; }, audit: function () { return { log: log.entries, chain: audit.toJSON() }; } });
     UI.testsBadge('#testsBadge', 'Multi-Strategy Builder'); UI.testsBadge('.tests-badge-slot', 'Multi-Strategy Builder');
     renderAll(); renderPA(); runReview();
     UI.revealHash(tabs);
+    var lastW = cw('half');
+    window.addEventListener('resize', UI.debounce(function () { var w = cw('half'); if (Math.abs(w - lastW) < 40) return; lastW = w; renderAll(); renderPA(); if (S.pipe) afterCharts(); }, 200));
   }
   init();
   /* homepage card: key number and chart data from the base case, read by tools/card-stats.mjs and tests.html */

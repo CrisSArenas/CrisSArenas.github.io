@@ -390,10 +390,10 @@
                     times are validated via logic analyzer:
                 </p>
                 <ul>
-                    <li>SensorRead: 0.4ms WCET (dominated by I2C transfer time)</li>
+                    <li>SensorRead: 0.4ms WCET (dominated by I2C transfer time: the 14-byte burst plus addressing is about 150 bus bits, roughly 0.38 ms at 400 kHz)</li>
                     <li>SensorFusion: 0.1ms WCET (Kalman filter matrix operations)</li>
                     <li>AngleControl: 0.05ms WCET (PID computation)</li>
-                    <li>Total CPU utilization: ~12% at steady state</li>
+                    <li>Total CPU utilization: ~12% at steady state. This counts CPU time only: a SensorRead that busy-waited for its whole 0.4 ms every 1 ms would alone take 40% of a core, so the figure relies on the task blocking while the I2C driver moves the bytes</li>
                 </ul>
             </section>
 

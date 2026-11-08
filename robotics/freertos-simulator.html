@@ -79,12 +79,14 @@ a{color:var(--cyan);text-decoration:none}
 .slider-ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:none;margin-top:-6px}
 .slider-ctrl .sval{color:var(--cyan);font-family:var(--mono);font-size:12px;font-weight:700;min-width:45px;text-align:right}
 .toggle-wrap{display:flex;align-items:center;gap:8px}
-.toggle-sw{position:relative;width:36px;height:18px;cursor:pointer;display:inline-block}
-.toggle-sw input{display:none}
+.toggle-sw{position:relative;width:44px;height:24px;cursor:pointer;display:inline-block}
+.toggle-sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
 .toggle-track{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--card2);border:1px solid var(--border);border-radius:9px;transition:all .3s}
-.toggle-track::before{content:'';position:absolute;width:12px;height:12px;left:2px;top:2px;background:var(--dim);border-radius:50%;transition:all .3s}
+.toggle-track{border-radius:12px}
+.toggle-track::before{content:'';position:absolute;width:18px;height:18px;left:2px;top:2px;background:var(--dim);border-radius:50%;transition:all .3s}
 .toggle-sw input:checked+.toggle-track{border-color:var(--green);background:color-mix(in srgb, var(--positive) 15%, transparent)}
-.toggle-sw input:checked+.toggle-track::before{transform:translateX(18px);background:var(--green)}
+.toggle-sw input:checked+.toggle-track::before{transform:translateX(20px);background:var(--green)}
+.toggle-sw input:focus-visible+.toggle-track{outline:2px solid var(--focus);outline-offset:2px}
 .toggle-lbl{font-size:11px;color:var(--dim);font-weight:500}
 .toggle-lbl.on{color:var(--green)}
 .add-btn{padding:5px 12px;font-size:11px;background:var(--card2);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:5px;transition:all .15s;font-weight:600;display:flex;align-items:center;gap:5px;font-family:var(--sans)}
@@ -120,7 +122,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .task-scard .tc-name{font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
 .task-scard .tc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .task-scard .tc-pri{font-size:9px;color:var(--dim);font-weight:400}
-.task-scard .tc-boost{font-size:8px;color:var(--purple);font-weight:700;margin-left:4px}
+.task-scard .tc-boost{font-size:8px;color:var(--gold-text);font-weight:700;margin-left:4px}
 .state-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:4px}
 .st-node{padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;border:1px solid transparent;transition:all .3s;font-family:var(--mono)}
 .st-node.st-ready{background:color-mix(in srgb, var(--ai) 10%, transparent);color:var(--cyan);border-color:color-mix(in srgb, var(--ai) 25%, transparent)}
@@ -150,6 +152,10 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .stat-table td{padding:8px 10px;text-align:right;font-family:var(--mono);font-size:12px;border-bottom:1px solid rgba(46,52,56,.4)}
 .stat-table td:first-child{text-align:left;font-family:inherit;font-weight:500}
 .stat-table tr:hover{background:color-mix(in srgb, var(--ai) 3%, transparent)}
+.stat-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.stat-wrap .stat-table.per-task{min-width:440px}
+@media(max-width:600px){.stat-table th,.stat-table td{padding:7px 6px}.stat-table td{font-size:11px}}
+.gantt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:6px}
 .tpos{color:var(--green);font-weight:600}
 .tneg{color:var(--red);font-weight:600}
 .twarn{color:var(--orange);font-weight:600}
@@ -162,9 +168,9 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .log-preempt{color:var(--orange)}
 .log-mutex{color:var(--yellow)}
 .log-inversion{color:var(--red);font-weight:700}
-.log-inherit{color:var(--purple);font-weight:600}
+.log-inherit{color:var(--positive);font-weight:600}
 .log-info{color:var(--text)}
-.log-semaphore{color:var(--pink)}
+.log-semaphore{color:var(--gold-text)}
 .log-deadline{color:var(--red);font-weight:700}
 .log-clear-btn{padding:3px 10px;font-size:10px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:4px;transition:all .15s;font-family:var(--mono)}
 .log-clear-btn:hover{border-color:var(--red);color:var(--red)}
@@ -196,6 +202,9 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   .kpi-cell{padding:10px 5px}
   .kpi-cell .val{font-size:.95rem}
   .guide,.kpi-strip,.controls,.grid{padding:0 10px}
+  .sim-btn{width:42px;height:42px}
+  .add-btn{min-height:40px;padding:6px 12px}
+  #statsPanel button{min-width:32px !important;min-height:32px !important}
 }
 
 /* Per-task icon controls were rendering ~12x11px, too small to hit reliably. */
@@ -329,7 +338,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     <div class="kpi-cell" title="Measured share of elapsed ticks in which a task (not the idle task) held the CPU"><div class="lbl">CPU Busy %</div><div class="val pos" id="kCPU">0.0</div></div>
     <div class="kpi-cell" title="Number of context switches"><div class="lbl">Ctx Switches</div><div class="val neutral" id="kCtx">0</div></div>
     <div class="kpi-cell" title="Share of elapsed ticks spent in the idle task (prvIdleTask, priority 0)"><div class="lbl">Idle (P0) %</div><div class="val neutral" id="kIdle">100.0</div></div>
-    <div class="kpi-cell" title="Number of priority inversions detected"><div class="lbl">Inversions</div><div class="val neutral" id="kInv">0</div></div>
+    <div class="kpi-cell" title="Times a task blocked on a mutex held by a lower-priority task (bounded inversion). The statistics table also counts the ticks of unbounded inversion."><div class="lbl">Inversions</div><div class="val neutral" id="kInv">0</div></div>
     <div class="kpi-cell" title="Scheduler load U = sum of C_i / T_i over the periodic tasks, against the Liu &amp; Layland rate-monotonic bound n(2^(1/n) - 1)"><div class="lbl">Util U = &Sigma;C/T</div><div class="val neutral" id="kUtilU">0.0%</div><div class="sub" id="kBound">RM bound -</div></div>
     <div class="kpi-cell" title="Currently running task name"><div class="lbl">Running</div><div class="val pos" id="kRunning">IDLE</div></div>
     <div class="kpi-cell" title="Elapsed kernel time = ticks / configTICK_RATE_HZ"><div class="lbl">Elapsed (ms)</div><div class="val neutral" id="kElapsed">0</div></div>
@@ -386,18 +395,20 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
   <div class="panel full">
     <div class="panel-head">
       <h3><i class="fas fa-chart-gantt"></i> Real-Time Gantt Chart</h3>
-      <span class="tag">fixed-priority preemptive &middot; hover a cell for detail</span>
+      <span class="tag">fixed-priority preemptive &middot; hover or tap a cell for detail</span>
     </div>
-    <div class="panel-body" style="padding:12px;overflow-x:auto;" id="ganttContainer">
+    <div class="panel-body" style="padding:12px">
+      <div class="gantt-scroll" id="ganttContainer">
       <canvas id="ganttCanvas" aria-label="Gantt chart of task states per kernel tick; one row per task plus the idle task, x axis is the tick counter" role="img"></canvas>
+      </div>
       <div class="d-tooltip" id="ganttTip"></div>
       <div class="legend" style="margin-top:12px">
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--cyan)"></span> Running</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:color-mix(in srgb, var(--ai) 15%, transparent);border:1px dashed color-mix(in srgb, var(--ai) 40%, transparent)"></span> Blocked</div>
-        <div class="legend-item"><span class="legend-swatch" style="border:1px solid color-mix(in srgb, var(--ai) 35%, transparent);background:transparent"></span> Ready</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--yellow)"></span> Mutex Hold</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:var(--orange)"></span> Ctx Switch (84 cyc &asymp; 0.5 &micro;s)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:color-mix(in srgb, var(--negative) 30%, transparent);border:1px solid var(--red)"></span> Unbounded inversion</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#A7ACB0"></span> Running (solid, in the task colour)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:rgba(167,172,176,0.15);border:1px dashed rgba(167,172,176,0.6)"></span> Blocked (B = on a mutex or semaphore)</div>
+        <div class="legend-item"><span class="legend-swatch" style="border:1px solid rgba(167,172,176,0.6);background:transparent"></span> Ready</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#A7ACB0;color:#07120E;font:700 8px/12px var(--mono);text-align:center">M</span> Holding a mutex</div>
+        <div class="legend-item"><span class="legend-swatch" style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #C4AE84;border-radius:0"></span> Context switch (84 cyc &asymp; 0.5 &micro;s)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:rgba(224,122,122,0.2);border:1px solid #E07A7A"></span> Unbounded inversion</div>
       </div>
     </div>
   </div>
@@ -517,12 +528,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 // Constants
 // ============================================================
 
+// Site palette (green, gold, graphite) in distinct lightness steps, readable on
+// the dark Gantt canvas. Red is kept for inversions and misses only.
 const TASK_COLORS = [
-  '#6B7176','#1F6F4A','#C4AE84','#A3312B',
-  '#B39B6E','#B39B6E','#C4AE84','#B39B6E',
-  '#6B7176','#B39B6E','#A3312B','#6B7176',
-  '#1F6F4A','#B39B6E','#C4AE84','#6FB59A'
+  '#6FB59A','#C4AE84','#A7ACB0','#3F9274',
+  '#9C8457','#7C8287','#A9D6C3','#E0D0AE'
 ];
+const IDLE_COLOR = '#565C60';
 
 const STATE = { READY:'Ready', RUNNING:'Running', BLOCKED:'Blocked', SUSPENDED:'Suspended' };
 
@@ -562,6 +574,8 @@ let contextSwitchTicks = [];
 let lastRunningTaskId = -1;
 let tickRateHz = 1000;        // configTICK_RATE_HZ
 let readySeq = 0;
+let unboundedTicks = 0;       // ticks of unbounded priority inversion
+let slotRunnerId = -1;        // task that executed the current slot, -1 = idle
 
 // Gantt rendering
 const ganttCellWidth = 14;
@@ -581,22 +595,24 @@ class Task {
     this.basePriority = cfg.priority;
     this.period = cfg.period || 0;
     this.execTime = cfg.execTime;
+    this.offset = cfg.offset || 0;          // first release, in ticks after creation
     this.color = cfg.color || TASK_COLORS[this.id % TASK_COLORS.length];
     this.state = STATE.READY;
     this.readyStamp = 0;
     this.sliceUsed = 0;
-    this.execRemaining = this.execTime;
+    this.jobs = [];                         // released, unfinished jobs: {r: release tick, missed}
+    this.execRemaining = 0;                 // CPU still owed to the job at the head of jobs
     this.nextActivation = 0;
     this.ticksRunning = 0;
     this.ticksBlocked = 0;
     this.ticksReady = 0;
     this.activationCount = 0;
+    this.completedJobs = 0;
     this.worstResponseTime = 0;
-    this.currentResponseStart = 0;
     this.deadlineMisses = 0;
     this.needsMutex = cfg.needsMutex || null;
     this.mutexHoldDuration = cfg.mutexHoldDuration || 3;
-    this.mutexAcquireOffset = cfg.mutexAcquireOffset || 1;
+    this.mutexAcquireOffset = cfg.mutexAcquireOffset != null ? cfg.mutexAcquireOffset : 1;
     this.holdingMutex = null;
     this.blockedOnMutex = null;
     this.mutexTicksHeld = 0;
@@ -660,9 +676,16 @@ function clearLog() {
 // ============================================================
 // Scheduler Core
 // ============================================================
+//
+// Time model. currentTick is xTaskGetTickCount(): the number of tick periods
+// that have elapsed. One call to schedulerTick() simulates the tick period that
+// starts at time currentTick (the slot labelled currentTick in the log and on
+// the Gantt chart) and then advances the counter, so slot k covers [k, k+1).
+// A job released at time r is due at r + T (implicit deadline D = T); a job
+// that completes in slot k has response time k + 1 - r.
 
 function getReadyTasks() {
-  return tasks.filter(function(t){ return t.state === STATE.READY && !t.isSuspended; });
+  return tasks.filter(function(t){ return t.state === STATE.READY && !t.isSuspended && t.execRemaining > 0; });
 }
 
 // Highest priority wins; within a priority the ready list is FIFO (longest
@@ -694,272 +717,312 @@ function schedUtilisation() {
   return { u: u, n: k, bound: k > 0 ? k * (Math.pow(2, 1 / k) - 1) : 0 };
 }
 
-function schedulerTick() {
-  currentTick++;
-  totalTicks++;
+// Put a task in its start state: the first job is released `offset` ticks after `now`.
+function armTask(t, now) {
+  t.jobs = [];
+  t.execRemaining = 0;
+  t.priority = t.basePriority;
+  t.sliceUsed = 0;
+  t.readyStamp = 0;
+  t.holdingMutex = null;
+  t.blockedOnMutex = null;
+  t.blockedOnSem = null;
+  t.mutexTicksHeld = 0;
+  t.hasAcquiredMutexThisPeriod = false;
+  t.hasDoneSemActionThisPeriod = false;
+  t.isSuspended = false;
+  t.ticksRunning = 0; t.ticksBlocked = 0; t.ticksReady = 0;
+  t.activationCount = 0; t.completedJobs = 0; t.worstResponseTime = 0; t.deadlineMisses = 0;
+  t.nextActivation = now + (t.offset || 0);
+  if (t.period > 0) {
+    // waiting for its first release, which phase 2 performs
+    t.state = STATE.BLOCKED;
+    t.delayRemaining = t.nextActivation - now;
+  } else {
+    // aperiodic: one job, available immediately
+    t.jobs.push({ r: now, missed: false });
+    t.activationCount = 1;
+    startJob(t);
+    t.state = STATE.READY;
+    t.delayRemaining = 0;
+  }
+}
 
-  // Phase 1: Handle blocked tasks
-  for (var i = 0; i < tasks.length; i++) {
-    var task = tasks[i];
-    if (task.isSuspended) { task.state = STATE.SUSPENDED; continue; }
-    if (task.state === STATE.BLOCKED) {
-      if (task.delayRemaining > 0) {
-        task.delayRemaining--;
-        task.ticksBlocked++;
-        if (task.delayRemaining === 0 && !task.blockedOnMutex && !task.blockedOnSem) {
-          task.state = STATE.READY;
-          addLog(currentTick, task.name + ' ready again (' + (task.period > 0 ? 'vTaskDelayUntil' : 'vTaskDelay') + ' elapsed)', 'sched');
-        }
+// The job at the head of the queue starts: full budget, fresh resource actions.
+function startJob(t) {
+  t.execRemaining = t.execTime;
+  t.hasAcquiredMutexThisPeriod = false;
+  t.hasDoneSemActionThisPeriod = false;
+}
+
+// xSemaphoreGive on a mutex: restore the base priority, hand the mutex to the
+// highest-priority waiter.
+function giveMutex(t) {
+  var mutex = mutexes.find(function(m){ return m.name === t.holdingMutex; });
+  t.holdingMutex = null;
+  t.mutexTicksHeld = 0;
+  if (!mutex) return;
+  addLog(currentTick, t.name + ': xSemaphoreGive(' + mutex.name + ')', 'mutex');
+  if (t.priority !== t.basePriority) {
+    addLog(currentTick, 'PRIORITY RESTORED: ' + t.name + ' drops from the inherited ' + t.priority + ' back to its base priority ' + t.basePriority, 'inherit');
+    t.priority = t.basePriority;
+  }
+  mutex.owner = null;
+  if (mutex.waitQueue.length > 0) {
+    mutex.waitQueue.sort(function(a,b){
+      var ta = tasks.find(function(x){ return x.id === a; });
+      var tb = tasks.find(function(x){ return x.id === b; });
+      return (tb ? tb.priority : 0) - (ta ? ta.priority : 0);
+    });
+    var nextWaiterId = mutex.waitQueue.shift();
+    var nextWaiter = tasks.find(function(x){ return x.id === nextWaiterId; });
+    if (nextWaiter) {
+      mutex.owner = nextWaiter.id;
+      nextWaiter.holdingMutex = mutex.name;
+      nextWaiter.mutexTicksHeld = 0;
+      nextWaiter.blockedOnMutex = null;
+      nextWaiter.hasAcquiredMutexThisPeriod = true;
+      if (!nextWaiter.isSuspended) nextWaiter.state = STATE.READY;
+      addLog(currentTick, nextWaiter.name + ': xSemaphoreTake(' + mutex.name + ') returns, highest-priority waiter takes the mutex', 'mutex');
+    }
+  }
+}
+
+// The running task finished the job at the head of its queue in this slot.
+function completeJob(t) {
+  var job = t.jobs.shift();
+  var response = job ? currentTick + 1 - job.r : 0;
+  if (response > t.worstResponseTime) t.worstResponseTime = response;
+  t.completedJobs++;
+  if (t.holdingMutex) giveMutex(t);
+  if (t.jobs.length > 0) {
+    // vTaskDelayUntil(): the wake time has already passed, so it returns at once
+    startJob(t);
+    addLog(currentTick, t.name + ': job done after ' + response + ' ticks; the next job was released at tick ' + t.jobs[0].r +
+      ', so vTaskDelayUntil() returns immediately', 'sched');
+    return;
+  }
+  t.execRemaining = 0;
+  t.state = STATE.BLOCKED;
+  if (t.period > 0) {
+    t.delayRemaining = t.nextActivation - (currentTick + 1);
+    addLog(currentTick, t.name + ': job done after ' + response + ' ticks, vTaskDelayUntil(&xLastWakeTime, ' +
+      t.period + ') until tick ' + t.nextActivation, 'sched');
+  } else {
+    t.delayRemaining = 0;
+    addLog(currentTick, t.name + ': aperiodic job done after ' + response + ' ticks, blocks indefinitely', 'sched');
+  }
+}
+
+// Try to execute one slot of task t. Returns false if t blocks before executing
+// (mutex or semaphore), in which case the slot goes to the next ready task.
+function runSlot(t) {
+  var ticksIntoExec = t.execTime - t.execRemaining;
+
+  // Mutex acquisition
+  if (t.needsMutex && !t.hasAcquiredMutexThisPeriod && !t.holdingMutex && ticksIntoExec >= t.mutexAcquireOffset) {
+    var mutex = mutexes.find(function(m){ return m.name === t.needsMutex; });
+    if (mutex) {
+      if (mutex.owner === null) {
+        mutex.owner = t.id;
+        t.holdingMutex = mutex.name;
+        t.mutexTicksHeld = 0;
+        t.hasAcquiredMutexThisPeriod = true;
+        addLog(currentTick, t.name + ': xSemaphoreTake(' + mutex.name + ', portMAX_DELAY) = pdTRUE', 'mutex');
       } else {
-        task.ticksBlocked++;
+        var owner = tasks.find(function(x){ return x.id === mutex.owner; });
+        t.state = STATE.BLOCKED;
+        t.blockedOnMutex = mutex.name;
+        if (mutex.waitQueue.indexOf(t.id) === -1) mutex.waitQueue.push(t.id);
+        addLog(currentTick, t.name + ': xSemaphoreTake(' + mutex.name + ', portMAX_DELAY) blocks - held by ' + (owner ? owner.name : 'unknown'), 'mutex');
+        if (owner && owner.basePriority < t.basePriority) {
+          inversionsDetected++;
+          addLog(currentTick, 'PRIORITY INVERSION: ' + t.name + ' (pri=' + t.basePriority + ') waits on ' + mutex.name +
+            ' held by ' + owner.name + ' (pri=' + owner.basePriority + ') - bounded by the critical section, unbounded as soon as a mid-priority task runs', 'inversion');
+          // FreeRTOS raises the holder to the priority of its highest waiter, and
+          // only for mutexes -- semaphores and queues have no owner to boost.
+          if (priorityInheritanceEnabled && owner.priority < t.priority) {
+            var oldPri = owner.priority;
+            owner.priority = t.priority;
+            addLog(currentTick, 'PRIORITY INHERITANCE (mutex only): ' + owner.name + ' raised ' + oldPri + ' -> ' +
+              owner.priority + ', the priority of its highest waiter', 'inherit');
+          }
+        }
+        return false;
       }
     }
   }
 
+  // Semaphore interaction
+  if (t.semAction && !t.hasDoneSemActionThisPeriod && ticksIntoExec >= (t.semAction.offset || 1)) {
+    var sem = semaphores.find(function(s){ return s.name === t.semAction.name; });
+    if (sem) {
+      if (t.semAction.type === 'give') {
+        t.hasDoneSemActionThisPeriod = true;
+        if (sem.count < sem.maxCount) {
+          sem.count = Math.min(sem.maxCount, sem.count + (t.semAction.count || 1));
+          addLog(currentTick, t.name + ': xSemaphoreGive(' + sem.name + ') - count=' + sem.count + '/' + sem.maxCount, 'semaphore');
+          while (sem.count > 0 && sem.waitQueue.length > 0) {
+            var waiterId = sem.waitQueue.shift();
+            var waiter = tasks.find(function(x){ return x.id === waiterId; });
+            if (waiter && waiter.blockedOnSem === sem.name) {
+              sem.count--;
+              waiter.blockedOnSem = null;
+              if (!waiter.isSuspended) waiter.state = STATE.READY;
+              waiter.hasDoneSemActionThisPeriod = true;
+              addLog(currentTick, waiter.name + ': xSemaphoreTake(' + sem.name + ') returns - count=' + sem.count, 'semaphore');
+            }
+          }
+        } else {
+          addLog(currentTick, t.name + ': xSemaphoreGive(' + sem.name + ') = pdFALSE - count already at ' + sem.maxCount, 'semaphore');
+        }
+      } else if (t.semAction.type === 'take') {
+        if (sem.count > 0) {
+          sem.count--;
+          addLog(currentTick, t.name + ': xSemaphoreTake(' + sem.name + ', portMAX_DELAY) = pdTRUE - count=' + sem.count + '/' + sem.maxCount, 'semaphore');
+          t.hasDoneSemActionThisPeriod = true;
+        } else {
+          t.state = STATE.BLOCKED;
+          t.blockedOnSem = sem.name;
+          if (sem.waitQueue.indexOf(t.id) === -1) sem.waitQueue.push(t.id);
+          addLog(currentTick, t.name + ': xSemaphoreTake(' + sem.name + ', portMAX_DELAY) blocks - count=0 (no priority inheritance on semaphores)', 'semaphore');
+          return false;
+        }
+      }
+    }
+  }
+
+  // Execute the slot
+  t.state = STATE.RUNNING;
+  t.ticksRunning++;
+  t.sliceUsed++;
+  slotRunnerId = t.id;
+  t.execRemaining--;
+
+  // Critical section length counts executed ticks while holding the mutex
+  if (t.holdingMutex) {
+    t.mutexTicksHeld++;
+    if (t.mutexTicksHeld >= t.mutexHoldDuration) giveMutex(t);
+  }
+
+  if (t.execRemaining <= 0) completeJob(t);
+  return true;
+}
+
+function schedulerTick() {
+  slotRunnerId = -1;
+
+  // Phase 1: count down the displayed delays
+  for (var i = 0; i < tasks.length; i++) {
+    var task = tasks[i];
+    if (task.isSuspended) { task.state = STATE.SUSPENDED; continue; }
+    if (task.state === STATE.BLOCKED && task.delayRemaining > 0) task.delayRemaining--;
+  }
+
   // Phase 2: release the next job of every periodic task whose period elapsed.
-  // Deadlines are implicit (D = T): unfinished work at the release instant is a miss.
+  // Deadlines are implicit (D = T): a job still unfinished at its deadline is a miss.
+  // An overrunning job is not dropped: as with vTaskDelayUntil(), later jobs queue
+  // behind it and run back to back.
   for (var i = 0; i < tasks.length; i++) {
     var task = tasks[i];
     if (task.isSuspended) continue;
     if (task.period <= 0 || currentTick < task.nextActivation) continue;
 
-    if (task.execRemaining > 0) {
-      task.deadlineMisses++;
-      addLog(currentTick, 'DEADLINE MISS: ' + task.name + ' still owed ' + task.execRemaining + '/' + task.execTime +
-        ' ticks of CPU at its deadline (D = T = ' + task.period + ' ticks)', 'deadline');
-    }
-    task.execRemaining = task.execTime;
-    do { task.nextActivation += task.period; } while (task.nextActivation <= currentTick);
-    task.activationCount++;
-    task.currentResponseStart = currentTick;
-    task.hasAcquiredMutexThisPeriod = false;
-    task.hasDoneSemActionThisPeriod = false;
-
-    if (task.state === STATE.BLOCKED && !task.blockedOnMutex && !task.blockedOnSem) {
-      task.delayRemaining = 0;
-      task.state = STATE.READY;
-    } else if (task.state !== STATE.RUNNING && task.state !== STATE.BLOCKED) {
-      task.state = STATE.READY;
-    }
-  }
-
-  // Phase 3: Pick highest priority ready task
-  var nextTask = getHighestPriorityReady();
-
-  if (currentRunningTask) {
-    if (currentRunningTask.isSuspended) {
-      currentRunningTask.state = STATE.SUSPENDED;
-      addLog(currentTick, currentRunningTask.name + ' suspended', 'sched');
-      currentRunningTask = null;
-    } else if (currentRunningTask.state === STATE.BLOCKED) {
-      currentRunningTask = null;
-    } else if (currentRunningTask.execRemaining <= 0) {
-      if (currentRunningTask.period > 0) {
-        currentRunningTask.state = STATE.BLOCKED;
-        currentRunningTask.delayRemaining = Math.max(0, currentRunningTask.nextActivation - currentTick);
-        if (currentRunningTask.delayRemaining === 0) currentRunningTask.state = STATE.READY;
-        addLog(currentTick, currentRunningTask.name + ': job done, vTaskDelayUntil(&xLastWakeTime, ' +
-          currentRunningTask.period + ') until tick ' + currentRunningTask.nextActivation, 'sched');
-      } else {
-        currentRunningTask.state = STATE.BLOCKED;
-        currentRunningTask.delayRemaining = 999999;
-        addLog(currentTick, currentRunningTask.name + ': aperiodic job done, vTaskSuspend(NULL)', 'sched');
+    for (var j = 0; j < task.jobs.length; j++) {
+      var job = task.jobs[j];
+      if (!job.missed && currentTick >= job.r + task.period) {
+        job.missed = true;
+        task.deadlineMisses++;
+        var owed = j === 0 ? task.execRemaining : task.execTime;
+        addLog(currentTick, 'DEADLINE MISS: ' + task.name + ' job released at tick ' + job.r + ' still owes ' + owed + '/' + task.execTime +
+          ' ticks of CPU at its deadline (D = T = ' + task.period + ' ticks)', 'deadline');
       }
+    }
+    task.jobs.push({ r: task.nextActivation, missed: false });
+    task.activationCount++;
+    do { task.nextActivation += task.period; } while (task.nextActivation <= currentTick);
+
+    if (task.execRemaining <= 0) {
+      startJob(task);
+      if (task.state === STATE.BLOCKED && !task.blockedOnMutex && !task.blockedOnSem) {
+        task.delayRemaining = 0;
+        task.state = STATE.READY;
+        if (task.activationCount > 1) addLog(currentTick, task.name + ' ready again (vTaskDelayUntil elapsed)', 'sched');
+      }
+    }
+  }
+
+  // Phase 3: preemption and time slicing for the task that held the CPU
+  var nextTask = getHighestPriorityReady();
+  if (currentRunningTask) {
+    var cur = currentRunningTask;
+    if (cur.isSuspended) {
+      cur.state = STATE.SUSPENDED;
       currentRunningTask = null;
-    } else if (nextTask && nextTask.id !== currentRunningTask.id && nextTask.priority > currentRunningTask.priority) {
-      addLog(currentTick, nextTask.name + ' (pri=' + nextTask.priority + ') preempted ' + currentRunningTask.name + ' (pri=' + currentRunningTask.priority + ')', 'preempt');
-      currentRunningTask.state = STATE.READY;
+    } else if (cur.state === STATE.BLOCKED || cur.execRemaining <= 0) {
       currentRunningTask = null;
-    } else if (nextTask && nextTask.id !== currentRunningTask.id && nextTask.priority === currentRunningTask.priority &&
-               currentRunningTask.sliceUsed >= TIME_SLICE_TICKS) {
+    } else if (nextTask && nextTask.priority > cur.priority) {
+      addLog(currentTick, nextTask.name + ' (pri=' + nextTask.priority + ') preempted ' + cur.name + ' (pri=' + cur.priority + ')', 'preempt');
+      cur.state = STATE.READY;
+      currentRunningTask = null;
+    } else if (nextTask && nextTask.priority === cur.priority && cur.sliceUsed >= TIME_SLICE_TICKS) {
       // configUSE_TIME_SLICING: equal priorities round-robin one tick at a time
-      addLog(currentTick, 'taskYIELD(): time slice expired, ' + currentRunningTask.name + ' yields to ' +
+      addLog(currentTick, 'Time slice expired: ' + cur.name + ' yields to ' +
         nextTask.name + ' (both pri=' + nextTask.priority + ')', 'sched');
-      currentRunningTask.state = STATE.READY;
-      currentRunningTask.sliceUsed = 0;
+      cur.state = STATE.READY;
+      cur.sliceUsed = 0;
       currentRunningTask = null;
     }
   }
 
-  if (!currentRunningTask) {
-    nextTask = getHighestPriorityReady();
-    if (nextTask) {
-      currentRunningTask = nextTask;
+  // Phase 4: run the highest-priority ready task for this slot. If it blocks on a
+  // mutex or semaphore before executing, the slot goes to the next one in line.
+  for (var guard = 0; guard <= tasks.length; guard++) {
+    if (!currentRunningTask) {
+      currentRunningTask = getHighestPriorityReady();
+      if (!currentRunningTask) break;
       currentRunningTask.state = STATE.RUNNING;
       currentRunningTask.sliceUsed = 0;
     }
-  }
-
-  // Phase 4: Execute current running task
-  if (currentRunningTask) {
     var t = currentRunningTask;
-    t.state = STATE.RUNNING;
-    t.ticksRunning++;
-    t.sliceUsed++;
-    var ticksIntoExec = t.execTime - t.execRemaining;
-
-    // Mutex acquisition
-    if (t.needsMutex && !t.hasAcquiredMutexThisPeriod && ticksIntoExec >= t.mutexAcquireOffset) {
-      var mutex = mutexes.find(function(m){ return m.name === t.needsMutex; });
-      if (mutex && !t.holdingMutex) {
-        if (mutex.owner === null) {
-          mutex.owner = t.id;
-          t.holdingMutex = mutex.name;
-          t.mutexTicksHeld = 0;
-          t.hasAcquiredMutexThisPeriod = true;
-          addLog(currentTick, t.name + ': xSemaphoreTake(' + mutex.name + ', portMAX_DELAY) = pdTRUE', 'mutex');
-        } else {
-          var owner = tasks.find(function(x){ return x.id === mutex.owner; });
-          t.state = STATE.BLOCKED;
-          t.blockedOnMutex = mutex.name;
-          if (mutex.waitQueue.indexOf(t.id) === -1) mutex.waitQueue.push(t.id);
-          addLog(currentTick, t.name + ': xSemaphoreTake(' + mutex.name + ', portMAX_DELAY) blocks - held by ' + (owner ? owner.name : 'unknown'), 'mutex');
-
-          if (owner && owner.basePriority < t.basePriority) {
-            inversionsDetected++;
-            addLog(currentTick, 'PRIORITY INVERSION: ' + t.name + ' (pri=' + t.basePriority + ') waits on ' + mutex.name +
-              ' held by ' + owner.name + ' (pri=' + owner.basePriority + ') - bounded by the critical section, unbounded as soon as a mid-priority task runs', 'inversion');
-            // FreeRTOS raises the holder to the priority of its highest waiter, and
-            // only for mutexes -- semaphores and queues have no owner to boost.
-            if (priorityInheritanceEnabled && owner.priority < t.priority) {
-              var oldPri = owner.priority;
-              owner.priority = Math.max(owner.priority, t.priority);
-              addLog(currentTick, 'PRIORITY INHERITANCE (mutex only): ' + owner.name + ' raised ' + oldPri + ' -> ' +
-                owner.priority + ', the priority of its highest waiter', 'inherit');
-            }
-          }
-
-          currentRunningTask = null;
-          var newTask = getHighestPriorityReady();
-          if (newTask) {
-            currentRunningTask = newTask;
-            currentRunningTask.state = STATE.RUNNING;
-            currentRunningTask.sliceUsed = 1;
-            currentRunningTask.ticksRunning++;
-            currentRunningTask.execRemaining--;
-          }
-          finishTick();
-          return;
-        }
-      }
+    if (runSlot(t)) {
+      if (t.state !== STATE.RUNNING) currentRunningTask = null;   // job done, now delayed
+      break;
     }
-
-    // Semaphore interaction
-    if (t.semAction && !t.hasDoneSemActionThisPeriod && ticksIntoExec >= (t.semAction.offset || 1)) {
-      var sem = semaphores.find(function(s){ return s.name === t.semAction.name; });
-      if (sem) {
-        if (t.semAction.type === 'give') {
-          var giveCount = t.semAction.count || 1;
-          if (sem.count < sem.maxCount) {
-            sem.count = Math.min(sem.maxCount, sem.count + giveCount);
-            addLog(currentTick, t.name + ': xSemaphoreGive(' + sem.name + ') - count=' + sem.count + '/' + sem.maxCount, 'semaphore');
-            t.hasDoneSemActionThisPeriod = true;
-            while (sem.count > 0 && sem.waitQueue.length > 0) {
-              var waiterId = sem.waitQueue.shift();
-              var waiter = tasks.find(function(x){ return x.id === waiterId; });
-              if (waiter && waiter.state === STATE.BLOCKED && waiter.blockedOnSem === sem.name) {
-                sem.count--;
-                waiter.blockedOnSem = null;
-                waiter.state = STATE.READY;
-                waiter.hasDoneSemActionThisPeriod = true;
-                addLog(currentTick, waiter.name + ': xSemaphoreTake(' + sem.name + ') returns - count=' + sem.count, 'semaphore');
-              }
-            }
-          }
-        } else if (t.semAction.type === 'take') {
-          if (sem.count > 0) {
-            sem.count--;
-            addLog(currentTick, t.name + ': xSemaphoreTake(' + sem.name + ', portMAX_DELAY) = pdTRUE - count=' + sem.count + '/' + sem.maxCount, 'semaphore');
-            t.hasDoneSemActionThisPeriod = true;
-          } else {
-            t.state = STATE.BLOCKED;
-            t.blockedOnSem = sem.name;
-            if (sem.waitQueue.indexOf(t.id) === -1) sem.waitQueue.push(t.id);
-            addLog(currentTick, t.name + ': xSemaphoreTake(' + sem.name + ', portMAX_DELAY) blocks - count=0 (no priority inheritance on semaphores)', 'semaphore');
-            currentRunningTask = null;
-            var newTask2 = getHighestPriorityReady();
-            if (newTask2) {
-              currentRunningTask = newTask2;
-              currentRunningTask.state = STATE.RUNNING;
-              currentRunningTask.sliceUsed = 1;
-              currentRunningTask.ticksRunning++;
-              currentRunningTask.execRemaining--;
-            }
-            finishTick();
-            return;
-          }
-        }
-      }
-    }
-
-    // Mutex hold duration
-    if (t.holdingMutex) {
-      t.mutexTicksHeld++;
-      if (t.mutexTicksHeld >= t.mutexHoldDuration) {
-        var mutex2 = mutexes.find(function(m){ return m.name === t.holdingMutex; });
-        if (mutex2) {
-          addLog(currentTick, t.name + ': xSemaphoreGive(' + mutex2.name + ')', 'mutex');
-          if (t.priority !== t.basePriority) {
-            addLog(currentTick, 'PRIORITY RESTORED: ' + t.name + ' drops from the inherited ' + t.priority + ' back to its base priority ' + t.basePriority, 'inherit');
-            t.priority = t.basePriority;
-          }
-          mutex2.owner = null;
-          if (mutex2.waitQueue.length > 0) {
-            mutex2.waitQueue.sort(function(a,b){
-              var ta = tasks.find(function(x){ return x.id === a; });
-              var tb = tasks.find(function(x){ return x.id === b; });
-              return (tb ? tb.priority : 0) - (ta ? ta.priority : 0);
-            });
-            var nextWaiterId = mutex2.waitQueue.shift();
-            var nextWaiter = tasks.find(function(x){ return x.id === nextWaiterId; });
-            if (nextWaiter) {
-              mutex2.owner = nextWaiter.id;
-              nextWaiter.holdingMutex = mutex2.name;
-              nextWaiter.mutexTicksHeld = 0;
-              nextWaiter.blockedOnMutex = null;
-              nextWaiter.hasAcquiredMutexThisPeriod = true;
-              nextWaiter.state = STATE.READY;
-              addLog(currentTick, nextWaiter.name + ': xSemaphoreTake(' + mutex2.name + ') returns, highest-priority waiter takes the mutex', 'mutex');
-            }
-          }
-        }
-        t.holdingMutex = null;
-        t.mutexTicksHeld = 0;
-      }
-    }
-
-    t.execRemaining--;
-    var responseTime = currentTick - t.currentResponseStart;
-    if (responseTime > t.worstResponseTime) t.worstResponseTime = responseTime;
-  } else {
-    idleTicks++;
+    currentRunningTask = null;
   }
+  if (slotRunnerId === -1) idleTicks++;
 
   finishTick();
 }
 
-// One place where a tick is closed out, so the switch counter, the Gantt row and
-// the event log can never disagree: a switch is exactly a change of the task
-// holding the CPU (idle counts as a task, id -1).
+// One place where a slot is closed out, so the switch counter, the Gantt row,
+// the per-task tick counts and the event log can never disagree: a switch is
+// exactly a change of the task holding the CPU (idle counts as a task, id -1).
 function finishTick() {
-  var currentId = currentRunningTask ? currentRunningTask.id : -1;
-  if (currentId !== lastRunningTaskId) {
+  if (slotRunnerId !== lastRunningTaskId) {
     contextSwitchCount++;
     contextSwitchTicks.push(currentTick);
   }
-  lastRunningTaskId = currentId;
+  lastRunningTaskId = slotRunnerId;
   recordGanttTick();
   updateReadyTicks();
+  currentTick++;
+  totalTicks++;
 }
 
-// Ready-list ordering: the first tick a task is found ready it is stamped, and the
-// stamp is cleared as soon as it leaves Ready, so the smallest stamp is the task
-// that has been waiting longest at that priority (FIFO, as in FreeRTOS).
+// Per-task state accounting for the slot just simulated (Run + Blk + Rdy + suspended
+// = elapsed ticks), plus the ready-list ordering: the first tick a task is found
+// ready it is stamped, and the stamp is cleared as soon as it leaves Ready, so the
+// smallest stamp is the task that has waited longest at that priority (FIFO).
 function updateReadyTicks() {
   for (var i = 0; i < tasks.length; i++) {
     var t = tasks[i];
+    if (t.id !== slotRunnerId) {
+      if (t.state === STATE.READY) t.ticksReady++;
+      else if (t.state === STATE.BLOCKED) t.ticksBlocked++;
+    }
     if (t.state === STATE.READY) {
-      t.ticksReady++;
       if (!t.readyStamp) t.readyStamp = ++readySeq;
     } else {
       t.readyStamp = 0;
@@ -969,34 +1032,35 @@ function updateReadyTicks() {
 
 function recordGanttTick() {
   var isInversion = false;
+  var runner = slotRunnerId === -1 ? null : tasks.find(function(x){ return x.id === slotRunnerId; });
   for (var i = 0; i < tasks.length; i++) {
     var t = tasks[i];
     if (t.state === STATE.BLOCKED && t.blockedOnMutex) {
       var mutex = mutexes.find(function(m){ return m.name === t.blockedOnMutex; });
       if (mutex && mutex.owner !== null) {
         var owner = tasks.find(function(x){ return x.id === mutex.owner; });
-        if (owner && owner.basePriority < t.basePriority) {
-          if (currentRunningTask && currentRunningTask.id !== owner.id && currentRunningTask.basePriority < t.basePriority && currentRunningTask.basePriority > owner.basePriority) {
-            isInversion = true;
-          }
+        if (owner && owner.basePriority < t.basePriority && runner && runner.id !== owner.id &&
+            runner.basePriority < t.basePriority && runner.basePriority > owner.basePriority) {
+          isInversion = true;
         }
       }
     }
   }
+  if (isInversion) unboundedTicks++;
 
   ganttHistory.push({
     tick: currentTick,
     slots: tasks.map(function(t){ return {
-      taskId: t.id, state: t.state, color: t.color, name: t.name, pri: t.priority, basePri: t.basePriority,
+      taskId: t.id, state: t.id === slotRunnerId ? STATE.RUNNING : t.state, color: t.color, name: t.name, pri: t.priority, basePri: t.basePriority,
       holdingMutex: t.holdingMutex,
       blockedOn: t.blockedOnMutex || t.blockedOnSem || null
     }; }),
-    runningTaskId: currentRunningTask ? currentRunningTask.id : null,
+    runningTaskId: slotRunnerId === -1 ? null : slotRunnerId,
     isInversion: isInversion
   });
 
   var piEl = document.getElementById('piBanner');
-  if (isInversion && !priorityInheritanceEnabled) {
+  if (isInversion) {
     piEl.classList.add('show');
   } else {
     piEl.classList.remove('show');
@@ -1038,8 +1102,7 @@ function simStep() {
 }
 window.simStep = simStep;
 
-function simReset() {
-  simPause();
+function resetKernelCounters() {
   currentTick = 0;
   contextSwitchCount = 0;
   idleTicks = 0;
@@ -1048,34 +1111,17 @@ function simReset() {
   logEntries = [];
   currentRunningTask = null;
   inversionsDetected = 0;
+  unboundedTicks = 0;
   contextSwitchTicks = [];
   lastRunningTaskId = -1;
+  slotRunnerId = -1;
   readySeq = 0;
+}
 
-  for (var i = 0; i < tasks.length; i++) {
-    var t = tasks[i];
-    t.state = STATE.READY;
-    t.execRemaining = t.execTime;
-    t.nextActivation = t.period > 0 ? t.period : 0;
-    t.ticksRunning = 0;
-    t.ticksBlocked = 0;
-    t.ticksReady = 0;
-    t.activationCount = 1;
-    t.worstResponseTime = 0;
-    t.currentResponseStart = 0;
-    t.deadlineMisses = 0;
-    t.holdingMutex = null;
-    t.blockedOnMutex = null;
-    t.blockedOnSem = null;
-    t.mutexTicksHeld = 0;
-    t.delayRemaining = 0;
-    t.isSuspended = false;
-    t.priority = t.basePriority;
-    t.sliceUsed = 0;
-    t.readyStamp = 0;
-    t.hasAcquiredMutexThisPeriod = false;
-    t.hasDoneSemActionThisPeriod = false;
-  }
+function simReset() {
+  simPause();
+  resetKernelCounters();
+  for (var i = 0; i < tasks.length; i++) armTask(tasks[i], 0);
   for (var i = 0; i < mutexes.length; i++) { mutexes[i].owner = null; mutexes[i].waitQueue = []; }
   for (var i = 0; i < semaphores.length; i++) { semaphores[i].count = semaphores[i].initialCount || 0; semaphores[i].waitQueue = []; }
 
@@ -1127,7 +1173,9 @@ function msPerTick() { return 1000 / tickRateHz; }
 function renderKPIs() {
   var cpuUtil = totalTicks > 0 ? ((1 - idleTicks / totalTicks) * 100).toFixed(1) : '0.0';
   var idlePct = totalTicks > 0 ? (idleTicks / totalTicks * 100).toFixed(1) : '100.0';
-  var runName = currentRunningTask ? currentRunningTask.name : 'IDLE';
+  // the task that executed the most recent slot (the last Gantt column)
+  var lastRunner = tasks.find(function(t){ return t.id === lastRunningTaskId; });
+  var runName = lastRunner ? lastRunner.name : 'IDLE';
   var util = schedUtilisation();
 
   document.getElementById('kTick').textContent = currentTick;
@@ -1140,7 +1188,7 @@ function renderKPIs() {
 
   var invEl = document.getElementById('kInv');
   invEl.textContent = inversionsDetected;
-  invEl.className = 'val ' + (inversionsDetected > 0 ? 'neg' : 'neutral');
+  invEl.className = 'val ' + (unboundedTicks > 0 ? 'neg' : inversionsDetected > 0 ? 'warn' : 'neutral');
 
   var uEl = document.getElementById('kUtilU');
   uEl.textContent = (util.u * 100).toFixed(1) + '%';
@@ -1173,7 +1221,7 @@ function hexToRGBA(hex, alpha) {
   return 'rgba('+r+','+g+','+b+','+alpha+')';
 }
 
-function renderGantt() {
+function renderGantt(fromScroll) {
   var canvas = document.getElementById('ganttCanvas');
   var ctx = canvas.getContext('2d');
   var container = document.getElementById('ganttContainer');
@@ -1191,6 +1239,12 @@ function renderGantt() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
+  // Follow the newest tick, unless the reader is scrolling back through history
+  if (!fromScroll && ganttHistory.length * ganttCellWidth > container.clientWidth - ganttLabelWidth - 50) {
+    container.scrollLeft = ganttHistory.length * ganttCellWidth - container.clientWidth + ganttLabelWidth + 100;
+  }
+  var lx = container.scrollLeft;   // the label column stays pinned to the left edge
+
   // Background
   ctx.fillStyle = '#07120E';
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -1203,6 +1257,7 @@ function renderGantt() {
   ctx.fillStyle = '#8C9196';
   ctx.font = '9px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
+  // column i is the slot that starts at tick i, the same number the event log prints
   for (var i = 0; i < numTicks; i++) {
     if (i % 5 === 0) {
       var x = startX + i * ganttCellWidth + ganttCellWidth / 2;
@@ -1216,15 +1271,10 @@ function renderGantt() {
     }
   }
 
-  // x-axis caption (units)
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#6B7176';
-  ctx.font = '9px "JetBrains Mono", monospace';
-  ctx.fillText('tick (1 tick = ' + msPerTick().toFixed(msPerTick() >= 1 ? 0 : 1) + ' ms)', 6, headerH - 5);
 
   // Task rows, with the idle task last
   var allRows = tasks.map(function(t){ return {id:t.id, name:t.name, color:t.color}; });
-  allRows.push({id:-1, name:'IDLE  P0', color:'#6B7176'});
+  allRows.push({id:-1, name:'IDLE  P0', color:IDLE_COLOR});
 
   for (var r = 0; r < allRows.length; r++) {
     var row = allRows[r];
@@ -1242,25 +1292,6 @@ function renderGantt() {
     ctx.lineTo(canvasWidth, y + ganttRowHeight);
     ctx.stroke();
 
-    // Label
-    ctx.fillStyle = row.color;
-    ctx.beginPath();
-    ctx.arc(10, y + ganttRowHeight / 2, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.font = '600 10px Inter, Segoe UI, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(row.name, 20, y + ganttRowHeight / 2 + 3);
-
-    // Priority label
-    if (row.id !== -1) {
-      var tk = tasks.find(function(t){ return t.id === row.id; });
-      if (tk) {
-        ctx.fillStyle = '#8C9196';
-        ctx.font = '8px "JetBrains Mono", monospace';
-        ctx.fillText('P' + tk.priority, ganttLabelWidth - 24, y + ganttRowHeight / 2 + 3);
-      }
-    }
 
     // Draw cells
     for (var tick = 0; tick < ganttHistory.length; tick++) {
@@ -1288,10 +1319,10 @@ function renderGantt() {
         }
         if (slot) {
           if (slot.state === STATE.RUNNING) {
-            if (entry.isInversion && !priorityInheritanceEnabled) {
+            if (entry.isInversion) {
               ctx.fillStyle = 'rgba(224,122,122,0.2)';
               ctx.fillRect(cx - 0.5, cy - 2, cw + 1, ch + 4);
-              ctx.strokeStyle = '#A3312B';
+              ctx.strokeStyle = '#E07A7A';
               ctx.lineWidth = 1.5;
               ctx.strokeRect(cx - 0.5, cy - 2, cw + 1, ch + 4);
             }
@@ -1303,7 +1334,7 @@ function renderGantt() {
             ctx.fillRect(cx, cy, cw, 2);
 
             if (slot.holdingMutex) {
-              ctx.fillStyle = '#C4AE84';
+              ctx.fillStyle = '#07120E';
               ctx.font = 'bold 7px "JetBrains Mono", monospace';
               ctx.textAlign = 'center';
               ctx.fillText('M', cx + cw / 2, cy + ch / 2 + 2);
@@ -1317,7 +1348,7 @@ function renderGantt() {
             ctx.strokeRect(cx, cy, cw, ch);
             ctx.setLineDash([]);
             if (slot.blockedOn) {
-              ctx.fillStyle = hexToRGBA('#A3312B', 0.6);
+              ctx.fillStyle = 'rgba(224,122,122,0.85)';
               ctx.font = '6px "JetBrains Mono", monospace';
               ctx.textAlign = 'center';
               ctx.fillText('B', cx + cw / 2, cy + ch / 2 + 2);
@@ -1335,9 +1366,10 @@ function renderGantt() {
   // Context switch markers
   for (var c = 0; c < contextSwitchTicks.length; c++) {
     var csTick = contextSwitchTicks[c];
-    if (csTick <= ganttHistory.length) {
-      var csX = startX + (csTick - 1) * ganttCellWidth + ganttCellWidth / 2;
-      ctx.strokeStyle = 'rgba(249,115,22,0.3)';
+    if (csTick < ganttHistory.length) {
+      // the switch happens at the boundary where slot csTick begins
+      var csX = startX + csTick * ganttCellWidth;
+      ctx.strokeStyle = 'rgba(196,174,132,0.35)';
       ctx.lineWidth = 0.5;
       ctx.setLineDash([1, 2]);
       ctx.beginPath();
@@ -1359,7 +1391,7 @@ function renderGantt() {
   // Current tick marker
   if (ganttHistory.length > 0) {
     var markerX = startX + (ganttHistory.length - 1) * ganttCellWidth + ganttCellWidth / 2;
-    ctx.strokeStyle = '#1F6F4A';
+    ctx.strokeStyle = '#6FB59A';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([3, 2]);
     ctx.beginPath();
@@ -1368,7 +1400,7 @@ function renderGantt() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = '#1F6F4A';
+    ctx.fillStyle = '#6FB59A';
     ctx.beginPath();
     ctx.moveTo(markerX - 4, headerH);
     ctx.lineTo(markerX + 4, headerH);
@@ -1377,19 +1409,52 @@ function renderGantt() {
     ctx.fill();
   }
 
-  // Auto-scroll
-  if (ganttHistory.length * ganttCellWidth > container.clientWidth - ganttLabelWidth - 50) {
-    container.scrollLeft = ganttHistory.length * ganttCellWidth - container.clientWidth + ganttLabelWidth + 100;
+  // Pinned label column: task names, priorities and the x-axis caption
+  ctx.fillStyle = '#07120E';
+  ctx.fillRect(lx, 0, ganttLabelWidth - 2, canvasHeight);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#8C9196';
+  ctx.font = '9px "JetBrains Mono", monospace';
+  ctx.fillText('tick (1 tick = ' + msPerTick().toFixed(msPerTick() >= 1 ? 0 : 1) + ' ms)', lx + 6, headerH - 5);
+  for (var r2 = 0; r2 < allRows.length; r2++) {
+    var row2 = allRows[r2];
+    var y2 = startY + r2 * ganttRowHeight;
+    ctx.fillStyle = r2 % 2 === 0 ? 'rgba(14,28,22,0.9)' : 'rgba(30,36,36,0.9)';
+    ctx.fillRect(lx, y2, ganttLabelWidth - 2, ganttRowHeight);
+    ctx.fillStyle = row2.color;
+    ctx.beginPath();
+    ctx.arc(lx + 10, y2 + ganttRowHeight / 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = row2.id === -1 ? '#8C9196' : row2.color;
+    ctx.font = '600 10px Inter, Segoe UI, sans-serif';
+    ctx.fillText(row2.name.length > 13 ? row2.name.slice(0, 12) + '\u2026' : row2.name, lx + 20, y2 + ganttRowHeight / 2 + 3);
+    var tk = row2.id === -1 ? null : tasks.find(function(t){ return t.id === row2.id; });
+    if (tk) {
+      ctx.fillStyle = '#8C9196';
+      ctx.font = '8px "JetBrains Mono", monospace';
+      ctx.fillText('P' + tk.priority, lx + ganttLabelWidth - 24, y2 + ganttRowHeight / 2 + 3);
+    }
   }
+  ctx.strokeStyle = 'rgba(58,64,68,1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(lx + ganttLabelWidth - 2, 0);
+  ctx.lineTo(lx + ganttLabelWidth - 2, canvasHeight);
+  ctx.stroke();
 }
 
 function initGanttTooltip() {
   var canvas = document.getElementById('ganttCanvas');
   var tip = document.getElementById('ganttTip');
   function hide(){ tip.classList.remove('show'); }
-  canvas.addEventListener('mouseleave', hide);
-  canvas.addEventListener('mousemove', function(e) {
+  canvas.addEventListener('pointerleave', function(e){ if (e.pointerType === 'mouse') hide(); });
+  document.addEventListener('pointerdown', function(e){ if (e.target !== canvas) hide(); });
+  canvas.addEventListener('pointerdown', show);
+  canvas.addEventListener('pointermove', function(e){ if (e.pointerType === 'mouse') show(e); });
+  function show(e) {
     var rect = canvas.getBoundingClientRect();
+    var container = document.getElementById('ganttContainer');
+    if (e.clientX - rect.left < container.scrollLeft + ganttLabelWidth) { hide(); return; }
     var col = Math.floor((e.clientX - rect.left - ganttLabelWidth) / ganttCellWidth);
     var row = Math.floor((e.clientY - rect.top - 24) / ganttRowHeight);
     if (col < 0 || col >= ganttHistory.length || row < 0 || row > tasks.length) { hide(); return; }
@@ -1410,10 +1475,10 @@ function initGanttTooltip() {
              (entry.isInversion ? '<br>unbounded priority inversion' : '');
     }
     tip.innerHTML = html;
-    tip.style.left = Math.min(e.clientX + 14, window.innerWidth - 300) + 'px';
+    tip.style.left = Math.max(8, Math.min(e.clientX + 14, window.innerWidth - 230)) + 'px';
     tip.style.top = (e.clientY + 14) + 'px';
     tip.classList.add('show');
-  });
+  }
 }
 
 // ===== STATE CARDS =====
@@ -1478,7 +1543,7 @@ function renderQueues() {
 
   // Running
   html += '<div class="queue-block"><div class="queue-label"><i class="fas fa-play" style="color:var(--green)"></i> Running</div><div class="queue-items">';
-  var runningTask = tasks.find(function(t){ return t.state === STATE.RUNNING; });
+  var runningTask = tasks.find(function(t){ return t.id === lastRunningTaskId; });
   if (runningTask) html += makeQueueChip(runningTask);
   else html += '<span class="q-empty">IDLE</span>';
   html += '</div></div>';
@@ -1551,7 +1616,7 @@ function renderStats() {
   var misses = 0, suspended = 0;
   for (var k = 0; k < tasks.length; k++) { misses += tasks[k].deadlineMisses; if (tasks[k].isSuspended) suspended++; }
 
-  var html = '<table class="stat-table"><thead><tr><th style="text-align:left">Metric</th><th>Value</th></tr></thead><tbody>';
+  var html = '<div class="stat-wrap"><table class="stat-table"><thead><tr><th style="text-align:left">Metric</th><th>Value</th></tr></thead><tbody>';
   html += '<tr><td>CPU busy (measured)</td><td class="' + (parseFloat(cpuUtil) > 90 ? 'tneg' : parseFloat(cpuUtil) > 70 ? 'twarn' : 'tpos') + '">' + cpuUtil + '%</td></tr>';
   html += '<tr><td>Idle task (P0)</td><td>' + idlePct + '%</td></tr>';
   html += '<tr><td>Load U = &Sigma; C<sub>i</sub>/T<sub>i</sub></td><td class="' + (util.u > 1 ? 'tneg' : util.u > util.bound ? 'twarn' : 'tpos') + '">' + (util.u * 100).toFixed(1) + '%</td></tr>';
@@ -1559,13 +1624,14 @@ function renderStats() {
   html += '<tr><td>Context switches</td><td>' + contextSwitchCount + '</td></tr>';
   html += '<tr><td>Switch overhead @' + CTX_SWITCH_CYCLES + ' cyc</td><td>' + ctxUs.toFixed(1) + ' &micro;s (' + ctxPct.toFixed(2) + '% of ' + elapsedMs.toFixed(0) + ' ms)</td></tr>';
   html += '<tr><td>Elapsed</td><td>' + currentTick + ' ticks @' + tickRateHz + ' Hz</td></tr>';
-  html += '<tr><td>Priority inversions</td><td class="' + (inversionsDetected > 0 ? 'tneg' : '') + '">' + inversionsDetected + '</td></tr>';
+  html += '<tr><td>Blocked on a lower-priority mutex holder</td><td>' + inversionsDetected + '</td></tr>';
+  html += '<tr><td>Unbounded inversion ticks</td><td class="' + (unboundedTicks > 0 ? 'tneg' : 'tpos') + '">' + unboundedTicks + '</td></tr>';
   html += '<tr><td>Deadline misses (all tasks)</td><td class="' + (misses > 0 ? 'tneg' : 'tpos') + '">' + misses + '</td></tr>';
   html += '<tr><td>Tasks (running set / suspended)</td><td>' + (tasks.length - suspended) + ' / ' + suspended + '</td></tr>';
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
 
   if (tasks.length > 0) {
-    html += '<table class="stat-table" style="margin-top:12px"><thead><tr><th style="text-align:left">Task</th><th>pri</th><th>C/T</th><th>CPU%</th><th>Blk</th><th>Rdy</th><th>WCRT</th><th>DL</th></tr></thead><tbody>';
+    html += '<div class="stat-wrap"><table class="stat-table per-task" style="margin-top:12px"><thead><tr><th style="text-align:left">Task</th><th>pri</th><th>C/T</th><th>CPU%</th><th>Blk</th><th>Rdy</th><th>WCRT</th><th>DL</th></tr></thead><tbody>';
     for (var i = 0; i < tasks.length; i++) {
       var t = tasks[i];
       var share = totalTicks > 0 ? (t.ticksRunning / totalTicks * 100) : 0;
@@ -1584,8 +1650,8 @@ function renderStats() {
         '<td>' + t.worstResponseTime + (t.period > 0 && t.worstResponseTime > t.period ? ' <span class="tneg">&gt;T</span>' : '') + '</td>' +
         '<td class="' + (t.deadlineMisses > 0 ? 'tneg' : 'tpos') + '">' + t.deadlineMisses + '</td></tr>';
     }
-    html += '</tbody></table>';
-    html += '<div style="font-size:10px;color:var(--faint);margin-top:8px;line-height:1.6">CPU% = task run ticks / elapsed ticks &middot; C/T = worst-case execution time over period (U<sub>i</sub>) &middot; Blk / Rdy = ticks spent Blocked / Ready &middot; WCRT = worst observed response time in ticks (release to job completion) &middot; DL = deadline misses (D = T).</div>';
+    html += '</tbody></table></div>';
+    html += '<div style="font-size:10px;color:var(--faint);margin-top:8px;line-height:1.6">CPU% = task run ticks / elapsed ticks, so the column sums to CPU busy &middot; C/T = worst-case execution time over period (U<sub>i</sub>) &middot; Blk / Rdy = ticks spent Blocked / Ready &middot; WCRT = worst response time of a completed job, in ticks from release to completion &middot; DL = jobs that missed their deadline (D = T); a late job is not dropped, later jobs queue behind it.</div>';
   }
 
   panel.innerHTML = html;
@@ -1628,7 +1694,10 @@ function addTaskFromModal() {
   var execTime = parseInt(document.getElementById('inpTaskExec').value) || 1;
   var mutex = document.getElementById('inpTaskMutex').value || null;
   var mutexDur = parseInt(document.getElementById('inpTaskMutexDur').value) || 3;
-  var mutexOff = parseInt(document.getElementById('inpTaskMutexOff').value) || 1;
+  var mutexOff = parseInt(document.getElementById('inpTaskMutexOff').value);
+  if (!(mutexOff >= 0)) mutexOff = 1;
+  period = Math.max(0, period);
+  execTime = Math.max(1, execTime);
 
   var t = new Task({
     name: name,
@@ -1639,10 +1708,10 @@ function addTaskFromModal() {
     mutexHoldDuration: mutexDur,
     mutexAcquireOffset: mutexOff
   });
-  t.nextActivation = currentTick + (period > 0 ? period : 0);
-  t.activationCount = 1;
+  // the first job is released in the next slot to be simulated
+  armTask(t, currentTick);
   tasks.push(t);
-  addLog(currentTick, 'xTaskCreate("' + name + '", pri=' + priority + ', period=' + period + ', exec=' + execTime + ')', 'sched');
+  addLog(currentTick, 'xTaskCreate("' + name + '", pri=' + t.priority + ', period=' + period + ', C=' + execTime + ')', 'sched');
   closeModals();
   renderAll();
 }
@@ -1673,8 +1742,8 @@ function removeTask(id) {
   var t = tasks.find(function(x){ return x.id === id; });
   if (!t) return;
   if (t.holdingMutex) {
-    var m = mutexes.find(function(x){ return x.name === t.holdingMutex; });
-    if (m) { m.owner = null; addLog(currentTick, t.name + ' released ' + m.name + ' (task deleted)', 'mutex'); }
+    addLog(currentTick, t.name + ' is deleted while holding ' + t.holdingMutex + '; the mutex is released', 'mutex');
+    giveMutex(t);
   }
   for (var i = 0; i < mutexes.length; i++) mutexes[i].waitQueue = mutexes[i].waitQueue.filter(function(x){ return x !== id; });
   for (var i = 0; i < semaphores.length; i++) semaphores[i].waitQueue = semaphores[i].waitQueue.filter(function(x){ return x !== id; });
@@ -1690,7 +1759,8 @@ function toggleSuspend(id) {
   if (!t) return;
   if (t.isSuspended) {
     t.isSuspended = false;
-    t.state = STATE.READY;
+    // back to Ready only if it still owes CPU and is not waiting on a resource
+    t.state = (t.execRemaining > 0 && !t.blockedOnMutex && !t.blockedOnSem) ? STATE.READY : STATE.BLOCKED;
     addLog(currentTick, 'vTaskResume("' + t.name + '")', 'sched');
   } else {
     t.isSuspended = true;
@@ -1714,13 +1784,10 @@ var PRESET_LABELS = {
   'producer-consumer': 'Producer / consumer'
 };
 
-// Hold a task in the Blocked state until `tick`, so a scenario can stage arrivals.
+// Stage an arrival: the task's first job is released at `tick` (its phase).
+// Kept on the task, so Reset replays the same scenario.
 function releaseAt(task, tick) {
-  task.nextActivation = tick;
-  task.execRemaining = 0;
-  task.state = STATE.BLOCKED;
-  task.delayRemaining = tick;
-  task.activationCount = 0;
+  task.offset = tick;
 }
 
 function loadPreset(name) {
@@ -1728,16 +1795,7 @@ function loadPreset(name) {
   tasks = [];
   mutexes = [];
   semaphores = [];
-  currentTick = 0;
-  contextSwitchCount = 0;
-  idleTicks = 0;
-  totalTicks = 0;
-  ganttHistory = [];
-  currentRunningTask = null;
-  inversionsDetected = 0;
-  contextSwitchTicks = [];
-  lastRunningTaskId = -1;
-  readySeq = 0;
+  resetKernelCounters();
   nextTaskId = 0;
   nextMutexId = 0;
   nextSemId = 0;
@@ -1778,13 +1836,14 @@ function loadPreset(name) {
       tasks.push(new Task({ name: 'Task_Med', priority: 4, period: 12, execTime: 3 }));
       tasks.push(new Task({ name: 'Task_Low', priority: 2, period: 40, execTime: 10, needsMutex: 'Mutex_SPI', mutexHoldDuration: 6, mutexAcquireOffset: 1 }));
 
-      // Staged arrivals: Task_Low owns Mutex_SPI from tick 2, Task_High blocks on it
-      // at tick 5, and Task_Med - which needs nothing from the mutex - then runs.
+      // Staged arrivals: Task_Low owns Mutex_SPI from tick 1, Task_High is released at
+      // tick 4 and blocks on it at tick 5, and Task_Med - which needs nothing from the
+      // mutex - then runs.
       releaseAt(tasks[0], 4);
       releaseAt(tasks[1], 5);
 
       addLog(0, 'Preset: unbounded priority inversion (inheritance OFF)', 'sched');
-      addLog(0, 'Task_Low(P2) takes Mutex_SPI at tick 2; Task_High(P6) blocks on it at tick 5', 'info');
+      addLog(0, 'Task_Low(P2) takes Mutex_SPI at tick 1; Task_High(P6) is released at tick 4 and blocks on it at tick 5; Task_Med(P4) is released at tick 5', 'info');
       addLog(0, 'Task_Med(P4) then preempts the mutex holder, so Task_High waits on work it has no relation to: the inversion is unbounded by the critical section', 'inversion');
       addLog(0, 'U = 0.167 + 0.250 + 0.250 = 0.667, so the long response time is blocking, not overload', 'info');
       addLog(0, 'Switch on Priority Inheritance (or load the Inheritance preset) to bound it', 'info');
@@ -1849,15 +1908,8 @@ function loadPreset(name) {
       break;
   }
 
-  // Initialize tasks
-  for (var i = 0; i < tasks.length; i++) {
-    var t = tasks[i];
-    if (t.activationCount === 0 && t.state === STATE.BLOCKED) continue;
-    if (!t.nextActivation || t.nextActivation === 0) {
-      t.nextActivation = t.period > 0 ? t.period : 0;
-    }
-    if (t.activationCount === 0) t.activationCount = 1;
-  }
+  // Initialize tasks: every first release happens at its offset (0 unless staged)
+  for (var i = 0; i < tasks.length; i++) armTask(tasks[i], 0);
 
   renderAll();
 }
@@ -1905,6 +1957,11 @@ function init() {
   });
 
   initGanttTooltip();
+  var gScrollRaf = 0;
+  document.getElementById('ganttContainer').addEventListener('scroll', function(){
+    if (gScrollRaf) return;
+    gScrollRaf = requestAnimationFrame(function(){ gScrollRaf = 0; renderGantt(true); });
+  }, { passive: true });
 
   // Close modals on overlay click
   var overlays = document.querySelectorAll('.modal-overlay');

@@ -101,7 +101,7 @@
 
     <section id="program" hidden>
       <div class="kpis" id="progKpis"></div>
-      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Twenty funds</h3><span class="sub">NAV shown as reported and as nowcast. TVPI and IRR use the nowcast NAV; IRR is not meaningful (n.m.) for funds under three years old. Values from cited statements are marked; Brisolt III is carried at its statement's roll-forward value while the break is open. Ostrel VI comes from its Q2 2026 report, net of accrued carry.</span></div>
+      <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Twenty funds</h3><span class="sub">NAV shown as reported and as nowcast. TVPI and IRR use the nowcast NAV; IRR is not meaningful (n.m.) for funds under three years old. Values from cited statements are marked.<span id="brkNote"> Brisolt III is carried at its statement's roll-forward value while the break is open.</span> Ostrel VI comes from its Q2 2026 report, net of accrued carry.</span></div>
         <div class="panel-body"><div id="progTable"></div></div></div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Watchlist</h3></div><div class="panel-body wl" id="watchlist"></div></div>
@@ -148,7 +148,7 @@
     <div class="fold-body">
       <ul>
         <li>Each fund follows the Takahashi-Alexander model. It calls a share of its unfunded commitment each year of the investment period, grows its NAV and pays out a rising share of NAV as it ages.</li>
-        <li>The pacing rule picks each year's commitment so projected private NAV sits on target four years out. The projection treats NAV growth G as net of fees; the one-fund panel below also shows what a 2% fee and 20% carry would take off if G were the gross return.</li>
+        <li>The pacing rule picks each year's commitment so projected private NAV sits on target at the end of the pacing horizon, four years by default. The projection treats NAV growth G as net of fees; the one-fund panel below also shows what a 2% fee and 20% carry would take off if G were the gross return.</li>
         <li>The Monte Carlo draws public returns, private returns, calls and distributions together, quarter by quarter, for ten years.</li>
         <li>The nowcast regresses each fund's reported NAV returns on a public index at lags of zero to two quarters and shrinks the betas toward a strategy prior, with weight n / (n + 12) on n quarters of data. It then rolls the last NAV through the stale quarters with the cash flows since.</li>
         <li>Fund performance uses XIRR, TVPI, DPI, KS-PME and Direct Alpha. Quarterly returns are desmoothed with Geltner's method.</li>
@@ -479,7 +479,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var f = PM.taFund({ commit: 100, rc: A.rc, ip: A.ip, life: A.life, growth: A.growth, bow: A.bow, yieldFloor: 0 });
     var net = PM.taNetOfFees(f, { commit: 100, mgmt: 0.02, carry: 0.2, pref: 0.08 }), sm = PM.taSummary(f, 100, A.target * 100);
     var xs = f.data.map(function (d) { return d.y; });
-    UI.chart.line('#taChart', { xs: xs, series: [{ name: 'Net cash flow (J-curve)', ys: f.data.map(function (d) { return d.cf; }), color: 's2', width: 2.5 }, { name: 'NAV', ys: f.data.map(function (d) { return d.nav; }), color: 's1' }, { name: 'Cumulative called', ys: f.data.map(function (d) { return d.cal; }), color: 's5', dash: '5 4' }, { name: 'Cumulative distributed', ys: f.data.map(function (d) { return d.dist; }), color: 's3', dash: '5 4' }], yFmt: function (v) { return '$' + F.num(v, 0) + 'm'; }, xFmt: function (v) { return 'Y' + v; }, height: 240, label: 'J-curve of one fund per $100m committed' });
+    UI.chart.line('#taChart', { xs: xs, series: [{ name: 'Net cash flow (J-curve)', ys: f.data.map(function (d) { return d.cf; }), color: 's2', width: 2.5 }, { name: 'NAV', ys: f.data.map(function (d) { return d.nav; }), color: 's1' }, { name: 'Cumulative called', ys: f.data.map(function (d) { return d.cal; }), color: 's5', dash: '5 4' }, { name: 'Cumulative distributed', ys: f.data.map(function (d) { return d.dist; }), color: 's3', dash: '5 4' }], yFmt: function (v) { return F.money(v, 0); }, xFmt: function (v) { return 'Y' + v; }, height: 240, label: 'J-curve of one fund per $100m committed' });
     UI.kpis('#taKpis', [
       { label: 'TVPI gross / net', value: F.mult(sm.tvpi) + ' / ' + F.mult(net.netTvpi) },
       { label: 'Net IRR', value: F.pct(net.netIrr, 1), sub: 'gross IRR equals G (' + F.pct(sm.irr, 1) + ') by construction', explain: function () { return { title: 'Net IRR of one fund', formula: '2% fee on commitment in the investment period then on prior NAV; 20% carry over an 8% preferred return accrued each year on unreturned capital, European waterfall, full catch-up', inputs: [{ name: 'Fees paid', value: F.money(net.feeTot, 1), src: 'computed' }, { name: 'GP carry', value: F.money(net.gpCarry, 1), src: 'computed' }], result: F.pct(net.netIrr, 2) }; } },
@@ -510,7 +510,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     var nowPath = qs.map(function (q, i) { return i < qs.length - 2 ? null : (i === qs.length - 1 ? T.nowcast : null); });
     var truePath = qs.map(function (q) { var s = 0; S.rows.forEach(function (r) { var row = r.f.navTrue.filter(function (x) { return x.q === q; })[0]; s += row ? row.nav : 0; }); return s; });
     nowPath[qs.length - 2] = repPath[qs.length - 2];
-    UI.chart.line('#nowPath', { xs: qs, series: [{ name: 'Latest reported marks', ys: repPath, color: 's4' }, { name: 'Nowcast', ys: nowPath, color: 's1', dots: true }, { name: 'Simulated true value (unknown in practice)', ys: truePath, color: 's3', dash: '4 4' }], yFmt: function (v) { return '$' + F.num(v, 0) + 'm'; }, xFmt: qLabel, height: 240, xTicks: 5, label: 'Program NAV path' });
+    UI.chart.line('#nowPath', { xs: qs, series: [{ name: 'Latest reported marks', ys: repPath, color: 's4' }, { name: 'Nowcast', ys: nowPath, color: 's1', dots: true }, { name: 'Simulated true value (unknown in practice)', ys: truePath, color: 's3', dash: '4 4' }], yFmt: function (v) { return F.money(v, 0); }, xFmt: qLabel, height: 240, xTicks: 5, label: 'Program NAV path' });
     $('#denomBox').innerHTML = '<p>Public assets are marked daily; private funds report a quarter or two later. After a fall in public markets, the reported private share is too high: the denominator has already dropped, the numerator has not.</p>' +
       '<div class="table-wrap"><table class="data"><thead><tr><th></th><th class="n">Reported marks</th><th class="n">Nowcast</th></tr></thead><tbody>' +
       '<tr><td>Private NAV</td><td class="n">' + F.money(T.reported, 0) + '</td><td class="n">' + F.money(T.nowcast, 0) + '</td></tr>' +
@@ -549,12 +549,14 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
         return { name: r.f.name, src: r.f.fromStatement ? (r.f.override && r.f.override.breakOpen ? 'cited, break open' : 'cited') : (r.f.base ? r.f.base.source.replace('2026 ', '') : ''), strategy: STRAT[r.f.strategy] ? STRAT[r.f.strategy].label : r.f.strategy, vintage: r.f.vintage, commitment: r.f.commitment, paidIn: r.paidIn, unfunded: r.unfunded, dist: r.distributed, reported: r.reported, nowcast: r.nowcast, tvpi: (r.distributed + r.nowcast) / r.paidIn, dpi: r.dpi, irr: m.irr }; }),
       foot: { name: 'Program ($m)', commitment: T.commit, paidIn: T.paidIn, unfunded: T.unfunded, dist: T.dist, reported: T.reported, nowcast: T.nowcast, tvpi: pTvpi, dpi: pDpi, irr: pm.irr },
       footExplain: { unfunded: function () { return { title: 'Program unfunded', formula: 'sum over funds of commitment - called (statement value where cited)', inputs: [{ name: 'Commitments', value: F.money(T.commit, 1), src: 'computed' }, { name: 'Called', value: F.money(T.paidIn, 1), src: 'computed' }], result: F.money(T.unfunded, 1) }; } } });
+    var openBrk = S.rows.filter(function (r) { return r.f.override && r.f.override.breakOpen; }).map(function (r) { return r.f.name.replace(/ Credit Opportunities| Ventures| Buyout| Growth/, ''); });
+    $('#brkNote').textContent = openBrk.length ? ' ' + openBrk.join(' and ') + (openBrk.length === 1 ? ' is' : ' are') + ' carried at the roll-forward value its statement lines support while the break is open.' : '';
     /* watchlist */
     var wl = [];
     S.rows.forEach(function (r) { if (r.stale >= 2) wl.push(['warn', '<b>Stale NAV</b>: ' + UI.esc(r.f.name) + ' last marked ' + qDate(r.navQ) + ' (' + r.stale + ' quarters). Nowcast ' + F.money(r.nowcast, 1) + ' vs reported ' + F.money(r.reported, 1) + '.']); });
     wl.push(['bad', '<b>Key person event</b>: Hasturn Mid-Market Buyout II. Departure of a named key person flagged by the <a href="manager-selection-copilot.html">Manager Selection Copilot</a> team-changes tracker; confirm whether the key person clause triggers.']);
-    wl.push(['warn', '<b>Fee break</b>: Ostrel Capital Partners VI. Management fee above the LPA rate after the step-down, raised by the <a href="fund-terms-auditor.html">Fund Terms Auditor</a>; query sent to the GP.']);
-    S.rows.forEach(function (r) { if (r.unfunded > 0.45 * r.f.commitment && r.f.vintage <= 2023) wl.push(['warn', '<b>Liquidity pressure</b>: ' + UI.esc(r.f.name) + ' still has ' + F.money(r.unfunded, 1) + ' unfunded (' + F.pct(r.unfunded / r.f.commitment, 0) + ') entering the back half of its investment period.']); });
+    wl.push(['warn', '<b>Fee and carry breaks</b>: Ostrel Capital Partners VI. The <a href="fund-terms-auditor.html">Fund Terms Auditor</a> found a Q3 2025 fee charged on commitments instead of net invested capital, a Q1 2026 offset at half the LPA rate and a $1.24m carry accrual the whole-fund waterfall does not support. The position stays at the reported capital account until the GP answers the query.']);
+    S.rows.forEach(function (r) { if (r.unfunded > 0.45 * r.f.commitment && r.f.vintage <= 2023 && fundAge(r.f) < (STRAT[r.f.strategy] || STRAT.buyout).ip) wl.push(['warn', '<b>Liquidity pressure</b>: ' + UI.esc(r.f.name) + ' still has ' + F.money(r.unfunded, 1) + ' unfunded (' + F.pct(r.unfunded / r.f.commitment, 0) + ') entering the back half of its investment period.']); });
     var brk = S.pipeline && S.pipeline.breaks.filter(function (b) { return b.state !== 'rejected'; });
     if (brk && brk.length) brk.forEach(function (b) { wl.push(['bad', '<b>Statement break</b>: ' + UI.esc(b.title) + '. See <a href="#ai">Under the hood</a>.']); });
     $('#watchlist').innerHTML = wl.map(function (w) { return '<div class="notice ' + w[0] + '">' + w[1] + '</div>'; }).join('');
@@ -601,7 +603,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
     S.liq = { cover: cover, pct1: pct1, need: need, liquid1: liquid1, calls: calls, dists1: dists1 };
     UI.kpis('#liqKpis', [
       { id: 'cover', label: '12-month liquidity coverage', value: F.mult(cover, 1), sub: 'liquid public / net cash need', tone: cover < 1.5 ? 'bad' : 'good', explain: function () { return { title: 'Liquidity coverage under stress', formula: 'liquid public after drawdown / (stressed calls - cut distributions + spending)', inputs: [{ name: 'Public after drawdown', value: F.money(pub1, 0), src: 'computed' }, { name: 'Liquid share', value: F.pct(A.liquidShare, 0), src: 'assumption' }, { name: 'Calls, 12 months', value: F.money(calls, 1), src: 'computed', note: F.pct(A.stressCall, 0) + ' of unfunded' }, { name: 'Distributions after cut', value: F.money(dists1, 1), src: 'computed' }, { name: 'Spending', value: F.money(spend, 1), src: 'computed' }], result: F.mult(cover, 2) }; } },
-      { id: 'pctStress', label: 'Private allocation after the drawdown', value: F.pct(pct1, 1), sub: 'on lagged marks; ' + F.pct(pctTrue, 1) + ' once marked down', tone: pct1 > A.bandHi ? 'bad' : null },
+      { id: 'pctStress', label: 'Private allocation after the drawdown', value: F.pct(pct1, 1), sub: 'reported marks after the markdown; ' + F.pct(pctTrue, 1) + ' on nowcast NAV', tone: pct1 > A.bandHi ? 'bad' : null },
       { id: 'need', label: 'Net cash need, 12 months', value: F.money(need, 0), sub: 'calls less distributions, plus spending' }
     ]);
     UI.table('#liqTable', { id: 'liquidity', name: 'Liquidity stress', columns: [{ key: 'k', label: '' }, { key: 'b', label: 'Today', num: 1 }, { key: 'a', label: 'After stress', num: 1 }],
@@ -856,6 +858,7 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
   function renderAll() { renderPacing(); renderNowcast(); renderProgram(); renderLiquidity(); renderEvergreen(); renderPerformance(); }
   function rerender(id) {
     if (['assets', 'target', 'bandLo', 'bandHi'].indexOf(id) !== -1) buildProgram();
+    if (id === 'horizon') document.querySelectorAll('[data-out="horizon"]').forEach(function (e) { e.textContent = A.horizon; });
     renderAll();
   }
   window.PCL = S;
