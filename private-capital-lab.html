@@ -150,13 +150,14 @@
         <li>Each fund follows the Takahashi-Alexander model. It calls a share of its unfunded commitment each year of the investment period, grows its NAV and pays out a rising share of NAV as it ages.</li>
         <li>The pacing rule picks each year's commitment so projected private NAV sits on target at the end of the pacing horizon, four years by default. The projection treats NAV growth G as net of fees; the one-fund panel below also shows what a 2% fee and 20% carry would take off if G were the gross return.</li>
         <li>The Monte Carlo draws public returns, private returns, calls and distributions together, quarter by quarter, for ten years.</li>
-        <li>The nowcast regresses each fund's reported NAV returns on a public index at lags of zero to two quarters and shrinks the betas toward a strategy prior, with weight n / (n + 12) on n quarters of data. It then rolls the last NAV through the stale quarters with the cash flows since.</li>
+        <li>The nowcast regresses each fund's reported NAV returns on a public index at lags of zero to two quarters and shrinks the betas toward a strategy prior, with weight n / (n + 12) on n quarters of data. It then adds the lagged response to index moves the last mark has not absorbed and rolls the NAV through the stale quarters with the cash flows since.</li>
         <li>Fund performance uses XIRR, TVPI, DPI, KS-PME and Direct Alpha. Quarterly returns are desmoothed with Geltner's method.</li>
       </ul>
       <h3>Formulas</h3>
       <div class="formula">C_t = RC x unfunded            (t &lt;= IP)
 NAV_t = (NAV_t-1 + C_t)(1 + G)
 D_t = max(Y, (t/L)^B) x NAV_t
+nowcast_0 = NAV_d (1 + (b1 + b2) r_d + b2 r_d-1), catch-up at the NAV date d
 nowcast_k = (nowcast_k-1 + calls_k - dists_k)(1 + B r_proxy,k), B = b0 + b1 + b2
 KS-PME = (sum D I_T/I_t + NAV_T) / sum C I_T/I_t
 r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>

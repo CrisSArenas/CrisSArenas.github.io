@@ -53,12 +53,15 @@
 <ol>
 <li>I take each fund's last reported NAV and count how many quarters stale it is.</li>
 <li>I regress the fund's reported quarterly returns on a public index at lags of zero, one and two quarters. The sum of the slopes is the fund's economic beta. The lags matter because appraisal marks catch up slowly. A fund with too short a history gets a prior for its strategy.</li>
-<li>I roll the NAV forward through each stale quarter. I add the calls, take off the distributions and apply beta times the index return. A stale mark gets no credit for manager skill, so alpha is zero. The band around the nowcast widens with each stale quarter.</li>
+<li>I first add the lagged response to index moves the last mark has not absorbed yet. Then I roll the NAV forward through each stale quarter. I add the calls, take off the distributions and apply beta times the index return. A stale mark gets no credit for manager skill, so alpha is zero. The band around the nowcast widens with each stale quarter.</li>
 <li>I compute the allocation on nowcast NAV and hand that total to the pacing rule.</li>
 <li>The pacing rule picks the commitment that puts projected private NAV on target at the end of the horizon, after the existing funds call and distribute. Each fund follows the Takahashi-Alexander model.</li>
 <li>I hold that plan fixed and run it through a Monte Carlo with public returns, private returns, calls and distributions drawn together. The bad paths size the cash buffer.</li>
 </ol>
-<pre class="formula">Nowcast, each stale quarter k:
+<pre class="formula">Catch-up at the NAV date d:
+  NAV_0 = NAV_d x (1 + (b1 + b2) r_d
+                   + b2 r_d-1)
+Nowcast, each stale quarter k:
   NAV_k = (NAV_k-1 + calls_k - dists_k)
           x (1 + B x r_k)
   r = public index return

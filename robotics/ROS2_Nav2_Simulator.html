@@ -882,6 +882,12 @@
             .viewport-toolbar { height: auto; flex-wrap: wrap; gap: 6px; padding: 6px 10px; }
             .demo-sub, .hint-bar { margin-left: 12px; margin-right: 12px; padding-left: 0; }
             .hint-bar { padding-left: 10px; }
+            .viewport-overlay { left: 6px; bottom: 6px; padding: 6px 8px; font-size: 10px; }
+            .overlay-row { gap: 10px; margin: 2px 0; }
+            .legend-overlay { top: 6px; right: 6px; }
+            .viewport-btn { min-height: 36px; }
+            .tool-item { width: 42px; height: 42px; }
+            .hint-bar .close, #hintClose { min-width: 36px; min-height: 36px; }
         }
     
 /* dismiss controls need a real hit target */
@@ -923,7 +929,7 @@
 
 <div class="hint-bar" id="hintBar">
   <i class="fas fa-lightbulb"></i>
-  <span>Press <kbd>G</kbd> then click the map to send a goal. <kbd>O</kbd> drops a dynamic obstacle in the robot's way to trigger replanning and recoveries. The <b>Global Costmap</b> and <b>Particles</b> layers start hidden, switch them on under the map to see the inflation field and the localisation cloud. <kbd>H</kbd> opens the full guide.</span>
+  <span>Pick a tool in the toolbar (the target sets a goal, the square drops an obstacle, the arrow sets the pose estimate), then click or tap the map. An obstacle in the robot's way triggers replanning and recoveries. The <b>Global Costmap</b> and <b>Particles</b> layers start hidden; switch them on above the map to see the inflation field and the localisation cloud. Keys <kbd>G</kbd> <kbd>O</kbd> <kbd>P</kbd> select the tools and <kbd>H</kbd> opens the full guide.</span>
   <button type="button" class="close" id="hintClose" aria-label="Dismiss hint"><span class="ico" aria-hidden="true">&times;</span></button>
 </div>
 
@@ -968,7 +974,7 @@
 
       <div class="d-help-section">
         <h3>5 &middot; AMCL-style localisation</h3>
-        <p>A <strong>500-particle</strong> filter runs beside the simulator. Particles are propagated with the sampled odometry motion model (&delta;<sub>rot1</sub>, &delta;<sub>trans</sub>, &delta;<sub>rot2</sub> with noise coefficients &alpha;<sub>1..4</sub>), weighted by an <strong>8-beam likelihood-field endpoint model</strong> against analytically raycast ranges, and <strong>low-variance resampled</strong> whenever <code>N_eff = 1/&Sigma;w&sup2;</code> falls below N/2. Like AMCL it only updates after <code>update_min_d</code> = 0.20&nbsp;m or <code>update_min_a</code> = 0.20&nbsp;rad of motion. Press <strong>P</strong> and click to teleport the robot: the cloud is re-scattered with 0.5&nbsp;m / 0.5&nbsp;rad spread and you can watch it reconverge. It is called <em>AMCL-style</em> and not AMCL because the particle count is fixed (no KLD adaptive resampling) and, honestly, <strong>the controller still drives on ground truth</strong>, the filter is observed, not closed into the loop.</p>
+        <p>A <strong>500-particle</strong> filter runs beside the simulator. Particles are propagated with the sampled odometry motion model (&delta;<sub>rot1</sub>, &delta;<sub>trans</sub>, &delta;<sub>rot2</sub> with noise coefficients &alpha;<sub>1..4</sub>; as in AMCL the rotation noise uses the smaller of the turn and its reverse, so a BackUp does not scatter the cloud), weighted by an <strong>8-beam likelihood-field endpoint model</strong> (each analytically raycast range is projected from the particle and scored on the distance from its endpoint to the nearest occupied cell; max-range readings are skipped), and <strong>low-variance resampled</strong> whenever <code>N_eff = 1/&Sigma;w&sup2;</code> falls below N/2. Like AMCL it only updates after <code>update_min_d</code> = 0.20&nbsp;m or <code>update_min_a</code> = 0.20&nbsp;rad of motion. Press <strong>P</strong> (or pick the arrow tool) and click or tap the map to teleport the robot: the cloud is re-scattered with 0.5&nbsp;m / 0.5&nbsp;rad spread and you can watch it reconverge. It is called <em>AMCL-style</em> and not AMCL because the particle count is fixed (no KLD adaptive resampling) and, honestly, <strong>the controller still drives on ground truth</strong>, the filter is observed, not closed into the loop.</p>
       </div>
 
       <div class="d-help-section">
@@ -983,7 +989,7 @@
     ├─ Spin 1.57 rad
     ├─ BackUp 0.15 m
     └─ Wait 5 s</pre>
-        <p style="margin-top:8px">The <code>RateController</code> re-plans once a second and immediately if a waypoint inside the local window turns lethal. If planning fails, the round robin runs the <em>next</em> recovery in the list and re-ticks the pipeline; it only gives up after all four have been tried without a path. That is why placing an obstacle on the path first produces a silent replan, and walling the robot in produces the full recovery sequence. One honest caveat: <code>ClearEntireCostmap</code> rebuilds the grid rather than wiping an accumulated obstacle layer, because obstacles here are ground truth rather than remembered sensor marks, it returns SUCCESS but rarely changes anything, so in practice <em>Spin</em> and <em>BackUp</em> do the useful work.</p>
+        <p style="margin-top:8px">The <code>RateController</code> re-plans once a second and immediately if a waypoint inside the local window turns lethal. If planning fails, or the progress checker sees less than 0.25&nbsp;m of movement in 10&nbsp;s, the round robin runs the <em>next</em> recovery in the list and re-ticks the pipeline; it only gives up after all four have been tried without a path. That is why placing an obstacle on the path first produces a silent replan, and walling the robot in produces the full recovery sequence. One honest caveat: <code>ClearEntireCostmap</code> rebuilds the grid rather than wiping an accumulated obstacle layer, because obstacles here are ground truth rather than remembered sensor marks, it returns SUCCESS but rarely changes anything, so in practice <em>Spin</em> and <em>BackUp</em> do the useful work.</p>
       </div>
 
       <div class="d-help-section">
@@ -1039,7 +1045,7 @@
             <div class="viewport-toolbar">
                 <div class="viewport-label">/map · nav_msgs/OccupancyGrid</div>
                 <div class="mode-indicator" id="modeIndicator">
-                    <span>Click on map to set navigation goal</span>
+                    <span>Click or tap the map to set a navigation goal</span>
                     <button type="button" class="mode-close" onclick="hideModeIndicator()" aria-label="Hide tool hint">&times;</button>
                 </div>
                 <div class="viewport-buttons">
@@ -1071,7 +1077,7 @@
                     </div>
                 </div>
                 <div class="legend-overlay">
-                    <div class="legend-header" onclick="toggleLegend()">
+                    <div class="legend-header" onclick="toggleLegend()" role="button" tabindex="0" aria-expanded="true" aria-label="Show or hide the legend">
                         <div class="legend-title">Legend</div>
                         <div class="legend-toggle">▼</div>
                     </div>
@@ -1145,7 +1151,7 @@
 
         <div class="sidebar">
             <div class="sidebar-panel environment-selector collapsed">
-                <div class="panel-title environment-header" onclick="toggleEnvironmentSelector()" style="cursor: pointer;">
+                <div class="panel-title environment-header" onclick="toggleEnvironmentSelector()" style="cursor: pointer;" role="button" tabindex="0" aria-expanded="false">
                     <span>Environment Layout</span>
                     <span class="environment-toggle" style="float: right;">▼</span>
                 </div>
@@ -1359,8 +1365,8 @@
           <li>Robot: TurtleBot3 Waffle, differential drive, footprint radius <code>0.22 m</code>, <code>max_vel_x 0.26 m/s</code>, <code>max_vel_theta 1.82 rad/s</code>, <code>acc_lim_x 2.5 m/s&sup2;</code>, <code>acc_lim_theta 3.2 rad/s&sup2;</code>.</li>
           <li>Costmaps: resolution <code>0.05 m</code>, <code>inflation_radius 0.55 m</code>, <code>cost_scaling_factor 3.0</code>, lethal 254 / inscribed 253; static + obstacle layers rasterised into one grid and inflated by a 3&times;3 chamfer distance transform, rebuilt at 5 Hz; local window <code>3 &times; 3 m</code>.</li>
           <li>Planner: A* on a <code>0.20 m</code> 8-connected lattice over that costmap, octile heuristic, unweighted <code>f = g + h</code>, 12 000 expansion cap, replanning at <code>1 Hz</code> (RateController).</li>
-          <li>Controller: <code>lookahead_time 1.5 s</code> clamped to <code>[0.30, 0.90] m</code>, <code>regulated_linear_scaling_min_radius 0.90 m</code>, <code>rotate_to_heading_min_angle 0.785 rad</code>, <code>rotate_to_heading_angular_vel 1.8 rad/s</code>, control loop 20 Hz.</li>
-          <li>Localisation: 500 particles, motion-model coefficients &alpha;<sub>1..4</sub> = 0.05 / 0.05 / 0.05 / 0.02, 8-beam likelihood field (z<sub>hit</sub> 0.85, &sigma;<sub>hit</sub> 0.12 m, z<sub>rand</sub> 0.15), <code>update_min_d 0.20 m</code>, <code>update_min_a 0.20 rad</code>, resample when N<sub>eff</sub> &lt; N/2.</li>
+          <li>Controller: <code>lookahead_time 1.5 s</code> clamped to <code>[0.30, 0.90] m</code>, <code>regulated_linear_scaling_min_radius 0.90 m</code>, <code>rotate_to_heading_min_angle 0.785 rad</code>, <code>rotate_to_heading_angular_vel 1.8 rad/s</code>, control loop 20 Hz; progress checker <code>required_movement_radius 0.25 m</code>, <code>movement_time_allowance 10 s</code>.</li>
+          <li>Localisation: 500 particles, motion-model coefficients &alpha;<sub>1..4</sub> = 0.05 / 0.05 / 0.05 / 0.02, 8-beam likelihood field on the costmap's distance transform (z<sub>hit</sub> 0.85, &sigma;<sub>hit</sub> 0.12 m, z<sub>rand</sub> 0.15, max-range readings skipped), <code>update_min_d 0.20 m</code>, <code>update_min_a 0.20 rad</code>, resample when N<sub>eff</sub> &lt; N/2.</li>
           <li>LiDAR: 120 beams over 360&deg; drawn from the 360-sample LDS-01 pattern, <code>3.5 m</code> max range, analytic ray/AABB and ray/circle intersection, no noise on the rendered scan (the filter adds &sigma; = 0.02 m).</li>
           <li>Determinism: mulberry32 PRNG, seed <code>20260909</code>, reseeded on every reset. Simulation advances at a real-time factor of <code>3.0&times;</code>.</li>
         </ul>
@@ -3843,7 +3849,7 @@
             document.querySelectorAll('.tool-item').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             document.getElementById('obstaclePanel').classList.remove('show');
-            updateModeIndicator('Click on map to set navigation goal');
+            updateModeIndicator('Click or tap the map to set a navigation goal');
         });
 
         document.getElementById('toolObstacle').addEventListener('click', function() {
@@ -3851,7 +3857,7 @@
             document.querySelectorAll('.tool-item').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             document.getElementById('obstaclePanel').classList.add('show');
-            updateModeIndicator('Click on map to place obstacle');
+            updateModeIndicator('Click or tap the map to place an obstacle');
         });
 
         // Obstacle type selection
@@ -3888,7 +3894,7 @@
             document.querySelectorAll('.tool-item').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             document.getElementById('obstaclePanel').classList.remove('show');
-            updateModeIndicator('Click on map to set initial pose');
+            updateModeIndicator('Click or tap the map to set the initial pose');
         });
 
         document.getElementById('toolPause').addEventListener('click', function() {
@@ -3994,13 +4000,23 @@
 
         // Toggle environment selector
         function toggleEnvironmentSelector() {
-            document.querySelector('.environment-selector').classList.toggle('collapsed');
+            const c = document.querySelector('.environment-selector').classList.toggle('collapsed');
+            document.querySelector('.environment-header').setAttribute('aria-expanded', String(!c));
         }
 
         // Toggle legend
         function toggleLegend() {
-            document.querySelector('.legend-overlay').classList.toggle('collapsed');
+            const c = document.querySelector('.legend-overlay').classList.toggle('collapsed');
+            document.querySelector('.legend-header').setAttribute('aria-expanded', String(!c));
         }
+        // Enter / Space on the two disclosure headers
+        document.querySelectorAll('.legend-header, .environment-header').forEach(h => {
+            h.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); h.click(); }
+            });
+        });
+        // On a phone the legend would cover a third of the map: start it collapsed
+        if (window.matchMedia('(max-width: 900px)').matches) toggleLegend();
 
         // Hide mode indicator
         function hideModeIndicator() {
@@ -4087,7 +4103,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey || e.altKey) return;
             const t = e.target;
-            if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') && e.key === ' ') return;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON' || (t.getAttribute && t.getAttribute('role') === 'button')) && e.key === ' ') return;
             if (e.key === 'g' || e.key === 'G') {
                 document.getElementById('toolGoal').click();
             } else if (e.key === 'o' || e.key === 'O') {
