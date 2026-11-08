@@ -187,7 +187,10 @@ netting cost = sum_i w_i perf_i g_i [g_i &gt; hurdle_i] - perf max(sum_i w_i g_i
   </details>
 
   <section class="demo-section memo-link-sec" id="memo">
-    <a class="card memo-card" href="/memos/multi-strategy-book.html"><span class="memo-no">Memo 06</span><span class="kind">Hedge fund portfolio</span><h3>Five-sleeve multi-strategy book</h3><p>Five hedge fund sleeves sized by risk, reviewed on ten years of monthly returns.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
+    <div class="memo-pair">
+      <a class="card memo-card" href="/memos/multi-strategy-book.html"><span class="memo-no">Memo 06</span><span class="kind">Hedge fund portfolio</span><h3>Five-sleeve multi-strategy book</h3><p>Five hedge fund sleeves sized by risk, reviewed on ten years of monthly returns.</p><span class="wc-link">Read memo <span aria-hidden="true">&rarr;</span></span></a>
+      <a class="card memo-card note-link-card" href="/notes/two-sleeves-same-bet.html"><span class="memo-no">Practitioner note</span><span class="kind">Multi-strategy</span><h3>When two sleeves are running the same bet</h3><p>Low correlation between sleeves can hide a shared factor bet until a crowded unwind. Factor loadings show it earlier.</p><span class="wc-link">Read note <span aria-hidden="true">&rarr;</span></span></a>
+    </div>
   </section>
 
   <div class="demo-foot"><div class="df-bottom"><a class="back-link" href="/#work">&larr; All work</a><span class="tests-badge-slot"></span></div></div>
@@ -245,6 +248,8 @@ netting cost = sum_i w_i perf_i g_i [g_i &gt; hurdle_i] - perf max(sum_i w_i g_i
   /* chart width in CSS pixels of the column the chart sits in ('half' = one side of a two-column row), so
      axis labels render at their stated size on a phone as well as on a desktop */
   function cw(kind) { var W = $('#tabsRoot').clientWidth, vw = window.innerWidth, pad = vw <= 640 ? 32 : 48, c = kind === 'half' && vw > 960 ? (W - 20) / 2 : W; return Math.max(280, Math.round(c - pad)); }
+  /* keep every k-th centred axis label so narrow charts do not print labels on top of each other */
+  function thinLabels(sel) { var svg = document.querySelector(sel + ' svg'); if (!svg) return; var t = svg.querySelectorAll('text[text-anchor="middle"]'), W = svg.viewBox.baseVal.width, k = Math.max(1, Math.ceil(t.length * 46 / Math.max(1, W - 140))); t.forEach(function (x, i) { if (i % k) x.style.display = 'none'; }); }
   function heatCell(n, lw) { return Math.max(44, Math.min(64, Math.floor((cw('half') - lw - 6) / n))); }
   function monthLabel(ms) { var d = new Date(ms); return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
@@ -419,6 +424,7 @@ netting cost = sum_i w_i perf_i g_i [g_i &gt; hurdle_i] - perf max(sum_i w_i g_i
     var dv = items.map(function (x) { return PA.annComp(x[1]); }); dv.push(PM.sum(dv));
     var dLo = Math.min.apply(null, dv.concat([0])), dHi = Math.max.apply(null, dv.concat([0]));
     UI.chart.bar('#paDecomp', { categories: items.map(function (x) { return x[0]; }).concat(['Net return']), series: [{ name: 'Contribution', values: dv }], signColors: true, horizontal: true, labelWidth: 122, values: true, width: cw('half'), height: 320, min: dLo < 0 ? dLo - 0.3 * (dHi - dLo) : 0, max: dHi + 0.15 * (dHi - dLo), yFmt: function (v) { return F.spct(v, 1); }, label: 'Return decomposition' });
+    thinLabels('#paDecomp');
     var hl = PA.health(sim, p, paS.active);
     $('#paHealth').innerHTML = hl.map(function (it) { return '<div class="health-row"><span class="health-dot ' + (it.ok ? '' : 'warn') + '" aria-label="' + (it.ok ? 'within range' : 'outside range') + '"></span><span>' + UI.esc(it.label) + '</span><span class="health-val">' + UI.esc(it.val) + '</span><span class="health-tgt">' + UI.esc(it.tgt) + '</span></div>'; }).join('');
     var sr = PA.stress(p);

@@ -1792,8 +1792,9 @@ document.addEventListener('DOMContentLoaded',init);
   var stage = 1;
   var el = function(id){ return document.getElementById(id); };
 
+  var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   setInterval(function(){
-    stage = stage % 6 + 1;
+    if (!still) stage = stage % 6 + 1;
     for(var i=0;i<lines.length;i++){
       lines[i].classList.toggle('on', lines[i].getAttribute('data-stage') === String(stage));
     }

@@ -1428,6 +1428,8 @@
         const ctx = canvas.getContext('2d');
 
         // ---- deterministic PRNG (mulberry32) -------------------------------
+        // decorative pulses on the robot and goal stay still for reduced-motion users
+        const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const SEED = 20260909;
         let rng = mulberry32(SEED);
         function mulberry32(a) {
@@ -3668,7 +3670,7 @@
                 // Speed indicator (pulsing rings when moving)
                 const speed = Math.sqrt(robot.vx * robot.vx + robot.vy * robot.vy);
                 if (speed > 0.05) {
-                    const pulsePhase = (Date.now() % 1000) / 1000;
+                    const pulsePhase = REDUCED_MOTION ? 0.3 : (Date.now() % 1000) / 1000;
                     ctx.strokeStyle = `rgba(111,181,154, ${0.5 - pulsePhase * 0.5})`;
                     ctx.lineWidth = 2;
                     ctx.beginPath();
@@ -3681,7 +3683,7 @@
             if (goal) {
                 const goalX = goal.x * SCALE;
                 const goalY = goal.y * SCALE;
-                const pulsePhase = (Date.now() % 1500) / 1500;
+                const pulsePhase = REDUCED_MOTION ? 0.3 : (Date.now() % 1500) / 1500;
                 const pulseSize = 1 + Math.sin(pulsePhase * Math.PI * 2) * 0.2;
 
                 // Outer pulsing ring

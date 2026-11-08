@@ -263,6 +263,7 @@
       .concat((o.bands || []).filter(function (b) { return b.name; }).map(function (b, i) { return { n: b.name, c: col(b.color, i), band: 1 }; }));
     if (items.length < 2 && !o.forceLegend) return '';
     return '<div class="chart-legend">' + items.map(function (it) {
+      if (it.dash) return '<span><i style="width:18px;height:0;border-radius:0;background:none;border-top:2px dashed ' + it.c + '"></i>' + UI.esc(it.n) + '</span>';
       return '<span><i style="background:' + it.c + (it.band ? ';height:8px;opacity:.35' : '') + '"></i>' + UI.esc(it.n) + '</span>';
     }).join('') + '</div>';
   }
@@ -401,7 +402,7 @@
         var v = M[i][j], t = Math.max(-1, Math.min(1, (2 * (v - lo) / (hi - lo)) - 1));
         var fill = t >= 0 ? 'var(--s1)' : 'var(--s2)';
         s += '<rect x="' + (lw + cw * j + 1) + '" y="' + (top + 30 * i + 1) + '" width="' + (cw - 2) + '" height="28" rx="3" style="fill:' + fill + ';opacity:' + (0.12 + 0.75 * Math.abs(t)).toFixed(2) + '"><title>' + UI.esc(r + ' / ' + c + ': ' + (o.fmt || F.num)(v, 2)) + '</title></rect>';
-        s += '<text x="' + (lw + cw * j + cw / 2) + '" y="' + (top + 30 * i + 19) + '" text-anchor="middle" style="fill:var(--text)">' + UI.esc((o.fmt || function (x) { return F.num(x, 2); })(v)) + '</text>';
+        s += '<text x="' + (lw + cw * j + cw / 2) + '" y="' + (top + 30 * i + 19) + '" text-anchor="middle" class="' + (Math.abs(t) > 0.6 ? 'hv-strong' : 'hv') + '">' + UI.esc((o.fmt || function (x) { return F.num(x, 2); })(v)) + '</text>';
       });
     });
     el.classList.add('chart');

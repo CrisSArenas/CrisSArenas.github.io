@@ -345,3 +345,9 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .chart-tip .row b { display: inline; margin: 0; }
 @media (prefers-reduced-motion: reduce) { .chart .mk, .chart .cur-dots circle { transition: none; } }
 .chart svg text { pointer-events: none; }
+
+/* heatmap value labels: strong cells get light text in the light theme so the number stays readable */
+.chart text.hv, .chart text.hv-strong { fill: var(--text); }
+:root:not([data-theme="dark"]) .chart text.hv-strong { fill: var(--c-white); }
+/* segmented buttons and small controls are easier to hit on touch screens */
+@media (pointer: coarse) { .seg button, .seg2 button { min-height: 40px; } }

@@ -320,7 +320,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="guide-card">
         <span class="step">STEP 4</span>
         <h3>Toggle Priority Inheritance</h3>
-        <p>Enable <strong>Priority Inheritance</strong> and reload the <strong>Inversion</strong> preset: the mutex holder is raised to its waiter's priority, so the medium task can no longer preempt it. Mutexes only, semaphores never inherit.</p>
+        <p>Load the <strong>Inheritance</strong> preset, or switch on <strong>Priority Inheritance</strong> during the <strong>Inversion</strong> preset and press Reset: the mutex holder is raised to its waiter's priority, so the medium task can no longer preempt it. Mutexes only, semaphores never inherit.</p>
       </div>
       <div class="guide-card">
         <span class="step">STEP 5</span>
@@ -793,6 +793,13 @@ function completeJob(t) {
   var job = t.jobs.shift();
   var response = job ? currentTick + 1 - job.r : 0;
   if (response > t.worstResponseTime) t.worstResponseTime = response;
+  // a late job not yet counted (for example one held over a vTaskSuspend) is a miss too
+  if (job && t.period > 0 && response > t.period && !job.missed) {
+    job.missed = true;
+    t.deadlineMisses++;
+    addLog(currentTick, 'DEADLINE MISS: ' + t.name + ' job released at tick ' + job.r + ' completed after ' + response +
+      ' ticks (D = T = ' + t.period + ' ticks)', 'deadline');
+  }
   t.completedJobs++;
   if (t.holdingMutex) giveMutex(t);
   if (t.jobs.length > 0) {
@@ -1844,9 +1851,9 @@ function loadPreset(name) {
 
       addLog(0, 'Preset: unbounded priority inversion (inheritance OFF)', 'sched');
       addLog(0, 'Task_Low(P2) takes Mutex_SPI at tick 1; Task_High(P6) is released at tick 4 and blocks on it at tick 5; Task_Med(P4) is released at tick 5', 'info');
-      addLog(0, 'Task_Med(P4) then preempts the mutex holder, so Task_High waits on work it has no relation to: the inversion is unbounded by the critical section', 'inversion');
+      addLog(0, 'Task_Med(P4) then runs ahead of the mutex holder, so Task_High waits on work it has no relation to: the wait is no longer bounded by the critical section', 'inversion');
       addLog(0, 'U = 0.167 + 0.250 + 0.250 = 0.667, so the long response time is blocking, not overload', 'info');
-      addLog(0, 'Switch on Priority Inheritance (or load the Inheritance preset) to bound it', 'info');
+      addLog(0, 'Switch on Priority Inheritance and press Reset (or load the Inheritance preset) to bound it', 'info');
       break;
 
     case 'inheritance':
