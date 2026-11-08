@@ -105,7 +105,7 @@
         <div class="panel-body"><div id="progTable"></div></div></div>
       <div class="split-2">
         <div class="panel"><div class="panel-head"><h3>Watchlist</h3></div><div class="panel-body wl" id="watchlist"></div></div>
-        <div class="panel"><div class="panel-head"><h3>Re-up calendar, next 24 months</h3></div><div class="panel-body"><div id="reupTable"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Re-up calendar, next 24 months</h3><span class="sub">GPs are fictional. Plan allows: the 2027 and 2028 budget shared by prior commitment size</span></div><div class="panel-body"><div id="reupTable"></div></div></div>
       </div>
       <div class="panel"><div class="panel-head"><h3>Concentration</h3><div class="seg" id="concSeg" role="tablist" aria-label="Concentration view"><button class="active" data-k="vintage" type="button">Vintage</button><button data-k="strategy" type="button">Strategy</button><button data-k="gp" type="button">GP</button><button data-k="sector" type="button">Sector</button><button data-k="geo" type="button">Geography</button></div></div>
         <div class="panel-body"><div id="concChart"></div></div></div>
@@ -567,8 +567,8 @@ r_true = (r_obs - rho r_obs,t-1) / (1 - rho)</div>
       .filter(function (x) { return x.back >= 2026 && x.back <= 2028; }).sort(function (a, b) { return a.back - b.back; });
     var reTot = PM.sum(re.map(function (x) { return x.prior; }));
     re.forEach(function (x) { x.need = budget * x.prior / Math.max(reTot, budget); });
-    UI.table('#reupTable', { id: 'reups', name: 'Re-up calendar', columns: [{ key: 'gp', label: 'GP (fictional)' }, { key: 'back', label: 'Expected in market', num: 1 }, { key: 'strategy', label: 'Strategy' }, { key: 'prior', label: 'Prior commit', num: 1, fmt: function (v) { return F.num(v, 0); } }, { key: 'need', label: 'Plan allows', num: 1, fmt: function (v) { return F.num(v, 1); } }],
-      rows: re, foot: { gp: 'Total vs 2027 to 2028 budget', prior: reTot, need: PM.sum(re.map(function (x) { return x.need; })) },
+    UI.table('#reupTable', { id: 'reups', name: 'Re-up calendar', columns: [{ key: 'gp', label: 'GP' }, { key: 'back', label: 'In market', num: 1 }, { key: 'strategy', label: 'Strategy' }, { key: 'prior', label: 'Prior, $m', num: 1, fmt: function (v) { return F.num(v, 0); } }, { key: 'need', label: 'Plan allows, $m', num: 1, fmt: function (v) { return F.num(v, 1); } }],
+      rows: re, foot: { gp: 'Total', prior: reTot, need: PM.sum(re.map(function (x) { return x.need; })) },
       footExplain: { need: function () { return { title: 'Re-up capacity', formula: 'plan commitments for 2027 and 2028, shared across returning GPs by their prior commitment size; capped at each prior size when the budget allows', inputs: [{ name: 'Budget 2027 + 2028', value: F.money(budget, 1), src: 'computed', note: 'pacing tab' }, { name: 'Prior commitments of returning GPs', value: F.money(reTot, 1), src: 'computed' }] }; } } });
     renderConc();
     /* look-through */

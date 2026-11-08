@@ -1515,7 +1515,9 @@
         let worldWidth = 0;
         let worldHeight = 0;
         let replanTimer = 0;
-        let stuckTimer = 0;
+        let stuckTimer = 0, progressAnchor = null;   // progress_checker state
+        const PROGRESS_RADIUS = 0.25, PROGRESS_TIME = 10.0; // required_movement_radius [m], movement_time_allowance [s]
+        function resetProgress() { stuckTimer = 0; progressAnchor = null; }
         let recoveryMode = null;
         let recoveryTimer = 0;
         let lastLogTime = 0;
@@ -2403,12 +2405,17 @@
             const drot = angNorm(robot.theta - lastAmclPose.th);
             if (dtrans < UPDATE_MIN_D && Math.abs(drot) < UPDATE_MIN_A) return false;
 
-            const rot1 = dtrans > 1e-4 ? angNorm(Math.atan2(dyw, dxw) - lastAmclPose.th) : 0;
+            // As in AMCL's differential model: no rot1 for a near-zero translation, and the
+            // rotation noise uses the smaller of the turn and its reverse, so a BackUp
+            // (rot1 close to pi) does not blow the cloud apart.
+            const rot1 = dtrans > 0.01 ? angNorm(Math.atan2(dyw, dxw) - lastAmclPose.th) : 0;
             const rot2 = angNorm(drot - rot1);
+            const n1 = Math.min(Math.abs(rot1), Math.PI - Math.abs(rot1));
+            const n2 = Math.min(Math.abs(rot2), Math.PI - Math.abs(rot2));
             for (const p of particles) {
-                const r1 = rot1 - randn() * Math.sqrt(ALPHA1 * rot1 * rot1 + ALPHA2 * dtrans * dtrans);
-                const tr = dtrans - randn() * Math.sqrt(ALPHA3 * dtrans * dtrans + ALPHA4 * (rot1 * rot1 + rot2 * rot2));
-                const r2 = rot2 - randn() * Math.sqrt(ALPHA1 * rot2 * rot2 + ALPHA2 * dtrans * dtrans);
+                const r1 = rot1 - randn() * Math.sqrt(ALPHA1 * n1 * n1 + ALPHA2 * dtrans * dtrans);
+                const tr = dtrans - randn() * Math.sqrt(ALPHA3 * dtrans * dtrans + ALPHA4 * (n1 * n1 + n2 * n2));
+                const r2 = rot2 - randn() * Math.sqrt(ALPHA1 * n2 * n2 + ALPHA2 * dtrans * dtrans);
                 p.x += tr * Math.cos(p.th + r1);
                 p.y += tr * Math.sin(p.th + r1);
                 p.th = angNorm(p.th + r1 + r2);
@@ -2417,15 +2424,23 @@
             const zs = [];
             for (let b = 0; b < AMCL_BEAMS; b++) {
                 const a = angNorm(robot.theta + (b / AMCL_BEAMS) * 2 * Math.PI);
-                zs.push(rayCast(robot.x, robot.y, a, LIDAR_RANGE) + randn() * 0.02);
+                const r = rayCast(robot.x, robot.y, a, LIDAR_RANGE);
+                zs.push(r >= LIDAR_RANGE ? LIDAR_RANGE : Math.min(LIDAR_RANGE - 1e-3, Math.max(0, r + randn() * 0.02)));
             }
+            // Likelihood-field endpoint model: project each measured range from the
+            // particle and score the distance from the endpoint to the nearest occupied
+            // cell (the same distance transform the costmap is built from). Max-range
+            // readings carry no endpoint and are skipped, as in AMCL.
             let sum = 0;
             for (const p of particles) {
                 let logw = 0;
                 for (let b = 0; b < AMCL_BEAMS; b++) {
-                    const a = angNorm(p.th + (b / AMCL_BEAMS) * 2 * Math.PI);
-                    const e = zs[b] - rayCast(p.x, p.y, a, LIDAR_RANGE);
-                    logw += Math.log(Z_HIT * Math.exp(-e * e / (2 * SIGMA_HIT * SIGMA_HIT)) + Z_RAND);
+                    if (zs[b] >= LIDAR_RANGE - 1e-6) continue;
+                    const a = p.th + (b / AMCL_BEAMS) * 2 * Math.PI;
+                    const i = Math.floor((p.x + zs[b] * Math.cos(a)) / COSTMAP_RES);
+                    const j = Math.floor((p.y + zs[b] * Math.sin(a)) / COSTMAP_RES);
+                    const d = (i < 0 || j < 0 || i >= costW || j >= costH) ? LIDAR_RANGE : distGrid[j * costW + i] * COSTMAP_RES;
+                    logw += Math.log(Z_HIT * Math.exp(-d * d / (2 * SIGMA_HIT * SIGMA_HIT)) + Z_RAND);
                 }
                 p.w = Math.exp(logw);
                 sum += p.w;
@@ -2728,6 +2743,29 @@
             robot.vy = Math.sin(robot.theta) * robot.v;
         }
 
+        // Collision check of the plan inside the 3 x 3 m local window: every segment is
+        // sampled at the costmap resolution, so an obstacle dropped between two plan
+        // poses is caught, not only one that lands on a pose. Samples under the robot's
+        // own footprint are skipped (it may already sit inside the inscribed band).
+        function findBlockedPlan() {
+            const half = LOCAL_COSTMAP_SIZE / 2;
+            let prev = { x: robot.x, y: robot.y };
+            for (let i = 0; i < globalPath.length; i++) {
+                const q = globalPath[i];
+                const len = Math.hypot(q.x - prev.x, q.y - prev.y);
+                const n = Math.max(1, Math.ceil(len / COSTMAP_RES));
+                for (let k = 1; k <= n; k++) {
+                    const x = prev.x + (q.x - prev.x) * k / n, y = prev.y + (q.y - prev.y) * k / n;
+                    if (Math.abs(x - robot.x) > half || Math.abs(y - robot.y) > half) return null;
+                    if (Math.hypot(x - robot.x, y - robot.y) <= ROBOT_RADIUS + COSTMAP_RES) continue;
+                    const c = cellCost(x, y);
+                    if (c >= INSCRIBED_COST) return { index: i, cost: c };
+                }
+                prev = q;
+            }
+            return null;
+        }
+
         function startRecovery() {
             recoveryMode = RECOVERIES[Math.min(recoveryIndex, RECOVERIES.length - 1)];
             recoveryIndex++;
@@ -2766,7 +2804,7 @@
                 goal = null;
                 globalPath = [];
                 localTraj = [];
-                stuckTimer = 0;
+                resetProgress();
                 recoveryMode = null;
                 recoveryIndex = 0;
                 updateBT('');
@@ -2811,7 +2849,7 @@
                         globalPath = newPath;
                         replans++;
                         recoveryIndex = 0;
-                        stuckTimer = 0;
+                        resetProgress();
                         replanTimer = 0;
                         document.getElementById('replansDisplay').textContent = replans;
                         addLog('INFO', 'Recovery cleared the blockage, resuming FollowPath', 'bt_navigator');
@@ -2853,18 +2891,11 @@
             blockTimer += dt;
             if (blockTimer >= 0.25) {
                 blockTimer = 0;
-                let pathBlocked = false, blockedIndex = -1;
-                const checkAhead = Math.min(12, globalPath.length);
-                for (let i = 0; i < checkAhead; i++) {
-                    if (cellCost(globalPath[i].x, globalPath[i].y) >= INSCRIBED_COST) {
-                        pathBlocked = true;
-                        blockedIndex = i;
-                        break;
-                    }
-                }
+                const blocked = findBlockedPlan();
+                const pathBlocked = blocked !== null;
                 if (pathBlocked || globalPath.length === 0) {
                     addLog('WARN', pathBlocked
-                        ? `Plan pose ${blockedIndex} is now cost ${cellCost(globalPath[blockedIndex].x, globalPath[blockedIndex].y)} in the local costmap - replanning`
+                        ? `Plan segment to pose ${blocked.index} crosses a cost-${blocked.cost} cell in the local costmap - replanning`
                         : 'FollowPath has no plan - requesting ComputePathToPose', 'controller_server');
                     updateBT('compute');
                     replanTimer = 0;
@@ -2872,7 +2903,6 @@
                     if (newPath.length > 0) {
                         globalPath = newPath;
                         replans++;
-                        stuckTimer = 0;
                         document.getElementById('replansDisplay').textContent = replans;
                         updateBT('follow');
                     } else {
@@ -2892,17 +2922,21 @@
                 if (periodic.length > 0) globalPath = periodic;
             }
 
-            // ---- progress watchdog -------------------------------------------
-            if (Math.abs(robot.v) < 0.03 && goalDist > tol * 2) {
+            // ---- progress checker (nav2 SimpleProgressChecker) -----------------
+            // FollowPath fails if the robot has not moved PROGRESS_RADIUS from where
+            // progress was last confirmed within PROGRESS_TIME. Turning in place is
+            // not a failure until the allowance runs out.
+            if (!progressAnchor || Math.hypot(robot.x - progressAnchor.x, robot.y - progressAnchor.y) > PROGRESS_RADIUS || goalDist < PROGRESS_RADIUS) {
+                progressAnchor = { x: robot.x, y: robot.y };
+                stuckTimer = 0;
+            } else {
                 stuckTimer += dt;
-                if (stuckTimer > 3.0) {
-                    addLog('WARN', 'No progress for 3.0 s - FollowPath returned FAILURE', 'controller_server');
-                    stuckTimer = 0;
+                if (stuckTimer > PROGRESS_TIME) {
+                    addLog('WARN', `Progress checker: moved less than ${PROGRESS_RADIUS.toFixed(2)} m in ${PROGRESS_TIME.toFixed(1)} s - FollowPath returned FAILURE`, 'controller_server');
+                    resetProgress();
                     startRecovery();
                     return;
                 }
-            } else {
-                stuckTimer = 0;
             }
 
             if (globalPath.length === 0) return;
@@ -3705,7 +3739,7 @@
                 recoveryIndex = 0;
                 replanTimer = 0;
                 blockTimer = 0;
-                stuckTimer = 0;
+                resetProgress();
                 updateBT('compute');
                 document.getElementById('stateDisplay').textContent = 'Planning';
                 addLog('INFO', `NavigateToPose goal accepted: (${x.toFixed(2)}, ${y.toFixed(2)}) in frame map`, 'bt_navigator');
@@ -3910,10 +3944,12 @@
             this.classList.toggle('active');
         });
 
-        document.getElementById('btnPath').addEventListener('click', function() {
-            showPath = !showPath;
-            this.classList.toggle('active');
-        });
+        function setShowPath(v) {
+            showPath = v;
+            document.getElementById('btnPath').classList.toggle('active', v);
+            document.getElementById('chkPath').checked = v;
+        }
+        document.getElementById('btnPath').addEventListener('click', function() { setShowPath(!showPath); });
 
         // Sliders
         document.getElementById('maxVelSlider').addEventListener('input', function() {
@@ -3939,9 +3975,7 @@
             showLaser = this.checked;
         });
 
-        document.getElementById('chkPath').addEventListener('change', function() {
-            showPath = this.checked;
-        });
+        document.getElementById('chkPath').addEventListener('change', function() { setShowPath(this.checked); });
 
         document.getElementById('chkLocal').addEventListener('change', function() {
             showLocalTraj = this.checked;
@@ -3989,7 +4023,7 @@
             localTraj = [];
             replans = 0;
             replanTimer = 0;
-            stuckTimer = 0;
+            resetProgress();
             recoveryMode = null;
             recoveryTimer = 0;
             recoveryIndex = 0;
@@ -4133,6 +4167,8 @@
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
+                const r = canvas.parentElement.getBoundingClientRect();
+                if (Math.abs(Math.round(r.width) - viewW) < 2 && Math.abs(Math.round(r.height) - viewH) < 2) return;
                 resizeCanvas();
                 resetSimulation();
             }, 250);
