@@ -229,6 +229,7 @@
         }
 
         .viewport-overlay {
+            pointer-events: none;   /* read-out only: map clicks pass through */
             position: absolute;
             bottom: 12px;
             left: 12px;
@@ -301,6 +302,7 @@
         }
 
         .legend-body {
+            pointer-events: none;
             padding: 12px 14px;
             max-height: 300px;
             overflow: hidden;
@@ -3102,8 +3104,10 @@
                     }
 
                     // Log if robot is moving slowly (potential issue)
-                    if (v < 0.05 && dist > 0.5) {
-                        addLog('WARN', `Velocity regulated to ${v.toFixed(2)} m/s - robot is inside the inflation layer (cost ${cellCost(robot.x, robot.y)})`, 'controller_server');
+                    if (v < 0.05 && dist > 0.5 && !recoveryMode) {
+                        const c = cellCost(robot.x, robot.y);
+                        if (Math.abs(robot.omega) > 0.2) addLog('INFO', `Rotating to heading at ${robot.omega.toFixed(2)} rad/s before driving`, 'controller_server');
+                        else if (c > 0) addLog('WARN', `Velocity regulated to ${v.toFixed(2)} m/s - robot is inside the inflation layer (cost ${c})`, 'controller_server');
                     }
                 }
             } else {
@@ -3447,7 +3451,8 @@
                 ctx.font = "10px 'JetBrains Mono', monospace";
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'bottom';
-                ctx.fillText(`local_costmap 3.0 x 3.0 m @ 0.05 m - ${localLethalCells} cells >= inscribed`, px + 2, py - 4);
+                ctx.fillText(viewW < 700 ? `local_costmap: ${localLethalCells} cells >= 253`
+                    : `local_costmap 3.0 x 3.0 m @ 0.05 m - ${localLethalCells} cells >= inscribed`, Math.max(2, px + 2), py > 14 ? py - 4 : py + size + 12);
             }
 
             // Global path with gradient and glow

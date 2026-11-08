@@ -125,13 +125,48 @@
   function col(c, i) { return 'var(--' + (c || ('s' + ((i % 6) + 1))) + ')'; }
   UI.chart = {};
 
+  /* charts draw at their container's width (320 to 760 units) so text stays readable on a phone, and redraw
+     when that width changes (resize, rotation, a tab becoming visible). An explicit opts.width is kept as is. */
+  function autoW(el) {
+    var cw = el.clientWidth || (el.parentElement && el.parentElement.clientWidth) || 0;
+    if (!cw) cw = (window.innerWidth || 760) - 48;
+    return Math.round(Math.max(320, Math.min(760, cw)));
+  }
+  function remember(el, fn, o, W) { if (o.width) return; el._chartRedraw = function () { fn(el, o); }; el._chartW = W; }
+  function refit() {
+    UI.$$('.chart').forEach(function (el) { if (el._chartRedraw && el.offsetParent !== null && Math.abs(autoW(el) - el._chartW) > 24) el._chartRedraw(); });
+  }
+  if (typeof window !== 'undefined' && window.addEventListener && !window.__chartRefit) {
+    window.__chartRefit = true;
+    var refitT = null;
+    window.addEventListener('resize', function () { clearTimeout(refitT); refitT = setTimeout(refit, 180); });
+    document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('.tabs button, [role="tab"], summary')) setTimeout(refit, 60); });
+    /* a tap outside a chart closes its tooltip on touch screens */
+    document.addEventListener('pointerdown', function (e) {
+      UI.$$('.chart').forEach(function (c) { if (c.contains(e.target)) return; UI.$$('.chart-tip', c).forEach(function (t) { t.style.display = 'none'; }); UI.$$('.cursor, .cur-dots', c).forEach(function (t) { t.style.display = 'none'; }); });
+    });
+  }
+  /* split an axis label into at most two lines of maxChars each */
+  function wrapLbl(t, maxChars) {
+    t = String(t); if (t.length <= maxChars) return [t];
+    var words = t.split(' '), a = '', b = '';
+    words.forEach(function (w) { if (!b && (a + (a ? ' ' : '') + w).length <= maxChars) a += (a ? ' ' : '') + w; else b += (b ? ' ' : '') + w; });
+    if (!a) { a = t.slice(0, maxChars); b = t.slice(maxChars); }
+    if (b.length > maxChars) b = b.slice(0, Math.max(1, maxChars - 1)) + '…';
+    return b ? [a, b] : [a];
+  }
+  function lblText(x, y, t, maxChars) {
+    var L = wrapLbl(t, maxChars);
+    return '<text x="' + x + '" y="' + y + '" text-anchor="middle">' + L.map(function (l, i) { return '<tspan x="' + x + '" dy="' + (i ? 12 : 0) + '">' + UI.esc(l) + '</tspan>'; }).join('') + '</text>';
+  }
+
   /* line / area / band chart
      opts: { xs:[], series:[{name, ys:[], color:'s1', dash, width, area}], bands:[{name, lo:[], hi:[], color}],
              xFmt, yFmt, height, yMin, yMax, hlines:[{y, label}], vlines:[{x, label}], legend,
              shade: [false|'s3'|... per point] shades the interval from each point to the next } */
   UI.chart.line = function (el, o) {
     el = resolve(el);
-    var W = o.width || 760, H = o.height || 280, m = { l: 56, r: 16, t: 14, b: 30 };
+    var W = o.width || autoW(el), H = o.height || 280, m = { l: 56, r: 16, t: 14, b: 30 };
     var xs = o.xs, n = xs.length, all = [];
     (o.series || []).forEach(function (s) { s.ys.forEach(function (v) { if (v != null && isFinite(v)) all.push(v); }); });
     (o.bands || []).forEach(function (b) { b.lo.concat(b.hi).forEach(function (v) { if (isFinite(v)) all.push(v); }); });
@@ -146,8 +181,8 @@
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + UI.esc(o.label || 'Chart') + '">';
     s += '<g class="grid">' + yt.map(function (v) { return '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(v) + '" y2="' + Y(v) + '"/>'; }).join('') + '</g>';
     s += '<g>' + yt.map(function (v) { return '<text x="' + (m.l - 8) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + UI.esc(yf(v)) + '</text>'; }).join('') + '</g>';
-    var every = Math.max(1, Math.ceil(n / (o.xTicks || 8)));
-    s += '<g>' + xs.map(function (x, i) { return (i % every && i !== n - 1) ? '' : '<text x="' + X(x) + '" y="' + (H - 8) + '" text-anchor="middle">' + UI.esc(xf(x)) + '</text>'; }).join('') + '</g>';
+    var every = Math.max(1, Math.ceil(n / (o.xTicks || Math.max(3, Math.min(8, Math.floor((W - m.l - m.r) / 72))))));
+    s += '<g>' + xs.map(function (x, i) { var show = i === n - 1 || (i % every === 0 && (n - 1 - i) >= every / 2); return show ? '<text x="' + (i === n - 1 && n > 1 ? W - m.r : X(x)) + '" y="' + (H - 8) + '" text-anchor="' + (i === n - 1 && n > 1 ? 'end' : 'middle') + '">' + UI.esc(xf(x)) + '</text>' : ''; }).join('') + '</g>';
     if (o.shade) o.shade.forEach(function (c, k) { if (!c || k >= n - 1) return; s += '<rect x="' + X(xs[k]).toFixed(1) + '" y="' + m.t + '" width="' + Math.max(1, X(xs[k + 1]) - X(xs[k])).toFixed(1) + '" height="' + (H - m.t - m.b) + '" style="fill:' + col(c === true ? 's5' : c, 0) + ';opacity:.12"/>'; });
     if (lo < 0 && hi > 0) s += '<line class="zero" x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(0) + '" y2="' + Y(0) + '"/>';
     (o.bands || []).forEach(function (b, i) {
@@ -177,7 +212,7 @@
     el.classList.add('chart');
     el.innerHTML = s + legend(o) + '<div class="chart-tip"></div>';
     var svg = el.querySelector('svg'), tip = el.querySelector('.chart-tip'), cur = svg.querySelector('.cursor');
-    svg.querySelector('.hit').addEventListener('mousemove', function (e) {
+    var lineTip = function (e) {
       var r = svg.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * W, k = 0, best = 1e9;
       xs.forEach(function (x, i) { var d = Math.abs(X(x) - px); if (d < best) { best = d; k = i; } });
       cur.setAttribute('x1', X(xs[k])); cur.setAttribute('x2', X(xs[k])); cur.style.display = '';
@@ -189,9 +224,12 @@
       tip.style.display = 'block';
       var left = (X(xs[k]) / W) * r.width + 12;
       if (left > r.width - 190) left -= 210;
-      tip.style.left = left + 'px'; tip.style.top = '8px';
-    });
-    svg.querySelector('.hit').addEventListener('mouseleave', function () { tip.style.display = 'none'; cur.style.display = 'none'; svg.querySelector('.cur-dots').style.display = 'none'; });
+      tip.style.left = Math.max(0, left) + 'px'; tip.style.top = '8px';
+    };
+    var hit = svg.querySelector('.hit');
+    hit.addEventListener('pointermove', lineTip); hit.addEventListener('pointerdown', lineTip);
+    hit.addEventListener('pointerleave', function (e) { if (e.pointerType === 'touch') return; tip.style.display = 'none'; cur.style.display = 'none'; svg.querySelector('.cur-dots').style.display = 'none'; });
+    remember(el, UI.chart.line, o, W);
   };
 
   /* rich hover for marks that carry a <title>: the title becomes a tooltip, the mark lights up, the rest dims */
@@ -214,7 +252,8 @@
       tip.style.left = Math.max(0, x) + 'px'; tip.style.top = y + 'px';
     }
     function hide() { tip.style.display = 'none'; if (on) on.classList.remove('on'); on = null; svg.classList.remove('hovering'); }
-    svg.addEventListener('pointermove', show); svg.addEventListener('pointerleave', hide);
+    svg.addEventListener('pointermove', show); svg.addEventListener('pointerdown', show);
+    svg.addEventListener('pointerleave', function (e) { if (e.pointerType !== 'touch') hide(); });
   }
   UI.tipify = tipify;
 
@@ -233,7 +272,7 @@
     el = resolve(el);
     var cats = o.categories, ser = o.series, nC = cats.length, nS = ser.length;
     var horiz = !!o.horizontal;
-    var W = o.width || 760, H = o.height || (horiz ? Math.max(160, 26 * nC + 50) : 280);
+    var W = o.width || autoW(el), H = o.height || (horiz ? Math.max(160, 26 * nC + 50) : 280);
     var m = horiz ? { l: o.labelWidth || 150, r: o.values ? 56 : 24, t: 10, b: 28 } : { l: 56, r: 12, t: o.values ? 28 : 14, b: 42 };
     var vals = [];
     if (o.stacked) {
@@ -279,19 +318,20 @@
         }
       });
       s += horiz ? '<text x="' + (m.l - 8) + '" y="' + (base + bw / 2 + 4) + '" text-anchor="end" style="fill:var(--text)">' + UI.esc(c) + '</text>'
-        : '<text x="' + (base + bw / 2) + '" y="' + (H - m.b + 16) + '" text-anchor="middle">' + UI.esc(c) + '</text>';
+        : lblText(base + bw / 2, H - m.b + 16, c, Math.max(4, Math.floor(bw / 6.4)));
     });
     s += horiz ? '<line x1="' + (m.l + z) + '" x2="' + (m.l + z) + '" y1="' + m.t + '" y2="' + (H - m.b) + '" style="stroke:var(--muted)"/>'
       : '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + (H - m.b - z) + '" y2="' + (H - m.b - z) + '" style="stroke:var(--muted)"/>';
     s += '</svg>';
     el.classList.add('chart');
     el.innerHTML = s + legend(o); tipify(el);
+    remember(el, UI.chart.bar, o, W);
   };
 
   /* waterfall: steps [{label, value}] with a total bar at the end */
   UI.chart.waterfall = function (el, o) {
     el = resolve(el);
-    var steps = o.steps, W = o.width || 760, H = o.height || 280, m = { l: 56, r: 12, t: 30, b: 46 };
+    var steps = o.steps, W = o.width || autoW(el), H = o.height || 280, m = { l: 56, r: 12, t: 30, b: 46 };
     var run = o.start || 0, pts = [run];
     steps.forEach(function (s) { run += s.value; pts.push(run); });
     var lo = Math.min.apply(null, pts.concat([0])), hi = Math.max.apply(null, pts);
@@ -308,7 +348,7 @@
       var x = m.l + bw * k + bw * 0.15, w = bw * 0.7;
       s += '<rect x="' + x + '" y="' + Y(Math.max(a, b)) + '" width="' + w + '" height="' + Math.max(1, Math.abs(Y(a) - Y(b))) + '" rx="2" style="fill:' + color + '"><title>' + UI.esc(label + ': ' + yf(val)) + '</title></rect>';
       s += '<text x="' + (x + w / 2) + '" y="' + (Y(Math.max(a, b)) - 4) + '" text-anchor="middle" style="fill:var(--text)">' + UI.esc(yf(val)) + '</text>';
-      s += '<text x="' + (x + w / 2) + '" y="' + (H - m.b + 16) + '" text-anchor="middle">' + UI.esc(label) + '</text>';
+      s += lblText(x + w / 2, H - m.b + 16, label, Math.max(4, Math.floor(bw / 6.4)));
       k++;
     }
     if (o.start) bar(o.startLabel || 'Start', 0, acc, 'var(--s4)', acc);
@@ -317,12 +357,13 @@
     s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" style="stroke:var(--muted)"/></svg>';
     el.classList.add('chart');
     el.innerHTML = s; tipify(el);
+    remember(el, UI.chart.waterfall, o, W);
   };
 
   /* scatter: points [{x, y, label, color, r}] */
   UI.chart.scatter = function (el, o) {
     el = resolve(el);
-    var P = o.points, W = o.width || 760, H = o.height || 300, m = { l: 56, r: 16, t: 14, b: 36 };
+    var P = o.points, W = o.width || autoW(el), H = o.height || 300, m = { l: 56, r: 16, t: 14, b: 36 };
     var xsv = P.map(function (p) { return p.x; }), ysv = P.map(function (p) { return p.y; });
     var xt = ticks(o.xMin != null ? o.xMin : Math.min.apply(null, xsv), o.xMax != null ? o.xMax : Math.max.apply(null, xsv), 6);
     var yt = ticks(o.yMin != null ? o.yMin : Math.min.apply(null, ysv), o.yMax != null ? o.yMax : Math.max.apply(null, ysv), 5);
@@ -343,6 +384,7 @@
     s += '</svg>';
     el.classList.add('chart');
     el.innerHTML = s; tipify(el);
+    remember(el, UI.chart.scatter, o, W);
   };
 
   /* heatmap: rows x cols matrix */

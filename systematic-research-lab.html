@@ -27,6 +27,8 @@
       .tie-no { color: var(--negative); font-weight: 600; }
       .heat-wrap { max-width: 460px; }
       .sweep-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
+      /* on a phone, let text columns wrap so the numbers stay in view */
+      @media (max-width: 640px) { #biasTable td, #dsrTable td:first-child, #regTable td:first-child, #mtTable td:first-child { white-space: normal; min-width: 7.5em; } }
     </style>
 </head>
 <body>
@@ -736,7 +738,7 @@ high-vol regime at t: sd(b_t-6 .. b_t-1) sqrt 12 &gt; expanding q-quantile of it
         return { msg: 'Drafted the research summary: in-sample Sharpe ' + F.num(R.isS, 2) + ', out of sample ' + F.num(R.oosP.sharpe, 2) + ' net, gap ' + F.num(R.gap, 2) + ', ' + R.dsr.N + ' trials disclosed' };
       } },
       { agent: 'propose', run: function () {
-        audit.push('propose', S.gate ? 'paper trading proposed' : 'not proposed', methodName(S.method));
+        audit.push('propose', S.gate ? 'paper trading proposed' : 'not proposed', methodName(S.method).toLowerCase() + ' combination');
         return S.gate ? { status: 'approval', msg: 'Proposed for paper trading: ' + methodName(S.method).toLowerCase() + ' combination at ' + F.pct(A.volTarget, 0) + ' target volatility, for review before any capital' } : { status: 'info', msg: 'Not proposed for capital. The evidence does not clear the research policy; the next step is a longer history or fewer trials' };
       } }
     ], afterReview);
