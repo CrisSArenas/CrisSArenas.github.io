@@ -978,3 +978,20 @@ a.lib-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px;
 .memo-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 1060px; }
 .memo-pair .memo-card { max-width: none; }
 @media (max-width: 760px) { .memo-pair { grid-template-columns: minmax(0, 1fr); } }
+/* hero: two entry points, one per area, and a quiet link to the work */
+.hero-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 660px; margin: 34px auto 0; text-align: left; }
+.path-card { --pc: var(--gold-text); --pcb: var(--gold); display: grid; grid-template-columns: 34px minmax(0, 1fr) 14px; gap: 14px; align-items: center; padding: 18px 20px; border-radius: 16px; border: 1px solid var(--border); background: var(--glass-card); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow); color: var(--text); text-decoration: none; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.path-card.pc-ai { --pc: var(--bottle); --pcb: var(--bottle); }
+.path-ic { width: 34px; height: 34px; padding: 6px; border-radius: 10px; fill: none; stroke: var(--pc); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; background: color-mix(in srgb, var(--pcb) 14%, transparent); }
+.path-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.path-title { font-weight: 600; font-size: 1rem; color: var(--pc); }
+.path-sub { font-size: .86rem; line-height: 1.4; color: var(--muted); }
+.path-go { color: var(--pc); transition: transform .2s ease; }
+.path-card:hover { transform: translateY(-2px); border-color: var(--pcb); box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-hover); text-decoration: none; }
+.path-card:hover .path-go { transform: translateX(3px); }
+.path-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.path-link { display: inline-block; margin-top: 18px; color: var(--gold-text); font-weight: 500; font-size: .95rem; text-decoration: none; }
+.path-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.path-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+@media (max-width: 640px) { .hero-paths { grid-template-columns: minmax(0, 1fr); margin-top: 26px; } }
+@media (prefers-reduced-motion: reduce) { .path-card:hover, .path-card:hover .path-go { transform: none; } }
