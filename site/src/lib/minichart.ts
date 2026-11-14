@@ -1,0 +1,87 @@
+// @ts-nocheck  (ported verbatim from tools/card-stats.mjs; the chart data is loosely typed JSON)
+/* Mini charts for project cards, ported from tools/card-stats.mjs so the cards draw exactly what each
+   application computes at its base case (data in /assets/data/card-stats.json). Returns SVG markup. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const W = 150, H = 64, P = 3;
+const f = (v: number) => +v.toFixed(1);
+const sx = (lo: number, hi: number) => (v: number) => f(P + (v - lo) / (hi - lo || 1) * (W - 2 * P));
+const sy = (lo: number, hi: number) => (v: number) => f(H - P - (v - lo) / (hi - lo || 1) * (H - 2 * P));
+const path = (pts: number[][]) => pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1]).join('');
+const rect = (x: number, y: number, w: number, h: number, cls: string) => `<rect class="${cls}" x="${f(x)}" y="${f(Math.min(y, y + h))}" width="${f(w)}" height="${f(Math.max(Math.abs(h), 0.8))}" rx="1"/>`;
+const pct = (v: number) => (v * 100).toFixed(0) + '%';
+
+export const DRAW: Record<string, (c: any) => { desc: string; svg: string }> = {
+  fan(c) {
+    const n = c.p50.length, all = c.p10.concat(c.p90, [c.target]), X = sx(0, n - 1), Y = sy(Math.min(...all), Math.max(...all));
+    const band = path(c.p90.map((v, i) => [X(i), Y(v)]).concat(c.p10.map((v, i) => [X(i), Y(v)]).reverse())) + 'Z';
+    return { desc: `Fan chart of the private allocation over ten years, 10th to 90th percentile, median against the ${pct(c.target)} target`,
+      svg: `<path class="f-band" d="${band}"/><line class="k-n dash" x1="${P}" x2="${W - P}" y1="${Y(c.target)}" y2="${Y(c.target)}"/><path class="k-g" d="${path(c.p50.map((v, i) => [X(i), Y(v)]))}"/>` };
+  },
+  pairs(c) {
+    const max = Math.max(...c.items.flatMap(x => [x.rep, x.calc])), Y = sy(0, max), g = (W - 2 * P) / c.items.length, bw = g * 0.3;
+    return { desc: 'Net management fee by quarter, reported next to recomputed; breaks in red',
+      svg: c.items.map((x, i) => { const x0 = P + i * g + g * 0.18; return rect(x0, Y(0), bw, Y(x.rep) - Y(0), x.brk ? 'f-r' : 'f-n') + rect(x0 + bw + 2, Y(0), bw, Y(x.calc) - Y(0), 'f-g'); }).join('') };
+  },
+  bridge(c) {
+    let run = c.start; const lv = [[0, c.start]]; c.steps.forEach(s => { lv.push([run, run + s[1]]); run += s[1]; }); lv.push([0, c.end]);
+    const Y = sy(0, Math.max(...lv.flat())), g = (W - 2 * P) / lv.length, bw = g * 0.62;
+    return { desc: 'Value creation bridge from entry equity to exit equity: ' + c.steps.map(s => s[0].toLowerCase()).join(', '),
+      svg: lv.map((v, i) => { const end = i === 0 || i === lv.length - 1; return rect(P + i * g + (g - bw) / 2, Y(v[0]), bw, Y(v[1]) - Y(v[0]), end ? 'f-n' : v[1] >= v[0] ? 'f-g' : 'f-r'); }).join('') };
+  },
+  curve(c) {
+    const X = sx(c.xs[0], c.xs[c.xs.length - 1]), Y = sy(Math.min(...c.ys), Math.max(...c.ys)), mx = X(c.mark.x), my = Y(c.mark.y);
+    return { desc: `Price as a share of NAV against the buyer's target IRR, ${pct(c.xs[0])} to ${pct(c.xs[c.xs.length - 1])}, with the bid marked`,
+      svg: `<line class="k-n dash" x1="${mx}" x2="${mx}" y1="${my}" y2="${H - P}"/><path class="k-g" d="${path(c.xs.map((x, i) => [X(x), Y(c.ys[i])]))}"/><circle class="f-n" cx="${mx}" cy="${my}" r="3.6"/>` };
+  },
+  frontier(c) {
+    const xs = c.curve.map(p => p[0]).concat(c.mark[0]), ys = c.curve.map(p => p[1]).concat(c.mark[1]);
+    const X = sx(Math.min(...xs), Math.max(...xs)), Y = sy(Math.min(...ys), Math.max(...ys));
+    return { desc: 'Efficient frontier, volatility against expected return, with the chosen portfolio marked',
+      svg: `<path class="k-n" d="${path(c.curve.map(p => [X(p[0]), Y(p[1])]))}"/><circle class="f-g" cx="${X(c.mark[0])}" cy="${Y(c.mark[1])}" r="4"/>` };
+  },
+  heat(c) {
+    const n = c.names.length, s = (H - 2) / n, x0 = (W - s * n) / 2, on = (i, j) => c.pairs.some(p => (p[0] === i && p[1] === j) || (p[0] === j && p[1] === i));
+    let out = '';
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const v = c.m[i][j], op = i === j ? 0.9 : Math.max(0.06, Math.min(1, Math.abs(v)));
+      out += `<rect class="${v < 0 ? 'f-r' : 'f-g'}${on(i, j) ? ' hit' : ''}" x="${f(x0 + j * s + 0.75)}" y="${f(1 + i * s + 0.75)}" width="${f(s - 1.5)}" height="${f(s - 1.5)}" rx="2" fill-opacity="${op.toFixed(2)}"/>`;
+    }
+    return { desc: `Stress-period correlation between the ${n} sleeves; pairs with a shared factor bet outlined`, svg: out };
+  },
+  bars(c) {
+    const Y = sy(Math.min(0, ...c.values), Math.max(...c.values)), g = (W - 2 * P) / c.values.length, bw = g * 0.66;
+    return { desc: 'Share of total gains by deal, largest first',
+      svg: c.values.map((v, i) => rect(P + i * g + (g - bw) / 2, Y(0), bw, Y(v) - Y(0), v < 0 ? 'f-r' : i === 0 ? 'f-g' : 'f-n')).join('') };
+  },
+  rcbars(c) {
+    const Y = sy(0, Math.max(...c.values)), g = (W - 2 * P) / c.values.length, bw = g * 0.62, top = c.values.indexOf(Math.max(...c.values));
+    return { desc: 'Share of total risk by asset class: ' + c.labels.map((l, i) => l + ' ' + Math.round(c.values[i] * 100) + '%').join(', '),
+      svg: c.values.map((v, i) => rect(P + i * g + (g - bw) / 2, Y(0), bw, Y(v) - Y(0), i === top ? 'f-g' : 'f-n')).join('') };
+  },
+  bands(c) {
+    const n = c.items.length, hi = Math.max(...c.items.map(x => Math.max(x.hi, x.w))), Y = sy(0, hi), g = (W - 2 * P) / n, bw = g * 0.5;
+    return { desc: 'Current weight against the policy range for each sleeve; breaches in red',
+      svg: c.items.map((x, i) => { const x0 = P + i * g + (g - bw) / 2;
+        return `<rect class="f-band" x="${f(x0 - 2)}" y="${Y(x.hi)}" width="${f(bw + 4)}" height="${f(Math.max(1, Y(x.lo) - Y(x.hi)))}" rx="2"/>` +
+          `<line class="k-n" x1="${f(x0 - 2)}" x2="${f(x0 + bw + 2)}" y1="${Y(x.target)}" y2="${Y(x.target)}" style="stroke-width:1"/>` +
+          `<circle class="${x.breach ? 'f-r' : 'f-g'}" cx="${f(x0 + bw / 2)}" cy="${Y(x.w)}" r="2.8"/>`; }).join('') };
+  },
+  equity(c) {
+    const all = c.s.concat(c.b), X = sx(0, c.s.length - 1), Y = sy(Math.min(...all), Math.max(...all)), xo = X(c.oos);
+    return { desc: 'Growth of $1 for the strategy net of costs against its benchmark; the dashed line marks where out-of-sample testing starts',
+      svg: `<line class="k-n dash" x1="${xo}" x2="${xo}" y1="${P}" y2="${H - P}"/><path class="k-b" d="${path(c.b.map((v, i) => [X(i), Y(v)]))}"/><path class="k-g" d="${path(c.s.map((v, i) => [X(i), Y(v)]))}"/>` };
+  },
+  evalbars(c) {
+    const Y = sy(0, 1), g = (W - 2 * P) / c.values.length, bw = g * 0.62;
+    return { desc: 'Share of evaluation cases passed by category: ' + c.labels.map((l, i) => l + ' ' + Math.round(c.values[i] * 100) + '%').join(', '),
+      svg: c.values.map((v, i) => rect(P + i * g + (g - bw) / 2, Y(0), bw, Y(v) - Y(0), v >= 0.999 ? 'f-g' : 'f-n')).join('') };
+  },
+  timeline(c) {
+    const X = sx(0, c.span), mid = 34, stack: Record<string, number> = {};
+    const dot = (t: number, up: boolean, cls: string, shape?: string) => { const k = (up ? 'a' : 'f') + t, n = stack[k] = (stack[k] || 0) + 1, x = X(t), y = up ? mid - 7 - (n - 1) * 8 : mid + 7 + (n - 1) * 8;
+      return shape === 'd' ? `<path class="${cls}" d="M${x} ${f(y - 3.4)}L${f(x + 3.4)} ${y}L${x} ${f(y + 3.4)}L${f(x - 3.4)} ${y}Z"/>` : `<circle class="${cls}" cx="${x}" cy="${y}" r="3"/>`; };
+    return { desc: `One monitoring cycle: ${c.alerts.length} alerts above the line as each check finishes, ${c.fixes.length} proposed fixes below it`,
+      svg: `<line class="k-m" x1="${P}" x2="${W - P}" y1="${mid}" y2="${mid}"/><line class="k-m" x1="${P}" x2="${P}" y1="${mid - 4}" y2="${mid + 4}"/><line class="k-m" x1="${W - P}" x2="${W - P}" y1="${mid - 4}" y2="${mid + 4}"/>` + c.alerts.map(a => dot(a.t, true, a.sev === 'critical' ? 'f-r' : 'f-n')).join('') + c.fixes.map(x => dot(x.t, false, x.ok ? 'f-g' : 'f-n', 'd')).join('') };
+  }
+};
+export const MINI = { W, H };

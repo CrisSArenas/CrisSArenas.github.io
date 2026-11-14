@@ -1,0 +1,75 @@
+@import "tailwindcss" source(none);
+@source "../";
+
+/* Tailwind colours map onto the shared tokens in /assets/css/tokens.css, so the React pages and the
+   existing applications always use the same palette in both themes. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@theme {
+  --color-page: var(--c-page);
+  --color-tint: var(--c-tint);
+  --color-card: var(--c-card);
+  --color-panel: var(--c-panel);
+  --color-line: var(--c-border);
+  --color-line-strong: var(--c-chip-border);
+  --color-ink: var(--c-text);
+  --color-muted: var(--c-text-2);
+  --color-faint: var(--c-text-3);
+  --color-teal: var(--c-green);
+  --color-sand: var(--c-gold);
+  --color-sand-ink: var(--c-gold-text);
+  --color-graphite: var(--c-graphite);
+  --color-graphite-2: var(--c-graphite-2);
+  --color-neg: var(--c-negative);
+  --color-btn: var(--c-btn);
+  --color-btn-ink: var(--c-btn-text);
+  --font-sans: "Inter Var", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Var", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ease-out-quart: cubic-bezier(.25, 1, .5, 1);
+}
+
+@layer base {
+  html { background: var(--c-page); color: var(--c-text); scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; font-family: var(--font-sans); font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; background: var(--c-page); }
+  ::selection { background: color-mix(in srgb, var(--c-green) 30%, transparent); }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--c-green); outline-offset: 3px; border-radius: 6px; }
+  noscript-fallback { display: block; padding: 96px 24px; max-width: 760px; margin: 0 auto; line-height: 1.6; }
+  noscript-fallback nav a { color: var(--c-green); }
+  [id] { scroll-margin-top: 88px; }
+}
+
+@layer components {
+  .wrap { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
+  @media (max-width: 640px) { .wrap { padding-inline: 18px; } }
+  .eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--c-green); }
+  .display { font-weight: 600; letter-spacing: -.035em; line-height: 1.02; }
+  .lede { color: var(--c-text-2); font-size: clamp(1.02rem, 1.4vw, 1.2rem); line-height: 1.65; }
+  .surface { background: color-mix(in srgb, var(--c-card) 86%, transparent); border: 1px solid var(--c-border); border-radius: 20px; }
+  .surface-2 { background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 16px; }
+  .hairline { border-color: var(--c-border); }
+  /* faint engineering grid used behind heroes and diagrams */
+  .grid-bg { background-image: linear-gradient(to right, color-mix(in srgb, var(--c-text) 5%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--c-text) 5%, transparent) 1px, transparent 1px); background-size: 48px 48px; }
+  .dot-bg { background-image: radial-gradient(color-mix(in srgb, var(--c-text) 10%, transparent) 1px, transparent 1.2px); background-size: 18px 18px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .link { color: var(--c-green); text-decoration: none; background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size .3s var(--ease-out-quart); }
+  .link:hover { background-size: 100% 1px; }
+  .prose-site p { color: var(--c-text-2); line-height: 1.75; margin: 0 0 1.1em; }
+  .prose-site strong { color: var(--c-text); font-weight: 500; }
+}
+
+/* mini charts on project cards */
+.mini-chart { width: 100%; height: auto; overflow: visible; }
+.mini-chart .f-g { fill: var(--c-green); }
+.mini-chart .f-n { fill: var(--c-gold); }
+.mini-chart .f-r { fill: var(--c-negative); }
+.mini-chart .f-band { fill: color-mix(in srgb, var(--c-green) 18%, transparent); }
+.mini-chart .k-g, .mini-chart .k-n, .mini-chart .k-b, .mini-chart .k-m { fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.mini-chart .k-g { stroke: var(--c-green); stroke-dasharray: 600; stroke-dashoffset: 600; animation: mc-draw 1.6s var(--ease-out-quart) .2s forwards; }
+.mini-chart .k-n { stroke: var(--c-gold); }
+.mini-chart .k-b { stroke: var(--c-graphite-2); stroke-width: 1.2; }
+.mini-chart .k-m { stroke: var(--c-border); }
+.mini-chart .dash { stroke: var(--c-graphite); stroke-dasharray: 3 3; stroke-width: 1; }
+.mini-chart .hit { stroke: var(--c-gold); stroke-width: 1.2; }
+@keyframes mc-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .mini-chart .k-g { animation: none; stroke-dashoffset: 0; stroke-dasharray: none; } }

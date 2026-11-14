@@ -1,7 +1,7 @@
-// WCAG AA contrast check for the light and dark palette tokens in styles.css.
+// WCAG AA contrast check for the light and dark palette tokens in assets/css/tokens.css.
 // Text pairs need 4.5:1; chart series and UI marks need 3:1. Matte gold is decorative in light mode only.
 import fs from 'node:fs';
-const css = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+const css = fs.readFileSync(new URL('../assets/css/tokens.css', import.meta.url), 'utf8');
 const grab = re => { const b = css.match(re)[0], t = {}; for (const d of b.matchAll(/--c-([\w-]+):\s*(#[0-9A-Fa-f]{6})/g)) t[d[1]] = d[2]; return t; };
 const pals = { light: grab(/:root \{\n  --c-page[\s\S]*?\n\}/), dark: grab(/:root\[data-theme="dark"\] \{[\s\S]*?\n  \}/) };
 const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
