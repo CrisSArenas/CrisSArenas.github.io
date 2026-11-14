@@ -194,7 +194,7 @@ export function ArchitectureDiagram({ nodes, edges, caption, title }: { nodes: F
           ))}
         </div>
       </div>
-      <div className="flow-note sticky bottom-3 z-10 mt-4 lg:static">
+      <div className={`flow-note z-10 mt-4 lg:static ${current ? 'sticky bottom-3' : ''}`}>
         <div id="flow-note" aria-live="polite" className="surface-2 min-h-[76px] px-5 py-4 shadow-[0_8px_30px_-12px_rgba(0,0,0,.35)] lg:shadow-none">
           {current ? (
             <div>

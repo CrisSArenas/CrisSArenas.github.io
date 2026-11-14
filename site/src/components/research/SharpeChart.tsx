@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { select, scaleLinear, easeCubicOut } from 'd3';
+/* the transition module adds selection.transition(); import it for its side effect so production builds keep it */
+import 'd3-transition';
 import { Tabs, Disclosure } from '@/components/ui';
 import { cssVar, useThemeTick } from '@/lib/theme';
 import { METHODS, SHARPE, DGPS, DGP_READING, GROUP_LABEL, type Dgp, type MethodGroup } from '@/data/research';

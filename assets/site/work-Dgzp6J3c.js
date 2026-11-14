@@ -1,1 +1,0 @@
-import{n as e,t}from"./mount-Df-LBnvA.js";var n=e();function r(){return(0,n.jsx)(`section`,{className:`wrap pt-40`,children:(0,n.jsx)(`h1`,{className:`display text-5xl`,children:`work`})})}t((0,n.jsx)(r,{}));

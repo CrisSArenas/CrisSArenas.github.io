@@ -479,7 +479,7 @@ export const CASES: Record<string, CaseStudy> = {
     nature: `Working application on synthetic data. Managers, companies and peers are made up; every test runs in the browser. ${DOCS_REAL}`,
     baseCase: 'Synthetic data, fixed seed 7, as of 30 Jun 2026.',
     problem: [
-      'A manager\'s past returns are the main evidence an investor has, and they are easy to misread. A buyout record can rest on one exceptional deal, a subscription line can lift the reported IRR, and a fund\'s quartile can fall after the next fund has been raised on it.',
+      'A manager\'s past returns are the main evidence an investor has, and they are easy to misread. A buyout record can rest on one unusually large exit, a subscription line can lift the reported IRR, and a fund\'s quartile can fall after the next fund has been raised on it.',
       'A hedge fund\'s smooth monthly returns can hide market exposure and make its Sharpe ratio look better than it is.'
     ],
     built: [

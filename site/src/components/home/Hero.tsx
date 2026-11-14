@@ -31,8 +31,8 @@ export function Hero() {
           <motion.h1 id="hero-name" {...rise(.06)} className="display text-[clamp(2.9rem,7vw,4.9rem)] text-ink">{NAME}</motion.h1>
           <motion.p {...rise(.12)} className="mt-5 text-[clamp(1.08rem,1.6vw,1.3rem)] font-medium leading-snug tracking-[-.01em] text-ink/90 [text-wrap:balance]">{TITLE}</motion.p>
           <motion.p {...rise(.18)} className="lede mt-5 max-w-[34rem]">{HERO_LINE}</motion.p>
-          <motion.div {...rise(.26)} className="mt-9 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
-            <Button href="#portfolio" variant="primary" className="col-span-2 sm:col-span-1">Portfolio management</Button>
+          <motion.div {...rise(.26)} className="mt-9 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
+            <Button href="#portfolio" variant="primary">Portfolio management</Button>
             <Button href="#ai" variant="sand">AI engineering</Button>
             <Button href="#work" variant="outline">Selected work</Button>
           </motion.div>

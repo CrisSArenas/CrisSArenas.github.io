@@ -24,7 +24,7 @@ const { projects } = JSON.parse(fs.readFileSync(path.join(root, 'site/src/data/p
 
 /* Where the crop starts, measured from the top of the page with the nav hidden. Most pages read best from
    the hero; a few have a long introduction, so the crop starts lower to show their working surface. */
-const OFFSET = { 'ai-engineering-lab': 590, 'systematic-research-lab': 330 };
+const OFFSET = { 'ai-engineering-lab': 590 };
 /* the applications sit in a centred column about 1100 px wide, so the crop keeps the middle 1200 px of the
    1440 px viewport at full resolution and drops the empty margins */
 const W = 1440, H = 900, CROP_X = 120, CROP_W = 1200, CROP_H = 750, OUT_W = 1200, QUALITY = 80;
