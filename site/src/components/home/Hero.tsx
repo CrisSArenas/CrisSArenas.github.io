@@ -20,7 +20,7 @@ type PanelTab = 'portfolio' | 'agents';
 export function Hero() {
   const [tab, setTab] = useState<PanelTab>('portfolio');
   return (
-    <section aria-labelledby="hero-name" className="relative overflow-hidden pb-12 pt-24 sm:pt-28 lg:pb-16 lg:pt-32">
+    <section aria-labelledby="hero-name" className="relative overflow-hidden pb-12 pt-[88px] sm:pt-24 lg:pb-16 lg:pt-20">
       <div aria-hidden="true" className="home-hero-wash pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="grid-bg home-hero-grid pointer-events-none absolute inset-0" />
       <div className="wrap relative grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14">
@@ -50,7 +50,7 @@ export function Hero() {
           className="surface relative min-w-0 p-4 shadow-[0_30px_80px_-40px_var(--c-shade-2)] sm:p-6">
           <div aria-hidden="true" className="dot-bg pointer-events-none absolute inset-0 rounded-[20px] opacity-50 [mask-image:linear-gradient(to_bottom,#000,transparent_45%)]" />
           <div className="relative">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <Tabs<PanelTab> label="Visualization" value={tab} onChange={setTab}
                 tabs={[{ id: 'portfolio', label: 'Portfolio' }, { id: 'agents', label: 'Agents' }]} />
               <span className="font-mono text-[10.5px] uppercase tracking-[.12em] text-faint">

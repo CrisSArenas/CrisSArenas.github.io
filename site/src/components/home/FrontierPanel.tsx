@@ -73,7 +73,7 @@ export function FrontierPanel() {
     return () => c.stop();
   }, [inView, reduce, drawn]);
 
-  const H = width < 420 ? 220 : 252;
+  const H = width < 420 ? 210 : 230;
   const m = { t: 14, r: 14, b: 34, l: 40 };
   /* axes fit the assets with a margin, rounded to whole percent */
   const x = scaleLinear().domain([Math.floor(Math.min(...VOL, F[0].vol) * 100 - 1) / 100, Math.ceil(Math.max(...VOL) * 100 + 1) / 100]).range([m.l, width - m.r]);
@@ -99,7 +99,7 @@ export function FrontierPanel() {
   const valueText = `Expected return ${pct(p.ret)}, volatility ${pct(p.vol)}`;
 
   return (
-    <div className="flex flex-col gap-3.5">
+    <div className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-4">
         <div className="flex gap-6 sm:gap-8">
           <Readout label="Expected return" note="Long term, annual" value={pct(p.ret)} />
@@ -154,11 +154,11 @@ export function FrontierPanel() {
       </label>
 
       <div>
-        <div className="mb-2.5 flex items-center gap-5 text-[12px] text-muted">
+        <div className="mb-2 flex items-center gap-5 text-[12px] text-muted">
           <span className="inline-flex items-center gap-2"><i className="h-1.5 w-4 rounded-full bg-teal" />Share of capital</span>
           <span className="inline-flex items-center gap-2"><i className="h-1.5 w-4 rounded-full bg-sand" />Share of risk</span>
         </div>
-        <ul className="grid gap-1.5" aria-label="Allocation and risk contribution by asset class">
+        <ul className="grid gap-1" aria-label="Allocation and risk contribution by asset class">
           {UNIVERSE.map((a, i) => <Row key={a.id} name={a.short} sub={CAPS[i] < 1 ? `Up to ${pct(CAPS[i], 0)}` : undefined} w={p.w[i]} rc={p.rc[i]} />)}
         </ul>
       </div>
