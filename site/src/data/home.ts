@@ -1,11 +1,16 @@
 /* Content used only by the homepage. Project facts live in projects.ts and site.ts. */
 
-/* Hero frontier: four asset classes with annualised return, volatility and correlation computed from monthly
-   history by tools/frontier-data.py (see that file for the series, the window and the method). */
+/* Hero frontier: nine asset classes with annualised return, volatility and correlation from 1995-2024 annual
+   returns, compiled and computed by tools/frontier-research.py (sources and judgement calls in
+   tools/frontier-research.md). Private equity and real estate risk are desmoothed. */
 import FRONTIER from './frontier.json';
-const NAMES: Record<string, [string, string]> = { eq: ['US equities', 'Equities'], tsy: ['US Treasuries', 'Treasuries'], gold: ['Gold', 'Gold'], cmd: ['Commodities', 'Commodities'] };
-export const UNIVERSE = FRONTIER.assets.map(a => ({ id: a.id, name: NAMES[a.id][0], short: NAMES[a.id][1], ret: a.ret, vol: a.vol }));
+export type AssetGroup = 'growth' | 'defensive' | 'credit' | 'real' | 'alternatives';
+export const UNIVERSE = FRONTIER.assets.map(a => ({ id: a.id, name: a.name, short: a.short, group: a.group as AssetGroup, ret: a.ret, vol: a.vol }));
 export const CORR: number[][] = FRONTIER.corr;
+/* institutional position limits: private and less liquid assets are capped, as a real policy portfolio would be */
+export const CAPS_BY_ID: Record<string, number> = { pe: 0.20, re: 0.15, hf: 0.15, em: 0.15 };
+export const CAPS: number[] = UNIVERSE.map(a => CAPS_BY_ID[a.id] ?? 1);
+export const GROUP_LABEL: Record<AssetGroup, string> = { growth: 'Growth', defensive: 'Defensive', credit: 'Credit', real: 'Real assets', alternatives: 'Diversifiers' };
 
 /* The six steps of running a portfolio, each shown in a working application (slug from projects.ts) or a memo. */
 export const PM_STEPS = [
