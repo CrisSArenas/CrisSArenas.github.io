@@ -21,7 +21,8 @@
       @media (max-width: 1000px) { .ai-grid { grid-template-columns: minmax(0, 1fr); } }
       .views td input.field[type="number"] { width: 68px; }
       .views td input[type="checkbox"] { width: auto; }
-      .views td select { max-width: 160px; }
+      .views td select { max-width: 130px; }
+      @media (max-width: 720px) { .views td select { max-width: 64%; } }
       .verdict-ok { color: var(--positive); font-weight: 600; }
       .verdict-no { color: var(--negative); font-weight: 600; }
       .mode-note { margin-bottom: 14px; }
@@ -395,6 +396,7 @@ alloc_i = (wp_i - wb_i)(rb_i - Rb)   sel_i = wb_i (rp_i - rb_i)</div>
       h += '<tr><td><input type="checkbox" data-k="' + k + '" data-f="on"' + (v.on ? ' checked' : '') + ' aria-label="View ' + (k + 1) + ' on"></td><td>' + UI.esc(v.text) + '</td><td>' + sel(v.a, 'a') + '</td><td>' + sel(v.type === 'rel' ? v.b : -1, 'b') + '</td><td class="n"><input class="field" type="number" step="0.1" data-k="' + k + '" data-f="q" value="' + +(v.q * 100).toFixed(2) + '" aria-label="View return %"></td><td class="n"><input class="field" type="number" step="5" min="5" max="99" data-k="' + k + '" data-f="conf" value="' + Math.round(v.conf * 100) + '" aria-label="Confidence %"></td></tr>';
     });
     $('#viewsTable').innerHTML = h + '</tbody></table></div><p class="eval-note">Return in % a year (relative views: outperformance). Confidence 5 to 99%; it sets each view\'s uncertainty relative to the prior.</p>';
+    UI.stackTable('#viewsTable table', { title: 1 });
     UI.$$('#viewsTable [data-k]').forEach(function (inp) {
       inp.addEventListener('change', function () {
         var v = VIEWS[+inp.dataset.k], f = inp.dataset.f;

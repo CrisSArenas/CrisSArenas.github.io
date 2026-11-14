@@ -893,6 +893,56 @@
 .hint-bar .close,#hintClose{min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;font-size:15px;line-height:1}
 .hint-bar .close:hover,#hintClose:hover{background:color-mix(in srgb, var(--accent) 12%, transparent)}
 </style>
+<style id="rb-layout">
+/* Robotics simulators: the title row and the intro under it (meta line, description, hint, guide) share the
+   site's reading column; the simulator workspace below stays wide. Shared by the five robotics simulators. */
+@font-face { font-family: 'Inter'; src: url('/assets/fonts/inter-var.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'JetBrains Mono'; src: url('/assets/fonts/jetbrains-mono-var.woff2') format('woff2'); font-weight: 100 800; font-display: swap; }
+:root { --rb-col: 1200px; }
+.demo-bar { padding: 32px 0 0; }
+.demo-bar .container, .rb-intro { max-width: calc(var(--rb-col) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+.demo-bar .container { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px 24px; }
+.demo-bar .back-link { grid-column: 1 / -1; font-size: 13px; }
+.demo-bar .demo-title { font-size: clamp(1.7rem, 3.2vw, 2.4rem); letter-spacing: -.03em; line-height: 1.08; min-width: 0; }
+.demo-bar .demo-actions { justify-content: flex-end; }
+.rb-intro { padding-bottom: 12px; }
+.rb-intro .demo-status { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 14px 0 0; padding: 0; font-size: 13px; line-height: 1.6; color: var(--c-text-3); font-variant-numeric: tabular-nums; }
+.rb-intro .demo-status > span { max-width: 100%; }
+.rb-intro .demo-status b { color: var(--c-text-2); font-weight: 500; }
+.rb-intro .demo-sub { max-width: 80ch; margin: 22px 0 0; padding: 0; font-size: 16px; line-height: 1.7; color: var(--c-text-2); letter-spacing: -.005em; }
+.rb-intro .demo-sub b { color: var(--c-text); font-weight: 500; }
+.rb-intro .hint-bar { margin: 22px 0 0; padding: 14px 16px 14px 18px; gap: 14px; align-items: flex-start; border: 1px solid var(--c-border); border-radius: 14px; background: var(--c-panel); color: var(--c-text-2); font-size: 14px; line-height: 1.65; }
+.rb-intro .hint-bar i { display: none; }
+.rb-intro .hint-bar::before { content: ''; flex: none; width: 8px; height: 8px; margin-top: .6em; border-radius: 50%; background: var(--c-green); }
+.rb-intro .hint-bar > span { max-width: 88ch; }
+.rb-intro .hint-bar b { color: var(--c-text); font-weight: 500; }
+.rb-intro .hint-bar kbd { color: var(--c-text); background: var(--c-card); border-color: var(--c-chip-border); }
+.rb-intro .hint-bar .close { margin-left: auto; color: var(--c-text-3); }
+.rb-intro .guide { max-width: none; margin: 24px 0 0; padding: 0; }
+.rb-intro .guide-box { background: transparent; border: 1px solid var(--c-border); border-radius: 18px; }
+.rb-intro .guide-header { padding: 14px 18px 14px 20px; }
+.rb-intro .guide-header h2 { font: 400 11px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--c-green); }
+.rb-intro .guide-header h2 i { display: none; }
+.rb-intro .guide-toggle { font: 500 12px/1 var(--sans); padding: 7px 14px; border-radius: 999px; background: transparent; border: 1px solid var(--c-chip-border); color: var(--c-text-2); }
+.rb-intro .guide-toggle:hover { color: var(--c-text); border-color: var(--c-green); }
+.rb-intro .guide-grid { padding: 18px 20px 20px; gap: 12px; border-top-color: var(--c-border); grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.rb-intro .guide-card { background: color-mix(in srgb, var(--c-card) 86%, transparent); border: 1px solid var(--c-border); border-radius: 12px; padding: 14px 16px 16px; }
+.rb-intro .guide-card .step { display: block; background: none; padding: 0; margin: 0 0 8px; border-radius: 0; font: 400 10.5px/1.4 var(--mono); letter-spacing: .14em; color: var(--c-green); }
+.rb-intro .guide-card h3 { font-size: 14px; letter-spacing: -.01em; line-height: 1.3; margin-bottom: 6px; }
+.rb-intro .guide-card p { font-size: 13px; line-height: 1.6; color: var(--c-text-2); max-width: none; }
+.rb-intro .guide-card strong { color: var(--c-text); font-weight: 500; }
+.demo-footer .inner { max-width: calc(var(--rb-col) + 2 * var(--gutter)); }
+.demo-footer .grid { max-width: none; margin: 0; padding: 0; }
+/* the workspace keeps its width but uses the same side gutter, so edges meet whenever the window is narrower than the column */
+body > .kpi-strip, body > .controls, body > .grid { padding-left: var(--gutter); padding-right: var(--gutter); }
+@media (max-width: 640px) {
+  .demo-bar { padding-top: 24px; }
+  .demo-bar .container { grid-template-columns: minmax(0, 1fr); }
+  .demo-bar .demo-actions { justify-content: flex-start; }
+  .rb-intro .demo-sub { font-size: 15px; }
+  .rb-intro .guide-grid { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+}
+</style>
 <script src="/assets/js/site.js"></script>
 </head>
 <body>
@@ -917,6 +967,7 @@
 <div id="main" tabindex="-1"></div>
 <div class="demo-bar"><div class="container"><a class="back-link" href="/lab/">&larr; Back to the Lab</a><h1 class="demo-title"><i class="fas fa-robot"></i> ROS 2 Nav2 Simulator</h1><div class="demo-actions"><button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
     <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><span class="ico" aria-hidden="true">?</span></button></div></div></div>
+<div class="rb-intro">
 <div class="demo-status">
   <span>TurtleBot3 Waffle &middot; costmap <b>0.05 m</b> &middot; inflation <b>0.55 m</b> &middot; planner <b>A*</b> @1&nbsp;Hz &middot; controller <b>RegulatedPurePursuit</b> @20&nbsp;Hz &middot; RTF <b>3.0&times;</b> &middot; render <b id="fpsValue">60</b> fps</span>
   <span><b>Simulated robot</b> &middot; seeded PRNG (mulberry32) &middot; idealised LiDAR, odometry and dynamics &middot; not hardware-validated</span>
@@ -931,6 +982,7 @@
 </div>
 
     <div class="instruction-banner" id="instructionBanner" role="status" aria-live="polite"></div>
+</div><!-- /rb-intro -->
 
 <!-- HELP MODAL -->
 <div class="d-help-overlay" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">

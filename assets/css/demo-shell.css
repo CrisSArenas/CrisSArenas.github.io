@@ -68,6 +68,8 @@ input.field[type=number] { width: 96px; }
 .split { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
 .split-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 @media (max-width: 960px) { .split, .split-2 { grid-template-columns: minmax(0, 1fr); } }
+/* a half-width pair whose table needs more room: full width below a wide desktop */
+@media (max-width: 1180px) { .split-2.tw { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 640px) { .panel-head { padding: 16px 16px 0; } .panel-body { padding: 12px 16px 18px; } }
 .demo-section { padding: 48px 0 8px; }
 .demo-section > h2 { margin-bottom: 8px; font-size: 1.8rem; }
@@ -352,3 +354,56 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 :root:not([data-theme="dark"]) .chart text.hv-strong { fill: var(--c-white); }
 /* segmented buttons and small controls are easier to hit on touch screens */
 @media (pointer: coarse) { .seg button, .seg2 button { min-height: 40px; } }
+
+/* ---------- tables fit their panel ----------
+   Text and headers wrap instead of forcing a sideways scroll; numbers stay on one line,
+   right-aligned and tabular. Tables with many columns get tighter cells. */
+table.data th { white-space: normal; vertical-align: bottom; line-height: 1.3; }
+table.data td { white-space: normal; overflow-wrap: break-word; line-height: 1.4; }
+table.data td.n { white-space: nowrap; }
+table.data td.n.wrap { white-space: normal; }
+table.data td.nw { white-space: nowrap; }
+/* cell padding scales with the table: --cx is the side padding, --cy the top and bottom */
+table.data { --cx: 12px; --cy: 9px; }
+table.data th, table.data td { padding: var(--cy) var(--cx); }
+table.data th:first-child, table.data td:first-child { padding-left: max(var(--cx), 10px); }
+table.data th:last-child, table.data td:last-child { padding-right: max(var(--cx), 10px); }
+.table-wrap { container-type: inline-size; }
+@container (min-width: 641px) {
+  table.data.stack { --cx: 10px; --cy: 8px; }
+  table.data:has(thead th:nth-child(9)) { --cx: 7px; }
+}
+/* tables in half-width panels and on phones: smaller type and tighter cells */
+@container (max-width: 640px) {
+  table.data { font-size: .82rem; --cx: 6px; --cy: 7px; }
+  table.data:has(thead th:nth-child(6)) { --cx: 5px; }
+  table.data:has(thead th:nth-child(7)) { --cx: 4px; }
+}
+table.data td.n input, table.data td .field { white-space: normal; }
+
+/* ---------- phone: wide tables become one card per row ----------
+   Any table with class stack (UI.table and UI.stackTable add it). The card heading is the row's first column (class ct); every other cell is a line
+   with its column name (data-label) on the left and the value on the right.
+   The footer row becomes a final summary card. Screen only: print keeps normal tables. */
+@media screen and (max-width: 720px) {
+  body:not(.report) :is(.table-wrap, .tscroll):has(> table.stack) { overflow: visible; background: none; border-radius: 0; }
+  body:not(.report) table.stack { display: block; width: 100%; min-width: 0 !important; }
+  body:not(.report) table.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  body:not(.report) table.stack tbody, body:not(.report) table.stack tfoot { display: grid; gap: 10px; }
+  body:not(.report) table.stack tfoot { margin-top: 10px; }
+  body:not(.report) table.stack tr { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2px 14px 4px; }
+  body:not(.report) table.stack tfoot tr { background: var(--surface-2); border-color: var(--border-strong); }
+  body:not(.report) table.stack td { display: flow-root; padding: 6px 0; border: 0; border-top: 1px solid var(--border); text-align: right; white-space: normal; overflow-wrap: anywhere; font-size: .86rem; line-height: 1.45; }
+  body:not(.report) table.stack td::before { content: attr(data-label); float: left; max-width: 58%; margin-right: 14px; text-align: left; color: var(--muted); font-size: .78rem; font-weight: 400; line-height: 1.6; overflow-wrap: normal; }
+  body:not(.report) table.stack td[data-label=""]::before { display: none; }
+  body:not(.report) table.stack td:has(> input, > select)::before { line-height: 34px; }
+  body:not(.report) table.stack td.ct { order: -1; border-top: 0; padding: 11px 0 7px; text-align: left; font-weight: 600; font-size: .94rem; color: var(--heading, var(--text)); }
+  body:not(.report) table.stack td.ct::before { display: none; }
+  body:not(.report) table.stack td.ct.ctl::before { display: inline; float: none; content: attr(data-label) " "; margin: 0; font-size: inherit; font-weight: 500; line-height: inherit; }
+  body:not(.report) table.stack td:empty { display: none; }
+  body:not(.report) table.stack tbody tr:hover { background: var(--surface); }
+  body:not(.report) details.fold table.stack tbody tr, body:not(.report) details.fold table.stack tbody tr:hover { background: var(--surface); }
+  /* tables that stay tables (4 columns or fewer): long codes and lists break so the table fits */
+  table.data:not(.stack) td { overflow-wrap: anywhere; }
+  table.data:not(.stack) td.n { white-space: normal; }
+}

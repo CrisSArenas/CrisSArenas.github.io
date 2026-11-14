@@ -166,6 +166,8 @@ b,strong{color:var(--text);font-weight:600}
 .mtable td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--border);font-family:var(--mono);white-space:nowrap;color:var(--muted)}
 .mtable td:first-child{text-align:left;font-family:var(--sans);color:var(--text);font-weight:600}
 .mtable td small{display:block;font-weight:400;color:var(--faint);font-size:11px;white-space:normal;line-height:1.45;margin-top:2px}
+@media(min-width:721px){#issuerTable{min-width:380px}}
+@media(max-width:720px){#issuerTable td{color:var(--text)}}
 
 /* ----------------------------------------------------------- sleeves */
 .slv{display:grid;grid-template-columns:minmax(0,108px) minmax(0,1fr) 128px;gap:10px;align-items:center;margin-bottom:9px;font-size:12px}
@@ -453,7 +455,7 @@ b,strong{color:var(--text);font-weight:600}
       </div>
       <div class="card">
         <h3><i class="fas fa-building-columns"></i> Look-through: single companies</h3>
-        <div class="tscroll"><table class="mtable" id="issuerTable" style="min-width:380px"></table></div>
+        <div class="tscroll"><table class="mtable stack" id="issuerTable"></table></div>
         <p class="hint">Stocks and bonds in the same company count together. That is why a portfolio can sit neatly inside every
         asset-class range and still hold too much of one name.</p>
       </div>
@@ -1252,9 +1254,9 @@ function renderFindings(){
   let h='<thead><tr><th>Company</th><th>Stock</th><th>Bonds</th><th>Total</th><th>Rating</th><th>Status</th></tr></thead><tbody>';
   B.issuers.slice().sort((a,b)=>exposure(b)-exposure(a)).forEach(x=>{
     const over=exposure(x)>LIMIT.issuer+1e-9,inel=IG.indexOf(x.rating)<0&&x.fi>1e-9;
-    h+='<tr><td>'+x.n+'<small>'+x.s+'</small></td><td>'+pp(x.eq)+'%</td><td>'+pp(x.fi)+'%</td><td style="color:'+(over?'var(--negative)':'var(--cyan)')+'"><b>'+pp(exposure(x))+'%</b></td>'
-      +'<td style="color:'+(IG.indexOf(x.rating)<0?'var(--negative)':'var(--muted)')+'">'+x.rating+'</td>'
-      +'<td>'+(over?'<span class="sev sev-h">OVER LIMIT</span>':inel?'<span class="sev sev-h">INELIGIBLE</span>':'<span class="sev sev-l">OK</span>')+'</td></tr>';
+    h+='<tr><td class="ct">'+x.n+'<small>'+x.s+'</small></td><td data-label="Stock">'+pp(x.eq)+'%</td><td data-label="Bonds">'+pp(x.fi)+'%</td><td data-label="Total" style="color:'+(over?'var(--negative)':'var(--cyan)')+'"><b>'+pp(exposure(x))+'%</b></td>'
+      +'<td data-label="Rating" style="color:'+(IG.indexOf(x.rating)<0?'var(--negative)':'var(--muted)')+'">'+x.rating+'</td>'
+      +'<td data-label="Status">'+(over?'<span class="sev sev-h">OVER LIMIT</span>':inel?'<span class="sev sev-h">INELIGIBLE</span>':'<span class="sev sev-l">OK</span>')+'</td></tr>';
   });
   el('issuerTable').innerHTML=h+'</tbody>';
 }

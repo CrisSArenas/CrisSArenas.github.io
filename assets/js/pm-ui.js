@@ -465,24 +465,33 @@
 
   /* ---------- tables, registered for CSV export ---------- */
   UI.tables = {};
-  /* o: { id, name, columns:[{key, label, num, fmt, cls(row)}], rows:[], foot:{}, footExplain:{key: fn}, rowAttr } */
+  /* o: { id, name, columns:[{key, label, num, wrap (numbers written with words may wrap), fmt, cls(row)}], rows:[], foot:{}, footExplain:{key: fn}, rowAttr,
+          stack (true/false: phone card layout, default when 5 or more columns), cardTitle (column key used as the card heading, default the first column) } */
   UI.table = function (el, o) {
     el = resolve(el);
     UI.tables[o.id] = o;
-    var h = '<div class="table-wrap"><table class="data" id="tbl-' + o.id + '"><thead><tr>' +
+    var stack = o.stack != null ? !!o.stack : o.columns.length >= 5, ct = o.cardTitle || o.columns[0].key;
+    var lab = function (c) { return ' data-label="' + UI.esc(c.label) + '"'; };
+    /* short text (a date, a code, "3 years") stays on one line; longer text wraps */
+    /* a heading that is only a number or a date (a year, a fold, a quarter end) keeps its column name: "Year 2027" */
+    var ctCls = function (txt) { return /^[\d\s.,%$+\-\u2212:\/()]+$/.test(String(txt)) ? 'ct ctl' : 'ct'; };
+    var h = '<div class="table-wrap"><table class="data' + (stack ? ' stack' : '') + '" id="tbl-' + o.id + '"><thead><tr>' +
       o.columns.map(function (c) { return '<th' + (c.num ? ' class="n"' : '') + ' scope="col">' + UI.esc(c.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
     o.rows.forEach(function (r) {
       h += '<tr>' + o.columns.map(function (c) {
         var v = r[c.key], txt = c.fmt ? c.fmt(v, r) : (v == null ? '' : v);
-        var cls = [c.num ? 'n' : '', c.cls ? c.cls(v, r) : ''].join(' ').trim();
-        return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + (c.html ? txt : UI.esc(txt)) + '</td>';
+        var cls = [c.num ? 'n' : (!c.html && String(txt).length <= 12 ? 'nw' : ''), c.wrap ? 'wrap' : '', c.key === ct ? ctCls(txt) : '', c.cls ? c.cls(v, r) : ''].join(' ').trim();
+        return '<td' + (cls ? ' class="' + cls + '"' : '') + lab(c) + '>' + (c.html ? txt : UI.esc(txt)) + '</td>';
       }).join('') + '</tr>';
     });
     h += '</tbody>';
     if (o.foot) {
+      /* the summary card's heading: the heading column, or else the first text label in the footer row ("Total") */
+      var fct = o.foot[ct] != null && o.foot[ct] !== '' ? ct : (o.columns.filter(function (c) { return typeof o.foot[c.key] === 'string' && o.foot[c.key] !== ''; })[0] || {}).key;
       h += '<tfoot><tr>' + o.columns.map(function (c) {
         var v = o.foot[c.key]; var txt = v == null ? '' : (c.fmt && typeof v === 'number' ? c.fmt(v, o.foot) : v);
-        return '<td' + (c.num ? ' class="n"' : '') + ' data-k="' + c.key + '">' + UI.esc(txt) + '</td>';
+        var cls = [c.num ? 'n' : '', c.wrap ? 'wrap' : '', c.key === fct ? 'ct' : ''].join(' ').trim();
+        return '<td' + (cls ? ' class="' + cls + '"' : '') + lab(c) + ' data-k="' + c.key + '">' + UI.esc(txt) + '</td>';
       }).join('') + '</tr></tfoot>';
     }
     el.innerHTML = h + '</table></div>';
@@ -492,6 +501,20 @@
         if (td) { td.appendChild(document.createTextNode(' ')); td.appendChild(UI.explainBtn(o.footExplain[k])); }
       });
     }
+  };
+
+  /* tables written by hand: give every cell its column name (data-label) and mark wide tables (5 or more columns)
+     so that phone screens show one card per row. opts: { stack: true/false, title: column index of the card heading } */
+  UI.stackTable = function (t, opts) {
+    t = resolve(t); opts = opts || {};
+    if (!t || !t.tHead || !t.tHead.rows.length) return t;
+    var labels = UI.$$('th', t.tHead.rows[0]).map(function (th) { return th.textContent.replace(/\s+/g, ' ').trim(); });
+    var stack = opts.stack != null ? !!opts.stack : labels.length >= 5, ti = opts.title || 0;
+    t.classList.toggle('stack', stack);
+    UI.$$('tbody tr, tfoot tr', t).forEach(function (tr) {
+      UI.$$('td, th', tr).forEach(function (td, k) { if (labels[k] != null) td.setAttribute('data-label', labels[k]); if (k === ti) { td.classList.add('ct'); if (/^[\d\s.,%$+\-\u2212:\/()]+$/.test(td.textContent.trim())) td.classList.add('ctl'); } });
+    });
+    return t;
   };
 
   /* ---------- CSV ---------- */
@@ -966,6 +989,7 @@
         '</td><td class="n">' + +(r.def * sc).toPrecision(6) + '</td><td class="src">' + UI.esc(r.source || '') + '</td></tr>';
     });
     el.innerHTML = h + '</tbody></table></div>';
+    UI.stackTable(el.querySelector('table'));
     UI.$$('input', el).forEach(function (inp) {
       inp.addEventListener('change', function () {
         var r = rows.filter(function (x) { return x.id === inp.dataset.id; })[0], sc = r.scale || 1, v = +inp.value;

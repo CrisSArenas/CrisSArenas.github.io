@@ -24,7 +24,7 @@
       .init-grid label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--muted); }
       .init-grid .field { width: 100%; }
       #triage .intro { margin-bottom: 18px; }
-      #triageTable table.data { min-width: 820px; }
+      @media (min-width: 721px) { #triageTable table.data { min-width: 820px; } }
       #triageTable table.data th, #triageTable table.data td { white-space: normal; vertical-align: top; }
       .doc-viewer .dv-line.tbl { white-space: pre; }
     </style>
@@ -387,7 +387,7 @@ uplift_t = p x run-rate x ramp(t)</div>
     var P = S.pipe;
     apps = UI.approvals('#approvals', P.items, { audit: audit, onChange: renderMemoInputs });
     UI.counters('#counters', { docs: Object.keys(DOCS).length, fields: P.fieldsN, checks: P.checks.length + P.fieldsN, flags: P.checks.filter(function (c) { return c.flag; }).length, review: P.items.length });
-    UI.table('#checkTable', { id: 'checks', name: 'Consistency checks', columns: [{ key: 'label', label: 'Check' }, { key: 'rep', label: 'CIM', num: 1 }, { key: 'calc', label: 'Recomputed or history', num: 1 }, { key: 'st', label: 'Result', cls: function (v) { return v === 'flag' ? 'neg' : ''; } }], rows: P.checks.map(function (c) { return { label: c.label, rep: c.rep, calc: c.calc, st: c.flag ? 'flag' : 'ties' }; }) });
+    UI.table('#checkTable', { id: 'checks', name: 'Consistency checks', columns: [{ key: 'label', label: 'Check' }, { key: 'rep', label: 'CIM', num: 1, wrap: 1 }, { key: 'calc', label: 'Recomputed or history', num: 1, wrap: 1 }, { key: 'st', label: 'Result', cls: function (v) { return v === 'flag' ? 'neg' : ''; } }], rows: P.checks.map(function (c) { return { label: c.label, rep: c.rep, calc: c.calc, st: c.flag ? 'flag' : 'ties' }; }) });
     renderMemoInputs(); renderEval();
     UI.$$('#runSteps span').forEach(function (s) { s.className = 'done'; });
   }

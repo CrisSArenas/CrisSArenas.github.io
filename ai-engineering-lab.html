@@ -80,10 +80,11 @@
       .bar-controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin-bottom: 14px; font-size: .92rem; }
       .bar-controls label { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
       .bar-controls select.field { max-width: 100%; }
-      /* long text columns wrap so the result columns stay in view */
-      #caseTable td:nth-child(4), #diffTable td:nth-child(4), #injTable td:nth-child(2), #injTable td:nth-child(4) { white-space: normal; min-width: 220px; }
-      #caseTable td:nth-child(8), #guardTable td:nth-child(3), #guardTable td:nth-child(4), #injTable td:nth-child(3), #apprTable td, #aclTable td:first-child, #blockedTable td:last-child { white-space: normal; min-width: 120px; }
-      #permTable th, #aclTable th, #apprTable th, #sweepTable th, #cmpTable th, #catTable th { white-space: normal; vertical-align: bottom; }
+      /* long text columns keep a readable width when they wrap (desktop; phones show cards) */
+      @media (min-width: 721px) {
+        #caseTable td:nth-child(4), #diffTable td:nth-child(4), #injTable td:nth-child(2), #injTable td:nth-child(4) { min-width: 11em; }
+        #caseTable td:nth-child(8), #guardTable td:nth-child(3), #guardTable td:nth-child(4), #injTable td:nth-child(3), #aclTable td:first-child, #blockedTable td:last-child { min-width: 7em; }
+      }
     </style>
 </head>
 <body>
@@ -628,7 +629,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       h += '<details class="tr-row"><summary><span class="dot st-' + sp.status + '" title="' + sp.status + '"></span><span class="tr-name">' + UI.esc(sp.name) + '</span><span class="tr-agent">' + UI.esc(sp.agent) + '</span><span class="tr-track">' + bar + '</span><span class="tr-ms">' + (sp.status === 'skipped' ? 'skipped' : ms(sp.dur)) + '</span></summary><div class="tr-body">' + body + '</div></details>';
     });
     $('#traceView').innerHTML = h + '</div>';
-    UI.table('#spanTable', { id: 'spans', name: 'Trace spans', columns: [{ key: 'id', label: '#', num: 1 }, { key: 'name', label: 'Span' }, { key: 'agent', label: 'Agent' }, { key: 'status', label: 'Status' }, { key: 'start', label: 'Start, ms', num: 1, fmt: function (v) { return F.int(v); } }, { key: 'dur', label: 'Duration, ms', num: 1, fmt: function (v) { return F.int(v); } }, { key: 'tin', label: 'Tokens in', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }, { key: 'tout', label: 'Tokens out', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }, { key: 'att', label: 'Attempts', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }],
+    UI.table('#spanTable', { id: 'spans', name: 'Trace spans', cardTitle: 'name', columns: [{ key: 'id', label: '#', num: 1 }, { key: 'name', label: 'Span' }, { key: 'agent', label: 'Agent' }, { key: 'status', label: 'Status' }, { key: 'start', label: 'Start, ms', num: 1, fmt: function (v) { return F.int(v); } }, { key: 'dur', label: 'Duration, ms', num: 1, fmt: function (v) { return F.int(v); } }, { key: 'tin', label: 'Tokens in', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }, { key: 'tout', label: 'Tokens out', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }, { key: 'att', label: 'Attempts', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }],
       rows: run.spans.map(function (sp) { return { id: sp.id, name: sp.name, agent: sp.agent, status: sp.status, start: sp.start, dur: sp.dur, tin: sp.tokensIn || 0, tout: sp.tokensOut || 0, att: sp.attempts ? sp.attempts.length : 0 }; }),
       foot: { name: 'Total', start: 0, dur: run.latency, tin: run.tokensIn, tout: run.tokensOut } });
   }
