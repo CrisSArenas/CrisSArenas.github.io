@@ -39,7 +39,7 @@ function PartBtn({ part, on, onSelect, className = '' }: { part: ArchPart; on: b
   );
 }
 
-/* A layered reference architecture for agent systems. Selecting or focusing a component explains its job and
+/* A layered reference architecture for agentic systems. Selecting or focusing a component explains its job and
    the failure it guards against. */
 export function ArchExplorer() {
   const [sel, setSel] = useState('approval');

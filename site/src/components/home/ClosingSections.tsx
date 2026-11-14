@@ -2,6 +2,7 @@ import { Reveal, KindBadge, Arrow, Button } from '@/components/ui';
 import { PAPER, ABOUT, EMAIL, LINKEDIN } from '@/data/site';
 import { LAB } from '@/data/projects';
 import { MailIcon, LinkedInIcon } from './Hero';
+import { ResearchArt, LabArt } from './CardArt';
 
 const ext = <svg viewBox="0 0 16 16" className="size-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M5 11l6-6M6 5h5v5" /></svg>;
 
@@ -22,6 +23,7 @@ export function ResearchAndLab() {
               <p className="mt-5 max-w-xl text-[15.5px] leading-relaxed text-muted">
                 It tests whether a transformer that learns market regimes and portfolio weights together builds better multi-asset portfolios, on simulated markets where the true regimes are known.
               </p>
+              <div className="mt-7"><ResearchArt /></div>
               <div className="mt-auto flex flex-wrap items-center gap-2.5 pt-9">
                 <Button href={PAPER.summary} variant="primary" size="sm" className="group">Read the summary <Arrow /></Button>
                 <Button href={PAPER.ssrn} variant="outline" size="sm" external>SSRN {ext}</Button>
@@ -39,6 +41,7 @@ export function ResearchAndLab() {
               <a href="/lab/" className="no-underline outline-none after:absolute after:inset-0 after:rounded-[20px] after:content-[''] focus-visible:after:outline-2 focus-visible:after:outline-teal">Robotics, embedded systems and edge ML</a>
             </h2>
             <p className="mt-4 text-[15px] leading-relaxed text-muted">Interactive simulators you can run in the browser, alongside hardware write-ups.</p>
+            <div className="mt-6"><LabArt /></div>
             <ul className="mt-6 divide-y divide-line border-y border-line">
               {sims.map(s => (
                 <li key={s.slug} className="flex items-baseline justify-between gap-4 py-3">

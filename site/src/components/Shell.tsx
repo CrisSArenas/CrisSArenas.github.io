@@ -3,6 +3,15 @@ import { motion, AnimatePresence, useScroll, useSpring, MotionConfig } from 'mot
 import { NAV, NAME, TITLE, EMAIL, LINKEDIN } from '@/data/site';
 import { useTheme } from '@/lib/theme';
 
+/* the site mark: a rising efficient-frontier curve with the chosen portfolio as a sand node */
+export function BrandMark({ className = 'size-8' }: { className?: string }) {
+  return (
+    <span className={`grid ${className} place-items-center rounded-[10px] border border-line-strong bg-panel text-teal transition-colors group-hover:border-teal`} aria-hidden="true">
+      <svg viewBox="0 0 32 32" className="size-[78%]"><path d="M7.5 23.5C10.5 15 15 11.2 24.5 9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /><circle cx="16.4" cy="12.6" r="3.1" fill="var(--c-gold)" /><circle cx="7.5" cy="23.5" r="1.6" fill="currentColor" /></svg>
+    </span>
+  );
+}
+
 function ThemeToggle() {
   const [theme, toggle] = useTheme();
   return (
@@ -38,7 +47,7 @@ export function Nav() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:rounded-lg focus:bg-card focus:px-3 focus:py-2">Skip to content</a>
       <nav className="wrap flex h-16 items-center justify-between" aria-label="Site">
         <a href="/" className="group flex items-center gap-3 text-[15px] font-semibold tracking-tight text-ink no-underline">
-          <span className="grid size-8 place-items-center rounded-lg border border-line-strong bg-panel font-mono text-[11px] text-teal transition-colors group-hover:border-teal">CA</span>
+          <BrandMark />
           <span>{NAME}</span>
         </a>
         <ul className="hidden items-center gap-1 md:flex">

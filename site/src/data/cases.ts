@@ -352,7 +352,7 @@ export const CASES: Record<string, CaseStudy> = {
   },
 
   'ai-engineering-lab': {
-    plain: 'An agent system that answers questions and takes actions over the documents of a fictional software company, laid out so every step can be inspected. Retrieval, permission checks, injection screening, approval gates, retries and scoring are real code running in the browser. No language model is called. The model steps are a deterministic rule-based stand-in, and the tool backends are simulated.',
+    plain: 'An agentic system that answers questions and takes actions over the documents of a fictional software company, laid out so every step can be inspected. Retrieval, permission checks, injection screening, approval gates, retries and scoring are real code running in the browser. No language model is called. The model steps are a deterministic rule-based stand-in, and the tool backends are simulated.',
     nature: 'Working application with simulated parts. The agents are deterministic and no language model is called. Retrieval, permissions, approval gates, the injection screen and scoring are real code. Tool backends are simulated, and latency, token and cost figures come from a stated cost model.',
     baseCase: 'Base case: seed 7, 11 fictional documents, 38 evaluation cases, no language model.',
     problem: [

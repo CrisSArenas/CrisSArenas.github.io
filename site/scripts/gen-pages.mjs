@@ -46,9 +46,9 @@ function html(p) {
 <meta property="og:image" content="${ORIGIN}/assets/images/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0A0D10">
-<link rel="icon" href="/assets/images/favicon.svg?v=6" type="image/svg+xml">
-<link rel="icon" href="/assets/images/favicon.png?v=6" type="image/png" sizes="64x64">
-<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=6">
+<link rel="icon" href="/assets/images/favicon.svg?v=7" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.png?v=7" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=7">
 <link rel="preload" href="/assets/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/css/tokens.css">
 <script>(function(){try{var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){}})();</script>

@@ -1,21 +1,11 @@
-/* Content and illustrative assumptions used only by the homepage. Project facts live in projects.ts and site.ts. */
+/* Content used only by the homepage. Project facts live in projects.ts and site.ts. */
 
-/* Hero frontier: a small multi-asset universe with plausible long-run assumptions (annualized, illustrative, not forecasts).
-   Private equity volatility is desmoothed, because reported private valuations understate how much they move. */
-export const UNIVERSE = [
-  { id: 'eq', name: 'Global equities', short: 'Equities', ret: 0.072, vol: 0.160 },
-  { id: 'pe', name: 'Private equity', short: 'Private eq.', ret: 0.085, vol: 0.230 },
-  { id: 'fi', name: 'Fixed income', short: 'Fixed income', ret: 0.040, vol: 0.060 },
-  { id: 'ra', name: 'Real assets', short: 'Real assets', ret: 0.060, vol: 0.130 },
-  { id: 'hf', name: 'Hedge funds', short: 'Hedge funds', ret: 0.050, vol: 0.075 }
-] as const;
-export const CORR: number[][] = [
-  [1.00, 0.80, 0.10, 0.55, 0.70],
-  [0.80, 1.00, 0.05, 0.50, 0.60],
-  [0.10, 0.05, 1.00, 0.20, 0.10],
-  [0.55, 0.50, 0.20, 1.00, 0.45],
-  [0.70, 0.60, 0.10, 0.45, 1.00]
-];
+/* Hero frontier: four asset classes with annualised return, volatility and correlation computed from monthly
+   history by tools/frontier-data.py (see that file for the series, the window and the method). */
+import FRONTIER from './frontier.json';
+const NAMES: Record<string, [string, string]> = { eq: ['US equities', 'Equities'], tsy: ['US Treasuries', 'Treasuries'], gold: ['Gold', 'Gold'], cmd: ['Commodities', 'Commodities'] };
+export const UNIVERSE = FRONTIER.assets.map(a => ({ id: a.id, name: NAMES[a.id][0], short: NAMES[a.id][1], ret: a.ret, vol: a.vol }));
+export const CORR: number[][] = FRONTIER.corr;
 
 /* The six steps of running a portfolio, each shown in a working application (slug from projects.ts) or a memo. */
 export const PM_STEPS = [
@@ -28,7 +18,7 @@ export const PM_STEPS = [
 ] as const;
 export const ASSET_CLASSES = ['Public equities', 'Fixed income', 'Hedge funds', 'Private equity', 'Private credit', 'Real assets'];
 
-/* How the agent systems are built, from the top of the stack down. Plain first; detail behind a disclosure. */
+/* How the agentic systems are built, from the top of the stack down. Plain first; detail behind a disclosure. */
 export const AI_LAYERS = [
   {
     id: 'orch', n: '01', title: 'Orchestrator and narrow workers',

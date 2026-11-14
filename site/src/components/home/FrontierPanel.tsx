@@ -16,11 +16,10 @@ const pct = (v: number, d = 1) => (v * 100).toFixed(d) + '%';
 
 /* where each asset's label sits relative to its dot, so labels never cover the frontier */
 const LABEL: Record<string, { dx: number; dy: number; anchor: 'start' | 'end' }> = {
-  eq: { dx: 9, dy: 4, anchor: 'start' },
-  pe: { dx: -6, dy: -9, anchor: 'end' },
-  fi: { dx: 9, dy: 13, anchor: 'start' },
-  ra: { dx: 9, dy: 13, anchor: 'start' },
-  hf: { dx: 9, dy: 4, anchor: 'start' }
+  eq: { dx: -8, dy: -9, anchor: 'end' },
+  tsy: { dx: 9, dy: 13, anchor: 'start' },
+  gold: { dx: 9, dy: 4, anchor: 'start' },
+  cmd: { dx: -8, dy: 14, anchor: 'end' }
 };
 
 export function FrontierPanel() {
@@ -42,8 +41,9 @@ export function FrontierPanel() {
 
   const H = width < 420 ? 200 : 232;
   const m = { t: 14, r: 14, b: 34, l: 40 };
-  const x = scaleLinear().domain([0.03, 0.25]).range([m.l, width - m.r]);
-  const y = scaleLinear().domain([0.035, 0.09]).range([H - m.b, m.t]);
+  /* axes fit the assets with a margin, rounded to whole percent */
+  const x = scaleLinear().domain([Math.floor(Math.min(...VOL) * 100 - 2) / 100, Math.ceil(Math.max(...VOL) * 100 + 1) / 100]).range([m.l, width - m.r]);
+  const y = scaleLinear().domain([Math.floor(Math.min(...MU) * 100 - .5) / 100, Math.ceil(Math.max(...MU) * 100 + .6) / 100]).range([H - m.b, m.t]);
   const path = line<{ vol: number; ret: number }>().x(d => x(d.vol)).y(d => y(d.ret)).curve(curveMonotoneX)(F) || '';
   const p = F[idx];
 
@@ -65,7 +65,7 @@ export function FrontierPanel() {
           <Readout label="Expected return" value={pct(p.ret)} />
           <Readout label="Volatility" value={pct(p.vol)} />
         </div>
-        <div className="pb-1 text-right font-mono text-[11px] uppercase tracking-[.12em] text-faint">{holds} of 5<br className="sm:hidden" /> held</div>
+        <div className="pb-1 text-right font-mono text-[11px] uppercase tracking-[.12em] text-faint">{holds} of {UNIVERSE.length}<br className="sm:hidden" /> held</div>
       </div>
 
       <div ref={wrapRef} className="relative">
@@ -81,7 +81,7 @@ export function FrontierPanel() {
               <text x={m.l - 8} y={y(t)} dy="0.32em" textAnchor="end" className="fill-faint font-mono text-[10px]">{pct(t, 0)}</text>
             </g>
           ))}
-          {[0.05, 0.10, 0.15, 0.20, 0.25].map(t => (
+          {x.ticks(5).map(t => (
             <text key={t} x={x(t)} y={H - m.b + 16} textAnchor="middle" className="fill-faint font-mono text-[10px]">{pct(t, 0)}</text>
           ))}
           <text x={width - m.r} y={H - 2} textAnchor="end" className="fill-faint text-[10.5px]">Volatility →</text>
@@ -143,9 +143,9 @@ export function FrontierPanel() {
 
       <p className="text-[13.5px] leading-relaxed text-muted">Move along the frontier: more return costs more risk; the bars show where the risk comes from.</p>
 
-      <Disclosure title="Assumptions and method" hint="illustrative long-run figures">
+      <Disclosure title="Inputs and method">
         <div className="space-y-4 text-[13px] leading-relaxed text-muted">
-          <p>Long-run annual assumptions for five asset classes. They are plausible round numbers chosen for illustration, and private equity volatility is desmoothed because reported valuations understate how much it moves.</p>
+          <p>Annualised expected return, volatility and correlation for four asset classes.</p>
           <div className="overflow-x-auto">
             <table className="num w-full min-w-[420px] border-collapse font-mono text-[11.5px]">
               <thead>

@@ -2,16 +2,16 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as RPointer
 import { Tabs } from '@/components/ui';
 import { cssVar, useThemeTick } from '@/lib/theme';
 
-type Algo = 'astar' | 'dijkstra';
-interface Result { order: number[]; path: number[]; cost: number; found: boolean }
-interface Grid { cols: number; rows: number; walls: Uint8Array; start: number; goal: number }
+export type Algo = 'astar' | 'dijkstra';
+export interface Result { order: number[]; path: number[]; cost: number; found: boolean }
+export interface Grid { cols: number; rows: number; walls: Uint8Array; start: number; goal: number }
 
 const SQRT2 = Math.SQRT2;
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* A* on an 8-connected grid with the octile heuristic, the same planner family Nav2 uses on its costmap.
    With h = 0 it is Dijkstra's algorithm. Diagonal moves may not cut a wall corner. */
-function search(g: Grid, algo: Algo): Result {
+export function search(g: Grid, algo: Algo): Result {
   const { cols, rows, walls, start, goal } = g;
   const n = cols * rows;
   const gs = new Float64Array(n).fill(Infinity), came = new Int32Array(n).fill(-1), closed = new Uint8Array(n);

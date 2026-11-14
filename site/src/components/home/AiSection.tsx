@@ -25,12 +25,12 @@ export function AiSection() {
     <section id="ai" aria-labelledby="ai-h" className="relative py-20 sm:py-28">
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-line" />
       <div className="wrap">
-        <SectionHead id="ai-h" eyebrow="AI engineering" title="How the agent systems are built"
+        <SectionHead id="ai-h" eyebrow="AI engineering" title="How the agentic systems are built"
           intro="Four layers, from the agent that plans the work down to the tests that catch regressions. Pick a layer for the plain version; the technical detail sits one click further." />
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">
           <Reveal>
-            <div role="tablist" aria-label="Layers of an agent system" aria-orientation="vertical" onKeyDown={onKey} className="relative flex flex-col gap-2.5">
+            <div role="tablist" aria-label="Layers of an agentic system" aria-orientation="vertical" onKeyDown={onKey} className="relative flex flex-col gap-2.5">
               <span aria-hidden="true" className="absolute bottom-6 left-[27px] top-6 w-px bg-line-strong" />
               {AI_LAYERS.map((l, i) => {
                 const on = i === sel;

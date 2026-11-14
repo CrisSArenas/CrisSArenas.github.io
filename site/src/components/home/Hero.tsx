@@ -25,10 +25,12 @@ export function Hero() {
       <div aria-hidden="true" className="grid-bg home-hero-grid pointer-events-none absolute inset-0" />
       <div className="wrap relative grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14">
         <div className="max-w-xl">
-          <motion.div {...rise(0)} className="eyebrow mb-6 flex items-center gap-3 max-sm:text-[10.5px] max-sm:tracking-[.1em]">
+          <motion.img {...rise(0)} src="/assets/images/profile-800.webp" alt={NAME} width={112} height={112} decoding="async" fetchPriority="high"
+            className="mb-7 size-[88px] rounded-full object-cover ring-2 ring-sand/80 ring-offset-4 ring-offset-page sm:size-28" />
+          <motion.div {...rise(.04)} className="eyebrow mb-6 flex items-center gap-3 max-sm:text-[10.5px] max-sm:tracking-[.1em]">
             <span className="hidden h-px w-8 bg-teal/60 sm:block" aria-hidden="true" />Multi-asset portfolios · Agentic AI systems
           </motion.div>
-          <motion.h1 id="hero-name" {...rise(.06)} className="display text-[clamp(2.9rem,7vw,4.9rem)] text-ink">{NAME}</motion.h1>
+          <motion.h1 id="hero-name" {...rise(.08)} className="display text-[clamp(2.9rem,7vw,4.9rem)] text-ink">{NAME}</motion.h1>
           <motion.p {...rise(.12)} className="mt-5 text-[clamp(1.08rem,1.6vw,1.3rem)] font-medium leading-snug tracking-[-.01em] text-ink/90 [text-wrap:balance]">{TITLE}</motion.p>
           <motion.p {...rise(.18)} className="lede mt-5 max-w-[34rem]">{HERO_LINE}</motion.p>
           <motion.div {...rise(.26)} className="mt-9 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
