@@ -1,16 +1,19 @@
 /* Content used only by the homepage. Project facts live in projects.ts and site.ts. */
 
-/* Hero frontier: nine asset classes with annualised return, volatility and correlation from 1995-2024 annual
-   returns, compiled and computed by tools/frontier-research.py (sources and judgement calls in
-   tools/frontier-research.md). Private equity and real estate risk are desmoothed. */
+/* Hero frontier: nine asset classes. Risk (volatility and correlation) comes from 1995-2024 annual returns, compiled by
+   tools/frontier-research.py, with private equity and real estate desmoothed. Expected returns are market implied:
+   the returns at which holding the market portfolio in frontier-config.ts is optimal. The 30-year averages are kept as
+   a reference. Sources and judgement calls in tools/frontier-research.md. */
 import FRONTIER from './frontier.json';
-export type AssetGroup = 'growth' | 'defensive' | 'credit' | 'real' | 'alternatives';
-export const UNIVERSE = FRONTIER.assets.map(a => ({ id: a.id, name: a.name, short: a.short, group: a.group as AssetGroup, ret: a.ret, vol: a.vol }));
+import { covariance, impliedReturns } from '@/components/home/frontier';
+import { MARKET_BY_ID, CASH, RISK_AVERSION, CAPS_BY_ID, GROUP_BY_ID } from './frontier-config';
+export { GROUPS, GROUP_LABEL, CASH, type AssetGroup } from './frontier-config';
 export const CORR: number[][] = FRONTIER.corr;
-/* institutional position limits: private and less liquid assets are capped, as a real policy portfolio would be */
-export const CAPS_BY_ID: Record<string, number> = { pe: 0.20, re: 0.15, hf: 0.15, em: 0.15 };
+export const MARKET: number[] = FRONTIER.assets.map(a => MARKET_BY_ID[a.id]);
+export const SIGMA = covariance(FRONTIER.assets.map(a => a.vol), CORR);
+const IMPLIED = impliedReturns(SIGMA, MARKET, RISK_AVERSION, CASH);
+export const UNIVERSE = FRONTIER.assets.map((a, i) => ({ id: a.id, name: a.name, short: a.short, group: GROUP_BY_ID[a.id], ret: IMPLIED[i], hist: a.ret, vol: a.vol, mkt: MARKET[i] }));
 export const CAPS: number[] = UNIVERSE.map(a => CAPS_BY_ID[a.id] ?? 1);
-export const GROUP_LABEL: Record<AssetGroup, string> = { growth: 'Growth', defensive: 'Defensive', credit: 'Credit', real: 'Real assets', alternatives: 'Diversifiers' };
 
 /* The six steps of running a portfolio, each shown in a working application (slug from projects.ts) or a memo. */
 export const PM_STEPS = [

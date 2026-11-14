@@ -3,7 +3,7 @@ import { motion, useInView, useReducedMotion, animate } from 'motion/react';
 import { scaleLinear } from 'd3-scale';
 import { line, curveMonotoneX } from 'd3-shape';
 import { Disclosure } from '@/components/ui';
-import { UNIVERSE, CORR, CAPS, GROUP_LABEL, type AssetGroup } from '@/data/home';
+import { UNIVERSE, CORR, CAPS, GROUPS, GROUP_LABEL, CASH, type AssetGroup } from '@/data/home';
 import POINTS from '@/data/frontier-points.json';
 import type { FrontierPoint } from './frontier';
 import { useWidth, prefersReducedMotion } from './useSize';
@@ -12,16 +12,18 @@ const MU = UNIVERSE.map(a => a.ret);
 const VOL = UNIVERSE.map(a => a.vol);
 /* the frontier is solved exactly at build time with the position caps (scripts/frontier-points.ts) */
 const F: FrontierPoint[] = POINTS.points;
-/* start near a balanced institutional mix, about 10% volatility */
-const START = F.reduce((b, q, i) => (Math.abs(q.vol - 0.10) < Math.abs(F[b].vol - 0.10) ? i : b), 0);
-const pct = (v: number, d = 1) => (v * 100).toFixed(d) + '%';
-const GROUPS: AssetGroup[] = ['growth', 'credit', 'defensive', 'real', 'alternatives'];
+/* the curve passes through the market portfolio (expected returns are implied from it); the panel opens there */
+const MARKET = POINTS.market;
+const START = MARKET;
+/* rounds away negative zero, so a tiny hedge shows 0% rather than -0% */
+const pct = (v: number, d = 1) => { const t = (v * 100).toFixed(d); return (Number(t) === 0 ? (0).toFixed(d) : t) + '%'; };
+const GROUP_SUB: Record<AssetGroup, string> = { equity: 'Public and private', rates: 'Treasuries', credit: 'IG and high yield', realestate: '', hedgefunds: '' };
 const IDX_BY_GROUP = GROUPS.map(g => UNIVERSE.map((a, i) => (a.group === g ? i : -1)).filter(i => i >= 0));
 
 /* chart labels: full names when there is room, short codes on narrow screens */
 const LABEL: Record<string, [string, string]> = {
   useq: ['US equities', 'US'], intl: ['Intl developed', 'Intl'], em: ['Emerging', 'EM'], gov: ['Treasuries', 'Gov'], ig: ['IG credit', 'IG'],
-  hy: ['High yield', 'HY'], pe: ['Private equity', 'PE'], re: ['Real estate', 'RE'], hf: ['Hedge funds', 'HF']
+  hy: ['High yield', 'HY'], pe: ['Private equity', 'PE'], re: ['Real estate', 'RE'], hf: ['Hedge funds', 'HF'], mkt: ['Market portfolio', 'Market']
 };
 type Box = { x0: number; y0: number; x1: number; y1: number };
 type Placed = { id: string; t: string; x: number; y: number; anchor: 'start' | 'middle' | 'end' };
@@ -81,7 +83,7 @@ export function FrontierPanel() {
   const path = line<{ vol: number; ret: number }>().x(d => x(d.vol)).y(d => y(d.ret)).curve(curveMonotoneX)(F) || '';
   const p = F[idx];
   const labels = useMemo(() => {
-    const dots = UNIVERSE.map(a => ({ id: a.id, cx: x(a.vol), cy: y(a.ret) }));
+    const dots = [{ id: 'mkt', cx: x(F[MARKET].vol), cy: y(F[MARKET].ret) }, ...UNIVERSE.map(a => ({ id: a.id, cx: x(a.vol), cy: y(a.ret) }))];
     const curve: [number, number][] = F.map(q => [x(q.vol), y(q.ret)]);
     return placeLabels(dots, curve, { x0: m.l - 4, y0: m.t - 6, x1: width - m.r + 4, y1: H - m.b - 2 }, width < 420);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,15 +104,15 @@ export function FrontierPanel() {
     <div className="flex flex-col gap-3.5">
       <div className="flex items-end justify-between gap-4">
         <div className="flex gap-6 sm:gap-8">
-          <Readout label="Expected return" value={pct(p.ret)} />
-          <Readout label="Volatility" value={pct(p.vol)} />
+          <Readout label="Expected return" note="Long term, annual" value={pct(p.ret)} />
+          <Readout label="Volatility" note="Annual" value={pct(p.vol)} />
         </div>
         <div className="pb-1 text-right font-mono text-[11px] uppercase tracking-[.12em] text-faint">{holds} of {UNIVERSE.length}<br className="sm:hidden" /> held</div>
       </div>
 
       <div ref={wrapRef} className="relative">
         <svg width={width} height={H} viewBox={`0 0 ${width} ${H}`} className="block touch-pan-y select-none overflow-visible"
-          role="img" aria-label={`Long-only efficient frontier for nine asset classes, with private equity capped at 20%, real estate, hedge funds and emerging markets at 15%. Selected portfolio: ${valueText}.`}
+          role="img" aria-label={`Long-only efficient frontier for nine asset classes with market-implied expected returns, private equity capped at 20%, and real estate, hedge funds and emerging markets at 15%. The marked point is the market portfolio. Selected portfolio: ${valueText}.`}
           onPointerDown={e => { dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); pick(e.clientX, e.currentTarget); }}
           onPointerMove={e => { if (dragging.current) pick(e.clientX, e.currentTarget); }}
           onPointerUp={() => { dragging.current = false; }} onPointerCancel={() => { dragging.current = false; }}
@@ -135,6 +137,7 @@ export function FrontierPanel() {
           <motion.path d={path} fill="none" className="stroke-teal" strokeWidth={2.25} strokeLinecap="round"
             initial={reduce ? false : { pathLength: 0 }} animate={inView || reduce ? { pathLength: 1 } : undefined} transition={{ duration: 1.1, ease: [.25, 1, .5, 1] }} />
 
+          <circle cx={x(F[MARKET].vol)} cy={y(F[MARKET].ret)} r={5.5} fill="none" className="stroke-sand" strokeWidth={1.75} />
           {UNIVERSE.map(a => <circle key={a.id} cx={x(a.vol)} cy={y(a.ret)} r={3.5} className="fill-card stroke-graphite-2" strokeWidth={1.5} />)}
           {labels.map(l => <text key={l.id} x={l.x} y={l.y} textAnchor={l.anchor} className="pointer-events-none fill-muted text-[10.5px]">{l.t}</text>)}
 
@@ -160,12 +163,12 @@ export function FrontierPanel() {
         <ul className="grid gap-2" aria-label="Allocation and risk contribution by role in the portfolio">
           {GROUPS.map((g, gi) => {
             const w = IDX_BY_GROUP[gi].reduce((t, i) => t + p.w[i], 0), rc = IDX_BY_GROUP[gi].reduce((t, i) => t + p.rc[i], 0);
-            return <Row key={g} name={GROUP_LABEL[g]} sub={IDX_BY_GROUP[gi].map(i => UNIVERSE[i].short).join(', ')} w={w} rc={rc} />;
+            return <Row key={g} name={GROUP_LABEL[g]} sub={GROUP_SUB[g] || undefined} w={w} rc={rc} />;
           })}
         </ul>
       </div>
 
-      <p className="text-[13.5px] leading-relaxed text-muted">Move along the frontier: more return costs more risk; the bars show where the risk comes from.</p>
+      <p className="text-[13.5px] leading-relaxed text-muted">The curve opens at the market portfolio, which holds all nine. Move along it: more return costs more risk, and the bars show where the risk comes from.</p>
 
       <Disclosure title="By asset class">
         <ul className="grid gap-2" aria-label="Allocation and risk contribution by asset class">
@@ -175,33 +178,37 @@ export function FrontierPanel() {
 
       <Disclosure title="Inputs and method">
         <div className="space-y-4 text-[13px] leading-relaxed text-muted">
-          <p>Annualised expected return and volatility for nine asset classes, and how they move together. Private equity and real estate risk are desmoothed, because reported valuations understate how much they move.</p>
-          <table className="num w-full border-collapse font-mono text-[11.5px]">
-            <thead><tr className="text-faint"><th className="py-1.5 pr-2 text-left font-sans font-normal">Asset class</th><th className="px-1 text-right font-normal">Return</th><th className="px-1 text-right font-normal">Vol</th><th className="pl-1 text-right font-normal">Cap</th></tr></thead>
+          <p>Expected returns are market implied. Start from a typical global multi-asset portfolio, the market weights below, and ask what returns would make holding exactly that portfolio the best choice, given each asset class&rsquo;s risk and how the classes move together. Each class is paid only for the market risk it carries, over cash at {pct(CASH, 0)}. Position caps are listed under By asset class.</p>
+          <table className="num w-full border-collapse font-mono text-[10.5px] sm:text-[11.5px]">
+            <thead><tr className="text-faint"><th className="whitespace-nowrap py-1.5 pr-2 text-left font-sans font-normal">Asset class</th><th className="px-1 text-right font-normal">Expected</th><th className="px-1 text-right font-normal">30-yr</th><th className="px-1 text-right font-normal">Vol</th><th className="px-1 text-right font-normal">Market</th><th className="hidden pl-1 text-right font-normal sm:table-cell">Cap</th></tr></thead>
             <tbody>
               {UNIVERSE.map((a, i) => (
                 <tr key={a.id} className="border-t border-line text-ink">
-                  <td className="py-1.5 pr-2 font-sans text-[12px]">{a.short}</td>
+                  <td className="whitespace-nowrap py-1.5 pr-2 font-sans text-[11.5px] sm:text-[12px]">{a.short}</td>
                   <td className="px-1 text-right">{pct(a.ret)}</td>
+                  <td className="px-1 text-right text-faint">{pct(a.hist)}</td>
                   <td className="px-1 text-right">{pct(a.vol)}</td>
-                  <td className="pl-1 text-right text-faint">{CAPS[i] < 1 ? pct(CAPS[i], 0) : ''}</td>
+                  <td className="px-1 text-right">{pct(a.mkt, 0)}</td>
+                  <td className="hidden pl-1 text-right text-faint sm:table-cell">{CAPS[i] < 1 ? pct(CAPS[i], 0) : ''}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <p>Risk comes from 30 years of annual history, 1995 to 2024. Private equity and real estate are desmoothed, because reported valuations understate how much they move. History sets the risk but not the returns: 30-year average returns are too noisy to optimise on, about &plusmn;3% a year for US equities alone, and an optimiser treats every such difference as real. The 30-year averages are shown for reference.</p>
           <CorrMap />
-          <p>Each point on the curve is the lowest-risk fully invested, long-only portfolio for its expected return, with every asset class held between zero and its cap. It is solved exactly: at the optimum each asset is at zero, at its cap or in between, and for every such split the problem has a closed-form solution; the best feasible one is kept. Risk shares are Euler contributions, weight times marginal risk divided by total variance, so they add to 100%.</p>
+          <p>Each point on the curve is the lowest-risk fully invested, long-only portfolio for its expected return, with every asset class held between zero and its cap. It is solved exactly: at the optimum each asset is at zero, at its cap or in between, and for every such split the problem has a closed-form solution; the best feasible one is kept. Risk shares are Euler contributions, weight times marginal risk divided by total variance, so they add to 100%. At the market portfolio&rsquo;s expected return the solver recovers the market weights exactly.</p>
         </div>
       </Disclosure>
     </div>
   );
 }
 
-function Readout({ label, value }: { label: string; value: string }) {
+function Readout({ label, note, value }: { label: string; note?: string; value: string }) {
   return (
     <div>
       <div className="font-mono text-[10.5px] uppercase tracking-[.12em] text-faint">{label}</div>
       <div className="num mt-1 text-[26px] font-semibold leading-none tracking-tight text-ink">{value}</div>
+      {note && <div className="mt-1.5 text-[11px] text-faint">{note}</div>}
     </div>
   );
 }

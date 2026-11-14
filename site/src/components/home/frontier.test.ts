@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { covariance, frontier, maxReturn, minVariance, riskShares, point } from './frontier';
-import { UNIVERSE, CORR, CAPS } from '@/data/home';
+import { covariance, frontier, impliedReturns, maxReturn, minVariance, riskShares, point } from './frontier';
+import { UNIVERSE, CORR, CAPS, MARKET, CASH } from '@/data/home';
 import POINTS from '@/data/frontier-points.json';
 
 const MU = UNIVERSE.map(a => a.ret), VOL = UNIVERSE.map(a => a.vol), S = covariance(VOL, CORR);
-const F = frontier(MU, S, 61, CAPS);
+const MK = point(MU, S, MARKET);
+const F = frontier(MU, S, 61, CAPS, [MK.ret]);
 const sum = (a: number[]) => a.reduce((s, v) => s + v, 0);
 
 /* random long-only portfolios inside the caps (seeded), used to check that none beats the solver */
@@ -31,7 +32,7 @@ describe('efficient frontier', () => {
     expect(minVariance(MU, S, undefined, CAPS)).not.toBeNull();
   });
   it('every point is fully invested, long only, inside the caps, with risk shares summing to 100%', () => {
-    expect(F.length).toBe(61);
+    expect(F.length).toBe(62);
     for (const p of F) {
       expect(sum(p.w)).toBeCloseTo(1, 9);
       p.w.forEach((w, i) => { expect(w).toBeGreaterThanOrEqual(0); expect(w).toBeLessThanOrEqual(CAPS[i] + 1e-9); });
@@ -56,6 +57,28 @@ describe('efficient frontier', () => {
     const w = F[20].w, v0 = point(MU, S, w).vol, h = 1e-6;
     const rc = riskShares(S, w);
     w.forEach((wi, i) => { const w2 = w.slice(); w2[i] += h; const d = (point(MU, S, w2).vol - v0) / h; expect(wi * d / v0).toBeCloseTo(rc[i], 5); });
+  });
+  it('expected returns are market implied: the market portfolio is optimal for them', () => {
+    expect(sum(MARKET)).toBeCloseTo(1, 12);
+    MARKET.forEach((w, i) => { expect(w).toBeGreaterThan(0); expect(w).toBeLessThanOrEqual(CAPS[i]); });
+    /* excess returns are proportional to S w, so the marginal reward to risk is the same for every asset */
+    const Sw = S.map(r => r.reduce((t, s, j) => t + s * MARKET[j], 0));
+    const k = (MU[0] - CASH) / Sw[0];
+    MU.forEach((m, i) => expect((m - CASH) / Sw[i]).toBeCloseTo(k, 10));
+    expect(impliedReturns(S, MARKET, 2.5, CASH)).toEqual(MU);
+  });
+  it('at the market expected return the solver recovers the market weights, holding all nine', () => {
+    const w = minVariance(MU, S, MK.ret, CAPS)!;
+    w.forEach((wi, i) => expect(wi).toBeCloseTo(MARKET[i], 8));
+    const shipped = POINTS.points[POINTS.market];
+    expect(shipped.ret).toBeCloseTo(MK.ret, 6);
+    shipped.w.forEach((wi, i) => { expect(wi).toBeCloseTo(MARKET[i], 5); expect(wi).toBeGreaterThan(0); });
+  });
+  it('credit is held through the middle of the curve', () => {
+    const credit = (p: { w: number[] }) => UNIVERSE.reduce((t, a, i) => t + (a.group === 'credit' ? p.w[i] : 0), 0);
+    const mid = F.filter(p => p.vol > 0.06 && p.vol < 0.16);
+    expect(mid.length).toBeGreaterThan(20);
+    mid.forEach(p => expect(credit(p)).toBeGreaterThan(0.05));
   });
   it('the frontier shipped with the page matches a fresh solve', () => {
     expect(POINTS.caps).toEqual(CAPS);

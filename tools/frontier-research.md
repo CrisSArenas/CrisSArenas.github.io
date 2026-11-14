@@ -200,5 +200,38 @@ S&P-UST -0.25, S&P-HY 0.65, S&P-HFRI 0.78, S&P-REIT 0.58, UST-IG 0.58.
    so the monthly cross-check above should be read alongside them.
 8. **Position caps on the site.** The frontier on the homepage holds every class between zero and a cap: private
    equity at most 20%, real estate, hedge funds and emerging markets at most 15% each. These are typical policy limits
-   for illiquid or concentrated sleeves, not estimates. The caps live in `site/src/data/home.ts` and
-   `site/scripts/frontier-points.ts`, which must agree (a unit test checks the shipped points against a fresh solve).
+   for illiquid or concentrated sleeves, not estimates. The caps live in `site/src/data/frontier-config.ts`, shared by
+   the page and the build-time solve (a unit test checks the shipped points against a fresh solve).
+
+## Expected returns on the site
+
+The homepage uses the 30-year history for risk only. Expected returns are market implied (reverse optimisation, the
+Black-Litterman prior): `pi = cash + lambda * Sigma * w_mkt`, with Sigma from the table above.
+
+- Market weights `w_mkt`: US equities 30%, international developed 14%, emerging markets 5%, Treasuries 22%,
+  investment grade 13%, high yield 4%, private equity 5%, real estate 4%, hedge funds 3%. A typical global multi-asset
+  market portfolio for these nine classes; a judgement, not a measured market capitalisation.
+- Cash 3.0%, risk aversion lambda = 2.5. These set the level of returns only. Scaling excess returns does not change
+  which portfolios are efficient.
+- Resulting expected returns: US 7.7%, international 7.4%, EM 8.0%, Treasuries 3.0%, IG 4.2%, HY 5.9%, PE 8.0%,
+  RE 5.5%, HF 5.2%. The market portfolio earns 6.0% at 10.9% volatility.
+
+Why not the 30-year averages. The standard error of a 30-year mean is vol / sqrt(30): about 3.3% a year for US and
+international equities, 2.6% for high yield and 1.8% for hedge funds. Most differences between classes are inside
+that noise, and a mean-variance optimiser treats them as real. On the historical means, hedge funds (8.0% at 9.8%)
+dominate high yield (7.8% at 14.0%), and US equities and Treasuries crowd out investment grade, so credit gets 0%
+everywhere on the curve. Sensitivity check: with the implied returns, raising Treasuries alone by 0.7% a year removes
+credit again, which is why no hand-set views are added.
+
+Properties a reviewer can check (unit tests in `site/src/components/home/frontier.test.ts`):
+- excess returns are proportional to Sigma * w_mkt, so the reward per unit of marginal risk is equal across classes;
+- at the market portfolio's expected return the capped solver returns the market weights exactly, holding all nine;
+- investment grade plus high yield is above 5% everywhere between 6% and 16% volatility.
+
+Known consequences, left as they are:
+- Treasuries come out at about cash. Over 1995-2024 they rose when equities fell, so in equilibrium they are held as a
+  hedge, not for return.
+- Private assets get no illiquidity premium: equilibrium pays only for market risk. Adding one is a view, and with full
+  confidence it pushes the curve back to corner portfolios; the position caps stay in place either way.
+
+The settings live in `site/src/data/frontier-config.ts`, shared by the page and by `site/scripts/frontier-points.ts`.

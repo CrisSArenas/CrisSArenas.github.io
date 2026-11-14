@@ -103,14 +103,23 @@ export function maxReturn(mu: number[], caps?: number[]): number {
   return r;
 }
 
-/* frontier from the minimum-variance portfolio to the highest-return portfolio, evenly spaced in target return */
-export function frontier(mu: number[], S: number[][], steps = 61, caps?: number[]): FrontierPoint[] {
+/* market-implied (reverse-optimised) expected returns: the returns at which the market weights w are the optimal
+   portfolio for an investor with the given risk aversion, pi = cash + lambda * S w (the Black-Litterman prior) */
+export function impliedReturns(S: number[][], w: number[], riskAversion: number, cash: number): number[] {
+  return S.map(r => cash + riskAversion * r.reduce((t, sij, j) => t + sij * w[j], 0));
+}
+
+/* frontier from the minimum-variance portfolio to the highest-return portfolio, evenly spaced in target return,
+   plus any extra target returns (such as the market portfolio's), all in increasing order */
+export function frontier(mu: number[], S: number[][], steps = 61, caps?: number[], extra: number[] = []): FrontierPoint[] {
   const w0 = minVariance(mu, S, undefined, caps)!;
   const r0 = w0.reduce((s, wi, i) => s + wi * mu[i], 0), r1 = maxReturn(mu, caps);
+  const targets = Array.from({ length: steps }, (_, s) => r0 + ((r1 - r0) * s) / (steps - 1));
+  for (const t of extra) if (t > r0 && t < r1 && !targets.some(u => Math.abs(u - t) < 1e-9)) targets.push(t);
+  targets.sort((a, b) => a - b);
   const out: FrontierPoint[] = [];
-  for (let s = 0; s < steps; s++) {
-    const t = r0 + ((r1 - r0) * s) / (steps - 1);
-    const w = s === 0 ? w0 : minVariance(mu, S, t, caps);
+  for (const t of targets) {
+    const w = t === r0 ? w0 : minVariance(mu, S, t, caps);
     if (w) out.push(point(mu, S, w));
   }
   return out;
