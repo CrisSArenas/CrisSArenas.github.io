@@ -10,7 +10,7 @@ export function ProjectCard({ p }: { p: Project }) {
   return (
     <article className="pcard group surface relative flex h-full flex-col overflow-hidden">
       <div className="pcard-shot relative aspect-[16/10] overflow-hidden border-b border-line bg-panel">
-        <Preview slug={p.slug} title={p.title} />
+        <Preview slug={p.slug} title={p.title} className="pv-zoom" sizes="(min-width: 1280px) 620px, (min-width: 768px) 80vw, 160vw" />
       </div>
       <div className="flex flex-1 flex-col p-6">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

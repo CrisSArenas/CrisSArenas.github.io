@@ -289,13 +289,13 @@ export function AStarDemo() {
   return (
     <div className="surface overflow-hidden">
       <div className="flex flex-col gap-4 border-b border-line p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <Tabs label="Search algorithm" value={algo} onChange={switchAlgo} tabs={[{ id: 'astar', label: 'A*' }, { id: 'dijkstra', label: 'Dijkstra' }]} />
+        <div className="self-start"><Tabs label="Search algorithm" value={algo} onChange={switchAlgo} tabs={[{ id: 'astar', label: 'A*' }, { id: 'dijkstra', label: 'Dijkstra' }]} /></div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => run(true)} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-btn px-5 text-[13.5px] font-medium text-btn-ink transition-shadow hover:shadow-[0_0_0_4px_color-mix(in_srgb,var(--c-btn)_18%,transparent)]">
+          <button type="button" onClick={() => run(true)} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-btn px-4 text-[13.5px] sm:px-5 font-medium text-btn-ink transition-shadow hover:shadow-[0_0_0_4px_color-mix(in_srgb,var(--c-btn)_18%,transparent)]">
             <svg viewBox="0 0 12 12" className="size-3" fill="currentColor" aria-hidden="true"><path d="M3 1.5v9l7-4.5z" /></svg>Find path
           </button>
-          <button type="button" onClick={randomWalls} className="min-h-10 rounded-full px-4 text-[13.5px] text-ink ring-1 ring-inset ring-line-strong transition-shadow hover:ring-teal">Random walls</button>
-          <button type="button" onClick={clearWalls} className="min-h-10 rounded-full px-4 text-[13.5px] text-muted transition-colors hover:bg-panel hover:text-ink">Clear</button>
+          <button type="button" onClick={randomWalls} className="min-h-10 rounded-full px-3.5 text-[13.5px] text-ink ring-1 ring-inset ring-line-strong transition-shadow hover:ring-teal">Random walls</button>
+          <button type="button" onClick={clearWalls} className="min-h-10 rounded-full px-3 text-[13.5px] text-muted transition-colors hover:bg-panel hover:text-ink">Clear</button>
         </div>
       </div>
 
@@ -310,7 +310,7 @@ export function AStarDemo() {
         </div>
       </div>
 
-      <div className="grid gap-4 border-t border-line p-5 sm:grid-cols-[auto_auto_1fr] sm:items-center sm:gap-8 sm:p-6">
+      <div className="grid grid-cols-2 gap-4 border-t border-line p-5 sm:grid-cols-[auto_auto_1fr] sm:items-center sm:gap-8 sm:p-6">
         <div>
           <div className="num font-mono text-[1.4rem] font-semibold text-ink">{result ? result.order.length : '–'}</div>
           <div className="text-[12.5px] text-muted">cells explored</div>
@@ -319,7 +319,7 @@ export function AStarDemo() {
           <div className="num font-mono text-[1.4rem] font-semibold text-ink">{result ? (result.found ? result.cost.toFixed(1) : 'none') : '–'}</div>
           <div className="text-[12.5px] text-muted">path length, in cells</div>
         </div>
-        <p id="astar-status" className="text-[13.5px] leading-relaxed text-muted" aria-live="polite">
+        <p id="astar-status" className="col-span-2 text-[13.5px] sm:col-span-1 leading-relaxed text-muted" aria-live="polite">
           {!result ? 'Draw walls by dragging across the grid, move the start or goal by dragging them, then find the path.'
             : !result.found ? 'The goal is walled off, so no path exists. Clear a gap and the planner finds one at once.'
             : compare ? `For the same shortest path, A* explored ${compare.astar} cells and Dijkstra’s search ${compare.dijkstra}${saved > 0 ? `, so the estimate saved ${saved}% of the work.` : '.'}` : ''}

@@ -1,11 +1,12 @@
 import { useId, useState, type ReactNode } from 'react';
-import { motion, AnimatePresence, type Variants } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion, type Variants } from 'motion/react';
 
 /* Reveal: fades and lifts content into place once as it scrolls into view. */
 export function Reveal({ children, delay = 0, y = 18, className = '', as = 'div' }: { children: ReactNode; delay?: number; y?: number; className?: string; as?: 'div' | 'section' | 'li' | 'article' }) {
   const M = motion[as];
+  const reduce = useReducedMotion();
   return (
-    <M className={className} initial={{ opacity: 0, y }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+    <M className={className} initial={reduce ? false : { opacity: 0, y }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '0px 0px -10% 0px' }}
       transition={{ duration: .7, delay, ease: [.25, 1, .5, 1] }}>
       {children}
     </M>

@@ -27,7 +27,7 @@ function Hero() {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-end">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7, ease }}>
             <div className="eyebrow mb-6">Work</div>
-            <h1 id="work-h" className="display max-w-[14ch] text-[clamp(2.5rem,6.4vw,5.2rem)] text-ink">Working applications, each with a case study</h1>
+            <h1 id="work-h" className="display max-w-[15ch] text-[clamp(2.4rem,5.6vw,4.4rem)] text-ink">Working applications, each with a case study</h1>
             <p className="lede mt-7 max-w-2xl">Each application runs in the browser on synthetic data, with its methods, assumptions and checks open to inspection. The case studies explain what each one does, why it matters and what it shows at its base case.</p>
           </motion.div>
           <motion.dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7, delay: .12, ease }}>
@@ -62,19 +62,19 @@ function Grid() {
   return (
     <section className="wrap pt-20 md:pt-28" aria-labelledby="apps-h">
       <h2 id="apps-h" className="sr-only">Applications</h2>
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0 max-w-full">
-          <Tabs tabs={tabs} value={filter} onChange={setFilter} label="Filter applications by area" />
-        </div>
-        <a href="/lab/" className="group inline-flex items-center gap-2 text-[13.5px] text-muted no-underline transition-colors hover:text-ink">
-          Robotics, embedded systems and edge ML are in the Engineering Lab <Arrow />
+      <div className="min-w-0 max-w-full">
+        <Tabs tabs={tabs} value={filter} onChange={setFilter} label="Filter applications by area" />
+      </div>
+      <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-baseline md:justify-between md:gap-8">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p key={filter} className="m-0 max-w-2xl text-[14.5px] leading-relaxed text-muted" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: .25 }} aria-live="polite">
+            {filter === 'all' ? `All ${PROJECTS.length} applications, across ${AREA_IDS.length} areas.` : AREAS[filter].blurb}
+          </motion.p>
+        </AnimatePresence>
+        <a href="/lab/" className="group inline-flex shrink-0 items-center gap-2 text-[13.5px] text-muted no-underline transition-colors hover:text-ink">
+          Robotics and embedded systems are in the Lab <Arrow />
         </a>
       </div>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.p key={filter} className="mt-6 max-w-2xl text-[14.5px] leading-relaxed text-muted" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: .25 }} aria-live="polite">
-          {filter === 'all' ? `All ${PROJECTS.length} applications, across ${AREA_IDS.length} areas.` : AREAS[filter].blurb}
-        </motion.p>
-      </AnimatePresence>
       <LayoutGroup>
         <motion.ul layout className="mt-10 grid list-none grid-cols-1 gap-6 p-0 md:grid-cols-2 xl:grid-cols-3">
           <AnimatePresence mode="popLayout">
