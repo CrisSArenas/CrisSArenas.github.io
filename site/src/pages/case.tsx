@@ -80,9 +80,9 @@ function Section({ n, id, title, children, wide = false }: { n: string; id: stri
   return (
     <section className="wrap pt-24 md:pt-32" aria-labelledby={id}>
       <div className={wide ? '' : 'grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,8fr)] lg:gap-16'}>
-        <Reveal className={wide ? 'mb-10 flex items-baseline gap-4' : 'lg:sticky lg:top-28 lg:self-start'}>
+        <Reveal className={wide ? 'mb-10' : 'lg:sticky lg:top-28 lg:self-start'}>
           <div className="font-mono text-[11px] tracking-[.14em] text-faint">{n}</div>
-          <h2 id={id} className={`display text-[clamp(1.7rem,3.2vw,2.5rem)] text-ink ${wide ? '' : 'mt-3'}`}>{title}</h2>
+          <h2 id={id} className={`display text-[clamp(1.7rem,3.2vw,2.5rem)] text-ink mt-3`}>{title}</h2>
         </Reveal>
         <div className="min-w-0">{children}</div>
       </div>
@@ -149,7 +149,7 @@ function Hood({ c }: { c: CaseStudy }) {
                 </ul>
               )}
               {h.formulas && (
-                <pre className="m-0 overflow-x-auto rounded-xl border border-line bg-page px-4 py-4 font-mono text-[12.5px] leading-[1.9] text-ink [scrollbar-width:thin]" tabIndex={0} aria-label="Formulas in plain text">
+                <pre className="m-0 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-line bg-page px-4 py-4 font-mono text-[12.5px] leading-[1.8] text-ink [scrollbar-width:thin] sm:whitespace-pre" tabIndex={0} aria-label="Formulas in plain text">
                   {h.formulas.join('\n')}
                 </pre>
               )}

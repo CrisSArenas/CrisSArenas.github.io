@@ -81,6 +81,9 @@ function dims(w: number) {
 export function AStarDemo() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /* on touch screens drawing is switched on explicitly, so a swipe over the grid scrolls the page */
+  const [coarse] = useState(() => typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches);
+  const [touchEdit, setTouchEdit] = useState(false);
   const [width, setWidth] = useState(0);
   const [grid, setGrid] = useState<Grid | null>(null);
   const [algo, setAlgo] = useState<Algo>('astar');
@@ -239,6 +242,7 @@ export function AStarDemo() {
     return { ...g, walls };
   };
   const onDown = (e: RPointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerType === 'touch' && !touchEdit) return;
     const i = cellAt(e);
     if (i < 0 || !grid) return;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -295,6 +299,7 @@ export function AStarDemo() {
             <svg viewBox="0 0 12 12" className="size-3" fill="currentColor" aria-hidden="true"><path d="M3 1.5v9l7-4.5z" /></svg>Find path
           </button>
           <button type="button" onClick={randomWalls} className="min-h-10 rounded-full px-3.5 text-[13.5px] text-ink ring-1 ring-inset ring-line-strong transition-shadow hover:ring-teal">Random walls</button>
+          {coarse && <button type="button" aria-pressed={touchEdit} onClick={() => setTouchEdit(v => !v)} className={`min-h-10 rounded-full px-3.5 text-[13.5px] ring-1 ring-inset transition-colors ${touchEdit ? 'bg-teal/15 text-teal ring-teal/50' : 'text-ink ring-line-strong'}`}>{touchEdit ? 'Done editing' : 'Edit grid'}</button>}
           <button type="button" onClick={clearWalls} className="min-h-10 rounded-full px-3 text-[13.5px] text-muted transition-colors hover:bg-panel hover:text-ink">Clear</button>
         </div>
       </div>
@@ -304,7 +309,7 @@ export function AStarDemo() {
           <canvas ref={canvasRef} tabIndex={0} role="application" aria-roledescription="path-finding grid"
             aria-label="Grid for the path-finding demo. Arrow keys move the cursor, Space toggles a wall, S places the start, G places the goal, F finds the path."
             aria-describedby="astar-status"
-            className="mx-auto block touch-none cursor-crosshair rounded-lg"
+            className={`mx-auto block cursor-crosshair rounded-lg ${touchEdit ? 'touch-none ring-2 ring-teal/60' : 'touch-pan-y'}`}
             onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
             onKeyDown={onKey} onFocus={() => { setFocused(true); if (cursor === null && grid) setCursor(grid.start); }} onBlur={() => setFocused(false)} />
         </div>
@@ -320,7 +325,7 @@ export function AStarDemo() {
           <div className="text-[12.5px] text-muted">path length, in cells</div>
         </div>
         <p id="astar-status" className="col-span-2 text-[13.5px] sm:col-span-1 leading-relaxed text-muted" aria-live="polite">
-          {!result ? 'Draw walls by dragging across the grid, move the start or goal by dragging them, then find the path.'
+          {!result ? (coarse && !touchEdit ? 'Tap Edit grid, then draw walls with your finger and drag the start or goal; tap Find path to plan.' : 'Draw walls by dragging across the grid, move the start or goal by dragging them, then find the path.')
             : !result.found ? 'The goal is walled off, so no path exists. Clear a gap and the planner finds one at once.'
             : compare ? `For the same shortest path, A* explored ${compare.astar} cells and Dijkstra’s search ${compare.dijkstra}${saved > 0 ? `, so the estimate saved ${saved}% of the work.` : '.'}` : ''}
         </p>

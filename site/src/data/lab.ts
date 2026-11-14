@@ -18,7 +18,7 @@ export const ARCH: ArchLayer[] = [
     { id: 'ui', label: 'Interfaces', sub: 'chat · email · web apps · scheduled jobs', does: 'Where people and other systems reach the agents. Every entry point, including a scheduled job, goes through the gateway first.', guards: 'Side doors that would skip identity and audit' }
   ] },
   { id: 'access', label: 'Access', parts: [
-    { id: 'gateway', label: 'Gateway', sub: 'single sign-on · identity propagation · rate limits · request audit', does: 'Authenticates the caller and carries their identity into every downstream call, so retrieval and tools see only what that user may see.', guards: 'A model reading data its user cannot open' }
+    { id: 'gateway', label: 'Gateway', sub: 'single sign-on · identity propagation · rate limits · request audit', does: 'Authenticates whoever is making the request and carries that identity into every downstream request, so retrieval and tools see only what that user may see.', guards: 'A model reading data its user cannot open' }
   ] },
   { id: 'orchestration', label: 'Orchestration', parts: [
     { id: 'orchestrator', label: 'Orchestrator', sub: 'plans · budgets · retries', does: 'Plans the run, dispatches workers, enforces step and token budgets, retries failed steps and stops on explicit conditions.', guards: 'Loops, runaway cost and half-finished runs', seen: { text: 'Run and trace tab, AI Systems Engineering & Evaluation Lab', href: AIL } },

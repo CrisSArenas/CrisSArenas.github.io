@@ -76,7 +76,7 @@ function Page() {
 
       <section className="border-y border-line bg-tint" aria-labelledby="how">
         <div className="wrap py-24 sm:py-32">
-          <SectionHead id="how" eyebrow="How it works" title="Regimes, one model, and a fair test"
+          <SectionHead id="how" eyebrow="How it works" title="What the model does, and how it was tested"
             intro="The idea in three pictures. The technical settings are in the panels underneath." />
           <HowItWorks />
         </div>

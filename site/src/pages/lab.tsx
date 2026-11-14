@@ -27,9 +27,9 @@ function Hero() {
       <motion.div variants={staggerParent} initial="hidden" animate="show" className="wrap relative grid gap-12 pb-20 pt-32 sm:pt-40 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-end lg:gap-16 lg:pb-28">
         <div>
           <motion.div variants={staggerItem} className="eyebrow">Engineering Lab</motion.div>
-          <motion.h1 variants={staggerItem} id="lab-title" className="display mt-6 max-w-[16ch] text-[clamp(2.3rem,4.8vw,3.9rem)] text-ink">Agents, robots and microcontrollers, built to be explored</motion.h1>
+          <motion.h1 variants={staggerItem} id="lab-title" className="display mt-6 max-w-[16ch] text-[clamp(2.3rem,4.8vw,3.9rem)] text-ink">Projects to explore, from agent systems to microcontrollers</motion.h1>
           <motion.p variants={staggerItem} className="lede mt-7 max-w-2xl">
-            Alongside the investment work, I build in AI engineering, robotics, autonomous systems, embedded computing and edge ML. These are projects: interactive simulators that run in your browser, and write-ups of hardware builds. Each card says which it is.
+            AI engineering, robotics, autonomous systems, embedded computing and edge ML are part of my technical work and interests. On this page they appear as projects: interactive simulators that run in your browser, and write-ups of hardware builds. Each card says which it is.
           </motion.p>
         </div>
         <motion.nav variants={staggerItem} aria-label="On this page" className="surface p-2">
@@ -85,7 +85,7 @@ function RoboticsSection() {
   return (
     <section className="border-y border-line bg-tint" aria-labelledby="robotics-title">
       <div className="wrap py-24 sm:py-32">
-        <SectionHead id="robotics-title" eyebrow="Robotics and embedded" title="Robots, real-time kernels and models on microcontrollers"
+        <SectionHead id="robotics-title" eyebrow="Robotics and embedded" title="From mobile robots down to the microcontroller"
           intro="Simulators reproduce an algorithm in the browser, with its assumptions stated on the page and nothing validated on hardware. Write-ups describe a physical build." />
         <div className="grid gap-20">
           {LAB_GROUPS.map(g => {

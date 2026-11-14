@@ -37,7 +37,7 @@ function layers(nodes: FlowNode[], edges: FlowEdge[]): FlowNode[][] {
     const key = (n: FlowNode) => { const p = (preds.get(n.id) || []).filter(x => row.has(x)); return p.length ? p.reduce((s, x) => s + row.get(x)!, 0) / p.length : 0; };
     const idx = new Map(cols[c].map((n, i) => [n.id, i]));
     cols[c].sort((a, b) => key(a) - key(b) || idx.get(a.id)! - idx.get(b.id)!);
-    cols[c].forEach((n, i) => row.set(n.id, (i / Math.max(1, cols[c].length - 1)) * Math.max(0, cols[c - 1].length - 1)));
+    cols[c].forEach((n, i) => row.set(n.id, i));
   }
   return cols.filter(c => c.length);
 }
@@ -144,7 +144,7 @@ export function ArchitectureDiagram({ nodes, edges, caption, title }: { nodes: F
         ))}
       </div>
       <div className="flow-frame dot-bg relative overflow-hidden rounded-[20px] border border-line p-4 sm:p-6 lg:p-8">
-        <div ref={box} className={`relative ${vertical ? 'flex flex-col gap-9' : 'grid items-center gap-x-7'}`}
+        <div ref={box} className={`relative ${vertical ? 'flex flex-col gap-9' : 'grid items-center gap-x-10 xl:gap-x-12'}`}
           style={vertical ? undefined : { gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}
           role="group" aria-label="Diagram steps. Use the arrow keys to move between steps.">
           <svg className="pointer-events-none absolute inset-0 overflow-visible" width={size.w} height={size.h} aria-hidden="true">
@@ -154,11 +154,11 @@ export function ArchitectureDiagram({ nodes, edges, caption, title }: { nodes: F
               const delay = .25 + (colIndex.get(p.from) ?? 0) * .12 + i * .01;
               return (
                 <g key={p.key} style={{ opacity: dim ? .25 : 1, transition: 'opacity .25s' }}>
-                  <motion.path d={p.d} fill="none" stroke="var(--c-chip-border)" strokeWidth={1.25}
+                  <motion.path d={p.d} fill="none" stroke="var(--flow-edge)" strokeWidth={1.4}
                     initial={reduce ? false : { pathLength: 0, opacity: 0 }} animate={shown ? { pathLength: 1, opacity: 1 } : undefined}
                     transition={{ duration: .9, delay, ease: [.25, 1, .5, 1] }} />
                   {on && <path className="flow-live" d={p.d} fill="none" stroke="var(--c-green)" strokeWidth={1.75} />}
-                  <motion.circle cx={p.end[0]} cy={p.end[1]} r={on ? 3.2 : 2.4} fill={on ? 'var(--c-green)' : 'var(--c-chip-border)'}
+                  <motion.circle cx={p.end[0]} cy={p.end[1]} r={on ? 3.2 : 2.4} fill={on ? 'var(--c-green)' : 'var(--flow-edge)'}
                     initial={reduce ? false : { opacity: 0 }} animate={shown ? { opacity: 1 } : undefined} transition={{ duration: .3, delay: delay + .6 }} />
                 </g>
               );

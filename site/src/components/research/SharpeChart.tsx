@@ -33,7 +33,7 @@ export function SharpeChart() {
 
   const narrow = width < 560;
   const ROW = narrow ? 30 : 34, HEAD = 26, GAP = 14;
-  const M = useMemo(() => ({ l: narrow ? 98 : 136, r: narrow ? 44 : 56, t: 6, b: 44 }), [narrow]);
+  const M = useMemo(() => ({ l: narrow ? 88 : 136, r: narrow ? 38 : 56, t: 6, b: 44 }), [narrow]);
   /* row positions, with a small group header above each group */
   const { layout, heads, H } = useMemo(() => {
     const layout: { id: string; group: MethodGroup; y: number }[] = [];
@@ -135,7 +135,7 @@ export function SharpeChart() {
   const dg = DGPS.find(d => d.id === dgp)!;
 
   return (
-    <figure className="surface relative p-5 sm:p-8" aria-labelledby="sharpe-title">
+    <figure className="surface relative px-4 py-5 sm:p-8" aria-labelledby="sharpe-title">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-xl">
           <div className="eyebrow mb-3">Main result</div>
