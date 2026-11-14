@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AI Systems Engineering &amp; Evaluation Lab · Cristian Arenas</title>
-    <meta name="description" content="An agent system that answers questions and takes actions over a fictional company's handbook, runbooks and policies, with a trace viewer, permissions, injection defence, approval gates, retries and a scored evaluation set.">
+    <meta name="description" content="An agentic system that answers questions and takes actions over a fictional company's handbook, runbooks and policies, with a trace viewer, permissions, injection defence, approval gates, retries and a scored evaluation set.">
     <link rel="canonical" href="https://crissarenas.github.io/ai-engineering-lab.html">
     <meta property="og:title" content="AI Systems Engineering &amp; Evaluation Lab · Cristian Arenas">
-    <meta property="og:description" content="An agent system that answers questions and takes actions over a fictional company's handbook, runbooks and policies, with a trace viewer, permissions, injection defence, approval gates, retries and a scored evaluation set.">
+    <meta property="og:description" content="An agentic system that answers questions and takes actions over a fictional company's handbook, runbooks and policies, with a trace viewer, permissions, injection defence, approval gates, retries and a scored evaluation set.">
     <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#0A0D10">
@@ -80,8 +80,8 @@
       .bar-controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin-bottom: 14px; font-size: .92rem; }
       .bar-controls label { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
       .bar-controls select.field { max-width: 100%; }
-      /* long text columns keep a readable width when they wrap (desktop; phones show cards) */
-      @media (min-width: 721px) {
+      /* long text columns keep a readable width when they wrap (desktop; phones and tablets show cards) */
+      @media (min-width: 1024px) {
         #caseTable td:nth-child(4), #diffTable td:nth-child(4), #injTable td:nth-child(2), #injTable td:nth-child(4) { min-width: 11em; }
         #caseTable td:nth-child(8), #guardTable td:nth-child(3), #guardTable td:nth-child(4), #injTable td:nth-child(3), #aclTable td:first-child, #blockedTable td:last-child { min-width: 7em; }
       }
@@ -110,7 +110,7 @@
     <a class="back-link" href="/work/">&larr; All work</a>
     <span class="group-label ai">AI engineering</span>
     <h1>AI Systems Engineering &amp; Evaluation Lab</h1>
-    <p class="lede">An agent system that answers questions and takes actions over the handbook, runbooks and policies of a fictional software company, laid out the way I inspect one. Retrieval, tool execution, permission checks, injection screening, approval gates, retries and scoring are real code running in this page. No language model runs here. The model's outputs come from a deterministic rule-based stand-in that selects answer sentences from retrieved passages and routes requests to tools by pattern. The tool backends (service status, tickets, config) are simulated. Latency, token and cost figures come from a cost model whose prices and per-step latencies are assumptions.</p>
+    <p class="lede">An agentic system that answers questions and takes actions over the handbook, runbooks and policies of a fictional software company, laid out the way I inspect one. Retrieval, tool execution, permission checks, injection screening, approval gates, retries and scoring are real code running in this page. No language model runs here. The model's outputs come from a deterministic rule-based stand-in that selects answer sentences from retrieved passages and routes requests to tools by pattern. The tool backends (service status, tickets, config) are simulated. Latency, token and cost figures come from a cost model whose prices and per-step latencies are assumptions.</p>
     <p class="eval-line" id="evalLine"></p>
   </header>
 
@@ -254,7 +254,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
         <span class="grow"></span>
         <span id="testsBadge"></span>
       </div>
-      <p class="muted" style="margin-bottom:16px;font-size:.95rem">Each evaluation run builds the index, runs every case through the agent system with shared circuit breakers and a simulated clock, scores the results and applies the release gate. Approvals you give in the Run and trace tab are written to the audit log. Try the tamper test on it.</p>
+      <p class="muted" style="margin-bottom:16px;font-size:.95rem">Each evaluation run builds the index, runs every case through the agentic system with shared circuit breakers and a simulated clock, scores the results and applies the release gate. Approvals you give in the Run and trace tab are written to the audit log. Try the tamper test on it.</p>
       <div class="ai-grid">
         <div class="panel"><div class="panel-head"><h3>Evaluation run</h3><button class="btn btn-primary btn-sm" id="runBtn" type="button">Run again</button></div><div class="panel-body"><div id="agentLog"></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Audit log</h3><button class="btn btn-ghost btn-sm" id="tamperBtn" type="button">Tamper with entry 3</button></div><div class="panel-body"><div id="audit"></div></div></div>
@@ -522,8 +522,8 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
   function archSVG(used) {
     var N = {}; NODES.forEach(function (n) { N[n.id] = n; });
     var on = function (id) { return used && used[id]; };
-    var s = '<svg class="art" viewBox="0 0 760 492" role="img"><title>Architecture of the agent system: a client sends a task to the orchestrator, which hands work to the planner, the retriever over a BM25 index of the knowledge base, the injection guard, the answerer, the tool executor behind a permission layer and an approval gate, and the verifier. Observability records every span and the evaluation harness replays the cases.</title>';
-    s += '<rect class="frame" x="8" y="8" width="744" height="476" rx="10"/><text class="tx-m" x="22" y="28">Agent system · one task, traced span by span</text>';
+    var s = '<svg class="art" viewBox="0 0 760 492" role="img"><title>Architecture of the agentic system: a client sends a task to the orchestrator, which hands work to the planner, the retriever over a BM25 index of the knowledge base, the injection guard, the answerer, the tool executor behind a permission layer and an approval gate, and the verifier. Observability records every span and the evaluation harness replays the cases.</title>';
+    s += '<rect class="frame" x="8" y="8" width="744" height="476" rx="10"/><text class="tx-m" x="22" y="28">Agentic system · one task, traced span by span</text>';
     function flow(d, id, label, lx, ly) { s += '<path class="flow' + (on(id) ? ' k' : '') + '" d="' + d + '"/>'; if (label) s += '<text class="tx-m" x="' + lx + '" y="' + ly + '" text-anchor="middle">' + label + '</text>'; }
     function ahR(x, y, id) { s += '<path class="ah' + (on(id) ? ' k' : '') + '" d="M' + x + ' ' + y + 'L' + (x - 8) + ' ' + (y - 4.5) + 'V' + (y + 4.5) + 'Z"/>'; }
     function ahD(x, y, id) { s += '<path class="ah' + (on(id) ? ' k' : '') + '" d="M' + x + ' ' + y + 'L' + (x - 4.5) + ' ' + (y - 8) + 'H' + (x + 4.5) + 'Z"/>'; }
@@ -629,6 +629,7 @@ model step latency = overhead + tokens_in ms_in + tokens_out ms_out</pre>
       h += '<details class="tr-row"><summary><span class="dot st-' + sp.status + '" title="' + sp.status + '"></span><span class="tr-name">' + UI.esc(sp.name) + '</span><span class="tr-agent">' + UI.esc(sp.agent) + '</span><span class="tr-track">' + bar + '</span><span class="tr-ms">' + (sp.status === 'skipped' ? 'skipped' : ms(sp.dur)) + '</span></summary><div class="tr-body">' + body + '</div></details>';
     });
     $('#traceView').innerHTML = h + '</div>';
+    UI.$$('#traceView .tr-body table').forEach(function (t) { UI.stackTable(t); });
     UI.table('#spanTable', { id: 'spans', name: 'Trace spans', cardTitle: 'name', columns: [{ key: 'id', label: '#', num: 1 }, { key: 'name', label: 'Span' }, { key: 'agent', label: 'Agent' }, { key: 'status', label: 'Status' }, { key: 'start', label: 'Start, ms', num: 1, fmt: function (v) { return F.int(v); } }, { key: 'dur', label: 'Duration, ms', num: 1, fmt: function (v) { return F.int(v); } }, { key: 'tin', label: 'Tokens in', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }, { key: 'tout', label: 'Tokens out', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }, { key: 'att', label: 'Attempts', num: 1, fmt: function (v) { return v ? F.int(v) : ''; } }],
       rows: run.spans.map(function (sp) { return { id: sp.id, name: sp.name, agent: sp.agent, status: sp.status, start: sp.start, dur: sp.dur, tin: sp.tokensIn || 0, tout: sp.tokensOut || 0, att: sp.attempts ? sp.attempts.length : 0 }; }),
       foot: { name: 'Total', start: 0, dur: run.latency, tin: run.tokensIn, tout: run.tokensOut } });

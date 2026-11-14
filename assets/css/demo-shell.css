@@ -370,7 +370,7 @@ table.data th:first-child, table.data td:first-child { padding-left: max(var(--c
 table.data th:last-child, table.data td:last-child { padding-right: max(var(--cx), 10px); }
 .table-wrap { container-type: inline-size; }
 @container (min-width: 641px) {
-  table.data.stack { --cx: 10px; --cy: 8px; }
+  table.data.rowcards { --cx: 10px; --cy: 8px; }
   table.data:has(thead th:nth-child(9)) { --cx: 7px; }
 }
 /* tables in half-width panels and on phones: smaller type and tighter cells */
@@ -381,29 +381,31 @@ table.data th:last-child, table.data td:last-child { padding-right: max(var(--cx
 }
 table.data td.n input, table.data td .field { white-space: normal; }
 
-/* ---------- phone: wide tables become one card per row ----------
-   Any table with class stack (UI.table and UI.stackTable add it). The card heading is the row's first column (class ct); every other cell is a line
+/* ---------- phones and tablets: wide tables become one card per row ----------
+   Any table with class rowcards (UI.table and UI.stackTable add it). The card heading is the row's first column (class ct); every other cell is a line
    with its column name (data-label) on the left and the value on the right.
    The footer row becomes a final summary card. Screen only: print keeps normal tables. */
-@media screen and (max-width: 720px) {
-  body:not(.report) :is(.table-wrap, .tscroll):has(> table.stack) { overflow: visible; background: none; border-radius: 0; }
-  body:not(.report) table.stack { display: block; width: 100%; min-width: 0 !important; }
-  body:not(.report) table.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  body:not(.report) table.stack tbody, body:not(.report) table.stack tfoot { display: grid; gap: 10px; }
-  body:not(.report) table.stack tfoot { margin-top: 10px; }
-  body:not(.report) table.stack tr { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2px 14px 4px; }
-  body:not(.report) table.stack tfoot tr { background: var(--surface-2); border-color: var(--border-strong); }
-  body:not(.report) table.stack td { display: flow-root; padding: 6px 0; border: 0; border-top: 1px solid var(--border); text-align: right; white-space: normal; overflow-wrap: anywhere; font-size: .86rem; line-height: 1.45; }
-  body:not(.report) table.stack td::before { content: attr(data-label); float: left; max-width: 58%; margin-right: 14px; text-align: left; color: var(--muted); font-size: .78rem; font-weight: 400; line-height: 1.6; overflow-wrap: normal; }
-  body:not(.report) table.stack td[data-label=""]::before { display: none; }
-  body:not(.report) table.stack td:has(> input, > select)::before { line-height: 34px; }
-  body:not(.report) table.stack td.ct { order: -1; border-top: 0; padding: 11px 0 7px; text-align: left; font-weight: 600; font-size: .94rem; color: var(--heading, var(--text)); }
-  body:not(.report) table.stack td.ct::before { display: none; }
-  body:not(.report) table.stack td.ct.ctl::before { display: inline; float: none; content: attr(data-label) " "; margin: 0; font-size: inherit; font-weight: 500; line-height: inherit; }
-  body:not(.report) table.stack td:empty { display: none; }
-  body:not(.report) table.stack tbody tr:hover { background: var(--surface); }
-  body:not(.report) details.fold table.stack tbody tr, body:not(.report) details.fold table.stack tbody tr:hover { background: var(--surface); }
-  /* tables that stay tables (4 columns or fewer): long codes and lists break so the table fits */
-  table.data:not(.stack) td { overflow-wrap: anywhere; }
-  table.data:not(.stack) td.n { white-space: normal; }
+@media screen and (max-width: 1023px) {
+  body:not(.report) :is(.table-wrap, .tscroll):has(> table.rowcards) { overflow: visible; background: none; border-radius: 0; }
+  body:not(.report) table.rowcards { display: block; width: 100%; min-width: 0 !important; }
+  body:not(.report) table.rowcards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  body:not(.report) table.rowcards tbody, body:not(.report) table.rowcards tfoot { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); align-items: start; }
+  body:not(.report) table.rowcards tfoot { margin-top: 10px; }
+  body:not(.report) table.rowcards tr { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2px 14px 4px; }
+  body:not(.report) table.rowcards tfoot tr { background: var(--surface-2); border-color: var(--border-strong); }
+  body:not(.report) table.rowcards td { display: flow-root; padding: 6px 0; border: 0; border-top: 1px solid var(--border); text-align: right; white-space: normal; overflow-wrap: anywhere; font-size: .86rem; line-height: 1.45; }
+  body:not(.report) table.rowcards td::before { content: attr(data-label); float: left; font-family: var(--sans); max-width: 58%; margin-right: 14px; text-align: left; color: var(--muted); font-size: .78rem; font-weight: 400; line-height: 1.6; overflow-wrap: normal; }
+  body:not(.report) table.rowcards td[data-label=""]::before { display: none; }
+  body:not(.report) table.rowcards td:has(> input, > select)::before { line-height: 34px; }
+  body:not(.report) table.rowcards td.ct { order: -1; border-top: 0; padding: 11px 0 7px; text-align: left; font-weight: 600; font-size: .94rem; color: var(--heading, var(--text)); }
+  body:not(.report) table.rowcards td.ct::before { display: none; }
+  body:not(.report) table.rowcards td.ct.ctl::before { display: inline; float: none; content: attr(data-label) " "; margin: 0; font-size: inherit; font-weight: 500; line-height: inherit; }
+  body:not(.report) table.rowcards td:empty { display: none; }
+  body:not(.report) table.rowcards tbody tr:hover { background: var(--surface); }
+  body:not(.report) details.fold table.rowcards tbody tr, body:not(.report) details.fold table.rowcards tbody tr:hover { background: var(--surface); }
+}
+/* phones: tables that stay tables (4 columns or fewer) break long codes and lists so they fit */
+@media screen and (max-width: 640px) {
+  table.data:not(.rowcards) td { overflow-wrap: anywhere; }
+  table.data:not(.rowcards) td.n, table.data:not(.rowcards) td.nw { white-space: normal; }
 }

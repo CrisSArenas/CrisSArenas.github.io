@@ -472,14 +472,14 @@
     UI.tables[o.id] = o;
     var stack = o.stack != null ? !!o.stack : o.columns.length >= 5, ct = o.cardTitle || o.columns[0].key;
     var lab = function (c) { return ' data-label="' + UI.esc(c.label) + '"'; };
-    /* short text (a date, a code, "3 years") stays on one line; longer text wraps */
     /* a heading that is only a number or a date (a year, a fold, a quarter end) keeps its column name: "Year 2027" */
     var ctCls = function (txt) { return /^[\d\s.,%$+\-\u2212:\/()]+$/.test(String(txt)) ? 'ct ctl' : 'ct'; };
-    var h = '<div class="table-wrap"><table class="data' + (stack ? ' stack' : '') + '" id="tbl-' + o.id + '"><thead><tr>' +
+    var h = '<div class="table-wrap"><table class="data' + (stack ? ' rowcards' : '') + '" id="tbl-' + o.id + '"><thead><tr>' +
       o.columns.map(function (c) { return '<th' + (c.num ? ' class="n"' : '') + ' scope="col">' + UI.esc(c.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
     o.rows.forEach(function (r) {
       h += '<tr>' + o.columns.map(function (c) {
         var v = r[c.key], txt = c.fmt ? c.fmt(v, r) : (v == null ? '' : v);
+        /* short text (a date, a code, "3 years") stays on one line (nw); longer text wraps */
         var cls = [c.num ? 'n' : (!c.html && String(txt).length <= 12 ? 'nw' : ''), c.wrap ? 'wrap' : '', c.key === ct ? ctCls(txt) : '', c.cls ? c.cls(v, r) : ''].join(' ').trim();
         return '<td' + (cls ? ' class="' + cls + '"' : '') + lab(c) + '>' + (c.html ? txt : UI.esc(txt)) + '</td>';
       }).join('') + '</tr>';
@@ -510,7 +510,7 @@
     if (!t || !t.tHead || !t.tHead.rows.length) return t;
     var labels = UI.$$('th', t.tHead.rows[0]).map(function (th) { return th.textContent.replace(/\s+/g, ' ').trim(); });
     var stack = opts.stack != null ? !!opts.stack : labels.length >= 5, ti = opts.title || 0;
-    t.classList.toggle('stack', stack);
+    t.classList.toggle('rowcards', stack);
     UI.$$('tbody tr, tfoot tr', t).forEach(function (tr) {
       UI.$$('td, th', tr).forEach(function (td, k) { if (labels[k] != null) td.setAttribute('data-label', labels[k]); if (k === ti) { td.classList.add('ct'); if (/^[\d\s.,%$+\-\u2212:\/()]+$/.test(td.textContent.trim())) td.classList.add('ctl'); } });
     });
