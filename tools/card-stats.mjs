@@ -1,7 +1,8 @@
-// Homepage Work cards: read each demo's base case key number and chart data (window.cardStat, computed
-// in the page from pm-math.js and the demo data), write assets/data/card-stats.json and stamp the card
-// previews into index.html. Server on :8765. `--check` only compares and exits 1 on a mismatch.
-// Also stamps the key numbers on the three AI feature cards (<!-- ai:ID:start/end --> in index.html).
+// Work card numbers: read each demo's base case key number and chart data (window.cardStat, computed in the
+// page from pm-math.js and the demo data) and write assets/data/card-stats.json, which the React site reads.
+// Server on :8765. `--check` only compares each demo against the JSON and exits 1 on a mismatch.
+// Legacy markers are optional: where a page in PAGES still has <!-- card:ID:start/end --> or
+// <!-- ai:ID:start/end --> markers, the card previews and AI key numbers are stamped and checked there too.
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -54,7 +55,12 @@ if (CHECK) {
     }
   }
   const home = fs.readFileSync(root + 'index.html', 'utf8');
-  const badAi = Object.keys(ai).filter(k => { const m = home.match(new RegExp(`<!-- ai:${k}:start --><span class="feat-num">([^<]*)</span>`)); return !oldAi[k] || oldAi[k].value !== ai[k].value || !m || m[1] !== ai[k].value; });
+  const badAi = Object.keys(ai).filter(k => {
+    if (!oldAi[k] || oldAi[k].value !== ai[k].value) return true;
+    if (!home.includes(`<!-- ai:${k}:start -->`)) return false;  /* no feature-card markers on the homepage: the JSON is the check */
+    const m = home.match(new RegExp(`<!-- ai:${k}:start --><span class="feat-num">([^<]*)</span>`));
+    return !m || m[1] !== ai[k].value;
+  });
   badAi.forEach(k => console.log('AI card ' + k + ': card ' + (oldAi[k] && oldAi[k].value) + ', demo ' + ai[k].value));
   console.log(bad.length + badAi.length ? (bad.length + badAi.length) + ' card(s) out of date' : 'all ' + Object.keys(cards).length + ' Work cards and ' + Object.keys(ai).length + ' AI cards match their demos');
   process.exit(bad.length + badAi.length ? 1 : 0);
@@ -147,6 +153,7 @@ const DRAW = {
 
 for (const pg of PAGES) {
   let html = fs.readFileSync(root + pg, 'utf8');
+  const before = html;
   for (const [id, c] of Object.entries(cards)) {
     const d = DRAW[c.chart.type](c.chart);
     const block = `<div class="wc-kpi"><span class="wc-num">${c.value}</span><span class="wc-lbl">${c.label}</span></div>` +
@@ -158,10 +165,10 @@ for (const pg of PAGES) {
   if (pg === 'index.html') {
     for (const [id, c] of Object.entries(ai)) {
       const re = new RegExp(`(<!-- ai:${id}:start -->)[\\s\\S]*?(<!-- ai:${id}:end -->)`);
-      if (!re.test(html)) { console.log('no markers for AI card ' + id); continue; }
+      if (!re.test(html)) continue;  /* the homepage no longer carries AI feature-card markers */
       html = html.replace(re, `$1<span class="feat-num${recon || id !== 'data' ? '' : ' feat-txt'}">${c.value}</span>$2`);
     }
   }
-  fs.writeFileSync(root + pg, html);
+  if (html !== before) fs.writeFileSync(root + pg, html);
 }
 console.log(Object.entries(cards).map(([k, c]) => k + ' ' + c.value).join(' | ') + ' || AI ' + Object.entries(ai).map(([k, c]) => k + ' ' + c.value).join(' | '));

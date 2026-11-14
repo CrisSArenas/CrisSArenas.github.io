@@ -1,0 +1,38 @@
+/* About and Contact page styles that Tailwind utilities do not cover. Colours come from the shared tokens. */
+
+/* accent phrases in the About text: teal with a soft underline that draws in once */
+.about-hl {
+  color: var(--c-green);
+  background-image: linear-gradient(color-mix(in srgb, var(--c-green) 32%, transparent), color-mix(in srgb, var(--c-green) 32%, transparent));
+  background-size: 100% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  padding-bottom: 1px;
+}
+
+/* reading column: comfortable measure and rhythm */
+.about-prose p { margin: 0; }
+.about-prose p + p { margin-top: 0; }
+
+/* photo frame: hairline, inner light edge, layered offset panel behind */
+.about-photo-stack { position: relative; isolation: isolate; }
+.about-photo-stack::before {
+  content: ""; position: absolute; inset: 14px -14px -14px 14px; z-index: -1; border-radius: 28px;
+  border: 1px solid var(--c-border);
+  background-image: radial-gradient(color-mix(in srgb, var(--c-text) 12%, transparent) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+}
+.about-photo-stack img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.about-photo-stack .frame { position: relative; overflow: hidden; border-radius: 24px; border: 1px solid var(--c-border); background: var(--c-panel); }
+.about-photo-stack .frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 6%, transparent); pointer-events: none; }
+@media (max-width: 640px) { .about-photo-stack::before { inset: 10px -10px -10px 10px; border-radius: 24px; } }
+
+/* hero fades the engineering grid out toward the content */
+.about-hero-grid { -webkit-mask-image: radial-gradient(ellipse 80% 70% at 30% 0%, #000 30%, transparent 75%); mask-image: radial-gradient(ellipse 80% 70% at 30% 0%, #000 30%, transparent 75%); }
+.contact-dots { -webkit-mask-image: radial-gradient(ellipse 70% 60% at 70% 20%, #000 20%, transparent 70%); mask-image: radial-gradient(ellipse 70% 60% at 70% 20%, #000 20%, transparent 70%); }
+
+/* cards that lift slightly and tint their border on hover */
+.lift { transition: transform .35s var(--ease-out-quart), border-color .25s ease, background-color .25s ease; }
+.lift:hover { border-color: color-mix(in srgb, var(--c-green) 45%, var(--c-border)); }
+@media (prefers-reduced-motion: no-preference) { .lift:hover { transform: translateY(-3px); } }
+

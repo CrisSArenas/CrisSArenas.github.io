@@ -1,0 +1,32 @@
+/* Homepage-only styles. Colours always come from the shared tokens. */
+
+.ag-fill-teal { fill: color-mix(in srgb, var(--c-green) 12%, var(--c-card)); }
+.ag-fill-sand { fill: color-mix(in srgb, var(--c-gold) 14%, var(--c-card)); }
+.ag-fill-neg { fill: color-mix(in srgb, var(--c-negative) 13%, var(--c-card)); }
+.ag-pulse { animation: ag-pulse 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes ag-pulse { 50% { opacity: .25; } }
+
+/* frontier slider: a hairline track that fills teal up to the thumb */
+.frontier-range { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; cursor: pointer; margin: 0; }
+.frontier-range::-webkit-slider-runnable-track { height: 4px; border-radius: 999px; background: linear-gradient(to right, var(--c-green) var(--fill), color-mix(in srgb, var(--c-text) 12%, transparent) var(--fill)); }
+.frontier-range::-moz-range-track { height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--c-text) 12%, transparent); }
+.frontier-range::-moz-range-progress { height: 4px; border-radius: 999px; background: var(--c-green); }
+.frontier-range::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border-radius: 50%; background: var(--c-text); border: 3px solid var(--c-card); box-shadow: 0 0 0 1px var(--c-chip-border); transition: box-shadow .2s; }
+.frontier-range::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--c-text); border: 3px solid var(--c-card); box-shadow: 0 0 0 1px var(--c-chip-border); }
+.frontier-range:hover::-webkit-slider-thumb, .frontier-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1px var(--c-chip-border), 0 0 0 6px color-mix(in srgb, var(--c-green) 20%, transparent); }
+.frontier-range:focus-visible { outline: none; }
+.frontier-range:focus-visible::-webkit-slider-runnable-track { outline: 2px solid var(--c-green); outline-offset: 6px; }
+
+/* hero backdrop: the engineering grid fades out toward the edges */
+.home-hero-grid { mask-image: radial-gradient(ellipse 70% 60% at 65% 35%, #000 20%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse 70% 60% at 65% 35%, #000 20%, transparent 75%); }
+.home-hero-wash { background: radial-gradient(ellipse 50% 45% at 72% 30%, var(--c-amb-1), transparent 70%), radial-gradient(ellipse 40% 35% at 15% 80%, var(--c-amb-2), transparent 70%); }
+
+/* project cards: lift, border tint and arrow nudge on hover */
+.work-card { transition: transform .45s var(--ease-out-quart), border-color .35s, box-shadow .45s var(--ease-out-quart); }
+.work-card:hover, .work-card:focus-within { transform: translateY(-4px); border-color: color-mix(in srgb, var(--c-green) 45%, var(--c-border)); box-shadow: 0 18px 40px -24px var(--c-lift-2, rgba(0,0,0,.5)); }
+.step-cell { transition: background-color .3s; }
+.step-cell:hover { background: color-mix(in srgb, var(--c-green) 5%, var(--c-card)); }
+@media (prefers-reduced-motion: reduce) {
+  .ag-pulse { animation: none; }
+  .work-card, .work-card:hover, .work-card:focus-within { transform: none; transition: border-color .2s; }
+}

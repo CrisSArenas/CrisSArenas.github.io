@@ -5,14 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SLAM Mapping Visualizer | Cristian Arenas</title>
 <meta name="description" content="Browser SLAM sandbox: a differential-drive robot with a simulated 360-beam 2-D LiDAR builds a 5 cm log-odds occupancy grid while a 300-particle Monte-Carlo localisation filter corrects drifting wheel odometry.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
-<link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
-<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
-<meta name="theme-color" content="#07120E">
+<link rel="icon" href="/assets/images/favicon.svg?v=6" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.png?v=6" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=6">
+<meta name="theme-color" content="#0A0D10">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
@@ -100,7 +97,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 
 /* TELEMETRY TABLE */
 .telem-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-.telem-table td{padding:6px 10px;font-family:var(--mono);border-bottom:1px solid rgba(46,52,56,.4)}
+.telem-table td{padding:6px 10px;font-family:var(--mono);border-bottom:1px solid rgba(46,56,65,.4)}
 .telem-table td:first-child{color:var(--dim);font-family:inherit;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:50%}
 .telem-table td:last-child{text-align:right;color:var(--cyan);font-weight:600}
 .telem-section{font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;padding:10px 10px 4px;border-bottom:1px solid var(--border)}
@@ -122,8 +119,8 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 .code-scroll pre{margin:0;font-family:var(--mono);font-size:11.2px;line-height:1.72;color:var(--text);white-space:pre}
 .cl{display:block;padding:0 6px;border-left:2px solid transparent;border-radius:0 3px 3px 0}
 .cl.on{background:color-mix(in srgb, var(--ai) 13%, transparent);border-left-color:var(--cyan)}
-.cl.on .cm{color:#6FB59A}
-.k{color:var(--s5)}.ty{color:var(--ai)}.fn{color:#6FB59A}.nu{color:var(--warning)}.st{color:var(--positive)}.cm{color:var(--muted);font-style:italic}
+.cl.on .cm{color:#4FC1B0}
+.k{color:var(--s5)}.ty{color:var(--ai)}.fn{color:#4FC1B0}.nu{color:var(--warning)}.st{color:var(--positive)}.cm{color:var(--muted);font-style:italic}
 .code-live{display:flex;flex-wrap:wrap;gap:14px;padding:9px 14px;border-top:1px solid var(--border);
   font-family:var(--mono);font-size:10.5px;color:var(--dim)}
 .code-live b{color:var(--cyan);font-weight:600}
@@ -137,14 +134,13 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 <a class="skip-link" href="#main">Skip to content</a>
 <nav class="site-nav" aria-label="Site">
   <div class="container">
-    <a class="brand" href="/">Cristian Arenas</a>
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">CA</span><span class="brand-name">Cristian Arenas</span></a>
     <ul class="nav-links">
-      <li><a href="/#about">About</a></li>
-      <li><a href="/#portfolio">Portfolio management</a></li>
-      <li><a href="/#ai">AI</a></li>
-      <li><a href="/#work">Work</a></li>
-      <li><a href="/#research">Research</a></li>
-      <li><a href="/#contact">Contact</a></li>
+      <li><a href="/work/">Work</a></li>
+      <li><a href="/research/">Research</a></li>
+      <li><a href="/lab/">Lab</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
     </ul>
     <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -152,7 +148,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
 </nav>
 <!-- site-nav:end -->
 <div id="main" tabindex="-1"></div>
-<div class="demo-bar"><div class="container"><a class="back-link" href="/robotics-embedded.html">&larr; Back to Robotics</a><h1 class="demo-title"><i class="fas fa-map"></i> SLAM Mapping Visualizer</h1><div class="demo-actions"><button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+<div class="demo-bar"><div class="container"><a class="back-link" href="/lab/">&larr; Back to the Lab</a><h1 class="demo-title"><i class="fas fa-map"></i> SLAM Mapping Visualizer</h1><div class="demo-actions"><button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
     <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><span class="ico" aria-hidden="true">?</span></button></div></div></div>
 <div class="demo-status">
   <span id="statusBar">initialising&hellip;</span>
@@ -313,7 +309,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         <button type="button" class="dp-btn dp-d" data-key="d" aria-label="Turn right (D)"><span aria-hidden="true">&#9654;</span><kbd>D</kbd></button>
         <span class="dp-hint">Hold to drive, or use W A S D</span>
       </div>
-      <div class="cap"><span><i class="sw" style="background:#6B7176"></i> True walls</span><span><i class="sw" style="background:#6FB59A"></i> LiDAR beams</span><span><i class="sw" style="background:#EEF2EF;border:1px solid #07120E"></i> True robot</span><span><i class="sw" style="background:#B39B6E"></i> Particles (300)</span><span><i class="sw" style="background:#C4AE84"></i> Filter estimate (outline)</span><span><i class="sw" style="background:#6FB59A;opacity:.6"></i> Path travelled</span></div>
+      <div class="cap"><span><i class="sw" style="background:#6B7580"></i> True walls</span><span><i class="sw" style="background:#4FC1B0"></i> LiDAR beams</span><span><i class="sw" style="background:#E8EDEF;border:1px solid #0A0D10"></i> True robot</span><span><i class="sw" style="background:#C8A66B"></i> Particles (300)</span><span><i class="sw" style="background:#D7BC8A"></i> Filter estimate (outline)</span><span><i class="sw" style="background:#4FC1B0;opacity:.6"></i> Path travelled</span></div>
     </div>
   </div>
 
@@ -325,7 +321,7 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
     </div>
     <div class="panel-body" style="padding:8px">
       <canvas id="mapCanvas" style="height:420px" aria-label="Occupancy grid map rendered as a grey scale of occupancy probability, 150 by 150 cells of 5 centimetres"></canvas>
-      <div class="cap"><span><i class="bx" style="background:#151B19"></i> Unknown (p = 0.50)</span><span><i class="bx" style="background:#0B110F"></i> Free (p &rarr; 0.007)</span><span><i class="bx" style="background:#B0B8B4"></i> Occupied (p &rarr; 0.993)</span><span><i class="sw" style="background:#C4AE84"></i> Filter estimate (the map's frame)</span><span><i class="sw" style="background:#6FB59A"></i> True pose (outline)</span><span>5 cm cells &middot; log-odds clamped to &plusmn;5</span></div>
+      <div class="cap"><span><i class="bx" style="background:#161C22"></i> Unknown (p = 0.50)</span><span><i class="bx" style="background:#0C1014"></i> Free (p &rarr; 0.007)</span><span><i class="bx" style="background:#B2BCC2"></i> Occupied (p &rarr; 0.993)</span><span><i class="sw" style="background:#D7BC8A"></i> Filter estimate (the map's frame)</span><span><i class="sw" style="background:#4FC1B0"></i> True pose (outline)</span><span>5 cm cells &middot; log-odds clamped to &plusmn;5</span></div>
     </div>
   </div>
 
@@ -401,11 +397,11 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
       <div class="chart-grid">
         <div>
           <canvas id="errChart" style="height:210px" aria-label="Line chart of position error in metres against elapsed time in seconds, for the particle filter and for raw odometry"></canvas>
-          <div class="cap"><span><i class="sw" style="background:#6FB59A"></i> Particle filter vs. truth</span><span><i class="sw" style="background:#C4AE84"></i> Odometry only vs. truth</span></div>
+          <div class="cap"><span><i class="sw" style="background:#4FC1B0"></i> Particle filter vs. truth</span><span><i class="sw" style="background:#D7BC8A"></i> Odometry only vs. truth</span></div>
         </div>
         <div>
           <canvas id="covChart" style="height:210px" aria-label="Line chart of map coverage as a percentage against elapsed time in seconds"></canvas>
-          <div class="cap"><span><i class="sw" style="background:#6FB59A"></i> Observed cells / reachable cells and the walls that bound them</span></div>
+          <div class="cap"><span><i class="sw" style="background:#4FC1B0"></i> Observed cells / reachable cells and the walls that bound them</span></div>
         </div>
       </div>
     </div>
@@ -517,14 +513,14 @@ canvas{display:block;width:100%;border-radius:6px;background:rgba(0,0,0,.15)}
         <div class="f-role">Quantitative Investment Management &amp; AI Engineering</div>
       </div>
       <ul>
-        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
-        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
-        <li><a href="/library.html">Library</a></li>
-        <li><a href="/ai-systems.html">AI systems</a></li>
+        <li><a href="/work/">Work</a></li>
+        <li><a href="/research/">Research</a></li>
+        <li><a href="/lab/">Lab</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/contact/">Contact</a></li>
+        <li><a href="/ai-systems.html">AI systems deep dive</a></li>
         <li><a href="/notes/">Notes</a></li>
         <li><a href="/tests.html">Model tests</a></li>
-        <li><a href="/arcade.html">Games</a></li>
-        <li><a href="/robotics-embedded.html">Robotics</a></li>
       </ul>
     </div>
     <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>
@@ -1126,7 +1122,7 @@ function drawWorld(){
   const offY=(worldH-ENV_SIZE*s)/2;
 
   ctx.clearRect(0,0,worldW,worldH);
-  ctx.fillStyle='#07120E';
+  ctx.fillStyle='#0A0D10';
   ctx.fillRect(0,0,worldW,worldH);
 
   ctx.save();
@@ -1135,7 +1131,7 @@ function drawWorld(){
 
   // Walls
   const walls=ENVS[currentEnv].walls;
-  ctx.strokeStyle='#6B7176';
+  ctx.strokeStyle='#6B7580';
   ctx.lineWidth=3;
   ctx.lineCap='round';
   for(const w of walls){
@@ -1151,7 +1147,7 @@ function drawWorld(){
     const age=(now-trail[i].t)/8000;
     const alpha=Math.max(0,1-age);
     if(alpha<=0)continue;
-    ctx.fillStyle=`rgba(111,181,154,${alpha*0.6})`;
+    ctx.fillStyle=`rgba(79,193,176,${alpha*0.6})`;
     ctx.beginPath();
     ctx.arc(trail[i].x,trail[i].y,2,0,Math.PI*2);
     ctx.fill();
@@ -1161,14 +1157,14 @@ function drawWorld(){
   for(const sc of scanData){
     const a=robot.angle+sc.angle;
     const alpha=sc.hit?0.22*(1-sc.dist/LIDAR_RANGE)+0.04:0.03;
-    ctx.strokeStyle=`rgba(111,181,154,${alpha})`;
+    ctx.strokeStyle=`rgba(79,193,176,${alpha})`;
     ctx.lineWidth=0.8;
     ctx.beginPath();
     ctx.moveTo(robot.x,robot.y);
     ctx.lineTo(sc.hx,sc.hy);
     ctx.stroke();
     if(sc.hit){
-      ctx.fillStyle=`rgba(111,181,154,${0.6*(1-sc.dist/LIDAR_RANGE)+0.2})`;
+      ctx.fillStyle=`rgba(79,193,176,${0.6*(1-sc.dist/LIDAR_RANGE)+0.2})`;
       ctx.beginPath();
       ctx.arc(sc.hx,sc.hy,2,0,Math.PI*2);
       ctx.fill();
@@ -1177,7 +1173,7 @@ function drawWorld(){
 
   // Particle cloud (localisation hypotheses) - opt-in, off by default
   if(showParticles){
-    ctx.fillStyle='rgba(179,155,110,0.5)';
+    ctx.fillStyle='rgba(200,166,107,0.5)';
     for(let i=0;i<particles.length;i++){
       ctx.fillRect(particles[i].x-0.9,particles[i].y-0.9,1.8,1.8);
     }
@@ -1189,7 +1185,7 @@ function drawWorld(){
   ctx.save();
   ctx.translate(est.x,est.y);
   ctx.rotate(est.angle);
-  ctx.strokeStyle='rgba(196,174,132,0.95)';
+  ctx.strokeStyle='rgba(215,188,138,0.95)';
   ctx.lineWidth=1.6;
   ctx.beginPath();
   ctx.moveTo(12,0);ctx.lineTo(-7,-6);ctx.lineTo(-4,0);ctx.lineTo(-7,6);
@@ -1204,17 +1200,17 @@ function drawWorld(){
   ctx.save();
   ctx.translate(robot.x,robot.y);
   const halo=ctx.createRadialGradient(0,0,6,0,0,26);
-  halo.addColorStop(0,'rgba(7,18,14,0.92)');
-  halo.addColorStop(1,'rgba(7,18,14,0)');
+  halo.addColorStop(0,'rgba(10,13,16,0.92)');
+  halo.addColorStop(1,'rgba(10,13,16,0)');
   ctx.fillStyle=halo;
   ctx.beginPath();ctx.arc(0,0,26,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='rgba(7,18,14,0.9)';
+  ctx.fillStyle='rgba(10,13,16,0.9)';
   ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(238,242,239,0.5)';
+  ctx.strokeStyle='rgba(232,237,239,0.5)';
   ctx.lineWidth=1.2;
   ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.stroke();
   ctx.rotate(robot.angle);
-  ctx.fillStyle='#EEF2EF';
+  ctx.fillStyle='#E8EDEF';
   ctx.beginPath();
   ctx.moveTo(15,0);
   ctx.lineTo(-8,-7.5);
@@ -1222,7 +1218,7 @@ function drawWorld(){
   ctx.lineTo(-8,7.5);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle='#07120E';
+  ctx.strokeStyle='#0A0D10';
   ctx.lineWidth=1.8;
   ctx.lineJoin='round';
   ctx.stroke();
@@ -1232,14 +1228,14 @@ function drawWorld(){
 
   // 1 m scale bar (screen space)
   const oneM=U_PER_M*s;
-  ctx.strokeStyle='rgba(140,145,150,0.75)';
+  ctx.strokeStyle='rgba(143,153,163,0.75)';
   ctx.lineWidth=1;
   ctx.beginPath();
   ctx.moveTo(12,worldH-14);ctx.lineTo(12+oneM,worldH-14);
   ctx.moveTo(12,worldH-18);ctx.lineTo(12,worldH-10);
   ctx.moveTo(12+oneM,worldH-18);ctx.lineTo(12+oneM,worldH-10);
   ctx.stroke();
-  ctx.fillStyle='rgba(140,145,150,0.9)';
+  ctx.fillStyle='rgba(143,153,163,0.9)';
   ctx.font="10px 'JetBrains Mono',monospace";
   ctx.textAlign='left';ctx.textBaseline='bottom';
   ctx.fillText('1 m',12,worldH-20);
@@ -1252,7 +1248,7 @@ let mapTmpCtx=null;
 function drawMap(){
   const ctx=mapCtx;
   ctx.clearRect(0,0,mapW,mapH);
-  ctx.fillStyle='#07120E';
+  ctx.fillStyle='#0A0D10';
   ctx.fillRect(0,0,mapW,mapH);
   // one uniform scale, centred, so the map keeps the world's square aspect
   const side=Math.min(mapW,mapH);
@@ -1298,7 +1294,7 @@ function drawMap(){
   ctx.drawImage(mapTmpCanvas,ox,oy,side,side);
 
   // Grid lines (faint)
-  ctx.strokeStyle='rgba(46,52,56,0.3)';
+  ctx.strokeStyle='rgba(46,56,65,0.3)';
   ctx.lineWidth=0.5;
   const step=Math.max(1,Math.floor(gridW/30));
   for(let x=0;x<=gridW;x+=step){
@@ -1314,7 +1310,7 @@ function drawMap(){
   ctx.save();
   ctx.translate(ox+robot.x/ENV_SIZE*side,oy+robot.y/ENV_SIZE*side);
   ctx.rotate(robot.angle);
-  ctx.strokeStyle='rgba(111,181,154,0.75)';
+  ctx.strokeStyle='rgba(79,193,176,0.75)';
   ctx.lineWidth=1;
   ctx.beginPath();
   ctx.moveTo(6,0);ctx.lineTo(-4,-3.5);ctx.lineTo(-2,0);ctx.lineTo(-4,3.5);
@@ -1326,7 +1322,7 @@ function drawMap(){
   ctx.save();
   ctx.translate(ox+est.x/ENV_SIZE*side,oy+est.y/ENV_SIZE*side);
   ctx.rotate(est.angle);
-  ctx.fillStyle='rgba(196,174,132,0.95)';
+  ctx.fillStyle='rgba(215,188,138,0.95)';
   ctx.beginPath();
   ctx.moveTo(6,0);
   ctx.lineTo(-4,-3.5);
@@ -1344,11 +1340,11 @@ function drawLidar(){
   const maxR=Math.min(cx,cy)-30;
 
   ctx.clearRect(0,0,lidarW,lidarH);
-  ctx.fillStyle='#07120E';
+  ctx.fillStyle='#0A0D10';
   ctx.fillRect(0,0,lidarW,lidarH);
 
   // Range rings
-  ctx.strokeStyle='rgba(46,52,56,0.5)';
+  ctx.strokeStyle='rgba(46,56,65,0.5)';
   ctx.lineWidth=0.7;
   const numRings=3;
   for(let i=1;i<=numRings;i++){
@@ -1357,14 +1353,14 @@ function drawLidar(){
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.stroke();
     // Label
-    ctx.fillStyle='rgba(140,145,150,0.5)';
+    ctx.fillStyle='rgba(143,153,163,0.5)';
     ctx.font="9px 'JetBrains Mono',monospace";
     ctx.textAlign='center';
     ctx.fillText((LIDAR_RANGE_M*i/numRings).toFixed(0)+' m',cx,cy-r+10);
   }
 
   // Angular sector labels
-  ctx.fillStyle='rgba(140,145,150,0.6)';
+  ctx.fillStyle='rgba(143,153,163,0.6)';
   ctx.font="10px 'JetBrains Mono',monospace";
   ctx.textAlign='center';
   ctx.textBaseline='middle';
@@ -1376,7 +1372,7 @@ function drawLidar(){
   }
 
   // Cross lines
-  ctx.strokeStyle='rgba(46,52,56,0.3)';
+  ctx.strokeStyle='rgba(46,56,65,0.3)';
   ctx.beginPath();ctx.moveTo(cx,cy-maxR);ctx.lineTo(cx,cy+maxR);ctx.stroke();
   ctx.beginPath();ctx.moveTo(cx-maxR,cy);ctx.lineTo(cx+maxR,cy);ctx.stroke();
 
@@ -1388,19 +1384,19 @@ function drawLidar(){
     const px=cx+Math.cos(plotA)*r;
     const py=cy+Math.sin(plotA)*r;
     const alpha=0.5+0.5*(1-s.dist/LIDAR_RANGE);
-    ctx.fillStyle=`rgba(111,181,154,${alpha})`;
+    ctx.fillStyle=`rgba(79,193,176,${alpha})`;
     ctx.beginPath();
     ctx.arc(px,py,2.5,0,Math.PI*2);
     ctx.fill();
   }
 
   // Center dot (robot), white like the true robot in the World View
-  ctx.fillStyle='rgba(238,242,239,0.95)';
+  ctx.fillStyle='rgba(232,237,239,0.95)';
   ctx.beginPath();
   ctx.arc(cx,cy,4,0,Math.PI*2);
   ctx.fill();
   // Direction indicator
-  ctx.strokeStyle='rgba(238,242,239,0.7)';
+  ctx.strokeStyle='rgba(232,237,239,0.7)';
   ctx.lineWidth=1.5;
   ctx.beginPath();
   ctx.moveTo(cx,cy);
@@ -1422,7 +1418,7 @@ function niceMax(v){
 
 function drawChart(ctx,W,H,id,cfg){
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#07120E';
+  ctx.fillStyle='#0A0D10';
   ctx.fillRect(0,0,W,H);
   const pad={l:52,r:14,t:12,b:36};
   const pw=Math.max(10,W-pad.l-pad.r), ph=Math.max(10,H-pad.t-pad.b);
@@ -1443,24 +1439,24 @@ function drawChart(ctx,W,H,id,cfg){
   const xDec=(t1-t0)/4<1?1:0;
   for(let i=0;i<=4;i++){
     const y=pad.t+ph-ph*i/4;
-    ctx.strokeStyle='rgba(46,52,56,0.85)';
+    ctx.strokeStyle='rgba(46,56,65,0.85)';
     ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();
-    ctx.fillStyle='rgba(140,145,150,0.85)';
+    ctx.fillStyle='rgba(143,153,163,0.85)';
     ctx.fillText((ymax*i/4).toFixed(yDec),pad.l-7,y);
   }
   // axes
-  ctx.strokeStyle='rgba(58,64,68,1)';
+  ctx.strokeStyle='rgba(59,70,81,1)';
   ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ph);ctx.lineTo(pad.l+pw,pad.t+ph);ctx.stroke();
   // x ticks
   ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.fillStyle='rgba(140,145,150,0.85)';
+  ctx.fillStyle='rgba(143,153,163,0.85)';
   for(let i=0;i<=4;i++){
     const x=pad.l+pw*i/4;
     ctx.fillText((t0+(t1-t0)*i/4).toFixed(xDec),x,pad.t+ph+6);
   }
   // axis labels
-  ctx.fillStyle='rgba(140,145,150,0.95)';
+  ctx.fillStyle='rgba(143,153,163,0.95)';
   ctx.fillText(cfg.xLabel,pad.l+pw/2,pad.t+ph+20);
   ctx.save();
   ctx.translate(12,pad.t+ph/2);
@@ -1482,7 +1478,7 @@ function drawChart(ctx,W,H,id,cfg){
       ctx.stroke();
     }
   }else{
-    ctx.fillStyle='rgba(140,145,150,0.55)';
+    ctx.fillStyle='rgba(143,153,163,0.55)';
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('drive the robot to record samples',pad.l+pw/2,pad.t+ph/2);
   }
@@ -1495,14 +1491,14 @@ function drawCharts(){
     yLabel:'Position error (m)',
     xLabel:'Elapsed simulation time (s)',
     yDec:2,
-    series:[{color:'#6FB59A',get:h=>h.e},{color:'#C4AE84',get:h=>h.o}]
+    series:[{color:'#4FC1B0',get:h=>h.e},{color:'#D7BC8A',get:h=>h.o}]
   });
   drawChart(covCtx,covW,covH,'covChart',{
     yLabel:'Map coverage (%)',
     xLabel:'Elapsed simulation time (s)',
     yDec:0,
     fixedMax:100,
-    series:[{color:'#6FB59A',get:h=>h.c}]
+    series:[{color:'#4FC1B0',get:h=>h.c}]
   });
 }
 

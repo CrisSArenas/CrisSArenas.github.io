@@ -1,4 +1,4 @@
-// Stamp the shared nav and footer partials (and the AI illustrations where marked) into every page between their markers.
+// Stamp the shared nav and footer partials into every legacy page (and the AI illustrations where marked) between their markers.
 // Usage: node tools/sync-chrome.mjs [--check]   (--check exits 1 if any page differs)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,6 +15,7 @@ const skip = new Set(['design-preview.html']);
 function pages(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(d => {
     if (['.git', 'node_modules', 'qa', 'tools', 'tests'].includes(d.name)) return [];
+    if (d.isDirectory() && dir === root && d.name === 'site') return [];  /* React source and build: the new pages carry their own chrome */
     const p = path.join(dir, d.name);
     return d.isDirectory() ? pages(p) : (d.name.endsWith('.html') ? [p] : []);
   });
@@ -24,6 +25,8 @@ for (const f of pages(root)) {
   const rel = path.relative(root, f);
   if (skip.has(rel)) continue;
   let html = fs.readFileSync(f, 'utf8'), orig = html;
+  /* the React pages (published from site/) and the redirect stubs have no legacy nav or footer */
+  if (/<div id="root"/.test(html) || /http-equiv="refresh"/i.test(html)) continue;
   for (const { tag, txt } of parts) {
     const re = new RegExp(`<!-- ${tag}:start -->[\\s\\S]*?<!-- ${tag}:end -->`);
     if (!re.test(html)) { bad.push(`${rel}: missing ${tag}`); continue; }

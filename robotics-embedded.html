@@ -1,184 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robotics and embedded systems · Cristian Arenas</title>
-    <meta name="description" content="Robotics and embedded-systems work by Cristian Arenas: ROS 2 navigation, FreeRTOS scheduling, SLAM, STM32 bare-metal I/O and TinyML quantization, each as an interactive in-browser simulator.">
-    <link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
-    <link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
-    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
-    <meta name="theme-color" content="#07120E">
-    <link rel="canonical" href="https://crissarenas.github.io/robotics-embedded.html">
-    <meta property="og:title" content="Robotics and embedded systems · Cristian Arenas">
-    <meta property="og:description" content="Robotics and embedded-systems work by Cristian Arenas: ROS 2 navigation, FreeRTOS scheduling, SLAM, STM32 bare-metal I/O and TinyML quantization, each as an interactive in-browser simulator.">
-    <meta property="og:image" content="https://crissarenas.github.io/assets/images/og.png">
-    <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="/styles.css">
-    <style>
-        .rb-hero { padding-top: 120px; }
-        .rb-eyebrow { margin: 28px 0 10px; font: 600 .78rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-text); }
-        .rb-hero h1 { margin: 0 0 16px; font-size: clamp(2.2rem, 5vw, 3.4rem); }
-        .rb-lede { max-width: 68ch; margin: 0; font-size: 1.12rem; line-height: 1.7; color: var(--muted); }
-        .rb-lede strong { font-weight: 500; color: var(--wc-g); }
-        .rb-stats { list-style: none; display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0 0; padding: 0; }
-        .rb-stats li { display: flex; align-items: baseline; gap: 10px; padding: 12px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--glass-card); }
-        .rb-stats .v { font: 600 1.5rem/1 var(--sans); color: var(--wc-num); font-variant-numeric: tabular-nums; }
-        .rb-stats .l { font-size: .9rem; color: var(--muted); }
-        .rb-grid { gap: 20px; }
-        .rb-card, a.rb-card { display: flex; flex-direction: column; gap: 10px; padding: 26px; border-radius: 18px; color: var(--text); text-decoration: none; }
-        a.rb-card:hover { transform: translateY(-2px); border-color: var(--wc-hover); }
-        a.rb-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-        .rb-kind { font: 600 .74rem/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--gold-text); }
-        .rb-card h3 { margin: 0; font-size: 1.15rem; color: var(--heading); transition: color .2s ease; }
-        a.rb-card:hover h3 { color: var(--ui-accent); }
-        .rb-card p { margin: 0; font-size: .95rem; line-height: 1.6; color: var(--text); }
-        .rb-chips { margin: 4px 0 0; }
-        .rb-chips li { font-size: .78rem; }
-        .rb-card .wc-link { margin-top: auto; padding-top: 6px; }
-        a.rb-card:hover .wc-link span { transform: translateX(5px); }
-        @media (prefers-reduced-motion: reduce) { a.rb-card:hover { transform: none; } }
-        @media (max-width: 680px) { .rb-hero { padding-top: 96px; } .rb-card { padding: 22px; } }
-    </style>
-<script src="/assets/js/site.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab · Cristian Arenas</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://crissarenas.github.io/lab/">
+<meta http-equiv="refresh" content="0; url=/lab/">
+<meta name="theme-color" content="#0A0D10">
+<link rel="icon" href="/assets/images/favicon.svg?v=6" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.png?v=6" type="image/png" sizes="64x64">
+<link rel="stylesheet" href="/assets/css/tokens.css">
+<script>(function(){try{var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--c-page); color: var(--c-text); font: 16px/1.6 "Inter Var", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { padding: 24px; text-align: center; }
+  p { margin: 0 0 8px; color: var(--c-text-2); }
+  a { color: var(--c-green); }
+</style>
+<script>location.replace('/lab/' + location.hash);</script>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <!-- site-nav:start -->
-<a class="skip-link" href="#main">Skip to content</a>
-<nav class="site-nav" aria-label="Site">
-  <div class="container">
-    <a class="brand" href="/">Cristian Arenas</a>
-    <ul class="nav-links">
-      <li><a href="/#about">About</a></li>
-      <li><a href="/#portfolio">Portfolio management</a></li>
-      <li><a href="/#ai">AI</a></li>
-      <li><a href="/#work">Work</a></li>
-      <li><a href="/#research">Research</a></li>
-      <li><a href="/#contact">Contact</a></li>
-    </ul>
-    <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
-    <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-  </div>
-</nav>
-<!-- site-nav:end -->
-<main id="main">
-<section class="section rb-hero">
-  <div class="container">
-    <a class="back-link" href="/">&larr; Back to the homepage</a>
-    <p class="rb-eyebrow">Hardware and software</p>
-    <h1>Robotics and embedded systems</h1>
-    <p class="rb-lede">Projects across the embedded stack: <strong>RTOS kernel scheduling</strong>, <strong>autonomous navigation with ROS 2</strong>, <strong>SLAM and sensor fusion</strong>, <strong>edge ML on microcontrollers</strong> and <strong>bare-metal register-level I/O</strong>. Each simulator runs in the browser with no setup.</p>
-    <ul class="rb-stats" aria-label="At a glance">
-      <li><span class="v">5</span><span class="l">Interactive simulators</span></li>
-      <li><span class="v">3</span><span class="l">Technical write-ups</span></li>
-      <li><span class="v">0</span><span class="l">Installs needed</span></li>
-    </ul>
-  </div>
-</section>
-
-<section class="section alt" id="simulators">
-  <div class="container">
-    <div class="section-head"><h2>Interactive simulators</h2><p>Each one models the real algorithm and states what it simplifies.</p></div>
-    <div class="grid-3 rb-grid">
-      <a class="card rb-card" href="/robotics/ROS2_Nav2_Simulator.html">
-        <span class="rb-kind">Autonomous Navigation</span>
-        <h3>ROS 2 Nav2 Simulator</h3>
-        <p>Full-stack ROS 2 Navigation Stack (Nav2) simulator implementing A* path planning, costmap inflation layers, behavior tree execution, and AMCL-based localization. Demonstrates the complete autonomous navigation pipeline from goal pose to velocity commands with real-time obstacle handling and recovery behaviors.</p>
-        <ul class="chips rb-chips"><li>ROS 2</li><li>Nav2</li><li>A* Path Planning</li><li>Behavior Trees</li></ul>
-        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
-      </a>
-      <a class="card rb-card" href="/robotics/freertos-simulator.html">
-        <span class="rb-kind">Real-Time Operating Systems</span>
-        <h3>FreeRTOS Kernel Simulator</h3>
-        <p>Implements the FreeRTOS fixed-priority preemptive scheduler with round-robin time slicing, a configurable tick rate, and running, ready, blocked and suspended state transitions. Presets walk through unbounded priority inversion, the mutex priority inheritance that fixes it, and an overloaded task set that misses deadlines, with CPU utilization shown against the rate-monotonic bound and a Gantt view that matches the kernel log line for line.</p>
-        <ul class="chips rb-chips"><li>FreeRTOS</li><li>Preemptive Scheduling</li><li>Context Switching</li><li>RTOS Internals</li></ul>
-        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
-      </a>
-      <a class="card rb-card" href="/robotics/slam-visualizer.html">
-        <span class="rb-kind">Perception & Mapping</span>
-        <h3>SLAM Mapping Simulator</h3>
-        <p>Simultaneous localization and mapping driven by a simulated 360-beam LiDAR at 10 Hz with realistic range and bearing noise. Builds a log-odds occupancy grid at 5 cm resolution from a 300-particle Monte Carlo localization estimate, so you can drive the robot and watch the filter hold its track while raw odometry drifts away. Live position error and map coverage are charted. No loop closure or pose-graph back end, and the page is explicit about what that costs.</p>
-        <ul class="chips rb-chips"><li>SLAM</li><li>LiDAR Simulation</li><li>Monte Carlo Localization</li><li>Occupancy Grids</li></ul>
-        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
-      </a>
-      <a class="card rb-card" href="/robotics/stm32-io-lab.html">
-        <span class="rb-kind">Bare-Metal Embedded</span>
-        <h3>STM32 Memory-Mapped I/O Lab</h3>
-        <p>Register-level control of an STM32F407 without HAL abstractions. Set RCC clock gates, drive GPIO through MODER, ODR and BSRR and read the result back in IDR, map alternate functions, configure TIM2 PWM, USART2, SPI1, ADC1 and SysTick, and enable interrupts in the NVIC. Each write shows the register in hex and binary, the equivalent C line and the resulting waveform.</p>
-        <ul class="chips rb-chips"><li>STM32</li><li>ARM Cortex-M</li><li>Register-Level I/O</li><li>Bare Metal C</li></ul>
-        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
-      </a>
-      <a class="card rb-card" href="/robotics/tinyml-quantization-lab.html">
-        <span class="rb-kind">Edge ML Deployment</span>
-        <h3>TinyML Model Quantization Lab</h3>
-        <p>Post-training INT8 and INT4 quantization of four TinyML models for microcontroller targets. Inspect per-layer quantization error (MSE and SQNR) and the estimated accuracy drop, compare modelled FP32 and quantized latency, and check whether the weights and tensor arena fit the flash and SRAM of four MCUs before deployment.</p>
-        <ul class="chips rb-chips"><li>TinyML</li><li>INT8 Quantization</li><li>Model Compression</li><li>MCU Deployment</li></ul>
-        <span class="wc-link">Open the simulator <span aria-hidden="true">&rarr;</span></span>
-      </a>
-      <a class="card rb-card" href="/terminal-heist.html">
-        <span class="rb-kind">Systems & CLI</span>
-        <h3>Terminal Heist</h3>
-        <p>Interactive terminal emulator showcasing Linux shell mechanics, process navigation, and systems-level problem solving. Built from scratch to simulate realistic CLI workflows including file system traversal, permission handling, and command parsing within a fully event-driven architecture.</p>
-        <ul class="chips rb-chips"><li>Linux CLI</li><li>Systems Design</li><li>Shell Emulation</li><li>Event Architecture</li></ul>
-        <span class="wc-link">Open the game <span aria-hidden="true">&rarr;</span></span>
-      </a>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="projects">
-  <div class="container">
-    <div class="section-head"><h2>Technical write-ups</h2><p>Architecture, design choices and results for three hardware builds.</p></div>
-    <div class="grid-3 rb-grid">
-      <a class="card rb-card" href="/robotics/project-autonomous-robot.html">
-        <span class="rb-kind">Full-Stack Robotics</span>
-        <h3>Autonomous Mobile Robot</h3>
-        <p>Differential-drive robot built from scratch on a Raspberry Pi 4 running ROS 2 Humble. C++ nodes for an RPLiDAR A1, a BNO055 IMU and encoder-fed motor control feed Cartographer SLAM, and Nav2 plans and drives with live obstacle avoidance.</p>
-        <ul class="chips rb-chips"><li>ROS 2</li><li>Nav2</li><li>Cartographer</li><li>RPLiDAR A1</li><li>BNO055</li></ul>
-        <span class="wc-link">Read the technical write-up <span aria-hidden="true">&rarr;</span></span>
-      </a>
-      <a class="card rb-card" href="/robotics/project-edge-ml-stm32.html">
-        <span class="rb-kind">On-Device AI</span>
-        <h3>Edge ML Inference on STM32</h3>
-        <p>INT8 image classifier on an STM32H743 (Cortex-M7, 480 MHz) with TensorFlow Lite Micro. Bare-metal C drivers capture OV7670 frames over DCMI with double-buffered DMA and draw results on an SPI display, all inside the chip's 512 KB AXI SRAM.</p>
-        <ul class="chips rb-chips"><li>TF Lite Micro</li><li>STM32H7</li><li>DCMI + DMA</li><li>INT8 quantization</li><li>Bare-metal C</li></ul>
-        <span class="wc-link">Read the technical write-up <span aria-hidden="true">&rarr;</span></span>
-      </a>
-      <a class="card rb-card" href="/robotics/project-sensor-fusion-controller.html">
-        <span class="rb-kind">Control Systems</span>
-        <h3>Real-Time Sensor Fusion & Balance Controller</h3>
-        <p>Self-balancing platform on an ESP32 under FreeRTOS. Complementary and Kalman filters fuse MPU-6050 gyro and accelerometer data, and a cascaded PID controller runs the angle loop at 100 Hz and the position loop at 20 Hz from ultrasonic distance.</p>
-        <ul class="chips rb-chips"><li>ESP32</li><li>FreeRTOS</li><li>Kalman filter</li><li>Cascaded PID</li><li>MPU-6050</li></ul>
-        <span class="wc-link">Read the technical write-up <span aria-hidden="true">&rarr;</span></span>
-      </a>
-    </div>
-  </div>
-</section>
+<main>
+  <p>Robotics and embedded systems are now in the Engineering Lab.</p>
+  <a href="/lab/">Go to the Lab</a>
 </main>
-
-    <!-- site-footer:start -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="f-grid">
-      <div>
-        <div class="f-brand">Cristian Arenas</div>
-        <div class="f-role">Quantitative Investment Management &amp; AI Engineering</div>
-      </div>
-      <ul>
-        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
-        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
-        <li><a href="/library.html">Library</a></li>
-        <li><a href="/ai-systems.html">AI systems</a></li>
-        <li><a href="/notes/">Notes</a></li>
-        <li><a href="/tests.html">Model tests</a></li>
-        <li><a href="/arcade.html">Games</a></li>
-        <li><a href="/robotics-embedded.html">Robotics</a></li>
-      </ul>
-    </div>
-    <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>
-  </div>
-</footer>
-<!-- site-footer:end -->
 </body>
 </html>

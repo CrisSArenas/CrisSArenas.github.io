@@ -5,14 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STM32 Memory-Mapped I/O Lab | Cristian Arenas</title>
 <meta name="description" content="Interactive STM32F407 memory-mapped I/O lab: toggle real RCC, GPIO, TIM2, USART2, SPI1, ADC1 and NVIC/SysTick register bits and watch the hex/binary value, the equivalent CMSIS C line, the pin states and the simulated waveform update live.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
-<link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
-<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
-<meta name="theme-color" content="#07120E">
+<link rel="icon" href="/assets/images/favicon.svg?v=6" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.png?v=6" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=6">
+<meta name="theme-color" content="#0A0D10">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
@@ -122,7 +119,7 @@ canvas{display:block;width:100%;border-radius:6px;background:var(--card2)}
 .code-block{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre;color:var(--dim);max-height:380px;overflow-y:auto}
 .code-block .kw{color:var(--cyan)}
 .code-block .hex{color:var(--green)}
-.code-block .cmt{color:#6B7176;font-style:italic}
+.code-block .cmt{color:#6B7580;font-style:italic}
 .code-block .fn{color:var(--yellow)}
 .code-block .op{color:var(--text)}
 .code-block .reg{color:var(--orange)}
@@ -160,14 +157,13 @@ canvas{display:block;width:100%;border-radius:6px;background:var(--card2)}
 <a class="skip-link" href="#main">Skip to content</a>
 <nav class="site-nav" aria-label="Site">
   <div class="container">
-    <a class="brand" href="/">Cristian Arenas</a>
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">CA</span><span class="brand-name">Cristian Arenas</span></a>
     <ul class="nav-links">
-      <li><a href="/#about">About</a></li>
-      <li><a href="/#portfolio">Portfolio management</a></li>
-      <li><a href="/#ai">AI</a></li>
-      <li><a href="/#work">Work</a></li>
-      <li><a href="/#research">Research</a></li>
-      <li><a href="/#contact">Contact</a></li>
+      <li><a href="/work/">Work</a></li>
+      <li><a href="/research/">Research</a></li>
+      <li><a href="/lab/">Lab</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
     </ul>
     <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -175,7 +171,7 @@ canvas{display:block;width:100%;border-radius:6px;background:var(--card2)}
 </nav>
 <!-- site-nav:end -->
 <div id="main" tabindex="-1"></div>
-<div class="demo-bar"><div class="container"><a class="back-link" href="/robotics-embedded.html">&larr; Back to Robotics</a><h1 class="demo-title"><i class="fas fa-memory"></i> STM32 Memory-Mapped I/O Lab</h1><div class="demo-actions"><button type="button" class="d-btn sm btn-preset" id="prLed" onclick="loadPreset('led')"><i class="fas fa-lightbulb"></i> LED</button>
+<div class="demo-bar"><div class="container"><a class="back-link" href="/lab/">&larr; Back to the Lab</a><h1 class="demo-title"><i class="fas fa-memory"></i> STM32 Memory-Mapped I/O Lab</h1><div class="demo-actions"><button type="button" class="d-btn sm btn-preset" id="prLed" onclick="loadPreset('led')"><i class="fas fa-lightbulb"></i> LED</button>
     <button type="button" class="d-btn sm btn-preset" id="prPwm" onclick="loadPreset('pwm')"><i class="fas fa-wave-square"></i> PWM 1 kHz</button>
     <button type="button" class="d-btn sm btn-preset" id="prUart" onclick="loadPreset('uart')"><i class="fas fa-exchange-alt"></i> UART 115200</button>
     <button type="button" class="d-btn sm btn-preset" id="prSpi" onclick="loadPreset('spi')"><i class="fas fa-right-left"></i> SPI 2.6 MHz</button>
@@ -354,10 +350,10 @@ var C={},FC=[];
 function readPal(){
   var s=getComputedStyle(document.documentElement);
   function g(n,d){var v=s.getPropertyValue(n).trim();return /^#[0-9a-fA-F]{6}$/.test(v)?v:d}
-  C.pos=g('--c-positive','#6FB59A');C.neg=g('--c-negative','#E07A7A');
-  C.gold=g('--c-gold','#B39B6E');C.goldT=g('--c-gold-text','#C4AE84');
-  C.graph=g('--c-graphite','#6B7176');C.dim=g('--c-text-2','#A7ACB0');
-  C.line=g('--c-chip-border','#3A4044');C.body=g('--c-card','#0E1C16');C.text=g('--c-text','#EEF2EF');
+  C.pos=g('--c-positive','#4FC1B0');C.neg=g('--c-negative','#E5827B');
+  C.gold=g('--c-gold','#C8A66B');C.goldT=g('--c-gold-text','#D7BC8A');
+  C.graph=g('--c-graphite','#6B7580');C.dim=g('--c-text-2','#A4AEB5');
+  C.line=g('--c-chip-border','#3B4651');C.body=g('--c-card','#11161B');C.text=g('--c-text','#E8EDEF');
   FC=[C.graph,C.pos,C.goldT,C.gold,C.dim,C.neg,C.goldT,C.pos,C.graph,C.gold,C.goldT,C.neg,C.dim,C.pos,C.gold,C.goldT];
 }
 function A(hex,a){var h=hex.replace('#','');return 'rgba('+parseInt(h.substr(0,2),16)+','+parseInt(h.substr(2,2),16)+','+parseInt(h.substr(4,2),16)+','+a+')'}
@@ -398,7 +394,7 @@ function iserFields(names,base){
 }
 
 var PERIPHS={
-  rcc:{name:'RCC',icon:'fa-bolt',color:'#C4AE84',base:0x40023800,bus:'AHB1',
+  rcc:{name:'RCC',icon:'fa-bolt',color:'#D7BC8A',base:0x40023800,bus:'AHB1',
     desc:'Reset and clock control. HSE 8 MHz through the PLL (M 8, N 336, P 2) gives SYSCLK 168 MHz; AHB /1 = 168 MHz, APB1 /4 = 42 MHz (timer clock 84 MHz), APB2 /2 = 84 MHz (timer clock 168 MHz). Every peripheral is clock-gated - until its xxxENR bit is set the registers read back 0 and writes are lost.',
     regs:[
       {name:'AHB1ENR',off:0x30,rst:0x00100000,desc:'AHB1 peripheral clock enable (+0x30). Bit 0 = GPIOAEN, 1 = GPIOBEN, 2 = GPIOCEN, 3 = GPIODEN. Reset 0x00100000 (CCM data RAM).',
@@ -408,7 +404,7 @@ var PERIPHS={
       {name:'APB2ENR',off:0x44,rst:0,desc:'APB2 peripheral clock enable (+0x44). Bit 4 = USART1EN, bit 8 = ADC1EN, bit 12 = SPI1EN, bit 14 = SYSCFGEN (needed before any EXTI pin interrupt).',
        fields:enrFields({0:'TIM1EN',1:'TIM8EN',4:'USART1EN',5:'USART6EN',8:'ADC1EN',9:'ADC2EN',10:'ADC3EN',11:'SDIOEN',12:'SPI1EN',14:'SYSCFGEN',16:'TIM9EN',17:'TIM10EN',18:'TIM11EN'},'APB2')}
     ]},
-  gpio:{name:'GPIOA',icon:'fa-plug',color:'#1F6F4A',base:0x40020000,bus:'AHB1',clk:['AHB1ENR',0],
+  gpio:{name:'GPIOA',icon:'fa-plug',color:'#0B6B63',base:0x40020000,bus:'AHB1',clk:['AHB1ENR',0],
     desc:'General-purpose I/O port A on AHB1 (GPIOB 0x40020400, GPIOC 0x40020800, GPIOD 0x40020C00). 16 pins, PA0-PA15.',
     regs:[
       {name:'MODER',off:0x00,rst:0xA8000000,desc:'Mode register (+0x00), 2 bits per pin: 00 = Input, 01 = Output, 10 = Alternate function, 11 = Analog. Reset 0xA8000000 leaves PA13/14/15 on SWD/JTAG.',
@@ -428,7 +424,7 @@ var PERIPHS={
       {name:'AFRL',off:0x20,rst:0,desc:'Alternate function low (+0x20), 4 bits per pin for PA0-PA7; AFRH (+0x24) covers PA8-PA15. AF1 = TIM2, AF5 = SPI1, AF7 = USART1/USART2. MODER must be 10 for the AF to take effect.',
        fields:(function(){var f=[];for(var i=7;i>=0;i--){var bs=[];for(var b=3;b>=0;b--)bs.push(i*4+b);f.push({name:'AFRL'+i,bits:bs,desc:'PA'+i+' alternate function 0-15 (1=TIM2, 5=SPI1, 7=USART2)'})}return f})()}
     ]},
-  tim2:{name:'TIM2',icon:'fa-clock',color:'#C4AE84',base:0x40000000,bus:'APB1',clk:['APB1ENR',0],
+  tim2:{name:'TIM2',icon:'fa-clock',color:'#D7BC8A',base:0x40000000,bus:'APB1',clk:['APB1ENR',0],
     desc:'General-purpose 32-bit timer on APB1 (base 0x40000000). APB1 runs at 42 MHz, but because the APB1 prescaler is greater than 1 the timer clock is doubled to 84 MHz. TIM2_CH1 is PA0, PA5 or PA15 on AF1.',
     regs:[
       {name:'CR1',off:0x00,rst:0,desc:'Control register 1 (+0x00). Counter enable, direction, alignment, auto-reload preload.',
@@ -480,7 +476,7 @@ var PERIPHS={
       {name:'CCR1',off:0x34,rst:0,desc:'Capture/compare 1 (+0x34). In PWM mode 1 the output is active while CNT < CCR1, so duty = CCR1 / (ARR+1).',
        fields:[{name:'CCR1',bits:range(31,0),desc:'Compare value; duty = CCR1/(ARR+1)'}]}
     ]},
-  usart2:{name:'USART2',icon:'fa-exchange-alt',color:'#B39B6E',base:0x40004400,bus:'APB1',clk:['APB1ENR',17],
+  usart2:{name:'USART2',icon:'fa-exchange-alt',color:'#C8A66B',base:0x40004400,bus:'APB1',clk:['APB1ENR',17],
     desc:'USART2 on APB1, base 0x40004400, so its PCLK1 is 42 MHz (USART1 sits on APB2 at 0x40011000 with an 84 MHz clock). Default pins PA2 = TX and PA3 = RX on AF7; on a Nucleo board these reach the ST-LINK virtual COM port.',
     regs:[
       {name:'SR',off:0x00,rst:0x00C0,desc:'Status register (+0x00). Poll TXE (bit 7) before writing DR and RXNE (bit 5) before reading it. Reset value 0x00C0: TXE and TC are already set.',
@@ -538,7 +534,7 @@ var PERIPHS={
          rsvBits(range(31,15).concat([7,4]))
        ]}
     ]},
-  spi1:{name:'SPI1',icon:'fa-right-left',color:'#B39B6E',base:0x40013000,bus:'APB2',clk:['APB2ENR',12],
+  spi1:{name:'SPI1',icon:'fa-right-left',color:'#C8A66B',base:0x40013000,bus:'APB2',clk:['APB2ENR',12],
     desc:'SPI1 on APB2, base 0x40013000, PCLK2 = 84 MHz. Default pins PA5 = SCK, PA6 = MISO, PA7 = MOSI on AF5. f_SCK = PCLK2 / 2^(BR+1), so /2 = 42 MHz down to /256 = 328 kHz.',
     regs:[
       {name:'CR1',off:0x00,rst:0,desc:'Control register 1 (+0x00). CPHA bit 0, CPOL bit 1, MSTR bit 2, BR[2:0] bits 5:3, SPE bit 6, LSBFIRST bit 7, DFF bit 11. Configure everything else before setting SPE.',
@@ -586,7 +582,7 @@ var PERIPHS={
       {name:'DR',off:0x0C,rst:0,desc:'Data register (+0x0C). Writing loads the Tx buffer, reading empties the Rx buffer; 8 or 16 bits wide depending on DFF.',
        fields:[{name:'DR',bits:range(15,0),desc:'Frame shifted out on MOSI (and the last frame shifted in on MISO)'},rsvBits(range(31,16))]}
     ]},
-  adc1:{name:'ADC1',icon:'fa-chart-line',color:'#B39B6E',base:0x40012000,bus:'APB2',clk:['APB2ENR',8],
+  adc1:{name:'ADC1',icon:'fa-chart-line',color:'#C8A66B',base:0x40012000,bus:'APB2',clk:['APB2ENR',8],
     desc:'12-bit successive-approximation ADC at 0x40012000 on APB2. ADCCLK = PCLK2 / 4 = 21 MHz (the 36 MHz maximum is respected). Conversion takes SMP + 12 ADC cycles at 12-bit resolution.',
     regs:[
       {name:'CR1',off:0x04,rst:0,desc:'Control register 1 (+0x04). Resolution, scan mode, analog watchdog and interrupt enables.',
@@ -638,7 +634,7 @@ var PERIPHS={
       {name:'DR',off:0x4C,rst:0,desc:'Regular data register (+0x4C). Read-only on hardware and written by the converter; it is editable here only so the sampling view has a value to display.',
        fields:[{name:'DATA',bits:range(15,0),desc:'Conversion result, right-aligned (0-4095 at 12-bit)'},rsvBits(range(31,16))]}
     ]},
-  core:{name:'NVIC/SysTick',icon:'fa-bolt-lightning',color:'#B39B6E',base:0xE000E000,bus:'Cortex-M4 PPB',
+  core:{name:'NVIC/SysTick',icon:'fa-bolt-lightning',color:'#C8A66B',base:0xE000E000,bus:'Cortex-M4 PPB',
     desc:'Cortex-M4 private peripheral bus: SysTick at 0xE000E010, NVIC set-enable at 0xE000E100 (clear-enable 0xE000E180, priority 0xE000E400) and SCB VTOR at 0xE000ED08. Interrupt n is enabled by setting bit (n mod 32) of ISER[n / 32].',
     regs:[
       {name:'SYST_CSR',off:0x010,rst:0,desc:'SysTick control and status, 0xE000E010. ENABLE bit 0, TICKINT bit 1 raises the SysTick exception on underflow, CLKSOURCE bit 2 picks AHB (168 MHz) or AHB/8 (21 MHz). COUNTFLAG bit 16 sets when the counter reaches 0 and clears when read.',
@@ -1717,14 +1713,14 @@ animWF();
         <div class="f-role">Quantitative Investment Management &amp; AI Engineering</div>
       </div>
       <ul>
-        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
-        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
-        <li><a href="/library.html">Library</a></li>
-        <li><a href="/ai-systems.html">AI systems</a></li>
+        <li><a href="/work/">Work</a></li>
+        <li><a href="/research/">Research</a></li>
+        <li><a href="/lab/">Lab</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/contact/">Contact</a></li>
+        <li><a href="/ai-systems.html">AI systems deep dive</a></li>
         <li><a href="/notes/">Notes</a></li>
         <li><a href="/tests.html">Model tests</a></li>
-        <li><a href="/arcade.html">Games</a></li>
-        <li><a href="/robotics-embedded.html">Robotics</a></li>
       </ul>
     </div>
     <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>

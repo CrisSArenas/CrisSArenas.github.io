@@ -5,14 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TinyML Model Quantization Lab | Cristian Arenas</title>
 <meta name="description" content="Interactive TinyML quantisation lab: symmetric per-channel INT8/INT4 weight quantisation, per-layer SQNR, tensor-arena and flash budgeting and a CMSIS-NN MAC-throughput latency model for Cortex-M class targets.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="icon" href="/assets/images/favicon.svg?v=5" type="image/svg+xml">
-<link rel="icon" href="/assets/images/favicon.png?v=5" type="image/png" sizes="64x64">
-<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=5">
-<meta name="theme-color" content="#07120E">
+<link rel="icon" href="/assets/images/favicon.svg?v=6" type="image/svg+xml">
+<link rel="icon" href="/assets/images/favicon.png?v=6" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=6">
+<meta name="theme-color" content="#0A0D10">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/assets/css/demo-shell.css">
 <style>
@@ -141,7 +138,7 @@ canvas{display:block;width:100%;border-radius:6px;background:var(--card2)}
 .flash-seg{height:100%;transition:width .6s ease;position:relative;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:color-mix(in srgb, var(--text) 70%, transparent);overflow:hidden;white-space:nowrap}
 .flash-seg.boot{background:var(--border-strong);color:var(--text)}
 .flash-seg.app{background:var(--graphite);color:#FFFFFF}
-.flash-seg.model{background:var(--gold);color:#1A2421}
+.flash-seg.model{background:var(--gold);color:#0F151A}
 .flash-seg.free{background:color-mix(in srgb, var(--text) 3%, transparent)}
 .flash-seg.arena{background:var(--s1);color:var(--bg)}
 .flash-seg.overflow{background:var(--red);color:var(--bg);animation:flash-warn 1s infinite}
@@ -212,14 +209,13 @@ canvas{display:block;width:100%;border-radius:6px;background:var(--card2)}
 <a class="skip-link" href="#main">Skip to content</a>
 <nav class="site-nav" aria-label="Site">
   <div class="container">
-    <a class="brand" href="/">Cristian Arenas</a>
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">CA</span><span class="brand-name">Cristian Arenas</span></a>
     <ul class="nav-links">
-      <li><a href="/#about">About</a></li>
-      <li><a href="/#portfolio">Portfolio management</a></li>
-      <li><a href="/#ai">AI</a></li>
-      <li><a href="/#work">Work</a></li>
-      <li><a href="/#research">Research</a></li>
-      <li><a href="/#contact">Contact</a></li>
+      <li><a href="/work/">Work</a></li>
+      <li><a href="/research/">Research</a></li>
+      <li><a href="/lab/">Lab</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
     </ul>
     <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme"><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     <button class="icon-btn menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -227,7 +223,7 @@ canvas{display:block;width:100%;border-radius:6px;background:var(--card2)}
 </nav>
 <!-- site-nav:end -->
 <div id="main" tabindex="-1"></div>
-<div class="demo-bar"><div class="container"><a class="back-link" href="/robotics-embedded.html">&larr; Back to Robotics</a><h1 class="demo-title"><i class="fas fa-compress"></i> TinyML Model Quantization Lab</h1><div class="demo-actions"><span class="d-pill cyan" id="quantPill">FP32</span>
+<div class="demo-bar"><div class="container"><a class="back-link" href="/lab/">&larr; Back to the Lab</a><h1 class="demo-title"><i class="fas fa-compress"></i> TinyML Model Quantization Lab</h1><div class="demo-actions"><span class="d-pill cyan" id="quantPill">FP32</span>
     <button type="button" class="d-btn sm" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
     <button type="button" class="d-btn sm icon" id="helpBtn" title="Guide" aria-label="Open guide"><span class="ico" aria-hidden="true">?</span></button></div></div></div>
 <div class="demo-status">
@@ -567,17 +563,17 @@ const MODELS = {
     baseAcc:94.4, accLabel:'Top-1', qSens:1.0, interactive:false,
     classes:['_silence_','_unknown_','yes','no','up','down','left','right','on','off','stop','go'],
     layers:[
-      {name:'Conv1 10x4 /s2', type:'conv',   dims:'49x10x1 -> 25x5x64', color:'#B39B6E', params:2624, macs:320000, dwMacs:0,     inAct:490,  outAct:8000, outCh:64, gridW:20, gridH:16},
-      {name:'DWConv2 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
-      {name:'PWConv2 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
-      {name:'DWConv3 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
-      {name:'PWConv3 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
-      {name:'DWConv4 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
-      {name:'PWConv4 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
-      {name:'DWConv5 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
-      {name:'PWConv5 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
-      {name:'DWConv6 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
-      {name:'PWConv6 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#B39B6E', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'Conv1 10x4 /s2', type:'conv',   dims:'49x10x1 -> 25x5x64', color:'#C8A66B', params:2624, macs:320000, dwMacs:0,     inAct:490,  outAct:8000, outCh:64, gridW:20, gridH:16},
+      {name:'DWConv2 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv2 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'DWConv3 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv3 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'DWConv4 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv4 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'DWConv5 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv5 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
+      {name:'DWConv6 3x3',    type:'dwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:640,  macs:72000,  dwMacs:72000, inAct:8000, outAct:8000, outCh:64, gridW:9,  gridH:16},
+      {name:'PWConv6 1x1',    type:'pwconv', dims:'25x5x64 -> 25x5x64', color:'#C8A66B', params:4160, macs:512000, dwMacs:0,     inAct:8000, outAct:8000, outCh:64, gridW:24, gridH:16},
       {name:'GAP + Dense',    type:'dense',  dims:'25x5x64 -> 64 -> 12', color:'var(--positive)', params:780, macs:768,    dwMacs:0,     inAct:8000, outAct:12,   outCh:12, gridW:16, gridH:12}
     ]
   },
@@ -589,16 +585,16 @@ const MODELS = {
     baseAcc:84.9, accLabel:'Top-1', qSens:1.4, interactive:false,
     classes:['no person','person'],
     layers:[
-      {name:'Conv1 3x3 /s2',      type:'conv',    dims:'96x96x1 -> 48x48x8',   color:'#B39B6E', params:80,    macs:165888,  dwMacs:0,      inAct:9216,  outAct:18432, outCh:8,    gridW:9,  gridH:8},
-      {name:'DS1 dw+pw 8->16',    type:'dsblock', dims:'48x48x8 -> 48x48x16',  color:'#B39B6E', params:224,   macs:460800,  dwMacs:165888, inAct:18432, outAct:36864, outCh:24,   gridW:12, gridH:16},
-      {name:'DS2 dw+pw 16->32/s2',type:'dsblock', dims:'48x48x16 -> 24x24x32', color:'#B39B6E', params:704,   macs:377856,  dwMacs:82944,  inAct:36864, outAct:18432, outCh:48,   gridW:16, gridH:16},
-      {name:'DS3 dw+pw 32->32',   type:'dsblock', dims:'24x24x32 -> 24x24x32', color:'#B39B6E', params:1376,  macs:755712,  dwMacs:165888, inAct:18432, outAct:18432, outCh:64,   gridW:20, gridH:16},
-      {name:'DS4 dw+pw 32->64/s2',type:'dsblock', dims:'24x24x32 -> 12x12x64', color:'#B39B6E', params:2432,  macs:336384,  dwMacs:41472,  inAct:18432, outAct:9216,  outCh:96,   gridW:22, gridH:18},
-      {name:'DS5 dw+pw 64->64',   type:'dsblock', dims:'12x12x64 -> 12x12x64', color:'#B39B6E', params:4800,  macs:672768,  dwMacs:82944,  inAct:9216,  outAct:9216,  outCh:128,  gridW:24, gridH:18},
-      {name:'DS6 dw+pw 64->128/s2',type:'dsblock',dims:'12x12x64 -> 6x6x128',  color:'#B39B6E', params:8960,  macs:315648,  dwMacs:20736,  inAct:9216,  outAct:4608,  outCh:192,  gridW:26, gridH:20},
-      {name:'DS7-11 128->128 (x5)',type:'dsblock',dims:'6x6x128 -> 6x6x128',   color:'#C4AE84', params:88960, macs:3156480, dwMacs:207360, inAct:4608,  outAct:4608,  outCh:1280, gridW:28, gridH:22},
-      {name:'DS12 dw+pw 128->256/s2',type:'dsblock',dims:'6x6x128 -> 3x3x256', color:'#C4AE84', params:34304, macs:305280,  dwMacs:10368,  inAct:4608,  outAct:2304,  outCh:384,  gridW:26, gridH:20},
-      {name:'DS13 dw+pw 256->256',type:'dsblock', dims:'3x3x256 -> 3x3x256',   color:'#C4AE84', params:68352, macs:610560,  dwMacs:20736,  inAct:2304,  outAct:2304,  outCh:512,  gridW:28, gridH:22},
+      {name:'Conv1 3x3 /s2',      type:'conv',    dims:'96x96x1 -> 48x48x8',   color:'#C8A66B', params:80,    macs:165888,  dwMacs:0,      inAct:9216,  outAct:18432, outCh:8,    gridW:9,  gridH:8},
+      {name:'DS1 dw+pw 8->16',    type:'dsblock', dims:'48x48x8 -> 48x48x16',  color:'#C8A66B', params:224,   macs:460800,  dwMacs:165888, inAct:18432, outAct:36864, outCh:24,   gridW:12, gridH:16},
+      {name:'DS2 dw+pw 16->32/s2',type:'dsblock', dims:'48x48x16 -> 24x24x32', color:'#C8A66B', params:704,   macs:377856,  dwMacs:82944,  inAct:36864, outAct:18432, outCh:48,   gridW:16, gridH:16},
+      {name:'DS3 dw+pw 32->32',   type:'dsblock', dims:'24x24x32 -> 24x24x32', color:'#C8A66B', params:1376,  macs:755712,  dwMacs:165888, inAct:18432, outAct:18432, outCh:64,   gridW:20, gridH:16},
+      {name:'DS4 dw+pw 32->64/s2',type:'dsblock', dims:'24x24x32 -> 12x12x64', color:'#C8A66B', params:2432,  macs:336384,  dwMacs:41472,  inAct:18432, outAct:9216,  outCh:96,   gridW:22, gridH:18},
+      {name:'DS5 dw+pw 64->64',   type:'dsblock', dims:'12x12x64 -> 12x12x64', color:'#C8A66B', params:4800,  macs:672768,  dwMacs:82944,  inAct:9216,  outAct:9216,  outCh:128,  gridW:24, gridH:18},
+      {name:'DS6 dw+pw 64->128/s2',type:'dsblock',dims:'12x12x64 -> 6x6x128',  color:'#C8A66B', params:8960,  macs:315648,  dwMacs:20736,  inAct:9216,  outAct:4608,  outCh:192,  gridW:26, gridH:20},
+      {name:'DS7-11 128->128 (x5)',type:'dsblock',dims:'6x6x128 -> 6x6x128',   color:'#D7BC8A', params:88960, macs:3156480, dwMacs:207360, inAct:4608,  outAct:4608,  outCh:1280, gridW:28, gridH:22},
+      {name:'DS12 dw+pw 128->256/s2',type:'dsblock',dims:'6x6x128 -> 3x3x256', color:'#D7BC8A', params:34304, macs:305280,  dwMacs:10368,  inAct:4608,  outAct:2304,  outCh:384,  gridW:26, gridH:20},
+      {name:'DS13 dw+pw 256->256',type:'dsblock', dims:'3x3x256 -> 3x3x256',   color:'#D7BC8A', params:68352, macs:610560,  dwMacs:20736,  inAct:2304,  outAct:2304,  outCh:512,  gridW:28, gridH:22},
       {name:'GAP + Dense',        type:'dense',   dims:'3x3x256 -> 256 -> 2',  color:'var(--positive)', params:514,   macs:512,     dwMacs:0,      inAct:2304,  outAct:2,     outCh:2,    gridW:16, gridH:10}
     ]
   },
@@ -610,11 +606,11 @@ const MODELS = {
     baseAcc:88.9, accLabel:'AUC', qSens:0.8, interactive:false,
     classes:['normal','anomaly'],
     layers:[
-      {name:'Dense1 128->96',      type:'dense', dims:'128 -> 96', color:'#B39B6E', params:12384, macs:12288, dwMacs:0, inAct:128, outAct:96,  outCh:96,  gridW:28, gridH:20},
-      {name:'Dense2 96->32',       type:'dense', dims:'96 -> 32',  color:'#B39B6E', params:3104,  macs:3072,  dwMacs:0, inAct:96,  outAct:32,  outCh:32,  gridW:24, gridH:16},
-      {name:'Bottleneck 32->8',    type:'dense', dims:'32 -> 8',   color:'#B39B6E', params:264,   macs:256,   dwMacs:0, inAct:32,  outAct:8,   outCh:8,   gridW:16, gridH:8},
-      {name:'Dense4 8->32',        type:'dense', dims:'8 -> 32',   color:'#B39B6E', params:288,   macs:256,   dwMacs:0, inAct:8,   outAct:32,  outCh:32,  gridW:8,  gridH:16},
-      {name:'Dense5 32->96',       type:'dense', dims:'32 -> 96',  color:'#B39B6E', params:3168,  macs:3072,  dwMacs:0, inAct:32,  outAct:96,  outCh:96,  gridW:24, gridH:16},
+      {name:'Dense1 128->96',      type:'dense', dims:'128 -> 96', color:'#C8A66B', params:12384, macs:12288, dwMacs:0, inAct:128, outAct:96,  outCh:96,  gridW:28, gridH:20},
+      {name:'Dense2 96->32',       type:'dense', dims:'96 -> 32',  color:'#C8A66B', params:3104,  macs:3072,  dwMacs:0, inAct:96,  outAct:32,  outCh:32,  gridW:24, gridH:16},
+      {name:'Bottleneck 32->8',    type:'dense', dims:'32 -> 8',   color:'#C8A66B', params:264,   macs:256,   dwMacs:0, inAct:32,  outAct:8,   outCh:8,   gridW:16, gridH:8},
+      {name:'Dense4 8->32',        type:'dense', dims:'8 -> 32',   color:'#C8A66B', params:288,   macs:256,   dwMacs:0, inAct:8,   outAct:32,  outCh:32,  gridW:8,  gridH:16},
+      {name:'Dense5 32->96',       type:'dense', dims:'32 -> 96',  color:'#C8A66B', params:3168,  macs:3072,  dwMacs:0, inAct:32,  outAct:96,  outCh:96,  gridW:24, gridH:16},
       {name:'Dense6 96->128 recon',type:'dense', dims:'96 -> 128', color:'var(--positive)', params:12416, macs:12288, dwMacs:0, inAct:96,  outAct:128, outCh:128, gridW:28, gridH:20}
     ]
   },
@@ -626,10 +622,10 @@ const MODELS = {
     baseAcc:99.1, accLabel:'Top-1', qSens:0.6, interactive:true,
     classes:['0','1','2','3','4','5','6','7','8','9'],
     layers:[
-      {name:'Conv1 3x3',     type:'conv',  dims:'28x28x1 -> 26x26x8',  color:'#B39B6E', params:80,    macs:48672,  dwMacs:0, inAct:784,  outAct:5408, outCh:8,  gridW:9,  gridH:8},
-      {name:'Conv2 3x3',     type:'conv',  dims:'13x13x8 -> 11x11x16', color:'#B39B6E', params:1168,  macs:139392, dwMacs:0, inAct:1352, outAct:1936, outCh:16, gridW:18, gridH:16},
-      {name:'Conv3 3x3',     type:'conv',  dims:'5x5x16 -> 3x3x32',    color:'#B39B6E', params:4640,  macs:41472,  dwMacs:0, inAct:400,  outAct:288,  outCh:32, gridW:24, gridH:16},
-      {name:'Dense1 288->64',type:'dense', dims:'288 -> 64',           color:'#C4AE84', params:18496, macs:18432,  dwMacs:0, inAct:288,  outAct:64,   outCh:64, gridW:28, gridH:20},
+      {name:'Conv1 3x3',     type:'conv',  dims:'28x28x1 -> 26x26x8',  color:'#C8A66B', params:80,    macs:48672,  dwMacs:0, inAct:784,  outAct:5408, outCh:8,  gridW:9,  gridH:8},
+      {name:'Conv2 3x3',     type:'conv',  dims:'13x13x8 -> 11x11x16', color:'#C8A66B', params:1168,  macs:139392, dwMacs:0, inAct:1352, outAct:1936, outCh:16, gridW:18, gridH:16},
+      {name:'Conv3 3x3',     type:'conv',  dims:'5x5x16 -> 3x3x32',    color:'#C8A66B', params:4640,  macs:41472,  dwMacs:0, inAct:400,  outAct:288,  outCh:32, gridW:24, gridH:16},
+      {name:'Dense1 288->64',type:'dense', dims:'288 -> 64',           color:'#D7BC8A', params:18496, macs:18432,  dwMacs:0, inAct:288,  outAct:64,   outCh:64, gridW:28, gridH:20},
       {name:'Dense2 64->10', type:'dense', dims:'64 -> 10',            color:'var(--positive)', params:650,   macs:640,    dwMacs:0, inAct:64,   outAct:10,   outCh:10, gridW:16, gridH:10}
     ]
   }
@@ -669,11 +665,11 @@ let COL = {};
 function readCol(){
   CSSV = getComputedStyle(document.documentElement);
   COL = {
-    bg:cv('--c-card','#0E1C16'), grid:cv('--c-border','#2E3438'), mid:cv('--c-chip-border','#3A4044'),
-    text:cv('--c-text','#EEF2EF'), muted:cv('--c-text-2','#A7ACB0'), faint:cv('--c-text-3','#8A9094'),
-    green:cv('--c-positive','#6FB59A'), red:cv('--c-negative','#E07A7A'),
-    gold:cv('--c-gold','#B39B6E'), goldT:cv('--c-gold-text','#C4AE84'),
-    graph:cv('--c-graphite','#6B7176'), graph2:cv('--c-graphite-2','#8C9196')
+    bg:cv('--c-card','#11161B'), grid:cv('--c-border','#2E3841'), mid:cv('--c-chip-border','#3B4651'),
+    text:cv('--c-text','#E8EDEF'), muted:cv('--c-text-2','#A4AEB5'), faint:cv('--c-text-3','#87929B'),
+    green:cv('--c-positive','#4FC1B0'), red:cv('--c-negative','#E5827B'),
+    gold:cv('--c-gold','#C8A66B'), goldT:cv('--c-gold-text','#D7BC8A'),
+    graph:cv('--c-graphite','#6B7580'), graph2:cv('--c-graphite-2','#8F99A3')
   };
 }
 readCol();
@@ -1164,7 +1160,7 @@ function drawArchitecture(){
   addArchBlock(body, {
     name: 'Input tensor',
     sub: model.inputName,
-    color: '#6B7176',
+    color: '#6B7580',
     right: model.inAct.toLocaleString() + ' values' + (currentQuant==='fp32' ? '' :
       ' &middot; s=' + inQ.scale.toExponential(2) + ' z=' + inQ.zp),
     rightColor: 'var(--dim)',
@@ -2410,14 +2406,14 @@ requestAnimationFrame(drawHeatmap);
         <div class="f-role">Quantitative Investment Management &amp; AI Engineering</div>
       </div>
       <ul>
-        <li><a href="mailto:cristianmiguelsa@gmail.com">Email</a></li>
-        <li><a href="https://www.linkedin.com/in/cristian-arenas-ai-engineer" rel="noopener" target="_blank">LinkedIn</a></li>
-        <li><a href="/library.html">Library</a></li>
-        <li><a href="/ai-systems.html">AI systems</a></li>
+        <li><a href="/work/">Work</a></li>
+        <li><a href="/research/">Research</a></li>
+        <li><a href="/lab/">Lab</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/contact/">Contact</a></li>
+        <li><a href="/ai-systems.html">AI systems deep dive</a></li>
         <li><a href="/notes/">Notes</a></li>
         <li><a href="/tests.html">Model tests</a></li>
-        <li><a href="/arcade.html">Games</a></li>
-        <li><a href="/robotics-embedded.html">Robotics</a></li>
       </ul>
     </div>
     <p class="f-copy">&copy; 2026 Cristian Arenas. The demos use synthetic data and fictional companies and funds. Not investment advice.</p>
