@@ -8,8 +8,3 @@ export const CASH = 0.03;
 export const RISK_AVERSION = 2.5;
 /* institutional position limits: private and less liquid assets are capped, as a real policy portfolio would be */
 export const CAPS_BY_ID: Record<string, number> = { pe: 0.20, re: 0.15, hf: 0.15, em: 0.15 };
-
-export type AssetGroup = 'equity' | 'rates' | 'credit' | 'realestate' | 'hedgefunds';
-export const GROUPS: AssetGroup[] = ['equity', 'rates', 'credit', 'realestate', 'hedgefunds'];
-export const GROUP_BY_ID: Record<string, AssetGroup> = { useq: 'equity', intl: 'equity', em: 'equity', pe: 'equity', gov: 'rates', ig: 'credit', hy: 'credit', re: 'realestate', hf: 'hedgefunds' };
-export const GROUP_LABEL: Record<AssetGroup, string> = { equity: 'Equity', rates: 'Rates', credit: 'Credit', realestate: 'Real estate', hedgefunds: 'Hedge funds' };

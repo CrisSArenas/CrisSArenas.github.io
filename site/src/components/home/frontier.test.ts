@@ -75,7 +75,7 @@ describe('efficient frontier', () => {
     shipped.w.forEach((wi, i) => { expect(wi).toBeCloseTo(MARKET[i], 5); expect(wi).toBeGreaterThan(0); });
   });
   it('credit is held through the middle of the curve', () => {
-    const credit = (p: { w: number[] }) => UNIVERSE.reduce((t, a, i) => t + (a.group === 'credit' ? p.w[i] : 0), 0);
+    const credit = (p: { w: number[] }) => UNIVERSE.reduce((t, a, i) => t + (a.id === 'ig' || a.id === 'hy' ? p.w[i] : 0), 0);
     const mid = F.filter(p => p.vol > 0.06 && p.vol < 0.16);
     expect(mid.length).toBeGreaterThan(20);
     mid.forEach(p => expect(credit(p)).toBeGreaterThan(0.05));

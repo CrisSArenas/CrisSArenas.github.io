@@ -6,13 +6,13 @@
    a reference. Sources and judgement calls in tools/frontier-research.md. */
 import FRONTIER from './frontier.json';
 import { covariance, impliedReturns } from '@/components/home/frontier';
-import { MARKET_BY_ID, CASH, RISK_AVERSION, CAPS_BY_ID, GROUP_BY_ID } from './frontier-config';
-export { GROUPS, GROUP_LABEL, CASH, type AssetGroup } from './frontier-config';
+import { MARKET_BY_ID, CASH, RISK_AVERSION, CAPS_BY_ID } from './frontier-config';
+export { CASH } from './frontier-config';
 export const CORR: number[][] = FRONTIER.corr;
 export const MARKET: number[] = FRONTIER.assets.map(a => MARKET_BY_ID[a.id]);
 export const SIGMA = covariance(FRONTIER.assets.map(a => a.vol), CORR);
 const IMPLIED = impliedReturns(SIGMA, MARKET, RISK_AVERSION, CASH);
-export const UNIVERSE = FRONTIER.assets.map((a, i) => ({ id: a.id, name: a.name, short: a.short, group: GROUP_BY_ID[a.id], ret: IMPLIED[i], hist: a.ret, vol: a.vol, mkt: MARKET[i] }));
+export const UNIVERSE = FRONTIER.assets.map((a, i) => ({ id: a.id, name: a.name, short: a.short, ret: IMPLIED[i], hist: a.ret, vol: a.vol, mkt: MARKET[i] }));
 export const CAPS: number[] = UNIVERSE.map(a => CAPS_BY_ID[a.id] ?? 1);
 
 /* The six steps of running a portfolio, each shown in a working application (slug from projects.ts) or a memo. */

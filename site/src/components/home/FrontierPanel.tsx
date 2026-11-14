@@ -3,7 +3,7 @@ import { motion, useInView, useReducedMotion, animate } from 'motion/react';
 import { scaleLinear } from 'd3-scale';
 import { line, curveMonotoneX } from 'd3-shape';
 import { Disclosure } from '@/components/ui';
-import { UNIVERSE, CORR, CAPS, GROUPS, GROUP_LABEL, CASH, type AssetGroup } from '@/data/home';
+import { UNIVERSE, CORR, CAPS, CASH } from '@/data/home';
 import POINTS from '@/data/frontier-points.json';
 import type { FrontierPoint } from './frontier';
 import { useWidth, prefersReducedMotion } from './useSize';
@@ -17,8 +17,6 @@ const MARKET = POINTS.market;
 const START = MARKET;
 /* rounds away negative zero, so a tiny hedge shows 0% rather than -0% */
 const pct = (v: number, d = 1) => { const t = (v * 100).toFixed(d); return (Number(t) === 0 ? (0).toFixed(d) : t) + '%'; };
-const GROUP_SUB: Record<AssetGroup, string> = { equity: 'Public and private', rates: 'Treasuries', credit: 'IG and high yield', realestate: '', hedgefunds: '' };
-const IDX_BY_GROUP = GROUPS.map(g => UNIVERSE.map((a, i) => (a.group === g ? i : -1)).filter(i => i >= 0));
 
 /* chart labels: full names when there is room, short codes on narrow screens */
 const LABEL: Record<string, [string, string]> = {
@@ -160,25 +158,16 @@ export function FrontierPanel() {
           <span className="inline-flex items-center gap-2"><i className="h-1.5 w-4 rounded-full bg-teal" />Share of capital</span>
           <span className="inline-flex items-center gap-2"><i className="h-1.5 w-4 rounded-full bg-sand" />Share of risk</span>
         </div>
-        <ul className="grid gap-2" aria-label="Allocation and risk contribution by role in the portfolio">
-          {GROUPS.map((g, gi) => {
-            const w = IDX_BY_GROUP[gi].reduce((t, i) => t + p.w[i], 0), rc = IDX_BY_GROUP[gi].reduce((t, i) => t + p.rc[i], 0);
-            return <Row key={g} name={GROUP_LABEL[g]} sub={GROUP_SUB[g] || undefined} w={w} rc={rc} />;
-          })}
+        <ul className="grid gap-1.5" aria-label="Allocation and risk contribution by asset class">
+          {UNIVERSE.map((a, i) => <Row key={a.id} name={a.short} sub={CAPS[i] < 1 ? `Up to ${pct(CAPS[i], 0)}` : undefined} w={p.w[i]} rc={p.rc[i]} />)}
         </ul>
       </div>
 
-      <p className="text-[13.5px] leading-relaxed text-muted">The curve opens at the market portfolio, which holds all nine. Move along it: more return costs more risk, and the bars show where the risk comes from.</p>
-
-      <Disclosure title="By asset class">
-        <ul className="grid gap-2" aria-label="Allocation and risk contribution by asset class">
-          {UNIVERSE.map((a, i) => <Row key={a.id} name={a.short} sub={CAPS[i] < 1 ? `Up to ${pct(CAPS[i], 0)}` : undefined} w={p.w[i]} rc={p.rc[i]} />)}
-        </ul>
-      </Disclosure>
+      <p className="text-[13.5px] leading-relaxed text-muted">The curve opens at the market portfolio, which holds all nine. Move along it: more return costs more risk, and the bars show where each asset class&rsquo;s capital and risk sit.</p>
 
       <Disclosure title="Inputs and method">
         <div className="space-y-4 text-[13px] leading-relaxed text-muted">
-          <p>Expected returns are market implied. Start from a typical global multi-asset portfolio, the market weights below, and ask what returns would make holding exactly that portfolio the best choice, given each asset class&rsquo;s risk and how the classes move together. Each class is paid only for the market risk it carries, over cash at {pct(CASH, 0)}. Position caps are listed under By asset class.</p>
+          <p>Expected returns are market implied. Start from a typical global multi-asset portfolio, the market weights below, and ask what returns would make holding exactly that portfolio the best choice, given each asset class&rsquo;s risk and how the classes move together. Each class is paid only for the market risk it carries, over cash at {pct(CASH, 0)}. Position caps are shown under each asset class above.</p>
           <table className="num w-full border-collapse font-mono text-[10.5px] sm:text-[11.5px]">
             <thead><tr className="text-faint"><th className="whitespace-nowrap py-1.5 pr-2 text-left font-sans font-normal">Asset class</th><th className="px-1 text-right font-normal">Expected</th><th className="px-1 text-right font-normal">30-yr</th><th className="px-1 text-right font-normal">Vol</th><th className="px-1 text-right font-normal">Market</th><th className="hidden pl-1 text-right font-normal sm:table-cell">Cap</th></tr></thead>
             <tbody>
@@ -224,10 +213,10 @@ function Bar({ v, cls }: { v: number; cls: string }) {
 
 function Row({ name, sub, w, rc }: { name: string; sub?: string; w: number; rc: number }) {
   return (
-    <li className="grid grid-cols-[104px_minmax(0,1fr)_76px] items-center gap-3 sm:grid-cols-[124px_minmax(0,1fr)_84px]">
+    <li className="grid grid-cols-[112px_minmax(0,1fr)_72px] items-center gap-3 sm:grid-cols-[124px_minmax(0,1fr)_84px]">
       <span className="min-w-0">
-        <span className="block truncate text-[12.5px] text-ink">{name}</span>
-        {sub && <span className="block truncate text-[10.5px] text-faint">{sub}</span>}
+        <span className="block truncate text-[12px] leading-snug text-ink sm:text-[12.5px]">{name}</span>
+        {sub && <span className="block truncate text-[10.5px] leading-tight text-faint">{sub}</span>}
       </span>
       <span className="grid gap-[3px]" aria-hidden="true">
         <Bar v={w} cls="bg-teal" />
