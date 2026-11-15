@@ -1,4 +1,4 @@
-// Generate one static HTML entry per page into site/ (index.html, work/, research/, lab/, about/, contact/; gitignored). Each page carries its own title,
+// Generate one static HTML entry per page into site/ (index.html, work/, ai/, research/, lab/, about/, contact/; gitignored). Each page carries its own title,
 // description and social tags, a readable fallback for crawlers and visitors without JavaScript, and the
 // script that mounts the React page. Case studies are generated from src/data/projects.json.
 import fs from 'node:fs';
@@ -7,7 +7,7 @@ import path from 'node:path';
 const here = path.dirname(new URL(import.meta.url).pathname);
 const site = path.resolve(here, '..');
 const www = site; /* pages are generated in place: site/index.html, site/work/..., all gitignored */
-const GEN_DIRS = ['work', 'research', 'lab', 'about', 'contact'];
+const GEN_DIRS = ['work', 'ai', 'research', 'lab', 'about', 'contact'];
 const data = JSON.parse(fs.readFileSync(path.join(site, 'src/data/projects.json'), 'utf8'));
 const ORIGIN = 'https://crissarenas.github.io';
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -17,10 +17,12 @@ const pages = [
     desc: 'Cristian Arenas: quantitative investment management and AI engineering. Portfolio management across public and private markets, quantitative research, and agentic AI systems, with working applications.' },
   { url: '/work/', script: 'work', title: 'Work · Cristian Arenas',
     desc: 'Working applications in portfolio management, quantitative research, AI engineering and private markets, each with a case study.' },
+  { url: '/ai/', script: 'ai', title: 'AI Engineering · Cristian Arenas',
+    desc: 'Agentic AI systems built for investment work: working applications, the layers every system is built on, a reference architecture and a deep dive on design, data and production.' },
   { url: '/research/', script: 'research', title: 'Research · Cristian Arenas',
     desc: 'Published research on regime-aware deep learning for multi-asset allocation, investment memos and practitioner notes.' },
   { url: '/lab/', script: 'lab', title: 'Engineering Lab · Cristian Arenas',
-    desc: 'AI systems engineering, robotics, autonomous systems, embedded computing and edge ML, as interactive simulators and technical write-ups.' },
+    desc: 'Robotics, autonomous systems, embedded computing and edge ML, as interactive simulators and technical write-ups.' },
   { url: '/about/', script: 'about', title: 'About · Cristian Arenas',
     desc: 'Background in institutional investment management, quantitative research and AI systems engineering.' },
   { url: '/contact/', script: 'contact', title: 'Contact · Cristian Arenas',
@@ -30,7 +32,7 @@ const pages = [
 
 function html(p) {
   const rel = '/src/pages/' + p.script + '.tsx';
-  const links = [['/', 'Home'], ['/work/', 'Work'], ['/research/', 'Research'], ['/lab/', 'Lab'], ['/about/', 'About'], ['/contact/', 'Contact']];
+  const links = [['/', 'Home'], ['/work/', 'Work'], ['/ai/', 'AI Engineering'], ['/research/', 'Research'], ['/lab/', 'Lab'], ['/about/', 'About'], ['/contact/', 'Contact']];
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>

@@ -6,7 +6,8 @@ import { bySlug } from '@/data/projects';
 
 const NOTE: Record<string, string> = { orch: 'orchestrator → workers', tools: 'retrieval · access filter · guard', verify: 'verifier · approval gate', eval: 'test suite · traces' };
 
-export function AiSection() {
+/* the four layers; on the homepage it ends with links out, on the AI Engineering page (onPage) it stands alone */
+export function AiSection({ id = 'ai', onPage = false }: { id?: string; onPage?: boolean }) {
   const [sel, setSel] = useState(0);
   const uid = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -22,10 +23,10 @@ export function AiSection() {
   };
 
   return (
-    <section id="ai" aria-labelledby="ai-h" className="relative py-20 sm:py-28">
+    <section id={id} aria-labelledby={`${id}-h`} className="relative py-20 sm:py-28">
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-line" />
       <div className="wrap">
-        <SectionHead id="ai-h" eyebrow="AI engineering" title="How the agentic systems are built"
+        <SectionHead id={`${id}-h`} eyebrow={onPage ? 'How they are built' : 'AI engineering'} title="How the agentic systems are built"
           intro="Four layers, from the agent that plans the work down to the tests that catch regressions. Pick a layer for the plain version; the technical detail sits one click further." />
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">
@@ -72,16 +73,16 @@ export function AiSection() {
           </Reveal>
         </div>
 
-        <Reveal className="mt-10 flex flex-col gap-5 border-t border-line pt-8 xl:flex-row xl:items-center xl:justify-between">
+        {!onPage && <Reveal className="mt-10 flex flex-col gap-5 border-t border-line pt-8 xl:flex-row xl:items-center xl:justify-between">
           <p className="max-w-[26rem] text-[14px] leading-relaxed text-muted">
             The public demos are deterministic simulations with no language model calls; the retrieval, permission checks, approval gates and scoring in them are real code.
           </p>
           <div className="flex flex-wrap gap-2.5 xl:shrink-0">
             <Button href={lab!.href} variant="outline" size="sm">{lab!.title}</Button>
             <Button href={mon!.href} variant="outline" size="sm">{mon!.title}</Button>
-            <Button href="/ai-systems.html" variant="ghost" size="sm" className="group">AI systems deep dive <Arrow /></Button>
+            <Button href="/ai/" variant="ghost" size="sm" className="group">All AI engineering <Arrow /></Button>
           </div>
-        </Reveal>
+        </Reveal>}
       </div>
     </section>
   );

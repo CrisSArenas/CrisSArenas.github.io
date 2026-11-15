@@ -6,7 +6,7 @@ import path from 'node:path';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 const repo = path.resolve(here, '..');
-const GEN = ['work', 'research', 'lab', 'about', 'contact'];
+const GEN = ['work', 'ai', 'research', 'lab', 'about', 'contact'];
 
 /* every generated page (site/index.html and site/<section>/.../index.html) is a build entry */
 function entries(): Record<string, string> {

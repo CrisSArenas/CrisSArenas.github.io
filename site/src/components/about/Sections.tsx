@@ -167,6 +167,7 @@ export function Experience() {
 /* ---------- Next: where to go from here ---------- */
 const NEXT = [
   { href: '/work/', label: 'Work', text: 'Working applications with a case study for each.' },
+  { href: '/ai/', label: 'AI Engineering', text: 'Agentic AI systems: applications, how they are built and a deep dive.' },
   { href: '/research/', label: 'Research', text: 'The published paper, investment memos and practitioner notes.' },
   { href: '/lab/', label: 'Lab', text: 'Robotics, embedded and edge ML simulators, with technical write-ups.' },
   { href: '/contact/', label: 'Contact', text: 'Email or LinkedIn.' }
@@ -177,9 +178,9 @@ export function NextLinks() {
     <section aria-labelledby="next-h" className="wrap pt-28 md:pt-36">
       <Reveal><h2 id="next-h" className="eyebrow mb-6">Continue</h2></Reveal>
       <motion.ul variants={staggerParent} initial={useReducedMotion() ? false : 'hidden'} whileInView="show" viewport={{ once: true, margin: '0px 0px -10% 0px' }}
-        className="grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+        className="grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
         {NEXT.map(n => (
-          <motion.li key={n.href} variants={staggerItem} className="flex bg-card">
+          <motion.li key={n.href} variants={staggerItem} className="flex bg-card sm:last:col-span-2 lg:last:col-span-1">
             <a href={n.href} className="group flex w-full flex-col gap-10 p-6 no-underline transition-colors duration-300 hover:bg-panel sm:p-7">
               <span className="flex items-center justify-between text-[1.25rem] font-semibold tracking-tight text-ink">
                 {n.label}

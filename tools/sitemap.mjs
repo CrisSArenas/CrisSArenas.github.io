@@ -9,7 +9,7 @@ const data = JSON.parse(fs.readFileSync(path.join(root, 'site/src/data/projects.
 
 const fresh = [
   ['', '1.0'], ['work/', '0.9'], ...data.projects.map(p => [`work/${p.slug}/`, '0.8']),
-  ['research/', '0.9'], ['lab/', '0.8'], ['about/', '0.8'], ['contact/', '0.6']
+  ['ai/', '0.9'], ['research/', '0.9'], ['lab/', '0.8'], ['about/', '0.8'], ['contact/', '0.6']
 ];
 
 const skip = new Set(['design-preview.html', '404.html']);

@@ -23,7 +23,7 @@ export function Hero() {
     <section aria-labelledby="hero-name" className="relative overflow-hidden pb-12 pt-[88px] sm:pt-24 lg:pb-16 lg:pt-20">
       <div aria-hidden="true" className="home-hero-wash pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="grid-bg home-hero-grid pointer-events-none absolute inset-0" />
-      <div className="wrap relative grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14">
+      <div className="wrap relative grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start lg:gap-14">
         <div className="mx-auto max-w-xl text-center">
           <motion.img {...rise(0)} src="/assets/images/profile-800.webp" alt={NAME} width={112} height={112} decoding="async" fetchPriority="high"
             className="mx-auto mb-7 size-[88px] rounded-full object-cover ring-2 ring-sand/80 ring-offset-4 ring-offset-page sm:size-28" />

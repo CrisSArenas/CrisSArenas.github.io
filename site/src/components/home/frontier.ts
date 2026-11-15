@@ -109,6 +109,11 @@ export function impliedReturns(S: number[][], w: number[], riskAversion: number,
   return S.map(r => cash + riskAversion * r.reduce((t, sij, j) => t + sij * w[j], 0));
 }
 
+/* the risk aversion at which the market portfolio w earns the target expected return: lambda = (target - cash) / w'Sw */
+export function riskAversionFor(S: number[][], w: number[], target: number, cash: number): number {
+  return (target - cash) / quad(S, w);
+}
+
 /* frontier from the minimum-variance portfolio to the highest-return portfolio, evenly spaced in target return,
    plus any extra target returns (such as the market portfolio's), all in increasing order */
 export function frontier(mu: number[], S: number[][], steps = 61, caps?: number[], extra: number[] = []): FrontierPoint[] {

@@ -211,10 +211,13 @@ Black-Litterman prior): `pi = cash + lambda * Sigma * w_mkt`, with Sigma from th
 - Market weights `w_mkt`: US equities 30%, international developed 14%, emerging markets 5%, Treasuries 22%,
   investment grade 13%, high yield 4%, private equity 5%, real estate 4%, hedge funds 3%. A typical global multi-asset
   market portfolio for these nine classes; a judgement, not a measured market capitalisation.
-- Cash 3.0%, risk aversion lambda = 2.5. These set the level of returns only. Scaling excess returns does not change
-  which portfolios are efficient.
-- Resulting expected returns: US 7.7%, international 7.4%, EM 8.0%, Treasuries 3.0%, IG 4.2%, HY 5.9%, PE 8.0%,
-  RE 5.5%, HF 5.2%. The market portfolio earns 6.0% at 10.9% volatility.
+- Cash 4.0%, about where Treasury yields are. Risk aversion lambda is solved so the market portfolio earns 7.5% a year
+  on average (lambda = (7.5% - 4.0%) / w'Sigma w, about 2.95). Cash and lambda set the level of returns only: scaling
+  excess returns does not change which portfolios are efficient, so the holdings along the curve are unchanged.
+- Resulting expected returns: US 9.6%, international 9.2%, EM 9.9%, Treasuries 4.0%, IG 5.4%, HY 7.5%, PE 9.9%,
+  RE 6.9%, HF 6.6%. The market portfolio earns 7.5% at 10.9% volatility, about 6.9% compounded, a reward of about
+  0.32 per unit of risk. (An earlier version used cash 3.0% and lambda 2.5, giving 6.0% for the market; at cash 3.5%
+  Treasuries would come out below cash.)
 
 Why not the 30-year averages. The standard error of a 30-year mean is vol / sqrt(30): about 3.3% a year for US and
 international equities, 2.6% for high yield and 1.8% for hedge funds. Most differences between classes are inside
@@ -235,3 +238,29 @@ Known consequences, left as they are:
   confidence it pushes the curve back to corner portfolios; the position caps stay in place either way.
 
 The settings live in `site/src/data/frontier-config.ts`, shared by the page and by `site/scripts/frontier-points.ts`.
+
+## Endowment-style policy portfolio on the site
+
+The homepage panel also shows a policy portfolio set out the way an endowment's investment policy statement would:
+a target and an allowed range for each asset class, inside the caps. Settings in `site/src/data/frontier-config.ts`.
+
+| Asset class | Target | Range | Role |
+|---|---|---|---|
+| US equities | 22% | 17-27% | Long-term growth |
+| Intl developed | 12% | 8-16% | Growth, diversified |
+| Emerging markets | 6% | 3-9% | Higher growth, higher risk |
+| Treasuries | 10% | 6-15% | Liquidity and protection in a downturn |
+| IG credit | 5% | 2-8% | Income |
+| High yield | 5% | 2-8% | Income with growth |
+| Private equity | 18% | 14-20% | Long-term growth, illiquid |
+| Real estate | 8% | 5-11% | Income and inflation sensitivity |
+| Hedge funds | 14% | 10-15% | Diversifier |
+
+Rules shown with it: objective inflation + 5% over rolling 10 years (about 7.5% at 2.5% inflation); spending 5% of the
+trailing 12-quarter average value; quarterly review, rebalance to target when outside a range; at least 15% saleable
+within a week, private equity plus real estate at most 30%.
+
+On the site's inputs the policy expects 8.1% a year on average (about 7.3% compounded) at 13.0% volatility; a
+1-in-20 bad year (mean less 1.645 volatilities) is about -13%. Private equity is 18% of capital and about 28% of risk.
+The best mix on the curve at the same volatility earns about 0.06% more, which is well inside the uncertainty of any
+input. Unit tests check the policy sums to 100%, sits inside its ranges and the caps, and lies on or below the curve.

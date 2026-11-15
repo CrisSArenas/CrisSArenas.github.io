@@ -93,7 +93,7 @@ export function Footer() {
         <div>
           <div className="eyebrow mb-4">Explore</div>
           <ul className="space-y-2.5 text-sm">
-            {[['/work/', 'Work'], ['/research/', 'Research'], ['/lab/', 'Engineering Lab'], ['/ai-systems.html', 'AI systems deep dive'], ['/notes/', 'Practitioner notes'], ['/tests.html', 'Model tests']].map(([h, l]) => (
+            {[['/work/', 'Work'], ['/ai/', 'AI Engineering'], ['/research/', 'Research'], ['/lab/', 'Engineering Lab'], ['/ai-systems.html', 'AI systems deep dive'], ['/notes/', 'Practitioner notes'], ['/tests.html', 'Model tests']].map(([h, l]) => (
               <li key={h}><a className="text-muted no-underline transition-colors hover:text-ink" href={h}>{l}</a></li>
             ))}
           </ul>

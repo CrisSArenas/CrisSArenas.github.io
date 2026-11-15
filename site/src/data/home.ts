@@ -2,18 +2,21 @@
 
 /* Hero frontier: nine asset classes. Risk (volatility and correlation) comes from 1995-2024 annual returns, compiled by
    tools/frontier-research.py, with private equity and real estate desmoothed. Expected returns are market implied:
-   the returns at which holding the market portfolio in frontier-config.ts is optimal. The 30-year averages are kept as
+   the returns at which holding the market portfolio in frontier-config.ts is optimal, scaled so it earns 7.5% a year. The 30-year averages are kept as
    a reference. Sources and judgement calls in tools/frontier-research.md. */
 import FRONTIER from './frontier.json';
-import { covariance, impliedReturns } from '@/components/home/frontier';
-import { MARKET_BY_ID, CASH, RISK_AVERSION, CAPS_BY_ID } from './frontier-config';
-export { CASH } from './frontier-config';
+import { covariance, impliedReturns, riskAversionFor } from '@/components/home/frontier';
+import { MARKET_BY_ID, CASH, MARKET_RETURN, CAPS_BY_ID, POLICY_BY_ID } from './frontier-config';
+export { CASH, MARKET_RETURN, INFLATION, REAL_OBJECTIVE, SPENDING, ILLIQUID_MAX, LIQUID_MIN } from './frontier-config';
 export const CORR: number[][] = FRONTIER.corr;
 export const MARKET: number[] = FRONTIER.assets.map(a => MARKET_BY_ID[a.id]);
 export const SIGMA = covariance(FRONTIER.assets.map(a => a.vol), CORR);
+export const RISK_AVERSION = riskAversionFor(SIGMA, MARKET, MARKET_RETURN, CASH);
 const IMPLIED = impliedReturns(SIGMA, MARKET, RISK_AVERSION, CASH);
 export const UNIVERSE = FRONTIER.assets.map((a, i) => ({ id: a.id, name: a.name, short: a.short, ret: IMPLIED[i], hist: a.ret, vol: a.vol, mkt: MARKET[i] }));
 export const CAPS: number[] = UNIVERSE.map(a => CAPS_BY_ID[a.id] ?? 1);
+/* the endowment-style policy portfolio, in the same order as UNIVERSE */
+export const POLICY = UNIVERSE.map(a => POLICY_BY_ID[a.id]);
 
 /* The six steps of running a portfolio, each shown in a working application (slug from projects.ts) or a memo. */
 export const PM_STEPS = [

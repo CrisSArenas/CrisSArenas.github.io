@@ -27,6 +27,7 @@ export const PAPER = {
 };
 export const NAV = [
   { href: '/work/', label: 'Work' },
+  { href: '/ai/', label: 'AI Engineering' },
   { href: '/research/', label: 'Research' },
   { href: '/lab/', label: 'Lab' },
   { href: '/about/', label: 'About' },

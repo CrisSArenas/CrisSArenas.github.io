@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { covariance, frontier, impliedReturns, maxReturn, minVariance, riskShares, point } from './frontier';
-import { UNIVERSE, CORR, CAPS, MARKET, CASH } from '@/data/home';
+import { UNIVERSE, CORR, CAPS, MARKET, CASH, MARKET_RETURN, RISK_AVERSION, POLICY, SIGMA, ILLIQUID_MAX } from '@/data/home';
 import POINTS from '@/data/frontier-points.json';
 
 const MU = UNIVERSE.map(a => a.ret), VOL = UNIVERSE.map(a => a.vol), S = covariance(VOL, CORR);
@@ -65,7 +65,9 @@ describe('efficient frontier', () => {
     const Sw = S.map(r => r.reduce((t, s, j) => t + s * MARKET[j], 0));
     const k = (MU[0] - CASH) / Sw[0];
     MU.forEach((m, i) => expect((m - CASH) / Sw[i]).toBeCloseTo(k, 10));
-    expect(impliedReturns(S, MARKET, 2.5, CASH)).toEqual(MU);
+    expect(impliedReturns(S, MARKET, RISK_AVERSION, CASH)).toEqual(MU);
+    expect(MK.ret).toBeCloseTo(MARKET_RETURN, 12);
+    expect(MARKET_RETURN).toBe(0.075);
   });
   it('at the market expected return the solver recovers the market weights, holding all nine', () => {
     const w = minVariance(MU, S, MK.ret, CAPS)!;
@@ -79,6 +81,23 @@ describe('efficient frontier', () => {
     const mid = F.filter(p => p.vol > 0.06 && p.vol < 0.16);
     expect(mid.length).toBeGreaterThan(20);
     mid.forEach(p => expect(credit(p)).toBeGreaterThan(0.05));
+  });
+  it('the policy portfolio is a valid investment policy inside the caps', () => {
+    const t = POLICY.map(l => l.target);
+    expect(sum(t)).toBeCloseTo(1, 12);
+    POLICY.forEach((l, i) => {
+      expect(l.min).toBeLessThanOrEqual(l.target); expect(l.target).toBeLessThanOrEqual(l.max);
+      expect(l.min).toBeGreaterThan(0); expect(l.max).toBeLessThanOrEqual(CAPS[i]);
+      expect(l.role.length).toBeGreaterThan(3);
+    });
+    expect(sum(POLICY.map(l => l.min))).toBeLessThan(1);
+    expect(sum(POLICY.map(l => l.max))).toBeGreaterThan(1);
+    const ill = UNIVERSE.reduce((s, a, i) => s + (a.id === 'pe' || a.id === 're' ? t[i] : 0), 0);
+    expect(ill).toBeLessThanOrEqual(ILLIQUID_MAX);
+    /* the policy sits on or below the curve: no feasible mix beats the frontier */
+    const pol = point(MU, SIGMA, t), k = F.findIndex(q => q.vol >= pol.vol);
+    expect(pol.ret).toBeLessThanOrEqual(F[k].ret + 1e-12);
+    expect(pol.ret).toBeCloseTo(0.081, 3); expect(pol.vol).toBeCloseTo(0.130, 3);
   });
   it('the frontier shipped with the page matches a fresh solve', () => {
     expect(POINTS.caps).toEqual(CAPS);

@@ -18,7 +18,7 @@ function walk(dir, out = []) {
   return out;
 }
 const files = walk(dist).sort();
-const allowed = f => f === 'index.html' || /^(work|research|lab|about|contact)\//.test(f) || f.startsWith('assets/site/');
+const allowed = f => f === 'index.html' || /^(work|ai|research|lab|about|contact)\//.test(f) || f.startsWith('assets/site/');
 const bad = files.filter(f => !allowed(f));
 if (bad.length) { console.error('refusing to publish unexpected paths:\n' + bad.join('\n')); process.exit(1); }
 
