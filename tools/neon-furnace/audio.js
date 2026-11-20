@@ -92,6 +92,23 @@ const AUDIO=(function(){
       case 'medal':   [659,784,988,1319].forEach((f,i)=>tone('triangle',f,f,0.01,0.22,0.12,t+i*0.09)); break;
       case 'levelup': [523,659,784,1047].forEach((f,i)=>tone('triangle',f,f,0.01,0.26,0.13*v,t+i*0.12)); break;
       case 'menu':    tone('square',900,900,0.003,0.04,0.06*v,t); break;
+      case 'punch':   noise(0.06,0.4*v,t,2200,120); tone('sine',140,60,0.002,0.08,0.3*v,t); break;
+      case 'heavy':   noise(0.12,0.55*v,t,1600,80); tone('sine',110,40,0.002,0.16,0.42*v,t); tone('square',220,80,0.002,0.06,0.08*v,t); break;
+      case 'ko':      noise(0.18,0.45*v,t,1800,90); tone('sine',90,30,0.004,0.3,0.36*v,t); break;
+      case 'whoosh':  noise(0.14,0.16*v,t,null,null,null,1600); break;
+      case 'counter': tone('square',1320,1980,0.003,0.06,0.1*v,t); noise(0.08,0.4*v,t,3000,200); tone('sine',150,50,0.002,0.12,0.35*v,t+0.02); break;
+      case 'tell':    tone('triangle',1760,1760,0.002,0.06,0.07*v,t); break;
+      case 'tell2':   tone('sawtooth',220,440,0.02,0.3,0.12*v,t); break;
+      case 'jump':    noise(0.08,0.1*v,t,null,1200); tone('sine',300,520,0.004,0.08,0.06*v,t); break;
+      case 'land':    noise(0.08,0.22*v,t,900,60); break;
+      case 'glide':   noise(0.5,0.08*v,t,null,null,null,700); break;
+      case 'grapple': tone('sawtooth',200,1400,0.005,0.18,0.08*v,t); noise(0.2,0.12*v,t,6000,1500); break;
+      case 'disc':    tone('sine',900,1500,0.004,0.12,0.08*v,t); noise(0.1,0.1*v,t,null,null,null,2500); break;
+      case 'discHit': noise(0.05,0.3*v,t,6000,900); tone('square',1700,900,0.002,0.05,0.07*v,t); break;
+      case 'emp':     tone('sine',80,900,0.01,0.35,0.3*v,t); noise(0.4,0.25*v,t,9000,1200); break;
+      case 'smoke':   noise(0.8,0.3*v,t,1400,100); break;
+      case 'vent':    noise(0.6,0.2*v,t,null,null,null,500); tone('sine',200,600,0.05,0.5,0.08*v,t); break;
+      case 'shard':   [880,1320,1760].forEach((f,i)=>tone('triangle',f,f,0.01,0.18,0.1,t+i*0.07)); break;
     }
   }
 

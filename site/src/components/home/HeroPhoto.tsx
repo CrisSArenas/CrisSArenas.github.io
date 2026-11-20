@@ -61,7 +61,7 @@ export function HeroPhoto() {
             <div className="nf-gate-rain" aria-hidden="true" />
             <p className="nf-gate-kicker">Access granted</p>
             <h2 id="nf-gate-title" className="nf-gate-title"><span>Neon</span> <span>Furnace</span></h2>
-            <p className="nf-gate-copy">A rogue AI has taken the tower. Five levels, one boss, and endless waves after that. The soundtrack is generated live in your browser.</p>
+            <p className="nf-gate-copy">A rogue AI has taken the tower. Fight across five districts of a neon city, glide between the rooftops and take it back. The soundtrack is composed live in your browser.</p>
             <div className="nf-gate-actions">
               <a ref={enterRef} href="/furnace.html" className="nf-gate-enter">Enter</a>
               <button type="button" className="nf-gate-later" onClick={close}>Not now</button>
