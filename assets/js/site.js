@@ -69,5 +69,14 @@
       var href = a.getAttribute('href') || '';
       if (href.indexOf('#') === -1 && href !== '/' && path.indexOf(href.replace(/index\.html$/, '')) === 0) a.setAttribute('aria-current', 'page');
     });
+    // a way back to the game, only for visitors who have already found it
+    var found = false;
+    try { found = localStorage.getItem('nf-found') === '1'; } catch (e) { /* storage blocked */ }
+    var copy = document.querySelector('.site-footer .f-copy');
+    if (found && copy && !copy.querySelector('.nf-cursor')) {
+      var c = document.createElement('a');
+      c.href = '/furnace.html'; c.className = 'nf-cursor'; c.setAttribute('aria-label', 'Back to NEON FURNACE');
+      copy.appendChild(c);
+    }
   });
 })();

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { motion, AnimatePresence, useScroll, useSpring, MotionConfig } from 'motion/react';
 import { NAV, NAME, TITLE, EMAIL, LINKEDIN } from '@/data/site';
 import { useTheme } from '@/lib/theme';
+import { foundEgg } from '@/lib/egg';
 
 function ThemeToggle() {
   const [theme, toggle] = useTheme();
@@ -82,6 +83,8 @@ export function Nav() {
 }
 
 export function Footer() {
+  const [found, setFound] = useState(false);
+  useEffect(() => setFound(foundEgg()), []);
   return (
     <footer className="mt-32 border-t border-line">
       <div className="wrap grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr]">
@@ -107,7 +110,7 @@ export function Footer() {
           </ul>
         </div>
       </div>
-      <div className="wrap border-t border-line py-6 text-xs text-faint">&copy; {new Date().getFullYear()} {NAME}</div>
+      <div className="wrap border-t border-line py-6 text-xs text-faint">&copy; {new Date().getFullYear()} {NAME}{found && <a href="/furnace.html" className="nf-cursor" aria-label="Back to NEON FURNACE" />}</div>
     </footer>
   );
 }

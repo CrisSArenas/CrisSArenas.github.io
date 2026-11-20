@@ -20,7 +20,8 @@ const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => {
 });
 const legacy = walk(root).filter(f => {
   const html = fs.readFileSync(path.join(root, f), 'utf8');
-  return !/<div id="root"/.test(html) && !/http-equiv="refresh"/i.test(html);  /* React pages are listed above; redirects are not pages */
+  /* React pages are listed above; redirects are not pages; pages marked noindex (the hidden game) stay out */
+  return !/<div id="root"/.test(html) && !/http-equiv="refresh"/i.test(html) && !/<meta name="robots" content="noindex/i.test(html);
 }).sort();
 const pri = f => /^(allocation-lab|private-capital-lab|manager-selection-copilot|fund-terms-auditor|co-invest-underwriter|secondaries-desk|multi-strategy-builder|agentic-portfolio-monitor|portfolio-risk-performance|allocation-rebalancing|systematic-research-lab|ai-engineering-lab)\.html$/.test(f) ? '0.7'
   : f.startsWith('notes/') || f.startsWith('memos/') || /^(ai-systems|research-regime)/.test(f) ? '0.6' : '0.5';

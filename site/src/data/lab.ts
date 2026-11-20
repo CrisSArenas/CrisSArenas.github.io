@@ -45,6 +45,5 @@ export const OPS: ArchPart[] = [
 ];
 
 export const EXPERIMENTS = [
-  { title: 'Terminal Heist', href: '/terminal-heist.html', desc: 'A puzzle game on an emulated shell with real Unix permission bits.' },
-  { title: 'FURNACE', href: '/arcade.html', desc: 'A first-person shooter written from scratch in one HTML file, with a raycasting renderer.' }
+  { title: 'Terminal Heist', href: '/terminal-heist.html', desc: 'A puzzle game on an emulated shell with real Unix permission bits.' }
 ];

@@ -4,6 +4,7 @@ import { Button, Tabs } from '@/components/ui';
 import { NAME, TITLE, HERO_LINE, EMAIL, LINKEDIN } from '@/data/site';
 import { FrontierPanel } from './FrontierPanel';
 import { AgentsPanel } from './AgentsPanel';
+import { HeroPhoto } from './HeroPhoto';
 
 const ease = [.25, 1, .5, 1] as const;
 const rise = (delay: number) => ({ initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { duration: .7, delay, ease } });
@@ -25,8 +26,7 @@ export function Hero() {
       <div aria-hidden="true" className="grid-bg home-hero-grid pointer-events-none absolute inset-0" />
       <div className="wrap relative grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start lg:gap-14">
         <div className="mx-auto max-w-xl text-center">
-          <motion.img {...rise(0)} src="/assets/images/profile-800.webp" alt={NAME} width={112} height={112} decoding="async" fetchPriority="high"
-            className="mx-auto mb-7 size-[88px] rounded-full object-cover ring-2 ring-sand/80 ring-offset-4 ring-offset-page sm:size-28" />
+          <HeroPhoto />
           <motion.div {...rise(.04)} className="eyebrow mb-6 flex items-center justify-center gap-3 max-sm:text-[10.5px] max-sm:tracking-[.1em]">
             <span className="hidden h-px w-6 bg-teal/60 sm:block" aria-hidden="true" />Multi-asset portfolios · Agentic AI systems<span className="hidden h-px w-6 bg-teal/60 sm:block" aria-hidden="true" />
           </motion.div>

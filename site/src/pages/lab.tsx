@@ -102,7 +102,7 @@ function Experiments() {
       <div className="wrap flex flex-col gap-6 py-14 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 id="exp-title" className="eyebrow">Experiments</h2>
-          <p className="mt-2 text-[15px] text-muted">Two games written from scratch, for fun.</p>
+          <p className="mt-2 text-[15px] text-muted">Written from scratch, for fun.</p>
         </div>
         <ul className="flex flex-col gap-3 sm:flex-row sm:gap-4">
           {EXPERIMENTS.map(e => (
