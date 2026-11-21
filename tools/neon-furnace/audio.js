@@ -108,6 +108,9 @@ const AUDIO=(function(){
       case 'emp':     tone('sine',80,900,0.01,0.35,0.3*v,t); noise(0.4,0.25*v,t,9000,1200); break;
       case 'smoke':   noise(0.8,0.3*v,t,1400,100); break;
       case 'vent':    noise(0.6,0.2*v,t,null,null,null,500); tone('sine',200,600,0.05,0.5,0.08*v,t); break;
+      case 'radio':   noise(0.12,0.1*v,t,3200,900); tone('square',1200,1200,0.002,0.03,0.05*v,t+0.02); tone('square',1600,1600,0.002,0.03,0.04*v,t+0.07); break;
+      case 'stinger': [0,4,7,12].forEach((k,i)=>tone('sawtooth',440*Math.pow(2,k/12),440*Math.pow(2,k/12),0.005,0.14,0.08,t+i*0.05)); noise(0.3,0.2*v,t,8000,2000); break;
+      case 'thunder': noise(2.2,0.5*v,t,500,30); tone('sine',55,30,0.05,1.6,0.25*v,t); break;
       case 'shard':   [880,1320,1760].forEach((f,i)=>tone('triangle',f,f,0.01,0.18,0.1,t+i*0.07)); break;
     }
   }
@@ -215,7 +218,7 @@ const AUDIO=(function(){
     get on(){return M.on;}
   };
   return{
-    init,play,music,
+    init,play,music,stinger(n){play('stinger',1);},
     get ready(){return !!ac;},
     get muted(){return muted;},
     toggleMute(){muted=!muted;if(master)master.gain.value=muted?0:1;return muted;},
