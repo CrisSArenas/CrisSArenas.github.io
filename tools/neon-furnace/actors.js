@@ -33,7 +33,7 @@ function playerDamage(d,from,kind){
   if(P.inv>0||P.state==='down'||G.god||G.scene!=='play')return false;
   d*=twist('glass')?2:1;
   P.hp-=d;G.tookDamage=true;G.hurt=Math.min(1,G.hurt+0.35+d/40);G.glitch=Math.min(1,G.glitch+0.2);CAM.shake=Math.max(CAM.shake,0.25+d/40);
-  breakCombo();AUDIO.play(kind==='shock'?'zap':'pain',clamp(d/22,0.35,1));
+  breakCombo();AUDIO.play(kind==='shock'?'zap':'pain',clamp(d/22,0.35,1));rumble(0.75,0.5,180);
   if(P.hp<=0){P.hp=0;set('down');P.gliding=false;AUDIO.play('dead');ragStart(P,from?P.x-from.x:0,from?P.z-from.z:1,4,4);return true;}
   set('hurt');P.gliding=false;P.diving=false;
   if(from){const dx=P.x-from.x,dz=P.z-from.z,l=Math.hypot(dx,dz)||1;P.vx=dx/l*6;P.vz=dz/l*6;}
@@ -371,7 +371,7 @@ function tryCounter(){
     if(best.token){best.token=false;G.tokens=Math.max(0,G.tokens-1);}
     if(best.type==='brute'||best.boss){best.state='open';best.st=0;pop('OPEN · BEAT IT DOWN',0);addCombo();if(best.boss)bossOpened(best);}
     else{best.state='stagger';best.st=0;hitEnemy(best,2,'counter');}
-    G.slow=0.2;AUDIO.play('counter');award(100,null);
+    G.slow=0.2;AUDIO.play('counter');award(100,null);rumble(0.3,0.65,100);
     for(const e of G.ents)if(e!==best&&e.state==='windup'&&e.counterable&&!e.dead&&Math.hypot(e.x-P.x,e.z-P.z)<4.8){e.state='stagger';e.st=0;hitEnemy(e,1,'counter');award(150,'MULTI COUNTER');}
   }else if(shot){
     shot.mine=true;shot.vx*=-1.4;shot.vy*=-1;shot.vz*=-1.4;shot.life=2;
@@ -390,7 +390,7 @@ function hitEnemy(e,dmg,how){
   if(twist('glass'))dmg*=2;
   e.hp-=dmg;e.aware=true;if(e.state==='idle'||e.state==='investigate')alertGroup(e);
   addCombo();
-  G.hitFlash.push({x:e.x,y:e.y+1.2,z:e.z,t:0.12});
+  G.hitFlash.push({x:e.x,y:e.y+1.2,z:e.z,t:0.12});rumble(dmg>=2?0.35:0.12,dmg>=2?0.55:0.35,dmg>=2?90:50);
   const col=(ETYPES[e.type]||{spark:[1,.6,.8]}).spark;
   for(let i=0;i<8;i++)spark(e.x,e.y+(e.cy||1.2),e.z,(rng()-.5)*6,rng()*4,(rng()-.5)*6,col,0.35);
   AUDIO.play(how==='disc'?'discHit':dmg>=2?'heavy':'punch',0.8);
@@ -415,7 +415,7 @@ function knockOut(e,how){
   if(labels[how])award(how==='friendly'?300:200,labels[how]);
   if(P.hp<25&&how!=='friendly')award(300,'CLOSE CALL');
   if(new Set(G.recent).size>=6){award(200,'VARIETY');G.recent.length=0;}
-  AUDIO.play(e.boss?'bossdie':T.heavy?'bigdeath':'ko',0.9);
+  AUDIO.play(e.boss?'bossdie':T.heavy?'bigdeath':'ko',0.9);rumble(e.boss?1:T.heavy?0.65:0.4,e.boss?1:0.7,e.boss?650:T.heavy?200:120);
   G.hitstop=Math.max(G.hitstop,e.boss?0.5:T.heavy?0.14:0.06);
   CAM.shake=Math.max(CAM.shake,e.boss?1:T.heavy?0.5:0.15);
   for(let i=0;i<(T.heavy?30:14);i++)spark(e.x,e.y+1,e.z,(rng()-.5)*8,rng()*6,(rng()-.5)*8,T.spark,0.6);

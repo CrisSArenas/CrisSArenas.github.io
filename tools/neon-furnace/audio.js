@@ -219,6 +219,8 @@ const AUDIO=(function(){
   };
   return{
     init,play,music,stinger(n){play('stinger',1);},
+    wake(){if(ac&&ac.state==='suspended')ac.resume();},
+    get suspended(){return !!ac&&ac.state!=='running';},
     get ready(){return !!ac;},
     get muted(){return muted;},
     toggleMute(){muted=!muted;if(master)master.gain.value=muted?0:1;return muted;},

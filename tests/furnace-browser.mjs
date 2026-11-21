@@ -196,6 +196,69 @@ ok(await p.evaluate(async () => { const N = __NF; N.startDistrict(0); N.endCut()
   window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Tab' })); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Tab' })); await N.wait(0.2); return N.G.map; }), 'Tab opens the map');
 ok(await p.evaluate(() => { __NF.G.map = false; __NF.G.scene = 'play'; __NF.pause(); return __NF.G.scene === 'paused'; }), 'pause opens the pause menu');
 
+console.log('\nController');
+// A simulated controller: navigator.getGamepads() returns a pad whose buttons and sticks the test sets.
+const pc = await b.newContext({ viewport: { width: 800, height: 500 } });
+await pc.addInitScript(() => {
+  const mk = () => ({ pressed: false, value: 0 });
+  window.__pad = { id: 'Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e)', index: 0, connected: true, mapping: 'standard',
+    buttons: Array.from({ length: 17 }, mk), axes: [0, 0, 0, 0], timestamp: 0, rumbles: [],
+    vibrationActuator: { type: 'dual-rumble', playEffect(t, o) { window.__pad.rumbles.push(o); return Promise.resolve('complete'); } } };
+  navigator.getGamepads = () => [window.__pad];
+  window.__press = (i, v = true) => { window.__pad.buttons[i].pressed = v; window.__pad.buttons[i].value = v ? 1 : 0; };
+  window.__connect = () => { const ev = new Event('gamepadconnected'); Object.defineProperty(ev, 'gamepad', { value: window.__pad }); window.dispatchEvent(ev); };
+});
+const g = await pc.newPage();
+g.on('pageerror', e => errs.push('pad: ' + e.message));
+await g.route(/cdnjs|fonts\.g/, r => r.abort());
+await g.goto(URL); await g.evaluate(() => localStorage.removeItem('neonfurnace.v4')); await g.reload(); await g.waitForTimeout(600);
+// tap a button for one game frame, then let go
+// (plain animation frames here: the usual wait helper skips scenes and unpauses, which would hide what the pad did)
+const tap = (i) => g.evaluate(async i => { const fr = n => new Promise(r => { let k = 0; (function f() { if (++k >= n) r(); else requestAnimationFrame(f); })(); });
+  __press(i); await fr(3); __press(i, false); await fr(3); }, i);
+await g.evaluate(() => __connect());
+ok(await g.evaluate(() => !document.getElementById('padHint').hidden && __NF.G.toast && /CONNECTED/.test(__NF.G.toast.text)), 'connecting a controller is announced, on the start screen too');
+await g.click('#startBtn'); await g.waitForTimeout(300);
+await tap(13);
+const menu = await g.evaluate(() => ({ input: __NF.G.input, menu: __NF.G.menu, label: __NF.menuItems()[__NF.G.menu].label }));
+ok(menu.input === 'pad' && menu.menu === 1, 'the d-pad moves through the title menu', JSON.stringify(menu));
+await g.evaluate(() => { __NF.G.menu = 0; }); await tap(0);
+const skillScene = await g.evaluate(() => __NF.G.scene); await tap(1);
+const back = await g.evaluate(() => __NF.G.scene);
+ok(skillScene === 'skill' && back === 'title', 'A chooses and B goes back', JSON.stringify([skillScene, back]));
+await g.evaluate(() => { __NF.G.menu = 0; }); await tap(0); await g.evaluate(() => { __NF.G.menu = 2; }); await tap(0);
+const cut = await g.evaluate(() => __NF.G.scene); await tap(0);
+ok(cut === 'cut' && await g.evaluate(() => __NF.G.scene === 'play'), 'a new game starts from the controller and A skips the opening scene', cut);
+const pmv = await g.evaluate(async () => { const N = __NF, P = N.P; N.G.god = true; for (const e of N.G.ents) { e.hidden = true; e.dead = true; }
+  N.CAM.yaw = Math.PI; const z0 = P.z, yaw0 = N.CAM.yaw; __pad.axes[1] = -1; await N.wait(0.7); __pad.axes[1] = 0;
+  const walked = z0 - P.z; __pad.axes[2] = 1; await N.wait(0.4); __pad.axes[2] = 0; const turned = yaw0 - N.CAM.yaw;
+  __press(0); await N.wait(0.12); const air = !P.onGround; __press(0, false); await N.wait(1.5);
+  return { walked, turned, air, landed: P.onGround }; });
+ok(pmv.walked > 1.5, 'the left stick runs, relative to the camera', JSON.stringify(pmv));
+ok(pmv.turned > 0.3, 'the right stick turns the camera', JSON.stringify(pmv));
+ok(pmv.air && pmv.landed, 'A jumps', JSON.stringify(pmv));
+const pst = await g.evaluate(async () => { const N = __NF, P = N.P, I = N.WORLD.W.islands.a; P.x = I.x; P.z = I.z + 3; P.y = I.y; P.onGround = true; P.state = 'move'; P.yaw = Math.PI; N.CAM.yaw = Math.PI;
+  const e = N.makeEnemy('thug', I.x, I.y, I.z, 'a', true); await N.wait(0.1); __pad.rumbles.length = 0;
+  let n = 0; while (!e.dead && n++ < 30) { __press(2); await N.wait(0.06); __press(2, false); await N.wait(0.16); }
+  return { dead: e.dead, combo: N.G.maxCombo, rumbles: __pad.rumbles.length }; });
+ok(pst.dead && pst.combo >= 2, 'X strikes, chains and knocks an enemy out', JSON.stringify(pst));
+ok(pst.rumbles > 0, 'hits make the controller rumble', JSON.stringify(pst));
+const prm = await g.evaluate(async () => { const pad = { grapple: btn('grapple'), special: btn('special'), confirm: btn('confirm') };
+  window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ShiftLeft' })); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'ShiftLeft' }));
+  const kb = { input: __NF.G.input, grapple: btn('grapple') };
+  __pad.id = 'DualSense Wireless Controller (Vendor: 054c)'; __press(13); await __NF.wait(0.05); __press(13, false); await __NF.wait(0.05);
+  return { pad, kb, ps: { input: __NF.G.input, jump: btn('jump'), grapple: btn('grapple') } }; });
+ok(prm.pad.grapple === 'RB' && prm.pad.special === 'LB' && prm.pad.confirm === 'A', 'prompts show the Xbox buttons', JSON.stringify(prm));
+ok(prm.kb.input === 'kb' && prm.kb.grapple === 'E', 'touching the keyboard switches the prompts back', JSON.stringify(prm));
+ok(prm.ps.input === 'pad' && prm.ps.jump === '✕' && prm.ps.grapple === 'R1', 'a PlayStation controller gets its own symbols', JSON.stringify(prm));
+await tap(9);
+const pz = await g.evaluate(() => __NF.G.scene); await tap(9);
+ok(pz === 'paused' && await g.evaluate(() => __NF.G.scene === 'play'), 'Menu / Options pauses and resumes', pz);
+const st = await g.evaluate(async () => { const N = __NF; N.G.scene = 'sound'; N.G.menu = N.menuItems().findIndex(i => i.label === 'INVERT CAMERA');
+  const before = N.SV.invertY; __press(0); await N.wait(0.05); __press(0, false); await N.wait(0.05); return { before, after: N.SV.invertY }; });
+ok(st.before === false && st.after === true, 'settings can be changed from the controller (invert camera)', JSON.stringify(st));
+await pc.close();
+
 console.log('\nPhone');
 const ph = await b.newContext({ ...devices['iPhone 13 landscape'] });
 const q = await ph.newPage();

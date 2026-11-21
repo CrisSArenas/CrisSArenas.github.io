@@ -34,7 +34,7 @@ const levelOf=x=>{let n=0;while(xpFor(n+1)<=x)n++;return n;};
 /* ----------------------------------------------------------------- saves */
 const SAVE_KEY='neonfurnace.v4';
 const SV=Object.assign({reached:0,cont:null,medals:[0,0,0,0,0],best:[0,0,0,0,0],od:0,odWave:0,daily:{key:0,best:0,wave:0},
-  finish:'stock',mus:0.7,sfx:0.8,skill:2,beaten:false,sens:5,quality:'auto',xp:0,up:[],logs:[false,false,false,false,false],
+  finish:'stock',mus:0.7,sfx:0.8,skill:2,beaten:false,sens:5,padSens:5,invertY:false,vib:true,quality:'auto',xp:0,up:[],logs:[false,false,false,false,false],
   stars:{},chBest:{},tables:{od:[],daily:{key:0,list:[]},weekly:{key:0,list:[]},chal:{}},tags:[0,0,0,0,0],seenIntro:[false,false,false,false,false]},(function(){
   try{return JSON.parse(localStorage.getItem(SAVE_KEY))||{};}catch(e){return{};}})());
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(SV));}catch(e){}}
@@ -49,7 +49,7 @@ const G={scene:'boot',mode:'campaign',skill:SV.skill,level:0,D:null,time:0,clock
   ents:[],civs:[],shots:[],sparks:[],fx:[],smoke:[],warps:[],hitFlash:[],bubbles:[],strikes:[],radioQ:[],tokens:0,
   score:0,combo:0,comboT:0,maxCombo:0,chain:0,recent:[],special:0,pops:[],kos:0,kosPlaced:0,enemyTotal:0,keys:{},shards:0,shardTotal:0,tags:0,tagTotal:0,
   tookDamage:false,hitstop:0,slow:0,hurt:0,glitch:0,noise:0,flash:0,msg:'',msgT:0,cine:null,cut:null,map:false,
-  wave:0,waveState:'',waveT:0,spawnQ:[],spawnT:0,daily:null,weekly:null,chal:null,spotted:0,ringsGot:0,seed:0,result:null,copied:0,
+  input:'kb',toast:null,wave:0,waveState:'',waveT:0,spawnQ:[],spawnT:0,daily:null,weekly:null,chal:null,spotted:0,ringsGot:0,seed:0,result:null,copied:0,
   totals:{kos:0,shards:0,time:0},tally:null,menu:0,started:false,locked:false,touch:false,god:false,initials:null,xpGain:0};
 const twist=id=>!!(G.daily&&G.daily.twist.id===id);
 function msg(t){G.msg=t;G.msgT=3.2;}
@@ -225,11 +225,14 @@ function menuItems(){
     {label:'QUALITY',sub:'◂ '+SV.quality.toUpperCase()+' ▸',adj:d=>{const o=['auto','low','medium','high'];SV.quality=o[(o.indexOf(SV.quality)+d+4)%4];applyQuality();save();}},
     {label:'MUSIC',sub:'◂ '+Math.round(SV.mus*10)+' ▸',adj:d=>{SV.mus=clamp(Math.round(SV.mus*10+d)/10,0,1);AUDIO.setVolumes(SV.mus,SV.sfx);save();}},
     {label:'EFFECTS',sub:'◂ '+Math.round(SV.sfx*10)+' ▸',adj:d=>{SV.sfx=clamp(Math.round(SV.sfx*10+d)/10,0,1);AUDIO.setVolumes(SV.mus,SV.sfx);save();AUDIO.play('pickup');}},
-    {label:'LOOK SPEED',sub:'◂ '+SV.sens+' ▸',adj:d=>{SV.sens=clamp(SV.sens+d,1,10);save();}},back];
+    {label:'MOUSE SPEED',sub:'◂ '+SV.sens+' ▸',adj:d=>{SV.sens=clamp(SV.sens+d,1,10);save();}},
+    {label:'STICK SPEED',sub:'◂ '+SV.padSens+' ▸',adj:d=>{SV.padSens=clamp(SV.padSens+d,1,10);save();}},
+    {label:'INVERT CAMERA',sub:'◂ '+(SV.invertY?'ON':'OFF')+' ▸',adj:()=>{SV.invertY=!SV.invertY;save();}},
+    {label:'VIBRATION',sub:'◂ '+(SV.vib?'ON':'OFF')+' ▸',adj:()=>{SV.vib=!SV.vib;save();if(SV.vib)rumble(0.4,0.6,160);}},back];
   if(S==='paused')return[
     {label:'RESUME',sub:'',act:resume},
     {label:'RESTART',sub:G.mode==='campaign'?'FROM THE START OF THIS DISTRICT':'A FRESH RUN',act:restart},
-    {label:'QUIT TO TITLE',sub:G.mode==='campaign'?'PROGRESS IS SAVED AT EACH DISTRICT':'',act:toTitle}];
+    {label:'QUIT TO TITLE',sub:G.mode==='campaign'?'SAVED AT EACH DISTRICT':'',act:toTitle}];
   if(S==='result')return[{label:'RETRY',sub:'',act:restart},{label:'SHARE RUN',sub:'COPIES YOUR SCORE LINE',act:shareRun},{label:'QUIT TO TITLE',sub:'',act:toTitle}];
   return[];
 }
@@ -484,7 +487,7 @@ function musicIntensity(){
 function cameraUpdate(dt){
   const k=0.0021*(SV.sens/5);
   CAM.yaw-=lookDX*k;CAM.pitch=clamp(CAM.pitch+lookDY*k,-0.55,1.1);lookDX=lookDY=0;
-  if(G.touch&&!TOUCH.look&&Math.hypot(P.vx,P.vz)>3&&P.state==='move')CAM.yaw+=angDiff(P.yaw,CAM.yaw)*Math.min(1,0.9*dt);
+  if((touchUI()&&!TOUCH.look||usingPad()&&PAD.lookT>0.8)&&Math.hypot(P.vx,P.vz)>3&&P.state==='move')CAM.yaw+=angDiff(P.yaw,CAM.yaw)*Math.min(1,0.9*dt);
   if(!P.gliding)CAM.roll=lerp(CAM.roll,0,Math.min(1,4*dt));
   CAM.dip=Math.max(0,CAM.dip-dt*1.6);
   // a slow, close look at the last knockout of a fight
@@ -544,7 +547,7 @@ function frame(now){
     // on AUTO, step the quality down rather than stutter
     if(G.scene==='play'&&SV.quality==='auto'&&fpsShown<40){lowT++;if(lowT>4){lowT=0;if(Q===QUALITY.high)Q=QUALITY.medium;else if(Q===QUALITY.medium)Q=QUALITY.low;else renderScale=Math.max(0.5,renderScale-0.1);renderScale=Math.min(renderScale,Q.scale);}}else lowT=0;}
   if(G.copied>0)G.copied-=dt;
-  readKeys();
+  readKeys();padPoll(dt);
   if(G.scene==='play')playTick(dt);
   else if(G.scene==='cut'){cutUpdate(dt);G.clock+=dt;worldUpdate(dt);for(const c of G.civs)civUpdate(c,dt);radioUpdate(dt);}
   else if(['title','skill','armory','sound','boot','challenges','upgrades','log','scores'].includes(G.scene)){
