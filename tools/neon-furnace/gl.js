@@ -20,7 +20,7 @@ layout(location=0) in vec3 aPos; layout(location=1) in vec2 aUV;
 layout(location=2) in vec4 aM0; layout(location=3) in vec4 aM1; layout(location=4) in vec4 aM2; layout(location=5) in vec4 aM3;
 layout(location=6) in vec4 aCol; layout(location=7) in vec4 aX; layout(location=8) in vec4 aGlow;
 uniform mat4 uVP;
-out vec3 vW; out vec3 vL; out vec2 vUV; out vec4 vCol; out vec4 vX; out vec3 vS; out vec4 vGlow;
+out vec3 vW; out vec3 vL; out vec2 vUV; flat out vec4 vCol; flat out vec4 vX; flat out vec3 vS; flat out vec4 vGlow;   // per-object values arrive exact, never blended
 void main(){
   mat4 M=mat4(aM0,aM1,aM2,aM3);
   vec4 w=M*vec4(aPos,1.0);
@@ -29,10 +29,10 @@ void main(){
   gl_Position=uVP*w;
 }`;
 const DEPTH_FS=`#version 300 es
-precision mediump float; in vec4 vX; out vec4 f; void main(){ if(vX.z<0.5)discard; f=vec4(1.0);}`;
+precision mediump float; flat in vec4 vX; out vec4 f; void main(){ if(vX.z<0.5)discard; f=vec4(1.0);}`;
 const BOX_FS=`#version 300 es
 precision highp float; precision highp sampler2DShadow;
-in vec3 vW; in vec3 vL; in vec2 vUV; in vec4 vCol; in vec4 vX; in vec3 vS; in vec4 vGlow;
+in vec3 vW; in vec3 vL; in vec2 vUV; flat in vec4 vCol; flat in vec4 vX; flat in vec3 vS; flat in vec4 vGlow;
 uniform vec3 uCam; uniform float uTime; uniform sampler2D uAtlas; uniform sampler2DShadow uShadow; uniform mat4 uLVP; uniform float uShadowOn;
 uniform vec3 uSky; uniform vec3 uGround; uniform vec3 uMoonDir; uniform vec3 uMoon; uniform float uWet;
 uniform vec3 uFogHi; uniform vec3 uFogLo; uniform float uFogD; uniform float uFogY;
@@ -40,7 +40,9 @@ uniform vec4 uLP[24]; uniform vec4 uLC[24]; uniform int uNL;
 uniform vec3 uWin0; uniform vec3 uWin1; uniform vec3 uWin2; uniform float uWinDensity; uniform float uFlash;
 out vec4 frag;
 float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
-vec4 atlas(float t,vec2 uv){uv=fract(uv);float tx=mod(t,16.0),ty=floor(t/16.0);return texture(uAtlas,(vec2(tx,ty)+clamp(uv,0.004,0.996))/16.0);}
+vec4 atlas(float t,vec2 uv){vec2 gx=dFdx(uv)/16.0,gy=dFdy(uv)/16.0;uv=fract(uv);float tx=mod(t,16.0),ty=floor(t/16.0);
+  vec2 p=(vec2(tx,ty)+clamp(uv,0.03,0.97))/16.0;return textureGrad(uAtlas,p,gx,gy);}
+float cutA(float t,vec2 uv){uv=fract(uv);float tx=mod(t,16.0),ty=floor(t/16.0);return textureLod(uAtlas,(vec2(tx,ty)+clamp(uv,0.03,0.97))/16.0,0.0).a;}
 void main(){
   vec3 N=normalize(cross(dFdx(vW),dFdy(vW)));
   vec3 V=uCam-vW; float dist=length(V); vec3 Vn=V/dist;
@@ -54,28 +56,34 @@ void main(){
     if(kind==9||kind==12||kind==10||kind==2||kind==15)uv=vUV;
     else{float sc=kind==3||kind==4?0.5:0.4; uv=side?(abs(N.x)>0.5?vec2(vW.z,-vW.y):vec2(vW.x,-vW.y))*sc:vW.xz*sc;}
     if(kind==16)uv.y+=uTime*0.6;
+    if(cutA(tl,uv)<0.25)discard;
     vec4 t=atlas(tl,uv);
-    if(t.a<0.25)discard;
-    if(t.a<0.75){emc+=t.rgb*vGlow.rgb*2.4;alb*=0.15;}
-    else alb*=t.rgb;
+    // alpha 1 is a surface, 0.5 glows; filtered texels blend between the two, so signs stay smooth far away
+    float ge=clamp((1.0-t.a)*2.0,0.0,1.0);
+    emc+=t.rgb*vGlow.rgb*2.4*ge;alb*=mix(t.rgb,vec3(0.15),ge);
   }
   if(kind==1||kind==8){                                   // towers: windows from world position
     if(side){
       float u=abs(N.x)>0.5?vW.z:vW.x;
-      vec2 cell=floor(vec2(u/1.7,vW.y/2.6)); vec2 f=fract(vec2(u/1.7,vW.y/2.6));
+      vec2 g=vec2(u/1.7,vW.y/2.6);
+      vec2 cell=floor(g); vec2 f=fract(g);
+      vec2 fw=fwidth(g); float far=smoothstep(0.18,0.6,max(fw.x,fw.y));
       float face=abs(N.x)>0.5?(N.x>0.0?1.0:2.0):(N.z>0.0?3.0:4.0);
-      float h=h21(cell+vec2(seed*0.013,face*7.1));
-      float win=step(0.16,f.x)*step(f.x,0.84)*step(0.22,f.y)*step(f.y,0.72);
-      float lit=step(1.0-uWinDensity,h)*step(0.25,h21(vec2(cell.y,seed+face)));
-      float pick=h21(cell*1.7+seed);
-      vec3 wc=pick<0.55?uWin0:pick<0.82?uWin1:uWin2;
-      // blinds and a silhouette now and then
-      float blind=step(0.7,h21(cell+9.0))*step(0.5,fract(f.y*6.0));
-      float person=step(0.93,h21(cell+floor(uTime*0.2)))*step(0.4,f.x)*step(f.x,0.6)*step(f.y,0.62);
-      alb=mix(alb,vec3(0.03,0.035,0.06),win);
-      emc+=wc*win*lit*(0.75+0.5*h21(cell+3.0))*(1.0-blind*0.5)*(1.0-person*0.85);
-      float band=step(0.93,fract(vW.y/18.0+seed*0.1));
-      emc+=mix(uWin1,uWin2,step(0.5,h21(vec2(seed))))*band*0.9;
+      // a building keeps one colour; a few floors are lit in runs, the way offices are
+      float bp=h21(vec2(seed*0.37,2.0));
+      vec3 wc=bp<0.55?uWin0:bp<0.85?uWin1:uWin2;
+      float run=h21(vec2(floor(cell.x/4.0)+face*13.0,cell.y)+seed*0.013);
+      float lit=step(1.0-uWinDensity,run)*step(0.06,h21(cell+vec2(seed,face)));
+      vec2 e=max(fw,vec2(0.02));
+      float win=smoothstep(0.05-e.x,0.05+e.x,f.x)*smoothstep(0.95+e.x,0.95-e.x,f.x)*smoothstep(0.26-e.y,0.26+e.y,f.y)*smoothstep(0.76+e.y,0.76-e.y,f.y);   // ribbon windows, thin mullions
+      float blind=step(0.75,h21(cell+9.0))*0.35;
+      vec3 near=wc*win*lit*(0.9+0.15*h21(cell+3.0))*(1.0-blind);
+      vec3 avg=wc*0.45*uWinDensity*0.85;                  // what a window grid averages to from far away
+      alb=mix(alb,vec3(0.035,0.04,0.065),mix(win,0.45,far));
+      emc+=mix(near,avg,far);
+      float bw=max(fwidth(vW.y/18.0),0.004);
+      float band=smoothstep(0.935-bw,0.935+bw,fract(vW.y/18.0+seed*0.1))*smoothstep(1.0,1.0-bw,fract(vW.y/18.0+seed*0.1));
+      emc+=mix(uWin1,uWin2,step(0.5,h21(vec2(seed))))*band*0.6;
     }
   }
   if((kind==3||kind==4)&&!side){                          // decks and bridges: a lit edge
@@ -159,7 +167,7 @@ void main(){vec2 p=gl_PointCoord*2.0-1.0;float r=dot(p,p);if(r>1.0)discard;f=vec
 const BRIGHT_FS=`#version 300 es
 precision highp float;
 in vec2 vUV; uniform sampler2D uTex; out vec4 frag;
-void main(){vec3 c=texture(uTex,vUV).rgb;float l=max(c.r,max(c.g,c.b));frag=vec4(c*smoothstep(0.55,1.0,l),1.0);}`;
+void main(){vec3 c=texture(uTex,vUV).rgb;float l=max(c.r,max(c.g,c.b));frag=vec4(c*smoothstep(0.8,1.6,l),1.0);}`;
 const BLUR_FS=`#version 300 es
 precision highp float;
 in vec2 vUV; uniform sampler2D uTex; uniform vec2 uDir; out vec4 frag;
@@ -189,11 +197,11 @@ vec3 scene(vec2 uv){
 void main(){
   vec2 uv=vUV;
   if(uGlitch>0.01){float band=floor(uv.y*24.0+floor(uTime*20.0));uv.x+=(h(band)-0.5)*uGlitch*0.06*step(0.6,h(band*1.3));}
-  vec2 cc=uv-0.5; float ab=0.0015+uGlitch*0.006+uHurt*0.004;
-  vec3 c=vec3(texture(uScene,uv+cc*ab).r,0.0,texture(uScene,uv-cc*ab).b);c.g=scene(uv).g;
-  vec3 base=scene(uv);c=vec3(mix(base.r,c.r,0.6),base.g,mix(base.b,c.b,0.6));
+  vec2 cc=uv-0.5; float ab=uGlitch*0.006+uHurt*0.004;   // colour fringing only when hurt or glitched
+  vec3 c=scene(uv);
+  if(ab>0.0002){c.r=mix(c.r,texture(uScene,uv+cc*ab).r,0.6);c.b=mix(c.b,texture(uScene,uv-cc*ab).b,0.6);}
   if(uBlur>0.01){vec3 acc=c;for(int i=1;i<7;i++){acc+=texture(uScene,uv-cc*float(i)*0.012*uBlur).rgb;}c=acc/7.0;}
-  c+=texture(uBloom,uv).rgb*1.25;
+  c+=texture(uBloom,uv).rgb*1.1;
   if(uRain>0.0){
     float r=0.0;
     for(int i=0;i<3;i++){
@@ -204,13 +212,15 @@ void main(){
     c+=vec3(0.65,0.8,1.0)*r*uRain;
   }
   c+=vec3(0.7,0.75,1.0)*uFlash*0.35;
-  c=c/(1.0+c*0.12);
-  c=mix(vec3(0.03,0.01,0.07),vec3(1.0),c);
-  float v=smoothstep(0.95,0.25,length(cc*vec2(1.2,1.0)));
-  c*=mix(0.55,1.0,v);
+  // a filmic curve: deep blacks, bright neon that rolls off instead of clipping
+  c*=1.15;
+  c=clamp((c*(2.51*c+0.03))/(c*(2.43*c+0.59)+0.14),0.0,1.0);
+  c=mix(vec3(0.008,0.004,0.02),vec3(1.0),c);
+  float v=smoothstep(1.05,0.3,length(cc*vec2(1.2,1.0)));
+  c*=mix(0.7,1.0,v);
   c=mix(c,vec3(0.9,0.05,0.15),uHurt*0.35*(1.0-v*0.7));
   c=mix(c,vec3(dot(c,vec3(0.3,0.59,0.11)))*vec3(0.75,0.9,1.2),uSlow*0.45);
-  c+=(h(uv.x*913.0+uv.y*277.0+uTime)-0.5)*0.025;
+  c+=(h(uv.x*913.0+uv.y*277.0+uTime)-0.5)*0.006;
   if(uBars>0.0){float b=uBars*0.12;if(vUV.y<b||vUV.y>1.0-b)c=vec3(0.0);}
   frag=vec4(c,1.0);
 }`;
@@ -302,7 +312,9 @@ function glInit(){
   const img=buildAtlas();
   R.atlas=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,R.atlas);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,ATS,ATS,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(img.data.buffer));
-  for(const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.NEAREST],[gl.TEXTURE_MAG_FILTER,gl.NEAREST],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,k,v);
+  // crisp up close, smoothly filtered far away: mip levels stop at 8 texels a tile so neighbours barely bleed
+  for(const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR],[gl.TEXTURE_MAG_FILTER,gl.NEAREST],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE],[gl.TEXTURE_MAX_LEVEL,3]])gl.texParameteri(gl.TEXTURE_2D,k,v);
+  gl.generateMipmap(gl.TEXTURE_2D);
   R.vbo={};for(const k in MESH){R.vbo[k]=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,R.vbo[k]);gl.bufferData(gl.ARRAY_BUFFER,MESH[k].data,gl.STATIC_DRAW);}
   R.empty=gl.createVertexArray();
   // a 1x1 depth texture for the shadow sampler when shadows are off: a sampler2DShadow with nothing bound fails the draw

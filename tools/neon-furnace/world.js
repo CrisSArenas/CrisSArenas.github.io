@@ -48,7 +48,7 @@ const SOLID_KINDS=new Set(['deck','tower','server','bridge','crate','rail','fram
 const pick=(arr,s)=>arr[s%arr.length];
 
 function buildWorld(W,themeId,rain){
-  const T=Object.assign({},THEMES[themeId]||THEMES.market);
+  const T=Object.assign({},THEMES[themeId]||THEMES.market);T.fogD*=0.82;            // a little clearer air than the raw palette
   WORLD.W=W;WORLD.T=T;WORLD.rain=rain?1:0;WORLD.kind=W.kind;
   WORLD.boxes=W.boxes.map(b=>Object.assign({},b));
   WORLD.hash=new Map();WORLD.lights=[];WORLD.holos=[];
@@ -76,12 +76,13 @@ function buildWorld(W,themeId,rain){
     const s=b.s%997;
     switch(b.k){
       case 'deck': B.aabb(b.x0,b.y0,b.z0,b.x1,b.y1,b.z1,T.deck,0,3,s,1,tile(T.deckTile));break;
-      case 'under':B.aabb(b.x0,b.y0,b.z0,b.x1,b.y1,b.z1,T.metal,0,0,s,1,tile('metal'));break;
-      case 'pillar':B.aabb(b.x0,b.y0,b.z0,b.x1,b.y1,b.z1,T.tower,0,1,s,1,tile(pick(T.walls,s)));break;
+      case 'under':B.aabb(b.x0+0.05,b.y0,b.z0+0.05,b.x1-0.05,b.y1-0.03,b.z1-0.05,T.metal,0,0,s,1,tile('metal'));break;
+      case 'pillar':{const q=0.04+(s%5)*0.03;B.aabb(b.x0+q,b.y0,b.z0+q,b.x1-q,b.y1-0.02,b.z1-q,T.tower,0,1,s,1,tile(pick(T.walls,s)));break;}
       case 'tower':case 'server':
         if(b.k==='server'){B.aabb(b.x0,b.y0,b.z0,b.x1,b.y1,b.z1,[.6,.65,.75],0,0,s,1,tile('server'),[.3,.95,1]);
           for(const f of [0,1])B.aabb(f?b.x1:b.x0-0.12,b.y0+1,(b.z0+b.z1)/2-0.4,f?b.x1+0.12:b.x0,b.y1-1,(b.z0+b.z1)/2+0.4,[.3,.95,1],1.5,13,s);}
-        else B.aabb(b.x0,b.y0,b.z0,b.x1,b.y1,b.z1,T.tower,0,1,s,1,tile(pick(T.walls,s)));
+        else{const q=0.03+(s%7)*0.025;          // each tower's walls sit a few cm in, by a different amount, so touching towers never flicker
+          B.aabb(b.x0+q,b.y0,b.z0+q,b.x1-q,b.y1,b.z1-q,T.tower,0,1,s,1,tile(pick(T.walls,s)));}
         B.aabb(b.x0,b.y1,b.z0,b.x1,b.y1+0.12,b.z0+0.15,accent,1.1,0,s);
         B.aabb(b.x0,b.y1,b.z1-0.15,b.x1,b.y1+0.12,b.z1,accent,1.1,0,s);
         dressRoof(B,b,T,r);dressWalls(B,b,T,r,W.kind);

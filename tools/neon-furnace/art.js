@@ -16,7 +16,7 @@ function tile(name,draw,glow){
   TILE[name]=i;if(glow)GLOW.add(i);return i;
 }
 const R8=s=>mulberry32(s*7919+13);
-function speck(c,n,a,seed,col){const r=R8(seed);for(let i=0;i<n;i++){c.fillStyle='rgba('+(col||'255,255,255')+','+(a*r()).toFixed(3)+')';c.fillRect(r()*TS|0,r()*TS|0,1+(r()*2|0),1);}}
+function speck(c,n,a,seed,col){const r=R8(seed);n=Math.round(n*0.3);a*=0.7;for(let i=0;i<n;i++){c.fillStyle='rgba('+(col||'255,255,255')+','+(a*r()).toFixed(3)+')';c.fillRect(r()*TS|0,r()*TS|0,1+(r()*2|0),1);}}
 const F=(c,col,x,y,w,h)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
 // every tile keeps its top-left 8x8 as plain fill: meshes map their back faces there
 const plain=(c,col)=>{F(c,col,0,0,TS,TS);};
@@ -42,8 +42,8 @@ function signTile(name,bg,fg,frame,seed,vert){
 
 function buildAtlas(){
   // ----- world surfaces -----
-  tile('concrete',c=>{plain(c,'#6b6874');const r=R8(1);for(let i=0;i<60;i++){const v=90+r()*40|0;F(c,'rgb('+v+','+(v-4)+','+(v+10)+')',r()*TS,r()*TS,3+r()*12,2+r()*8);}
-    F(c,'#4a4752',0,31,TS,2);F(c,'#4a4752',31,0,2,31);speck(c,400,.25,2,'20,20,30');});
+  tile('concrete',c=>{plain(c,'#666370');const r=R8(1);for(let i=0;i<10;i++){const v=98+r()*14|0;F(c,'rgba('+v+','+(v-3)+','+(v+8)+',.35)',r()*TS,r()*TS,8+r()*20,6+r()*14);}
+    F(c,'#55525e',0,31,TS,1);F(c,'#55525e',31,0,1,TS);F(c,'#77748080',0,32,TS,1);speck(c,400,.25,2,'20,20,30');});
   tile('brick',c=>{plain(c,'#5a3a40');const r=R8(3);for(let y=0;y<TS;y+=8){const o=(y/8)&1?8:0;for(let x=-8;x<TS;x+=16){const v=.75+r()*.45;
     F(c,'rgb('+(118*v|0)+','+(64*v|0)+','+(70*v|0)+')',x+o+1,y+1,14,6);}}speck(c,300,.3,4,'0,0,0');});
   tile('metal',c=>{plain(c,'#6a7080');F(c,'#56596a',2,2,28,28);F(c,'#5e6274',34,2,28,28);F(c,'#5a5e70',2,34,28,28);F(c,'#626678',34,34,28,28);
@@ -53,8 +53,8 @@ function buildAtlas(){
   tile('hazard',c=>{plain(c,'#1c1a20');c.fillStyle='#e0a820';for(let i=-TS;i<TS*2;i+=16){c.beginPath();c.moveTo(i,0);c.lineTo(i+8,0);c.lineTo(i+8-TS,TS);c.lineTo(i-TS,TS);c.fill();}speck(c,200,.3,8,'0,0,0');});
   tile('grate',c=>{plain(c,'#3a3a44');for(let y=0;y<TS;y+=8)F(c,'#5c5c6a',0,y,TS,4);for(let x=0;x<TS;x+=16)F(c,'#4a4a56',x,0,3,TS);});
   tile('floor',c=>{plain(c,'#4e4c5a');for(let y=0;y<4;y++)for(let x=0;x<4;x++)F(c,(x+y)&1?'#5a5868':'#535162',x*16+1,y*16+1,14,14);speck(c,300,.2,9,'0,0,0');});
-  tile('asphalt',c=>{plain(c,'#3a3844');const r=R8(10);for(let i=0;i<150;i++){const v=50+r()*30|0;F(c,'rgb('+v+','+v+','+(v+8)+')',r()*TS,r()*TS,1+r()*4,1+r()*3);}
-    F(c,'#d8c050',30,0,4,20);F(c,'#d8c050',30,40,4,20);});
+  tile('asphalt',c=>{plain(c,'#393743');const r=R8(10);for(let i=0;i<40;i++){const v=52+r()*12|0;F(c,'rgba('+v+','+v+','+(v+8)+',.6)',r()*TS,r()*TS,2+r()*5,1+r()*3);}
+    F(c,'#2e2c36',0,0,TS,1);F(c,'#2e2c36',0,0,1,TS);});
   tile('tar',c=>{plain(c,'#34323c');speck(c,600,.25,11,'90,90,110');F(c,'#2a2830',0,20,TS,1);F(c,'#2a2830',0,44,TS,1);});
   tile('glassWall',c=>{plain(c,'#2a3048');F(c,'#3a4468',0,0,TS,2);F(c,'#3a4468',0,0,2,TS);F(c,'#3a4468',31,0,2,TS);
     c.fillStyle='rgba(180,200,255,.12)';c.beginPath();c.moveTo(0,0);c.lineTo(24,0);c.lineTo(0,36);c.fill();});

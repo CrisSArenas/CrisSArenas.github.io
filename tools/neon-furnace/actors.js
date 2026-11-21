@@ -297,14 +297,14 @@ function strikeUpdate(dt,tp){
     const dx=e.x-P.x,dz=e.z-P.z,d=Math.hypot(dx,dz);
     if(S!=='counter'||P.cdir==='front')P.yaw=Math.atan2(dx,dz);
     const reach=(e.type==='mech'||e.type==='brute'?2.1:e.boss?3.2:1.2)+(P.move&&P.move.reach>1.3?0.4:0);
-    if(d>reach&&P.lunge<0.34&&S!=='counter'){
+    if(d>reach&&P.lunge>=0&&P.lunge<0.34&&S!=='counter'){     // close the gap first; once in reach the move never stalls again
       P.lunge+=dt;const sp=Math.min(26,d/0.12,Math.max(0,d-reach+0.15)/Math.max(dt,1e-3));P.vx=dx/d*sp;P.vz=dz/d*sp;   // never overshoot, even at a low frame rate
       if(e.fly&&P.y<e.y-1.5)P.vy=Math.max(P.vy,7);
       P.st=0;P.trail.push({x:P.x,y:P.y,z:P.z,yaw:P.yaw,t:0.18});
       Object.assign(tp,{lean:0.6,aR:[-1,0.3,-1.2],aL:[-1,0.3,-1.2],lL:[-0.6,0.5],lR:[0.5,0.3]});blendPose(P.pose,tp,0.5);
       physicsLite(dt);return;
     }
-    P.vx*=0.2;P.vz*=0.2;
+    P.vx*=0.2;P.vz*=0.2;P.lunge=-1;
   }else{P.vx*=Math.pow(0.01,dt);P.vz*=Math.pow(0.01,dt);}
   if(!P.onGround&&!(e&&e.fly))P.vy-=NF_MOVE.gravity*dt;else if(e&&e.fly)P.vy=Math.max(P.vy-NF_MOVE.gravity*dt*0.3,-2);
   const k=clamp(P.st/dur,0,1);
@@ -686,7 +686,7 @@ function effectsUpdate(dt){
   G.warps=G.warps.filter(w=>w.t<0.6);
   for(const h of G.hitFlash)h.t-=dt;G.hitFlash=G.hitFlash.filter(h=>h.t>0);
   for(const b of G.bubbles)b.t-=dt;G.bubbles=G.bubbles.filter(b=>b.t>0&&!b.e.dead);
-  if(WORLD.rain&&Q.halos)for(let i=0;i<3;i++){const a=rng()*TAU,d=rng()*10,x=P.x+Math.cos(a)*d,z=P.z+Math.sin(a)*d,g=groundAt(x,z,P.y+3);if(g)spark(x,g.y1+0.02,z,(rng()-.5),1+rng(),(rng()-.5),[.6,.75,1],0.18);}
+  if(WORLD.rain&&Q.halos)for(let i=0;i<3;i++){const a=rng()*TAU,d=rng()*10,x=P.x+Math.cos(a)*d,z=P.z+Math.sin(a)*d,g=groundAt(x,z,P.y+3);if(g&&G.sparks.length<260)G.sparks.push({x,y:g.y1+0.02,z,vx:(rng()-.5)*.6,vy:1.2+rng(),vz:(rng()-.5)*.6,c:[.6,.75,1],t:0,life:0.16,s:0.03,drop:true});}
   for(const v of WORLD.vents)if(rng()<dt*8)G.sparks.push({x:v.x+(rng()-.5)*2,y:v.y+0.5,z:v.z+(rng()-.5)*2,vx:0,vy:4+rng()*3,vz:0,c:[.5,.55,.6],t:0,life:1.2,s:0.25,steam:true});
 }
 
@@ -713,6 +713,7 @@ function drawActors(time){
   if(P.disc)for(const d of P.disc){if(d.done)continue;XF.reset().t(d.x,d.y,d.z).ry(time*30);D.part('cyl12',XF.m,0.45,0.06,0.45,sty.trim,3,0);}
   for(const s of G.shots){if(s.kind==='snipe'||s.kind==='bolt')beam(A,s.x,s.y,s.z,s.x-s.vx*0.03,s.y-s.vy*0.03,s.z-s.vz*0.03,s.c,1,0.08);else D.aabb(s.x-.14,s.y-.14,s.z-.14,s.x+.14,s.y+.14,s.z+.14,s.c,3,0);}
   for(const p of G.sparks){const k=1-p.t/p.life;if(p.steam){Gl.aabb(p.x-p.s,p.y-p.s,p.z-p.s,p.x+p.s,p.y+p.s,p.z+p.s,p.c,0.1,0,0,0.25*k);continue;}
+    if(p.drop){Gl.aabb(p.x-.012,p.y,p.z-.012,p.x+.012,p.y+.08,p.z+.012,p.c,0.7,0,0,0.4*k);continue;}   // a rain splash: a fine glint, not a block
     D.aabb(p.x-p.s*k,p.y-p.s*k,p.z-p.s*k,p.x+p.s*k,p.y+p.s*k,p.z+p.s*k,p.c,3,0);}
   for(const r of G.fx){const rad=r.max*ease(r.t/0.5),a=1-r.t/0.5;
     for(let i=0;i<24;i++){const an=i/24*TAU;A.aabb(r.x+Math.cos(an)*rad-.25,r.y,r.z+Math.sin(an)*rad-.25,r.x+Math.cos(an)*rad+.25,r.y+.15,r.z+Math.sin(an)*rad+.25,r.c,2,0,0,a);}}

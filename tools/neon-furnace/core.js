@@ -2,8 +2,8 @@
 /* ==========================================================================
    NEON FURNACE - an original third-person brawler in a neon voxel city.
    Written from scratch: the WebGL2 renderer, the physics, the characters,
-   the combat and the music are all code in this one page. There are no
-   image, model or audio files, and no engine or library.
+   the combat and the music are all made by code. There are no image,
+   model or audio files, and no engine or library.
    ========================================================================== */
 
 /* ------------------------------------------------------------- utilities */
