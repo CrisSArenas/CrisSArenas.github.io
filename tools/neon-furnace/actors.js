@@ -188,10 +188,7 @@ function afterMove(dt){
   scarfFrame(dt);
   for(const t of P.trail)t.t-=dt;P.trail=P.trail.filter(t=>t.t>0);
 }
-function scarfFrame(dt){
-  const c=Math.cos(P.yaw),s=Math.sin(P.yaw),w=windAt(P.x,P.y,P.z),y=P.y+1.62+P.pose.hip;
-  scarfUpdate(P.scarf,P.x-s*0.18,y,P.z-c*0.18,Math.min(dt,0.033),[-P.vx*0.6+w[0],-P.vz*0.6+w[1]]);
-}
+function scarfFrame(dt){}                 // Kestrel no longer wears the scarf
 function respawn(dead){
   const c=P.checkpoint;
   P.x=c.x;P.y=c.y+0.1;P.z=c.z;P.vx=P.vy=P.vz=0;set('move');P.inv=1.5;P.gliding=false;P.diving=false;P.grap=null;P.pose=POSE0();P.scarf={};P.rag=null;
@@ -695,7 +692,7 @@ function drawActors(time){
   const D=R.dyn,Gl=R.glass,A=R.add;
   const sty=STY(),look=LOOKS.hero(sty);
   if(SV.finish==='glitch'||SV.finish==='prism'){const k=(time*2)%3;look.glow=SV.finish==='glitch'?(k<1?[1,.25,.7]:[.2,.95,1]):[[1,.5,.2],[.3,1,.6],[.6,.4,1]][k|0];look.scarf=look.glow;}
-  drawHuman(D,{x:P.x,y:P.y,z:P.z,yaw:P.yaw,pose:P.pose,look,scarf:P.scarf,ph:P.ph});
+  drawHuman(D,{x:P.x,y:P.y,z:P.z,yaw:P.yaw,pose:P.pose,look,ph:P.ph});
   for(const t of P.trail){XF.reset().t(t.x,t.y+0.95,t.z).ry(t.yaw);Gl.part('box',XF.m,0.5,1.8,0.3,sty.trim,1.5,0,t.t*0.8);}
   shadow(P.x,P.y,P.z,0.7);
   for(const e of G.ents){

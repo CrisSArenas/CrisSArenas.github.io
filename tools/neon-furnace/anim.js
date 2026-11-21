@@ -76,7 +76,7 @@ function poseIdle(p,t,kind){
 /* -------------------------------------------------------- looks */
 const LOOKS={
   hero:s=>({tiles:{torso:TILE.suit,arms:TILE.suit,legs:TILE.suit,head:TILE.heroMask,pelvis:TILE.suitPlain},
-    body:s.suit,limb:s.suit,skin:s.suit,glow:s.trim,eye:s.visor,emblem:true,pauldron:s.plate,boots:s.plate,scarf:s.trim,wings:true,gloves:true,belt:true,build:1.06}),
+    body:s.suit,limb:s.suit,skin:s.suit,glow:s.trim,eye:s.visor,emblem:true,pauldron:s.plate,boots:s.plate,wings:true,gloves:true,belt:true,build:1.06}),
   thug:e=>{const c=GANG[e.seed%4];return{tiles:{torso:TILE.jacket,arms:TILE.jacket,legs:TILE.jeans,head:TILE['gangFace'+(e.seed%3)]},
     body:[.45,.35,.5].map((v,i)=>v*0.6+c[i]*0.25),limb:[.5,.4,.55],skin:[1,1,1],glow:c,eye:c,mohawk:e.seed%2?c:null,chain:true,build:1}},
   knife:e=>({tiles:{torso:TILE.vest,arms:TILE.jacket,legs:TILE.jeans,head:TILE.gangFace1},body:[.7,.7,.5],limb:[.4,.4,.35],skin:[1,1,1],glow:[1,.7,.2],eye:[1,.7,.2],knife:true,bandana:[1,.7,.2],build:0.95}),
@@ -119,7 +119,7 @@ function drawHuman(Bt,o){
   else Bt.part('head',X.m,0.27,0.3,0.28,L.skin,0,9,AL,tl.head,G);
   if(L.mohawk)for(let i=0;i<4;i++){X.push().t(0,0.17,0.08-i*0.07).rx(-0.3-i*0.12);Bt.part('spike',X.m,0.06,0.18,0.08,L.mohawk,1.6,9);X.pop();}
   X.pop();
-  // pauldrons and the hero's scarf knot
+  // pauldrons
   if(L.pauldron)for(const sx of [-1,1]){X.push().t(sx*0.27*bk,0.28,0).rz(-sx*0.35);Bt.part('wedge',X.m,0.2,0.12,0.3,L.pauldron,0,9,AL,TILE.armor,G);X.pop();}
   // wings, folded against the back until they open
   if(L.wings&&p.wings>0.02){
